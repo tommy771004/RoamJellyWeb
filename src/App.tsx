@@ -154,8 +154,12 @@ export default function App() {
   };
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-pink-100 via-purple-100 to-cyan-100 w-full h-full flex flex-col min-h-screen">
-      <div className="flex-1 pb-24 relative z-10 w-full overflow-hidden flex flex-col">
+    <div className="flex-1 bg-[#f8fafc] w-full h-full flex flex-col min-h-[100dvh] relative overflow-hidden font-sans text-slate-800">
+      <div className="absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] rounded-full bg-fuchsia-300/20 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[20%] right-[-20%] w-[70vw] h-[70vw] rounded-full bg-cyan-300/20 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-purple-300/20 blur-[120px] pointer-events-none" />
+      
+      <div className="flex-1 pb-20 relative z-10 w-full overflow-hidden flex flex-col">
         <AnimatePresence mode="wait">
           <motion.div
             key={!isLoggedIn && activeTab !== 'home' ? 'login' : activeTab}

@@ -412,7 +412,7 @@ export default function ItineraryTab() {
   };
 
   return (
-    <div className="overflow-auto p-6 md:p-8 pt-12 md:pt-16 min-h-screen flex-1 max-w-2xl mx-auto w-full h-full">
+    <div className="overflow-auto p-6 md:p-10 pt-16 md:pt-24 min-h-[100dvh] flex-1 max-w-full lg:max-w-4xl xl:max-w-5xl mx-auto w-full flex flex-col">
       {isOffline ? (
         <GlassCard className="mb-4 !p-3 bg-[#fef3c7] border-[#fde68a]">
           <span className="text-amber-700 font-semibold">目前離線中，僅供查看喔 📴</span>
@@ -420,52 +420,55 @@ export default function ItineraryTab() {
       ) : null}
 
       {/* Header — title from API */}
-      <div className="flex-row justify-between items-center mb-5">
-        <div>
-          <span className="text-3xl font-extrabold text-slate-800 drop-shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-y-4">
+        <div className="flex flex-col gap-y-1">
+          <span className="text-[44px] md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-cyan-500 tracking-tight">
             {tripInfo?.name ?? '載入中...'}
           </span>
           {tripInfo && (
-            <span className="text-xs text-slate-400 mt-0.5">
+            <span className="text-base font-bold text-slate-500 tracking-wide mt-1">
               {tripInfo.destination} · {tripInfo.days} 天
             </span>
           )}
         </div>
-        <div className="flex-row items-center" style={{ gap: -8 }}>
-          {collaborators.map((c: Collaborator, index: number) => {
-            const Comp = CollaboratorAvatar as any;
-            return (
-              <Comp
-                key={c.id}
-                collaborator={c}
-                index={index}
-                isOnline={isSocketConnected}
-              />
-            );
-          })}
+        <div className="flex flex-row items-center bg-white/60 backdrop-blur-md px-4 py-2 rounded-[24px] border border-white shadow-sm ring-1 ring-slate-100/30">
+          <div className="flex flex-row items-center mr-2" style={{ gap: -8 }}>
+            {collaborators.map((c: Collaborator, index: number) => {
+              const Comp = CollaboratorAvatar as any;
+              return (
+                <Comp
+                  key={c.id}
+                  collaborator={c}
+                  index={index}
+                  isOnline={isSocketConnected}
+                />
+              );
+            })}
+          </div>
+          <div className="w-px h-8 bg-slate-200" />
           <button
             onClick={() => void handleShare()}
-            className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center border-2 border-white ml-2"
+            className="w-10 h-10 rounded-full bg-gradient-to-r from-fuchsia-400 to-purple-500 hover:opacity-90 active:scale-95 flex items-center justify-center border border-fuchsia-300 ml-2 shadow-sm transition-all"
           >
-            <span className="text-sm font-bold text-purple-600">+</span>
+            <Plus size={20} color="white" strokeWidth={3} />
           </button>
         </div>
       </div>
 
       {/* View mode + share */}
-      <div className="flex-row mb-4 items-stretch h-12">
-        <div className="flex-row bg-white/40 p-1 rounded-2xl border border-white/50">
+      <div className="flex-row mb-6 items-stretch h-[52px]">
+        <div className="flex-row bg-white/50 backdrop-blur-md p-1.5 rounded-full border border-white/60 shadow-sm ring-1 ring-slate-100/30">
           {(['list', 'map'] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
-              className={`flex-row items-center px-4 py-2 rounded-xl ${viewMode === mode ? 'bg-white shadow-sm' : ''}`}
+              className={`flex-row items-center px-5 py-2.5 rounded-full transition-all duration-300 ${viewMode === mode ? 'bg-white shadow-md shadow-slate-200/50 scale-[1.02]' : 'hover:bg-white/40'}`}
             >
               {mode === 'list'
-                ? <ListIcon size={16} color={viewMode === mode ? '#9333ea' : '#64748b'} />
-                : <MapIcon size={16} color={viewMode === mode ? '#9333ea' : '#64748b'} />
+                ? <ListIcon size={18} strokeWidth={2.5} color={viewMode === mode ? '#d946ef' : '#94a3b8'} />
+                : <MapIcon size={18} strokeWidth={2.5} color={viewMode === mode ? '#d946ef' : '#94a3b8'} />
               }
-              <span className={`ml-2 font-bold text-sm ${viewMode === mode ? 'text-purple-600' : 'text-slate-500'}`}>
+              <span className={`ml-2 font-black tracking-wide text-sm ${viewMode === mode ? 'text-fuchsia-600' : 'text-slate-500'}`}>
                 {mode === 'list' ? '列表' : '地圖'}
               </span>
             </button>
@@ -473,17 +476,17 @@ export default function ItineraryTab() {
         </div>
         <button
           onClick={() => void handleShare()}
-          className="flex-1 flex-row bg-[#f472b6] rounded-2xl items-center justify-center ml-3 px-4 shadow-sm"
+          className="flex-1 flex-row bg-gradient-to-r from-fuchsia-400 to-pink-500 hover:opacity-90 active:scale-95 rounded-full items-center justify-center ml-3 px-4 shadow-[0_4px_14px_0_rgb(217,70,239,0.39)] transition-all"
         >
-          <Share2 size={16} color="white" />
-          <span className="ml-2 font-bold text-white text-sm">邀請好友</span>
+          <Share2 size={18} strokeWidth={2.5} color="white" />
+          <span className="ml-2 font-bold tracking-wide text-white text-sm">邀請好友</span>
         </button>
       </div>
 
       {/* Day selector — days from trip API */}
       <div 
-        className="mb-4 overflow-auto flex"
-        style={{ gap: 8 }}
+        className="mb-8 overflow-x-auto overflow-y-hidden flex pb-2 scrollbar-hide -mx-2 px-2"
+        style={{ gap: 10 }}
       >
         {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
           const isActive = selectedDay === day;
@@ -492,22 +495,22 @@ export default function ItineraryTab() {
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className="relative"
+              className="relative flex-none group focus:outline-none"
             >
               {isActive && (
                 <motion.div
                   layoutId="day-indicator"
-                  className="absolute inset-0 rounded-2xl bg-[#9333ea]"
-                  transition={{ type: 'spring', bounce: 0.3, duration: 0.4 }}
+                  className="absolute inset-0 rounded-[24px] bg-gradient-to-b from-fuchsia-500 to-purple-600 shadow-md shadow-fuchsia-500/20"
+                  transition={{ type: 'spring', bounce: 0.35, duration: 0.5 }}
                 />
               )}
-              <div className="px-4 py-2 rounded-2xl items-center relative z-10" style={{ minWidth: 64 }}>
-                <span className={`text-xs font-bold ${isActive ? 'text-white' : 'text-slate-500'}`}>
+              <div className={`px-5 py-3 rounded-[24px] items-center relative z-10 flex flex-col gap-y-1 transition-colors ${!isActive && 'bg-white/40 border border-white hover:bg-white/60'}`} style={{ minWidth: 72 }}>
+                <span className={`text-[13px] font-black tracking-wider ${isActive ? 'text-white' : 'text-slate-600 group-hover:text-fuchsia-600'}`}>
                   Day {day}
                 </span>
                 {count > 0
-                  ? <div className={`mt-0.5 w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/70' : 'bg-purple-400'}`} />
-                  : <div className="mt-0.5 w-1.5 h-1.5" />
+                  ? <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'bg-fuchsia-400'}`} />
+                  : <div className="w-1.5 h-1.5 rounded-full bg-transparent border border-slate-300" />
                 }
               </div>
             </button>
@@ -515,122 +518,111 @@ export default function ItineraryTab() {
         })}
       </div>
 
-      <GlassCard className="!p-4 mb-4 border-[#d8b4fe]">
-        <span className="font-bold text-slate-700 mb-3">AI 行程規劃表單</span>
-        <div style={{ gap: 10 }}>
-          <div className="flex-row" style={{ gap: 8 }}>
-            <spanInput
+      <GlassCard className="!p-6 mb-6">
+        <div className="flex flex-col gap-y-1 mb-5">
+          <span className="text-[11px] font-black tracking-widest text-fuchsia-500 uppercase">AI Assistant</span>
+          <span className="font-extrabold text-2xl text-slate-800 tracking-tight">AI 行程規劃</span>
+        </div>
+        <div className="flex flex-col gap-y-3">
+          <div className="flex flex-row gap-x-3">
+            <input
               value={String(plannerForm.days)}
               onChange={(e) => setPlannerField('days', Math.max(1, Number(e.target.value) || 1))}
               placeholder="幾天"
               inputMode="numeric"
-              className="flex-1 rounded-xl border border-white bg-white/80 px-3 py-2.5 font-semibold text-slate-700 text-sm"
+              className="flex-1 rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
             />
-            <spanInput
+            <input
+              type="date"
               value={plannerForm.flightDate}
               onChange={(e) => setPlannerField('flightDate', e.target.value)}
               placeholder="航班日期 YYYY-MM-DD"
-              className="flex-[2] rounded-xl border border-white bg-white/80 px-3 py-2.5 font-semibold text-slate-700 text-sm"
+              className="flex-[2] rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none uppercase"
             />
           </div>
-          <div className="flex-row" style={{ gap: 8 }}>
-            <spanInput
+          <div className="flex flex-row gap-x-3">
+            <input
               value={plannerForm.departureFrom}
               onChange={(e) => setPlannerField('departureFrom', e.target.value.toUpperCase())}
-              placeholder="出發機場 (例 TPE)"
-              className="flex-1 rounded-xl border border-white bg-white/80 px-3 py-2.5 font-semibold text-slate-700 text-sm"
+              placeholder="出發機場 (例: TPE)"
+              className="flex-1 rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
             />
-            <spanInput
+            <input
               value={plannerForm.arrivalTo}
               onChange={(e) => setPlannerField('arrivalTo', e.target.value.toUpperCase())}
-              placeholder="抵達機場 (例 NRT)"
-              className="flex-1 rounded-xl border border-white bg-white/80 px-3 py-2.5 font-semibold text-slate-700 text-sm"
+              placeholder="抵達機場 (例: NRT)"
+              className="flex-1 rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
             />
           </div>
-          <spanInput
+          <input
             value={plannerForm.countries.join(', ')}
             onChange={(e) => setPlannerCsvField('countries')(e.target.value)}
             placeholder="想去國家（逗號分隔）"
-            className="rounded-xl border border-white bg-white/80 px-3 py-2.5 font-semibold text-slate-700 text-sm"
+            className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
           />
-          <spanInput
+          <input
             value={plannerForm.mustVisitSpots.join(', ')}
             onChange={(e) => setPlannerCsvField('mustVisitSpots')(e.target.value)}
-            placeholder="想去景點（逗號分隔）"
-            className="rounded-xl border border-white bg-white/80 px-3 py-2.5 font-semibold text-slate-700 text-sm"
+            placeholder="必去景點（例如：雷門, 晴空塔）"
+            className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
           />
-          <spanInput
+          <input
             value={plannerForm.mustEatFoods.join(', ')}
             onChange={(e) => setPlannerCsvField('mustEatFoods')(e.target.value)}
-            placeholder="想吃食物（逗號分隔）"
-            className="rounded-xl border border-white bg-white/80 px-3 py-2.5 font-semibold text-slate-700 text-sm"
+            placeholder="必吃美食（例如：拉麵, 壽司）"
+            className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
           />
-          <spanInput
+          <input
             value={plannerForm.notes}
             onChange={(e) => setPlannerField('notes', e.target.value)}
-            placeholder="其他需求（例如：想慢旅、帶長輩、不要太早出門）"
-            className="rounded-xl border border-white bg-white/80 px-3 py-2.5 font-semibold text-slate-700 text-sm"
+            placeholder="其他需求（慢旅、帶長輩、晚出早歸）"
+            className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
           />
           <button
             onClick={() => void handleAutoFetchFlights()}
             disabled={flightsLoading || isOffline}
-            className={`rounded-2xl px-4 py-2.5 flex-row items-center justify-center ${
-              flightsLoading || isOffline ? 'bg-sky-300' : 'bg-sky-500'
+            className={`rounded-[20px] shadow-sm px-4 py-4 mt-2 flex-row items-center justify-center transition-all active:scale-95 ${
+              flightsLoading || isOffline ? 'bg-slate-200 cursor-not-allowed opacity-70' : 'bg-slate-800 hover:bg-slate-700 shadow-lg shadow-slate-800/20'
             }`}
           >
-            <span className="text-white font-bold">{flightsLoading ? '抓取航班中...' : '自動抓航班（含轉乘）'}</span>
+            <span className="text-white font-extrabold tracking-wide">{flightsLoading ? '自動抓取中...' : '抓取航班資料（含轉乘）'}</span>
           </button>
           {plannerForm.autoFlightSegments.length > 0 && (
-            <div className="rounded-xl bg-white/60 border border-white p-2" style={{ gap: 4 }}>
+            <div className="rounded-[20px] bg-white/60 border border-white/80 p-4 mt-2 shadow-sm flex flex-col gap-y-2">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Flight Segments</span>
               {plannerForm.autoFlightSegments.map((segment: string) => (
-                <span key={segment} className="text-xs text-slate-600">• {segment}</span>
+                <span key={segment} className="text-[13px] font-semibold text-slate-700 bg-white rounded-lg px-3 py-2 border border-slate-100">{segment}</span>
               ))}
             </div>
           )}
 
-          <div className="rounded-xl border border-white bg-white/60 p-2">
-            <span className="text-xs font-bold text-slate-600 mb-2">生成模式</span>
-            <div className="flex-row" style={{ gap: 8 }}>
+          <div className="rounded-[24px] border border-white/60 bg-white/40 p-3 mt-4 flex flex-col shadow-sm">
+            <span className="text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-widest pl-2 pt-1">Generation Mode</span>
+            <div className="flex-row gap-x-2 bg-white/50 p-1 rounded-[20px]">
               <button
                 onClick={() => setAiGenerateMode('selected_day')}
-                className={`flex-1 rounded-xl px-3 py-2 border ${
+                className={`flex-1 rounded-[16px] px-3 py-3 transition-all ${
                   aiGenerateMode === 'selected_day'
-                    ? 'bg-violet-100 border-violet-300'
-                    : 'bg-white/70 border-white'
+                    ? 'bg-white shadow-sm ring-1 ring-slate-100'
+                    : 'hover:bg-white/40 text-slate-500'
                 }`}
               >
-                <span className={`text-xs font-bold ${aiGenerateMode === 'selected_day' ? 'text-violet-700' : 'text-slate-500'}`}>
-                  只生成選定 Day
+                <span className={`text-[13px] font-black tracking-wide ${aiGenerateMode === 'selected_day' ? 'text-fuchsia-600' : ''}`}>
+                  單日重建
                 </span>
               </button>
               <button
                 onClick={() => setAiGenerateMode('overwrite_all')}
-                className={`flex-1 rounded-xl px-3 py-2 border ${
+                className={`flex-1 rounded-[16px] px-3 py-3 transition-all ${
                   aiGenerateMode === 'overwrite_all'
-                    ? 'bg-rose-100 border-rose-300'
-                    : 'bg-white/70 border-white'
+                    ? 'bg-rose-50 shadow-sm ring-1 ring-rose-200'
+                    : 'hover:bg-rose-50/50 text-slate-500'
                 }`}
               >
-                <span className={`text-xs font-bold ${aiGenerateMode === 'overwrite_all' ? 'text-rose-700' : 'text-slate-500'}`}>
-                  一鍵覆蓋目前行程
+                <span className={`text-[13px] font-black tracking-wide ${aiGenerateMode === 'overwrite_all' ? 'text-rose-600' : ''}`}>
+                  全局覆寫
                 </span>
               </button>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-white bg-white/60 p-2">
-            <span className="text-xs font-bold text-slate-600 mb-2">分類 icon 對照表</span>
-            <div className="overflow-auto" horizontal >
-              <div className="flex-row" style={{ gap: 6 }}>
-                {CATEGORY_OPTIONS.map((category) => {
-                  const meta = getCategoryMeta(category);
-                  return (
-                    <div key={category} className="px-2 py-1 rounded-full border border-white bg-white/80">
-                      <span className="text-[10px] font-bold text-slate-600">{meta.icon} {meta.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           </div>
         </div>
@@ -640,25 +632,25 @@ export default function ItineraryTab() {
       <button
         onClick={() => void handleAiSuggest()}
         disabled={aiLoading}
-        className={`mb-5 flex-row items-center justify-center rounded-2xl py-3 px-4 ${aiLoading ? 'bg-violet-300' : 'bg-violet-500'}`}
+        className={`mb-8 flex-row items-center justify-center rounded-[24px] py-4 px-4 shadow-[0_8px_20px_rgb(0,0,0,0.12)] transition-all active:scale-[0.98] ${aiLoading ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 hover:opacity-90'}`}
       >
-        <Sparkles size={16} color="white" />
-        <span className="ml-2 font-bold text-white">
+        <Sparkles size={20} strokeWidth={2.5} color="white" />
+        <span className="ml-2.5 font-black text-white tracking-wide text-lg">
           {aiLoading
-            ? '果凍精靈正在生成行程...'
+            ? '果凍精靈編排中...'
             : aiGenerateMode === 'overwrite_all'
-              ? '✨ AI 一鍵覆蓋目前行程'
-              : `✨ AI 只生成 Day ${selectedDay}`}
+              ? 'AI 生成完整行程'
+              : `AI 生成 Day ${selectedDay}`}
         </span>
       </button>
 
-      {tip ? <span className="text-xs text-slate-500 mb-3">{tip}</span> : null}
+      {tip ? <span className="text-xs font-bold text-slate-500 mb-4 block text-center animate-pulse">{tip}</span> : null}
 
       {/* Favorites panel — data from /api/favorites */}
-      <GlassCard className="!p-4 mb-5">
-        <div className="flex-row items-center justify-between mb-3">
-          <span className="font-bold text-slate-700">收藏夾</span>
-          <span className="text-xs text-slate-400">拖曳或點「+」加入 Day {selectedDay}</span>
+      <GlassCard className="!p-5 mb-8">
+        <div className="flex-row items-center justify-between mb-5">
+          <span className="font-extrabold text-xl text-slate-800 tracking-tight">收藏夾</span>
+          <span className="text-[11px] font-bold text-slate-400 tracking-wider">點擊 + 快速加入</span>
         </div>
 
         <div style={{ gap: 10 }}>
@@ -688,7 +680,7 @@ export default function ItineraryTab() {
               >
                 <span className="text-xl">{newSpotEmoji}</span>
               </button>
-              <spanInput
+              <input
                 value={newSpotTitle}
                 onChange={(e) => setNewSpotTitle(e.target.value)}
                 placeholder="新增景點名稱..."
@@ -946,24 +938,24 @@ function ItineraryList({
                   {editingId === item.node_id && draft ? (
                     <div className="ml-5 flex-1" style={{ gap: 6 }}>
                       <div className="flex-row" style={{ gap: 8 }}>
-                        <spanInput
+                        <input
                           value={draft.day}
                           onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, day: e.target.value } : prev))}
                           inputMode="numeric"
                           className="w-16 rounded-lg border border-white bg-white/80 px-2 py-1.5 text-sm font-semibold text-slate-700"
                         />
-                        <spanInput
+                        <input
                           value={draft.time}
                           onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, time: e.target.value } : prev))}
                           className="w-24 rounded-lg border border-white bg-white/80 px-2 py-1.5 text-sm font-semibold text-slate-700"
                         />
-                        <spanInput
+                        <input
                           value={draft.emoji}
                           onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, emoji: e.target.value } : prev))}
                           className="w-16 rounded-lg border border-white bg-white/80 px-2 py-1.5 text-sm font-semibold text-slate-700"
                         />
                       </div>
-                      <spanInput
+                      <input
                         value={draft.title}
                         onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, title: e.target.value } : prev))}
                         className="rounded-lg border border-white bg-white/80 px-2 py-1.5 text-sm font-semibold text-slate-700"

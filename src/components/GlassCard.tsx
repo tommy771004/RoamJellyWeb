@@ -4,8 +4,8 @@ import { isLowPerformanceDevice } from '../lib/performance';
 function useGlassClass() {
   const lowPerf = isLowPerformanceDevice();
   return lowPerf
-    ? 'bg-white/85 border border-white/70 shadow rounded-3xl p-5'
-    : 'bg-white/40 backdrop-blur-xl border border-white/60 shadow-lg rounded-3xl p-5';
+    ? 'bg-white border border-slate-100 shadow-sm rounded-[32px] p-5 relative overflow-hidden'
+    : 'bg-white/60 backdrop-blur-3xl border border-white/60 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 rounded-[32px] p-5 relative overflow-hidden';
 }
 
 import React from 'react';

@@ -62,10 +62,13 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
 
   return (
     <div
-      className="flex-1 justify-center items-center p-6 flex flex-col h-screen w-screen"
-      style={{ background: 'linear-gradient(135deg, #fce7f3 0%, #ede9fe 50%, #cffafe 100%)' }}
+      className="flex-1 justify-center items-center p-6 flex flex-col h-[100dvh] w-screen bg-[#f8fafc] relative overflow-hidden"
     >
-      <div style={{ width: '100%', maxWidth: 360 }}>
+      <div className="absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] rounded-full bg-fuchsia-300/20 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[20%] right-[-20%] w-[70vw] h-[70vw] rounded-full bg-cyan-300/20 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-purple-300/20 blur-[120px] pointer-events-none" />
+
+      <div className="w-full max-w-[360px] relative z-10">
         {/* Logo */}
         <div className="items-center mb-8 flex flex-col">
           <span style={{ fontSize: 48, marginBottom: 8 }}>✈️</span>
@@ -75,13 +78,13 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
 
         {/* Card */}
         <div
-          className="rounded-3xl p-6 shadow-lg flex flex-col"
-          style={{ backgroundColor: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.6)' }}
+          className="rounded-[32px] p-6 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 flex flex-col relative overflow-hidden"
+          style={{ backgroundColor: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.6)' }}
         >
           {/* Mode tabs */}
           <div
-            className="flex flex-row mb-6 rounded-2xl p-1"
-            style={{ backgroundColor: '#f5f3ff' }}
+            className="flex flex-row mb-8 rounded-full p-1.5 shadow-inner"
+            style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
           >
             {(['login', 'register'] as Mode[]).map((m) => (
               <button
@@ -89,22 +92,24 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
                 onClick={() => switchMode(m)}
                 style={{
                   flex: 1,
-                  paddingTop: 8, paddingBottom: 8,
-                  borderRadius: 12,
+                  paddingTop: 10, paddingBottom: 10,
+                  borderRadius: 9999,
                   backgroundColor: mode === m ? '#ffffff' : 'transparent',
-                  boxShadow: mode === m ? '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04)' : 'none',
+                  boxShadow: mode === m ? '0 4px 12px rgba(0, 0, 0, 0.05), border 1px solid rgba(255,255,255,0.8)' : 'none',
                   alignItems: 'center',
                   outline: 'none',
                   border: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'all 0.3s'
                 }}
                 className="flex justify-center appearance-none"
               >
                 <span
                   style={{
-                    fontWeight: '600',
-                    color: mode === m ? '#7c3aed' : '#9ca3af',
+                    fontWeight: mode === m ? '800' : '600',
+                    color: mode === m ? '#d946ef' : '#94a3b8',
                     fontSize: 14,
+                    letterSpacing: '0.05em'
                   }}
                 >
                   {m === 'login' ? '登入' : '註冊'}
@@ -115,19 +120,20 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
 
           {/* Username */}
           <div className="mb-4 flex flex-col">
-            <span className="text-sm font-medium text-gray-600 mb-1">使用者名稱</span>
+            <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">使用者名稱</span>
             <input
               style={{
-                backgroundColor: '#f9fafb',
+                backgroundColor: 'rgba(255,255,255,0.8)',
                 borderWidth: 1,
-                borderColor: '#e5e7eb',
-                borderRadius: 12,
-                paddingInline: 16,
-                paddingBlock: 12,
-                color: '#1f2937',
+                borderColor: 'rgba(255,255,255,0.9)',
+                borderRadius: 20,
+                paddingInline: 20,
+                paddingBlock: 14,
+                color: '#1e293b',
                 fontSize: 15,
+                fontWeight: '700'
               }}
-              className="outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+              className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
               placeholder="3–30 個英數字或底線"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -139,19 +145,20 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
           {/* Display name – register only */}
           {mode === 'register' && (
             <div className="mb-4 flex flex-col">
-              <span className="text-sm font-medium text-gray-600 mb-1">暱稱（選填）</span>
+              <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">暱稱（選填）</span>
               <input
                 style={{
-                  backgroundColor: '#f9fafb',
+                  backgroundColor: 'rgba(255,255,255,0.8)',
                   borderWidth: 1,
-                  borderColor: '#e5e7eb',
-                  borderRadius: 12,
-                  paddingInline: 16,
-                  paddingBlock: 12,
-                  color: '#1f2937',
+                  borderColor: 'rgba(255,255,255,0.9)',
+                  borderRadius: 20,
+                  paddingInline: 20,
+                  paddingBlock: 14,
+                  color: '#1e293b',
                   fontSize: 15,
+                  fontWeight: '700'
                 }}
-                className="outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
                 placeholder="顯示給其他成員的名稱"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -161,20 +168,21 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
 
           {/* Password */}
           <div className="mb-4 flex flex-col">
-            <span className="text-sm font-medium text-gray-600 mb-1">密碼</span>
+            <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">密碼</span>
             <input
               type="password"
               style={{
-                backgroundColor: '#f9fafb',
+                backgroundColor: 'rgba(255,255,255,0.8)',
                 borderWidth: 1,
-                borderColor: '#e5e7eb',
-                borderRadius: 12,
-                paddingInline: 16,
-                paddingBlock: 12,
-                color: '#1f2937',
+                borderColor: 'rgba(255,255,255,0.9)',
+                borderRadius: 20,
+                paddingInline: 20,
+                paddingBlock: 14,
+                color: '#1e293b',
                 fontSize: 15,
+                fontWeight: '700'
               }}
-              className="outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+              className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
               placeholder="至少 8 個字元"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -184,20 +192,21 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
           {/* Confirm password – register only */}
           {mode === 'register' && (
             <div className="mb-4 flex flex-col">
-              <span className="text-sm font-medium text-gray-600 mb-1">確認密碼</span>
+              <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">確認密碼</span>
               <input
                 type="password"
                 style={{
-                  backgroundColor: '#f9fafb',
+                  backgroundColor: 'rgba(255,255,255,0.8)',
                   borderWidth: 1,
-                  borderColor: '#e5e7eb',
-                  borderRadius: 12,
-                  paddingInline: 16,
-                  paddingBlock: 12,
-                  color: '#1f2937',
+                  borderColor: 'rgba(255,255,255,0.9)',
+                  borderRadius: 20,
+                  paddingInline: 20,
+                  paddingBlock: 14,
+                  color: '#1e293b',
                   fontSize: 15,
+                  fontWeight: '700'
                 }}
-                className="outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
                 placeholder="再次輸入密碼"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -208,10 +217,9 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
           {/* Error message */}
           {error ? (
             <div
-              className="mb-4 px-4 py-3 rounded-xl flex"
-              style={{ backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca' }}
+              className="mb-4 px-4 py-3 rounded-xl flex items-center bg-rose-50/80 border border-rose-200"
             >
-              <span style={{ color: '#dc2626', fontSize: 14 }}>{error}</span>
+              <span className="text-rose-600 text-[13px] font-bold">{error}</span>
             </div>
           ) : null}
 
@@ -219,18 +227,18 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
           <button
             onClick={() => void handleSubmit()}
             disabled={loading}
+            className={`flex justify-center border-none appearance-none cursor-pointer outline-none transition-all active:scale-95 shadow-[0_8px_16px_rgb(217,70,239,0.25)] ${loading ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:opacity-90'}`}
             style={{
-              paddingTop: 14, paddingBottom: 14,
-              borderRadius: 16,
+              paddingTop: 16, paddingBottom: 16,
+              borderRadius: 24,
               alignItems: 'center',
-              backgroundColor: loading ? '#c4b5fd' : '#7c3aed',
+              marginTop: 8
             }}
-            className="flex justify-center border-none appearance-none cursor-pointer outline-none hover:bg-purple-600 transition-colors"
           >
             {loading ? (
-              <span style={{ color: 'white' }}>處理中...</span>
+              <span style={{ color: 'white', fontWeight: '800' }}>處理中...</span>
             ) : (
-              <span style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>
+              <span style={{ color: 'white', fontWeight: '900', fontSize: 16, letterSpacing: '0.05em' }}>
                 {mode === 'login' ? '登入' : '建立帳號'}
               </span>
             )}
@@ -243,13 +251,13 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
               style={{
                 marginTop: 12,
                 paddingTop: 14, paddingBottom: 14,
-                borderRadius: 16,
+                borderRadius: 24,
                 alignItems: 'center',
                 backgroundColor: 'transparent',
               }}
-              className="flex justify-center border-none appearance-none cursor-pointer outline-none hover:bg-black/5 transition-colors"
+              className="flex justify-center border-none appearance-none cursor-pointer outline-none hover:bg-black/5 transition-all active:scale-95"
             >
-              <span style={{ color: '#4b5563', fontWeight: '600', fontSize: 15 }}>取消</span>
+              <span style={{ color: '#64748b', fontWeight: '800', fontSize: 14, letterSpacing: '0.05em' }}>取消</span>
             </button>
           )}
         </div>

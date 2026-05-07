@@ -5,7 +5,7 @@ import cors from 'cors';
 import path from 'path';
 import { createClient, type RedisClientType } from 'redis';
 import { AppRepository } from './src/server/repositories/appRepository';
-import { pool } from './src/server/db/client';
+import { pool, db } from './src/server/db/client';
 import { signAccessToken, type AuthUser, verifyAccessToken } from './src/server/auth/jwt';
 import { hashPassword, verifyPassword } from './src/server/auth/password';
 
@@ -278,7 +278,7 @@ async function geocodeSpot(title: string, city = '東京'): Promise<{ lat: numbe
 }
 
 async function startServer() {
-  const repo = new AppRepository();
+  const repo = new AppRepository(db);
 
   if (SHOULD_SEED_DEMO_DATA) {
     await repo.ensureDemoSeed();
