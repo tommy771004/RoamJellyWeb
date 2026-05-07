@@ -7,6 +7,13 @@ import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError } from 
 import { useSearchStore } from '../store/useSearchStore';
 import { useAppStore } from '../store/useAppStore';
 import type { SearchItem } from '../types/workflow';
+import {
+  TRAVEL_GUIDE_DESTINATIONS,
+  TRAVEL_GUIDE_REGIONS,
+  TRAVEL_GUIDE_SOURCE_REPO,
+  matchTravelDestinations,
+  type TravelGuideDestination,
+} from '../data/travelGuideDestinations';
 
 interface FlightCardProps {
   flight: SearchItem;
@@ -72,6 +79,31 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const { openRedirectModal } = useAppStore();
 
   const [dateError, setDateError] = useState<string | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<string>('全部地區');
+  const [selectedGuideId, setSelectedGuideId] = useState<string>('');
+
+  const regionDestinations = useMemo(() => {
+    const source =
+      selectedRegion === '全部地區'
+        ? TRAVEL_GUIDE_DESTINATIONS
+        : TRAVEL_GUIDE_DESTINATIONS.filter((item) => item.region === selectedRegion);
+    return [...source].sort((a, b) => a.place.localeCompare(b.place, 'zh-Hant'));
+  }, [selectedRegion]);
+
+  const destinationQuickMatches = useMemo(
+    () => matchTravelDestinations(searchForm.to, selectedRegion),
+    [searchForm.to, selectedRegion],
+  );
+
+  const selectedGuide = useMemo(
+    () => TRAVEL_GUIDE_DESTINATIONS.find((item) => item.id === selectedGuideId) ?? null,
+    [selectedGuideId],
+  );
+
+  const applyGuideDestination = (destination: TravelGuideDestination) => {
+    setSelectedGuideId(destination.id);
+    updateField('to', (destination.searchAlias ?? destination.place).toUpperCase());
+  };
 
   const isSearchDisabled = useMemo(
     () => !searchForm.from.trim() || !searchForm.to.trim() || !searchForm.date.trim(),
@@ -113,18 +145,89 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       <GlassCard className="!p-4 mb-6 border-[#f0abfc] bg-[#fdf4ff] flex flex-col">
         <span className="font-bold text-slate-700 mb-3">探索比價</span>
         <div className="flex flex-col gap-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold text-slate-500 pl-1">選擇地區</label>
+              <select
+                value={selectedRegion}
+                onChange={(e) => {
+                  setSelectedRegion(e.target.value);
+                  setSelectedGuideId('');
+                }}
+                className="rounded-2xl border border-white bg-white/80 px-4 py-3 font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-fuchsia-300"
+              >
+                <option value="全部地區">全部地區</option>
+                {TRAVEL_GUIDE_REGIONS.map((region) => (
+                  <option key={region} value={region}>{region}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold text-slate-500 pl-1">選擇地方</label>
+              <select
+                value={selectedGuideId}
+                onChange={(e) => {
+                  const picked = regionDestinations.find((item) => item.id === e.target.value);
+                  if (!picked) {
+                    setSelectedGuideId('');
+                    return;
+                  }
+                  applyGuideDestination(picked);
+                }}
+                className="rounded-2xl border border-white bg-white/80 px-4 py-3 font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-fuchsia-300"
+              >
+                <option value="">請選擇地方</option>
+                {regionDestinations.map((item) => (
+                  <option key={item.id} value={item.id}>{item.country} · {item.place}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <input
             value={searchForm.from}
             onChange={(e) => updateField('from', e.target.value.toUpperCase())}
-            placeholder="出發地 (例: TPE)"
+            placeholder="出發地 (例: TPE / 台北)"
             className="rounded-2xl border border-white bg-white/80 px-4 py-3 font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-fuchsia-300"
           />
           <input
             value={searchForm.to}
-            onChange={(e) => updateField('to', e.target.value.toUpperCase())}
-            placeholder="目的地 (例: NRT)"
+            onChange={(e) => {
+              setSelectedGuideId('');
+              updateField('to', e.target.value.toUpperCase());
+            }}
+            placeholder="輸入目的地或機場代碼 (例: 福岡 / FUK / 東京 / NRT)"
             className="rounded-2xl border border-white bg-white/80 px-4 py-3 font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-fuchsia-300"
           />
+          <div className="flex flex-col gap-y-2 rounded-2xl bg-white/60 border border-white px-3 py-3">
+            <span className="text-xs font-bold text-slate-500">熱門目的地快速選擇</span>
+            <div className="flex flex-wrap gap-2">
+              {destinationQuickMatches.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => applyGuideDestination(item)}
+                  className="px-3 py-1.5 rounded-full bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200 text-xs font-bold hover:bg-fuchsia-200 transition-colors"
+                >
+                  {item.country} · {item.place}
+                </button>
+              ))}
+            </div>
+            {selectedGuide ? (
+              <a
+                href={selectedGuide.guideUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-sky-700 font-semibold hover:underline"
+              >
+                查看 {selectedGuide.country} {selectedGuide.place} 旅遊指南
+              </a>
+            ) : null}
+            <span className="text-[11px] text-slate-500">
+              已整合資料來源: {TRAVEL_GUIDE_SOURCE_REPO}
+            </span>
+          </div>
+
           <div className="flex flex-col">
             <input
               value={searchForm.date}
