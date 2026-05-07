@@ -16,7 +16,7 @@ interface AppStore {
   closeRedirectModal: () => void;
 
   userId: string | null;
-  setAuthenticated: (userId: string) => void;
+  setAuthenticated: (userId: string | null) => void;
 
   toastMessage: string | null;
   showToast: (message: string) => void;

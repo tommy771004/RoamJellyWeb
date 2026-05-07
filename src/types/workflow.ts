@@ -68,6 +68,7 @@ export interface ItineraryNode {
   title: string;
   emoji: string;
   category: string;
+  description?: string;
   source: 'local' | 'remote';
   lat?: number;
   lng?: number;

@@ -17,10 +17,13 @@ interface GlassCardProps {
 
 function GlassCard({ children, className = '' }: GlassCardProps) {
   const glassClass = useGlassClass();
+  // Check if overflow-visible is provided in className to avoid forcing overflow hidden via style
+  const style: React.CSSProperties = className.includes('overflow-visible') ? {} : { overflow: 'hidden' };
+  
   return (
     <div
-      className={`${glassClass} ${className} flex flex-col`}
-      style={{ overflow: 'hidden' }}
+      className={`${glassClass.replace('overflow-hidden', '')} ${className} flex flex-col`}
+      style={style}
     >
       {children}
     </div>
@@ -33,11 +36,13 @@ interface GlassCardPressableProps extends GlassCardProps {
 
 function GlassCardPressable({ children, className = '', onPress }: GlassCardPressableProps) {
   const glassClass = useGlassClass();
+  const style: React.CSSProperties = className.includes('overflow-visible') ? {} : { overflow: 'hidden' };
+
   return (
     <button
       onClick={onPress}
-      className={`${glassClass} active:scale-95 transition-transform hover:bg-white/50 text-left w-full flex flex-col appearance-none ${className}`}
-      style={{ overflow: 'hidden' }}
+      className={`${glassClass.replace('overflow-hidden', '')} active:scale-95 transition-transform hover:bg-white/50 text-left w-full flex flex-col appearance-none ${className}`}
+      style={style}
     >
       {children}
     </button>

@@ -116,6 +116,7 @@ export default function ItineraryTab() {
   const [plannerForm, setPlannerForm] = useState<ItineraryPlannerForm>(buildDefaultPlannerForm('東京', 5));
   const [flightsLoading, setFlightsLoading] = useState<boolean>(false);
   const [aiGenerateMode, setAiGenerateMode] = useState<AiGenerateMode>('selected_day');
+  const [showPlanner, setShowPlanner] = useState<boolean>(true);
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -412,7 +413,7 @@ export default function ItineraryTab() {
   };
 
   return (
-    <div className="overflow-auto p-6 md:p-10 pt-16 md:pt-24 min-h-[100dvh] flex-1 max-w-full lg:max-w-4xl xl:max-w-5xl mx-auto w-full flex flex-col">
+    <div className="overflow-x-hidden p-4 md:p-10 pt-20 md:pt-24 min-h-[100dvh] flex-1 max-w-full lg:max-w-4xl xl:max-w-5xl mx-auto w-full flex flex-col">
       {isOffline ? (
         <GlassCard className="mb-4 !p-3 bg-[#fef3c7] border-[#fde68a]">
           <span className="text-amber-700 font-semibold">目前離線中，僅供查看喔 📴</span>
@@ -420,19 +421,19 @@ export default function ItineraryTab() {
       ) : null}
 
       {/* Header — title from API */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-y-4">
-        <div className="flex flex-col gap-y-1">
-          <span className="text-[44px] md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-cyan-500 tracking-tight">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-y-6">
+        <div className="flex flex-col gap-y-1 w-full md:w-auto">
+          <span className="text-[36px] md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 to-cyan-500 tracking-tight leading-tight">
             {tripInfo?.name ?? '載入中...'}
           </span>
           {tripInfo && (
-            <span className="text-base font-bold text-slate-500 tracking-wide mt-1">
-              {tripInfo.destination} · {tripInfo.days} 天
+            <span className="text-sm md:text-base font-bold text-slate-500 tracking-wide mt-1">
+              {tripInfo.destination} · {tripInfo.days} 天 · {collaborators.length} 人共編
             </span>
           )}
         </div>
-        <div className="flex flex-row items-center bg-white/60 backdrop-blur-md px-4 py-2 rounded-[24px] border border-white shadow-sm ring-1 ring-slate-100/30">
-          <div className="flex flex-row items-center mr-2" style={{ gap: -8 }}>
+        <div className="flex flex-row items-center bg-white/60 backdrop-blur-md px-3 md:px-4 py-2 rounded-[24px] border border-white shadow-sm ring-1 ring-slate-100/30">
+          <div className="flex flex-row items-center mr-1 md:mr-2" style={{ gap: -10 }}>
             {collaborators.map((c: Collaborator, index: number) => {
               const Comp = CollaboratorAvatar as any;
               return (
@@ -456,8 +457,8 @@ export default function ItineraryTab() {
       </div>
 
       {/* View mode + share */}
-      <div className="flex-row mb-6 items-stretch h-[52px]">
-        <div className="flex-row bg-white/50 backdrop-blur-md p-1.5 rounded-full border border-white/60 shadow-sm ring-1 ring-slate-100/30">
+      <div className="flex flex-col sm:flex-row mb-8 items-stretch gap-3">
+        <div className="flex flex-row bg-white/50 backdrop-blur-md p-1.5 rounded-full border border-white/60 shadow-sm ring-1 ring-slate-100/30 w-full sm:w-auto">
           {(['list', 'map'] as const).map((mode) => (
             <button
               key={mode}
@@ -479,14 +480,14 @@ export default function ItineraryTab() {
           className="flex-1 flex-row bg-gradient-to-r from-fuchsia-400 to-pink-500 hover:opacity-90 active:scale-95 rounded-full items-center justify-center ml-3 px-4 shadow-[0_4px_14px_0_rgb(217,70,239,0.39)] transition-all"
         >
           <Share2 size={18} strokeWidth={2.5} color="white" />
-          <span className="ml-2 font-bold tracking-wide text-white text-sm">邀請好友</span>
+          <span className="ml-2 font-bold tracking-wide text-white text-sm">Share Trip</span>
         </button>
       </div>
 
       {/* Day selector — days from trip API */}
       <div 
-        className="mb-8 overflow-x-auto overflow-y-hidden flex pb-2 scrollbar-hide -mx-2 px-2"
-        style={{ gap: 10 }}
+        className="mb-8 overflow-x-auto overflow-y-hidden flex pb-3 scrollbar-hide -mx-4 px-4 touch-pan-x"
+        style={{ gap: 12 }}
       >
         {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
           const isActive = selectedDay === day;
@@ -518,114 +519,159 @@ export default function ItineraryTab() {
         })}
       </div>
 
-      <GlassCard className="!p-6 mb-6">
-        <div className="flex flex-col gap-y-1 mb-5">
-          <span className="text-[11px] font-black tracking-widest text-fuchsia-500 uppercase">AI Assistant</span>
-          <span className="font-extrabold text-2xl text-slate-800 tracking-tight">AI 行程規劃</span>
-        </div>
-        <div className="flex flex-col gap-y-3">
-          <div className="flex flex-row gap-x-3">
-            <input
-              value={String(plannerForm.days)}
-              onChange={(e) => setPlannerField('days', Math.max(1, Number(e.target.value) || 1))}
-              placeholder="幾天"
-              inputMode="numeric"
-              className="flex-1 rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-            />
-            <input
-              type="date"
-              value={plannerForm.flightDate}
-              onChange={(e) => setPlannerField('flightDate', e.target.value)}
-              placeholder="航班日期 YYYY-MM-DD"
-              className="flex-[2] rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none uppercase"
-            />
+      <GlassCard className="!p-0 mb-6 transition-all duration-500 border border-slate-100/50">
+        <button 
+          onClick={() => setShowPlanner(!showPlanner)}
+          className="w-full flex flex-row items-center justify-between p-6 hover:bg-slate-50/50 transition-colors"
+        >
+          <div className="flex flex-col items-start gap-y-1">
+            <span className="text-[10px] font-black tracking-widest text-fuchsia-500 uppercase">AI Assistant</span>
+            <span className="font-black text-xl md:text-2xl text-slate-800 tracking-tight">AI 智能規劃助手</span>
           </div>
-          <div className="flex flex-row gap-x-3">
-            <input
-              value={plannerForm.departureFrom}
-              onChange={(e) => setPlannerField('departureFrom', e.target.value.toUpperCase())}
-              placeholder="出發機場 (例: TPE)"
-              className="flex-1 rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-            />
-            <input
-              value={plannerForm.arrivalTo}
-              onChange={(e) => setPlannerField('arrivalTo', e.target.value.toUpperCase())}
-              placeholder="抵達機場 (例: NRT)"
-              className="flex-1 rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-            />
+          <div className={`w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center transition-transform duration-300 ${showPlanner ? 'rotate-180' : ''}`}>
+            <Plus size={18} className={`transition-transform ${showPlanner ? 'rotate-45' : ''}`} />
           </div>
-          <input
-            value={plannerForm.countries.join(', ')}
-            onChange={(e) => setPlannerCsvField('countries')(e.target.value)}
-            placeholder="想去國家（逗號分隔）"
-            className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-          />
-          <input
-            value={plannerForm.mustVisitSpots.join(', ')}
-            onChange={(e) => setPlannerCsvField('mustVisitSpots')(e.target.value)}
-            placeholder="必去景點（例如：雷門, 晴空塔）"
-            className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-          />
-          <input
-            value={plannerForm.mustEatFoods.join(', ')}
-            onChange={(e) => setPlannerCsvField('mustEatFoods')(e.target.value)}
-            placeholder="必吃美食（例如：拉麵, 壽司）"
-            className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-          />
-          <input
-            value={plannerForm.notes}
-            onChange={(e) => setPlannerField('notes', e.target.value)}
-            placeholder="其他需求（慢旅、帶長輩、晚出早歸）"
-            className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-4 py-3.5 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-          />
-          <button
-            onClick={() => void handleAutoFetchFlights()}
-            disabled={flightsLoading || isOffline}
-            className={`rounded-[20px] shadow-sm px-4 py-4 mt-2 flex-row items-center justify-center transition-all active:scale-95 ${
-              flightsLoading || isOffline ? 'bg-slate-200 cursor-not-allowed opacity-70' : 'bg-slate-800 hover:bg-slate-700 shadow-lg shadow-slate-800/20'
-            }`}
-          >
-            <span className="text-white font-extrabold tracking-wide">{flightsLoading ? '自動抓取中...' : '抓取航班資料（含轉乘）'}</span>
-          </button>
-          {plannerForm.autoFlightSegments.length > 0 && (
-            <div className="rounded-[20px] bg-white/60 border border-white/80 p-4 mt-2 shadow-sm flex flex-col gap-y-2">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Flight Segments</span>
-              {plannerForm.autoFlightSegments.map((segment: string) => (
-                <span key={segment} className="text-[13px] font-semibold text-slate-700 bg-white rounded-lg px-3 py-2 border border-slate-100">{segment}</span>
-              ))}
-            </div>
-          )}
+        </button>
 
-          <div className="rounded-[24px] border border-white/60 bg-white/40 p-3 mt-4 flex flex-col shadow-sm">
-            <span className="text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-widest pl-2 pt-1">Generation Mode</span>
-            <div className="flex-row gap-x-2 bg-white/50 p-1 rounded-[20px]">
-              <button
-                onClick={() => setAiGenerateMode('selected_day')}
-                className={`flex-1 rounded-[16px] px-3 py-3 transition-all ${
-                  aiGenerateMode === 'selected_day'
-                    ? 'bg-white shadow-sm ring-1 ring-slate-100'
-                    : 'hover:bg-white/40 text-slate-500'
-                }`}
-              >
-                <span className={`text-[13px] font-black tracking-wide ${aiGenerateMode === 'selected_day' ? 'text-fuchsia-600' : ''}`}>
-                  單日重建
-                </span>
-              </button>
-              <button
-                onClick={() => setAiGenerateMode('overwrite_all')}
-                className={`flex-1 rounded-[16px] px-3 py-3 transition-all ${
-                  aiGenerateMode === 'overwrite_all'
-                    ? 'bg-rose-50 shadow-sm ring-1 ring-rose-200'
-                    : 'hover:bg-rose-50/50 text-slate-500'
-                }`}
-              >
-                <span className={`text-[13px] font-black tracking-wide ${aiGenerateMode === 'overwrite_all' ? 'text-rose-600' : ''}`}>
-                  全局覆寫
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <AnimatePresence>
+          {showPlanner && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="px-6 pb-6 flex flex-col gap-y-4">
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">旅遊天數</span>
+                    <input
+                      value={String(plannerForm.days)}
+                      onChange={(e) => setPlannerField('days', Math.max(1, Number(e.target.value) || 1))}
+                      placeholder="天數"
+                      inputMode="numeric"
+                      className="w-full rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
+                    />
+                  </div>
+                  <div className="flex-[2] flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">出發日期</span>
+                    <input
+                      type="date"
+                      value={plannerForm.flightDate}
+                      onChange={(e) => setPlannerField('flightDate', e.target.value)}
+                      className="w-full rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none uppercase"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">出發地</span>
+                    <input
+                      value={plannerForm.departureFrom}
+                      onChange={(e) => setPlannerField('departureFrom', e.target.value.toUpperCase())}
+                      placeholder="例: TPE"
+                      className="w-full rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
+                    />
+                  </div>
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">目的地</span>
+                    <input
+                      value={plannerForm.arrivalTo}
+                      onChange={(e) => setPlannerField('arrivalTo', e.target.value.toUpperCase())}
+                      placeholder="例: NRT"
+                      className="w-full rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">偏好的國家 / 景點 / 美食 / 需求備註</span>
+                  <div className="flex flex-col gap-y-3">
+                    <input
+                      value={plannerForm.countries.join(', ')}
+                      onChange={(e) => setPlannerCsvField('countries')(e.target.value)}
+                      placeholder="想去的國家（例如：日本, 韓國）"
+                      className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
+                    />
+                    <input
+                      value={plannerForm.mustVisitSpots.join(', ')}
+                      onChange={(e) => setPlannerCsvField('mustVisitSpots')(e.target.value)}
+                      placeholder="必訪景點（例如：迪士尼, 雷門）"
+                      className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
+                    />
+                    <input
+                      value={plannerForm.mustEatFoods.join(', ')}
+                      onChange={(e) => setPlannerCsvField('mustEatFoods')(e.target.value)}
+                      placeholder="想吃的美食（例如：和牛, 壽司）"
+                      className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
+                    />
+                    <textarea
+                      value={plannerForm.notes}
+                      onChange={(e) => setPlannerField('notes', e.target.value)}
+                      placeholder="其他特定需求（例：慢步調、親子同行、一定要逛街）"
+                      className="rounded-[24px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none min-h-[100px] resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-y-3">
+                  <button
+                    onClick={() => void handleAutoFetchFlights()}
+                    disabled={flightsLoading || isOffline}
+                    className={`rounded-[22px] shadow-sm px-6 py-4.5 flex flex-row items-center justify-center transition-all active:scale-95 ${
+                      flightsLoading || isOffline ? 'bg-slate-200 cursor-not-allowed opacity-70' : 'bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-900/10'
+                    }`}
+                  >
+                    <Plus size={18} className="mr-2 text-white" strokeWidth={3.5} />
+                    <span className="text-white font-black tracking-wide">
+                      {flightsLoading ? '智能抓取數據中...' : '自動獲取推薦航班資料'}
+                    </span>
+                  </button>
+                  
+                  {plannerForm.autoFlightSegments.length > 0 && (
+                    <div className="rounded-[24px] bg-slate-50 border border-slate-100 p-4 shadow-inner flex flex-col gap-y-2">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">偵測到航班片段</span>
+                      <div className="flex flex-col gap-2">
+                        {plannerForm.autoFlightSegments.map((segment: string) => (
+                          <span key={segment} className="text-[13px] font-bold text-slate-600 bg-white rounded-xl px-3 py-2.5 border border-slate-100 shadow-sm leading-relaxed">{segment}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-[28px] border border-slate-100 bg-slate-50 p-2 mt-2 flex flex-col">
+                  <span className="text-[9px] font-black text-slate-400 mb-2 uppercase tracking-widest pl-3 pt-2">生成精度模式</span>
+                  <div className="flex flex-row gap-x-2 p-1">
+                    <button
+                      onClick={() => setAiGenerateMode('selected_day')}
+                      className={`flex-1 rounded-[20px] px-4 py-3.5 transition-all flex flex-col items-center gap-1 ${
+                        aiGenerateMode === 'selected_day'
+                          ? 'bg-white shadow-md ring-1 ring-slate-100'
+                          : 'hover:bg-white/40 text-slate-500'
+                      }`}
+                    >
+                      <span className={`text-[14px] font-black tracking-wide ${aiGenerateMode === 'selected_day' ? 'text-fuchsia-600' : ''}`}>單日重建</span>
+                      <span className="text-[9px] text-slate-400 font-bold">僅更新選取的日期</span>
+                    </button>
+                    <button
+                      onClick={() => setAiGenerateMode('overwrite_all')}
+                      className={`flex-1 rounded-[20px] px-4 py-3.5 transition-all flex flex-col items-center gap-1 ${
+                        aiGenerateMode === 'overwrite_all'
+                          ? 'bg-white shadow-md ring-1 ring-rose-100'
+                          : 'hover:bg-white/40 text-slate-500'
+                      }`}
+                    >
+                      <span className={`text-[14px] font-black tracking-wide ${aiGenerateMode === 'overwrite_all' ? 'text-rose-500' : ''}`}>全局重建</span>
+                      <span className="text-[9px] text-slate-400 font-bold">同步更新完整旅程</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </GlassCard>
 
       {/* AI button */}
@@ -653,7 +699,7 @@ export default function ItineraryTab() {
           <span className="text-[11px] font-bold text-slate-400 tracking-wider">點擊 + 快速加入</span>
         </div>
 
-        <div style={{ gap: 10 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {favorites.map((spot: FavoriteSpot) => {
             const Comp = DraggableFavoriteSpot as any;
             return (
@@ -671,46 +717,51 @@ export default function ItineraryTab() {
 
         {/* Add custom favorite */}
         {!isOffline && (
-          <div className="mt-3 pt-3 border-t border-white/40">
-            <div className="flex-row items-center" style={{ gap: 8 }}>
-              {/* Emoji picker trigger */}
-              <button
-                onClick={() => setShowEmojiPicker((v: boolean) => !v)}
-                className="w-11 h-11 rounded-xl bg-white/70 border border-white flex items-center justify-center"
-              >
-                <span className="text-xl">{newSpotEmoji}</span>
-              </button>
-              <input
-                value={newSpotTitle}
-                onChange={(e) => setNewSpotTitle(e.target.value)}
-                placeholder="新增景點名稱..."
-                className="flex-1 rounded-xl border border-white bg-white/80 px-3 py-2.5 font-semibold text-slate-700 text-sm"
-                onKeyDown={(e) => { if (e.key === "Enter") { void handleAddFavorite(); } }} />
+          <div className="mt-6 pt-5 border-t border-slate-100">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex flex-row gap-3 flex-1">
+                {/* Emoji picker trigger */}
+                <button
+                  onClick={() => setShowEmojiPicker((v: boolean) => !v)}
+                  className="w-12 h-12 shrink-0 rounded-2xl bg-white/70 border border-slate-100 flex items-center justify-center shadow-sm"
+                >
+                  <span className="text-xl">{newSpotEmoji}</span>
+                </button>
+                <input
+                  value={newSpotTitle}
+                  onChange={(e) => setNewSpotTitle(e.target.value)}
+                  placeholder="新增想去的景點名稱..."
+                  className="flex-1 rounded-2xl border border-slate-100 bg-white/80 px-4 py-2.5 font-bold text-slate-700 text-sm focus:ring-2 focus:ring-fuchsia-400 outline-none transition-all"
+                  onKeyDown={(e) => { if (e.key === "Enter") { void handleAddFavorite(); } }} />
+              </div>
               <button
                 onClick={() => void handleAddFavorite()}
                 disabled={addingFavorite || !newSpotTitle.trim()}
-                className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-                  addingFavorite || !newSpotTitle.trim() ? 'bg-purple-200' : 'bg-[#9333ea]'
+                className={`h-12 px-6 rounded-2xl flex flex-row items-center justify-center gap-2 transition-all active:scale-95 ${
+                  addingFavorite || !newSpotTitle.trim() ? 'bg-purple-100 text-purple-300' : 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
                 }`}
               >
-                <Plus size={18} color="white" />
+                <Plus size={20} strokeWidth={3} />
+                <span className="font-black">新增收藏</span>
               </button>
             </div>
             {addingFavorite && (
-              <span className="text-xs text-purple-500 mt-1.5 ml-1">Nominatim 地理編碼中...</span>
+              <span className="text-[11px] font-bold text-purple-500 mt-2 ml-1 flex flex-row items-center animate-pulse">
+                <Sparkles size={12} className="mr-1" /> Nominatim 地理編碼中...
+              </span>
             )}
             {/* Emoji picker */}
             {showEmojiPicker && (
-              <div className="flex-row flex-wrap mt-2" style={{ gap: 6 }}>
+              <div className="flex flex-row flex-wrap mt-4 p-4 bg-white/60 rounded-3xl border border-white gap-2">
                 {EMOJI_OPTIONS.map((emoji) => (
                   <button
                     key={emoji}
                     onClick={() => { setNewSpotEmoji(emoji); setShowEmojiPicker(false); }}
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                      newSpotEmoji === emoji ? 'bg-purple-100 border border-purple-300' : 'bg-white/60'
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                      newSpotEmoji === emoji ? 'bg-purple-100 border border-purple-300 scale-110' : 'bg-white/80 hover:bg-white'
                     }`}
                   >
-                    <span className="text-lg">{emoji}</span>
+                    <span className="text-xl">{emoji}</span>
                   </button>
                 ))}
               </div>
@@ -823,27 +874,29 @@ function DraggableFavoriteSpot({
         }}
         style={{ cursor: isOffline ? 'default' : 'grab', position: 'relative', zIndex: 10 }}
       >
-        <div className="bg-white/70 rounded-2xl border border-white px-3 py-2.5 flex-row items-center">
-          <span className="text-xl mr-2">{spot.emoji}</span>
-          <span className="font-semibold text-slate-700 flex-1">{spot.title}</span>
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white px-3 py-3 md:py-2.5 flex-row items-center shadow-sm hover:shadow-md transition-shadow">
+          <span className="text-xl md:text-2xl mr-3 md:mr-2">{spot.emoji}</span>
+          <span className="font-bold text-slate-700 flex-1 truncate text-sm md:text-base">{spot.title}</span>
           {spot.lat && spot.lng && (
-            <div className="bg-emerald-50 rounded-full px-1.5 py-0.5 mr-2 border border-emerald-100">
-              <span className="text-[9px] font-bold text-emerald-600">📍 已定位</span>
+            <div className="bg-emerald-50 rounded-full px-2 py-0.5 mr-2 border border-emerald-100 shrink-0 hidden sm:flex">
+              <span className="text-[9px] font-black text-emerald-600 tracking-wide uppercase">LOCATED</span>
             </div>
           )}
-          <button
-            onClick={() => !isOffline && onAdd(spot, selectedDay)}
-            disabled={isOffline}
-            className={`${isOffline ? 'bg-slate-300' : 'bg-[#9333ea]'} rounded-full w-8 h-8 flex items-center justify-center mr-1`}
-          >
-            <Plus size={14} color="white" />
-          </button>
-          <button
-            onClick={() => onDelete(spot.id)}
-            className="w-7 h-7 rounded-full bg-red-50 border border-red-100 flex items-center justify-center"
-          >
-            <X size={12} color="#ef4444" />
-          </button>
+          <div className="flex flex-row items-center gap-1.5 md:gap-1 pl-2 border-l border-slate-100 ml-1">
+            <button
+              onClick={() => !isOffline && onAdd(spot, selectedDay)}
+              disabled={isOffline}
+              className={`${isOffline ? 'bg-slate-300' : 'bg-fuchsia-600 hover:bg-fuchsia-700 active:scale-95 shadow-fuchsia-200 shadow-md'} rounded-full w-9 h-9 md:w-8 md:h-8 flex items-center justify-center transition-all`}
+            >
+              <Plus size={16} color="white" strokeWidth={3} />
+            </button>
+            <button
+              onClick={() => onDelete(spot.id)}
+              className="w-9 h-9 md:w-8 md:h-8 rounded-full bg-slate-50 border border-slate-100 hover:bg-red-50 hover:border-red-100 flex items-center justify-center transition-all group"
+            >
+              <X size={14} className="text-slate-400 group-hover:text-red-500" strokeWidth={3} />
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>
@@ -865,7 +918,7 @@ function ItineraryList({
   onUpdate: (node: ItineraryNode) => void;
   isOffline: boolean;
 }) {
-  type EditDraft = { day: string; time: string; title: string; emoji: string; category: string };
+  type EditDraft = { day: string; time: string; title: string; emoji: string; category: string; description: string };
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<EditDraft | null>(null);
@@ -879,6 +932,7 @@ function ItineraryList({
       title: item.title,
       emoji: item.emoji || meta.icon,
       category: meta.key,
+      description: item.description || '',
     });
   };
 
@@ -898,6 +952,7 @@ function ItineraryList({
       title: draft.title.trim() || item.title,
       category,
       emoji: draft.emoji.trim() || categoryMeta.icon,
+      description: draft.description.trim() || undefined,
       source: 'local',
     };
     onUpdate(nextNode);
@@ -907,142 +962,167 @@ function ItineraryList({
 
   if (items.length === 0) {
     return (
-      <div className="items-center py-16">
-        <span className="text-4xl mb-3">🗒️</span>
-        <span className="text-slate-500 font-semibold text-base">Day {day} 還沒有行程</span>
-        <span className="text-slate-400 text-sm mt-1">從收藏夾拖曳景點，或讓 AI 幫你規劃！</span>
+      <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+        <span className="text-5xl mb-4">🗒️</span>
+        <span className="text-slate-600 font-black text-xl tracking-tight">Day {day} 還沒有行程</span>
+        <span className="text-slate-400 text-sm mt-2 max-w-[240px] leading-relaxed">試著從收藏夾拖曳景點，或讓 AI 幫你智能編排！</span>
       </div>
     );
   }
 
   return (
-    <div className="relative pl-6 mt-4 pb-12" style={{ gap: 32 }}>
-      <div className="absolute left-[13px] top-6 bottom-4 w-1 bg-[#d8b4fe] rounded-full" />
+    <div className="relative pl-8 md:pl-16 lg:pl-20 mt-10 pb-40 flex flex-col gap-y-10 md:gap-y-16">
+      <div className="absolute left-[13px] md:left-[21px] lg:left-[25px] top-4 bottom-20 w-1 md:w-1.5 bg-gradient-to-b from-fuchsia-400 via-purple-300/40 to-transparent rounded-full shadow-[0_0_15px_rgba(217,70,239,0.2)]" />
       <AnimatePresence>
-        {items.map((item) => (
+        {items.map((item, idx) => (
           <motion.div
             key={item.node_id}
             layout
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.85, opacity: 0 }}
-            transition={{ type: 'spring', bounce: 0.45, duration: 0.4 }}
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 10, opacity: 0 }}
+            transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
           >
-            <div className="relative mb-6">
-              <div className="absolute -left-9 top-[25%] w-5 h-5 rounded-full bg-white border-4 border-purple-400 z-10" />
-              <GlassCard className="!p-5 ml-2">
-                <div className="flex-row items-center">
-                  <div className="w-14 h-14 rounded-full bg-white/60 flex items-center justify-center shadow-sm border border-white shrink-0">
-                    <span className="text-3xl">{item.emoji}</span>
-                  </div>
-                  {editingId === item.node_id && draft ? (
-                    <div className="ml-5 flex-1" style={{ gap: 6 }}>
-                      <div className="flex-row" style={{ gap: 8 }}>
-                        <input
-                          value={draft.day}
-                          onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, day: e.target.value } : prev))}
-                          inputMode="numeric"
-                          className="w-16 rounded-lg border border-white bg-white/80 px-2 py-1.5 text-sm font-semibold text-slate-700"
-                        />
-                        <input
-                          value={draft.time}
-                          onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, time: e.target.value } : prev))}
-                          className="w-24 rounded-lg border border-white bg-white/80 px-2 py-1.5 text-sm font-semibold text-slate-700"
-                        />
-                        <input
-                          value={draft.emoji}
-                          onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, emoji: e.target.value } : prev))}
-                          className="w-16 rounded-lg border border-white bg-white/80 px-2 py-1.5 text-sm font-semibold text-slate-700"
-                        />
-                      </div>
-                      <input
-                        value={draft.title}
-                        onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, title: e.target.value } : prev))}
-                        className="rounded-lg border border-white bg-white/80 px-2 py-1.5 text-sm font-semibold text-slate-700"
-                      />
-                      <div className="overflow-auto" horizontal >
-                        <div className="flex-row" style={{ gap: 6 }}>
-                          {CATEGORY_OPTIONS.map((option) => {
-                            const optionMeta = getCategoryMeta(option);
-                            const active = draft.category === option;
-                            return (
-                              <button
-                                key={option}
-                                onClick={() =>
-                                  setDraft((prev: EditDraft | null) =>
-                                    prev ? { ...prev, category: option, emoji: optionMeta.icon } : prev,
-                                  )
-                                }
-                                className={`px-2 py-1 rounded-full border ${
-                                  active ? 'bg-purple-100 border-purple-300' : 'bg-white/70 border-white'
-                                }`}
-                              >
-                                <span className={`text-[10px] font-bold ${active ? 'text-purple-700' : 'text-slate-500'}`}>
+            <div className="relative">
+              <div className="absolute -left-11 md:-left-15 lg:-left-17 top-8 w-6 md:w-8 h-6 md:h-8 rounded-full bg-white border-4 border-fuchsia-500 z-10 shadow-lg ring-4 ring-fuchsia-50 shadow-fuchsia-200 shrink-0" />
+              <GlassCard className="!p-6 md:!p-10 lg:!p-12 ml-2 md:ml-8 lg:ml-12 hover:shadow-[0_45px_110px_-25px_rgba(217,70,239,0.18)] hover:-translate-y-1 hover:translate-x-1 transition-all duration-500 ring-1 ring-white/70 border border-white">
+                <div className="flex flex-col md:flex-row items-start lg:items-center gap-8 md:gap-14">
+                  <div className="flex flex-row items-start md:items-center flex-1 min-w-0 gap-6 md:gap-10 w-full">
+                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-[32px] bg-gradient-to-br from-white to-slate-50 flex items-center justify-center shadow-inner border border-white shrink-0 relative group">
+                      <div className="absolute inset-0 bg-fuchsia-400 opacity-0 group-hover:opacity-10 transition-opacity rounded-[32px]" />
+                      <span className="text-3xl md:text-6xl drop-shadow-sm select-none">{item.emoji}</span>
+                    </div>
+                    {editingId === item.node_id && draft ? (
+                      <div className="flex-1 flex flex-col gap-4">
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <div className="flex flex-col gap-1.5 flex-1 min-w-[80px]">
+                            <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Day</span>
+                            <input
+                              value={draft.day}
+                              onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, day: e.target.value } : prev))}
+                              inputMode="numeric"
+                              className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1.5 flex-[2] min-w-[120px]">
+                            <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Time</span>
+                            <input
+                              value={draft.time}
+                              onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, time: e.target.value } : prev))}
+                              placeholder="例: 10:30"
+                              className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Title</span>
+                          <input
+                            value={draft.title}
+                            onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, title: e.target.value } : prev))}
+                            className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Description / Note</span>
+                          <textarea
+                            value={draft.description}
+                            onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, description: e.target.value } : prev))}
+                            placeholder="活動詳情或備註..."
+                            className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 min-h-[100px] resize-none"
+                          />
+                        </div>
+                        
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Category</span>
+                          <div className="flex flex-row overflow-x-auto gap-2 py-1 scrollbar-hide pb-2">
+                            {CATEGORY_OPTIONS.map((option) => {
+                              const optionMeta = getCategoryMeta(option);
+                              const active = draft.category === option;
+                              return (
+                                <button
+                                  key={option}
+                                  title={optionMeta.label}
+                                  onClick={() =>
+                                    setDraft((prev: EditDraft | null) =>
+                                      prev ? { ...prev, category: option, emoji: optionMeta.icon } : prev,
+                                    )
+                                  }
+                                  className={`flex-none px-4 py-2 rounded-full border transition-all text-xs font-bold ${
+                                    active ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30' : 'bg-white/80 border-slate-100 text-slate-500 hover:bg-white'
+                                  }`}
+                                >
                                   {optionMeta.icon} {optionMeta.label}
-                                </span>
-                              </button>
-                            );
-                          })}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-row gap-3 pt-2">
+                          <button
+                            onClick={() => saveEdit(item)}
+                            className="flex-1 bg-slate-900 py-3.5 rounded-2xl shadow-lg active:scale-[0.98] transition-all"
+                          >
+                            <span className="text-white font-black text-[13px] tracking-wide">儲存變更</span>
+                          </button>
+                          <button
+                            onClick={() => cancelEdit()}
+                            className="flex-1 bg-slate-50 py-3.5 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
+                          >
+                            <span className="text-slate-500 font-bold text-[13px] tracking-wide">取消</span>
+                          </button>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="ml-5 flex-1">
-                      {(() => {
-                        const categoryMeta = getCategoryMeta(item.category);
-                        return (
-                          <>
-                            <span className="text-sm text-purple-600 font-extrabold mb-1 tracking-wider">Day {item.day} · {item.time}</span>
-                            <span className="text-xl font-bold text-slate-800">{item.title}</span>
-                            <div className="mt-1.5 flex-row" style={{ gap: 6 }}>
-                              <div className="bg-violet-100 rounded-full px-2 py-1 border border-violet-200">
-                                <span className="text-[10px] font-bold text-violet-700">{categoryMeta.icon} {categoryMeta.label}</span>
-                              </div>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  )}
-                  <div className="flex-row items-center" style={{ gap: 8 }}>
-                    {item.source === 'local' && (
-                      <div className="bg-emerald-100 rounded-full px-2 py-1 border border-emerald-200">
-                        <span className="text-[10px] font-bold text-emerald-700">剛同步</span>
+                    ) : (
+                      <div className="flex-1 flex flex-col gap-y-1.5 md:gap-y-2 overflow-hidden">
+                        <div className="flex flex-row flex-wrap items-center gap-2">
+                          <span className="text-xs md:text-[14px] font-black text-fuchsia-600 tracking-widest font-mono bg-fuchsia-50/50 px-2.5 py-1 rounded-lg border border-fuchsia-100/50">
+                            {item.time || '--:--'}
+                          </span>
+                          <div className={`px-2.5 py-1 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-wider ${
+                            item.category === 'flight' ? 'bg-blue-50 text-blue-500 border border-blue-100' :
+                            item.category === 'food' ? 'bg-orange-50 text-orange-500 border border-orange-100' :
+                            'bg-slate-50 text-slate-500 border border-slate-100'
+                          }`}>
+                            {getCategoryMeta(item.category).label}
+                          </div>
+                          {item.source === 'local' && (
+                             <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter bg-emerald-50/50 px-1.5 py-0.5 rounded-md border border-emerald-100/50">SYNCED</span>
+                          )}
+                        </div>
+                        <span className="text-xl md:text-3xl font-black text-slate-800 tracking-tight leading-tight line-clamp-2 md:line-clamp-1">
+                          {item.title}
+                        </span>
+                        {item.description && (
+                          <span className="text-sm md:text-base text-slate-600 font-medium leading-relaxed mt-1 line-clamp-2">
+                            {item.description}
+                          </span>
+                        )}
                       </div>
                     )}
-                    {!isOffline && editingId !== item.node_id && (
+                  </div>
+
+                  {editingId !== item.node_id && !isOffline && (
+                    <div className="flex flex-row md:flex-col gap-4 w-full md:w-auto pt-6 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100/50 pl-0 md:pl-10 justify-end md:justify-center">
                       <button
                         onClick={() => startEdit(item)}
-                        className="p-2 rounded-full bg-indigo-50 border border-indigo-100"
+                        className="flex-1 md:flex-none w-full md:w-16 h-14 md:h-16 rounded-[22px] bg-white border border-slate-100 shadow-sm flex items-center justify-center hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 group"
+                        title="編輯行程"
                       >
-                        <Pencil size={14} color="#4f46e5" />
+                        <Pencil size={22} className="text-slate-400 group-hover:text-slate-600" />
+                        <span className="md:hidden ml-3 text-sm font-black text-slate-600 tracking-tight">編輯行程</span>
                       </button>
-                    )}
-                    {!isOffline && editingId === item.node_id && (
-                      <button
-                        onClick={() => saveEdit(item)}
-                        className="p-2 rounded-full bg-emerald-50 border border-emerald-100"
-                      >
-                        <Save size={14} color="#16a34a" />
-                      </button>
-                    )}
-                    {!isOffline && editingId === item.node_id && (
-                      <button
-                        onClick={cancelEdit}
-                        className="p-2 rounded-full bg-slate-100 border border-slate-200"
-                      >
-                        <X size={14} color="#64748b" />
-                      </button>
-                    )}
-                    {!isOffline && editingId !== item.node_id && (
                       <button
                         onClick={() => onDelete(item.node_id)}
-                        className="p-2 rounded-full bg-red-50 border border-red-100"
+                        className="flex-1 md:flex-none w-full md:w-16 h-14 md:h-16 rounded-[22px] bg-rose-50 border border-rose-100 shadow-sm flex items-center justify-center hover:bg-rose-100 hover:border-rose-200 transition-all active:scale-95 group"
+                        title="刪除行程"
                       >
-                        <Trash2 size={14} color="#ef4444" />
+                        <Trash2 size={22} className="text-rose-400 group-hover:text-rose-600" />
+                        <span className="md:hidden ml-3 text-sm font-black text-rose-600 tracking-tight">刪除項目</span>
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </GlassCard>
             </div>
@@ -1116,16 +1196,15 @@ function TokyoMapView({ items }: { items: ItineraryNode[] }) {
               transform: 'translate(-50%, -100%)',
             }}
           >
-            <div className="items-center">
-              <div className="bg-white/95 rounded-2xl px-2.5 py-2 border-2 border-white items-center shadow-lg">
+            <div className="flex flex-col items-center">
+              <div className="bg-white/95 rounded-2xl px-2.5 py-2 border-2 border-white flex flex-col items-center shadow-lg">
                 <span className="text-2xl">{item.emoji}</span>
               </div>
               <div
-                className="w-2.5 h-2.5 bg-white -mt-1.5 border-r-2 border-b-2 border-white"
-                style={{ transform: [{ rotate: '45deg' }] }}
+                className="w-2.5 h-2.5 bg-white -mt-1.5 border-r-2 border-b-2 border-white rotate-45"
               />
               <div className="bg-slate-800/80 px-2.5 py-0.5 rounded-full mt-1">
-                <span className="text-[10px] font-bold text-white">{item.title}</span>
+                <span className="text-[10px] font-bold text-white whitespace-nowrap">{item.title}</span>
               </div>
             </div>
           </motion.div>

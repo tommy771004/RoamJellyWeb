@@ -280,114 +280,103 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
 function WeatherCard() {
   const { state: { weather, destination } } = useToolsTabContext();
   return (
-    <GlassCard className="bg-gradient-to-br from-blue-50 to-[#e0f2fe] border-[#bae6fd] mb-6">
-      <div className="flex flex-row justify-between items-start z-10 relative">
-        <div className="absolute top-[-30px] right-[-20px] bg-blue-400/20 w-32 h-32 rounded-full blur-2xl pointer-events-none" />
-        <div className="flex flex-col flex-1 mr-4">
-          <span className="text-xl font-extrabold text-blue-900 drop-shadow-sm tracking-tight">{`${destination || '目的地'}・今日天氣`}</span>
-          {weather ? (
-            <>
-              <div className="flex flex-row items-end mt-2 mb-2">
-                <span className="text-5xl font-black text-blue-900 tracking-tighter">{weather.temp_current}°</span>
-                <span className="text-sm font-bold text-blue-600 mb-1.5 ml-2">
-                  {weather.temp_min}° / {weather.temp_max}°C
-                </span>
-              </div>
-              {/* 色溫條：藍(冷)→橙(熱)，0°C~40°C */}
-              <div className="relative h-2.5 rounded-full overflow-hidden mb-3 shadow-inner" style={{ backgroundColor: '#bfdbfe' }}>
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full"
-                  style={{
-                    background: 'linear-gradient(to right, #93c5fd, #fbbf24, #f97316)',
-                    width: '100%',
-                  }}
-                />
-                <div
-                  className="absolute top-0 bottom-0 w-0.5 bg-white/80"
-                  style={{ left: `${Math.min(100, (weather.temp_min / 40) * 100)}%` }}
-                />
-                <div
-                  className="absolute top-0 bottom-0 w-0.5 bg-slate-700/60"
-                  style={{ left: `${Math.min(100, (weather.temp_max / 40) * 100)}%` }}
-                />
-              </div>
-              <div className="flex flex-row items-center bg-white/50 rounded-xl p-2 border border-white gap-x-1 w-fit">
-                <Droplets size={14} color="#3b82f6" />
-                <span className="text-sm font-bold text-blue-800 flex items-center">
-                  降雨 {weather.rain_prob}%
-                  {weather.rain_prob >= 50 ? '　☂️ 記得帶傘！' : '　☀️ 天氣不錯'}
-                </span>
-              </div>
-            </>
-          ) : (
-            <span className="text-sm font-medium text-blue-700 mt-1">載入中...</span>
-          )}
+    <section className="relative rounded-xl p-md bg-white/40 backdrop-blur-[25px] border-t-2 border-l-2 border-white/70 shadow-[inset_0_2px_15px_rgba(255,255,255,0.9),0_10px_30px_rgba(134,77,97,0.1)] overflow-hidden hover:scale-[1.02] transition-transform duration-300 mb-6">
+      {/* Weather decorative background image */}
+      <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center mix-blend-overlay" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAaMVziRT6-Y9U5mkXCVUZw2KpRQsTCfpvSynKbpKexuyI4jzIw3aMfRGGGGiVaOsnwy5b7nkS2s-VM2_0W8xSkoTxTx7zSzWI5ryIU3lLPbwGytSoE0VQl2LHSEWGikEAPmaYlqTAJkh11t9yChHX-HkZp6yr8nq-G2_NRJh7LCHQXlssWvPwSAssJ6Rfov_StXR2yr6XW1DQSAWF4Hth2xa8i_Au49qc4bw-N7ICwmliU4EO8DZF58Qme2sAo9KRFA8Gz5LfgpgR_')" }}></div>
+      <div className="relative z-10 flex flex-col space-y-md">
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="font-h2 text-h2 text-primary-fixed-dim drop-shadow-sm">Tomorrow</h2>
+            <p className="font-label-caps text-label-caps text-on-surface-variant opacity-80 mt-1 uppercase">{destination || 'Destination'}</p>
+          </div>
+          <div className="text-5xl drop-shadow-md">
+            {weather && weather.rain_prob >= 50 ? '🌧️' : '☀️'}
+          </div>
         </div>
-        <CloudRain size={52} color="#60a5fa" />
+        <div className="flex items-end justify-between">
+          <div className="text-[56px] font-bold leading-none text-primary drop-shadow-sm font-plus-jakarta">
+            {weather ? weather.temp_current : '--'}°
+          </div>
+          <div className="text-right space-y-1">
+            <p className="font-label-caps text-label-caps text-secondary-fixed-dim bg-white/50 px-2 py-1 rounded-full inline-block backdrop-blur-md shadow-sm border border-white/40">
+              {weather && weather.rain_prob >= 50 ? 'Bring an umbrella!' : 'Perfect for walking'}
+            </p>
+          </div>
+        </div>
+        {/* Outfit Suggestion */}
+        <div className="bg-white/60 rounded-lg p-sm backdrop-blur-md border border-white/50 shadow-[inset_0_1px_5px_rgba(255,255,255,0.8)] mt-2">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 rounded-full bg-primary-container/50 flex items-center justify-center text-2xl shadow-inner">
+                👗
+            </div>
+            <div>
+              <p className="font-body-md text-base font-semibold text-primary">Light layers!</p>
+              <p className="font-label-caps text-label-caps text-on-surface-variant">Cardigan & comfy sneakers.</p>
+            </div>
+          </div>
+        </div>
       </div>
-    </GlassCard>
+    </section>
   );
 }
 
 function ChecklistSection() {
   const { state: { checklist, aiLoading }, actions } = useToolsTabContext();
+  const packedCount = checklist.filter((i) => i.checked).length;
+  
   return (
-    <GlassCard className="!p-6 mb-8">
-      <div className="flex flex-row items-center justify-between mb-6">
-        <div className="flex flex-row items-center">
-          <span className="text-2xl drop-shadow-sm">✅</span>
-          <span className="text-xl font-extrabold tracking-tight text-slate-800 ml-2">核心行李清單</span>
+    <section className="space-y-md mb-8">
+      <div className="flex justify-between items-end">
+        <h2 className="font-h2 text-h2 text-primary">My Suitcase</h2>
+        <span className="font-label-caps text-label-caps text-on-surface-variant bg-tertiary-container/30 px-3 py-1 rounded-full">
+          {packedCount}/{checklist.length} Packed
+        </span>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-gutter">
+        <div className="col-span-2 bg-surface-container-low/50 rounded-xl p-md backdrop-blur-xl border border-white/60 shadow-[inset_0_2px_10px_rgba(255,255,255,0.6)]">
+          <h3 className="font-label-caps text-label-caps text-tertiary mb-3 flex items-center">
+            <span className="material-symbols-outlined text-[16px] mr-1">flight_takeoff</span> ESSENTIALS
+          </h3>
+          <div className="space-y-sm">
+            {checklist.length === 0 && <span className="text-sm text-slate-400">目前沒有行李項目</span>}
+            {checklist.map((item) => (
+              <label key={item.id} className="flex items-center space-x-3 group cursor-pointer" onClick={(e) => { e.preventDefault(); actions.toggleCheck(item); }}>
+                <div className="relative w-6 h-6 flex items-center justify-center">
+                  <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
+                  <div className={`w-6 h-6 rounded-full border-2 transition-all shadow-sm ${item.checked ? 'bg-primary border-primary' : 'border-primary-container bg-white/50'}`}></div>
+                  <span className={`material-symbols-outlined text-[14px] text-white absolute transition-opacity ${item.checked ? 'opacity-100' : 'opacity-0'}`} style={{ fontVariationSettings: "'wght' 700" }}>check</span>
+                </div>
+                <span className={`font-body-md text-base transition-all ${item.checked ? 'line-through opacity-60 text-on-surface' : 'text-on-surface'}`}>
+                  {item.text}
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
-        <button
-          onClick={() => void actions.handleAiPackingList()}
-          disabled={aiLoading}
-          className={`flex flex-row items-center px-4 py-2.5 rounded-full cursor-pointer appearance-none transition-all active:scale-95 ${aiLoading ? 'bg-fuchsia-100 cursor-not-allowed shadow-none' : 'bg-fuchsia-50 hover:bg-fuchsia-100 shadow-sm ring-1 ring-fuchsia-200/50 hover:shadow-fuchsia-200/50'}`}
-        >
-          <Sparkles size={14} color="#d946ef" strokeWidth={2.5} />
-          <span className="ml-1.5 text-xs font-black text-fuchsia-600">
-            {aiLoading ? '規劃中...' : 'AI 幫我想'}
-          </span>
-        </button>
       </div>
-      <div className="flex flex-col gap-y-3">
-        {checklist.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => actions.toggleCheck(item)}
-            className="flex flex-row items-center bg-white/60 p-4 rounded-[24px] border border-white appearance-none cursor-pointer text-left hover:bg-white/90 transition-all shadow-sm group active:scale-[0.98]"
-          >
-            <div
-              className={`w-7 h-7 rounded-[10px] flex justify-center items-center transition-colors shadow-sm ${
-                item.checked ? 'bg-[#10b981] border-transparent' : 'bg-white border-[2.5px] border-slate-200 group-hover:border-fuchsia-300'
-              }`}
-            >
-              <Check size={16} color="white" strokeWidth={3} className={item.checked ? "opacity-100 scale-100 transition-all" : "opacity-0 scale-50"} />
-            </div>
-            <span
-              className={`ml-4 text-[15px] font-bold transition-all ${
-                item.checked ? 'text-slate-400 line-through' : 'text-slate-700'
-              }`}
-            >
-              {item.text}
-            </span>
-          </button>
-        ))}
-      </div>
-    </GlassCard>
+      
+      <button
+        onClick={() => void actions.handleAiPackingList()}
+        disabled={aiLoading}
+        className="jelly-button w-full mt-4 py-3 rounded-full bg-gradient-to-r from-primary-container to-tertiary-fixed-dim text-on-primary-container font-h2 text-[16px] border border-white/60 shadow-[inset_0_2px_10px_rgba(255,255,255,0.8),0_4px_15px_rgba(255,183,206,0.3)] hover:scale-[0.98] active:scale-95 active:blur-[1px] transition-all flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
+      >
+        <span className="material-symbols-outlined">{aiLoading ? 'hourglass_empty' : 'auto_awesome'}</span>
+        <span>{aiLoading ? 'AI is packing...' : 'AI Suggestion'}</span>
+      </button>
+    </section>
   );
 }
 
 function LedgerSection() {
   const { state: { form, errors, members, submitting }, actions } = useToolsTabContext();
   return (
-    <GlassCard className="bg-gradient-to-br from-[#fce7f3] to-pink-50/50 border-[#fbcfe8] mb-8 !p-6 flex flex-col relative overflow-hidden">
-      <div className="absolute top-[-30px] left-[-20px] bg-pink-400/20 w-32 h-32 rounded-full blur-2xl pointer-events-none" />
+    <section className="jelly-card rounded-xl p-container-padding flex flex-col relative overflow-hidden mb-8">
+      <div className="absolute -top-10 -left-10 w-32 h-32 bg-primary-container/40 rounded-full blur-[30px] pointer-events-none" />
+      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-tertiary-container/40 rounded-full blur-[30px] pointer-events-none" />
       <div className="mb-6 flex flex-col relative z-10">
-        <div className="flex flex-row items-center mb-1">
-          <Wallet size={24} color="#ec4899" strokeWidth={2.5} />
-          <span className="text-2xl font-extrabold tracking-tight text-pink-900 ml-2">溫柔分帳本</span>
-        </div>
-        <span className="text-sm font-semibold text-pink-600">新增一筆費用後會立即回算「誰要給誰」。</span>
+        <h3 className="font-h2 text-h2 text-on-surface-variant z-10">Split Bill</h3>
+        <span className="text-sm font-semibold text-primary opacity-80">Add expense & calculate.</span>
       </div>
 
       <div className="flex flex-col gap-y-4 relative z-10">
@@ -398,12 +387,12 @@ function LedgerSection() {
               actions.updateForm((prev) => ({ ...prev, title: e.target.value }));
               if (errors.title) actions.clearFormError('title');
             }}
-            placeholder="費用名稱，例如：和牛晚餐"
-            className={`rounded-[20px] border shadow-sm bg-white/80 backdrop-blur-sm px-5 py-3.5 font-bold text-slate-800 outline-none focus:ring-2 focus:ring-pink-400 transition-all ${
-              errors.title ? 'border-red-300' : 'border-white'
+            placeholder="Expense title e.g. Dinner"
+            className={`rounded-xl border shadow-sm bg-white/60 backdrop-blur-sm px-4 py-3 font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary transition-all ${
+              errors.title ? 'border-error' : 'border-white/80'
             }`}
           />
-          {errors.title ? <span className="text-red-400 font-bold text-xs mt-1.5 ml-2">{errors.title}</span> : null}
+          {errors.title ? <span className="text-error font-bold text-xs mt-1.5 ml-2">{errors.title}</span> : null}
         </div>
 
         <div className="flex flex-col">
@@ -413,27 +402,27 @@ function LedgerSection() {
               actions.updateForm((prev) => ({ ...prev, amount: e.target.value.replace(/[^0-9]/g, '') }));
               if (errors.amount) actions.clearFormError('amount');
             }}
-            placeholder="金額，例如：15000"
+            placeholder="Amount e.g. 15000"
             inputMode="numeric"
-            className={`rounded-[20px] border shadow-sm bg-white/80 backdrop-blur-sm px-5 py-3.5 font-bold text-slate-800 outline-none focus:ring-2 focus:ring-pink-400 transition-all ${
-              errors.amount ? 'border-red-300' : 'border-white'
+            className={`rounded-xl border shadow-sm bg-white/60 backdrop-blur-sm px-4 py-3 font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary transition-all ${
+              errors.amount ? 'border-error' : 'border-white/80'
             }`}
           />
-          {errors.amount ? <span className="text-red-400 font-bold text-xs mt-1.5 ml-2">{errors.amount}</span> : null}
+          {errors.amount ? <span className="text-error font-bold text-xs mt-1.5 ml-2">{errors.amount}</span> : null}
         </div>
 
         <div className="flex flex-col mt-2">
-          <span className="text-[13px] font-black tracking-widest uppercase text-pink-700 mb-2 ml-1">幣別</span>
+          <span className="font-label-caps text-label-caps text-on-surface-variant mb-2 ml-1">CURRENCY</span>
           <div className="flex flex-row flex-wrap gap-2">
             {(['JPY', 'TWD', 'USD', 'EUR', 'KRW', 'THB'] as const).map((cur) => (
               <button
                 key={cur}
                 onClick={() => actions.updateForm((prev) => ({ ...prev, currency: cur }))}
-                className={`rounded-[14px] px-4 py-2 border shadow-sm cursor-pointer appearance-none transition-all active:scale-95 ${
-                  form.currency === cur ? 'bg-fuchsia-500 border-fuchsia-500 shadow-md shadow-fuchsia-500/20' : 'bg-white/80 border-white hover:bg-white'
+                className={`rounded-[14px] px-4 py-2 border shadow-sm cursor-pointer transition-all active:scale-95 ${
+                  form.currency === cur ? 'bg-primary border-primary text-white' : 'bg-white/60 border-white/80 hover:bg-white/80 text-on-surface-variant'
                 }`}
               >
-                <span className={`text-[13px] font-black ${form.currency === cur ? 'text-white' : 'text-slate-600'}`}>
+                <span className="text-[13px] font-bold">
                   {cur}
                 </span>
               </button>
@@ -441,9 +430,9 @@ function LedgerSection() {
           </div>
         </div>
 
-        <div className="h-px w-full bg-pink-200/50 my-2" />
+        <div className="h-px w-full bg-outline-variant/30 my-2" />
 
-        <span className="text-[13px] font-black tracking-widest uppercase text-pink-700 mt-1 ml-1">代墊人</span>
+        <span className="font-label-caps text-label-caps text-on-surface-variant mt-1 ml-1">PAID BY</span>
         <div className="flex flex-row flex-wrap gap-2">
           {members.map((member) => (
             <button
@@ -452,19 +441,19 @@ function LedgerSection() {
                 actions.updateForm((prev) => ({ ...prev, payer: member }));
                 if (errors.payer) actions.clearFormError('payer');
               }}
-              className={`rounded-[14px] px-4 py-2 border shadow-sm cursor-pointer appearance-none transition-all active:scale-95 ${
-                form.payer === member ? 'bg-pink-500 border-pink-500 shadow-md shadow-pink-500/20' : 'bg-white/80 border-white hover:bg-white'
+              className={`rounded-[14px] px-4 py-2 border shadow-sm cursor-pointer transition-all active:scale-95 ${
+                form.payer === member ? 'bg-primary border-primary text-white' : 'bg-white/60 border-white/80 hover:bg-white/80 text-on-surface-variant'
               }`}
             >
-              <span className={`text-[13px] font-black ${form.payer === member ? 'text-white' : 'text-slate-600'}`}>
+              <span className="text-[13px] font-bold">
                 {member}
               </span>
             </button>
           ))}
         </div>
-        {errors.payer ? <span className="text-red-400 font-bold text-xs ml-2 mt-1">{errors.payer}</span> : null}
+        {errors.payer ? <span className="text-error font-bold text-xs ml-2 mt-1">{errors.payer}</span> : null}
 
-        <span className="text-[13px] font-black tracking-widest uppercase text-pink-700 mt-3 ml-1">分攤者</span>
+        <span className="font-label-caps text-label-caps text-on-surface-variant mt-3 ml-1">SPLIT WITH</span>
         <div className="flex flex-row flex-wrap gap-2">
           {members.map((member) => {
             const selected = form.splitWith.includes(member);
@@ -475,27 +464,27 @@ function LedgerSection() {
                   actions.toggleSplitMember(member);
                   if (errors.splitWith) actions.clearFormError('splitWith');
                 }}
-                className={`rounded-[14px] px-4 py-2 border shadow-sm cursor-pointer appearance-none transition-all active:scale-95 flex items-center ${
-                  selected ? 'bg-pink-100 border-pink-300 hover:bg-pink-200 text-pink-700' : 'bg-white/80 border-white hover:bg-white text-slate-600'
+                className={`rounded-[14px] px-4 py-2 border shadow-sm cursor-pointer transition-all active:scale-95 flex items-center ${
+                  selected ? 'bg-primary-container border-primary text-on-primary-container' : 'bg-white/60 border-white/80 hover:bg-white/80 text-on-surface-variant'
                 }`}
               >
                 {selected && <Check size={14} className="mr-1.5" strokeWidth={3} />}
-                <span className="text-[13px] font-black">{member}</span>
+                <span className="text-[13px] font-bold">{member}</span>
               </button>
             );
           })}
         </div>
-        {errors.splitWith ? <span className="text-red-400 font-bold text-xs ml-2 mt-1">{errors.splitWith}</span> : null}
+        {errors.splitWith ? <span className="text-error font-bold text-xs ml-2 mt-1">{errors.splitWith}</span> : null}
 
         <button
           onClick={() => void actions.submitExpense()}
           disabled={submitting}
-          className={`${submitting ? 'bg-pink-300 shadow-none cursor-not-allowed' : 'bg-gradient-to-r from-pink-500 to-fuchsia-500 hover:opacity-90 shadow-[0_8px_20px_rgb(236,72,153,0.3)]'} rounded-[24px] py-4 flex justify-center mt-6 border-none appearance-none cursor-pointer transition-all active:scale-95`}
+          className={`jelly-button ${submitting ? 'opacity-70 cursor-not-allowed' : 'bg-gradient-to-r from-primary-container to-tertiary-container'} rounded-[24px] py-4 flex justify-center mt-6 transition-all`}
         >
-          <span className="text-white font-black tracking-wide text-lg">{submitting ? '計算中...' : '新增費用並重算'}</span>
+          <span className="text-on-primary-container font-h2 text-[16px] tracking-wide">{submitting ? 'Calculating...' : 'Add Expense & Split'}</span>
         </button>
       </div>
-    </GlassCard>
+    </section>
   );
 }
 
@@ -503,72 +492,63 @@ function SettlementsSection() {
   const { state: { settlements, expenseByCurrency, clearingId }, actions } = useToolsTabContext();
   const currencyEntries = Object.entries(expenseByCurrency);
   return (
-    <GlassCard className="bg-white/40 border-white/60 mb-32 flex flex-col mt-4">
-      <div className="flex flex-row items-center justify-between mb-5 flex-wrap gap-y-1">
-        <span className="text-xl font-extrabold text-slate-800 tracking-tight w-auto text-nowrap mr-2">最新結算</span>
+    <section className="flex flex-col gap-md mt-sm mb-32">
+      <div className="flex items-center justify-between px-xs">
+        <h3 className="font-h2 text-[20px] text-on-surface">Who owes who</h3>
         <div className="flex flex-row flex-wrap justify-end gap-2">
           {currencyEntries.length === 0 ? (
-            <span className="text-[13px] font-bold text-slate-400 w-auto shrink-0">尚無費用</span>
+            <span className="text-[13px] font-bold text-slate-400 w-auto shrink-0">No expenses yet</span>
           ) : (
             currencyEntries.map(([cur, amount]) => (
-              <span key={cur} className="text-sm font-black text-pink-600 bg-pink-50 border border-pink-100 rounded-lg px-2 py-1 w-auto shrink-0">
+              <span key={cur} className="font-label-caps text-label-caps text-primary bg-primary-container/30 px-2 py-1 rounded-full w-auto shrink-0">
                 {cur} {amount.toLocaleString()}
               </span>
             ))
           )}
         </div>
       </div>
-
-      <div className="flex flex-col gap-y-3 mb-6">
+      
+      <div className="flex flex-col gap-sm">
         {settlements.length === 0 && (
-          <div className="py-6 flex flex-col items-center justify-center text-center bg-white/40 rounded-[24px] border border-white border-dashed">
-            <span className="text-3xl mb-2 grayscale opacity-50">💸</span>
-            <span className="text-sm font-bold text-slate-400">尚無需要結算的費用喔</span>
+          <div className="jelly-card rounded-lg p-sm flex items-center justify-center py-8 opacity-60">
+            <span className="font-body-md text-on-surface-variant">All settled up!</span>
           </div>
         )}
         {settlements.map((settlement) => (
-          <div
-            key={settlement.id}
-            className="bg-white/80 backdrop-blur-md rounded-[24px] shadow-sm p-4 flex flex-row justify-between items-center border border-white"
-          >
-            <div className="flex flex-row items-center">
-              <span className="text-3xl drop-shadow-sm">💸</span>
-              <div className="flex flex-col ml-3">
-                <div className="flex flex-row items-center gap-x-1.5">
-                  <span className="font-black text-slate-800 text-lg">{settlement.from}</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-500 bg-fuchsia-100 border border-fuchsia-200 rounded px-1.5 py-0.5">應付</span>
-                  <span className="font-black text-slate-800 text-lg">{settlement.to}</span>
-                </div>
+          <div key={settlement.id} className="jelly-card rounded-lg p-sm flex flex-col md:flex-row md:items-center justify-between gap-y-3 gap-x-2">
+            <div className="flex items-center gap-md">
+              <div className="w-12 h-12 rounded-full bg-white/50 border-2 border-white/80 shadow-sm flex items-center justify-center text-xl relative">
+                💸
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container border-2 border-white rounded-full"></div>
+              </div>
+              <div className="flex flex-col">
+                <p className="font-body-md font-semibold text-on-surface">{settlement.from}</p>
+                <p className="font-body-md text-sm text-tertiary">Owes {settlement.to} {settlement.currency} {settlement.amount}</p>
               </div>
             </div>
-            <div className="flex flex-row items-center bg-pink-50 px-3 py-2 rounded-xl border border-pink-100/50">
-              <span className="font-black text-xl text-pink-600 tracking-tight">{settlement.amount}</span>
-              <span className="text-[11px] font-black text-pink-400 ml-1">{settlement.currency}</span>
+            
+            <div className="flex flex-row items-center gap-2">
+              <button
+                onClick={() => void actions.sendReminder()}
+                className="jelly-button bg-gradient-to-r from-tertiary-container to-secondary-container border border-white rounded-full px-sm py-[6px] flex items-center gap-xs flex-1 md:flex-initial justify-center"
+              >
+                <span className="material-symbols-outlined text-[16px] text-on-tertiary-container" data-icon="send" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
+                <span className="font-label-caps text-[10px] text-on-tertiary-container">Nudge</span>
+              </button>
+              
+              <button
+                onClick={() => void actions.handleClearSettlement(settlement)}
+                disabled={clearingId === settlement.id}
+                className="jelly-button bg-gradient-to-r from-primary-container to-primary-fixed border border-white rounded-full px-sm py-[6px] flex items-center gap-xs flex-1 md:flex-initial justify-center"
+              >
+                <span className="material-symbols-outlined text-[16px] text-on-primary-container" data-icon="check" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
+                <span className="font-label-caps text-[10px] text-on-primary-container">{clearingId === settlement.id ? '...' : 'Settle'}</span>
+              </button>
             </div>
-            <button
-              onClick={() => void actions.handleClearSettlement(settlement)}
-              disabled={clearingId === settlement.id}
-              className="bg-gradient-to-r from-emerald-400 to-emerald-500 hover:opacity-90 shadow-[0_4px_10px_rgb(52,211,153,0.3)] rounded-[14px] px-3 ml-2 flex justify-center items-center cursor-pointer appearance-none transition-all active:scale-95 border-none"
-              style={{ width: "56px", height: "40px" }}
-            >
-              {clearingId === settlement.id ? (
-                <span className="text-white font-black text-sm">...</span>
-              ) : (
-                <span className="text-white font-black text-[13px] tracking-widest">結清</span>
-              )}
-            </button>
           </div>
         ))}
       </div>
-
-      <button
-        onClick={() => void actions.sendReminder()}
-        className="bg-slate-800 hover:bg-slate-700 shadow-[0_8px_20px_rgb(0,0,0,0.12)] rounded-[24px] py-4 flex flex-row items-center justify-center border-none appearance-none cursor-pointer transition-all active:scale-95"
-      >
-        <SendHorizontal size={18} color="white" strokeWidth={2.5} />
-        <span className="text-white font-black ml-2.5 tracking-wide text-lg">溫柔提醒結算</span>
-      </button>
-    </GlassCard>
+    </section>
   );
 }
 
@@ -585,24 +565,24 @@ function TripSelectorBar() {
   if (trips.length <= 1) return null;
 
   return (
-    <div
-      className="mb-5 -mx-1 w-full overflow-x-auto"
-    >
-      <div className="flex flex-row px-1 min-w-max">
+    <div className="mb-6 -mx-1 w-full overflow-x-auto scrollbar-hide">
+      <div className="flex flex-row px-1 min-w-max gap-3">
         {trips.map((trip) => {
           const active = activeTripId === trip.tripId;
           return (
             <button
               key={trip.tripId}
               onClick={() => setActiveTripId(trip.tripId)}
-              className={`mr-2 px-4 py-2 flex flex-col rounded-2xl border cursor-pointer appearance-none text-left transition-colors ${
-                active ? 'bg-violet-600 border-violet-600 hover:bg-violet-700 text-white' : 'bg-white/70 border-white hover:bg-white text-slate-700'
+              className={`px-4 py-2 flex flex-col rounded-2xl border cursor-pointer transition-all ${
+                active 
+                  ? 'bg-primary border-primary text-white scale-105 shadow-[0_4px_15px_rgba(134,77,97,0.3)]' 
+                  : 'bg-white/60 border-white hover:bg-white/80 text-on-surface-variant'
               }`}
             >
-              <span className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-700'}`}>
+              <span className={`text-[14px] font-bold ${active ? 'text-white' : 'text-on-surface'}`}>
                 {trip.name}
               </span>
-              <span className={`text-xs ${active ? 'text-violet-200' : 'text-slate-500'}`}>
+              <span className={`text-[10px] uppercase font-bold tracking-wider ${active ? 'text-primary-container' : 'text-on-surface-variant/70'}`}>
                 {trip.destination}
               </span>
             </button>
@@ -626,10 +606,10 @@ export default function ToolsTab() {
 function ToolsTabContent() {
   const { state: { loading, tip } } = useToolsTabContext();
   return (
-    <div className="p-6 md:p-10 pt-16 md:pt-24 max-w-full lg:max-w-4xl xl:max-w-5xl mx-auto flex flex-col w-full h-full overflow-y-auto">
-      <div className="flex flex-col items-center text-center lg:items-start lg:text-left mb-8 w-full">
-        <h1 className="text-[44px] md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-cyan-500 tracking-tight mb-3">旅途工具包</h1>
-        <p className="text-[17px] font-semibold text-slate-500 tracking-wide">分帳、清單與提醒都在這裡一次處理。</p>
+    <div className="pt-2 pb-32 px-container-padding max-w-md mx-auto flex flex-col w-full h-full overflow-y-auto scrollbar-hide">
+      <div className="space-y-xs pt-sm mb-6">
+        <h1 className="font-h1 text-h1 text-primary">Prep Hub</h1>
+        <p className="font-body-lg text-body-lg text-on-surface-variant">Kyoto is calling! Let's get you ready. 🌸</p>
       </div>
       <TripSelectorBar />
 

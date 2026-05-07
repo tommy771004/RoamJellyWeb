@@ -1,48 +1,44 @@
-import { motion } from 'motion/react';
-import { Compass, CalendarDays, Luggage } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import type { TabName } from '../types/workflow';
 
-const TABS: { id: TabName; label: string; icon: typeof Compass }[] = [
-  { id: 'home', label: '探索首頁', icon: Compass },
-  { id: 'itinerary', label: '行程手帳', icon: CalendarDays },
-  { id: 'tools', label: '行前準備', icon: Luggage },
+export const TABS: { id: TabName; label: string; icon: string }[] = [
+  { id: 'home', label: '探索首頁', icon: 'home' },
+  { id: 'itinerary', label: '行程手帳', icon: 'calendar_month' },
+  { id: 'tools', label: '行前準備', icon: 'backpack' },
 ];
 
 export default function BottomTabs() {
   const { activeTab, setActiveTab } = useAppStore();
 
   return (
-    <div className="absolute bottom-4 left-0 right-0 z-40 px-6 flex justify-center w-full pb-safe">
-      <div className="bg-white/70 border border-white/60 shadow-xl shadow-slate-200/50 rounded-full p-1.5 flex flex-row justify-around items-center backdrop-blur-3xl w-full max-w-[300px]">
+    <nav className="md:hidden fixed bottom-6 w-full z-50 flex justify-center items-center px-4 pointer-events-none pb-safe">
+      <div className="bg-white/70 backdrop-blur-[30px] rounded-[32px] border border-white/60 shadow-2xl border-t border-l flex justify-evenly items-center p-2 pointer-events-auto w-full max-w-[320px] mx-auto">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
-          const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex flex-col items-center py-2 px-3 rounded-full relative appearance-none bg-transparent border-none cursor-pointer flex-1"
+              className={`flex flex-col items-center justify-center text-pink-500 w-20 pt-2 pb-1.5 transition-all rounded-[24px] ${
+                isActive 
+                  ? 'bg-white/80 shadow-[0_0_20px_rgba(255,183,206,0.6)] scale-105 active:scale-95' 
+                  : 'opacity-60 hover:opacity-100 hover:scale-105 active:scale-95'
+              }`}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="tab-indicator"
-                  className="absolute inset-0 bg-white shadow-sm rounded-full"
-                  transition={{ type: 'spring', bounce: 0.35, duration: 0.5 }}
-                />
-              )}
-              <div className="items-center relative z-10 flex flex-col gap-1">
-                <Icon size={20} color={isActive ? '#d946ef' : '#94a3b8'} strokeWidth={isActive ? 2.5 : 2} />
-                <span
-                  className={`text-[9px] font-bold ${isActive ? 'text-fuchsia-600' : 'text-slate-400'}`}
-                >
-                  {tab.label}
-                </span>
-              </div>
+              <span 
+                className="material-symbols-outlined text-[26px] leading-none mb-1" 
+                data-icon={tab.icon}
+                style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+              >
+                {tab.icon}
+              </span>
+              <span className={`text-[11px] font-bold ${isActive ? 'text-pink-600' : 'text-pink-500'}`}>
+                {tab.label}
+              </span>
             </button>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }
