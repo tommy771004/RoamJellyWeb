@@ -12,6 +12,7 @@
     "lint": "tsc --noEmit",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:generate": "drizzle-kit generate",
+    "sync:travel-guide": "node scripts/sync-travel-guide.mjs",
     "test:integration:staging": "tsx scripts/staging-integration-test.ts"
   },
   "dependencies": {
