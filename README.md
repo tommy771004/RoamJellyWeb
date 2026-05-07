@@ -21,6 +21,19 @@ View your app in AI Studio: https://ai.studio/apps/1d1f53f0-fdd2-4cdb-a2f9-8fdb8
 4. Run the app:
    `npm run dev`
 
+## Travel Guide Integration
+
+- `HomeTab` now supports Trip.com-like destination discovery:
+   - Choose region (`亞洲` / `歐洲`)
+   - Choose place (e.g. `福岡`, `東京`)
+   - Or type directly in destination input (`福岡`, `FUK`, `東京`, `NRT`)
+- Destination metadata is integrated from:
+   - `https://github.com/travel-guide-tw/travel-guide-tw.github.io`
+- Local dataset file:
+   - `src/data/travelGuideDestinations.ts`
+- To refresh dataset from the source repo:
+   - `npm run sync:travel-guide`
+
 ## Auth (development)
 
 - Backend now uses JWT + trip-level permission checks.
