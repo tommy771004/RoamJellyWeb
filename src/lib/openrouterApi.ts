@@ -42,10 +42,31 @@ export async function suggestItinerary(destination: string, days: number): Promi
       notes: '',
     },
   };
-  return suggestItineraryWithForm(input);
+  const response = await suggestItineraryWithForm(input);
+  
+  // Transform AiResponse to ItineraryNode[]
+  const nodes: ItineraryNode[] = [];
+  if (response?.itinerary && Array.isArray(response.itinerary)) {
+    response.itinerary.forEach((dayData: any) => {
+      if (Array.isArray(dayData.spots)) {
+        dayData.spots.forEach((spot: any, i: number) => {
+          nodes.push({
+            node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+            day: dayData.day || 1,
+            time: normalizeTime(spot.time),
+            title: String(spot.name || spot.title || '景點'),
+            emoji: pickIcon(spot.emoji, spot.category || 'other'),
+            category: normalizeCategory(spot.category || 'other'),
+            source: 'local' as const,
+          });
+        });
+      }
+    });
+  }
+  return nodes;
 }
 
-export async function suggestItineraryWithForm(input: SuggestItineraryInput): Promise<ItineraryNode[]> {
+export async function suggestItineraryWithForm(input: SuggestItineraryInput): Promise<any> {
   try {
     const res = await fetch('/api/generate/itinerary', {
       method: 'POST',
@@ -54,37 +75,26 @@ export async function suggestItineraryWithForm(input: SuggestItineraryInput): Pr
     });
     if (!res.ok) throw new Error('API failed');
     const data = await res.json();
-    if (data.status === 'success' && Array.isArray(data.data)) {
-      return data.data.map((item: any, i: number) => {
-        const category = normalizeCategory(item.category);
-        const emoji = pickIcon(item.emoji, category);
-        return {
-          node_id: `ai_${Date.now()}_${i}`,
-          day: normalizeDay(item.day, input.planner.days),
-          time: normalizeTime(item.time),
-          title: String(item.title ?? '景點'),
-          emoji,
-          category,
-          source: 'local' as const,
-        };
-      });
+    if (data.status === 'success' && data.data) {
+      return data.data; // Return full AiResponse
     }
   } catch (err) {
     console.error('Failed to generate itinerary via API', err);
   }
 
   // Fallback
-  return [
-    {
-      node_id: `ai_${Date.now()}_0`,
-      day: 1,
-      time: '10:00',
-      title: '系統繁忙，這是預設行程',
-      emoji: '✈️',
-      category: 'flight',
-      source: 'local' as const,
-    }
-  ];
+  return {
+    ui_config: { bg_gradient: 'from-blue-100 to-white', font_scale: 'normal' },
+    summary: { title: '系統繁忙預設行程', smart_tags: [] },
+    itinerary: [
+      {
+        day: 1,
+        spots: [
+          { time: '10:00', name: '系統繁忙，這是預設行程', category: 'flight', emoji: '✈️' }
+        ]
+      }
+    ]
+  };
 }
 
 export async function suggestPackingList(destination: string, season: string): Promise<string[]> {

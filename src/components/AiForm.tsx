@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
+import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import GlassCard from './GlassCard';
+import { TRAVEL_GUIDE_DESTINATIONS } from '../data/travelGuideDestinations';
 
 const COMPANION_OPTIONS = [
   { id: 'solo', label: '獨行俠', emoji: '🚶' },
   { id: 'couple', label: '浪漫雙人', emoji: '💑' },
   { id: 'family', label: '親子育兒', emoji: '👨‍👩‍👧‍👦' },
-  { id: 'elderly', label: '帶長輩', emoji: 's🧓' },
+  { id: 'elderly', label: '帶長輩', emoji: '👵' },
   { id: 'friends', label: '三五好友', emoji: '🍻' },
 ];
 
@@ -42,9 +44,16 @@ export const MultiSelectPill: React.FC<{
   );
 }
 
-export default function AiForm({ onSubmit }: { onSubmit: (data: AiFormData) => void }) {
+export default function AiForm({ 
+  onSubmit, 
+  onCancel 
+}: { 
+  onSubmit: (data: AiFormData) => void;
+  onCancel?: () => void;
+}) {
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showDestDropdown, setShowDestDropdown] = useState(false);
   const [formData, setFormData] = useState<AiFormData>({
     destination: '',
     days: 5,
@@ -53,6 +62,19 @@ export default function AiForm({ onSubmit }: { onSubmit: (data: AiFormData) => v
     interests: [],
     dietary: []
   });
+
+  const filteredDestinations = TRAVEL_GUIDE_DESTINATIONS.filter(dest => {
+    if (!formData.destination) return false;
+    const search = formData.destination.toLowerCase();
+    const aliasMatch = dest.searchAlias?.toLowerCase().includes(search);
+    const placeMatch = dest.place.toLowerCase().includes(search);
+    return aliasMatch || placeMatch;
+  }).sort((a, b) => {
+    const search = formData.destination.toLowerCase();
+    const aAlias = a.searchAlias?.toLowerCase() === search ? -2 : (a.searchAlias?.toLowerCase().startsWith(search) ? -1 : 0);
+    const bAlias = b.searchAlias?.toLowerCase() === search ? -2 : (b.searchAlias?.toLowerCase().startsWith(search) ? -1 : 0);
+    return aAlias - bAlias;
+  }).slice(0, 5);
 
   const handleNext = () => {
     if (formData.destination && formData.companions) {
@@ -76,185 +98,219 @@ export default function AiForm({ onSubmit }: { onSubmit: (data: AiFormData) => v
   };
 
   const handleSubmit = () => {
-    console.log('Final Form Data:', JSON.stringify(formData, null, 2));
-    setIsGenerating(true);
-    setTimeout(() => {
-      setIsGenerating(false);
-      onSubmit(formData);
-    }, 3000);
+    onSubmit(formData);
   };
 
-  if (isGenerating) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full w-full p-8 animate-in fade-in duration-500 relative">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-64 h-64 bg-fuchsia-400/30 rounded-full blur-[60px] animate-pulse" />
-        </div>
-        
-        <GlassCard className="!rounded-full p-8 mb-8 relative z-10 flex items-center justify-center">
-          <Loader2 size={48} className="text-fuchsia-500 animate-spin" />
-        </GlassCard>
-        
-        <h2 className="text-2xl font-black bg-gradient-to-r from-fuchsia-600 to-purple-600 bg-clip-text text-transparent mb-4 text-center z-10">
-          AI 正在為您客製專屬行程...
-        </h2>
-        <p className="text-slate-600 font-medium text-center z-10 animate-pulse">
-          正在為您篩選 {formData.destination} 的完美景點
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col h-full w-full p-6 animate-in slide-in-from-bottom-4 duration-500 pb-32 overflow-y-auto">
+    <div className="flex flex-col h-full w-full p-6 animate-in slide-in-from-bottom-4 duration-500 pb-32 overflow-y-auto max-w-4xl mx-auto">
+      <div className="flex justify-between items-start mb-10">
+        <div>
+          <h2 className="text-[32px] sm:text-[40px] font-black text-slate-800 leading-none tracking-tight mb-3">AI 旅程規劃</h2>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"> Powered by AI Assistant</p>
+          </div>
+        </div>
+        {onCancel && (
+          <button 
+            onClick={onCancel}
+            className="w-12 h-12 rounded-full bg-white/50 backdrop-blur-xl border border-white flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-white shadow-sm transition-all"
+          >
+            <ArrowLeft size={24} />
+          </button>
+        )}
+      </div>
+
       {step === 1 && (
-        <div className="flex flex-col gap-8 animate-in fade-in duration-300">
-          <div>
-            <h2 className="text-[28px] font-black text-slate-800 mb-2 font-serif tracking-tight">想去哪裡？</h2>
-            <p className="text-slate-500 text-[14px]">告訴我們您的夢想目的地與天數。</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in duration-300">
+          <div className="space-y-10">
+            <div className="flex flex-col gap-4">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">目的地</label>
+              <div className="relative group">
+                <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-500 transition-colors" size={20} />
+                <input 
+                  type="text" 
+                  placeholder="例如：日本、曼谷..." 
+                  value={formData.destination}
+                  onChange={e => {
+                    setFormData(p => ({ ...p, destination: e.target.value }));
+                    setShowDestDropdown(true);
+                  }}
+                  onBlur={() => setTimeout(() => setShowDestDropdown(false), 200)}
+                  onFocus={() => setShowDestDropdown(true)}
+                  className="w-full bg-white/40 backdrop-blur-xl border border-white/60 rounded-[28px] py-6 pl-14 pr-6 text-lg text-slate-800 font-black placeholder:text-slate-200 placeholder:font-black focus:outline-none focus:ring-4 focus:ring-pink-100 shadow-xl shadow-slate-100/50 transition-all"
+                />
+                
+                <AnimatePresence>
+                  {showDestDropdown && filteredDestinations.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white p-2 z-[100] overflow-hidden"
+                    >
+                      {filteredDestinations.map(dest => (
+                        <button
+                          key={dest.id}
+                          onClick={() => {
+                            const displayValue = dest.searchAlias ? `${dest.place} (${dest.searchAlias})` : dest.place;
+                            setFormData(p => ({ ...p, destination: displayValue }));
+                            setShowDestDropdown(false);
+                          }}
+                          className="w-full flex items-center justify-between px-6 py-4 hover:bg-pink-50 rounded-2xl transition-colors group/item"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-pink-100/50 flex items-center justify-center text-pink-500 group-hover/item:scale-110 transition-transform">
+                              <MapPin size={18} />
+                            </div>
+                            <div className="text-left">
+                              <p className="font-black text-slate-800 text-[15px]">{dest.place}</p>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{dest.country}</p>
+                            </div>
+                          </div>
+                          {dest.searchAlias && (
+                            <div className="bg-slate-800 text-white px-3 py-1 rounded-lg text-[10px] font-black group-hover/item:bg-pink-500 transition-colors">
+                              {dest.searchAlias}
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
 
-          <div className="flex flex-col gap-3">
-            <label className="font-bold text-slate-700 text-[15px]">目的地</label>
-            <div className="relative">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-              <input 
-                type="text" 
-                placeholder="例如：東京、京都、曼谷" 
-                value={formData.destination}
-                onChange={e => setFormData(p => ({ ...p, destination: e.target.value }))}
-                className="w-full bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl py-4 pl-12 pr-6 text-[16px] text-slate-800 font-bold placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-fuchsia-400/50 shadow-sm transition-all"
-              />
+            <div className="flex flex-col gap-4">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">預計天數</label>
+              <div className="flex items-center gap-10 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[32px] p-6 w-full shadow-xl shadow-slate-100/50">
+                <button 
+                  onClick={() => setFormData(p => ({ ...p, days: Math.max(1, p.days - 1) }))}
+                  className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-lg text-slate-600 hover:text-pink-500 hover:bg-pink-50 active:scale-95 transition-all"
+                >
+                  <Minus size={24} strokeWidth={3} />
+                </button>
+                <div className="flex-1 text-center">
+                  <span className="text-[32px] font-black text-slate-800 tabular-nums">{formData.days}</span>
+                  <span className="text-slate-400 font-black text-xs uppercase tracking-widest ml-2">天之旅</span>
+                </div>
+                <button 
+                  onClick={() => setFormData(p => ({ ...p, days: Math.min(30, p.days + 1) }))}
+                  className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-lg text-slate-600 hover:text-pink-500 hover:bg-pink-50 active:scale-95 transition-all"
+                >
+                  <Plus size={24} strokeWidth={3} />
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <label className="font-bold text-slate-700 text-[15px]">預計天數</label>
-            <div className="flex items-center gap-6 bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-4 w-fit shadow-sm">
-              <button 
-                onClick={() => setFormData(p => ({ ...p, days: Math.max(1, p.days - 1) }))}
-                className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-slate-600 hover:text-fuchsia-500 hover:bg-fuchsia-50 active:scale-95 transition-all"
-              >
-                <Minus size={20} />
-              </button>
-              <span className="text-[20px] font-black w-12 text-center text-slate-800">{formData.days} 天</span>
-              <button 
-                onClick={() => setFormData(p => ({ ...p, days: Math.max(1, p.days + 1) }))}
-                className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-slate-600 hover:text-fuchsia-500 hover:bg-fuchsia-50 active:scale-95 transition-all"
-              >
-                <Plus size={20} />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="font-bold text-slate-700 text-[15px]">與誰同行？</label>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-4">
+            <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">與誰同行？</label>
+            <div className="grid grid-cols-2 gap-4">
               {COMPANION_OPTIONS.map(opt => {
                 const isSelected = formData.companions === opt.id;
                 return (
                   <button
                     key={opt.id}
                     onClick={() => setFormData(p => ({ ...p, companions: opt.id }))}
-                    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl transition-all duration-300 ${
+                    className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[32px] transition-all duration-500 border-2 group ${
                       isSelected 
-                        ? 'bg-white/80 border border-fuchsia-400 shadow-[0_0_15px_rgba(217,70,239,0.3)] scale-[1.02]' 
-                        : 'bg-white/40 border border-white/60 hover:bg-white/60 shadow-sm'
+                        ? 'bg-white shadow-[0_0_15px_rgba(244,114,182,0.4)] border-pink-400 scale-[1.02] z-10' 
+                        : 'bg-white/40 border-transparent hover:bg-white/60 shadow-sm'
                     } backdrop-blur-xl`}
                   >
-                    <span className="text-3xl filter drop-shadow-sm">{opt.emoji}</span>
-                    <span className={`text-[14px] font-bold ${isSelected ? 'text-fuchsia-600' : 'text-slate-600'}`}>{opt.label}</span>
+                    <span className="text-4xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{opt.emoji}</span>
+                    <span className={`text-[13px] font-black uppercase tracking-widest ${isSelected ? 'text-pink-600' : 'text-slate-500'}`}>{opt.label}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <button
-            onClick={handleNext}
-            disabled={!formData.destination || !formData.companions}
-            className={`mt-4 py-4 rounded-full font-bold text-[16px] text-white flex items-center justify-center gap-2 transition-all ${
-              !formData.destination || !formData.companions
-                ? 'bg-slate-300 opacity-60 cursor-not-allowed'
-                : 'bg-gradient-to-r from-fuchsia-500 to-purple-600 shadow-[0_8px_20px_rgba(217,70,239,0.4)] active:scale-95 hover:shadow-[0_12px_25px_rgba(217,70,239,0.5)]'
-            }`}
-          >
-            下一步，微調細節
-            <Settings2 size={18} />
-          </button>
+          <div className="md:col-span-2 pt-6">
+            <button
+              onClick={handleNext}
+              disabled={!formData.destination || !formData.companions}
+              className={`w-full py-6 rounded-full font-black text-sm uppercase tracking-[0.2em] text-white flex items-center justify-center gap-3 transition-all ${
+                !formData.destination || !formData.companions
+                  ? 'bg-slate-200 opacity-60 cursor-not-allowed'
+                  : 'bg-slate-800 shadow-2xl shadow-slate-300 active:scale-95 hover:bg-slate-900'
+              }`}
+            >
+              下一步，微調細節
+              <ArrowLeft className="rotate-180" size={20} />
+            </button>
+          </div>
         </div>
       )}
 
       {step === 2 && (
-        <div className="flex flex-col gap-8 animate-in fade-in duration-300">
-          <div className="flex items-center gap-4">
-            <button 
+        <div className="flex flex-col gap-10 animate-in fade-in duration-300">
+          <div className="flex justify-end mb-[-20px]">
+             <button
+               onClick={handleSubmit}
+               className="text-pink-500 font-bold text-sm tracking-widest hover:text-pink-600 transition-colors bg-white/50 px-4 py-2 rounded-full border border-pink-100 shadow-sm"
+             >
+               跳過細節，直接交給 AI 🚀
+             </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+            <div className="flex flex-col gap-5">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">旅遊節奏</label>
+              <div className="flex flex-wrap gap-2">
+                {VIBE_OPTIONS.map(vibe => (
+                  <MultiSelectPill
+                    key={vibe}
+                    label={vibe}
+                    selected={formData.vibes.includes(vibe)}
+                    onClick={() => toggleArrayItem('vibes', vibe)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-5">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">興趣偏好</label>
+              <div className="flex flex-wrap gap-2">
+                {INTEREST_OPTIONS.map(interest => (
+                  <MultiSelectPill
+                    key={interest}
+                    label={interest}
+                    selected={formData.interests.includes(interest)}
+                    onClick={() => toggleArrayItem('interests', interest)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-5">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">飲食禁忌</label>
+              <div className="flex flex-wrap gap-2">
+                {DIETARY_OPTIONS.map(diet => (
+                  <MultiSelectPill
+                    key={diet}
+                    label={diet}
+                    selected={formData.dietary.includes(diet)}
+                    onClick={() => toggleArrayItem('dietary', diet)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <button
               onClick={handleBack}
-              className="w-10 h-10 rounded-full bg-white/40 backdrop-blur-md border border-white/60 flex items-center justify-center shadow-sm text-slate-600 hover:bg-white/80 transition-colors"
+              className="w-full sm:w-auto px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest bg-slate-100 text-slate-400 hover:bg-slate-200 transition-all active:scale-95"
             >
-              <ArrowLeft size={20} />
-            </button>
-            <div>
-              <h2 className="text-[24px] font-black text-slate-800 font-serif tracking-tight">靈魂細節選填</h2>
-              <p className="text-slate-500 text-[13px]">自由多選，也可直接跳過</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="font-bold text-slate-700 text-[15px]">旅遊節奏</label>
-            <div className="flex flex-wrap gap-2">
-              {VIBE_OPTIONS.map(vibe => (
-                <MultiSelectPill
-                  key={vibe}
-                  label={vibe}
-                  selected={formData.vibes.includes(vibe)}
-                  onClick={() => toggleArrayItem('vibes', vibe)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="font-bold text-slate-700 text-[15px]">興趣偏好</label>
-            <div className="flex flex-wrap gap-2">
-              {INTEREST_OPTIONS.map(interest => (
-                <MultiSelectPill
-                  key={interest}
-                  label={interest}
-                  selected={formData.interests.includes(interest)}
-                  onClick={() => toggleArrayItem('interests', interest)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="font-bold text-slate-700 text-[15px]">飲食禁忌</label>
-            <div className="flex flex-wrap gap-2">
-              {DIETARY_OPTIONS.map(diet => (
-                <MultiSelectPill
-                  key={diet}
-                  label={diet}
-                  selected={formData.dietary.includes(diet)}
-                  onClick={() => toggleArrayItem('dietary', diet)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 flex items-center gap-3">
-            <button
-              onClick={handleSubmit}
-              className="flex-1 py-4 rounded-full font-bold text-[15px] bg-white/50 hover:bg-white/80 text-slate-600 border border-white/60 shadow-sm backdrop-blur-md transition-all active:scale-95 text-center"
-            >
-              跳過，直接生成
+              返回修改
             </button>
             <button
               onClick={handleSubmit}
-              className="flex-1 py-4 rounded-full font-bold text-[15px] text-white flex items-center justify-center gap-2 bg-gradient-to-r from-fuchsia-500 to-purple-600 shadow-[0_8px_20px_rgba(217,70,239,0.4)] active:scale-95 hover:shadow-[0_12px_25px_rgba(217,70,239,0.5)] transition-all"
+              className="flex-1 w-full py-6 rounded-full font-black text-sm text-white flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 shadow-2xl shadow-pink-200/50 active:scale-95 transition-all uppercase tracking-[0.2em]"
             >
-              魔法生成
-              <Sparkles size={18} />
+              魔法生成專屬行程
+              <Sparkles size={20} />
             </button>
           </div>
         </div>

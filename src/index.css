@@ -97,16 +97,47 @@
   --color-fuchsia-400: #e879f9;
   --color-fuchsia-500: #d946ef;
   --color-fuchsia-600: #c026d3;
-  --color-cyan-100: #cffafe;
-  --color-pink-100: #fce7f3;
-  --color-pink-200: #fbcfe8;
-  --color-pink-300: #f9a8d4;
-  --color-purple-50: #faf5ff;
-  --color-purple-100: #f3e8ff;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
+  --color-pink-500: #ec4899;
+  --color-orange-400: #fb923c;
+  --color-macaron-pink: #ff8eaa;
+  --color-macaron-orange: #ffa755;
+  --color-primary-fixed: #ffd9df;
+  --color-secondary-container: #aeedd5;
+  --color-surface-container: #efeded;
+  --color-on-surface: #1b1c1c;
+  --color-outline: #877275;
+}
+
+@utility glass-card {
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+}
+
+@utility macaron-bg {
+  background: linear-gradient(120deg, #ffd9df 0%, #c7e7ff 100%);
+}
+
+@utility text-gradient {
+  background: linear-gradient(to right, #ec4899, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 @utility scrollbar-hide {
@@ -226,5 +257,113 @@ body {
   -moz-osx-font-smoothing: grayscale;
   /* Support for IE. */
   font-feature-settings: 'liga';
+}
+
+/* Responsive Table Styles (Route B / Mobile-Optimized) */
+.responsive-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(25px);
+  border: 1.5px solid white;
+}
+
+.responsive-table thead {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .responsive-table thead {
+    display: table-header-group;
+    background: rgba(248, 250, 252, 0.5);
+  }
+}
+
+.responsive-table th {
+  padding: 1.25rem;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 900;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+
+.responsive-table tr {
+  display: block;
+  margin-bottom: 1.5rem;
+  border-radius: 24px;
+  border: 1.5px solid white;
+  background: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+@media (min-width: 768px) {
+  .responsive-table tr {
+    display: table-row;
+    margin-bottom: 0;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+  .responsive-table tr {
+    border-bottom: 1px solid rgba(241, 245, 249, 0.5);
+  }
+  .responsive-table tr:last-child {
+    border-bottom: none;
+  }
+  .responsive-table tr:hover {
+    background: rgba(255, 255, 255, 0.6);
+  }
+}
+
+.responsive-table td {
+  display: block;
+  padding: 1rem 1.25rem;
+  text-align: right;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #334155;
+  border-bottom: 1px solid #f8fafc;
+  position: relative;
+}
+
+.responsive-table td:last-child {
+  border-bottom: none;
+}
+
+@media (min-width: 768px) {
+  .responsive-table td {
+    display: table-cell;
+    padding: 1.25rem;
+    text-align: left;
+    border-bottom: none;
+  }
+}
+
+/* The core logic from the tutorial: data-label for mobile context */
+.responsive-table td:before {
+  content: attr(data-label);
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 900;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .responsive-table td:before {
+    display: none;
+  }
 }
 

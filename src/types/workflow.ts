@@ -11,6 +11,7 @@ export interface SearchItem {
     airline?: string;
     departure?: string;
     arrival?: string;
+    duration?: string;
     stops?: number;
   };
 }
@@ -30,6 +31,8 @@ export interface TripInfo {
   name: string;
   destination: string;
   days: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface WeatherData {
@@ -71,6 +74,7 @@ export interface ItineraryNode {
   node_id: string;
   day: number;
   time: string;
+  timestamp?: string;
   title: string;
   emoji: string;
   category: string;

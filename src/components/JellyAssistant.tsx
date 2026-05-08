@@ -28,7 +28,7 @@ export default function JellyAssistant() {
 
   const simulateAiResponse = () => {
     setIsTyping(true);
-    const fullText = "好的，這就為您奉上「東京五天四夜」的行程懶人包，包含機加酒與票券建議！";
+    const fullText = "好的，這就為您奉上「專屬五天四夜」的行程懶人包，包含機加酒與票券建議！";
     let index = 0;
     
     // Typewriter effect
@@ -57,18 +57,18 @@ export default function JellyAssistant() {
     setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', text }]);
     setInputValue('');
     
-    if (text === '規劃東京五天四夜') {
+    if (text.includes('規劃') || text === '規劃專屬五天四夜') {
       setTimeout(simulateAiResponse, 500);
     } else {
       setTimeout(() => {
-        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', text: '我正在學習更多功能中，目前暫時只能幫您規劃「東京五天四夜」喔！' }]);
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', text: '請問您想規劃去哪裡呢？我可以幫您生成專屬行程喔！' }]);
       }, 1000);
     }
   };
 
   const handleAddItinerary = () => {
     setIsOpen(false);
-    showToast('已成功將東京行程懶人包加入您的手帳！', 'success');
+    showToast('已成功將行程懶人包加入您的手帳！', 'success');
   };
 
   return (
@@ -153,10 +153,10 @@ export default function JellyAssistant() {
                       >
                         <div className="h-24 bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center relative">
                           <div className="absolute inset-0 bg-black/10" />
-                          <h4 className="text-white font-black text-xl tracking-wider relative z-10 drop-shadow-md">TOKYO 5 DAYS</h4>
+                          <h4 className="text-white font-black text-xl tracking-wider relative z-10 drop-shadow-md">TRIP PLAN</h4>
                         </div>
                         <div className="p-4 flex flex-col gap-3">
-                          <p className="text-[13px] text-slate-600 dark:text-slate-300">精選機加酒與必去景點，馬上開啟您的東京之旅！</p>
+                          <p className="text-[13px] text-slate-600 dark:text-slate-300">精選機加酒與必去景點，馬上開啟您的專屬之旅！</p>
                           <button 
                             onClick={handleAddItinerary}
                             className="w-full py-2.5 bg-slate-900 dark:bg-fuchsia-500 text-white rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 hover:bg-slate-800 dark:hover:bg-fuchsia-600 transition-colors active:scale-95"
@@ -197,10 +197,10 @@ export default function JellyAssistant() {
             {messages.length === 1 && !isTyping && (
               <div className="px-4 pb-2 flex overflow-x-auto scrollbar-hide gap-2">
                 <button 
-                  onClick={() => handleSend('規劃東京五天四夜')}
+                  onClick={() => handleSend('規劃專屬五天四夜')}
                   className="px-4 py-2 bg-fuchsia-50 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-300 rounded-full text-[13px] font-bold whitespace-nowrap active:scale-95 transition-transform border border-fuchsia-200 dark:border-fuchsia-700/50"
                 >
-                  🗼 規劃東京五天四夜
+                  ✨ 規劃專屬行程
                 </button>
                 <button 
                   onClick={() => handleSend('附近有什麼好吃的？')}

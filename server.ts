@@ -8,8 +8,13 @@ import { AppRepository } from './src/server/repositories/appRepository';
 import { pool, db } from './src/server/db/client';
 import { signAccessToken, type AuthUser, verifyAccessToken } from './src/server/auth/jwt';
 import { hashPassword, verifyPassword } from './src/server/auth/password';
+import * as schema from './src/server/db/schema';
+
+import { scrapeTripFlights } from './src/server/services/tripParser';
+import { generateItinerary } from './src/server/services/aiItineraryService';
 
 const REAL_BACKEND_BASE_URL = process.env.REAL_BACKEND_BASE_URL?.replace(/\/+$/, '');
+const SERPAPI_KEY = process.env.SERPAPI_KEY;
 const SHOULD_SEED_DEMO_DATA = process.env.SEED_DEMO_DATA === 'true' && !REAL_BACKEND_BASE_URL;
 const REDIS_URL = process.env.REDIS_URL?.trim();
 const JWT_DEV_TOKEN_ENABLED = process.env.ENABLE_DEV_TOKEN_ENDPOINT !== 'false';
@@ -152,32 +157,96 @@ async function setSearchCacheData(cacheKey: string, data: SearchItem[]): Promise
 }
 
 async function fetchFromOtaProvider(from: string, to: string, date: string): Promise<SearchItem[] | null> {
-  if (!OTA_PROVIDER_URL) return null;
-  try {
-    const url = `${OTA_PROVIDER_URL}/flights?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
-    const json = (await res.json()) as unknown;
-    if (!Array.isArray(json) || json.length === 0) return null;
-    return (json as Record<string, any>[]).map((item, idx) => ({
-      id: String(item.id ?? `ota_${idx}`),
-      type: 'flight' as const,
-      provider: String(item.provider ?? 'Skyscanner (Global)'),
-      title: String(item.title ?? `${from} \u2192 ${to} \u00b7 Direct`),
-      price: Number(item.price ?? 0),
-      currency: String(item.currency ?? 'TWD'),
-      emoji: '\u2708\uFE0F',
-      affiliate_url: String(item.affiliate_url ?? ''),
-      details: item.details ?? {
-        airline: String(item.airline ?? 'Global Airways'),
-        departure: String(item.dep_time ?? '09:00'),
-        arrival: String(item.arr_time ?? '13:00'),
-        stops: Number(item.stops ?? 0)
+  // If we have a SerpApi key, use Google Flights via SerpApi
+  if (SERPAPI_KEY) {
+    try {
+      console.log(`Fetching real flight data from SerpApi (Google Flights) for ${from} -> ${to} on ${date}`);
+      const params = new URLSearchParams({
+        engine: 'google_flights',
+        departure_id: from,
+        arrival_id: to,
+        outbound_date: date,
+        currency: 'TWD',
+        hl: 'zh-tw',
+        gl: 'tw',
+        api_key: SERPAPI_KEY
+      });
+
+      const url = `https://serpapi.com/search.json?${params.toString()}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+
+      if (!res.ok) {
+        console.error(`SerpApi error: ${res.status}`);
+      } else {
+        const json = await res.json() as any;
+        
+        if (json.error) {
+          console.error('SerpApi returned error:', json.error);
+        } else if (json.best_flights) {
+          return json.best_flights.slice(0, 10).map((flight: any, idx: number) => {
+            const leg = flight.flights[0];
+            return {
+              id: `serp_${idx}_${Date.now()}`,
+              type: 'flight' as const,
+              provider: 'Google Flights',
+              title: `${from} → ${to} · ${flight.type === 'Nonstop' ? '直飛' : flight.type}`,
+              price: flight.price,
+              currency: 'TWD',
+              emoji: '✈️',
+              affiliate_url: 'https://www.google.com/travel/flights',
+              details: {
+                airline: leg.airline,
+                departure: leg.departure_airport.time.split(' ')[1] || '08:00',
+                arrival: leg.arrival_airport.time.split(' ')[1] || '12:00',
+                stops: flight.type === 'Nonstop' ? 0 : 1,
+                duration: `${Math.floor(flight.total_duration / 60)}h ${flight.total_duration % 60}m`
+              }
+            };
+          });
+        }
       }
-    }));
-  } catch {
-    return null;
+    } catch (error) {
+      console.error('SerpApi call failed:', error);
+    }
   }
+
+  // Fallback to Trip.com Scraper (Route B)
+  console.log(`Fallback to Trip.com scraper for ${from} -> ${to} on ${date}`);
+  const scrapedFlights = await scrapeTripFlights(from, to, date);
+  if (scrapedFlights && scrapedFlights.length > 0) {
+    return scrapedFlights;
+  }
+
+  // Legacy fallback to internal OTA provider if URL exists
+  if (OTA_PROVIDER_URL) {
+    try {
+      const url = `${OTA_PROVIDER_URL}/flights?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${encodeURIComponent(date)}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) return null;
+      const json = (await res.json()) as unknown;
+      if (!Array.isArray(json) || json.length === 0) return null;
+      return (json as Record<string, any>[]).map((item, idx) => ({
+        id: String(item.id ?? `ota_${idx}`),
+        type: 'flight' as const,
+        provider: String(item.provider ?? 'Skyscanner'),
+        title: String(item.title ?? `${from} → ${to} · Direct`),
+        price: Number(item.price ?? 0),
+        currency: String(item.currency ?? 'TWD'),
+        emoji: '✈️',
+        affiliate_url: String(item.affiliate_url ?? ''),
+        details: item.details ?? {
+          airline: String(item.airline ?? 'EVA Air'),
+          departure: String(item.dep_time ?? '09:00'),
+          arrival: String(item.arr_time ?? '13:00'),
+          stops: Number(item.stops ?? 0)
+        }
+      }));
+    } catch {
+      return null;
+    }
+  }
+  
+  return null;
 }
 
 async function appendSearchHistory(record: SearchHistoryRecord): Promise<void> {
@@ -269,7 +338,7 @@ async function getPlanningSnapshot(tripId: string): Promise<unknown[] | null> {
   }
 }
 
-async function geocodeSpot(title: string, city = '東京'): Promise<{ lat: number; lng: number } | null> {
+async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng: number } | null> {
   try {
     const q = encodeURIComponent(`${title} ${city}`);
     const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja`;
@@ -607,24 +676,43 @@ async function startServer() {
   });
 
   app.get('/api/trips/:trip_id/flights', async (req, res) => {
-    await new Promise((r) => setTimeout(r, 800)); // Simulate realistic OTA fetch
-    res.json([
-      { airline: 'EVA Air', direct: true, duration: '3h 45m', price: 14500, depTime: '10:00', depCode: 'TPE', arrTime: '14:45', arrCode: 'NRT' },
-      { airline: 'Starlux Airlines', direct: true, duration: '3h 30m', price: 16800, depTime: '12:30', depCode: 'TPE', arrTime: '16:40', arrCode: 'NRT' }
-    ]);
+    const flightsData = await repo.getAllFlights();
+    if (flightsData.length > 0) {
+       res.json(flightsData.map(f => ({
+         airline: f.provider,
+         direct: true,
+         duration: '4h 00m',
+         price: f.price,
+         depTime: f.time?.split(' - ')[0] || '10:00',
+         depCode: 'TPE',
+         arrTime: f.time?.split(' - ')[1] || '14:00',
+         arrCode: 'NRT'
+       })));
+       return;
+    }
+    res.json([]);
   });
 
   app.get('/api/trips/:trip_id/activities', async (req, res) => {
-    await new Promise((r) => setTimeout(r, 800)); // Simulate realistic OTA fetch
-    res.json([
-      { img: 'https://images.unsplash.com/photo-1542931287-023b922fa89b?auto=format&fit=crop&q=80&w=200&h=200', title: 'Tokyo Skytree fast-track Admission Ticket', rating: 4.8, reviews: '12k', price: 580 },
-      { img: 'https://images.unsplash.com/photo-1505069818817-5fa76483161a?auto=format&fit=crop&q=80&w=200&h=200', title: 'Tokyo Disney Resort 1-Day Pass', rating: 4.9, reviews: '45k', price: 2100 }
-    ]);
+    const tripId = req.params.trip_id;
+    const nodes = await repo.getItineraryNodes(tripId);
+    
+    if (nodes.length > 0) {
+      res.json(nodes.map(node => ({
+        img: 'https://images.unsplash.com/photo-1542931287-023b922fa89b?auto=format&fit=crop&q=80&w=200&h=200', 
+        title: `${node.title} Admission Ticket`, 
+        rating: 4.8, 
+        reviews: '12k', 
+        price: 580 
+      })));
+      return;
+    }
+
+    res.json([]);
   });
 
   app.post('/api/generate/itinerary', async (req, res) => {
     try {
-      const { generateItinerary } = await import('./src/server/services/aiItineraryService');
       const nodes = await generateItinerary(req.body);
       res.json({ status: 'success', data: nodes });
     } catch (err) {
@@ -653,41 +741,18 @@ async function startServer() {
 
     // If no params, return "Popular Recommendations" (latest flights)
     if (!from || !to || !date) {
-      const results = [
-        {
-          id: 'flight_trend_1',
-          type: 'flight',
-          provider: 'Skyscanner Trends',
-          title: '台北 (TPE) -> 東京 (NRT) · 直飛 3h 15m',
-          price: 12500,
-          currency: 'TWD',
-          emoji: '✈️',
-          affiliate_url: 'https://skyscanner.example.com/trending/1',
-          details: { stops: 0, airline: 'EVA Air', departure: '08:00', arrival: '12:15' }
-        },
-        {
-          id: 'flight_trend_2',
-          type: 'flight',
-          provider: 'Amadeus Insights',
-          title: '台北 (TPE) -> 大阪 (KIX) · 直飛 2h 45m',
-          price: 9800,
-          currency: 'TWD',
-          emoji: '✈️',
-          affiliate_url: 'https://amadeus.example.com/trending/2',
-          details: { stops: 0, airline: 'Tigerair Taiwan', departure: '14:20', arrival: '17:05' }
-        },
-        {
-          id: 'flight_trend_3',
-          type: 'flight',
-          provider: 'Global Travel Data',
-          title: '台北 (TPE) -> 首爾 (ICN) · 直飛 2h 30m',
-          price: 11000,
-          currency: 'TWD',
-          emoji: '✈️',
-          affiliate_url: 'https://traveldata.example.com/trending/3',
-          details: { stops: 0, airline: 'Korean Air', departure: '10:15', arrival: '13:45' }
-        }
-      ];
+      const topFlights = await repo.getTopFlights(5);
+      const results = topFlights.map((f: any, idx: number) => ({
+        id: f.id || `flight_trend_${idx}`,
+        type: 'flight',
+        provider: f.provider,
+        title: `台北 (TPE) -> 目的地 · 直飛`, // Simple fallback for title if not in db
+        price: f.price,
+        currency: 'TWD',
+        emoji: '✈️',
+        affiliate_url: `https://example.com/flight/${f.id}`,
+        details: { stops: 0, airline: f.provider, departure: f.time?.split(' - ')[0] || '10:00', arrival: f.time?.split(' - ')[1] || '14:00' }
+      }));
       res.json({ status: 'success', data: results });
       return;
     }
@@ -718,22 +783,27 @@ async function startServer() {
         res.status(503).json({ status: 'error', message: 'no flight provider data available' });
         return;
       }
-      data = flightRows.map((flight, idx) => ({
-        id: `flight_${flight.id}`,
-        type: 'flight' as const,
-        provider: idx % 2 === 0 ? 'Skyscanner (Mock)' : 'Amadeus (Mock)',
-        title: `${from} -> ${to} · ${idx % 2 === 0 ? '直飛' : '1 轉'}`,
-        price: flight.price + (idx * 500),
-        currency: 'TWD',
-        emoji: '✈️',
-        affiliate_url: `https://partner.example.com/flights/${encodeURIComponent(flight.id)}`,
-        details: {
-          airline: flight.provider,
-          departure: flight.time.split(' - ')[0] || '10:00',
-          arrival: flight.time.split(' - ')[1] || '14:30',
-          stops: idx % 2 === 0 ? 0 : 1
-        }
-      }));
+          data = flightRows.map((flight, idx) => {
+        const providers = ['EVA Air', 'China Airlines', 'Starlux Airlines', 'Tigerair Taiwan', 'Peach Aviation', 'Skyscanner', 'Expedia'];
+        const provider = providers[idx % providers.length];
+        return {
+          id: `flight_${flight.id}`,
+          type: 'flight' as const,
+          provider: provider,
+          title: `${from} -> ${to} · ${idx % 2 === 0 ? '直飛' : '1 轉'}`,
+          price: flight.price + (idx * 300),
+          currency: 'TWD',
+          emoji: '✈️',
+          affiliate_url: `https://partner.example.com/flights/${encodeURIComponent(flight.id)}`,
+          details: {
+            airline: provider,
+            departure: flight.time.split(' - ')[0] || '10:00',
+            arrival: flight.time.split(' - ')[1] || '14:30',
+            stops: idx % 2 === 0 ? 0 : 1,
+            duration: idx === 0 ? '3h 15m' : (idx === 1 ? '2h 45m' : '4h 10m')
+          }
+        };
+      });
     }
 
     await setSearchCacheData(cacheKey, data);
@@ -756,12 +826,9 @@ async function startServer() {
   });
 
   app.get('/api/handbooks', async (req, res) => {
-    // Return some mock creator handbooks
-    res.json([
-      { id: 'h1', title: '東京散策：巷弄裡的小秘密', author: 'Jelly Explorer', likes: 1205, cover: 'https://images.unsplash.com/photo-1540959733332-e94e270b4052?w=800' },
-      { id: 'h2', title: '大阪美食地圖 2024', author: 'Foodie Bear', likes: 890, cover: 'https://images.unsplash.com/photo-1590559899731-a382839e5449?w=800' },
-      { id: 'h3', title: '京都紅葉季完全攻略', author: 'Maple Fan', likes: 2100, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800' }
-    ]);
+    const limit = Number(req.query.limit ?? 10);
+    const trips = await repo.getPublicTrips(limit);
+    res.json(trips);
   });
 
   app.get('/api/weather', async (req, res) => {
@@ -897,7 +964,9 @@ async function startServer() {
       res.status(404).json({ status: 'error', message: 'trip not found' });
       return;
     }
-    res.json({ trip_id: trip.tripId, name: trip.name, destination: trip.destination, days: trip.days });
+    const nodes = await repo.getItineraryNodes(req.params.trip_id);
+    const maxDay = nodes.reduce((max, node) => Math.max(max, node.day), 1);
+    res.json({ trip_id: trip.id, name: trip.name, destination: trip.destination, days: maxDay });
   });
 
   // ── Trip: Join via invite link ───────────────────────────────────────────────
@@ -914,6 +983,47 @@ async function startServer() {
     }
     await repo.ensureTripMember({ tripId: req.params.trip_id, userId, role: 'editor' });
     res.json({ status: 'success', trip_id: req.params.trip_id });
+  });
+
+  app.post('/api/trips/:trip_id/clone', async (req, res) => {
+    const tripId = req.params.trip_id;
+    const userId = getRequestUserId(req);
+    if (!userId) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
+
+    let trip = await repo.getTripById(tripId);
+    let nodes = await repo.getItineraryNodes(tripId);
+    
+    if (!trip) {
+      res.status(404).json({ status: 'error', message: 'trip not found' });
+      return;
+    }
+
+    // Create new trip
+    const newTripId = `trip_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    await repo.createTrip({
+      id: newTripId,
+      name: `${trip.name} (複製)`,
+      destination: trip.destination,
+    });
+    // Add user as owner
+    await repo.addTripMember(newTripId, userId, 'owner');
+
+    // Copy nodes
+    for (const node of nodes) {
+      await repo.upsertItineraryNode(newTripId, {
+        node_id: `node_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        day: node.day,
+        time: node.time || '10:00',
+        title: node.title,
+        emoji: node.emoji || '📍',
+        category: node.category || 'spot',
+      });
+    }
+
+    res.json({ status: 'success', data: { new_trip_id: newTripId } });
   });
 
   app.get('/api/trips/:trip_id', async (req, res) => {
@@ -1298,6 +1408,56 @@ async function startServer() {
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
+  }
+
+  if (!REAL_BACKEND_BASE_URL) {
+    try {
+      const flights = await repo.getAllFlights();
+      if (flights.length === 0) {
+        console.log('Seeding demo flights...');
+        const demoFlights = [
+          { id: 'f1', provider: 'EVA Air', time: '08:00 - 12:15', price: 12500 },
+          { id: 'f2', provider: 'Starlux Airlines', time: '10:30 - 14:45', price: 14200 },
+          { id: 'f3', provider: 'China Airlines', time: '12:00 - 16:15', price: 11800 },
+          { id: 'f4', provider: 'Tigerair Taiwan', time: '14:20 - 17:05', price: 8500 },
+          { id: 'f5', provider: 'Peach Aviation', time: '16:55 - 20:40', price: 7900 },
+        ];
+        for (const f of demoFlights) {
+          await db.insert(schema.flights).values(f).onConflictDoNothing();
+        }
+        console.log('Demo flights seeded successfully');
+      }
+
+      const publicTrips = await repo.getPublicTrips(1);
+      if (publicTrips.length === 0) {
+        console.log('Seeding demo public trips...');
+        // Create a fake author if it doesn't exist
+        const authorId = 'seeder_1';
+        await repo.createUserWithPassword(authorId, 'Travel Guru', 'nomatter');
+        
+        const demoTrips = [
+          { id: 'h1', name: '東京散策：巷弄裡的小秘密', destination: '東京', userId: authorId, role: 'owner' },
+          { id: 'h2', name: '大阪美食地圖 2024', destination: '大阪', userId: authorId, role: 'owner' },
+          { id: 'h3', name: '京都紅葉季完全攻略', destination: '京都', userId: authorId, role: 'owner' },
+        ];
+        
+        for (const mt of demoTrips) {
+          await repo.createTrip({ id: mt.id, name: mt.name, destination: mt.destination });
+          await repo.addTripMember(mt.id, mt.userId, mt.role);
+          await repo.upsertItineraryNode(mt.id, {
+            node_id: `node_start_${mt.id}`,
+            day: 1,
+            time: '10:00',
+            title: '抵達地點',
+            emoji: '📍',
+            category: 'spot',
+          });
+        }
+        console.log('Demo trips seeded successfully');
+      }
+    } catch (e) {
+      console.error('Failed to seed demo data', e);
+    }
   }
 
   httpServer.listen(PORT, '0.0.0.0', () => {

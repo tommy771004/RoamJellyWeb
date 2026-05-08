@@ -60,7 +60,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
       <div className="absolute bottom-[-10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-purple-300/20 blur-[120px] pointer-events-none" />
 
       {fetching ? (
-        <div className="text-fuchsia-600 text-lg font-medium relative z-10">載入中...</div>
+        <div className="text-fuchsia-600 text-lg font-medium relative z-10"></div>
       ) : notFound || fetchError ? (
         <div className="items-center flex flex-col relative z-10">
           <span style={{ fontSize: 56, marginBottom: 16 }}>{notFound ? '🤔' : '⚠️'}</span>

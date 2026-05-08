@@ -1,69 +1,162 @@
 import { motion } from 'motion/react';
-import { Store } from 'lucide-react';
+import { Store, Plane, Clock, Heart, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
 import GlassCard from './GlassCard';
 
 interface RedirectModalProps {
   provider: string;
+  airline?: string;
+  departure?: string;
+  arrival?: string;
+  duration?: string;
+  stops?: number;
+  price?: number;
+  currency?: string;
+  emoji?: string;
   onClose: () => void;
   onConfirm: () => void;
+  onSave?: () => void;
 }
 
-export default function RedirectModal({ provider, onClose, onConfirm }: RedirectModalProps) {
+export default function RedirectModal({ 
+  provider, 
+  airline, 
+  departure, 
+  arrival, 
+  duration,
+  stops,
+  price, 
+  currency, 
+  emoji, 
+  onClose, 
+  onConfirm,
+  onSave 
+}: RedirectModalProps) {
+  const airlineInitial = airline ? airline.charAt(0) : provider.charAt(0);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        padding: '0 16px 32px',
-        backgroundColor: 'rgba(15,23,42,0.45)',
-      }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
       onClick={onClose}
     >
       <motion.div
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0 }}
-        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-        style={{ width: '100%', maxWidth: 400 }}
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-[500px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <GlassCard className="items-center !p-8 border-2 border-white/80 shadow-2xl bg-[#faf5ff] flex flex-col">
-          <div className="mx-auto w-20 h-20 bg-white/80 rounded-full flex items-center justify-center mb-6 border border-white">
-            <Store size={40} color="#9333ea" />
-          </div>
+        <div className="relative group">
+          {/* Liquid Glow Effect */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-400 rounded-[48px] blur-2xl opacity-10 group-hover:opacity-30 transition-opacity duration-1000"></div>
+          
+          <GlassCard className="relative items-center !p-0 border border-white/40 shadow-2xl bg-white/60 backdrop-blur-[50px] rounded-[48px] overflow-hidden">
+            {/* Header / Airline Logo Section */}
+            <div className="w-full bg-gradient-to-br from-slate-50 to-white/30 p-8 border-b border-white/40 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm text-2xl font-black text-fuchsia-500">
+                  {airlineInitial}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Airline / Provider</span>
+                  <span className="text-xl font-black text-slate-800 leading-none">{airline || provider}</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-1.5 text-emerald-500 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 mb-1">
+                  <ShieldCheck size={12} strokeWidth={3} />
+                  <span className="text-[10px] font-black uppercase tracking-tighter">Verified</span>
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{provider}</span>
+              </div>
+            </div>
 
-          <h2 className="text-2xl font-black text-slate-800 mb-2 text-center">準備前往訂購！</h2>
-          <p className="text-slate-600 font-medium mb-8 text-center leading-relaxed">
-            即將為您導向至{' '}
-            <strong className="font-extrabold text-[#9333ea] text-lg">{provider}</strong> 官方網站。
-          </p>
-          <p className="text-xs text-slate-400 -mt-5 mb-6 text-center">
-            我們會先記錄一次導流事件，再安全開啟外部連結。
-          </p>
+            <div className="p-8 w-full flex flex-col">
+              {/* Flight Route Visual */}
+              <div className="flex items-center justify-between mb-8 px-2 relative">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 h-[2px] bg-slate-100 z-0"></div>
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center mb-2 shadow-sm">
+                    <MapPin size={18} className="text-slate-400" />
+                  </div>
+                  <span className="text-2xl font-black text-slate-800 tracking-tight">{departure}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Departure</span>
+                </div>
 
-          <div className="flex flex-col space-y-3 w-full">
-            <button
-              onClick={onConfirm}
-              className="w-full py-4 rounded-2xl bg-[#d946ef] shadow-lg flex flex-row justify-center mb-3 appearance-none border-none cursor-pointer hover:opacity-90"
-            >
-              <span className="font-black text-white text-lg">確認前往</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="w-full py-4 rounded-2xl bg-white/50 border border-white/60 flex flex-row justify-center appearance-none cursor-pointer hover:bg-white/70"
-            >
-              <span className="font-bold text-slate-500 text-lg">再想一下</span>
-            </button>
-          </div>
-        </GlassCard>
+                <div className="relative z-10 flex flex-col items-center flex-1 mx-4">
+                   <div className="bg-fuchsia-50 text-fuchsia-500 p-2 rounded-full mb-1">
+                     <Plane size={18} strokeWidth={3} />
+                   </div>
+                   <div className="flex flex-col items-center">
+                     <span className="text-[13px] font-black text-slate-700 whitespace-nowrap">{duration || '3h 30m'}</span>
+                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                      {stops === 0 ? 'Direct' : `${stops} Stop${stops! > 1 ? 's' : ''}`}
+                     </span>
+                   </div>
+                </div>
+
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center mb-2 shadow-sm">
+                    <MapPin size={18} className="text-fuchsia-400" />
+                  </div>
+                  <span className="text-2xl font-black text-slate-800 tracking-tight">{arrival}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Arrival</span>
+                </div>
+              </div>
+
+              {/* Pricing breakdown */}
+              <div className="bg-slate-50/50 rounded-3xl p-6 mb-8 border border-white/50 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">Total Estimated Price</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-sm font-bold text-slate-400">{currency}</span>
+                    <span className="text-3xl font-black text-slate-800 decoration-fuchsia-400/30 underline decoration-4 underline-offset-2">{price?.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-2xl shadow-sm">
+                  {emoji || '✨'}
+                </div>
+              </div>
+
+              <div className="flex flex-col space-y-4 w-full">
+                <button
+                  onClick={onConfirm}
+                  className="group relative w-full py-5 rounded-2xl bg-slate-900 border-none shadow-2xl shadow-slate-200 flex items-center justify-center overflow-hidden transition-all active:scale-[0.97] hover:bg-slate-800"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <span className="font-black text-white text-[18px] tracking-wide relative z-10 flex items-center gap-3">
+                    立即前往預訂 <ArrowRight size={20} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </button>
+                
+                <div className="flex gap-4">
+                  <button
+                    onClick={onSave}
+                    className="flex-1 py-4.5 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2.5 hover:bg-pink-50 hover:border-pink-200 transition-all active:scale-[0.97] group"
+                  >
+                    <Heart size={20} className="text-pink-400 group-hover:text-pink-500 group-hover:fill-pink-500 transition-all" />
+                    <span className="font-bold text-slate-600 group-hover:text-pink-600 text-[15px]">收藏方案</span>
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="flex-1 py-4.5 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-all active:scale-[0.97]"
+                  >
+                    <span className="font-bold text-slate-500 text-[15px]">暫時關閉</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-8 flex items-center justify-center gap-2 text-slate-400">
+                <Clock size={14} />
+                <span className="text-[11px] font-bold tracking-wide">價格與位子變動快速，建議及早確認</span>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
       </motion.div>
     </motion.div>
   );

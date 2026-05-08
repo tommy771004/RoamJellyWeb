@@ -52,7 +52,8 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
           ? await loginUser(trimmedUser, password)
           : await registerUser(trimmedUser, password, displayName.trim() || trimmedUser);
           
-      const token = result?.access_token || result?.token || 'dummy_token';
+      const token = result?.access_token || result?.token;
+      if (!token) throw new Error('Token missing in response');
       const userId = result?.user?.id || result?.user_id || trimmedUser;
       
       setClientAccessToken(token);

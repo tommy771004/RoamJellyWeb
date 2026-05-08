@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, type PanInfo } from 'motion/react';
 
 
-import { List as ListIcon, Map as MapIcon, Share2, Trash2, Sparkles, Plus, X, Pencil, Save, GripVertical } from 'lucide-react';
+import { List as ListIcon, Map as MapIcon, Share2, Trash2, Sparkles, Plus, X, Pencil, Save, GripVertical, Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
 import { ItinerarySkeletonCard } from './SkeletonCard';
@@ -31,6 +31,8 @@ import type {
   SyncItineraryPayload,
   TripInfo,
 } from '../types/workflow';
+
+import AiForm, { AiFormData } from './AiForm';
 
 const TRIP_ID =
   (typeof window !== 'undefined'
@@ -87,15 +89,72 @@ function withAutoCategoryIcon(node: ItineraryNode): ItineraryNode {
 function buildDefaultPlannerForm(destination: string, days: number): ItineraryPlannerForm {
   return {
     days,
-    departureFrom: 'TPE',
+    departureFrom: '台北',
     arrivalTo: destination,
     flightDate: '2026-06-15',
-    countries: ['日本'],
+    countries: [],
     mustVisitSpots: [],
     mustEatFoods: [],
     autoFlightSegments: [],
     notes: '',
   };
+}
+
+export function assignDaysBasedOnTimeAndOrder(nodes: any[], startDateStr?: string): ItineraryNode[] {
+  let currentDay = 1;
+  let lastTimeMinutes = -1;
+
+  const baseDate = startDateStr ? new Date(startDateStr) : new Date();
+  if (isNaN(baseDate.getTime())) {
+    baseDate.setTime(Date.now());
+  }
+
+  return nodes.map((n) => {
+    const node: ItineraryNode = {
+      node_id: n.node_id || n.id || `node_${Date.now()}_${Math.random()}`,
+      day: 1, // Will be overridden
+      time: n.time || '10:00',
+      title: n.title || n.location || '未命名行程',
+      emoji: n.emoji || n.icon || '📍',
+      category: n.category || 'other',
+      source: n.source || 'remote',
+      lat: n.lat,
+      lng: n.lng,
+    };
+
+    if (n.day != null) {
+      currentDay = n.day;
+    } else {
+      const timeParts = String(node.time).split(":");
+      const hours = parseInt(timeParts[0] || "10", 10);
+      const mins = parseInt(timeParts[1] || "0", 10);
+      const timeMinutes = hours * 60 + mins;
+
+      if (lastTimeMinutes !== -1 && timeMinutes < lastTimeMinutes) {
+        currentDay++;
+      }
+      lastTimeMinutes = timeMinutes;
+    }
+
+    node.day = currentDay;
+
+    // Calculate timestamp
+    const nodeDate = new Date(baseDate);
+    nodeDate.setDate(nodeDate.getDate() + (node.day - 1));
+    const timeParts2 = String(node.time).split(":");
+    const hours = parseInt(timeParts2[0] || "10", 10);
+    const mins = parseInt(timeParts2[1] || "0", 10);
+    
+    const yyyy = nodeDate.getFullYear();
+    const mm = String(nodeDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(nodeDate.getDate()).padStart(2, '0');
+    const hh = String(hours).padStart(2, '0');
+    const mn = String(mins).padStart(2, '0');
+    
+    node.timestamp = `${yyyy}-${mm}-${dd}T${hh}:${mn}:00Z`;
+
+    return node;
+  });
 }
 
 export default function ItineraryTab() {
@@ -113,16 +172,58 @@ export default function ItineraryTab() {
   const [newSpotEmoji, setNewSpotEmoji] = useState('📍');
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
   const [addingFavorite, setAddingFavorite] = useState<boolean>(false);
-  const [plannerForm, setPlannerForm] = useState<ItineraryPlannerForm>(buildDefaultPlannerForm('東京', 5));
+  const [plannerForm, setPlannerForm] = useState<ItineraryPlannerForm>(buildDefaultPlannerForm('', 5));
   const [flightsLoading, setFlightsLoading] = useState<boolean>(false);
   const [aiGenerateMode, setAiGenerateMode] = useState<AiGenerateMode>('selected_day');
-  const [showPlanner, setShowPlanner] = useState<boolean>(true);
+  const [showPlanner, setShowPlanner] = useState<boolean>(false);
+  const [isPlanningNew, setIsPlanningNew] = useState<boolean>(false);
 
   const socketRef = useRef<Socket | null>(null);
 
   const { nodes, setNodes, addNode, updateNode, removeNode, collaborators, setCollaborators, isOffline, setOffline } =
     useItineraryStore();
   const { showToast } = useAppStore();
+
+  const handleAiFormSubmit = async (formData: AiFormData) => {
+    setAiLoading(true);
+    setIsPlanningNew(false);
+    try {
+      const suggestRequest = {
+        days: formData.days,
+        departureFrom: '台北',
+        arrivalTo: formData.destination,
+        flightDate: '2026-06-15',
+        countries: [formData.destination],
+        mustVisitSpots: formData.interests,
+        mustEatFoods: [],
+        autoFlightSegments: [],
+        notes: `旅伴: ${formData.companions}, 氛圍: ${formData.vibes.join(',')}, 飲食: ${formData.dietary.join(',')}`,
+      };
+      
+      let suggestions = await suggestItineraryWithForm({ 
+        destination: formData.destination, 
+        planner: suggestRequest 
+      });
+
+      await removeNodesBatch([...nodes]);
+      
+      suggestions = assignDaysBasedOnTimeAndOrder(suggestions, plannerForm.flightDate);
+
+      for (const node of suggestions) {
+        const normalized = withAutoCategoryIcon(node);
+        addNode(normalized);
+        const payload: SyncItineraryPayload = { trip_id: TRIP_ID, action: 'add_node', payload: normalized };
+        socketRef.current?.emit('sync_itinerary', payload);
+        void syncItinerary(payload);
+      }
+      
+      showToast('AI 行程生成完成！');
+    } catch (err) {
+      showToast('AI 規劃失敗，請檢查系統設定');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   // Online/offline tracking
   useEffect(() => {
@@ -156,10 +257,10 @@ export default function ItineraryTab() {
         setPlannerForm(buildDefaultPlannerForm(tripResult.destination, tripResult.days));
         setFavorites(favResult);
         setCollaborators(collabResult);
-        setNodes(itineraryResult);
+        setNodes(assignDaysBasedOnTimeAndOrder(itineraryResult, tripResult.startDate || '2026-06-15'));
       } catch {
         const cached = readCachedItinerary();
-        setNodes(cached);
+        setNodes(assignDaysBasedOnTimeAndOrder(cached, '2026-06-15'));
         setTip('同步服務暫時不可用，先顯示最近的離線內容。');
       } finally {
         setLoading(false);
@@ -405,13 +506,14 @@ export default function ItineraryTab() {
     if (!TRIP_ID) { showToast('缺少 trip_id，無法生成行程'); return; }
     setAiLoading(true);
     try {
-      const destination = tripInfo?.destination ?? '東京';
+      const destination = tripInfo?.destination || '您的目的地';
       const suggestions = await suggestItineraryWithForm({ destination, planner: plannerForm });
 
       let finalNodes: ItineraryNode[] = suggestions;
 
       if (aiGenerateMode === 'overwrite_all') {
         await removeNodesBatch([...nodes]);
+        finalNodes = assignDaysBasedOnTimeAndOrder(suggestions, plannerForm.flightDate);
       } else {
         const currentDayNodes = nodes.filter((node: ItineraryNode) => node.day === selectedDay);
         await removeNodesBatch(currentDayNodes);
@@ -438,10 +540,33 @@ export default function ItineraryTab() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex-1 flex flex-col pt-8 sm:pt-12 items-center justify-center min-h-[50vh]">
+        <Loader2 className="animate-spin text-pink-400 mb-4" size={32} />
+        <p className="text-slate-400 font-bold">載入行程中...</p>
+      </div>
+    );
+  }
+
+  if (isPlanningNew) {
+    return (
+      <div className="flex-1 flex flex-col pt-8 sm:pt-12">
+        <AiForm onSubmit={handleAiFormSubmit} />
+        <button 
+          onClick={() => setIsPlanningNew(false)}
+          className="fixed top-24 left-6 z-[60] w-12 h-12 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center border border-white/60 shadow-sm text-slate-600 hover:bg-white transition-colors"
+        >
+          <ArrowLeft size={24} />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-x-hidden p-4 md:p-8 md:pb-[90px] xl:px-12 min-h-[100dvh] flex-1 max-w-full lg:max-w-5xl xl:max-w-7xl mx-auto w-full flex flex-col transition-all duration-300">
-      {isOffline ? (
-        <GlassCard className="mb-4 !p-4 bg-amber-50/80 backdrop-blur-md border border-amber-200 shadow-sm flex flex-row items-center justify-center gap-2">
+    <main className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-6 font-sans selection:bg-pink-100 pb-32 animate-in fade-in duration-700">
+      {isOffline && (
+        <div className="mb-6 glass-card rounded-2xl p-4 bg-amber-50/80 border-amber-200 shadow-sm flex items-center justify-center gap-2">
           <span className="text-amber-700 font-bold text-sm tracking-wide flex items-center gap-2">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -449,442 +574,355 @@ export default function ItineraryTab() {
             </span>
             目前離線中，僅供查看喔 📴
           </span>
-        </GlassCard>
-      ) : null}
-
-      {/* Header — title from API */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-y-6">
-        <div className="flex flex-col gap-y-1 w-full md:w-auto">
-          <span className="text-[36px] md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 to-cyan-500 tracking-tight leading-tight">
-            {tripInfo?.name ?? '載入中...'}
-          </span>
-          {tripInfo && (
-            <span className="text-sm md:text-base font-bold text-slate-500 tracking-wide mt-1">
-              {tripInfo.destination} · {tripInfo.days} 天 · {collaborators.length} 人共編
-            </span>
-          )}
         </div>
-        <div className="flex flex-row items-center bg-white/60 backdrop-blur-md px-3 md:px-4 py-2 rounded-[24px] border border-white shadow-sm ring-1 ring-slate-100/30">
-          <div className="flex flex-row items-center mr-1 md:mr-2" style={{ gap: -10 }}>
-            {collaborators.map((c: Collaborator, index: number) => {
-              const Comp = CollaboratorAvatar as any;
-              return (
-                <Comp
-                  key={c.id}
-                  collaborator={c}
-                  index={index}
-                  isOnline={isSocketConnected}
-                />
-              );
-            })}
+      )}
+
+      {/* Header Section */}
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div className="group">
+          <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 flex items-center gap-3 font-serif tracking-tight leading-tight">
+            <div className="flex items-center gap-3">
+              {tripInfo?.destination || '未命名目的地'} <span className="text-3xl md:text-4xl animate-bounce group-hover:scale-125 transition-transform">✨</span>
+            </div>
+          </h1>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-slate-500 font-bold text-[15px]">
+             <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-pink-400">calendar_month</span>
+                <span>{tripInfo?.startDate && tripInfo?.endDate ? `${tripInfo.startDate} - ${tripInfo.endDate} • ` : null}{totalDays} 天</span>
+             </div>
+             <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-pink-400">group</span>
+                <span>{collaborators.length} 位旅行者</span>
+             </div>
           </div>
-          <div className="w-px h-8 bg-slate-200" />
-          <button
-            onClick={() => void handleShare()}
-            className="w-10 h-10 rounded-full bg-gradient-to-r from-fuchsia-400 to-purple-500 hover:opacity-90 active:scale-95 flex items-center justify-center border border-fuchsia-300 ml-2 shadow-sm transition-all"
-            title="分享旅程"
+        </div>
+        
+        <div className="flex gap-2 p-1.5 glass-card rounded-full w-full md:w-auto overflow-x-auto no-scrollbar shadow-lg border border-white/60">
+          <button 
+            onClick={() => setViewMode('list')}
+            className={`px-8 py-3 rounded-full font-black text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'list' ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-xl shadow-pink-200/50' : 'text-slate-400 hover:text-pink-500 hover:bg-white/40'}`}
           >
-            <Share2 size={18} color="white" strokeWidth={3} />
+            LIST
+          </button>
+          <button 
+            onClick={() => setViewMode('map')}
+            className={`px-8 py-3 rounded-full font-black text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-xl shadow-pink-200/50' : 'text-slate-400 hover:text-pink-500 hover:bg-white/40'}`}
+          >
+            EXPLORE
           </button>
         </div>
       </div>
 
-      {/* View mode + share */}
-      <div className="flex flex-col sm:flex-row mb-8 items-stretch gap-3">
-        <div className="flex flex-row bg-white/50 backdrop-blur-md p-1.5 rounded-full border border-white/60 shadow-sm ring-1 ring-slate-100/30 w-full sm:w-auto">
-          {(['list', 'map'] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={`flex flex-1 sm:flex-none flex-row justify-center items-center px-5 py-2.5 rounded-full transition-all duration-300 ${viewMode === mode ? 'bg-white shadow-md shadow-slate-200/50 scale-[1.02]' : 'hover:bg-white/40'}`}
-            >
-              {mode === 'list'
-                ? <ListIcon size={18} strokeWidth={2.5} color={viewMode === mode ? '#d946ef' : '#94a3b8'} />
-                : <MapIcon size={18} strokeWidth={2.5} color={viewMode === mode ? '#d946ef' : '#94a3b8'} />
-              }
-              <span className={`ml-2 font-black tracking-wide text-sm ${viewMode === mode ? 'text-fuchsia-600' : 'text-slate-500'}`}>
-                {mode === 'list' ? '列表' : '地圖'}
-              </span>
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => void handleShare()}
-          className="flex flex-1 sm:flex-none flex-row bg-gradient-to-r from-fuchsia-400 to-pink-500 hover:opacity-90 active:scale-95 rounded-full items-center justify-center sm:ml-auto px-6 py-3 shadow-[0_4px_14px_0_rgb(217,70,239,0.39)] transition-all"
-        >
-          <Share2 size={18} strokeWidth={2.5} color="white" />
-          <span className="ml-2 font-bold tracking-wide text-white text-sm">Share to Social Media</span>
-        </button>
-      </div>
-
-      {/* Day selector — days from trip API */}
-      <div 
-        className="mb-8 overflow-x-auto sm:overflow-visible flex sm:flex-wrap pb-3 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 touch-pan-x"
-        style={{ gap: 12 }}
-      >
-        {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
-          const isActive = selectedDay === day;
-          const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
-          return (
-            <button
-              key={day}
-              onClick={() => setSelectedDay(day)}
-              className="relative flex-none group focus:outline-none"
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="day-indicator"
-                  className="absolute inset-0 rounded-full bg-gradient-to-b from-fuchsia-500 to-purple-600 shadow-md shadow-fuchsia-500/20"
-                  transition={{ type: 'spring', bounce: 0.35, duration: 0.5 }}
-                />
-              )}
-              <div className={`px-5 py-2.5 md:px-6 md:py-3 rounded-full items-center justify-center relative z-10 flex flex-row gap-x-2 transition-all duration-300 ${!isActive && 'bg-white/40 border border-white hover:bg-white/60 hover:shadow-sm'}`}>
-                <span className={`text-sm md:text-[15px] font-bold tracking-wide transition-colors duration-300 whitespace-nowrap ${isActive ? 'text-white' : 'text-slate-700 group-hover:text-fuchsia-700'}`}>
-                  Day {day}
-                </span>
-                {count > 0
-                  ? <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'bg-fuchsia-400'}`} />
-                  : <div className="w-1.5 h-1.5 rounded-full bg-transparent border border-slate-300 shrink-0" />
-                }
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      <GlassCard className="!p-0 mb-6 transition-all duration-500 border border-slate-100/50">
-        <button 
-          onClick={() => setShowPlanner(!showPlanner)}
-          className="w-full flex flex-row items-center justify-between p-6 hover:bg-slate-50/50 transition-colors"
-        >
-          <div className="flex flex-col items-start gap-y-1">
-            <span className="text-[10px] font-black tracking-widest text-fuchsia-500 uppercase">AI Assistant</span>
-            <span className="font-black text-xl md:text-2xl text-slate-800 tracking-tight">AI 智能規劃助手</span>
-          </div>
-          <div className={`w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center transition-transform duration-300 ${showPlanner ? 'rotate-180' : ''}`}>
-            <Plus size={18} className={`transition-transform ${showPlanner ? 'rotate-45' : ''}`} />
-          </div>
-        </button>
-
-        <AnimatePresence>
-          {showPlanner && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="px-6 pb-6 flex flex-col gap-y-4">
-                <div className="flex flex-col md:flex-row gap-3">
-                  <div className="flex-1 flex flex-col gap-1.5">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">旅遊天數</span>
-                    <input
-                      value={String(plannerForm.days)}
-                      onChange={(e) => setPlannerField('days', Math.max(1, Number(e.target.value) || 1))}
-                      placeholder="天數"
-                      inputMode="numeric"
-                      className="w-full rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-                    />
-                  </div>
-                  <div className="flex-[2] flex flex-col gap-1.5">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">出發日期</span>
-                    <input
-                      type="date"
-                      value={plannerForm.flightDate}
-                      onChange={(e) => setPlannerField('flightDate', e.target.value)}
-                      className="w-full rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none uppercase"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex flex-col md:flex-row gap-3">
-                  <div className="flex-1 flex flex-col gap-1.5">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">出發地</span>
-                    <input
-                      value={plannerForm.departureFrom}
-                      onChange={(e) => setPlannerField('departureFrom', e.target.value.toUpperCase())}
-                      placeholder="例: TPE"
-                      className="w-full rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-                    />
-                  </div>
-                  <div className="flex-1 flex flex-col gap-1.5">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">目的地</span>
-                    <input
-                      value={plannerForm.arrivalTo}
-                      onChange={(e) => setPlannerField('arrivalTo', e.target.value.toUpperCase())}
-                      placeholder="例: NRT"
-                      className="w-full rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">偏好的國家 / 景點 / 美食 / 需求備註</span>
-                  <div className="flex flex-col gap-y-3">
-                    <input
-                      value={plannerForm.countries.join(', ')}
-                      onChange={(e) => setPlannerCsvField('countries')(e.target.value)}
-                      placeholder="想去的國家（例如：日本, 韓國）"
-                      className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-                    />
-                    <input
-                      value={plannerForm.mustVisitSpots.join(', ')}
-                      onChange={(e) => setPlannerCsvField('mustVisitSpots')(e.target.value)}
-                      placeholder="必訪景點（例如：迪士尼, 雷門）"
-                      className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-                    />
-                    <input
-                      value={plannerForm.mustEatFoods.join(', ')}
-                      onChange={(e) => setPlannerCsvField('mustEatFoods')(e.target.value)}
-                      placeholder="想吃的美食（例如：和牛, 壽司）"
-                      className="rounded-[20px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none"
-                    />
-                    <textarea
-                      value={plannerForm.notes}
-                      onChange={(e) => setPlannerField('notes', e.target.value)}
-                      placeholder="其他特定需求（例：慢步調、親子同行、一定要逛街）"
-                      className="rounded-[24px] shadow-sm border border-slate-100 bg-white px-5 py-4 font-bold text-slate-800 text-[15px] focus:ring-2 focus:ring-fuchsia-400 transition-all outline-none min-h-[100px] resize-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Left Column: Filters & Info */}
+        <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit">
+          <GlassCard className="!p-6 shadow-sm ring-1 ring-slate-100/50">
+            <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400 mb-5 flex items-center gap-2">
+              <span>旅程天數</span> <span className="text-lg">📅</span>
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
+                const isActive = selectedDay === day;
+                const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
+                return (
                   <button
-                    onClick={() => void handleAutoFetchFlights()}
-                    disabled={flightsLoading || isOffline}
-                    className={`rounded-[22px] shadow-sm px-6 py-4.5 flex flex-row items-center justify-center transition-all active:scale-95 ${
-                      flightsLoading || isOffline ? 'bg-slate-200 cursor-not-allowed opacity-70' : 'bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-900/10'
+                    key={day}
+                    onClick={() => setSelectedDay(day)}
+                    className={`px-4 py-3.5 rounded-2xl font-black text-sm transition-all flex flex-col items-center gap-1 border ${
+                      isActive 
+                        ? 'bg-pink-50 text-pink-600 border-pink-200 shadow-inner' 
+                        : 'bg-white/60 text-slate-400 border-white hover:bg-white hover:text-pink-400'
                     }`}
                   >
-                    <Plus size={18} className="mr-2 text-white" strokeWidth={3.5} />
-                    <span className="text-white font-black tracking-wide">
-                      {flightsLoading ? '智能抓取數據中...' : '自動獲取推薦航班資料'}
-                    </span>
+                    <span>DAY {day}</span>
+                    <span className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">{count} SPOTS</span>
                   </button>
-                  
-                  {plannerForm.autoFlightSegments.length > 0 && (
-                    <div className="rounded-[24px] bg-slate-50 border border-slate-100 p-4 shadow-inner flex flex-col gap-y-2">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">偵測到航班片段</span>
-                      <div className="flex flex-col gap-2">
-                        {plannerForm.autoFlightSegments.map((segment: string) => (
-                          <span key={segment} className="text-[13px] font-bold text-slate-600 bg-white rounded-xl px-3 py-2.5 border border-slate-100 shadow-sm leading-relaxed">{segment}</span>
-                        ))}
-                      </div>
+                );
+              })}
+            </div>
+          </GlassCard>
+
+          {/* Collaborators with presence */}
+          <GlassCard className="!p-6">
+             <div className="flex items-center justify-between mb-5">
+                <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">目前在線</span>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-black text-emerald-600 uppercase">LIVE</span>
+                </div>
+             </div>
+             <div className="flex flex-row items-center">
+                {collaborators.map((c, i) => (
+                  <CollaboratorAvatar key={c.id} collaborator={c} index={i} isOnline={true} />
+                ))}
+             </div>
+          </GlassCard>
+
+          {/* Favorites List - Desktop */}
+          <GlassCard className="!p-6">
+             <div className="flex items-center justify-between mb-5">
+                <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">口袋名單</span>
+                <span className="text-[10px] font-bold text-pink-400">點擊 + 加入</span>
+             </div>
+             <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto no-scrollbar pr-1 -mr-1">
+                {favorites.map((spot: FavoriteSpot) => (
+                  <DraggableFavoriteSpot
+                    key={spot.id}
+                    spot={spot}
+                    selectedDay={selectedDay}
+                    isOffline={isOffline}
+                    onAdd={addSpotToDay}
+                    onDelete={handleDeleteFavorite}
+                  />
+                ))}
+             </div>
+
+             {!isOffline && (
+                <div className="mt-6 pt-5 border-t border-slate-50">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg active:scale-90 transition-all"
+                    >
+                      {newSpotEmoji}
+                    </button>
+                    <input
+                      value={newSpotTitle}
+                      onChange={(e) => setNewSpotTitle(e.target.value)}
+                      placeholder="快速收藏..."
+                      className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-200 transition-all"
+                      onKeyDown={(e) => { if (e.key === "Enter") { void handleAddFavorite(); } }}
+                    />
+                    <button
+                      onClick={() => void handleAddFavorite()}
+                      disabled={addingFavorite || !newSpotTitle.trim()}
+                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 text-white flex items-center justify-center disabled:opacity-30 active:scale-95 transition-all"
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
+                  {showEmojiPicker && (
+                    <div className="flex flex-wrap gap-1.5 mt-3 p-2 bg-white rounded-xl border border-slate-100 shadow-xl overflow-y-auto max-h-[120px] no-scrollbar">
+                      {EMOJI_OPTIONS.map(em => (
+                        <button key={em} onClick={() => { setNewSpotEmoji(em); setShowEmojiPicker(false); }} className="w-8 h-8 flex items-center justify-center hover:bg-pink-50 rounded-lg text-lg">{em}</button>
+                      ))}
                     </div>
                   )}
+                  {addingFavorite && <p className="text-[9px] font-bold text-pink-500 mt-2 animate-pulse uppercase tracking-widest text-center">GEOCODING...</p>}
+                </div>
+             )}
+          </GlassCard>
+
+          {/* New Trip Button */}
+          <button 
+            onClick={() => setIsPlanningNew(true)}
+            className="w-full py-5 rounded-[28px] bg-white text-slate-700 font-bold text-sm shadow-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+          >
+            <Plus size={20} className="text-pink-400" />
+            重新規劃旅程
+          </button>
+        </aside>
+
+        {/* Right Column: Content */}
+        <div className="lg:col-span-3 flex flex-col gap-6">
+          {/* Mobile Day Selector */}
+          <div className="lg:hidden flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4">
+            {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
+              const isActive = selectedDay === day;
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDay(day)}
+                  className={`px-8 py-3 rounded-full font-black text-sm whitespace-nowrap transition-all uppercase tracking-widest ${
+                    isActive 
+                      ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-200/50' 
+                      : 'glass-card text-slate-400 hover:text-pink-400'
+                  }`}
+                >
+                  DAY {day}
+                </button>
+              );
+            })}
+          </div>
+
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="relative pl-6 mt-4 flex flex-col gap-8"
+              >
+                {[0, 1, 2].map((i) => <ItinerarySkeletonCard key={i} />)}
+              </motion.div>
+            ) : viewMode === 'list' ? (
+              <motion.div
+                key="list"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="flex-1 flex flex-col gap-8"
+              >
+                {/* AI Assistant Quick Trigger */}
+                <div className="group relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 rounded-[32px] blur-2xl opacity-10 group-hover:opacity-20 transition-opacity duration-1000" />
+                  <GlassCard className="!p-6 !rounded-[32px] border border-white/80 shadow-xl overflow-hidden">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                      <div className="flex items-center gap-5">
+                        <div className="w-16 h-16 rounded-[22px] bg-gradient-to-tr from-pink-500 to-fuchsia-600 flex items-center justify-center text-white shadow-lg shadow-pink-200">
+                          <Sparkles size={28} />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-xl text-slate-800 leading-tight">需要微調 Day {selectedDay} 嗎？</h3>
+                          <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-wider">AI 行程規劃助手</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setShowPlanner(!showPlanner)}
+                        className={`w-full sm:w-auto px-10 py-4 rounded-full font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${showPlanner ? 'bg-slate-100 text-slate-400' : 'bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 active:scale-95'}`}
+                      >
+                        {showPlanner ? '收起助理' : '喚起 AI 助理'}
+                        {showPlanner ? <X size={18} /> : <ArrowRight size={18} />}
+                      </button>
+                    </div>
+
+                    <AnimatePresence>
+                      {showPlanner && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-10 flex flex-col gap-6">
+                            <div className="h-px bg-slate-100 w-full" />
+                            <div className="flex flex-col gap-3">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2 mb-1">您的具體需求或對 AI 的指令</label>
+                              <textarea
+                                placeholder="例如：幫我把下午行程安排得更輕鬆一點，或是推薦三間必吃的拉麵店插入到晚上..."
+                                value={plannerForm.notes}
+                                onChange={(e) => setPlannerField('notes', e.target.value)}
+                                className="w-full bg-white/50 border border-slate-100 rounded-3xl px-6 py-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[140px] shadow-inner text-base resize-none"
+                              />
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row gap-3">
+                              <button
+                                onClick={() => setAiGenerateMode('selected_day')}
+                                className={`flex-1 py-4.5 rounded-[22px] font-black text-xs uppercase tracking-widest transition-all border ${aiGenerateMode === 'selected_day' ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                              >
+                                重建 Day {selectedDay}
+                              </button>
+                              <button
+                                onClick={() => setAiGenerateMode('overwrite_all')}
+                                className={`flex-1 py-4.5 rounded-[22px] font-black text-xs uppercase tracking-widest transition-all border ${aiGenerateMode === 'overwrite_all' ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                              >
+                                全局重新規劃
+                              </button>
+                            </div>
+
+                            <button 
+                              onClick={() => void handleAiSuggest()}
+                              disabled={aiLoading}
+                              className="w-full py-5 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] transition-all"
+                            >
+                              {aiLoading ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
+                              開始智慧微調行程
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </GlassCard>
                 </div>
 
-                <div className="rounded-[28px] border border-slate-100 bg-slate-50 p-2 mt-2 flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400 mb-2 uppercase tracking-widest pl-3 pt-2">生成精度模式</span>
-                  <div className="flex flex-row gap-x-2 p-1">
-                    <button
-                      onClick={() => setAiGenerateMode('selected_day')}
-                      className={`flex-1 rounded-[20px] px-4 py-3.5 transition-all flex flex-col items-center gap-1 ${
-                        aiGenerateMode === 'selected_day'
-                          ? 'bg-white shadow-md ring-1 ring-slate-100'
-                          : 'hover:bg-white/40 text-slate-500'
-                      }`}
-                    >
-                      <span className={`text-[14px] font-black tracking-wide ${aiGenerateMode === 'selected_day' ? 'text-fuchsia-600' : ''}`}>單日重建</span>
-                      <span className="text-[9px] text-slate-400 font-bold">僅更新選取的日期</span>
-                    </button>
-                    <button
-                      onClick={() => setAiGenerateMode('overwrite_all')}
-                      className={`flex-1 rounded-[20px] px-4 py-3.5 transition-all flex flex-col items-center gap-1 ${
-                        aiGenerateMode === 'overwrite_all'
-                          ? 'bg-white shadow-md ring-1 ring-rose-100'
-                          : 'hover:bg-white/40 text-slate-500'
-                      }`}
-                    >
-                      <span className={`text-[14px] font-black tracking-wide ${aiGenerateMode === 'overwrite_all' ? 'text-rose-500' : ''}`}>全局重建</span>
-                      <span className="text-[9px] text-slate-400 font-bold">同步更新完整旅程</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </GlassCard>
+                <ItineraryList
+                  items={selectedDayNodes}
+                  day={selectedDay}
+                  onDelete={handleDeleteNode}
+                  onUpdate={handleUpdateNode}
+                  isOffline={isOffline}
+                  aiLoading={aiLoading}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="map"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.4 }}
+                className="w-full"
+              >
+                <MapView items={selectedDayNodes} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
 
-      {/* AI button */}
-      <button
-        onClick={() => void handleAiSuggest()}
-        disabled={aiLoading}
-        className={`mb-8 flex-row items-center justify-center rounded-[24px] py-4 px-4 shadow-[0_8px_20px_rgb(0,0,0,0.12)] transition-all active:scale-[0.98] ${aiLoading ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 hover:opacity-90'}`}
+      {tip ? <span className="fixed bottom-28 left-0 right-0 text-center text-xs font-black text-slate-400 pointer-events-none animate-pulse">{tip}</span> : null}
+
+      {/* Floating Action Button (Mobile Only) */}
+      <button 
+        onClick={() => setIsPlanningNew(true)}
+        className="md:hidden fixed bottom-24 right-6 w-16 h-16 rounded-full bg-gradient-to-tr from-pink-500 to-fuchsia-600 text-white shadow-2xl shadow-pink-200 flex items-center justify-center z-50 active:scale-90 transition-all"
       >
-        <Sparkles size={20} strokeWidth={2.5} color="white" />
-        <span className="ml-2.5 font-black text-white tracking-wide text-lg">
-          {aiLoading
-            ? '果凍精靈編排中...'
-            : aiGenerateMode === 'overwrite_all'
-              ? 'AI 生成完整行程'
-              : `AI 生成 Day ${selectedDay}`}
-        </span>
+        <Sparkles size={28} />
       </button>
 
-      {tip ? <span className="text-xs font-bold text-slate-500 mb-4 block text-center animate-pulse">{tip}</span> : null}
-
-      {/* Favorites panel — data from /api/favorites */}
-      <GlassCard className="!p-5 mb-8">
-        <div className="flex-row items-center justify-between mb-5">
-          <span className="font-extrabold text-xl text-slate-800 tracking-tight">收藏夾</span>
-          <span className="text-[11px] font-bold text-slate-400 tracking-wider">點擊 + 快速加入</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {favorites.map((spot: FavoriteSpot) => {
-            const Comp = DraggableFavoriteSpot as any;
-            return (
-              <Comp
-                key={spot.id}
-                spot={spot}
-                selectedDay={selectedDay}
-                isOffline={isOffline}
-                onAdd={addSpotToDay}
-                onDelete={handleDeleteFavorite}
-              />
-            );
-          })}
-        </div>
-
-        {/* Add custom favorite */}
-        {!isOffline && (
-          <div className="mt-6 pt-5 border-t border-slate-100">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="flex flex-row gap-3 flex-1">
-                {/* Emoji picker trigger */}
-                <button
-                  onClick={() => setShowEmojiPicker((v: boolean) => !v)}
-                  className="w-12 h-12 shrink-0 rounded-2xl bg-white/70 border border-slate-100 flex items-center justify-center shadow-sm"
-                >
-                  <span className="text-xl">{newSpotEmoji}</span>
-                </button>
-                <input
-                  value={newSpotTitle}
-                  onChange={(e) => setNewSpotTitle(e.target.value)}
-                  placeholder="新增想去的景點名稱..."
-                  className="flex-1 rounded-2xl border border-slate-100 bg-white/80 px-4 py-2.5 font-bold text-slate-700 text-sm focus:ring-2 focus:ring-fuchsia-400 outline-none transition-all"
-                  onKeyDown={(e) => { if (e.key === "Enter") { void handleAddFavorite(); } }} />
-              </div>
-              <button
-                onClick={() => void handleAddFavorite()}
-                disabled={addingFavorite || !newSpotTitle.trim()}
-                className={`h-12 px-6 rounded-2xl flex flex-row items-center justify-center gap-2 transition-all active:scale-95 ${
-                  addingFavorite || !newSpotTitle.trim() ? 'bg-purple-100 text-purple-300' : 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
-                }`}
-              >
-                <Plus size={20} strokeWidth={3} />
-                <span className="font-black">新增收藏</span>
-              </button>
-            </div>
-            {addingFavorite && (
-              <span className="text-[11px] font-bold text-purple-500 mt-2 ml-1 flex flex-row items-center animate-pulse">
-                <Sparkles size={12} className="mr-1" /> Nominatim 地理編碼中...
-              </span>
-            )}
-            {/* Emoji picker */}
-            {showEmojiPicker && (
-              <div className="flex flex-row flex-wrap mt-4 p-4 bg-white/60 rounded-3xl border border-white gap-2">
-                {EMOJI_OPTIONS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => { setNewSpotEmoji(emoji); setShowEmojiPicker(false); }}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                      newSpotEmoji === emoji ? 'bg-purple-100 border border-purple-300 scale-110' : 'bg-white/80 hover:bg-white'
-                    }`}
-                  >
-                    <span className="text-xl">{emoji}</span>
-                  </button>
+      {/* Favorites panel hidden below main if needed, but on desktop it's in sidebar */}
+      {!loading && nodes.length > 0 && (
+         <div className="lg:hidden mt-20">
+           <GlassCard className="!p-6">
+              <h3 className="font-black text-xl text-slate-800 mb-6">口袋名單</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {favorites.map((spot: FavoriteSpot) => (
+                  <DraggableFavoriteSpot
+                    key={spot.id}
+                    spot={spot}
+                    selectedDay={selectedDay}
+                    isOffline={isOffline}
+                    onAdd={addSpotToDay}
+                    onDelete={handleDeleteFavorite}
+                  />
                 ))}
               </div>
-            )}
-          </div>
-        )}
-      </GlassCard>
-
-      {/* Timeline / Map */}
-      <div className="flex-1 pb-32">
-        <AnimatePresence mode="wait">
-          {loading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="relative pl-6 mt-4 flex flex-col gap-8"
-            >
-              {[0, 1, 2].map((i) => <ItinerarySkeletonCard key={i} />)}
-            </motion.div>
-          ) : viewMode === 'list' ? (
-            <motion.div
-              key="list"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ItineraryList
-                items={selectedDayNodes}
-                day={selectedDay}
-                onDelete={handleDeleteNode}
-                onUpdate={handleUpdateNode}
-                isOffline={isOffline}
-                aiLoading={aiLoading}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="map"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <TokyoMapView items={selectedDayNodes} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
+           </GlassCard>
+         </div>
+      )}
+    </main>
   );
 }
 
 // ─── Collaborator Avatar with presence glow ──────────────────────────────────
 
-function CollaboratorAvatar({
-  collaborator,
-  index,
-  isOnline,
-}: {
-  collaborator: Collaborator;
-  index: number;
-  isOnline: boolean;
-}) {
+function CollaboratorAvatar({ collaborator, index, isOnline }: { collaborator: Collaborator; index: number; isOnline: boolean; key?: string }) {
   return (
-    <div
-      className="relative w-10 h-10"
-      style={{ marginLeft: index === 0 ? 0 : -8, zIndex: 10 - index }}
+    <motion.div
+      initial={{ scale: 0, x: -20 }}
+      animate={{ scale: 1, x: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className={`relative -ml-3 first:ml-0 group`}
+      style={{ zIndex: 10 + index }}
     >
-      {isOnline && (
-        <motion.div
-          className="absolute rounded-full bg-emerald-400"
-          style={{ inset: -2 }}
-          animate={{ scale: [1, 1.45, 1], opacity: [0.6, 0, 0.6] }}
-          transition={{ duration: 2.2, repeat: Infinity, delay: index * 0.35, ease: 'easeInOut' }}
-        />
-      )}
-      <div
-        className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center"
-        style={{ borderWidth: 2, borderColor: 'white' }}
-      >
-        <span className="text-lg">{collaborator.avatar}</span>
+      <div className={`w-12 h-12 rounded-full border-[3px] border-white shadow-xl overflow-hidden transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1 relative ${isOnline ? 'ring-2 ring-emerald-400 ring-offset-2' : ''}`}>
+        <div className="w-full h-full bg-pink-50 flex items-center justify-center text-xl">
+           {collaborator.avatar.length > 2 ? <img src={collaborator.avatar} className="w-full h-full object-cover" /> : collaborator.avatar}
+        </div>
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+      </div>
+      
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800/90 backdrop-blur-md text-white text-[10px] font-black rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase tracking-widest shadow-xl">
+        {collaborator.name}
       </div>
       {isOnline && (
-        <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white" />
+        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-400 border-[3px] border-white shadow-sm" />
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -902,321 +940,190 @@ function DraggableFavoriteSpot({
   isOffline: boolean;
   onAdd: (spot: FavoriteSpot, day: number) => void;
   onDelete: (id: string) => void | Promise<void>;
+  key?: string;
 }) {
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-
-  return (
-    <div className="relative">
-      <AnimatePresence>
-        {isDragging && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute -bottom-16 left-0 right-0 h-14 rounded-2xl border-2 border-dashed border-purple-400 bg-purple-50/80 flex items-center justify-center z-0"
-          >
-            <span className="text-purple-500 font-bold text-sm">放開加入 Day {selectedDay} ↓</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.div
-        drag={!isOffline}
-        dragSnapToOrigin
-        dragElastic={0.15}
-        dragConstraints={{ top: 0, left: -20, right: 20, bottom: 200 }}
-        whileDrag={{ scale: 1.05, boxShadow: '0 16px 48px rgba(147,51,234,0.25)', zIndex: 50, cursor: 'grabbing' }}
-        onDragStart={() => setIsDragging(true)}
-        onDragEnd={(_: PointerEvent, info: PanInfo) => {
-          setIsDragging(false);
-          if (info.offset.y > 80) onAdd(spot, selectedDay);
-        }}
-        style={{ cursor: isOffline ? 'default' : 'grab', position: 'relative', zIndex: 10 }}
-      >
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white px-3 py-3 md:py-2.5 flex-row items-center shadow-sm hover:shadow-md transition-shadow">
-          <span className="text-xl md:text-2xl mr-3 md:mr-2">{spot.emoji}</span>
-          <span className="font-bold text-slate-700 flex-1 truncate text-sm md:text-base">{spot.title}</span>
-          {spot.lat && spot.lng && (
-            <div className="bg-emerald-50 rounded-full px-2 py-0.5 mr-2 border border-emerald-100 shrink-0 hidden sm:flex">
-              <span className="text-[9px] font-black text-emerald-600 tracking-wide uppercase">LOCATED</span>
-            </div>
-          )}
-          <div className="flex flex-row items-center gap-1.5 md:gap-1 pl-2 border-l border-slate-100 ml-1">
-            <button
-              onClick={() => !isOffline && onAdd(spot, selectedDay)}
-              disabled={isOffline}
-              className={`${isOffline ? 'bg-slate-300' : 'bg-fuchsia-600 hover:bg-fuchsia-700 active:scale-95 shadow-fuchsia-200 shadow-md'} rounded-full w-9 h-9 md:w-8 md:h-8 flex items-center justify-center transition-all`}
-            >
-              <Plus size={16} color="white" strokeWidth={3} />
-            </button>
-            <button
-              onClick={() => onDelete(spot.id)}
-              className="w-9 h-9 md:w-8 md:h-8 rounded-full bg-slate-50 border border-slate-100 hover:bg-red-50 hover:border-red-100 flex items-center justify-center transition-all group"
-            >
-              <X size={14} className="text-slate-400 group-hover:text-red-500" strokeWidth={3} />
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// ─── Itinerary List ───────────────────────────────────────────────────────────
-
-function ItineraryListItem({
-  item,
-  idx,
-  editingId,
-  draft,
-  setDraft,
-  startEdit,
-  saveEdit,
-  cancelEdit,
-  isOffline,
-  onDelete
-}: {
-  key?: React.Key;
-  item: ItineraryNode;
-  idx: number;
-  editingId: string | null;
-  draft: any;
-  setDraft: any;
-  startEdit: (item: ItineraryNode) => void;
-  saveEdit: (item: ItineraryNode) => void;
-  cancelEdit: () => void;
-  isOffline: boolean;
-  onDelete: (id: string) => void;
-}) {
-  const [isSimulatingDrag, setIsSimulatingDrag] = useState(false);
-
   return (
     <motion.div
       layout
-      initial={{ x: -20, opacity: 0 }}
-      animate={{ 
-        x: 0, 
-        opacity: 1,
-        rotate: isSimulatingDrag ? 2 : 0,
-        scale: isSimulatingDrag ? 1.02 : 1
-      }}
-      exit={{ x: 10, opacity: 0 }}
-      transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
-      style={{ zIndex: isSimulatingDrag ? 50 : 1 }}
+      whileHover={{ y: -2 }}
+      className="group relative flex items-center justify-between p-4 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[28px] shadow-sm hover:shadow-xl transition-all"
     >
-      <div className="relative">
-        <div className="absolute left-[-30px] md:left-[-42px] lg:left-[-54px] top-8 md:top-10 w-[20px] h-[20px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] rounded-full bg-white border-[4px] border-fuchsia-500 shadow-lg ring-[4px] ring-fuchsia-50 shadow-fuchsia-200 shrink-0" style={{ zIndex: isSimulatingDrag ? 51 : 10 }} />
-        <GlassCard className={`!p-4 sm:!p-6 md:!p-8 lg:!p-10 mb-4 sm:mb-6 md:mb-8 lg:mb-10 hover:-translate-y-1 hover:translate-x-1 transition-all duration-300 ring-1 ring-white/70 border border-white ${isSimulatingDrag ? 'shadow-2xl shadow-purple-500/20 ring-4 ring-purple-300' : 'hover:shadow-[0_45px_110px_-25px_rgba(217,70,239,0.18)]'}`}>
-          <div className={`flex flex-col ${editingId === item.node_id ? '' : 'sm:flex-row items-start sm:items-center'} gap-4 sm:gap-6 md:gap-10`}>
-            <div className={`flex ${editingId === item.node_id ? 'flex-col' : 'flex-row items-start sm:items-center'} flex-1 min-w-0 gap-3 sm:gap-4 md:gap-6 w-full`}>
-              {!isOffline && editingId !== item.node_id && (
-                <div 
-                  className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-fuchsia-400 p-1 -ml-3 hidden sm:block"
-                  onMouseDown={() => setIsSimulatingDrag(true)}
-                  onMouseUp={() => setIsSimulatingDrag(false)}
-                  onMouseLeave={() => setIsSimulatingDrag(false)}
-                  onTouchStart={() => setIsSimulatingDrag(true)}
-                  onTouchEnd={() => setIsSimulatingDrag(false)}
-                >
-                  <GripVertical size={24} />
-                </div>
-              )}
-              
-              {editingId !== item.node_id && (
-                <div className="w-14 h-14 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-[24px] md:rounded-[32px] bg-gradient-to-br from-white to-slate-50 flex items-center justify-center shadow-inner border border-white shrink-0 relative group">
-                  <div className="absolute inset-0 bg-fuchsia-400 opacity-0 group-hover:opacity-10 transition-opacity rounded-[24px] md:rounded-[32px]" />
-                  <span className="text-3xl md:text-5xl lg:text-6xl drop-shadow-sm select-none">{item.emoji}</span>
-                </div>
-              )}
-
-              {editingId === item.node_id && draft ? (
-                <div className="flex-1 flex flex-col gap-4 w-full">
-                  <div className="flex flex-col sm:flex-row items-center gap-3 mb-2">
-                    <span className="text-3xl bg-white shadow-sm p-3 rounded-2xl shrink-0">{draft.emoji || item.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-black text-slate-800">編輯行程節點</h3>
-                      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-none">Inline Editing Mode</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="flex flex-col gap-1.5 col-span-1">
-                      <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Day</span>
-                      <input
-                        value={draft.day}
-                        onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, day: e.target.value } : prev))}
-                        inputMode="numeric"
-                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 transition-all"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5 col-span-1">
-                      <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Time</span>
-                      <input
-                        value={draft.time}
-                        onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, time: e.target.value } : prev))}
-                        placeholder="例: 10:30"
-                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 transition-all"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5 col-span-1">
-                      <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Quick Category</span>
-                      <select 
-                        value={draft.category}
-                        onChange={(e) => {
-                          const cat = e.target.value;
-                          const meta = getCategoryMeta(cat);
-                          setDraft((prev: any) => (prev ? { ...prev, category: cat, emoji: meta.icon } : prev));
-                        }}
-                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 transition-all appearance-none"
-                      >
-                        {CATEGORY_OPTIONS.map(opt => (
-                          <option key={opt} value={opt}>{getCategoryMeta(opt).label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Title</span>
-                    <input
-                      value={draft.title}
-                      onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, title: e.target.value } : prev))}
-                      placeholder="活動名稱..."
-                      className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 transition-all"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Description</span>
-                    <textarea
-                      value={draft.description}
-                      onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, description: e.target.value } : prev))}
-                      placeholder="活動詳情..."
-                      className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 min-h-[60px] resize-none"
-                    />
-                  </div>
-                  
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Notes (Private)</span>
-                    <textarea
-                      value={draft.notes}
-                      onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, notes: e.target.value } : prev))}
-                      placeholder="私人備註，只有你看得到..."
-                      className="w-full rounded-2xl border border-slate-100 bg-amber-50/50 px-4 py-2.5 text-sm font-bold text-amber-800 shadow-sm outline-none focus:ring-2 focus:ring-amber-400 min-h-[60px] resize-none"
-                    />
-                  </div>
-                  
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Category</span>
-                    <div className="flex flex-row overflow-x-auto gap-2 py-1 scrollbar-hide pb-2">
-                      {CATEGORY_OPTIONS.map((option) => {
-                        const optionMeta = getCategoryMeta(option);
-                        const active = draft.category === option;
-                        return (
-                          <button
-                            key={option}
-                            title={optionMeta.label}
-                            onClick={() =>
-                              setDraft((prev: any) =>
-                                prev ? { ...prev, category: option, emoji: optionMeta.icon } : prev,
-                              )
-                            }
-                            className={`flex-none px-4 py-2 rounded-full border transition-all text-xs font-bold ${
-                              active ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30' : 'bg-white/80 border-slate-100 text-slate-500 hover:bg-white'
-                            }`}
-                          >
-                            {optionMeta.icon} {optionMeta.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-row gap-3 pt-2">
-                    <button
-                      onClick={() => saveEdit(item)}
-                      className="flex-1 bg-slate-900 py-3.5 rounded-2xl shadow-lg active:scale-[0.98] transition-all"
-                    >
-                      <span className="text-white font-black text-[13px] tracking-wide">儲存變更</span>
-                    </button>
-                    <button
-                      onClick={() => cancelEdit()}
-                      className="flex-1 bg-slate-50 py-3.5 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
-                    >
-                      <span className="text-slate-500 font-bold text-[13px] tracking-wide">取消</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('確定要刪除此行程嗎？')) {
-                          onDelete(item.node_id);
-                          cancelEdit();
-                        }
-                      }}
-                      className="p-3.5 rounded-2xl bg-rose-50 border border-rose-100 text-rose-500 hover:bg-rose-100 transition-all flex items-center justify-center shrink-0"
-                      title="刪除行程"
-                    >
-                      <Trash2 size={20} strokeWidth={2.5} />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col gap-y-1.5 md:gap-y-2 overflow-hidden">
-                  <div className="flex flex-row flex-wrap items-center gap-2">
-                    <span className="text-xs md:text-[14px] font-black text-fuchsia-600 tracking-widest font-mono bg-fuchsia-50/50 px-2.5 py-1 rounded-lg border border-fuchsia-100/50">
-                      {item.time || '--:--'}
-                    </span>
-                    <div className={`px-2.5 py-1 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-wider ${
-                      item.category === 'flight' ? 'bg-blue-50 text-blue-500 border border-blue-100' :
-                      item.category === 'food' ? 'bg-orange-50 text-orange-500 border border-orange-100' :
-                      'bg-slate-50 text-slate-500 border border-slate-100'
-                    }`}>
-                      {getCategoryMeta(item.category).label}
-                    </div>
-                    {item.source === 'local' && (
-                       <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter bg-emerald-50/50 px-1.5 py-0.5 rounded-md border border-emerald-100/50">SYNCED</span>
-                    )}
-                  </div>
-                  <span className="text-xl md:text-3xl font-black text-slate-800 tracking-tight leading-tight line-clamp-2 md:line-clamp-1">
-                    {item.title}
-                  </span>
-                  {item.description && (
-                    <div className="text-sm md:text-base text-slate-600 font-medium leading-relaxed mt-1 whitespace-pre-wrap">
-                      {item.description}
-                    </div>
-                  )}
-                  {item.notes && (
-                    <div className="text-sm md:text-base text-amber-700 bg-amber-50/50 p-3 rounded-xl border border-amber-100 font-medium leading-relaxed mt-2 whitespace-pre-wrap flex flex-row items-start gap-2">
-                      <span className="text-amber-500 shrink-0">📝</span>
-                      <span>{item.notes}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {editingId !== item.node_id && !isOffline && (
-              <div className="flex flex-row lg:flex-col gap-4 w-full lg:w-auto pt-6 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-100/50 pl-0 lg:pl-10 justify-end lg:justify-center shrink-0">
-                <button
-                  onClick={() => startEdit(item)}
-                  className="flex-1 lg:flex-none w-full lg:w-16 h-14 lg:h-16 rounded-[22px] bg-white border border-slate-100 shadow-sm flex items-center justify-center hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 group"
-                  title="編輯行程"
-                >
-                  <Pencil size={20} className="text-slate-400 group-hover:text-fuchsia-600 transition-colors" strokeWidth={2.5} />
-                </button>
-                <button
-                  onClick={() => onDelete(item.node_id)}
-                  className="flex-1 lg:flex-none w-full lg:w-16 h-14 lg:h-16 rounded-[22px] bg-white border border-slate-100 shadow-sm flex items-center justify-center hover:bg-rose-50 hover:border-rose-200 transition-all active:scale-95 group"
-                  title="刪除"
-                >
-                  <Trash2 size={20} className="text-slate-400 group-hover:text-rose-500 transition-colors" strokeWidth={2.5} />
-                </button>
-              </div>
-            )}
-          </div>
-        </GlassCard>
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-[20px] bg-white flex items-center justify-center text-2xl shadow-sm border border-slate-100/50 group-hover:scale-105 transition-transform">
+          {spot.emoji}
+        </div>
+        <div>
+          <h4 className="font-black text-slate-800 text-[15px] leading-tight">{spot.title}</h4>
+          <p className="text-[10px] font-black text-slate-400 mt-0.5 uppercase tracking-[0.1em]">口袋名單</p>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onAdd(spot, selectedDay)}
+          disabled={isOffline}
+          className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all hover:bg-slate-900"
+          title="加入今天"
+        >
+          <Plus size={18} strokeWidth={3} />
+        </button>
+        <button
+          onClick={() => onDelete(spot.id)}
+          className="w-10 h-10 rounded-full bg-white/50 text-slate-300 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
+        >
+          <Trash2 size={16} />
+        </button>
       </div>
     </motion.div>
   );
 }
 
+// ─── Itinerary List ───────────────────────────────────────────────────────────
+
+interface ItineraryListItemProps {
+  key?: React.Key;
+  item: ItineraryNode;
+  idx: number;
+  editingId: string | null;
+  draft: any | null;
+  setDraft: React.Dispatch<React.SetStateAction<any | null>>;
+  startEdit: (item: ItineraryNode) => void;
+  saveEdit: (item: ItineraryNode) => void;
+  cancelEdit: () => void;
+  isOffline: boolean;
+  onDelete: (node_id: string) => void;
+}
+
+function ItineraryListItem({
+  item,
+  idx,
+  onDelete,
+  onUpdate,
+  isOffline,
+}: {
+  item: ItineraryNode;
+  idx: number;
+  onDelete: (node_id: string) => void;
+  onUpdate: (node: ItineraryNode) => void;
+  isOffline: boolean;
+  key?: string;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(item.title);
+  const [editTime, setEditTime] = useState(item.time);
+  const [editEmoji, setEditEmoji] = useState(item.emoji);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const handleSave = () => {
+    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji });
+    setIsEditing(false);
+  };
+
+  const meta = getCategoryMeta(item.category);
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
+      className="relative flex gap-6 sm:gap-10 items-start group"
+    >
+      {/* Timeline line */}
+      <div className="absolute left-[24px] sm:left-[30px] top-[60px] bottom-[-40px] w-0.5 bg-gradient-to-b from-pink-300/30 via-slate-200 to-transparent z-0 hidden sm:block group-last:hidden" />
+
+      {/* Time Badge */}
+      <div className="flex flex-col items-center pt-2">
+        <div className="w-[50px] sm:w-[60px] flex flex-col items-center">
+           <span className="text-[12px] sm:text-[14px] font-black text-slate-800 tabular-nums uppercase tracking-tight">{item.time}</span>
+           <div className={`w-3.5 h-3.5 rounded-full border-[3px] border-white shadow-lg z-10 mt-2.5 ${item.category === 'flight' ? 'bg-indigo-500 ring-4 ring-indigo-50' : 'bg-pink-500 ring-4 ring-pink-50'}`} />
+        </div>
+      </div>
+
+      {/* Content Card */}
+      <GlassCard className={`flex-1 !p-5 sm:!p-6 !rounded-[32px] border border-white/80 shadow-lg relative z-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300`}>
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full">
+          {/* Icon/Emoji Wrapper */}
+          <div className="relative group/emoji shrink-0">
+            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-[28px] flex items-center justify-center text-3xl sm:text-4xl shadow-sm border border-slate-100/50 transition-transform group-hover:scale-105 duration-500 ${item.category === 'flight' ? 'bg-gradient-to-br from-indigo-50 to-blue-50' : 'bg-white'}`}>
+              {isEditing ? (
+                 <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="animate-pulse active:scale-95 transition-transform">
+                    {editEmoji}
+                 </button>
+              ) : (
+                 <span className="filter drop-shadow-sm">{item.emoji}</span>
+              )}
+            </div>
+            {isEditing && showEmojiPicker && (
+               <div className="absolute top-full left-0 mt-4 p-3 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white z-[100] flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
+                 {EMOJI_OPTIONS.map(e => (
+                   <button key={e} onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl text-xl transition-colors">{e}</button>
+                 ))}
+               </div>
+            )}
+          </div>
+
+          <div className="flex-1 text-center sm:text-left min-w-0">
+            <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+               <span className="px-3 py-0.5 rounded-full bg-pink-50 text-[10px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
+                 {meta.label}
+               </span>
+               {item.category === 'flight' && (
+                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-indigo-500 flex items-center gap-1 animate-pulse">
+                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                   CONFIRMED
+                 </span>
+               )}
+            </div>
+            
+            {isEditing ? (
+               <div className="flex flex-col gap-3">
+                 <input 
+                   autoFocus
+                   value={editTitle}
+                   onChange={e => setEditTitle(e.target.value)}
+                   className="text-lg font-black text-slate-800 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                 />
+                 <div className="flex items-center gap-3">
+                    <input 
+                      value={editTime}
+                      onChange={e => setEditTime(e.target.value)}
+                      className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-xl px-4 py-2 w-24 text-center outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                    />
+                    <button onClick={handleSave} className="px-6 py-2 rounded-full bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">保存</button>
+                    <button onClick={() => setIsEditing(false)} className="px-6 py-2 rounded-full bg-slate-100 text-slate-400 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">取消</button>
+                 </div>
+               </div>
+            ) : (
+               <>
+                 <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-2 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
+                 <p className="text-xs sm:text-sm font-bold text-slate-400 line-clamp-1 italic">這是一個關於 {item.title} 的詳細介紹，推薦理由與預計停留時間...</p>
+               </>
+            )}
+          </div>
+
+          {!isOffline && !isEditing && (
+            <div className="flex flex-row sm:flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-pink-500 hover:border-pink-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
+              >
+                <Pencil size={18} />
+              </button>
+              <button
+                onClick={() => onDelete(item.node_id)}
+                className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-red-500 hover:border-red-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          )}
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+}
 function ItineraryList({
   items,
   day,
@@ -1232,114 +1139,43 @@ function ItineraryList({
   isOffline: boolean;
   aiLoading: boolean;
 }) {
-  type EditDraft = { day: string; time: string; title: string; emoji: string; category: string; description: string; notes: string };
-
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<EditDraft | null>(null);
-
-  const startEdit = (item: ItineraryNode) => {
-    const meta = getCategoryMeta(item.category);
-    setEditingId(item.node_id);
-    setDraft({
-      day: String(item.day),
-      time: item.time,
-      title: item.title,
-      emoji: item.emoji || meta.icon,
-      category: meta.key,
-      description: item.description || '',
-      notes: item.notes || '',
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setDraft(null);
-  };
-
-  const saveEdit = (item: ItineraryNode) => {
-    if (!draft) return;
-    const category = CATEGORY_OPTIONS.includes(draft.category) ? draft.category : 'other';
-    const categoryMeta = getCategoryMeta(category);
-    const nextNode: ItineraryNode = {
-      ...item,
-      day: Math.max(1, Number(draft.day) || item.day),
-      time: normalizeClockInput(draft.time),
-      title: draft.title.trim() || item.title,
-      category,
-      emoji: draft.emoji.trim() || categoryMeta.icon,
-      description: draft.description.trim() || undefined,
-      notes: draft.notes.trim() || undefined,
-      source: 'local',
-    };
-    onUpdate(nextNode);
-    setEditingId(null);
-    setDraft(null);
-  };
-
-  if (items.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-        <span className="text-5xl mb-4">🗒️</span>
-        <span className="text-slate-600 font-black text-xl tracking-tight">Day {day} 還沒有行程</span>
-        <span className="text-slate-400 text-sm mt-2 max-w-[240px] leading-relaxed">試著從收藏夾拖曳景點，或讓 AI 幫你智能編排！</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative pl-[40px] md:pl-[60px] lg:pl-[80px] mt-8 pb-32 flex flex-col gap-y-6 md:gap-y-10 lg:gap-y-12">
-      <div className="absolute left-[18px] md:left-[27px] lg:left-[37px] top-4 bottom-20 w-[4px] md:w-[6px] bg-gradient-to-b from-fuchsia-400 via-purple-300/40 to-transparent rounded-full shadow-[0_0_15px_rgba(217,70,239,0.2)]" />
-      <AnimatePresence>
-        {aiLoading ? (
-          Array.from({ length: 3 }).map((_, idx) => (
-            <motion.div
-              key={`skeleton-${idx}`}
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 10, opacity: 0 }}
-              transition={{ delay: idx * 0.1 }}
-            >
-              <div className="relative">
-                <div className="absolute left-[-30px] md:left-[-42px] lg:left-[-54px] top-8 md:top-10 w-[20px] h-[20px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] rounded-full bg-slate-200 border-[4px] border-white z-10 shadow-lg animate-pulse" />
-                <GlassCard className="!p-4 sm:!p-6 md:!p-8 lg:!p-10 mb-4 sm:mb-6 md:mb-8 lg:mb-10 animate-pulse ring-1 ring-white/70 border border-white">
-                  <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 md:gap-10">
-                    <div className="flex flex-row items-start md:items-center flex-1 gap-4 md:gap-6 w-full">
-                      <div className="w-14 h-14 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-[24px] md:rounded-[32px] bg-slate-200 shrink-0" />
-                      <div className="flex-1 flex flex-col gap-3 min-w-0 py-2">
-                        <div className="w-16 h-4 bg-slate-200 rounded-full" />
-                        <div className="w-3/4 h-8 md:h-10 bg-slate-200 rounded-xl" />
-                        <div className="w-1/2 h-4 bg-slate-200 rounded-full" />
-                      </div>
-                    </div>
-                  </div>
-                </GlassCard>
-              </div>
-            </motion.div>
-          ))
-        ) : (
-        items.map((item, idx) => (
+    <div className="flex flex-col gap-10 mt-6 min-h-[400px]">
+      {items.length === 0 && !aiLoading && (
+        <GlassCard className="!p-16 !rounded-[48px] border border-white/60 bg-white/30 flex flex-col items-center justify-center text-center backdrop-blur-2xl shadow-inner">
+          <div className="w-28 h-28 rounded-[40px] bg-white flex items-center justify-center text-6xl mb-8 shadow-xl border border-slate-100/50 animate-bounce">
+            🏝️
+          </div>
+          <h3 className="text-3xl font-black text-slate-800 mb-3 tracking-tight">Day {day} 還是空白的</h3>
+          <p className="text-slate-400 font-bold max-w-[320px] leading-relaxed uppercase text-[10px] tracking-[0.2em]">使用 AI 助理或從側邊欄拖入景點開始您的旅程</p>
+        </GlassCard>
+      )}
+
+      {aiLoading && (
+        <div className="flex flex-col gap-8">
+           {[0, 1, 2].map(i => <ItinerarySkeletonCard key={i} />)}
+        </div>
+      )}
+
+      <AnimatePresence initial={false} mode="popLayout">
+        {items.map((item: ItineraryNode, idx: number) => (
           <ItineraryListItem
             key={item.node_id}
             item={item}
             idx={idx}
-            editingId={editingId}
-            draft={draft}
-            setDraft={setDraft}
-            startEdit={startEdit}
-            saveEdit={saveEdit}
-            cancelEdit={cancelEdit}
-            isOffline={isOffline}
             onDelete={onDelete}
+            onUpdate={onUpdate}
+            isOffline={isOffline}
           />
-        )))}
+        ))}
       </AnimatePresence>
     </div>
   );
 }
 
-// ─── Tokyo Map View ───────────────────────────────────────────────────────────
+// ─── Map View ───────────────────────────────────────────────────────────
 
-function TokyoMapView({ items }: { items: ItineraryNode[] }) {
+function MapView({ items }: { items: ItineraryNode[] }) {
   return (
     <GlassCard className="h-[55vh] relative overflow-hidden !p-0 border-4 border-white/40 rounded-[2.5rem]">
       <div

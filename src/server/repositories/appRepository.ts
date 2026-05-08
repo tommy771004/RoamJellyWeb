@@ -63,11 +63,13 @@ export class AppRepository {
 
   async upsertItineraryNode(tripId: string, node: any) {
     if (!this.db) return;
+    const ts = node.timestamp ? new Date(node.timestamp) : null;
     await this.db.insert(schema.itineraryNodes).values({
       nodeId: node.node_id,
       tripId,
       day: node.day,
       time: node.time,
+      timestamp: ts,
       title: node.title,
       emoji: node.emoji,
       category: node.category,
@@ -78,6 +80,7 @@ export class AppRepository {
       set: {
         day: node.day,
         time: node.time,
+        timestamp: ts,
         title: node.title,
         emoji: node.emoji,
         category: node.category,
@@ -85,6 +88,33 @@ export class AppRepository {
         lng: node.lng,
       }
     });
+  }
+
+  async getPublicTrips(limit: number) {
+    if (!this.db) return [];
+    // For demo purposes, we will treat all trips as public and join with users to get author names
+    const rows = await this.db
+      .select({
+        id: schema.trips.id,
+        title: schema.trips.name,
+        destination: schema.trips.destination,
+        author: schema.users.displayName,
+        createdAt: schema.trips.createdAt,
+      })
+      .from(schema.trips)
+      .leftJoin(schema.tripMembers, eq(schema.trips.id, schema.tripMembers.tripId))
+      .leftJoin(schema.users, eq(schema.tripMembers.userId, schema.users.userId))
+      .where(eq(schema.tripMembers.role, 'owner'))
+      .limit(limit);
+      
+    // Transform to handbook format
+    return rows.map((r: any) => ({
+       id: r.id,
+       title: r.title,
+       author: r.author || 'Anonymous',
+       likes: Math.floor(Math.random() * 1000), // Random likes for demo as we don't have likes count
+       cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800'
+    }));
   }
 
   async getTopFlights(limit: number) {
@@ -137,6 +167,11 @@ export class AppRepository {
   async createTrip(data: { id: string, name: string, destination?: string }) {
     if (!this.db) return;
     await this.db.insert(schema.trips).values(data);
+  }
+
+  async addTripMember(tripId: string, userId: string, role: string) {
+    if (!this.db) return;
+    await this.db.insert(schema.tripMembers).values({ tripId, userId, role });
   }
 
   async trackUserPrice(userId: string, itemId: string) {
@@ -197,8 +232,57 @@ export class AppRepository {
   async getAggregatedSettlements(tripId: string) {
     if (!this.db) return [];
     const rows = await this.db.select().from(schema.expenses).where(eq(schema.expenses.tripId, tripId));
-    // Simple mock aggregation for demo
-    return rows.map((r: any) => ({ from: 'Member', to: r.payerId, amount: r.amount }));
+    const members = await this.db.select().from(schema.tripMembers).where(eq(schema.tripMembers.tripId, tripId));
+    
+    if (members.length === 0 || rows.length === 0) return [];
+    
+    const balances: Record<string, number> = {};
+    for (const m of members) balances[m.userId] = 0;
+    
+    for (const r of rows) {
+      const splitAmount = r.amount / members.length;
+      for (const m of members) {
+        if (m.userId === r.payerId) {
+          balances[m.userId] += (r.amount - splitAmount);
+        } else {
+          balances[m.userId] -= splitAmount;
+        }
+      }
+    }
+    
+    const debtors = Object.entries(balances)
+      .filter(([_, bal]) => bal < -0.01)
+      .map(([userId, bal]) => ({ userId, bal: -bal }))
+      .sort((a, b) => b.bal - a.bal);
+      
+    const creditors = Object.entries(balances)
+      .filter(([_, bal]) => bal > 0.01)
+      .map(([userId, bal]) => ({ userId, bal }))
+      .sort((a, b) => b.bal - a.bal);
+
+    const settlements: { id: string, from: string, to: string, amount: number, currency: string }[] = [];
+    let i = 0;
+    let j = 0;
+    while (i < debtors.length && j < creditors.length) {
+      const debtor = debtors[i];
+      const creditor = creditors[j];
+      const amount = Math.min(debtor.bal, creditor.bal);
+      
+      settlements.push({
+        id: `stl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        from: debtor.userId,
+        to: creditor.userId,
+        amount: Math.round(amount),
+        currency: 'TWD',
+      });
+      
+      debtor.bal -= amount;
+      creditor.bal -= amount;
+      if (debtor.bal < 0.01) i++;
+      if (creditor.bal < 0.01) j++;
+    }
+    
+    return settlements;
   }
 
   async clearSettlements(tripId: string) {

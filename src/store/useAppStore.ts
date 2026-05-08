@@ -6,6 +6,14 @@ export interface RedirectModalState {
   provider: string;
   affiliateUrl?: string;
   itemId: string;
+  airline?: string;
+  departure?: string;
+  arrival?: string;
+  duration?: string;
+  stops?: number;
+  price?: number;
+  currency?: string;
+  emoji?: string;
 }
 
 interface AppStore {

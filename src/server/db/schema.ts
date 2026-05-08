@@ -28,6 +28,7 @@ export const itineraryNodes = pgTable('itinerary_nodes', {
   tripId: varchar('trip_id', { length: 128 }).notNull().references(() => trips.id),
   day: integer('day').notNull(),
   time: varchar('time', { length: 64 }),
+  timestamp: timestamp('timestamp'),
   title: varchar('title', { length: 255 }).notNull(),
   emoji: varchar('emoji', { length: 32 }),
   category: varchar('category', { length: 64 }),

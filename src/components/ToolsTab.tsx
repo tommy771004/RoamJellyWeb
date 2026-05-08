@@ -116,7 +116,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
         const [checklistData, collaboratorsData, weatherData, tripInfoData] = await Promise.all([
           fetchChecklist(tripId),
           fetchCollaborators(tripId),
-          fetchWeather(tripInfo?.destination || '東京').catch(() => null),
+          fetchWeather(tripInfo?.destination || '您的目的地').catch(() => null),
           fetchTripInfo(tripId).catch(() => null),
         ]);
         if (weatherData) setWeather(weatherData);
@@ -173,7 +173,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     async handleAiPackingList() {
       setAiLoading(true);
       try {
-        const suggestions = await suggestPackingList(tripInfo?.destination ?? '東京', getCurrentSeason());
+        const suggestions = await suggestPackingList(tripInfo?.destination ?? '目的地', getCurrentSeason());
         const newItems: ChecklistItem[] = suggestions.map((text, i) => ({
           id: `ai_${Date.now()}_${i}`,
           text,
@@ -203,7 +203,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       });
     },
 
-    submitExpense() {
+    async submitExpense() {
       const errs = validateForm();
       if (Object.keys(errs).length > 0) {
         setErrors(errs);
@@ -212,7 +212,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       setErrors({});
       try {
         setSubmitting(true);
-        addExpense({
+        const expense = {
           id: `exp_${Date.now()}_${Math.random()}`,
           title: form.title,
           amount: Number(form.amount),
@@ -220,7 +220,13 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           payer: form.payer,
           splitWith: form.splitWith,
           date: new Date().toISOString()
-        });
+        };
+        addExpense(expense);
+        
+        if (tripId) {
+          await submitLedgerExpense(tripId, expense);
+        }
+
         showToast('分帳已更新，已算出最新應付關係。', 'success');
         setForm((prev) => ({ ...prev, title: '', amount: '' }));
       } catch {
@@ -240,10 +246,13 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       }
     },
 
-    handleClearSettlement(settlement) {
+    async handleClearSettlement(settlement) {
       setClearingId(settlement.id);
       try {
         clearSettlementRecord(settlement.from, settlement.to, settlement.currency);
+        if (tripId) {
+           await clearSettlement(tripId);
+        }
         showToast(`${settlement.from} → ${settlement.to} 已標記結清。`, 'success');
       } catch {
         showToast('結清失敗，請稍後再試。', 'warning');
@@ -284,11 +293,28 @@ function WeatherCard() {
   const { isOffline } = useAppStore();
   const Icon = weather && weather.rain_prob >= 50 ? CloudRain : Sun;
   
+  const getOutfitSuggestion = (temp?: number, rainProb?: number) => {
+    if (!temp) return { title: '輕便舒適穿搭', desc: '建議搭飛機時洋蔥式穿搭，並預備舒適好走的鞋子。' };
+    let desc = '建議帶件薄外套與好走的鞋。';
+    let title = '輕薄層次穿搭';
+    if (temp >= 28) { title = '透氣涼爽穿搭'; desc = '建議穿著短袖與透氣材質，注意防曬避暑。'; }
+    else if (temp < 28 && temp >= 20) { title = '輕薄層次穿搭'; desc = '建議短袖搭配薄外套，方便應對日夜溫差。'; }
+    else if (temp < 20 && temp >= 10) { title = '保暖防風穿搭'; desc = '天氣微涼，建議準備長袖衣物與防風外套。'; }
+    else { title = '厚實禦寒穿搭'; desc = '天氣寒冷，請準備保暖大衣、毛衣與圍巾。'; }
+    
+    if (rainProb && rainProb >= 50) {
+      desc += ' 降雨機率高，請務必攜帶雨具出門。';
+    }
+    return { title, desc };
+  };
+
+  const outfit = getOutfitSuggestion(weather?.temp_current, weather?.rain_prob);
+
   return (
     <GlassCard className="!p-6 sm:!p-8 mb-8 flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-xl group">
       <div className="absolute top-0 right-0 w-48 h-48 bg-fuchsia-100 rounded-full translate-x-1/3 -translate-y-1/3 opacity-30 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
       <div className="relative z-10">
-        <h2 className="font-serif text-3xl text-[#2C302E] mb-1">Tomorrow in {destination || 'Kyoto'}</h2>
+        <h2 className="font-serif text-3xl text-[#2C302E] mb-1">明天在 {destination || '您的目的地'}</h2>
         <div className="flex flex-col gap-1 mb-6">
           <p className="text-[11px] uppercase tracking-widest text-fuchsia-600/70 font-bold">Local Weather & Outfit</p>
           {isOffline && (
@@ -299,7 +325,7 @@ function WeatherCard() {
         <div className="flex items-end justify-between mb-6">
           <div className="flex bg-fuchsia-50 rounded-full px-4 py-2 items-center gap-2 border border-fuchsia-100/50">
             <Icon size={18} className="text-fuchsia-500" />
-            <span className="text-fuchsia-700 font-medium text-sm">{weather && weather.rain_prob >= 50 ? 'Rain likely' : 'Clear skies'}</span>
+            <span className="text-fuchsia-700 font-medium text-sm">{weather && weather.rain_prob >= 50 ? '可能有雨' : '晴朗好天氣'}</span>
           </div>
           <div className="text-[56px] leading-none font-light tracking-tight text-[#2C302E]">
             {weather ? weather.temp_current : '--'}°
@@ -311,8 +337,8 @@ function WeatherCard() {
               👗
           </div>
           <div className="flex flex-col">
-            <span className="text-[#2C302E] font-bold">Light layers & comfort</span>
-            <span className="text-slate-500 text-sm font-medium">Cardigan & comfy sneakers suggested.</span>
+            <span className="text-[#2C302E] font-bold">{outfit.title}</span>
+            <span className="text-slate-500 text-sm font-medium leading-relaxed mt-0.5">{outfit.desc}</span>
           </div>
         </div>
       </div>
@@ -377,18 +403,43 @@ function LedgerSection() {
         
         {/* Recent Expenses List */}
         {expenses && expenses.length > 0 && (
-          <div className="flex flex-col gap-3 mb-4">
+          <div className="flex flex-col gap-3 mb-4 w-full">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-2">最新花費紀錄</span>
-            <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1 scrollbar-hide">
-              {expenses.slice().reverse().map(exp => (
-                <div key={exp.id} className="flex justify-between items-center bg-white/50 border border-slate-100 p-3 rounded-2xl">
-                  <div className="flex flex-col">
-                    <span className="text-[14px] font-bold text-[#2C302E] truncate">{exp.title}</span>
-                    <span className="text-[11px] text-slate-500 font-medium tracking-wide">由 {exp.payer} 墊付</span>
-                  </div>
-                  <span className="font-black text-fuchsia-500 text-[14px]">{exp.currency} {exp.amount}</span>
-                </div>
-              ))}
+            <div className="w-full overflow-x-auto md:overflow-visible pb-2 mt-2">
+              <table className="responsive-table !rounded-[24px]">
+                <caption className="sr-only">最新花費清單</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">支出項目</th>
+                    <th scope="col">代墊人</th>
+                    <th scope="col" className="text-right">金額</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expenses.slice().reverse().map(exp => (
+                    <tr key={exp.id}>
+                      <td data-label="支出項目">
+                        <div className="flex flex-col items-end md:items-start">
+                          <span className="text-[15px] font-bold text-[#2C302E] truncate">{exp.title}</span>
+                        </div>
+                      </td>
+                      <td data-label="代墊人">
+                        <div className="flex justify-end md:justify-start">
+                          <span className="text-[12px] font-bold tracking-wide flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100 text-slate-600">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                            {exp.payer}
+                          </span>
+                        </div>
+                      </td>
+                      <td data-label="金額" className="md:text-right font-variant-numeric:tabular-nums !text-right">
+                        <div className="flex flex-col items-end">
+                          <span className="font-black text-fuchsia-500 text-[16px]">{exp.currency} {exp.amount.toLocaleString()}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             <div className="h-px w-full bg-slate-100 my-2" />
           </div>
@@ -519,44 +570,73 @@ function SettlementsSection() {
         </div>
       </div>
       
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 w-full">
         {settlements.length === 0 && (
           <GlassCard className="!p-10 flex items-center justify-center">
             <span className="text-slate-400 font-medium italic">都算清囉！ ✨</span>
           </GlassCard>
         )}
-        {settlements.map((settlement) => (
-          <GlassCard key={settlement.id} className="!p-5 flex flex-col md:flex-row md:items-center justify-between gap-y-4 hover:shadow-lg transition-all duration-300">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-fuchsia-50 border border-fuchsia-100 flex items-center justify-center shrink-0">
-                <span className="text-2xl">💶</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[17px] font-bold text-[#2C302E]">{settlement.from}</span>
-                <span className="text-[14px] text-slate-500 font-medium">應付給 {settlement.to} <strong className="font-black text-fuchsia-500">{settlement.currency} {settlement.amount}</strong></span>
-              </div>
-            </div>
-            
-            <div className="flex flex-row items-center gap-3">
-              <button
-                onClick={() => void actions.sendReminder()}
-                className="flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-full px-5 py-2.5 transition-all active:scale-95 flex-1 md:flex-initial"
-              >
-                <Send size={15} className="opacity-70" />
-                <span className="text-[12px] font-bold tracking-wide uppercase">提醒</span>
-              </button>
-              
-              <button
-                onClick={() => void actions.handleClearSettlement(settlement)}
-                disabled={clearingId === settlement.id}
-                className="flex items-center justify-center gap-2 bg-fuchsia-500 hover:bg-fuchsia-600 text-white rounded-full px-6 py-2.5 transition-all active:scale-95 flex-1 md:flex-initial shadow-md shadow-fuchsia-200"
-              >
-                <CheckCircle2 size={15} className="opacity-90" />
-                <span className="text-[12px] font-bold tracking-wide uppercase">{clearingId === settlement.id ? '處理中...' : '標記結清'}</span>
-              </button>
-            </div>
-          </GlassCard>
-        ))}
+        {settlements.length > 0 && (
+          <div className="w-full overflow-x-auto md:overflow-visible pb-2 mt-2">
+            <table className="responsive-table !rounded-[24px]">
+              <caption className="sr-only">結算清單</caption>
+              <thead>
+                <tr>
+                  <th scope="col">付款人</th>
+                  <th scope="col">收款人</th>
+                  <th scope="col" className="text-right">結算金額</th>
+                  <th scope="col" className="text-right">動作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {settlements.map((settlement) => (
+                  <tr key={settlement.id}>
+                    <td data-label="付款人">
+                      <div className="flex justify-end md:justify-start items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 font-black text-sm">
+                          {settlement.from.charAt(0)}
+                        </div>
+                        <span className="text-[15px] font-bold text-[#2C302E]">{settlement.from}</span>
+                      </div>
+                    </td>
+                    <td data-label="收款人">
+                      <div className="flex justify-end md:justify-start">
+                        <span className="text-[13px] text-slate-500 font-medium px-3 py-1 rounded-full bg-slate-50 border border-slate-100">
+                          支付給 <strong className="font-bold text-slate-700">{settlement.to}</strong>
+                        </span>
+                      </div>
+                    </td>
+                    <td data-label="結算金額" className="md:text-right font-variant-numeric:tabular-nums !text-right">
+                      <div className="flex justify-end">
+                        <span className="font-black text-fuchsia-500 text-[18px]">{settlement.currency} {settlement.amount.toLocaleString()}</span>
+                      </div>
+                    </td>
+                    <td data-label="動作">
+                      <div className="flex flex-row items-center gap-2 justify-end">
+                        <button
+                          onClick={() => void actions.sendReminder()}
+                          className="flex items-center justify-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg px-3 py-2 transition-all active:scale-95 border border-slate-100"
+                        >
+                          <Send size={14} className="opacity-70" />
+                          <span className="text-[11px] font-bold tracking-wide uppercase">提醒</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => void actions.handleClearSettlement(settlement)}
+                          disabled={clearingId === settlement.id}
+                          className="flex items-center justify-center gap-1.5 bg-fuchsia-500 hover:bg-fuchsia-600 text-white rounded-lg px-4 py-2 transition-all active:scale-95 shadow-md shadow-fuchsia-200"
+                        >
+                          <CheckCircle2 size={14} className="opacity-90" />
+                          <span className="text-[11px] font-bold tracking-wide uppercase">{clearingId === settlement.id ? '處理中' : '結清'}</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -618,6 +698,7 @@ function ToolsTabContent() {
   const [flights, setFlights] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+  const [filterMode, setFilterMode] = useState<'best' | 'filters' | 'nonstop'>('best');
 
   useEffect(() => {
     if (activeTripId) {
@@ -630,6 +711,17 @@ function ToolsTabContent() {
       }).catch(() => setIsLoadingOffers(false));
     }
   }, [activeTripId]);
+
+  const displayedFlights = useMemo(() => {
+    let result = [...flights];
+    if (filterMode === 'nonstop') {
+      result = result.filter(f => f.direct || f.stops === 0);
+    } else if (filterMode === 'filters') {
+      // Just an example filter, e.g., price < 15000
+      result = result.filter(f => f.price < 15000);
+    }
+    return result;
+  }, [flights, filterMode]);
 
   return (
     <div className="pt-8 pb-32 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full h-full overflow-y-auto scrollbar-hide bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] absolute inset-0 transition-all duration-300">
@@ -658,15 +750,25 @@ function ToolsTabContent() {
 
           {/* Filters */}
           <div className="flex flex-row overflow-x-auto scrollbar-hide gap-3 mb-2 -mx-5 px-5 sm:mx-0 sm:px-0 py-2">
-            <button className="bg-white/70 backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[#2C302E] text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border border-white hover:border-fuchsia-200 hover:text-fuchsia-600 group">
-              <ArrowDownUp size={16} className="text-slate-400 group-hover:text-fuchsia-500" />
+            <button 
+              onClick={() => setFilterMode('best')}
+              className={`backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border ${filterMode === 'best' ? 'bg-fuchsia-100/80 border-fuchsia-200 text-fuchsia-700' : 'bg-white/70 border-white text-[#2C302E] hover:border-fuchsia-200 hover:text-fuchsia-600'} group`}
+            >
+              <ArrowDownUp size={16} className={filterMode === 'best' ? 'text-fuchsia-500' : 'text-slate-400 group-hover:text-fuchsia-500'} />
               Best Match
             </button>
-            <button className="bg-white/70 backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[#2C302E] text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border border-white hover:border-fuchsia-200 hover:text-fuchsia-600 group">
-              <SlidersHorizontal size={16} className="text-slate-400 group-hover:text-fuchsia-500" />
+            <button 
+              onClick={() => setFilterMode('filters')}
+              className={`backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border ${filterMode === 'filters' ? 'bg-fuchsia-100/80 border-fuchsia-200 text-fuchsia-700' : 'bg-white/70 border-white text-[#2C302E] hover:border-fuchsia-200 hover:text-fuchsia-600'} group`}
+            >
+              <SlidersHorizontal size={16} className={filterMode === 'filters' ? 'text-fuchsia-500' : 'text-slate-400 group-hover:text-fuchsia-500'} />
               Filters
             </button>
-            <button className="bg-white/70 backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[#2C302E] text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border border-white hover:border-fuchsia-200 hover:text-fuchsia-600">
+            <button 
+              onClick={() => setFilterMode('nonstop')}
+              className={`backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border ${filterMode === 'nonstop' ? 'bg-fuchsia-100/80 border-fuchsia-200 text-fuchsia-700' : 'bg-white/70 border-white text-[#2C302E] hover:border-fuchsia-200 hover:text-fuchsia-600'} group`}
+            >
+              <Plane size={16} className={filterMode === 'nonstop' ? 'text-fuchsia-500' : 'text-slate-400 group-hover:text-fuchsia-500'} />
               Non-stop
             </button>
           </div>
@@ -704,7 +806,7 @@ function ToolsTabContent() {
             ) : (
               <>
             {/* Flight Cards */}
-            {flights.map((flight, idx) => (
+            {displayedFlights.map((flight, idx) => (
               <GlassCard key={idx} className="!p-6 flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group">
                 <div className="flex justify-between items-start mb-8">
                   <div className="flex items-center gap-4">

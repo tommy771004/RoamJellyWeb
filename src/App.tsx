@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import HomeTab from './components/HomeTab';
-import ItineraryTab from './components/ItineraryTab';
+import ItineraryTab, { assignDaysBasedOnTimeAndOrder } from './components/ItineraryTab';
 import ToolsTab from './components/ToolsTab';
 import RedirectModal from './components/RedirectModal';
 import BottomTabs, { TABS } from './components/BottomTabs';
+import AiLoadingState from './components/AiLoadingState';
 import LoginScreen from './components/LoginScreen';
 import TripLandingPage from './components/TripLandingPage';
 import JellyAssistant from './components/JellyAssistant';
@@ -30,7 +31,7 @@ export default function App() {
     isOffline, setOffline,
     isDarkMode, setDarkMode 
   } = useAppStore();
-  const { loadPreferences } = useSearchStore();
+  const { loadPreferences, toggleSave, savedItems } = useSearchStore();
 
   // Detect trip landing URL once on mount (before any auth check)
   const [tripLandingId] = useState<string | null>(getTripLandingId);
@@ -39,8 +40,65 @@ export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const isLoggedIn = !!userId;
+  const lastActivityRef = useRef<number>(Date.now());
+  const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+  // Auto-logout logic
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    // Load last activity from localStorage to survive page refresh
+    const storedLastActivity = localStorage.getItem('last_activity');
+    if (storedLastActivity) {
+      lastActivityRef.current = parseInt(storedLastActivity, 10);
+    }
+
+    const checkSession = () => {
+      const now = Date.now();
+      if (now - lastActivityRef.current > SESSION_TIMEOUT) {
+        console.log('Session expired. Logging out...');
+        handleLogout();
+        showToast('工作階段已過期，請重新登入。');
+      }
+    };
+
+    const updateActivity = () => {
+      const now = Date.now();
+      lastActivityRef.current = now;
+      localStorage.setItem('last_activity', now.toString());
+    };
+
+    // Events to monitor activity
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
+    events.forEach(event => window.addEventListener(event, updateActivity));
+
+    const interval = setInterval(checkSession, 30000); // Check every 30 seconds
+
+    return () => {
+      events.forEach(event => window.removeEventListener(event, updateActivity));
+      clearInterval(interval);
+    };
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    // Initial check on load
+    const storedUserId = localStorage.getItem('user_id');
+    const storedLastActivity = localStorage.getItem('last_activity');
+    
+    if (storedUserId && storedLastActivity) {
+      const now = Date.now();
+      if (now - parseInt(storedLastActivity, 10) < SESSION_TIMEOUT) {
+        setAuthenticated(storedUserId);
+      } else {
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('last_activity');
+      }
+    }
+    setAuthReady(true);
+  }, [setAuthenticated]);
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -69,11 +127,15 @@ export default function App() {
   }, [activeTab]);
 
   const handleLogin = (loggedInUserId: string) => {
+    localStorage.setItem('user_id', loggedInUserId);
+    localStorage.setItem('last_activity', Date.now().toString());
     setAuthenticated(loggedInUserId);
     setShowLogin(false);
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('last_activity');
     setAuthenticated(null);
     setShowLogoutModal(false);
     if (activeTab !== 'home') {
@@ -90,14 +152,11 @@ export default function App() {
       item_id: current.itemId,
       provider: current.provider,
       timestamp: new Date().toISOString(),
+      affiliate_url: current.affiliateUrl,
     });
 
     if (typeof window !== 'undefined' && current.affiliateUrl) {
-      const newWindow = window.open(current.affiliateUrl, '_blank', 'noopener,noreferrer');
-      if (!newWindow) {
-        showToast(`彈窗被封鎖，請點此開啟：${current.affiliateUrl}`);
-        return;
-      }
+      window.open(current.affiliateUrl, '_blank', 'noopener,noreferrer');
     }
 
     showToast(`已導向至 ${current.provider}`);
@@ -164,29 +223,101 @@ export default function App() {
       />;
     }
     if (activeTab === 'ai_form') {
-      return <AiForm onSubmit={(data) => {
-        // Generate mock data based on input
-        const mockResult = {
-          title: `${data.destination} ${data.days}天夢幻之旅`,
-          days: Array.from({ length: data.days }).map((_, i) => ({
-            day: i + 1,
-            activities: [
-              { name: '早晨探索', description: `體驗當地的${data.vibes[0] || '特色文化'}`, location: data.destination },
-              { name: '品嚐美食', description: `享受道地的${data.dietary[0] || '經典料理'}`, location: data.destination }
-            ]
-          })),
-          ui_state: {
-            theme_gradient: 'from-pink-100 to-fuchsia-100'
+      if (isGenerating) {
+        return <AiLoadingState />;
+      }
+      return <AiForm onSubmit={async (data) => {
+        setIsGenerating(true);
+        showToast(`正在為您生成旅程：${data.destination}...`);
+        try {
+          const { suggestItineraryWithForm } = await import('./lib/openrouterApi');
+          let suggestions = await suggestItineraryWithForm({ 
+            destination: data.destination,
+            planner: {
+              days: data.days,
+              departureFrom: '台北',
+              arrivalTo: data.destination,
+              flightDate: '',
+              countries: [],
+              mustVisitSpots: [],
+              mustEatFoods: [],
+              autoFlightSegments: [],
+              notes: `Companions: ${data.companions}, Vibes: ${data.vibes.join(',')}, Interests: ${data.interests.join(',')}`
+            }
+          });
+
+          // Convert AiResponse itinerary to ItineraryNode[]
+          const nodes: any[] = [];
+          if (suggestions && suggestions.itinerary) {
+            suggestions.itinerary.forEach((dayData: any) => {
+              if (dayData.spots) {
+                 dayData.spots.forEach((spot: any, i: number) => {
+                   nodes.push({
+                     node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+                     day: dayData.day || 1,
+                     time: spot.time || "10:00",
+                     title: String(spot.name || spot.title || '景點'),
+                     emoji: spot.emoji || '📍',
+                     category: spot.category || 'other',
+                     source: 'local' as const,
+                   });
+                 });
+              }
+            });
           }
-        };
-        const { setAiResult } = useAppStore.getState();
-        setAiResult(mockResult);
-        setActiveTab('ai_result');
+
+          // assign missing days correctly & populate timestamp
+          const startDate = new Date();
+          startDate.setDate(startDate.getDate() + 1);
+          const finalNodes = assignDaysBasedOnTimeAndOrder(nodes, startDate.toISOString());
+
+          useAppStore.getState().setAiResult({
+             fullResponse: suggestions,
+             title: suggestions?.summary?.title || `${data.destination} ${data.days}天行程規劃`,
+             rawSuggestions: finalNodes
+          });
+          setActiveTab('ai_result');
+        } catch (e) {
+          showToast('生成失敗，請更換目的地或稍後再試。', 'warning');
+        } finally {
+          setIsGenerating(false);
+        }
       }} />;
     }
     if (activeTab === 'ai_result') {
       const { aiResult } = useAppStore.getState();
-      return <DynamicItineraryView result={aiResult} onBack={() => setActiveTab('ai_form')} />;
+      return <DynamicItineraryView 
+        result={aiResult} 
+        onBack={() => setActiveTab('ai_form')} 
+        onSave={async (result) => {
+          showToast('正在儲存行程...', 'info');
+          
+          try {
+            const { useItineraryStore } = await import('./store/useItineraryStore');
+            const { syncItinerary } = await import('./lib/workflowApi');
+            const TRIP_ID =
+              (new URLSearchParams(window.location.search).get('trip_id')) ||
+              (import.meta as any).env?.VITE_TRIP_ID ||
+              '';
+
+            if (result.rawSuggestions?.length) {
+                const { setNodes, addNode } = useItineraryStore.getState();
+                setNodes([]); // Clear existing
+                for (const node of result.rawSuggestions) {
+                   addNode(node);
+                   if (TRIP_ID) {
+                      await syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
+                   }
+                }
+            }
+          } catch (err) {
+             console.error('Failed to save to server', err);
+          }
+
+          showToast('行程已為您準備好！', 'success');
+          setActiveTab('itinerary');
+        }}
+      />;
     }
     if (activeTab === 'itinerary') {
       return <ItineraryTab />;
@@ -244,7 +375,9 @@ export default function App() {
 
         {/* Right: User Avatar & Greetings */}
         <div className="flex items-center gap-2 sm:gap-3 z-20">
-          <button className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400">
+          <button 
+            onClick={() => showToast('目前無新通知', 'info')}
+            className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400">
             <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
           </button>
           
@@ -308,8 +441,23 @@ export default function App() {
         {redirectModal.isOpen && (
           <RedirectModal
             provider={redirectModal.provider}
+            airline={redirectModal.airline}
+            departure={redirectModal.departure}
+            arrival={redirectModal.arrival}
+            duration={redirectModal.duration}
+            stops={redirectModal.stops}
+            price={redirectModal.price}
+            currency={redirectModal.currency}
+            emoji={redirectModal.emoji}
             onClose={closeRedirectModal}
             onConfirm={() => void handleRedirectConfirm()}
+            onSave={() => {
+              const currentId = redirectModal.itemId;
+              toggleSave(currentId);
+              const isSaved = savedItems.includes(currentId);
+              showToast(!isSaved ? '✨ 已收藏該機票！' : '已從收藏清單移除');
+              closeRedirectModal();
+            }}
           />
         )}
         {showLogoutModal && (
