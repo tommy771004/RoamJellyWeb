@@ -11,7 +11,7 @@ import { hashPassword, verifyPassword } from './src/server/auth/password';
 import * as schema from './src/server/db/schema';
 
 import { scrapeTripFlights } from './src/server/services/tripParser';
-import { generateItinerary } from './src/server/services/aiItineraryService';
+import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
 
 const REAL_BACKEND_BASE_URL = process.env.REAL_BACKEND_BASE_URL?.replace(/\/+$/, '');
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
@@ -120,6 +120,90 @@ function getTokenFromRequest(req: Request): string | null {
 
 function getRequestUserId(req: Request): string | null {
   return (req as AuthedRequest).authUser?.userId ?? null;
+}
+
+function formatDateOnly(value?: Date | string | null): string | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+}
+
+function mapTravelFactRow(row: any) {
+  return {
+    id: row.id,
+    tripId: row.tripId,
+    factType: row.factType,
+    source: row.source,
+    title: row.title,
+    startAt: row.startAt ? new Date(row.startAt).toISOString() : null,
+    endAt: row.endAt ? new Date(row.endAt).toISOString() : null,
+    locationName: row.locationName ?? null,
+    lat: row.lat ?? null,
+    lng: row.lng ?? null,
+    referenceCode: row.referenceCode ?? null,
+    metadata: row.metadata ?? null,
+    createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : undefined,
+    updatedAt: row.updatedAt ? new Date(row.updatedAt).toISOString() : undefined,
+  };
+}
+
+function summarizeTravelFacts(rows: any[]) {
+  const mapped = rows.map(mapTravelFactRow);
+  const missingAnchors: Array<'flight_outbound' | 'stay'> = [];
+
+  if (!mapped.some((row) => row.factType === 'flight_outbound')) {
+    missingAnchors.push('flight_outbound');
+  }
+  if (!mapped.some((row) => row.factType === 'stay')) {
+    missingAnchors.push('stay');
+  }
+
+  return {
+    items: mapped,
+    missingAnchors,
+    hasCompleteAiAnchors: missingAnchors.length === 0,
+  };
+}
+
+async function buildTripInfo(repo: AppRepository, tripId: string) {
+  const trip = await repo.getTripById(tripId);
+  if (!trip) return null;
+
+  const [nodes, facts] = await Promise.all([
+    repo.getItineraryNodes(tripId),
+    repo.getTripTravelFacts(tripId),
+  ]);
+
+  const outbound = facts.find((fact: any) => fact.factType === 'flight_outbound');
+  const inbound = facts.find((fact: any) => fact.factType === 'flight_inbound');
+  const stay = facts.find((fact: any) => fact.factType === 'stay');
+
+  const startDate =
+    formatDateOnly(outbound?.startAt) ??
+    formatDateOnly(stay?.startAt) ??
+    null;
+  const endDate =
+    formatDateOnly(inbound?.endAt) ??
+    formatDateOnly(stay?.endAt) ??
+    null;
+
+  const dateBasedDays =
+    startDate && endDate
+      ? Math.max(1, Math.round((new Date(endDate).getTime() - new Date(startDate).getTime()) / 86_400_000) + 1)
+      : null;
+
+  const maxNodeDay = nodes.reduce((max, node) => Math.max(max, Number(node.day ?? 1)), 1);
+
+  return {
+    trip_id: trip.id,
+    id: trip.id,
+    name: trip.name,
+    destination: trip.destination ?? '',
+    days: dateBasedDays ?? maxNodeDay,
+    startDate,
+    endDate,
+  };
 }
 
 async function getSearchCacheData(cacheKey: string): Promise<SearchItem[] | null> {
@@ -721,6 +805,34 @@ async function startServer() {
     }
   });
 
+  // ── Spot-level regenerate ─────────────────────────────────────────────────
+  app.post('/api/itinerary/regenerate-spot', async (req, res) => {
+    const { trip_id, node_id, destination, day, current_time, current_title, notes } = req.body ?? {};
+
+    if (!trip_id || !node_id) {
+      res.status(400).json({ status: 'error', message: 'trip_id and node_id are required' });
+      return;
+    }
+
+    const allowed = await ensureTripRole(req, res, String(trip_id), 'editor');
+    if (!allowed) return;
+
+    const spot = await regenerateSpot({
+      destination: String(destination ?? ''),
+      day: Number(day ?? 1),
+      currentTime: String(current_time ?? '10:00'),
+      currentTitle: String(current_title ?? ''),
+      notes: notes ? String(notes) : undefined,
+    });
+
+    if (!spot) {
+      res.status(503).json({ status: 'error', message: 'AI 服務目前無法使用，請稍後再試' });
+      return;
+    }
+
+    res.json({ status: 'success', data: spot });
+  });
+
   app.post('/api/generate/packing-list', async (req, res) => {
     const { destination = 'Kyoto', days = 5, weatherContext = 'Clear skies, 20°C' } = req.body || {};
     try {
@@ -949,7 +1061,13 @@ async function startServer() {
       return;
     }
     const tripRows = await repo.getTripsByUser(userId);
-    res.json(tripRows);
+    res.json(
+      tripRows.map((trip) => ({
+        tripId: trip.id,
+        name: trip.name,
+        destination: trip.destination ?? '',
+      })),
+    );
   });
 
   // ── Trip: public preview (requires auth, no membership needed) ──────────────
@@ -959,14 +1077,12 @@ async function startServer() {
       res.status(401).json({ status: 'error', message: 'unauthorized' });
       return;
     }
-    const trip = await repo.getTripById(req.params.trip_id);
-    if (!trip) {
+    const info = await buildTripInfo(repo, req.params.trip_id);
+    if (!info) {
       res.status(404).json({ status: 'error', message: 'trip not found' });
       return;
     }
-    const nodes = await repo.getItineraryNodes(req.params.trip_id);
-    const maxDay = nodes.reduce((max, node) => Math.max(max, node.day), 1);
-    res.json({ trip_id: trip.id, name: trip.name, destination: trip.destination, days: maxDay });
+    res.json(info);
   });
 
   // ── Trip: Join via invite link ───────────────────────────────────────────────
@@ -1031,18 +1147,105 @@ async function startServer() {
     const allowed = await ensureTripRole(req, res, tripId, 'viewer');
     if (!allowed) return;
 
-    const trip = await repo.getTripById(tripId);
-    if (!trip) {
+    const info = await buildTripInfo(repo, tripId);
+    if (!info) {
       res.status(404).json({ status: 'error', message: 'trip not found' });
       return;
     }
 
-    res.json({
-      trip_id: trip.tripId,
-      name: trip.name,
-      destination: trip.destination,
-      days: trip.days,
+    res.json(info);
+  });
+
+  app.get('/api/trips/:trip_id/facts', async (req, res) => {
+    const tripId = req.params.trip_id;
+    const allowed = await ensureTripRole(req, res, tripId, 'viewer');
+    if (!allowed) return;
+
+    const facts = await repo.getTripTravelFacts(tripId);
+    res.json(summarizeTravelFacts(facts));
+  });
+
+  app.post('/api/trips/:trip_id/facts', async (req, res) => {
+    const tripId = req.params.trip_id;
+    const allowed = await ensureTripRole(req, res, tripId, 'editor');
+    if (!allowed) return;
+
+    const {
+      factType,
+      source = 'manual',
+      title,
+      startAt,
+      endAt,
+      locationName,
+      lat,
+      lng,
+      referenceCode,
+      metadata,
+    } = req.body ?? {};
+
+    if (!factType || !title?.trim()) {
+      res.status(400).json({ status: 'error', message: 'factType and title are required' });
+      return;
+    }
+
+    const created = await repo.createTripTravelFact(tripId, {
+      factType: String(factType),
+      source: String(source),
+      title: String(title).trim(),
+      startAt,
+      endAt,
+      locationName: locationName ? String(locationName).trim() : null,
+      lat: Number.isFinite(Number(lat)) ? Number(lat) : null,
+      lng: Number.isFinite(Number(lng)) ? Number(lng) : null,
+      referenceCode: referenceCode ? String(referenceCode).trim() : null,
+      metadata: metadata && typeof metadata === 'object' ? metadata : null,
     });
+
+    res.status(201).json(mapTravelFactRow(created));
+  });
+
+  app.patch('/api/trips/:trip_id/facts/:fact_id', async (req, res) => {
+    const tripId = req.params.trip_id;
+    const factId = req.params.fact_id;
+    const allowed = await ensureTripRole(req, res, tripId, 'editor');
+    if (!allowed) return;
+
+    const existing = await repo.getTripTravelFactById(factId);
+    if (!existing || existing.tripId !== tripId) {
+      res.status(404).json({ status: 'error', message: 'travel fact not found' });
+      return;
+    }
+
+    const updated = await repo.updateTripTravelFact(factId, {
+      factType: String(req.body?.factType ?? existing.factType),
+      source: String(req.body?.source ?? existing.source),
+      title: String(req.body?.title ?? existing.title).trim(),
+      startAt: req.body?.startAt ?? existing.startAt,
+      endAt: req.body?.endAt ?? existing.endAt,
+      locationName: req.body?.locationName ?? existing.locationName,
+      lat: req.body?.lat ?? existing.lat,
+      lng: req.body?.lng ?? existing.lng,
+      referenceCode: req.body?.referenceCode ?? existing.referenceCode,
+      metadata: req.body?.metadata ?? existing.metadata,
+    });
+
+    res.json(mapTravelFactRow(updated));
+  });
+
+  app.delete('/api/trips/:trip_id/facts/:fact_id', async (req, res) => {
+    const tripId = req.params.trip_id;
+    const factId = req.params.fact_id;
+    const allowed = await ensureTripRole(req, res, tripId, 'editor');
+    if (!allowed) return;
+
+    const existing = await repo.getTripTravelFactById(factId);
+    if (!existing || existing.tripId !== tripId) {
+      res.status(404).json({ status: 'error', message: 'travel fact not found' });
+      return;
+    }
+
+    await repo.deleteTripTravelFact(factId);
+    res.json({ status: 'success' });
   });
 
   app.get('/api/itinerary', async (req, res) => {

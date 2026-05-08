@@ -39,6 +39,7 @@ export async function suggestItinerary(destination: string, days: number): Promi
       mustVisitSpots: [],
       mustEatFoods: [],
       autoFlightSegments: [],
+      travelFactsContext: '',
       notes: '',
     },
   };
@@ -143,6 +144,7 @@ function buildItineraryPrompt(input: SuggestItineraryInput): string {
     `- 抵達地: ${planner.arrivalTo || input.destination}`,
     `- 航班日期: ${planner.flightDate || '未填'}`,
     `- 自動抓取航班（含轉乘）: ${flights}`,
+    `- 旅程事實錨點: ${planner.travelFactsContext || '尚未提供'}`,
     `- 國家偏好: ${countries}`,
     `- 想去景點: ${spots}`,
     `- 想吃食物: ${foods}`,

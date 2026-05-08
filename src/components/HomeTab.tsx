@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List } from 'lucide-react';
+import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { FlightSkeletonCard } from './SkeletonCard';
-import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchHandbooks } from '../lib/workflowApi';
+import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchHandbooks, createTripFact } from '../lib/workflowApi';
 import { useSearchStore } from '../store/useSearchStore';
 import { useAppStore } from '../store/useAppStore';
 import type { SearchItem } from '../types/workflow';
@@ -20,11 +20,12 @@ interface FlightCardProps {
   isSaved: boolean;
   isTracked: boolean;
   onPress: () => void;
+  onImportToTrip: (e: React.MouseEvent) => void;
   onToggleSave: (e: React.MouseEvent) => void;
   onToggleTrack: (e: React.MouseEvent) => void;
 }
 
-function FlightCard({ flight, isSaved, isTracked, onPress, onToggleSave, onToggleTrack }: FlightCardProps) {
+function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onToggleSave, onToggleTrack }: FlightCardProps) {
   const airlineInitial = flight.details?.airline ? flight.details.airline.charAt(0) : flight.provider.charAt(0);
 
   return (
@@ -111,20 +112,29 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onToggleSave, onToggl
                     <span className="text-2xl font-black text-slate-800">{flight.price.toLocaleString()}</span>
                 </div>
             </div>
-            
-            <button
-                onClick={onToggleTrack}
-                className={`px-4 py-2.5 rounded-2xl flex items-center gap-2 transition-all active:scale-95 border ${
-                    isTracked 
-                        ? 'bg-slate-900 border-slate-900 text-white' 
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-fuchsia-300 hover:text-fuchsia-600 shadow-sm'
-                }`}
-            >
-                {isTracked ? <BellRing size={14} strokeWidth={3} /> : <Bell size={14} strokeWidth={3} />}
-                <span className="text-xs font-black uppercase tracking-wide">
-                    {isTracked ? 'Tracking' : 'Track Price'}
-                </span>
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onImportToTrip}
+                className="px-4 py-2.5 rounded-2xl flex items-center gap-2 transition-all active:scale-95 border bg-white border-slate-200 text-slate-600 hover:border-pink-300 hover:text-pink-600 shadow-sm"
+              >
+                <PlaneTakeoff size={14} strokeWidth={3} />
+                <span className="text-xs font-black uppercase tracking-wide">帶入行程</span>
+              </button>
+              <button
+                  onClick={onToggleTrack}
+                  className={`px-4 py-2.5 rounded-2xl flex items-center gap-2 transition-all active:scale-95 border ${
+                      isTracked 
+                          ? 'bg-slate-900 border-slate-900 text-white' 
+                          : 'bg-white border-slate-200 text-slate-600 hover:border-fuchsia-300 hover:text-fuchsia-600 shadow-sm'
+                  }`}
+              >
+                  {isTracked ? <BellRing size={14} strokeWidth={3} /> : <Bell size={14} strokeWidth={3} />}
+                  <span className="text-xs font-black uppercase tracking-wide">
+                      {isTracked ? 'Tracking' : 'Track Price'}
+                  </span>
+              </button>
+            </div>
         </div>
       </GlassCard>
     </div>
@@ -136,6 +146,7 @@ function FlightTable({
   savedItems, 
   trackedPrices, 
   onPress, 
+  onImportToTrip,
   onToggleSave, 
   onToggleTrack 
 }: { 
@@ -143,6 +154,7 @@ function FlightTable({
   savedItems: string[]; 
   trackedPrices: string[]; 
   onPress: (f: SearchItem) => void;
+  onImportToTrip: (e: React.MouseEvent, f: SearchItem) => void;
   onToggleSave: (e: React.MouseEvent, id: string) => void;
   onToggleTrack: (e: React.MouseEvent, f: SearchItem) => void;
 }) {
@@ -198,6 +210,12 @@ function FlightTable({
               <td data-label="操作">
                 <div className="flex items-center gap-2 justify-end">
                   <button
+                    onClick={(e) => onImportToTrip(e, flight)}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90 border bg-white border-slate-200 text-slate-400 hover:text-pink-500"
+                  >
+                    <PlaneTakeoff size={16} strokeWidth={3} />
+                  </button>
+                  <button
                     onClick={(e) => onToggleTrack(e, flight)}
                     className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90 border ${
                       trackedPrices.includes(flight.id) 
@@ -230,7 +248,7 @@ function FlightTable({
 export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin?: () => void; isLoggedIn?: boolean }) {
   const { searchForm, updateField, results, setResults, loading, setLoading, searchError, setSearchError, savedItems, toggleSave, trackedPrices, toggleTrack } =
     useSearchStore();
-  const { openRedirectModal, isOffline, showToast, setActiveTab } = useAppStore();
+  const { openRedirectModal, isOffline, showToast, setActiveTab, activeTripId } = useAppStore();
 
   const [dateError, setDateError] = useState<string | null>(null);
   const [showDeparturePicker, setShowDeparturePicker] = useState<boolean>(false);
@@ -239,6 +257,11 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   const [communityTrips, setCommunityTrips] = useState<any[]>([]);
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
+
+  const resolveCurrentTripId = () =>
+    activeTripId ||
+    (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('trip_id') : '') ||
+    ((typeof import.meta !== 'undefined' && (import.meta as { env?: Record<string, string> }).env?.VITE_TRIP_ID) || '').trim();
 
   useEffect(() => {
     // Initial fetch for recommendations and handbooks
@@ -324,6 +347,44 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       setResults([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImportFlight = async (flight: SearchItem) => {
+    if (!isLoggedIn && onRequireLogin) {
+      onRequireLogin();
+      return;
+    }
+
+    const tripId = resolveCurrentTripId();
+    if (!tripId) {
+      showToast('請先開啟一趟旅程，再把航班帶入手帳。', 'warning');
+      return;
+    }
+
+    try {
+      const depCode = searchForm.from?.trim() || flight.details?.depCode || 'TPE';
+      const arrCode = searchForm.to?.trim() || flight.details?.arrCode || 'NRT';
+      const factDate = searchForm.date?.trim() || new Date().toISOString().slice(0, 10);
+      await createTripFact(tripId, {
+        factType: 'flight_outbound',
+        source: 'imported_search',
+        title: `${flight.details?.airline || flight.provider} ${depCode} → ${arrCode}`,
+        startAt: `${factDate}T${flight.details?.departure || '09:00'}:00.000Z`,
+        endAt: `${factDate}T${flight.details?.arrival || '13:00'}:00.000Z`,
+        locationName: arrCode,
+        referenceCode: flight.details?.flightNumber || null,
+        metadata: {
+          airline: flight.details?.airline || flight.provider,
+          depCode,
+          arrCode,
+          flightNumber: flight.details?.flightNumber,
+          provider: flight.provider,
+        },
+      });
+      showToast(`已把 ${flight.provider} 航班帶入旅程錨點。`, 'success');
+    } catch {
+      showToast('帶入旅程失敗，請稍後再試。', 'warning');
     }
   };
 
@@ -773,6 +834,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                               emoji: flight.emoji,
                             })
                           }
+                          onImportToTrip={(e) => {
+                            e.stopPropagation();
+                            void handleImportFlight(flight);
+                          }}
                           onToggleSave={(e) => {
                             e.stopPropagation();
                             if (!isLoggedIn && onRequireLogin) {
@@ -810,6 +875,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       results={results}
                       savedItems={savedItems}
                       trackedPrices={trackedPrices}
+                      onImportToTrip={(e, flight) => {
+                        e.stopPropagation();
+                        void handleImportFlight(flight);
+                      }}
                       onPress={(flight) => 
                         openRedirectModal({
                           provider: flight.provider,

@@ -273,18 +273,66 @@ export async function fetchTripActivities(tripId: string) {
     return [];
   }
 }
-export async function getTripsForUser(...args: any[]): Promise<any> {}
-export async function removeActivity(...args: any[]): Promise<any> {}
-// We can just define a proxy or just the ones needed.
-export async function addActivity(...args: any[]): Promise<any> {}
-export async function updateActivity(...args: any[]): Promise<any> {}
-export async function reorderActivities(...args: any[]): Promise<any> {}
-export async function deleteTrip(...args: any[]): Promise<any> {}
-export async function createTrip(...args: any[]): Promise<any> {}
-export async function createTemplateFromTrip(...args: any[]): Promise<any> {}
-export async function submitReceipt(...args: any[]): Promise<any> {}
-export async function getTripMembers(...args: any[]): Promise<any> {}
-export async function getSettlements(...args: any[]): Promise<any> {}
+export async function fetchTripFacts(tripId: string): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${tripId}/facts`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function createTripFact(tripId: string, body: any): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${tripId}/facts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('Create fact failed');
+  return res.json();
+}
+
+export async function updateTripFact(tripId: string, factId: string, body: any): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${tripId}/facts/${factId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('Update fact failed');
+  return res.json();
+}
+
+export async function deleteTripFact(tripId: string, factId: string): Promise<boolean> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${tripId}/facts/${factId}`, {
+    method: 'DELETE',
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
+  return res.ok;
+}
+
+export async function createTrip(body: { name: string; destination: string }): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch('/api/trips', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('Create trip failed');
+  return res.json();
+}
+
+export async function cloneTrip(tripId: string): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${tripId}/clone`, {
+    method: 'POST',
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
+  if (!res.ok) throw new Error('Clone trip failed');
+  return res.json();
+}
 export async function trackClickOut(body: TrackClickOutBody): Promise<void> {
   try {
     const token = getStoredToken();
@@ -338,4 +386,38 @@ export async function searchOffers(form: any): Promise<SearchItem[]> {
 
     throw new SearchServiceUnavailableError('搜尋服務暫時無法使用，請稍後再試。');
   }
+}
+
+export async function regenerateItinerarySpot(params: {
+  trip_id: string;
+  node_id: string;
+  destination: string;
+  day: number;
+  current_time: string;
+  current_title: string;
+  notes?: string;
+}): Promise<{
+  time: string;
+  title: string;
+  emoji: string;
+  category: string;
+  ai_note: string;
+  lat?: number;
+  lng?: number;
+}> {
+  const token = getStoredToken();
+  const res = await fetch('/api/itinerary/regenerate-spot', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as any).message ?? 'AI 換景點失敗，請稍後再試');
+  }
+  const data = await res.json();
+  return data.data;
 }

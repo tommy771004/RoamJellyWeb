@@ -1,4 +1,4 @@
-import { pgTable, text, varchar, timestamp, uuid, integer, real, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, varchar, timestamp, uuid, integer, real, boolean, jsonb } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   userId: varchar('user_id', { length: 128 }).primaryKey(),
@@ -65,6 +65,23 @@ export const favorites = pgTable('favorites', {
   lat: real('lat'),
   lng: real('lng'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const tripTravelFacts = pgTable('trip_travel_facts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tripId: varchar('trip_id', { length: 128 }).notNull().references(() => trips.id),
+  factType: varchar('fact_type', { length: 64 }).notNull(),
+  source: varchar('source', { length: 64 }).notNull().default('manual'),
+  title: varchar('title', { length: 255 }).notNull(),
+  startAt: timestamp('start_at'),
+  endAt: timestamp('end_at'),
+  locationName: varchar('location_name', { length: 255 }),
+  lat: real('lat'),
+  lng: real('lng'),
+  referenceCode: varchar('reference_code', { length: 128 }),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const checklistItems = pgTable('checklist_items', {

@@ -242,6 +242,7 @@ export default function App() {
               mustVisitSpots: [],
               mustEatFoods: [],
               autoFlightSegments: [],
+              travelFactsContext: '',
               notes: `Companions: ${data.companions}, Vibes: ${data.vibes.join(',')}, Interests: ${data.interests.join(',')}, Dietary: ${data.dietary.join(',')}, Transport: ${data.transport.join(',')}, Budget: ${data.budget}`
             }
           });

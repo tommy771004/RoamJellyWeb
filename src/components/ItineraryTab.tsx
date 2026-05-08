@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, type PanInfo } from 'motion/react';
 
 
-import { List as ListIcon, Map as MapIcon, Share2, Trash2, Sparkles, Plus, X, Pencil, Save, GripVertical, Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { List as ListIcon, Map as MapIcon, Share2, Trash2, Sparkles, Plus, X, Pencil, Save, GripVertical, Loader2, ArrowLeft, ArrowRight, Navigation2, RefreshCw } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
 import { ItinerarySkeletonCard } from './SkeletonCard';
@@ -18,6 +18,8 @@ import {
   deleteItineraryNode,
   addFavorite,
   deleteFavorite,
+  updateTripFact,
+  regenerateItinerarySpot,
 } from '../lib/workflowApi';
 import { suggestItineraryWithForm } from '../lib/openrouterApi';
 import { useItineraryStore } from '../store/useItineraryStore';
@@ -123,6 +125,7 @@ function buildDefaultPlannerForm(destination: string, days: number): ItineraryPl
     mustEatFoods: [],
     autoFlightSegments: [],
     notes: '',
+    travelFactsContext: '',
   };
 }
 
@@ -224,6 +227,7 @@ export default function ItineraryTab() {
         mustEatFoods: [],
         autoFlightSegments: [],
         notes: `旅伴: ${formData.companions}, 氛圍: ${formData.vibes.join(',')}, 飲食: ${formData.dietary.join(',')}`,
+        travelFactsContext: '',
       };
       
       let suggestions = await suggestItineraryWithForm({ 
@@ -872,6 +876,8 @@ export default function ItineraryTab() {
                   onUpdate={handleUpdateNode}
                   isOffline={isOffline}
                   aiLoading={aiLoading}
+                  tripId={TRIP_ID}
+                  destination={tripInfo?.destination || ''}
                 />
               </motion.div>
             ) : (
@@ -1026,15 +1032,20 @@ function ItineraryListItem({
   onDelete,
   onUpdate,
   isOffline,
+  tripId,
+  destination,
 }: {
   item: ItineraryNode;
   idx: number;
   onDelete: (node_id: string) => void;
   onUpdate: (node: ItineraryNode) => void;
   isOffline: boolean;
+  tripId: string;
+  destination: string;
   key?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [editTitle, setEditTitle] = useState(item.title);
   const [editTime, setEditTime] = useState(item.time);
   const [editEmoji, setEditEmoji] = useState(item.emoji);
@@ -1044,6 +1055,37 @@ function ItineraryListItem({
   const handleSave = () => {
     onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes });
     setIsEditing(false);
+  };
+
+  const handleNavigate = () => {
+    if (!item.lat || !item.lng) return;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const label = encodeURIComponent(item.title);
+    const url = isIOS 
+      ? `maps://maps.apple.com/?q=${label}&ll=${item.lat},${item.lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lng}`;
+    window.open(url, '_blank');
+  };
+
+  const handleRegenerate = async () => {
+    if (!tripId || !destination) return;
+    setRegenerating(true);
+    try {
+      const newNode = await regenerateItinerarySpot({
+        trip_id: tripId,
+        node_id: item.node_id,
+        destination: destination,
+        day: item.day,
+        current_time: item.time,
+        current_title: item.title,
+        notes: item.description || item.notes
+      });
+      onUpdate({ ...item, ...newNode });
+    } catch (err) {
+      console.error('Regenerate failed:', err);
+    } finally {
+      setRegenerating(false);
+    }
   };
 
   const meta = getCategoryMeta(item.category);
@@ -1139,6 +1181,23 @@ function ItineraryListItem({
 
           {!isOffline && !isEditing && (
             <div className="flex flex-row sm:flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+              {item.lat && item.lng && (
+                <button
+                  onClick={handleNavigate}
+                  title="在地圖中導航"
+                  className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-emerald-500 hover:border-emerald-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
+                >
+                  <Navigation2 size={16} />
+                </button>
+              )}
+              <button
+                onClick={() => void handleRegenerate()}
+                disabled={regenerating}
+                title="AI 換一個景點"
+                className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-fuchsia-500 hover:border-fuchsia-100 flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:opacity-30"
+              >
+                {regenerating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+              </button>
               <button
                 onClick={() => setIsEditing(true)}
                 className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-pink-500 hover:border-pink-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
@@ -1165,6 +1224,8 @@ function ItineraryList({
   onUpdate,
   isOffline,
   aiLoading,
+  tripId,
+  destination,
 }: {
   items: ItineraryNode[];
   day: number;
@@ -1172,6 +1233,8 @@ function ItineraryList({
   onUpdate: (node: ItineraryNode) => void;
   isOffline: boolean;
   aiLoading: boolean;
+  tripId: string;
+  destination: string;
 }) {
   return (
     <div className="flex flex-col gap-10 mt-6 min-h-[400px]">
@@ -1217,6 +1280,8 @@ function ItineraryList({
                 onDelete={onDelete}
                 onUpdate={onUpdate}
                 isOffline={isOffline}
+                tripId={tripId}
+                destination={destination}
               />
               {nextItem && timeGapStr && (
                 <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">

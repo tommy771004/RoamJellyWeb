@@ -13,6 +13,9 @@ export interface SearchItem {
     arrival?: string;
     duration?: string;
     stops?: number;
+    depCode?: string;
+    arrCode?: string;
+    flightNumber?: string;
   };
 }
 
@@ -31,8 +34,14 @@ export interface TripInfo {
   name: string;
   destination: string;
   days: number;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+export interface TripSummary {
+  tripId: string;
+  name: string;
+  destination: string;
 }
 
 export interface WeatherData {
@@ -94,7 +103,58 @@ export interface ItineraryPlannerForm {
   mustVisitSpots: string[];
   mustEatFoods: string[];
   autoFlightSegments: string[];
+  travelFactsContext: string;
   notes: string;
+}
+
+export type TravelFactType = 'flight_outbound' | 'flight_inbound' | 'stay';
+export type TravelFactSource = 'imported_search' | 'manual' | 'ai_inferred';
+
+export interface TravelFactMetadata {
+  airline?: string;
+  flightNumber?: string;
+  depCode?: string;
+  arrCode?: string;
+  provider?: string;
+  address?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+}
+
+export interface TravelFact {
+  id: string;
+  tripId: string;
+  factType: TravelFactType;
+  source: TravelFactSource;
+  title: string;
+  startAt?: string | null;
+  endAt?: string | null;
+  locationName?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  referenceCode?: string | null;
+  metadata?: TravelFactMetadata | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TravelFactsSummary {
+  items: TravelFact[];
+  missingAnchors: Array<'flight_outbound' | 'stay'>;
+  hasCompleteAiAnchors: boolean;
+}
+
+export interface UpsertTravelFactBody {
+  factType: TravelFactType;
+  source?: TravelFactSource;
+  title: string;
+  startAt?: string | null;
+  endAt?: string | null;
+  locationName?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  referenceCode?: string | null;
+  metadata?: TravelFactMetadata | null;
 }
 
 export interface SyncItineraryPayload {

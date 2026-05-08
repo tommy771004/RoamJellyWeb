@@ -34,7 +34,7 @@ interface AppStore {
   toastMessage: string | null;
 
   activeTripId?: string;
-  setActiveTripId?: (id: string) => void;
+  setActiveTripId: (id: string) => void;
 
   isOffline: boolean;
   setOffline: (offline: boolean) => void;
@@ -67,6 +67,8 @@ export const useAppStore = create<AppStore>((set) => ({
 
   toastMessage: null,
   toasts: [],
+  activeTripId: undefined,
+  setActiveTripId: (id) => set({ activeTripId: id }),
   showToast: (message, type = 'info') => {
     const id = Math.random().toString(36).substring(2, 9);
     set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));

@@ -1,14 +1,12 @@
 import { fetchOpenRouterWithFallback } from './openrouterHelper';
-import { GoogleGenAI } from '@google/genai';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
-const geminiApiKey = process.env.GEMINI_API_KEY;
 
 export async function generateItinerary(body: any) {
   const { destination, planner } = body;
   const days = planner?.days || 3;
   
-  if (!apiKey && !geminiApiKey) {
+  if (!apiKey) {
     // Artificial delay for fallback
     await new Promise(r => setTimeout(r, 2000));
     return [
@@ -54,6 +52,8 @@ Details:
 - Trip length: ${days} days
 - Destination: ${destination}
 - Departure: ${planner?.departureFrom || 'unknown'}
+- Auto flight segments: ${planner?.autoFlightSegments?.join(' | ') || 'Not specified'}
+- Travel facts anchors: ${planner?.travelFactsContext || 'Not specified'}
 - Spots user likes: ${planner?.mustVisitSpots?.join(', ') || 'Not specified'}
 - Extra notes: ${planner?.notes || 'None'}
 
@@ -84,4 +84,62 @@ Details:
   return [
     { day: 1, time: '10:00', title: `系統繁忙: 這是一筆備用資料`, category: 'other', emoji: '📍' },
   ];
+}
+
+/**
+ * Spot-level regeneration: replaces a single itinerary node with a fresh AI suggestion.
+ * Returns a single spot object compatible with ItineraryNode.
+ */
+export async function regenerateSpot(params: {
+  destination: string;
+  day: number;
+  currentTime: string;
+  currentTitle: string;
+  notes?: string;
+}): Promise<{
+  time: string;
+  title: string;
+  emoji: string;
+  category: string;
+  ai_note: string;
+  lat?: number;
+  lng?: number;
+} | null> {
+  if (!apiKey) return null;
+
+  const prompt = `你是旅遊規劃 AI，請**只輸出一個 JSON 物件**（不要陣列、不要 markdown），替換使用者不滿意的景點。
+
+被替換的景點：
+- 目的地: ${params.destination}
+- Day: ${params.day}
+- 時間: ${params.currentTime}
+- 原景點名稱: ${params.currentTitle}
+- 使用者備註: ${params.notes || '無'}
+
+請直接輸出一個 JSON 物件，欄位如下：
+{
+  "time": "HH:MM",
+  "title": "景點名稱（在 ${params.destination} 附近的替代景點）",
+  "emoji": "對應表情",
+  "category": "landmark|food|shopping|nature|hotel|activity|nightlife|transport|other",
+  "ai_note": "一句話的貼心提醒",
+  "lat": 緯度數字（可選）,
+  "lng": 經度數字（可選）
+}
+
+注意：請直接輸出 JSON，不要有任何多餘說明。`;
+
+  try {
+    const text = await fetchOpenRouterWithFallback(apiKey, prompt);
+    const match = text.match(/\{[\s\S]*?\}/);
+    if (!match) throw new Error('No JSON found');
+    const parsed = JSON.parse(match[0]);
+    if (parsed && typeof parsed.title === 'string') {
+      return parsed;
+    }
+  } catch (err) {
+    console.error('regenerateSpot failed', err);
+  }
+
+  return null;
 }

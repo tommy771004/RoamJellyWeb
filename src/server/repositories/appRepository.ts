@@ -298,6 +298,66 @@ export class AppRepository {
     return await this.db.select().from(schema.favorites).where(eq(schema.favorites.tripId, tripId));
   }
 
+  async getTripTravelFacts(tripId: string) {
+    if (!this.db) return [];
+    return await this.db.select().from(schema.tripTravelFacts).where(eq(schema.tripTravelFacts.tripId, tripId));
+  }
+
+  async getTripTravelFactById(id: string) {
+    if (!this.db) return null;
+    const [row] = await this.db.select().from(schema.tripTravelFacts).where(eq(schema.tripTravelFacts.id, id));
+    return row || null;
+  }
+
+  async createTripTravelFact(tripId: string, data: any) {
+    if (!this.db) return null;
+    const [row] = await this.db
+      .insert(schema.tripTravelFacts)
+      .values({
+        tripId,
+        factType: data.factType,
+        source: data.source ?? 'manual',
+        title: data.title,
+        startAt: data.startAt ? new Date(data.startAt) : null,
+        endAt: data.endAt ? new Date(data.endAt) : null,
+        locationName: data.locationName,
+        lat: data.lat,
+        lng: data.lng,
+        referenceCode: data.referenceCode,
+        metadata: data.metadata ?? null,
+      })
+      .returning();
+    return row || null;
+  }
+
+  async updateTripTravelFact(id: string, data: any) {
+    if (!this.db) return null;
+    const [row] = await this.db
+      .update(schema.tripTravelFacts)
+      .set({
+        factType: data.factType,
+        source: data.source,
+        title: data.title,
+        startAt: data.startAt ? new Date(data.startAt) : null,
+        endAt: data.endAt ? new Date(data.endAt) : null,
+        locationName: data.locationName,
+        lat: data.lat,
+        lng: data.lng,
+        referenceCode: data.referenceCode,
+        metadata: data.metadata ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.tripTravelFacts.id, id))
+      .returning();
+    return row || null;
+  }
+
+  async deleteTripTravelFact(id: string) {
+    if (!this.db) return false;
+    await this.db.delete(schema.tripTravelFacts).where(eq(schema.tripTravelFacts.id, id));
+    return true;
+  }
+
   async createFavorite(tripId: string, data: any) {
     if (!this.db) return null;
     const [row] = await this.db.insert(schema.favorites).values({
