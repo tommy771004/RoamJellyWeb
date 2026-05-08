@@ -1,8 +1,9 @@
 import { useAppStore } from '../store/useAppStore';
 import type { TabName } from '../types/workflow';
 
-export const TABS: { id: TabName; label: string; icon: string }[] = [
+export const TABS: { id: string; label: string; icon: string }[] = [
   { id: 'home', label: '探索首頁', icon: 'home' },
+  { id: 'ai_form', label: 'AI 行程', icon: 'auto_awesome' },
   { id: 'itinerary', label: '行程手帳', icon: 'calendar_month' },
   { id: 'tools', label: '行前準備', icon: 'backpack' },
 ];
@@ -18,7 +19,7 @@ export default function BottomTabs() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => setActiveTab(tab.id as any)}
               className={`flex flex-col items-center justify-center text-pink-500 w-20 pt-2 pb-1.5 transition-all rounded-[24px] ${
                 isActive 
                   ? 'bg-white/80 shadow-[0_0_20px_rgba(255,183,206,0.6)] scale-105 active:scale-95' 

@@ -16,7 +16,7 @@ const JWT_DEV_TOKEN_ENABLED = process.env.ENABLE_DEV_TOKEN_ENDPOINT !== 'false';
 const AUTH_REQUIRED = process.env.AUTH_REQUIRED === 'true' || process.env.NODE_ENV === 'production';
 const OTA_PROVIDER_URL = process.env.OTA_PROVIDER_URL?.replace(/\/+$/, '');
 
-const PORT = Number(process.env.PORT ?? 3000);
+const PORT = 3000;
 
 type TripRole = 'owner' | 'editor' | 'viewer';
 
@@ -280,10 +280,6 @@ async function geocodeSpot(title: string, city = '東京'): Promise<{ lat: numbe
 async function startServer() {
   const repo = new AppRepository(db);
 
-  if (SHOULD_SEED_DEMO_DATA) {
-    await repo.ensureDemoSeed();
-  }
-
   if (REDIS_URL) {
     const candidate = createClient({ url: REDIS_URL });
     candidate.on('error', (error: unknown) => {
@@ -431,8 +427,6 @@ async function startServer() {
 
       const userId = String(req.body?.user_id ?? 'demo_user').trim() || 'demo_user';
       await repo.ensureUser(userId, userId);
-      await repo.ensureDemoSeed();
-      await repo.ensureTripMember({ tripId: 'trip_999', userId, role: 'owner' });
 
       const token = signAccessToken({ userId });
       res.json({ status: 'success', token, user_id: userId, expires_in: process.env.JWT_EXPIRES_IN ?? '12h' });
@@ -464,10 +458,9 @@ async function startServer() {
       return;
     }
 
-    const passwordHash = hashPassword(password);
+    const passwordHash = await hashPassword(password);
     await repo.createUserWithPassword(username, displayName, passwordHash);
-    await repo.ensureTripMember({ tripId: 'trip_999', userId: username, role: 'editor' });
-
+    
     const token = signAccessToken({ userId: username });
     res.status(201).json({ status: 'success', token, user_id: username, expires_in: process.env.JWT_EXPIRES_IN ?? '12h' });
   });
@@ -483,7 +476,7 @@ async function startServer() {
     }
 
     const user = await repo.getUserByUsername(username);
-    if (!user || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
+    if (!user || !user.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
       res.status(401).json({ status: 'error', message: '使用者名稱或密碼不正確' });
       return;
     }
@@ -607,13 +600,65 @@ async function startServer() {
     );
   });
 
+  app.get('/api/trips/:trip_id/flights', async (req, res) => {
+    await new Promise((r) => setTimeout(r, 800)); // Simulate realistic OTA fetch
+    res.json([
+      { airline: 'EVA Air', direct: true, duration: '3h 45m', price: 14500, depTime: '10:00', depCode: 'TPE', arrTime: '14:45', arrCode: 'NRT' },
+      { airline: 'Starlux Airlines', direct: true, duration: '3h 30m', price: 16800, depTime: '12:30', depCode: 'TPE', arrTime: '16:40', arrCode: 'NRT' }
+    ]);
+  });
+
+  app.get('/api/trips/:trip_id/activities', async (req, res) => {
+    await new Promise((r) => setTimeout(r, 800)); // Simulate realistic OTA fetch
+    res.json([
+      { img: 'https://images.unsplash.com/photo-1542931287-023b922fa89b?auto=format&fit=crop&q=80&w=200&h=200', title: 'Tokyo Skytree fast-track Admission Ticket', rating: 4.8, reviews: '12k', price: 580 },
+      { img: 'https://images.unsplash.com/photo-1505069818817-5fa76483161a?auto=format&fit=crop&q=80&w=200&h=200', title: 'Tokyo Disney Resort 1-Day Pass', rating: 4.9, reviews: '45k', price: 2100 }
+    ]);
+  });
+
+  app.post('/api/generate/itinerary', async (req, res) => {
+    try {
+      const { generateItinerary } = await import('./src/server/services/aiItineraryService');
+      const nodes = await generateItinerary(req.body);
+      res.json({ status: 'success', data: nodes });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ status: 'error', message: 'Failed to generate itinerary' });
+    }
+  });
+
+  app.post('/api/generate/packing-list', async (req, res) => {
+    const { destination = 'Kyoto', days = 5, weatherContext = 'Clear skies, 20°C' } = req.body || {};
+    try {
+      // dynamic import so server.ts doesn't crash if omitted
+      const { generatePackingList } = await import('./src/server/services/aiService');
+      const list = await generatePackingList(destination, days, weatherContext);
+      res.json({ status: 'success', data: list });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ status: 'error', message: 'Failed to generate packing list' });
+    }
+  });
+
   app.get('/api/search', async (req, res) => {
     const from = String(req.query.from ?? '').trim().toUpperCase();
     const to = String(req.query.to ?? '').trim().toUpperCase();
     const date = String(req.query.date ?? '').trim();
 
+    // If no params, return "Popular Recommendations" (latest flights)
     if (!from || !to || !date) {
-      res.status(400).json({ status: 'error', message: 'from, to, date are required' });
+      const flightRows = await repo.getAllFlights();
+      const results = flightRows.map((f: any) => ({
+        id: `flight_${f.id}`,
+        type: 'flight',
+        provider: f.provider,
+        title: `熱門推薦: ${f.provider}`,
+        price: f.price,
+        currency: 'TWD',
+        emoji: '✈️',
+        affiliate_url: 'https://jelly.roam'
+      }));
+      res.json({ status: 'success', data: results });
       return;
     }
 
@@ -672,6 +717,15 @@ async function startServer() {
     const limit = Number(req.query.limit ?? 50);
     const data = await getSearchHistory(Number.isFinite(limit) ? limit : 50);
     res.json({ status: 'success', data });
+  });
+
+  app.get('/api/handbooks', async (req, res) => {
+    // Return some mock creator handbooks
+    res.json([
+      { id: 'h1', title: '東京散策：巷弄裡的小秘密', author: 'Jelly Explorer', likes: 1205, cover: 'https://images.unsplash.com/photo-1540959733332-e94e270b4052?w=800' },
+      { id: 'h2', title: '大阪美食地圖 2024', author: 'Foodie Bear', likes: 890, cover: 'https://images.unsplash.com/photo-1590559899731-a382839e5449?w=800' },
+      { id: 'h3', title: '京都紅葉季完全攻略', author: 'Maple Fan', likes: 2100, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800' }
+    ]);
   });
 
   app.get('/api/weather', async (req, res) => {
@@ -1033,22 +1087,21 @@ async function startServer() {
       return;
     }
     const tripId = String(req.query.trip_id ?? '').trim();
-    const rows = tripId ? await repo.getChecklistByTrip(tripId) : await repo.getChecklist();
-    res.json(rows.map((row) => ({ id: row.id, text: row.text, checked: Boolean(row.checked) })));
+    const rows = tripId ? await repo.getChecklist(tripId) : [];
+    res.json(rows.map((row) => ({ id: row.id, text: row.content, checked: Boolean(row.completed) })));
   });
 
-  app.post('/api/checklist/:id', async (req, res) => {
+  app.post('/api/checklist', async (req, res) => {
     if (!getRequestUserId(req) && AUTH_REQUIRED) {
       res.status(401).json({ status: 'error', message: 'unauthorized' });
       return;
     }
-    const id = String(req.params.id ?? '').trim();
-    const checked = Boolean(req.body?.checked);
-    const updated = await repo.updateChecklist(id, checked);
-    if (!updated) {
-      res.status(404).json({ status: 'error', message: 'checklist item not found' });
+    const { trip_id, items } = req.body;
+    if (!trip_id || !Array.isArray(items)) {
+      res.status(400).json({ status: 'error', message: 'trip_id and items array required' });
       return;
     }
+    await repo.updateChecklist(trip_id, items);
     res.json({ status: 'success' });
   });
 
@@ -1074,13 +1127,10 @@ async function startServer() {
 
     if (!members.includes(payer)) members.push(payer);
 
-    await repo.addLedgerExpense({
-      tripId: trip_id,
-      title,
+    await repo.addLedgerExpense(trip_id, {
+      payer_id: payer,
       amount: safeAmount,
-      currency: currency ?? 'JPY',
-      payer,
-      splitWith: members,
+      description: title,
     });
 
     const settlementRows = await repo.getAggregatedSettlements(trip_id);
@@ -1116,7 +1166,7 @@ async function startServer() {
     const allowed = await ensureTripRole(req, res, trip_id, 'editor');
     if (!allowed) return;
 
-    await repo.clearSettlements(trip_id, from_name, to_name, currency);
+    await repo.clearSettlements(trip_id);
     const rows = await repo.getAggregatedSettlements(trip_id);
     res.json({ status: 'success', settlements: rows });
   });
@@ -1161,8 +1211,8 @@ async function startServer() {
     }
 
     const coords = await geocodeSpot(title.trim(), trip.destination);
-    const favorite = await repo.createFavorite({
-      tripId: trip_id,
+    const favorite = await repo.createFavorite(trip_id, {
+      id: `fav_${Date.now()}`,
       title: title.trim(),
       emoji: emoji ?? '📍',
       lat: coords?.lat ?? null,

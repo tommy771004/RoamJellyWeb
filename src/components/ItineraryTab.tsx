@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, type PanInfo } from 'motion/react';
 
 
-import { List as ListIcon, Map as MapIcon, Share2, Trash2, Sparkles, Plus, X, Pencil, Save } from 'lucide-react';
+import { List as ListIcon, Map as MapIcon, Share2, Trash2, Sparkles, Plus, X, Pencil, Save, GripVertical } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
 import { ItinerarySkeletonCard } from './SkeletonCard';
@@ -19,7 +19,7 @@ import {
   addFavorite,
   deleteFavorite,
 } from '../lib/workflowApi';
-import { suggestItineraryWithForm } from '../lib/geminiApi';
+import { suggestItineraryWithForm } from '../lib/openrouterApi';
 import { useItineraryStore } from '../store/useItineraryStore';
 import { useAppStore } from '../store/useAppStore';
 import type {
@@ -247,9 +247,35 @@ export default function ItineraryTab() {
     }
     const deepLink = `${window.location.origin}/trip/${TRIP_ID}`;
     const name = tripInfo?.name ?? '我的旅程';
-    const ok = await shareText(`一起共編「${name}」，點我加入：${deepLink}`);
-    setTip(ok ? '邀請連結已分享或複製。' : '分享未完成，請稍後再試。');
-    setTimeout(() => setTip(''), 2200);
+    const textToShare = `一起共編「${name}」，點我加入：${deepLink}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: name,
+          text: textToShare,
+          url: deepLink,
+        });
+        showToast('分享成功！');
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          // fallback to clipboard
+          try {
+            await navigator.clipboard.writeText(textToShare);
+            showToast('已複製連結到剪貼簿。');
+          } catch (e) {
+            showToast('無法複製分享連結。');
+          }
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(textToShare);
+        showToast('已複製連結到剪貼簿。');
+      } catch (err) {
+        showToast('分享未完成，請稍後再試。');
+      }
+    }
   };
 
   // Add a favorite spot from the DB to the selected day's timeline
@@ -413,10 +439,16 @@ export default function ItineraryTab() {
   };
 
   return (
-    <div className="overflow-x-hidden p-4 md:p-10 pt-20 md:pt-24 min-h-[100dvh] flex-1 max-w-full lg:max-w-4xl xl:max-w-5xl mx-auto w-full flex flex-col">
+    <div className="overflow-x-hidden p-4 md:p-8 md:pb-[90px] xl:px-12 min-h-[100dvh] flex-1 max-w-full lg:max-w-5xl xl:max-w-7xl mx-auto w-full flex flex-col transition-all duration-300">
       {isOffline ? (
-        <GlassCard className="mb-4 !p-3 bg-[#fef3c7] border-[#fde68a]">
-          <span className="text-amber-700 font-semibold">目前離線中，僅供查看喔 📴</span>
+        <GlassCard className="mb-4 !p-4 bg-amber-50/80 backdrop-blur-md border border-amber-200 shadow-sm flex flex-row items-center justify-center gap-2">
+          <span className="text-amber-700 font-bold text-sm tracking-wide flex items-center gap-2">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+            </span>
+            目前離線中，僅供查看喔 📴
+          </span>
         </GlassCard>
       ) : null}
 
@@ -463,7 +495,7 @@ export default function ItineraryTab() {
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
-              className={`flex-row items-center px-5 py-2.5 rounded-full transition-all duration-300 ${viewMode === mode ? 'bg-white shadow-md shadow-slate-200/50 scale-[1.02]' : 'hover:bg-white/40'}`}
+              className={`flex flex-1 sm:flex-none flex-row justify-center items-center px-5 py-2.5 rounded-full transition-all duration-300 ${viewMode === mode ? 'bg-white shadow-md shadow-slate-200/50 scale-[1.02]' : 'hover:bg-white/40'}`}
             >
               {mode === 'list'
                 ? <ListIcon size={18} strokeWidth={2.5} color={viewMode === mode ? '#d946ef' : '#94a3b8'} />
@@ -477,16 +509,16 @@ export default function ItineraryTab() {
         </div>
         <button
           onClick={() => void handleShare()}
-          className="flex-1 flex-row bg-gradient-to-r from-fuchsia-400 to-pink-500 hover:opacity-90 active:scale-95 rounded-full items-center justify-center ml-3 px-4 shadow-[0_4px_14px_0_rgb(217,70,239,0.39)] transition-all"
+          className="flex flex-1 sm:flex-none flex-row bg-gradient-to-r from-fuchsia-400 to-pink-500 hover:opacity-90 active:scale-95 rounded-full items-center justify-center sm:ml-auto px-6 py-3 shadow-[0_4px_14px_0_rgb(217,70,239,0.39)] transition-all"
         >
           <Share2 size={18} strokeWidth={2.5} color="white" />
-          <span className="ml-2 font-bold tracking-wide text-white text-sm">Share Trip</span>
+          <span className="ml-2 font-bold tracking-wide text-white text-sm">Share to Social Media</span>
         </button>
       </div>
 
       {/* Day selector — days from trip API */}
       <div 
-        className="mb-8 overflow-x-auto overflow-y-hidden flex pb-3 scrollbar-hide -mx-4 px-4 touch-pan-x"
+        className="mb-8 overflow-x-auto sm:overflow-visible flex sm:flex-wrap pb-3 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 touch-pan-x"
         style={{ gap: 12 }}
       >
         {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
@@ -501,17 +533,17 @@ export default function ItineraryTab() {
               {isActive && (
                 <motion.div
                   layoutId="day-indicator"
-                  className="absolute inset-0 rounded-[24px] bg-gradient-to-b from-fuchsia-500 to-purple-600 shadow-md shadow-fuchsia-500/20"
+                  className="absolute inset-0 rounded-full bg-gradient-to-b from-fuchsia-500 to-purple-600 shadow-md shadow-fuchsia-500/20"
                   transition={{ type: 'spring', bounce: 0.35, duration: 0.5 }}
                 />
               )}
-              <div className={`px-5 py-3 rounded-[24px] items-center relative z-10 flex flex-col gap-y-1 transition-colors ${!isActive && 'bg-white/40 border border-white hover:bg-white/60'}`} style={{ minWidth: 72 }}>
-                <span className={`text-[13px] font-black tracking-wider ${isActive ? 'text-white' : 'text-slate-600 group-hover:text-fuchsia-600'}`}>
+              <div className={`px-5 py-2.5 md:px-6 md:py-3 rounded-full items-center justify-center relative z-10 flex flex-row gap-x-2 transition-all duration-300 ${!isActive && 'bg-white/40 border border-white hover:bg-white/60 hover:shadow-sm'}`}>
+                <span className={`text-sm md:text-[15px] font-bold tracking-wide transition-colors duration-300 whitespace-nowrap ${isActive ? 'text-white' : 'text-slate-700 group-hover:text-fuchsia-700'}`}>
                   Day {day}
                 </span>
                 {count > 0
-                  ? <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'bg-fuchsia-400'}`} />
-                  : <div className="w-1.5 h-1.5 rounded-full bg-transparent border border-slate-300" />
+                  ? <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'bg-fuchsia-400'}`} />
+                  : <div className="w-1.5 h-1.5 rounded-full bg-transparent border border-slate-300 shrink-0" />
                 }
               </div>
             </button>
@@ -772,21 +804,47 @@ export default function ItineraryTab() {
 
       {/* Timeline / Map */}
       <div className="flex-1 pb-32">
-        {loading ? (
-          <div className="relative pl-6 mt-4" style={{ gap: 32 }}>
-            {[0, 1, 2].map((i) => <ItinerarySkeletonCard key={i} />)}
-          </div>
-        ) : viewMode === 'list' ? (
-          <ItineraryList
-            items={selectedDayNodes}
-            day={selectedDay}
-            onDelete={handleDeleteNode}
-            onUpdate={handleUpdateNode}
-            isOffline={isOffline}
-          />
-        ) : (
-          <TokyoMapView items={selectedDayNodes} />
-        )}
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="relative pl-6 mt-4 flex flex-col gap-8"
+            >
+              {[0, 1, 2].map((i) => <ItinerarySkeletonCard key={i} />)}
+            </motion.div>
+          ) : viewMode === 'list' ? (
+            <motion.div
+              key="list"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ItineraryList
+                items={selectedDayNodes}
+                day={selectedDay}
+                onDelete={handleDeleteNode}
+                onUpdate={handleUpdateNode}
+                isOffline={isOffline}
+                aiLoading={aiLoading}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="map"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <TokyoMapView items={selectedDayNodes} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -905,20 +963,243 @@ function DraggableFavoriteSpot({
 
 // ─── Itinerary List ───────────────────────────────────────────────────────────
 
+function ItineraryListItem({
+  item,
+  idx,
+  editingId,
+  draft,
+  setDraft,
+  startEdit,
+  saveEdit,
+  cancelEdit,
+  isOffline,
+  onDelete
+}: {
+  key?: React.Key;
+  item: ItineraryNode;
+  idx: number;
+  editingId: string | null;
+  draft: any;
+  setDraft: any;
+  startEdit: (item: ItineraryNode) => void;
+  saveEdit: (item: ItineraryNode) => void;
+  cancelEdit: () => void;
+  isOffline: boolean;
+  onDelete: (id: string) => void;
+}) {
+  const [isSimulatingDrag, setIsSimulatingDrag] = useState(false);
+
+  return (
+    <motion.div
+      layout
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ 
+        x: 0, 
+        opacity: 1,
+        rotate: isSimulatingDrag ? 2 : 0,
+        scale: isSimulatingDrag ? 1.02 : 1
+      }}
+      exit={{ x: 10, opacity: 0 }}
+      transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
+      style={{ zIndex: isSimulatingDrag ? 50 : 1 }}
+    >
+      <div className="relative">
+        <div className="absolute left-[-30px] md:left-[-42px] lg:left-[-54px] top-8 md:top-10 w-[20px] h-[20px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] rounded-full bg-white border-[4px] border-fuchsia-500 shadow-lg ring-[4px] ring-fuchsia-50 shadow-fuchsia-200 shrink-0" style={{ zIndex: isSimulatingDrag ? 51 : 10 }} />
+        <GlassCard className={`!p-4 sm:!p-6 md:!p-8 lg:!p-10 mb-4 sm:mb-6 md:mb-8 lg:mb-10 hover:-translate-y-1 hover:translate-x-1 transition-all duration-300 ring-1 ring-white/70 border border-white ${isSimulatingDrag ? 'shadow-2xl shadow-purple-500/20 ring-4 ring-purple-300' : 'hover:shadow-[0_45px_110px_-25px_rgba(217,70,239,0.18)]'}`}>
+          <div className={`flex flex-col ${editingId === item.node_id ? '' : 'sm:flex-row items-start sm:items-center'} gap-4 sm:gap-6 md:gap-10`}>
+            <div className={`flex ${editingId === item.node_id ? 'flex-col' : 'flex-row items-start sm:items-center'} flex-1 min-w-0 gap-3 sm:gap-4 md:gap-6 w-full`}>
+              {!isOffline && editingId !== item.node_id && (
+                <div 
+                  className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-fuchsia-400 p-1 -ml-3 hidden sm:block"
+                  onMouseDown={() => setIsSimulatingDrag(true)}
+                  onMouseUp={() => setIsSimulatingDrag(false)}
+                  onMouseLeave={() => setIsSimulatingDrag(false)}
+                  onTouchStart={() => setIsSimulatingDrag(true)}
+                  onTouchEnd={() => setIsSimulatingDrag(false)}
+                >
+                  <GripVertical size={24} />
+                </div>
+              )}
+              
+              {editingId !== item.node_id && (
+                <div className="w-14 h-14 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-[24px] md:rounded-[32px] bg-gradient-to-br from-white to-slate-50 flex items-center justify-center shadow-inner border border-white shrink-0 relative group">
+                  <div className="absolute inset-0 bg-fuchsia-400 opacity-0 group-hover:opacity-10 transition-opacity rounded-[24px] md:rounded-[32px]" />
+                  <span className="text-3xl md:text-5xl lg:text-6xl drop-shadow-sm select-none">{item.emoji}</span>
+                </div>
+              )}
+
+              {editingId === item.node_id && draft ? (
+                <div className="flex-1 flex flex-col gap-4 w-full">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-3xl bg-white shadow-sm p-3 rounded-2xl">{item.emoji}</span>
+                    <h3 className="text-lg font-black text-slate-800">編輯行程</h3>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col gap-1.5 flex-1 min-w-[80px]">
+                      <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Day</span>
+                      <input
+                        value={draft.day}
+                        onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, day: e.target.value } : prev))}
+                        inputMode="numeric"
+                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5 flex-[2] min-w-[120px]">
+                      <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Time</span>
+                      <input
+                        value={draft.time}
+                        onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, time: e.target.value } : prev))}
+                        placeholder="例: 10:30"
+                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Title</span>
+                    <input
+                      value={draft.title}
+                      onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, title: e.target.value } : prev))}
+                      className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Description</span>
+                    <textarea
+                      value={draft.description}
+                      onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, description: e.target.value } : prev))}
+                      placeholder="活動詳情..."
+                      className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 min-h-[60px] resize-none"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Notes (Private)</span>
+                    <textarea
+                      value={draft.notes}
+                      onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, notes: e.target.value } : prev))}
+                      placeholder="私人備註，只有你看得到..."
+                      className="w-full rounded-2xl border border-slate-100 bg-amber-50/50 px-4 py-2.5 text-sm font-bold text-amber-800 shadow-sm outline-none focus:ring-2 focus:ring-amber-400 min-h-[60px] resize-none"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Category</span>
+                    <div className="flex flex-row overflow-x-auto gap-2 py-1 scrollbar-hide pb-2">
+                      {CATEGORY_OPTIONS.map((option) => {
+                        const optionMeta = getCategoryMeta(option);
+                        const active = draft.category === option;
+                        return (
+                          <button
+                            key={option}
+                            title={optionMeta.label}
+                            onClick={() =>
+                              setDraft((prev: any) =>
+                                prev ? { ...prev, category: option, emoji: optionMeta.icon } : prev,
+                              )
+                            }
+                            className={`flex-none px-4 py-2 rounded-full border transition-all text-xs font-bold ${
+                              active ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30' : 'bg-white/80 border-slate-100 text-slate-500 hover:bg-white'
+                            }`}
+                          >
+                            {optionMeta.icon} {optionMeta.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row gap-3 pt-2">
+                    <button
+                      onClick={() => saveEdit(item)}
+                      className="flex-1 bg-slate-900 py-3.5 rounded-2xl shadow-lg active:scale-[0.98] transition-all"
+                    >
+                      <span className="text-white font-black text-[13px] tracking-wide">儲存變更</span>
+                    </button>
+                    <button
+                      onClick={() => cancelEdit()}
+                      className="flex-1 bg-slate-50 py-3.5 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
+                    >
+                      <span className="text-slate-500 font-bold text-[13px] tracking-wide">取消</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col gap-y-1.5 md:gap-y-2 overflow-hidden">
+                  <div className="flex flex-row flex-wrap items-center gap-2">
+                    <span className="text-xs md:text-[14px] font-black text-fuchsia-600 tracking-widest font-mono bg-fuchsia-50/50 px-2.5 py-1 rounded-lg border border-fuchsia-100/50">
+                      {item.time || '--:--'}
+                    </span>
+                    <div className={`px-2.5 py-1 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-wider ${
+                      item.category === 'flight' ? 'bg-blue-50 text-blue-500 border border-blue-100' :
+                      item.category === 'food' ? 'bg-orange-50 text-orange-500 border border-orange-100' :
+                      'bg-slate-50 text-slate-500 border border-slate-100'
+                    }`}>
+                      {getCategoryMeta(item.category).label}
+                    </div>
+                    {item.source === 'local' && (
+                       <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter bg-emerald-50/50 px-1.5 py-0.5 rounded-md border border-emerald-100/50">SYNCED</span>
+                    )}
+                  </div>
+                  <span className="text-xl md:text-3xl font-black text-slate-800 tracking-tight leading-tight line-clamp-2 md:line-clamp-1">
+                    {item.title}
+                  </span>
+                  {item.description && (
+                    <div className="text-sm md:text-base text-slate-600 font-medium leading-relaxed mt-1 whitespace-pre-wrap">
+                      {item.description}
+                    </div>
+                  )}
+                  {item.notes && (
+                    <div className="text-sm md:text-base text-amber-700 bg-amber-50/50 p-3 rounded-xl border border-amber-100 font-medium leading-relaxed mt-2 whitespace-pre-wrap flex flex-row items-start gap-2">
+                      <span className="text-amber-500 shrink-0">📝</span>
+                      <span>{item.notes}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {editingId !== item.node_id && !isOffline && (
+              <div className="flex flex-row lg:flex-col gap-4 w-full lg:w-auto pt-6 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-100/50 pl-0 lg:pl-10 justify-end lg:justify-center shrink-0">
+                <button
+                  onClick={() => startEdit(item)}
+                  className="flex-1 lg:flex-none w-full lg:w-16 h-14 lg:h-16 rounded-[22px] bg-white border border-slate-100 shadow-sm flex items-center justify-center hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 group"
+                  title="編輯行程"
+                >
+                  <Pencil size={20} className="text-slate-400 group-hover:text-fuchsia-600 transition-colors" strokeWidth={2.5} />
+                </button>
+                <button
+                  onClick={() => onDelete(item.node_id)}
+                  className="flex-1 lg:flex-none w-full lg:w-16 h-14 lg:h-16 rounded-[22px] bg-white border border-slate-100 shadow-sm flex items-center justify-center hover:bg-rose-50 hover:border-rose-200 transition-all active:scale-95 group"
+                  title="刪除"
+                >
+                  <Trash2 size={20} className="text-slate-400 group-hover:text-rose-500 transition-colors" strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
+          </div>
+        </GlassCard>
+      </div>
+    </motion.div>
+  );
+}
+
 function ItineraryList({
   items,
   day,
   onDelete,
   onUpdate,
   isOffline,
+  aiLoading,
 }: {
   items: ItineraryNode[];
   day: number;
   onDelete: (node_id: string) => void;
   onUpdate: (node: ItineraryNode) => void;
   isOffline: boolean;
+  aiLoading: boolean;
 }) {
-  type EditDraft = { day: string; time: string; title: string; emoji: string; category: string; description: string };
+  type EditDraft = { day: string; time: string; title: string; emoji: string; category: string; description: string; notes: string };
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<EditDraft | null>(null);
@@ -933,6 +1214,7 @@ function ItineraryList({
       emoji: item.emoji || meta.icon,
       category: meta.key,
       description: item.description || '',
+      notes: item.notes || '',
     });
   };
 
@@ -953,6 +1235,7 @@ function ItineraryList({
       category,
       emoji: draft.emoji.trim() || categoryMeta.icon,
       description: draft.description.trim() || undefined,
+      notes: draft.notes.trim() || undefined,
       source: 'local',
     };
     onUpdate(nextNode);
@@ -971,163 +1254,51 @@ function ItineraryList({
   }
 
   return (
-    <div className="relative pl-8 md:pl-16 lg:pl-20 mt-10 pb-40 flex flex-col gap-y-10 md:gap-y-16">
-      <div className="absolute left-[13px] md:left-[21px] lg:left-[25px] top-4 bottom-20 w-1 md:w-1.5 bg-gradient-to-b from-fuchsia-400 via-purple-300/40 to-transparent rounded-full shadow-[0_0_15px_rgba(217,70,239,0.2)]" />
+    <div className="relative pl-[40px] md:pl-[60px] lg:pl-[80px] mt-8 pb-32 flex flex-col gap-y-6 md:gap-y-10 lg:gap-y-12">
+      <div className="absolute left-[18px] md:left-[27px] lg:left-[37px] top-4 bottom-20 w-[4px] md:w-[6px] bg-gradient-to-b from-fuchsia-400 via-purple-300/40 to-transparent rounded-full shadow-[0_0_15px_rgba(217,70,239,0.2)]" />
       <AnimatePresence>
-        {items.map((item, idx) => (
-          <motion.div
-            key={item.node_id}
-            layout
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 10, opacity: 0 }}
-            transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
-          >
-            <div className="relative">
-              <div className="absolute -left-11 md:-left-15 lg:-left-17 top-8 w-6 md:w-8 h-6 md:h-8 rounded-full bg-white border-4 border-fuchsia-500 z-10 shadow-lg ring-4 ring-fuchsia-50 shadow-fuchsia-200 shrink-0" />
-              <GlassCard className="!p-6 md:!p-10 lg:!p-12 ml-2 md:ml-8 lg:ml-12 hover:shadow-[0_45px_110px_-25px_rgba(217,70,239,0.18)] hover:-translate-y-1 hover:translate-x-1 transition-all duration-500 ring-1 ring-white/70 border border-white">
-                <div className="flex flex-col md:flex-row items-start lg:items-center gap-8 md:gap-14">
-                  <div className="flex flex-row items-start md:items-center flex-1 min-w-0 gap-6 md:gap-10 w-full">
-                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-[32px] bg-gradient-to-br from-white to-slate-50 flex items-center justify-center shadow-inner border border-white shrink-0 relative group">
-                      <div className="absolute inset-0 bg-fuchsia-400 opacity-0 group-hover:opacity-10 transition-opacity rounded-[32px]" />
-                      <span className="text-3xl md:text-6xl drop-shadow-sm select-none">{item.emoji}</span>
+        {aiLoading ? (
+          Array.from({ length: 3 }).map((_, idx) => (
+            <motion.div
+              key={`skeleton-${idx}`}
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 10, opacity: 0 }}
+              transition={{ delay: idx * 0.1 }}
+            >
+              <div className="relative">
+                <div className="absolute left-[-30px] md:left-[-42px] lg:left-[-54px] top-8 md:top-10 w-[20px] h-[20px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] rounded-full bg-slate-200 border-[4px] border-white z-10 shadow-lg animate-pulse" />
+                <GlassCard className="!p-4 sm:!p-6 md:!p-8 lg:!p-10 mb-4 sm:mb-6 md:mb-8 lg:mb-10 animate-pulse ring-1 ring-white/70 border border-white">
+                  <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 md:gap-10">
+                    <div className="flex flex-row items-start md:items-center flex-1 gap-4 md:gap-6 w-full">
+                      <div className="w-14 h-14 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-[24px] md:rounded-[32px] bg-slate-200 shrink-0" />
+                      <div className="flex-1 flex flex-col gap-3 min-w-0 py-2">
+                        <div className="w-16 h-4 bg-slate-200 rounded-full" />
+                        <div className="w-3/4 h-8 md:h-10 bg-slate-200 rounded-xl" />
+                        <div className="w-1/2 h-4 bg-slate-200 rounded-full" />
+                      </div>
                     </div>
-                    {editingId === item.node_id && draft ? (
-                      <div className="flex-1 flex flex-col gap-4">
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <div className="flex flex-col gap-1.5 flex-1 min-w-[80px]">
-                            <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Day</span>
-                            <input
-                              value={draft.day}
-                              onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, day: e.target.value } : prev))}
-                              inputMode="numeric"
-                              className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-1.5 flex-[2] min-w-[120px]">
-                            <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Time</span>
-                            <input
-                              value={draft.time}
-                              onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, time: e.target.value } : prev))}
-                              placeholder="例: 10:30"
-                              className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Title</span>
-                          <input
-                            value={draft.title}
-                            onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, title: e.target.value } : prev))}
-                            className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Description / Note</span>
-                          <textarea
-                            value={draft.description}
-                            onChange={(e) => setDraft((prev: EditDraft | null) => (prev ? { ...prev, description: e.target.value } : prev))}
-                            placeholder="活動詳情或備註..."
-                            className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 min-h-[100px] resize-none"
-                          />
-                        </div>
-                        
-                        <div className="flex flex-col gap-1.5">
-                          <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Category</span>
-                          <div className="flex flex-row overflow-x-auto gap-2 py-1 scrollbar-hide pb-2">
-                            {CATEGORY_OPTIONS.map((option) => {
-                              const optionMeta = getCategoryMeta(option);
-                              const active = draft.category === option;
-                              return (
-                                <button
-                                  key={option}
-                                  title={optionMeta.label}
-                                  onClick={() =>
-                                    setDraft((prev: EditDraft | null) =>
-                                      prev ? { ...prev, category: option, emoji: optionMeta.icon } : prev,
-                                    )
-                                  }
-                                  className={`flex-none px-4 py-2 rounded-full border transition-all text-xs font-bold ${
-                                    active ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md shadow-fuchsia-600/30' : 'bg-white/80 border-slate-100 text-slate-500 hover:bg-white'
-                                  }`}
-                                >
-                                  {optionMeta.icon} {optionMeta.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <div className="flex flex-row gap-3 pt-2">
-                          <button
-                            onClick={() => saveEdit(item)}
-                            className="flex-1 bg-slate-900 py-3.5 rounded-2xl shadow-lg active:scale-[0.98] transition-all"
-                          >
-                            <span className="text-white font-black text-[13px] tracking-wide">儲存變更</span>
-                          </button>
-                          <button
-                            onClick={() => cancelEdit()}
-                            className="flex-1 bg-slate-50 py-3.5 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
-                          >
-                            <span className="text-slate-500 font-bold text-[13px] tracking-wide">取消</span>
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex-1 flex flex-col gap-y-1.5 md:gap-y-2 overflow-hidden">
-                        <div className="flex flex-row flex-wrap items-center gap-2">
-                          <span className="text-xs md:text-[14px] font-black text-fuchsia-600 tracking-widest font-mono bg-fuchsia-50/50 px-2.5 py-1 rounded-lg border border-fuchsia-100/50">
-                            {item.time || '--:--'}
-                          </span>
-                          <div className={`px-2.5 py-1 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-wider ${
-                            item.category === 'flight' ? 'bg-blue-50 text-blue-500 border border-blue-100' :
-                            item.category === 'food' ? 'bg-orange-50 text-orange-500 border border-orange-100' :
-                            'bg-slate-50 text-slate-500 border border-slate-100'
-                          }`}>
-                            {getCategoryMeta(item.category).label}
-                          </div>
-                          {item.source === 'local' && (
-                             <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter bg-emerald-50/50 px-1.5 py-0.5 rounded-md border border-emerald-100/50">SYNCED</span>
-                          )}
-                        </div>
-                        <span className="text-xl md:text-3xl font-black text-slate-800 tracking-tight leading-tight line-clamp-2 md:line-clamp-1">
-                          {item.title}
-                        </span>
-                        {item.description && (
-                          <span className="text-sm md:text-base text-slate-600 font-medium leading-relaxed mt-1 line-clamp-2">
-                            {item.description}
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
-
-                  {editingId !== item.node_id && !isOffline && (
-                    <div className="flex flex-row md:flex-col gap-4 w-full md:w-auto pt-6 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100/50 pl-0 md:pl-10 justify-end md:justify-center">
-                      <button
-                        onClick={() => startEdit(item)}
-                        className="flex-1 md:flex-none w-full md:w-16 h-14 md:h-16 rounded-[22px] bg-white border border-slate-100 shadow-sm flex items-center justify-center hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 group"
-                        title="編輯行程"
-                      >
-                        <Pencil size={22} className="text-slate-400 group-hover:text-slate-600" />
-                        <span className="md:hidden ml-3 text-sm font-black text-slate-600 tracking-tight">編輯行程</span>
-                      </button>
-                      <button
-                        onClick={() => onDelete(item.node_id)}
-                        className="flex-1 md:flex-none w-full md:w-16 h-14 md:h-16 rounded-[22px] bg-rose-50 border border-rose-100 shadow-sm flex items-center justify-center hover:bg-rose-100 hover:border-rose-200 transition-all active:scale-95 group"
-                        title="刪除行程"
-                      >
-                        <Trash2 size={22} className="text-rose-400 group-hover:text-rose-600" />
-                        <span className="md:hidden ml-3 text-sm font-black text-rose-600 tracking-tight">刪除項目</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </GlassCard>
-            </div>
-          </motion.div>
-        ))}
+                </GlassCard>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+        items.map((item, idx) => (
+          <ItineraryListItem
+            key={item.node_id}
+            item={item}
+            idx={idx}
+            editingId={editingId}
+            draft={draft}
+            setDraft={setDraft}
+            startEdit={startEdit}
+            saveEdit={saveEdit}
+            cancelEdit={cancelEdit}
+            isOffline={isOffline}
+            onDelete={onDelete}
+          />
+        )))}
       </AnimatePresence>
     </div>
   );
@@ -1186,9 +1357,9 @@ function TokyoMapView({ items }: { items: ItineraryNode[] }) {
         return (
           <motion.div
             key={item.node_id}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: index * 0.12, type: 'spring', bounce: 0.5 }}
+            initial={{ scale: 0, opacity: 0, y: -50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.12, type: 'spring', bounce: 0.5, mass: 0.8 }}
             style={{
               position: 'absolute',
               left: `${pos.x}%`,

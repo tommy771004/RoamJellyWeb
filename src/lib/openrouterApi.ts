@@ -1,4 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
 import type { ItineraryNode, ItineraryPlannerForm } from '../types/workflow';
 
 const CATEGORY_ICON_MAP: Record<string, string> = {
@@ -22,29 +21,10 @@ export interface SuggestItineraryInput {
 function getApiKey(): string {
   const nodeEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
   return (
-    (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) ||
-    nodeEnv?.GEMINI_API_KEY ||
+    (typeof process !== 'undefined' && process.env?.OPENROUTER_API_KEY) ||
+    nodeEnv?.OPENROUTER_API_KEY ||
     ''
   );
-}
-
-async function chat(systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
-
-  // Use any to bypass potential version differences in types
-  const genAI = new GoogleGenAI({ apiKey } as any) as any;
-  const result = await genAI.models.generateContent({
-    model: 'gemini-1.5-flash',
-    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-    config: {
-      systemInstruction: systemPrompt,
-    }
-  });
-
-  const text = result.text;
-  if (!text) throw new Error('empty Gemini response');
-  return text;
 }
 
 export async function suggestItinerary(destination: string, days: number): Promise<ItineraryNode[]> {
@@ -66,39 +46,70 @@ export async function suggestItinerary(destination: string, days: number): Promi
 }
 
 export async function suggestItineraryWithForm(input: SuggestItineraryInput): Promise<ItineraryNode[]> {
-  const text = await chat(
-    '你是專業旅遊規劃師。只能回傳 JSON 陣列，不可出現 markdown、註解、前後綴說明。',
-    buildItineraryPrompt(input),
-  );
+  try {
+    const res = await fetch('/api/generate/itinerary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input)
+    });
+    if (!res.ok) throw new Error('API failed');
+    const data = await res.json();
+    if (data.status === 'success' && Array.isArray(data.data)) {
+      return data.data.map((item: any, i: number) => {
+        const category = normalizeCategory(item.category);
+        const emoji = pickIcon(item.emoji, category);
+        return {
+          node_id: `ai_${Date.now()}_${i}`,
+          day: normalizeDay(item.day, input.planner.days),
+          time: normalizeTime(item.time),
+          title: String(item.title ?? '景點'),
+          emoji,
+          category,
+          source: 'local' as const,
+        };
+      });
+    }
+  } catch (err) {
+    console.error('Failed to generate itinerary via API', err);
+  }
 
-  const raw = parseJsonArray(text);
-  return raw.map((item, i) => {
-    const category = normalizeCategory(item.category);
-    const emoji = pickIcon(item.emoji, category);
-    return {
-      node_id: `ai_${Date.now()}_${i}`,
-      day: normalizeDay(item.day, input.planner.days),
-      time: normalizeTime(item.time),
-      title: String(item.title ?? '景點'),
-      emoji,
-      category,
+  // Fallback
+  return [
+    {
+      node_id: `ai_${Date.now()}_0`,
+      day: 1,
+      time: '10:00',
+      title: '系統繁忙，這是預設行程',
+      emoji: '✈️',
+      category: 'flight',
       source: 'local' as const,
-    };
-  });
+    }
+  ];
 }
 
 export async function suggestPackingList(destination: string, season: string): Promise<string[]> {
-  const text = await chat(
-    '你是旅遊達人，只回傳 JSON，不加任何說明文字。',
-    `列出前往「${destination}」${season}旅遊的必備行李，最多 8 項。
-回傳格式（純 JSON 字串陣列）：["護照","外幣","充電器"]`,
-  );
-
-  const match = text.match(/\[[\s\S]*?\]/);
-  if (!match) throw new Error('invalid response: no JSON array found');
-
-  const raw = JSON.parse(match[0]) as unknown[];
-  return raw.filter((s): s is string => typeof s === 'string');
+  try {
+    const res = await fetch('/api/generate/packing-list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ destination, days: 5, weatherContext: season })
+    });
+    if (!res.ok) throw new Error('API failed');
+    const data = await res.json();
+    if (data.status === 'success' && Array.isArray(data.data)) {
+      return data.data.map((item: any) => item.text || item);
+    }
+  } catch (err) {
+    console.error('Failed to suggestion packing list via API', err);
+  }
+  // Fallback if network or backend fails
+  return [
+    `護照與簽證 (${destination})`,
+    `適合 ${season} 的衣物`,
+    `個人常備藥物`,
+    `萬用轉接頭與充電線`,
+    `盥洗用品`
+  ];
 }
 
 function buildItineraryPrompt(input: SuggestItineraryInput): string {

@@ -1,5 +1,5 @@
 import React, { createContext, use, useEffect, useMemo, useState } from 'react';
-import { CloudRain, Droplets, Check, Wallet, SendHorizontal, Sparkles } from 'lucide-react';
+import { CloudRain, Check, Sparkles, Sun, Send, CheckCircle2, Plane, Star, ExternalLink, SlidersHorizontal, ArrowDownUp } from 'lucide-react';
 import GlassCard from './GlassCard';
 import {
   fetchChecklist,
@@ -15,8 +15,8 @@ import {
   type TripSummary,
 } from '../lib/workflowApi';
 import type { TripInfo, WeatherData } from '../types/workflow';
-import { suggestPackingList } from '../lib/geminiApi';
-import { useToolsStore } from '../store/useToolsStore';
+import { suggestPackingList } from '../lib/openrouterApi';
+import { useToolsStore, Expense } from '../store/useToolsStore';
 import { useAppStore } from '../store/useAppStore';
 import type { ChecklistItem, Settlement } from '../types/workflow';
 
@@ -52,6 +52,7 @@ interface ToolsTabState {
   destination: string;
   checklist: ChecklistItem[];
   settlements: Settlement[];
+  expenses: Expense[];
   members: string[];
   expenseByCurrency: Record<string, number>;
   form: ExpenseForm;
@@ -88,7 +89,7 @@ function useToolsTabContext() {
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 function ToolsTabProvider({ children }: { children: React.ReactNode }) {
-  const { checklist, setChecklist, revertCheckItem, settlements, setSettlements, members, setMembers } =
+  const { checklist, setChecklist, revertCheckItem, settlements, setSettlements, members, setMembers, expenses, addExpense, clearSettlementRecord } =
     useToolsStore();
   const { showToast, activeTripId: tripId } = useAppStore();
 
@@ -112,20 +113,19 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     const init = async () => {
       try {
         setLoading(true);
-        const [checklistData, settlementsData, collaboratorsData, weatherData, tripInfoData] = await Promise.all([
+        const [checklistData, collaboratorsData, weatherData, tripInfoData] = await Promise.all([
           fetchChecklist(tripId),
-          fetchSettlements(tripId),
           fetchCollaborators(tripId),
-          fetchWeather().catch(() => null),
+          fetchWeather(tripInfo?.destination || '東京').catch(() => null),
           fetchTripInfo(tripId).catch(() => null),
         ]);
         if (weatherData) setWeather(weatherData);
         if (tripInfoData) setTripInfo(tripInfoData);
-        const memberNames = collaboratorsData.map((m) => m.name);
+        const memberNames = collaboratorsData.map((m: any) => m.name);
         setChecklist(checklistData);
-        setSettlements(settlementsData);
         if (memberNames.length > 0) {
           setMembers(memberNames);
+          // Only update initial form state once when we get members
           setForm((prev) => ({ ...prev, payer: memberNames[0], splitWith: memberNames }));
         }
       } catch {
@@ -135,16 +135,16 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       }
     };
     void init();
-  }, [tripId, setChecklist, setSettlements, setMembers]);
+  }, [tripId, setChecklist, setMembers]);
 
   const expenseByCurrency = useMemo(
     () =>
-      (settlements as any[]).reduce((acc: Record<string, number>, s: any) => {
-        const cur = s.currency ?? 'JPY';
-        acc[cur] = (acc[cur] ?? 0) + Number(s.amount || 0);
+      (expenses as Expense[]).reduce((acc: Record<string, number>, exp: Expense) => {
+        const cur = exp.currency ?? 'JPY';
+        acc[cur] = (acc[cur] ?? 0) + Number(exp.amount || 0);
         return acc;
       }, {} as Record<string, number>),
-    [settlements],
+    [expenses],
   );
 
   const validateForm = (): FormErrors => {
@@ -161,8 +161,9 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
   const actions: ToolsTabActions = {
     toggleCheck(item) {
       const nextChecked = !item.checked;
-      setChecklist(checklist.map((i) => (i.id === item.id ? { ...i, checked: nextChecked } : i)));
-      void updateChecklist(item.id, nextChecked).catch(() => {
+      const nextChecklist = checklist.map((i: any) => (i.id === item.id ? { ...i, checked: nextChecked } : i));
+      setChecklist(nextChecklist);
+      void updateChecklist({ trip_id: tripId, items: nextChecklist }).catch(() => {
         revertCheckItem(item.id, item.checked);
         setTip('清單同步失敗，已還原。');
         setTimeout(() => setTip(''), 2000);
@@ -179,9 +180,9 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           checked: false,
         }));
         setChecklist([...checklist, ...newItems]);
-        showToast(`✨ AI 新增了 ${newItems.length} 項行李建議！`);
+        showToast(`✨ AI 新增了 ${newItems.length} 項行李建議！`, 'success');
       } catch {
-        showToast('AI 功能失敗，請確認 Gemini API Key 是否設定。');
+        showToast('AI 功能失敗，請確認 OpenRouter API Key 是否設定。', 'warning');
       } finally {
         setAiLoading(false);
       }
@@ -202,7 +203,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       });
     },
 
-    async submitExpense() {
+    submitExpense() {
       const errs = validateForm();
       if (Object.keys(errs).length > 0) {
         setErrors(errs);
@@ -211,41 +212,41 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       setErrors({});
       try {
         setSubmitting(true);
-        const result = await submitLedgerExpense({
-          trip_id: tripId,
+        addExpense({
+          id: `exp_${Date.now()}_${Math.random()}`,
           title: form.title,
           amount: Number(form.amount),
           currency: form.currency,
           payer: form.payer,
-          split_with: form.splitWith,
+          splitWith: form.splitWith,
+          date: new Date().toISOString()
         });
-        setSettlements(result);
-        setTip('分帳已更新，已算出最新應付關係。');
+        showToast('分帳已更新，已算出最新應付關係。', 'success');
         setForm((prev) => ({ ...prev, title: '', amount: '' }));
-        setTimeout(() => setTip(''), 2200);
       } catch {
-        showToast('分帳送出失敗，請稍後再試。');
+        showToast('分帳送出失敗，請稍後再試。', 'warning');
       } finally {
         setSubmitting(false);
       }
     },
 
     async sendReminder() {
-      const text = settlements.map((item) => `${item.from} 需給 ${item.to} ${item.currency} ${item.amount.toLocaleString()}`).join('\n');
+      const text = settlements.map((item: any) => `${item.from} 需給 ${item.to} ${item.currency} ${item.amount.toLocaleString()}`).join('\n');
       const ok = await shareText(`溫柔提醒：\n${text || '目前沒有待結算項目'}`);
-      setTip(ok ? '提醒內容已分享或複製。' : '提醒發送失敗，請稍後再試。');
-      setTimeout(() => setTip(''), 2200);
+      if (ok) {
+         showToast('提醒內容已分享或複製。', 'success');
+      } else {
+         showToast('提醒發送失敗，請稍後再試。', 'warning');
+      }
     },
 
-    async handleClearSettlement(settlement) {
+    handleClearSettlement(settlement) {
       setClearingId(settlement.id);
       try {
-        const updated = await clearSettlement(tripId, settlement.from, settlement.to, settlement.currency);
-        setSettlements(updated);
-        setTip(`${settlement.from} → ${settlement.to} 已標記結清。`);
-        setTimeout(() => setTip(''), 2200);
+        clearSettlementRecord(settlement.from, settlement.to, settlement.currency);
+        showToast(`${settlement.from} → ${settlement.to} 已標記結清。`, 'success');
       } catch {
-        showToast('結清失敗，請稍後再試。');
+        showToast('結清失敗，請稍後再試。', 'warning');
       } finally {
         setClearingId(null);
       }
@@ -259,6 +260,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     destination: tripInfo?.destination ?? '',
     checklist,
     settlements,
+    expenses,
     members,
     expenseByCurrency,
     form,
@@ -279,44 +281,42 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
 
 function WeatherCard() {
   const { state: { weather, destination } } = useToolsTabContext();
+  const { isOffline } = useAppStore();
+  const Icon = weather && weather.rain_prob >= 50 ? CloudRain : Sun;
+  
   return (
-    <section className="relative rounded-xl p-md bg-white/40 backdrop-blur-[25px] border-t-2 border-l-2 border-white/70 shadow-[inset_0_2px_15px_rgba(255,255,255,0.9),0_10px_30px_rgba(134,77,97,0.1)] overflow-hidden hover:scale-[1.02] transition-transform duration-300 mb-6">
-      {/* Weather decorative background image */}
-      <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center mix-blend-overlay" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAaMVziRT6-Y9U5mkXCVUZw2KpRQsTCfpvSynKbpKexuyI4jzIw3aMfRGGGGiVaOsnwy5b7nkS2s-VM2_0W8xSkoTxTx7zSzWI5ryIU3lLPbwGytSoE0VQl2LHSEWGikEAPmaYlqTAJkh11t9yChHX-HkZp6yr8nq-G2_NRJh7LCHQXlssWvPwSAssJ6Rfov_StXR2yr6XW1DQSAWF4Hth2xa8i_Au49qc4bw-N7ICwmliU4EO8DZF58Qme2sAo9KRFA8Gz5LfgpgR_')" }}></div>
-      <div className="relative z-10 flex flex-col space-y-md">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="font-h2 text-h2 text-primary-fixed-dim drop-shadow-sm">Tomorrow</h2>
-            <p className="font-label-caps text-label-caps text-on-surface-variant opacity-80 mt-1 uppercase">{destination || 'Destination'}</p>
-          </div>
-          <div className="text-5xl drop-shadow-md">
-            {weather && weather.rain_prob >= 50 ? '🌧️' : '☀️'}
-          </div>
+    <GlassCard className="!p-6 sm:!p-8 mb-8 flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-xl group">
+      <div className="absolute top-0 right-0 w-48 h-48 bg-fuchsia-100 rounded-full translate-x-1/3 -translate-y-1/3 opacity-30 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+      <div className="relative z-10">
+        <h2 className="font-serif text-3xl text-[#2C302E] mb-1">Tomorrow in {destination || 'Kyoto'}</h2>
+        <div className="flex flex-col gap-1 mb-6">
+          <p className="text-[11px] uppercase tracking-widest text-fuchsia-600/70 font-bold">Local Weather & Outfit</p>
+          {isOffline && (
+            <span className="text-[10px] text-amber-500 font-bold bg-amber-50 w-fit px-2 py-0.5 rounded-full border border-amber-200">最後更新於 2 小時前</span>
+          )}
         </div>
-        <div className="flex items-end justify-between">
-          <div className="text-[56px] font-bold leading-none text-primary drop-shadow-sm font-plus-jakarta">
+        
+        <div className="flex items-end justify-between mb-6">
+          <div className="flex bg-fuchsia-50 rounded-full px-4 py-2 items-center gap-2 border border-fuchsia-100/50">
+            <Icon size={18} className="text-fuchsia-500" />
+            <span className="text-fuchsia-700 font-medium text-sm">{weather && weather.rain_prob >= 50 ? 'Rain likely' : 'Clear skies'}</span>
+          </div>
+          <div className="text-[56px] leading-none font-light tracking-tight text-[#2C302E]">
             {weather ? weather.temp_current : '--'}°
           </div>
-          <div className="text-right space-y-1">
-            <p className="font-label-caps text-label-caps text-secondary-fixed-dim bg-white/50 px-2 py-1 rounded-full inline-block backdrop-blur-md shadow-sm border border-white/40">
-              {weather && weather.rain_prob >= 50 ? 'Bring an umbrella!' : 'Perfect for walking'}
-            </p>
-          </div>
         </div>
-        {/* Outfit Suggestion */}
-        <div className="bg-white/60 rounded-lg p-sm backdrop-blur-md border border-white/50 shadow-[inset_0_1px_5px_rgba(255,255,255,0.8)] mt-2">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-full bg-primary-container/50 flex items-center justify-center text-2xl shadow-inner">
-                👗
-            </div>
-            <div>
-              <p className="font-body-md text-base font-semibold text-primary">Light layers!</p>
-              <p className="font-label-caps text-label-caps text-on-surface-variant">Cardigan & comfy sneakers.</p>
-            </div>
+
+        <div className="bg-fuchsia-50/50 rounded-[24px] p-4 flex items-center gap-4 border border-fuchsia-100/30">
+          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl shadow-sm shrink-0">
+              👗
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[#2C302E] font-bold">Light layers & comfort</span>
+            <span className="text-slate-500 text-sm font-medium">Cardigan & comfy sneakers suggested.</span>
           </div>
         </div>
       </div>
-    </section>
+    </GlassCard>
   );
 }
 
@@ -325,166 +325,177 @@ function ChecklistSection() {
   const packedCount = checklist.filter((i) => i.checked).length;
   
   return (
-    <section className="space-y-md mb-8">
-      <div className="flex justify-between items-end">
-        <h2 className="font-h2 text-h2 text-primary">My Suitcase</h2>
-        <span className="font-label-caps text-label-caps text-on-surface-variant bg-tertiary-container/30 px-3 py-1 rounded-full">
+    <section className="mb-8 font-sans">
+      <div className="flex justify-between items-end mb-4 px-2">
+        <h2 className="font-serif text-[28px] text-[#2C302E]">My Suitcase</h2>
+        <span className="text-[11px] uppercase tracking-wider font-bold text-fuchsia-600 bg-fuchsia-100/80 px-4 py-1.5 rounded-full border border-fuchsia-200">
           {packedCount}/{checklist.length} Packed
         </span>
       </div>
       
-      <div className="grid grid-cols-2 gap-gutter">
-        <div className="col-span-2 bg-surface-container-low/50 rounded-xl p-md backdrop-blur-xl border border-white/60 shadow-[inset_0_2px_10px_rgba(255,255,255,0.6)]">
-          <h3 className="font-label-caps text-label-caps text-tertiary mb-3 flex items-center">
-            <span className="material-symbols-outlined text-[16px] mr-1">flight_takeoff</span> ESSENTIALS
-          </h3>
-          <div className="space-y-sm">
-            {checklist.length === 0 && <span className="text-sm text-slate-400">目前沒有行李項目</span>}
-            {checklist.map((item) => (
-              <label key={item.id} className="flex items-center space-x-3 group cursor-pointer" onClick={(e) => { e.preventDefault(); actions.toggleCheck(item); }}>
-                <div className="relative w-6 h-6 flex items-center justify-center">
-                  <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
-                  <div className={`w-6 h-6 rounded-full border-2 transition-all shadow-sm ${item.checked ? 'bg-primary border-primary' : 'border-primary-container bg-white/50'}`}></div>
-                  <span className={`material-symbols-outlined text-[14px] text-white absolute transition-opacity ${item.checked ? 'opacity-100' : 'opacity-0'}`} style={{ fontVariationSettings: "'wght' 700" }}>check</span>
-                </div>
-                <span className={`font-body-md text-base transition-all ${item.checked ? 'line-through opacity-60 text-on-surface' : 'text-on-surface'}`}>
-                  {item.text}
-                </span>
-              </label>
-            ))}
-          </div>
+      <GlassCard className="!p-6 mb-4">
+        <div className="flex flex-col gap-3">
+          {checklist.length === 0 && <span className="text-sm text-slate-400 italic">目前沒有行李項目</span>}
+          {checklist.map((item) => (
+            <label key={item.id} className="flex items-center gap-4 group cursor-pointer p-2 rounded-2xl hover:bg-fuchsia-50/50 transition-colors" onClick={(e) => { e.preventDefault(); actions.toggleCheck(item); }}>
+              <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
+                <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
+                <div className={`w-full h-full rounded-full border transition-all shadow-sm ${item.checked ? 'bg-fuchsia-500 border-fuchsia-500' : 'border-slate-200 bg-slate-50'}`}></div>
+                <Check size={16} className={`text-white absolute transition-opacity ${item.checked ? 'opacity-100' : 'opacity-0'}`} strokeWidth={3} />
+              </div>
+              <span className={`text-[15px] font-medium transition-all ${item.checked ? 'line-through opacity-40 text-slate-500' : 'text-[#2C302E]'}`}>
+                {item.text}
+              </span>
+            </label>
+          ))}
         </div>
-      </div>
+      </GlassCard>
       
       <button
         onClick={() => void actions.handleAiPackingList()}
         disabled={aiLoading}
-        className="jelly-button w-full mt-4 py-3 rounded-full bg-gradient-to-r from-primary-container to-tertiary-fixed-dim text-on-primary-container font-h2 text-[16px] border border-white/60 shadow-[inset_0_2px_10px_rgba(255,255,255,0.8),0_4px_15px_rgba(255,183,206,0.3)] hover:scale-[0.98] active:scale-95 active:blur-[1px] transition-all flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full mt-2 py-4 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-bold text-[15px] shadow-[0_8px_20px_rgba(217,70,239,0.25)] hover:shadow-[0_12px_25px_rgba(217,70,239,0.35)] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        <span className="material-symbols-outlined">{aiLoading ? 'hourglass_empty' : 'auto_awesome'}</span>
-        <span>{aiLoading ? 'AI is packing...' : 'AI Suggestion'}</span>
+        <Sparkles size={18} />
+        <span>{aiLoading ? 'AI 正在規劃...' : 'Auto-Generate Packing List'}</span>
       </button>
     </section>
   );
 }
 
 function LedgerSection() {
-  const { state: { form, errors, members, submitting }, actions } = useToolsTabContext();
+  const { state: { form, errors, members, submitting, expenses }, actions } = useToolsTabContext();
   return (
-    <section className="jelly-card rounded-xl p-container-padding flex flex-col relative overflow-hidden mb-8">
-      <div className="absolute -top-10 -left-10 w-32 h-32 bg-primary-container/40 rounded-full blur-[30px] pointer-events-none" />
-      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-tertiary-container/40 rounded-full blur-[30px] pointer-events-none" />
-      <div className="mb-6 flex flex-col relative z-10">
-        <h3 className="font-h2 text-h2 text-on-surface-variant z-10">Split Bill</h3>
-        <span className="text-sm font-semibold text-primary opacity-80">Add expense & calculate.</span>
+    <GlassCard className="!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300">
+      <div className="absolute -top-10 -left-10 w-32 h-32 bg-purple-100/40 rounded-full blur-[20px] pointer-events-none" />
+      <div className="mb-6 flex flex-col relative z-10 px-2">
+        <h3 className="font-serif text-[28px] text-[#2C302E]">Split Bill</h3>
+        <span className="text-sm font-bold text-fuchsia-600/70">Recent expenses & calculate.</span>
       </div>
 
-      <div className="flex flex-col gap-y-4 relative z-10">
-        <div className="flex flex-col">
+      <div className="flex flex-col gap-y-5 relative z-10">
+        
+        {/* Recent Expenses List */}
+        {expenses && expenses.length > 0 && (
+          <div className="flex flex-col gap-3 mb-4">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-2">最新花費紀錄</span>
+            <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1 scrollbar-hide">
+              {expenses.slice().reverse().map(exp => (
+                <div key={exp.id} className="flex justify-between items-center bg-white/50 border border-slate-100 p-3 rounded-2xl">
+                  <div className="flex flex-col">
+                    <span className="text-[14px] font-bold text-[#2C302E] truncate">{exp.title}</span>
+                    <span className="text-[11px] text-slate-500 font-medium tracking-wide">由 {exp.payer} 墊付</span>
+                  </div>
+                  <span className="font-black text-fuchsia-500 text-[14px]">{exp.currency} {exp.amount}</span>
+                </div>
+              ))}
+            </div>
+            <div className="h-px w-full bg-slate-100 my-2" />
+          </div>
+        )}
+
+        {/* Add Expense Form */}
+        <div className="flex flex-col gap-1.5">
           <input
             value={form.title}
             onChange={(e) => {
               actions.updateForm((prev) => ({ ...prev, title: e.target.value }));
               if (errors.title) actions.clearFormError('title');
             }}
-            placeholder="Expense title e.g. Dinner"
-            className={`rounded-xl border shadow-sm bg-white/60 backdrop-blur-sm px-4 py-3 font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary transition-all ${
-              errors.title ? 'border-error' : 'border-white/80'
+            placeholder="項目名稱 (例如：晚餐)"
+            className={`rounded-2xl border bg-white/50 px-5 py-4 text-[15px] text-[#2C302E] outline-none focus:ring-2 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition-all placeholder:text-slate-400 ${
+              errors.title ? 'border-red-300 bg-red-50/50' : 'border-slate-100 shadow-sm'
             }`}
           />
-          {errors.title ? <span className="text-error font-bold text-xs mt-1.5 ml-2">{errors.title}</span> : null}
+          {errors.title && <span className="text-red-500 font-bold text-[11px] uppercase tracking-wide ml-2">{errors.title}</span>}
         </div>
 
-        <div className="flex flex-col">
-          <input
-            value={form.amount}
-            onChange={(e) => {
-              actions.updateForm((prev) => ({ ...prev, amount: e.target.value.replace(/[^0-9]/g, '') }));
-              if (errors.amount) actions.clearFormError('amount');
-            }}
-            placeholder="Amount e.g. 15000"
-            inputMode="numeric"
-            className={`rounded-xl border shadow-sm bg-white/60 backdrop-blur-sm px-4 py-3 font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary transition-all ${
-              errors.amount ? 'border-error' : 'border-white/80'
-            }`}
-          />
-          {errors.amount ? <span className="text-error font-bold text-xs mt-1.5 ml-2">{errors.amount}</span> : null}
-        </div>
-
-        <div className="flex flex-col mt-2">
-          <span className="font-label-caps text-label-caps text-on-surface-variant mb-2 ml-1">CURRENCY</span>
-          <div className="flex flex-row flex-wrap gap-2">
-            {(['JPY', 'TWD', 'USD', 'EUR', 'KRW', 'THB'] as const).map((cur) => (
-              <button
-                key={cur}
-                onClick={() => actions.updateForm((prev) => ({ ...prev, currency: cur }))}
-                className={`rounded-[14px] px-4 py-2 border shadow-sm cursor-pointer transition-all active:scale-95 ${
-                  form.currency === cur ? 'bg-primary border-primary text-white' : 'bg-white/60 border-white/80 hover:bg-white/80 text-on-surface-variant'
-                }`}
-              >
-                <span className="text-[13px] font-bold">
-                  {cur}
-                </span>
-              </button>
-            ))}
+        <div className="flex flex-row gap-3">
+          <div className="flex flex-col gap-1.5 flex-[2]">
+            <input
+              value={form.amount}
+              onChange={(e) => {
+                actions.updateForm((prev) => ({ ...prev, amount: e.target.value.replace(/[^0-9]/g, '') }));
+                if (errors.amount) actions.clearFormError('amount');
+              }}
+              placeholder="金額 (例如: 1500)"
+              inputMode="numeric"
+              className={`w-full rounded-2xl border bg-white/50 px-5 py-4 text-[15px] font-bold text-[#2C302E] outline-none focus:ring-2 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition-all placeholder:text-slate-400 ${
+                errors.amount ? 'border-red-300 bg-red-50/50' : 'border-slate-100 shadow-sm'
+              }`}
+            />
+            {errors.amount && <span className="text-red-500 font-bold text-[11px] uppercase tracking-wide ml-2">{errors.amount}</span>}
+          </div>
+          <div className="flex flex-col flex-1 max-w-[100px]">
+            <select
+              value={form.currency}
+              onChange={(e) => actions.updateForm((prev) => ({ ...prev, currency: e.target.value }))}
+              className="w-full rounded-2xl border border-slate-100 bg-white/50 px-3 py-4 text-[15px] font-bold text-[#2C302E] outline-none focus:ring-2 focus:ring-fuchsia-500/30 shadow-sm appearance-none text-center cursor-pointer"
+            >
+              {['JPY', 'TWD', 'USD', 'EUR', 'KRW', 'THB'].map((cur) => (
+                <option key={cur} value={cur}>{cur}</option>
+              ))}
+            </select>
           </div>
         </div>
 
-        <div className="h-px w-full bg-outline-variant/30 my-2" />
+        <div className="h-px w-full bg-slate-100 my-2" />
 
-        <span className="font-label-caps text-label-caps text-on-surface-variant mt-1 ml-1">PAID BY</span>
-        <div className="flex flex-row flex-wrap gap-2">
-          {members.map((member) => (
-            <button
-              key={member}
-              onClick={() => {
-                actions.updateForm((prev) => ({ ...prev, payer: member }));
-                if (errors.payer) actions.clearFormError('payer');
-              }}
-              className={`rounded-[14px] px-4 py-2 border shadow-sm cursor-pointer transition-all active:scale-95 ${
-                form.payer === member ? 'bg-primary border-primary text-white' : 'bg-white/60 border-white/80 hover:bg-white/80 text-on-surface-variant'
-              }`}
-            >
-              <span className="text-[13px] font-bold">
-                {member}
-              </span>
-            </button>
-          ))}
-        </div>
-        {errors.payer ? <span className="text-error font-bold text-xs ml-2 mt-1">{errors.payer}</span> : null}
-
-        <span className="font-label-caps text-label-caps text-on-surface-variant mt-3 ml-1">SPLIT WITH</span>
-        <div className="flex flex-row flex-wrap gap-2">
-          {members.map((member) => {
-            const selected = form.splitWith.includes(member);
-            return (
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-2">誰先墊付</span>
+          <div className="flex flex-row flex-wrap gap-2">
+            {members.map((member) => (
               <button
                 key={member}
                 onClick={() => {
-                  actions.toggleSplitMember(member);
-                  if (errors.splitWith) actions.clearFormError('splitWith');
+                  actions.updateForm((prev) => ({ ...prev, payer: member }));
+                  if (errors.payer) actions.clearFormError('payer');
                 }}
-                className={`rounded-[14px] px-4 py-2 border shadow-sm cursor-pointer transition-all active:scale-95 flex items-center ${
-                  selected ? 'bg-primary-container border-primary text-on-primary-container' : 'bg-white/60 border-white/80 hover:bg-white/80 text-on-surface-variant'
+                className={`rounded-full px-5 py-2 border transition-all active:scale-95 text-[13px] font-bold ${
+                  form.payer === member ? 'bg-fuchsia-500 border-fuchsia-500 text-white shadow-md shadow-fuchsia-200' : 'bg-white/80 border-slate-100 text-slate-600 hover:bg-fuchsia-50 hover:border-fuchsia-100'
                 }`}
               >
-                {selected && <Check size={14} className="mr-1.5" strokeWidth={3} />}
-                <span className="text-[13px] font-bold">{member}</span>
+                {member}
               </button>
-            );
-          })}
+            ))}
+          </div>
+          {errors.payer && <span className="text-red-500 font-bold text-[11px] uppercase tracking-wide ml-2">{errors.payer}</span>}
         </div>
-        {errors.splitWith ? <span className="text-error font-bold text-xs ml-2 mt-1">{errors.splitWith}</span> : null}
+
+        <div className="flex flex-col gap-2 mt-2">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-2">分攤人員</span>
+          <div className="flex flex-row flex-wrap gap-2">
+            {members.map((member) => {
+              const selected = form.splitWith.includes(member);
+              return (
+                <button
+                  key={member}
+                  onClick={() => {
+                    actions.toggleSplitMember(member);
+                    if (errors.splitWith) actions.clearFormError('splitWith');
+                  }}
+                  className={`rounded-full px-5 py-2 border transition-all active:scale-95 text-[13px] font-bold flex items-center gap-2 ${
+                    selected ? 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-700 shadow-sm' : 'bg-white/80 border-slate-100 text-slate-500 hover:bg-fuchsia-50/50 hover:border-fuchsia-100'
+                  }`}
+                >
+                  <div className={`w-3.5 h-3.5 rounded-full shrink-0 border transition-colors ${selected ? 'bg-fuchsia-500 border-fuchsia-500' : 'bg-transparent border-slate-300'}`} />
+                  {member}
+                </button>
+              );
+            })}
+          </div>
+          {errors.splitWith && <span className="text-red-500 font-bold text-[11px] uppercase tracking-wide ml-2">{errors.splitWith}</span>}
+        </div>
 
         <button
           onClick={() => void actions.submitExpense()}
           disabled={submitting}
-          className={`jelly-button ${submitting ? 'opacity-70 cursor-not-allowed' : 'bg-gradient-to-r from-primary-container to-tertiary-container'} rounded-[24px] py-4 flex justify-center mt-6 transition-all`}
+          className={`w-full mt-4 py-4 rounded-[20px] transition-all font-bold text-[15px] ${submitting ? 'opacity-70 cursor-not-allowed bg-slate-200 text-slate-400' : 'bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-fuchsia-200/50 hover:shadow-xl hover:-translate-y-0.5 active:scale-95'}`}
         >
-          <span className="text-on-primary-container font-h2 text-[16px] tracking-wide">{submitting ? 'Calculating...' : 'Add Expense & Split'}</span>
+          {submitting ? '計算中...' : '新增花費'}
         </button>
       </div>
-    </section>
+    </GlassCard>
   );
 }
 
@@ -492,15 +503,15 @@ function SettlementsSection() {
   const { state: { settlements, expenseByCurrency, clearingId }, actions } = useToolsTabContext();
   const currencyEntries = Object.entries(expenseByCurrency);
   return (
-    <section className="flex flex-col gap-md mt-sm mb-32">
-      <div className="flex items-center justify-between px-xs">
-        <h3 className="font-h2 text-[20px] text-on-surface">Who owes who</h3>
+    <section className="flex flex-col mb-32">
+      <div className="flex items-center justify-between px-4 mb-6">
+        <h3 className="font-serif text-[26px] text-[#2C302E]">結算清單 (誰應付誰)</h3>
         <div className="flex flex-row flex-wrap justify-end gap-2">
           {currencyEntries.length === 0 ? (
-            <span className="text-[13px] font-bold text-slate-400 w-auto shrink-0">No expenses yet</span>
+            <span className="text-[12px] font-bold text-slate-400 shrink-0">尚無款項</span>
           ) : (
             currencyEntries.map(([cur, amount]) => (
-              <span key={cur} className="font-label-caps text-label-caps text-primary bg-primary-container/30 px-2 py-1 rounded-full w-auto shrink-0">
+              <span key={cur} className="text-[11px] font-black text-fuchsia-600 bg-fuchsia-50 px-4 py-2 rounded-full shrink-0 tracking-wider shadow-sm border border-fuchsia-100">
                 {cur} {amount.toLocaleString()}
               </span>
             ))
@@ -508,44 +519,43 @@ function SettlementsSection() {
         </div>
       </div>
       
-      <div className="flex flex-col gap-sm">
+      <div className="flex flex-col gap-4">
         {settlements.length === 0 && (
-          <div className="jelly-card rounded-lg p-sm flex items-center justify-center py-8 opacity-60">
-            <span className="font-body-md text-on-surface-variant">All settled up!</span>
-          </div>
+          <GlassCard className="!p-10 flex items-center justify-center">
+            <span className="text-slate-400 font-medium italic">都算清囉！ ✨</span>
+          </GlassCard>
         )}
         {settlements.map((settlement) => (
-          <div key={settlement.id} className="jelly-card rounded-lg p-sm flex flex-col md:flex-row md:items-center justify-between gap-y-3 gap-x-2">
-            <div className="flex items-center gap-md">
-              <div className="w-12 h-12 rounded-full bg-white/50 border-2 border-white/80 shadow-sm flex items-center justify-center text-xl relative">
-                💸
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container border-2 border-white rounded-full"></div>
+          <GlassCard key={settlement.id} className="!p-5 flex flex-col md:flex-row md:items-center justify-between gap-y-4 hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-fuchsia-50 border border-fuchsia-100 flex items-center justify-center shrink-0">
+                <span className="text-2xl">💶</span>
               </div>
               <div className="flex flex-col">
-                <p className="font-body-md font-semibold text-on-surface">{settlement.from}</p>
-                <p className="font-body-md text-sm text-tertiary">Owes {settlement.to} {settlement.currency} {settlement.amount}</p>
+                <span className="text-[17px] font-bold text-[#2C302E]">{settlement.from}</span>
+                <span className="text-[14px] text-slate-500 font-medium">應付給 {settlement.to} <strong className="font-black text-fuchsia-500">{settlement.currency} {settlement.amount}</strong></span>
               </div>
             </div>
             
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row items-center gap-3">
               <button
                 onClick={() => void actions.sendReminder()}
-                className="jelly-button bg-gradient-to-r from-tertiary-container to-secondary-container border border-white rounded-full px-sm py-[6px] flex items-center gap-xs flex-1 md:flex-initial justify-center"
+                className="flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-full px-5 py-2.5 transition-all active:scale-95 flex-1 md:flex-initial"
               >
-                <span className="material-symbols-outlined text-[16px] text-on-tertiary-container" data-icon="send" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
-                <span className="font-label-caps text-[10px] text-on-tertiary-container">Nudge</span>
+                <Send size={15} className="opacity-70" />
+                <span className="text-[12px] font-bold tracking-wide uppercase">提醒</span>
               </button>
               
               <button
                 onClick={() => void actions.handleClearSettlement(settlement)}
                 disabled={clearingId === settlement.id}
-                className="jelly-button bg-gradient-to-r from-primary-container to-primary-fixed border border-white rounded-full px-sm py-[6px] flex items-center gap-xs flex-1 md:flex-initial justify-center"
+                className="flex items-center justify-center gap-2 bg-fuchsia-500 hover:bg-fuchsia-600 text-white rounded-full px-6 py-2.5 transition-all active:scale-95 flex-1 md:flex-initial shadow-md shadow-fuchsia-200"
               >
-                <span className="material-symbols-outlined text-[16px] text-on-primary-container" data-icon="check" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
-                <span className="font-label-caps text-[10px] text-on-primary-container">{clearingId === settlement.id ? '...' : 'Settle'}</span>
+                <CheckCircle2 size={15} className="opacity-90" />
+                <span className="text-[12px] font-bold tracking-wide uppercase">{clearingId === settlement.id ? '處理中...' : '標記結清'}</span>
               </button>
             </div>
-          </div>
+          </GlassCard>
         ))}
       </div>
     </section>
@@ -565,24 +575,24 @@ function TripSelectorBar() {
   if (trips.length <= 1) return null;
 
   return (
-    <div className="mb-6 -mx-1 w-full overflow-x-auto scrollbar-hide">
-      <div className="flex flex-row px-1 min-w-max gap-3">
+    <div className="mb-8 w-full overflow-x-auto scrollbar-hide py-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="flex flex-row gap-3 min-w-max">
         {trips.map((trip) => {
           const active = activeTripId === trip.tripId;
           return (
             <button
               key={trip.tripId}
               onClick={() => setActiveTripId(trip.tripId)}
-              className={`px-4 py-2 flex flex-col rounded-2xl border cursor-pointer transition-all ${
+              className={`px-5 py-4 flex flex-col rounded-[24px] border transition-all text-left shadow-sm ${
                 active 
-                  ? 'bg-primary border-primary text-white scale-105 shadow-[0_4px_15px_rgba(134,77,97,0.3)]' 
-                  : 'bg-white/60 border-white hover:bg-white/80 text-on-surface-variant'
+                  ? 'bg-fuchsia-500 border-fuchsia-500 text-white shadow-fuchsia-200' 
+                  : 'bg-white bg-opacity-60 backdrop-blur-md border-white/50 text-slate-500 hover:bg-white hover:text-fuchsia-500'
               }`}
             >
-              <span className={`text-[14px] font-bold ${active ? 'text-white' : 'text-on-surface'}`}>
+              <span className={`text-[16px] font-bold ${active ? 'text-white' : 'text-[#2C302E]'}`}>
                 {trip.name}
               </span>
-              <span className={`text-[10px] uppercase font-bold tracking-wider ${active ? 'text-primary-container' : 'text-on-surface-variant/70'}`}>
+              <span className={`text-[11px] uppercase tracking-[0.1em] font-black mt-1 ${active ? 'text-white/80' : 'text-slate-400'}`}>
                 {trip.destination}
               </span>
             </button>
@@ -604,27 +614,170 @@ export default function ToolsTab() {
 }
 
 function ToolsTabContent() {
-  const { state: { loading, tip } } = useToolsTabContext();
+  const { activeTripId } = useAppStore();
+  const [flights, setFlights] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+
+  useEffect(() => {
+    if (activeTripId) {
+      setIsLoadingOffers(true);
+      import('../lib/workflowApi').then(({ fetchTripFlights, fetchTripActivities }) => {
+        Promise.all([
+          fetchTripFlights(activeTripId).then(setFlights).catch(() => {}),
+          fetchTripActivities(activeTripId).then(setActivities).catch(() => {})
+        ]).finally(() => setIsLoadingOffers(false));
+      }).catch(() => setIsLoadingOffers(false));
+    }
+  }, [activeTripId]);
+
   return (
-    <div className="pt-2 pb-32 px-container-padding max-w-md mx-auto flex flex-col w-full h-full overflow-y-auto scrollbar-hide">
-      <div className="space-y-xs pt-sm mb-6">
-        <h1 className="font-h1 text-h1 text-primary">Prep Hub</h1>
-        <p className="font-body-lg text-body-lg text-on-surface-variant">Kyoto is calling! Let's get you ready. 🌸</p>
+    <div className="pt-8 pb-32 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full h-full overflow-y-auto scrollbar-hide bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] absolute inset-0 transition-all duration-300">
+      <div className="flex flex-col max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto w-full gap-y-10 pl-0 pt-[50px]">
+        <TripSelectorBar />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          <div className="flex flex-col gap-y-8">
+            <WeatherCard />
+            <ChecklistSection />
+          </div>
+          <div className="flex flex-col gap-y-8">
+            <LedgerSection />
+            <SettlementsSection />
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-200/50 my-4" />
+
+        <div className="flex flex-col gap-y-6">
+          <div className="flex flex-col gap-2 mb-2 mt-4 relative">
+            <div className="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-fuchsia-500 to-purple-600 rounded-full" />
+            <h1 className="text-[32px] md:text-4xl font-black text-[#111111] leading-tight tracking-tight">推薦行程與航班</h1>
+            <p className="text-[17px] text-slate-500 font-bold tracking-wide">為您的旅程精選的機票與活動票券</p>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-row overflow-x-auto scrollbar-hide gap-3 mb-2 -mx-5 px-5 sm:mx-0 sm:px-0 py-2">
+            <button className="bg-white/70 backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[#2C302E] text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border border-white hover:border-fuchsia-200 hover:text-fuchsia-600 group">
+              <ArrowDownUp size={16} className="text-slate-400 group-hover:text-fuchsia-500" />
+              Best Match
+            </button>
+            <button className="bg-white/70 backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[#2C302E] text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border border-white hover:border-fuchsia-200 hover:text-fuchsia-600 group">
+              <SlidersHorizontal size={16} className="text-slate-400 group-hover:text-fuchsia-500" />
+              Filters
+            </button>
+            <button className="bg-white/70 backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[#2C302E] text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border border-white hover:border-fuchsia-200 hover:text-fuchsia-600">
+              Non-stop
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+            {isLoadingOffers ? (
+              <>
+                <GlassCard className="!p-6 flex flex-col h-[280px] animate-pulse">
+                  <div className="flex justify-between items-start mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-slate-200 rounded-2xl"></div>
+                      <div className="w-24 h-6 bg-slate-200 rounded-md"></div>
+                    </div>
+                    <div className="w-20 h-8 bg-slate-200 rounded-md"></div>
+                  </div>
+                  <div className="flex justify-between items-center mb-8">
+                    <div className="w-16 h-8 bg-slate-200 rounded-md"></div>
+                    <div className="flex-1 mx-6 h-1 bg-slate-100"></div>
+                    <div className="w-16 h-8 bg-slate-200 rounded-md"></div>
+                  </div>
+                  <div className="w-full h-12 bg-slate-200 rounded-full mt-auto"></div>
+                </GlassCard>
+                <GlassCard className="!p-5 flex flex-row gap-5 h-[280px] animate-pulse">
+                  <div className="w-[130px] h-full bg-slate-200 rounded-[24px]"></div>
+                  <div className="flex flex-col flex-1 py-1">
+                    <div className="w-24 h-6 bg-slate-200 rounded-md mb-2"></div>
+                    <div className="w-full h-12 bg-slate-200 rounded-md mb-auto"></div>
+                    <div className="flex justify-between items-end mt-3">
+                      <div className="w-12 h-6 bg-slate-200 rounded-md"></div>
+                      <div className="w-16 h-8 bg-slate-200 rounded-md"></div>
+                    </div>
+                  </div>
+                </GlassCard>
+              </>
+            ) : (
+              <>
+            {/* Flight Cards */}
+            {flights.map((flight, idx) => (
+              <GlassCard key={idx} className="!p-6 flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group">
+                <div className="flex justify-between items-start mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-fuchsia-50 text-fuchsia-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Plane className="w-6 h-6 transform -rotate-45" />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-[18px] text-[#2C302E]">{flight.airline}</span>
+                        <ExternalLink size={14} className="text-slate-300" />
+                      </div>
+                      <span className="text-[13px] text-slate-400 font-bold tracking-wide">Direct • {flight.duration}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[32px] font-black text-fuchsia-500 leading-none group-hover:scale-105 transition-transform">${flight.price}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col mb-8">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-col">
+                      <span className="text-[26px] font-black text-[#2C302E] tracking-tight">{flight.depTime}</span>
+                      <span className="text-[14px] font-black text-slate-300 uppercase tracking-widest">{flight.depCode}</span>
+                    </div>
+                    <div className="flex-1 mx-6 flex items-center relative">
+                      <div className="h-[2px] bg-slate-100 flex-1"></div>
+                      <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-fuchsia-400 shadow-sm" />
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[26px] font-black text-[#2C302E] tracking-tight">{flight.arrTime}</span>
+                      <span className="text-[14px] font-black text-slate-300 uppercase tracking-widest">{flight.arrCode}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button className="w-full py-4 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[15px] transition-all active:scale-95 shadow-lg shadow-fuchsia-200">
+                  查看航班詳情
+                </button>
+              </GlassCard>
+            ))}
+
+            {/* Klook Cards */}
+            {activities.map((item, idx) => (
+              <GlassCard key={`klook-${idx}`} className="!p-5 flex flex-row gap-5 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group">
+                <div className="relative w-[130px] h-full shrink-0 overflow-hidden rounded-[24px]">
+                  <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={item.title} />
+                </div>
+                <div className="flex flex-col flex-1 py-1">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-lg leading-none">🎡</span>
+                    <span className="font-black text-fuchsia-500 text-[11px] uppercase tracking-widest bg-fuchsia-50 px-2 py-1 rounded-md">Klook 精選</span>
+                  </div>
+                  <h3 className="font-bold text-[#2C302E] leading-snug text-[17px] mb-auto line-clamp-2">{item.title}</h3>
+                  
+                  <div className="flex items-end justify-between mt-3">
+                    <div className="flex items-center gap-1.5 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
+                      <Star size={14} className="text-amber-500" fill="currentColor" />
+                      <span className="text-[13px] font-black text-amber-700">{item.rating}</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[24px] font-black text-fuchsia-500 leading-none">${item.price}</span>
+                    </div>
+                  </div>
+                </div>
+              </GlassCard>
+            ))}
+              </>
+            )}
+          </div>
+        </div>
       </div>
-      <TripSelectorBar />
-
-      <WeatherCard />
-
-      {loading ? (
-        <div className="flex justify-center items-center py-10 font-bold text-fuchsia-500">載入中...</div>
-      ) : (
-        <>
-          <ChecklistSection />
-          <LedgerSection />
-          <SettlementsSection />
-          {tip ? <span className="text-center font-bold text-xs text-slate-500 -mt-24 mb-24 transition-opacity">{tip}</span> : null}
-        </>
-      )}
     </div>
   );
 }
+

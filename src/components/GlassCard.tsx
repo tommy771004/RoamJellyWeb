@@ -4,24 +4,30 @@ import { isLowPerformanceDevice } from '../lib/performance';
 function useGlassClass() {
   const lowPerf = isLowPerformanceDevice();
   return lowPerf
-    ? 'bg-white border border-slate-100 shadow-sm rounded-[32px] p-5 relative overflow-hidden'
-    : 'bg-white/60 backdrop-blur-3xl border border-white/60 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 rounded-[32px] p-5 relative overflow-hidden';
+    ? 'bg-white border border-slate-100 shadow-sm rounded-[32px] p-5 relative overflow-hidden transition-colors duration-500'
+    : 'bg-white/60 backdrop-blur-3xl border border-white/60 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 rounded-[32px] p-5 relative overflow-hidden transition-colors duration-500';
 }
 
 import React from 'react';
 
 interface GlassCardProps {
-  children: ReactNode;
   className?: string;
+  children?: React.ReactNode;
+  style?: React.CSSProperties;
+  [key: string]: any;
 }
 
-function GlassCard({ children, className = '' }: GlassCardProps) {
+function GlassCard({ children, className = '', style: propsStyle, ...restProps }: GlassCardProps) {
   const glassClass = useGlassClass();
-  // Check if overflow-visible is provided in className to avoid forcing overflow hidden via style
-  const style: React.CSSProperties = className.includes('overflow-visible') ? {} : { overflow: 'hidden' };
+  
+  const style: React.CSSProperties = {
+    ...propsStyle,
+    overflow: className.includes('overflow-visible') ? (propsStyle?.overflow) : 'hidden'
+  };
   
   return (
     <div
+      {...restProps}
       className={`${glassClass.replace('overflow-hidden', '')} ${className} flex flex-col`}
       style={style}
     >
@@ -30,17 +36,30 @@ function GlassCard({ children, className = '' }: GlassCardProps) {
   );
 }
 
-interface GlassCardPressableProps extends GlassCardProps {
+interface GlassCardPressableProps {
   onPress: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  className?: string;
+  children?: React.ReactNode;
+  style?: React.CSSProperties;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  [key: string]: any;
 }
 
-function GlassCardPressable({ children, className = '', onPress }: GlassCardPressableProps) {
+function GlassCardPressable({ children, className = '', onPress, style: propsStyle, onClick, ...restProps }: GlassCardPressableProps) {
   const glassClass = useGlassClass();
-  const style: React.CSSProperties = className.includes('overflow-visible') ? {} : { overflow: 'hidden' };
+  
+  const style: React.CSSProperties = {
+    ...propsStyle,
+    overflow: className.includes('overflow-visible') ? (propsStyle?.overflow) : 'hidden'
+  };
 
   return (
     <button
-      onClick={onPress}
+      {...restProps}
+      onClick={(e) => {
+        onPress(e);
+        onClick?.(e);
+      }}
       className={`${glassClass.replace('overflow-hidden', '')} active:scale-95 transition-transform hover:bg-white/50 text-left w-full flex flex-col appearance-none ${className}`}
       style={style}
     >

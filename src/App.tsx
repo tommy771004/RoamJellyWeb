@@ -7,9 +7,13 @@ import RedirectModal from './components/RedirectModal';
 import BottomTabs, { TABS } from './components/BottomTabs';
 import LoginScreen from './components/LoginScreen';
 import TripLandingPage from './components/TripLandingPage';
+import JellyAssistant from './components/JellyAssistant';
+import AiForm from './components/AiForm';
+import DynamicItineraryView from './components/DynamicItineraryView';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
 import { trackClickOut, getStoredToken, ensureClientAccessToken } from './lib/workflowApi';
+import { JellyToast } from './components/JellyToast';
 
 /** Extract /trip/:tripId from the current URL path, null if no match. */
 function getTripLandingId(): string | null {
@@ -19,8 +23,13 @@ function getTripLandingId(): string | null {
 }
 
 export default function App() {
-  const { activeTab, setActiveTab, redirectModal, closeRedirectModal, userId, toastMessage, showToast, setAuthenticated } =
-    useAppStore();
+  const { 
+    activeTab, setActiveTab, 
+    redirectModal, closeRedirectModal, 
+    userId, toasts, removeToast, showToast, setAuthenticated,
+    isOffline, setOffline,
+    isDarkMode, setDarkMode 
+  } = useAppStore();
   const { loadPreferences } = useSearchStore();
 
   // Detect trip landing URL once on mount (before any auth check)
@@ -28,15 +37,15 @@ export default function App() {
 
   // Auth state
   const [authReady, setAuthReady] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const isLoggedIn = !!userId;
 
   useEffect(() => {
     const bootstrap = async () => {
       let token = getStoredToken();
-      // Auto-login for dev: if VITE_DEV_AUTO_LOGIN is not explicitly false,
-      // fetch a dev token on startup so login screen is skipped.
+      // Auto-fetch token for dev API access
       if (!token) {
         const autoLogin =
           (import.meta as any).env?.VITE_DEV_AUTO_LOGIN ?? 'true';
@@ -44,14 +53,16 @@ export default function App() {
           token = await ensureClientAccessToken().catch(() => '');
         }
       }
-      if (token) {
-        setIsLoggedIn(true);
+      
+      // Load user preferences only if authenticated
+      if (isLoggedIn) {
         void loadPreferences();
       }
+      
       setAuthReady(true);
     };
     void bootstrap();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLoggedIn]); // Re-run pref loading when login state changes
 
   useEffect(() => {
     setShowLogin(false);
@@ -59,15 +70,11 @@ export default function App() {
 
   const handleLogin = (loggedInUserId: string) => {
     setAuthenticated(loggedInUserId);
-    setIsLoggedIn(true);
     setShowLogin(false);
-    void loadPreferences();
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('amadeus_token_data');
     setAuthenticated(null);
-    setIsLoggedIn(false);
     setShowLogoutModal(false);
     if (activeTab !== 'home') {
       setActiveTab('home');
@@ -156,6 +163,31 @@ export default function App() {
         }}
       />;
     }
+    if (activeTab === 'ai_form') {
+      return <AiForm onSubmit={(data) => {
+        // Generate mock data based on input
+        const mockResult = {
+          title: `${data.destination} ${data.days}天夢幻之旅`,
+          days: Array.from({ length: data.days }).map((_, i) => ({
+            day: i + 1,
+            activities: [
+              { name: '早晨探索', description: `體驗當地的${data.vibes[0] || '特色文化'}`, location: data.destination },
+              { name: '品嚐美食', description: `享受道地的${data.dietary[0] || '經典料理'}`, location: data.destination }
+            ]
+          })),
+          ui_state: {
+            theme_gradient: 'from-pink-100 to-fuchsia-100'
+          }
+        };
+        const { setAiResult } = useAppStore.getState();
+        setAiResult(mockResult);
+        setActiveTab('ai_result');
+      }} />;
+    }
+    if (activeTab === 'ai_result') {
+      const { aiResult } = useAppStore.getState();
+      return <DynamicItineraryView result={aiResult} onBack={() => setActiveTab('ai_form')} />;
+    }
     if (activeTab === 'itinerary') {
       return <ItineraryTab />;
     }
@@ -166,20 +198,22 @@ export default function App() {
   };
 
   return (
-    <div className="flex-1 jelly-bg w-full h-full flex flex-col min-h-[100dvh] relative overflow-hidden font-body-md text-slate-800">
+    <div className="flex-1 jelly-bg w-full h-full flex flex-col min-h-[100dvh] relative overflow-hidden font-body-md text-slate-800 transition-colors duration-500">
+      {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
+      {(import.meta as any).env.MODE !== 'production' && (
+        <div className="fixed top-2 left-2 z-[60] flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
+            <input type="checkbox" checked={isOffline} onChange={e => setOffline(e.target.checked)} className="accent-red-500" />
+            斷網
+          </label>
+        </div>
+      )}
+
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-white/30 backdrop-blur-[25px] rounded-b-[40px] border-b border-l border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.8)]">
-        <div 
-          onClick={() => {
-            if (!isLoggedIn) {
-              setShowLogin(true);
-            } else {
-              setShowLogoutModal(true);
-            }
-          }}
-          className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white/60 shadow-[0_2px_8px_rgba(134,77,97,0.15)] flex items-center justify-center bg-pink-100 pb-2 cursor-pointer transition-transform hover:scale-105 active:scale-95 z-20"
-        >
-          <span className="text-xl pt-1">🐴</span>
+      <header className="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-white/30 backdrop-blur-[25px] rounded-b-[40px] border-b border-l border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.8)] transition-colors duration-500">
+        {/* Left: Logo */}
+        <div className="flex items-center gap-2 z-20">
+          <h1 className="text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>
         </div>
         
         {/* Desktop Navigation (Center, hidden on mobile) */}
@@ -189,7 +223,7 @@ export default function App() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => setActiveTab(tab.id as any)}
                 className={`flex flex-row items-center gap-2 px-5 py-2.5 transition-all rounded-[20px] ${
                   isActive 
                     ? 'bg-white/80 shadow-[0_0_15px_rgba(255,183,206,0.6)] text-pink-600' 
@@ -208,15 +242,47 @@ export default function App() {
           })}
         </nav>
 
-        <h1 className="text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta md:hidden z-20">RoamJelly</h1>
-        
-        <div className="flex items-center gap-4 z-20">
-          <h1 className="hidden md:block text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400">
+        {/* Right: User Avatar & Greetings */}
+        <div className="flex items-center gap-2 sm:gap-3 z-20">
+          <button className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400">
             <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
           </button>
+          
+          <div 
+            onClick={() => {
+              if (!isLoggedIn) {
+                setShowLogin(true);
+              } else {
+                setShowLogoutModal(true);
+              }
+            }}
+            className={`flex items-center gap-3 cursor-pointer group rounded-full border shadow-sm transition-all pl-3 pr-1 py-1 ${isLoggedIn ? 'bg-fuchsia-50/80 border-fuchsia-200/50 hover:bg-fuchsia-100/80' : 'bg-slate-50/80 border-slate-200 hover:bg-white/90'}`}
+          >
+            <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-fuchsia-700' : 'text-slate-500'}`}>
+              {isLoggedIn ? `${userId} 您好` : '未登入'}
+            </span>
+            <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center pb-1 transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-pink-100' : 'bg-slate-200'}`}>
+              <span className="text-lg pt-1">{isLoggedIn ? '🐴' : '🤫'}</span>
+            </div>
+          </div>
         </div>
       </header>
+
+      {/* Offline Banner */}
+      <AnimatePresence>
+        {isOffline && (
+          <motion.div 
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -50, opacity: 0 }}
+            className="fixed top-[72px] left-0 right-0 z-40 px-4 pt-2 pb-1 pointer-events-none"
+          >
+            <div className="max-w-2xl mx-auto bg-red-500/80 dark:bg-red-900/80 backdrop-blur-md rounded-2xl p-2.5 shadow-lg border border-red-400/50 dark:border-red-500/30 flex items-center justify-center gap-2 pointer-events-auto">
+              <span className="text-white text-[13px] font-bold tracking-wide">✈️ 目前處於離線狀態，已切換至本機快取模式。</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <div className="flex-1 relative z-10 w-full overflow-hidden flex flex-col">
         <AnimatePresence mode="wait">
@@ -234,7 +300,9 @@ export default function App() {
         </AnimatePresence>
       </div>
 
+      {/* Bottom Fixed Navigation (Mobile Only) */}
       <BottomTabs />
+      <JellyAssistant />
 
       <AnimatePresence>
         {redirectModal.isOpen && (
@@ -257,24 +325,24 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-sm bg-white/90 backdrop-blur-2xl border border-white rounded-[32px] p-6 shadow-2xl flex flex-col items-center text-center"
+              className="relative w-full max-w-[480px] bg-white/90 backdrop-blur-2xl border border-white rounded-[32px] p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center"
             >
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-3xl mb-4 border border-white shadow-inner animate-pulse">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-3xl mb-4 border border-white shadow-inner animate-pulse shrink-0">
                 🐴
               </div>
-              <h3 className="font-h2 text-xl text-slate-800 mb-2">準備要休息一會嗎？</h3>
-              <p className="font-body-md text-slate-500 mb-6 px-4">雖然很捨不得您離開，但 RoamJelly 會一直在這裡等您回來探索世界。</p>
+              <h3 className="font-h2 text-2xl text-slate-800 mb-2">準備要休息一會嗎？</h3>
+              <p className="font-body-md text-slate-500 mb-8 px-2 sm:px-6">雖然很捨不得您離開，但 RoamJelly 會一直在這裡等您回來探索世界。</p>
               
-              <div className="flex w-full gap-3">
+              <div className="flex flex-row w-full gap-3 sm:gap-4">
                 <button
                   onClick={() => setShowLogoutModal(false)}
-                  className="flex-1 py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-colors"
+                  className="flex-1 py-3 sm:py-3.5 px-2 sm:px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-colors whitespace-nowrap text-[15px]"
                 >
                   再待一下
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="flex-1 py-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white font-bold transition-colors shadow-md shadow-orange-500/30"
+                  className="flex-1 py-3 sm:py-3.5 px-2 sm:px-4 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white font-bold transition-colors shadow-md shadow-orange-500/30 whitespace-nowrap text-[15px]"
                 >
                   確認登出
                 </button>
@@ -284,11 +352,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {toastMessage ? (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-slate-800/90 py-3 px-6 rounded-full shadow-2xl z-50">
-          <span className="text-white font-bold">{toastMessage}</span>
-        </div>
-      ) : null}
+      <JellyToast toasts={toasts} removeToast={removeToast} />
     </div>
   );
 }

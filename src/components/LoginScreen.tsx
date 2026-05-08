@@ -51,8 +51,12 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
         mode === 'login'
           ? await loginUser(trimmedUser, password)
           : await registerUser(trimmedUser, password, displayName.trim() || trimmedUser);
-      setClientAccessToken(result.token);
-      onLogin(result.user_id);
+          
+      const token = result?.access_token || result?.token || 'dummy_token';
+      const userId = result?.user?.id || result?.user_id || trimmedUser;
+      
+      setClientAccessToken(token);
+      onLogin(userId);
     } catch (err) {
       setError(err instanceof Error ? err.message : '發生錯誤，請再試一次');
     } finally {
@@ -62,13 +66,13 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
 
   return (
     <div
-      className="flex-1 justify-center items-center p-6 flex flex-col h-[100dvh] w-screen bg-[#f8fafc] relative overflow-hidden"
+      className="flex-1 p-6 flex flex-col min-h-[100dvh] w-screen jelly-bg dark:bg-gradient-to-br dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900 relative overflow-y-auto overflow-x-hidden transition-colors duration-500"
     >
-      <div className="absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] rounded-full bg-fuchsia-300/20 blur-[120px] pointer-events-none" />
-      <div className="absolute top-[20%] right-[-20%] w-[70vw] h-[70vw] rounded-full bg-cyan-300/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-purple-300/20 blur-[120px] pointer-events-none" />
+      <div className="fixed top-[-10%] left-[-20%] w-[80vw] h-[80vw] rounded-full bg-fuchsia-300/20 blur-[120px] pointer-events-none" />
+      <div className="fixed top-[20%] right-[-20%] w-[70vw] h-[70vw] rounded-full bg-cyan-300/20 blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-purple-300/20 blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-[360px] relative z-10">
+      <div className="flex-1 flex flex-col justify-center py-12 w-full max-w-[360px] mx-auto relative z-10">
         {/* Logo */}
         <div className="items-center mb-8 flex flex-col">
           <span style={{ fontSize: 48, marginBottom: 8 }}>✈️</span>

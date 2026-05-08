@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { FlightSkeletonCard } from './SkeletonCard';
-import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError } from '../lib/workflowApi';
+import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchHandbooks } from '../lib/workflowApi';
 import { useSearchStore } from '../store/useSearchStore';
 import { useAppStore } from '../store/useAppStore';
 import type { SearchItem } from '../types/workflow';
@@ -78,12 +78,43 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onToggleSave, onToggl
 export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin?: () => void; isLoggedIn?: boolean }) {
   const { searchForm, updateField, results, setResults, loading, setLoading, searchError, setSearchError, savedItems, toggleSave, trackedPrices, toggleTrack } =
     useSearchStore();
-  const { openRedirectModal } = useAppStore();
+  const { openRedirectModal, isOffline, showToast, setActiveTab } = useAppStore();
 
   const [dateError, setDateError] = useState<string | null>(null);
   const [showDeparturePicker, setShowDeparturePicker] = useState<boolean>(false);
   const [showDestinationPicker, setShowDestinationPicker] = useState<boolean>(false);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+
+  const [communityTrips, setCommunityTrips] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Initial fetch for recommendations and handbooks
+    const loadInitialData = async () => {
+      try {
+        const [handbooks, recommendations] = await Promise.all([
+          fetchHandbooks(),
+          results.length === 0 ? searchOffers({}) : Promise.resolve(results)
+        ]);
+        setCommunityTrips(handbooks);
+        if (results.length === 0) setResults(recommendations);
+      } catch (e) {
+        console.error('Failed to load initial data', e);
+      }
+    };
+    void loadInitialData();
+  }, []);
+
+  const handleCloneTrip = (e: React.MouseEvent, tripTitle: string) => {
+    // 飛行動畫邏輯：我們可以在這裡加一個 Toast 就好，
+    // 要製作動畫的話需要抓取按鈕位置再放一個 animated div 飛向下方的圖標
+    showToast(`已成功將行程 ${tripTitle} 複製到您的手帳！`, 'success');
+    
+    // Simulate navigation after animation
+    setTimeout(() => {
+      setActiveTab('itinerary');
+    }, 800);
+  };
+
 
   const applyGuideDestination = (destination: TravelGuideDestination, field: 'from' | 'to') => {
     // 根據選好的地方 顯示中文
@@ -365,10 +396,31 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   };
 
   return (
-    <div className="p-6 md:p-10 pt-16 md:pt-24 max-w-full lg:max-w-[72rem] xl:max-w-[80rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
-      <div className="flex flex-col items-center text-center lg:items-start lg:text-left mb-10 w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
+    <div className="p-6 md:p-10 max-w-full lg:max-w-[72rem] xl:max-w-[80rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto w-full">
+      <div className="flex flex-col items-center text-center lg:items-start lg:text-left mb-6 w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
         <h1 className="text-[44px] md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-cyan-500 tracking-tight mb-3">RoamJelly</h1>
         <p className="text-[17px] text-slate-500 font-semibold tracking-wide">探索機票與體驗，確認後再溫柔導流至供應商下單。</p>
+      </div>
+
+      {/* AI Form Banner */}
+      <div className="mb-10 w-full">
+        <div className="bg-gradient-to-r from-pink-400 to-fuchsia-500 rounded-[32px] p-6 sm:p-8 flex items-center justify-between shadow-[0_15px_40px_rgba(217,70,239,0.3)] text-white relative overflow-hidden group hover:scale-[1.01] transition-transform cursor-pointer"
+             onClick={() => setActiveTab('ai_form')}
+        >
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none mix-blend-overlay"></div>
+          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700 pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <h3 className="text-2xl sm:text-3xl font-black mb-2 flex items-center gap-2 drop-shadow-md">
+              <span className="material-symbols-outlined text-[32px]">auto_awesome</span>
+              AI 智能規劃
+            </h3>
+            <p className="text-white/90 text-sm sm:text-base font-bold">告訴我們你想去哪，秒速客製專屬行程！</p>
+          </div>
+          <div className="relative z-10 w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/50 group-hover:bg-white/40 transition-colors shadow-sm">
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 w-full">
@@ -378,8 +430,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             <div className="flex flex-col">
               {/* Main Search Inputs Area */}
               <div className="p-5 flex flex-col gap-y-4 bg-white/20 rounded-[32px] relative overflow-visible">
-                  <div className="grid grid-cols-2 gap-x-3">
-                    <div className="flex flex-col gap-y-1 bg-white/90 backdrop-blur-md rounded-[24px] px-5 py-3 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all h-full group hover:bg-white focus-within:bg-white">
+                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3">
+                    <div className="flex flex-col gap-y-1 bg-white/90 backdrop-blur-md rounded-[24px] px-5 py-3 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all flex-1 group hover:bg-white focus-within:bg-white">
                       <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase group-hover:text-orange-400 transition-colors">出發地</span>
                       <input
                         value={searchForm.from}
@@ -394,7 +446,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       />
                     </div>
 
-                    <div className="flex flex-col gap-y-1 bg-white/90 backdrop-blur-md rounded-[24px] px-5 py-3 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all h-full group hover:bg-white focus-within:bg-white">
+                    <div className="flex flex-col gap-y-1 bg-white/90 backdrop-blur-md rounded-[24px] px-5 py-3 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all flex-1 group hover:bg-white focus-within:bg-white">
                       <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase group-hover:text-orange-400 transition-colors">目的地</span>
                       <input
                         value={searchForm.to}
@@ -460,15 +512,16 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
                   <button
                     onClick={() => void handleSearch()}
-                    disabled={isSearchDisabled || loading}
+                    disabled={isSearchDisabled || loading || isOffline}
+                    title={isOffline ? '請連線網路以進行機票比價' : ''}
                     className={`mt-6 rounded-[32px] py-5.5 flex flex-row items-center justify-center border-none appearance-none cursor-pointer transition-all active:scale-[0.95] ${
-                      isSearchDisabled || loading 
+                      isSearchDisabled || loading || isOffline
                         ? 'bg-slate-200/50 grayscale cursor-not-allowed opacity-60' 
                         : 'bg-gradient-to-r from-orange-500 via-orange-400 to-amber-500 hover:shadow-[0_25px_50px_rgba(249,115,22,0.5)] shadow-[0_12px_30px_rgba(245,158,11,0.3)] hover:scale-[1.025] hover:brightness-110 ring-2 ring-white/40'
                 }`}
               >
                 <SearchIcon size={28} color="white" strokeWidth={3.5} />
-                <span className="text-white font-black ml-4 text-[22px] tracking-wider drop-shadow-xl">立即探索比價</span>
+                <span className="text-white font-black ml-4 text-[22px] tracking-wider drop-shadow-xl">{isOffline ? '需連網進行比價' : '立即探索比價'}</span>
               </button>
               </div>
             </div>
@@ -546,6 +599,43 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             </div>
           </AnimatePresence>
         ) : null}
+
+          {/* Social Community Trips */}
+          <div className="mt-12 flex flex-col">
+            <span className="text-2xl font-black mb-4 text-slate-800 tracking-tight pl-2 flex items-center gap-2">熱門達人手帳 🌍</span>
+            <div className="flex overflow-x-auto gap-4 pb-6 scrollbar-hide px-2">
+              {communityTrips.map((trip) => (
+                <div key={trip.id} className="min-w-[280px] sm:min-w-[320px] rounded-[32px] overflow-hidden relative shadow-lg group">
+                  {/* Aspect ratio background */}
+                  <div 
+                    className="w-full h-[180px] bg-cover bg-center" 
+                    style={{ 
+                      background: trip.cover?.startsWith('linear-gradient') ? trip.cover : (trip.cover ? `url(${trip.cover})` : '#f1f5f9'),
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }} 
+                  />
+                  {/* Dark overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 pointer-events-none" />
+                  
+                  {/* Content */}
+                  <div className="absolute bottom-0 left-0 right-0 p-5 flex flex-col justify-end">
+                    <span className="text-white text-[13px] font-bold opacity-80 mb-1">{trip.author}</span>
+                    <span className="text-white text-[20px] font-black tracking-wide leading-tight mb-4 drop-shadow-md">{trip.title}</span>
+                    
+                    <button 
+                      onClick={(e) => handleCloneTrip(e, trip.title)}
+                      className="w-full py-3 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-bold text-[14px] flex items-center justify-center gap-2 transition-all active:scale-95 border border-white/50"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">file_copy</span>
+                      複製行程
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
       </div>
       </div>
     </div>

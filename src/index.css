@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: #864d61;
   --color-on-primary: #ffffff;
@@ -133,6 +135,10 @@ body {
   background-color: var(--color-surface);
   background-attachment: fixed;
 }
+.dark .jelly-bg {
+  background-image: none;
+  background-color: var(--color-surface); /* Will be overridden by Tailwind classes but just in case */
+}
 
 .jelly-surface {
   background: rgba(255, 255, 255, 0.4);
@@ -141,6 +147,12 @@ body {
   border-top: 1.5px solid rgba(255, 255, 255, 0.5);
   border-left: 1.5px solid rgba(255, 255, 255, 0.5);
   box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.8), 0 8px 32px rgba(134, 77, 97, 0.05);
+}
+.dark .jelly-surface {
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-left: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 .jelly-button {
@@ -151,6 +163,12 @@ body {
   border-left: 1.5px solid rgba(255, 255, 255, 0.7);
   box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.9), 0 4px 15px rgba(134, 77, 97, 0.1);
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.dark .jelly-button {
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-left: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.1), 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .jelly-button:active {
@@ -167,6 +185,14 @@ body {
   border-left: 1.5px solid rgba(255, 255, 255, 0.5);
   box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.8), 0 8px 32px rgba(134, 77, 97, 0.1);
 }
+.dark .glass-panel {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.5);
+}
 
 .glass-node {
   background: rgba(255, 255, 255, 0.6);
@@ -174,6 +200,11 @@ body {
   -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(134, 77, 97, 0.15);
+}
+.dark .glass-node {
+  background: rgba(40, 40, 40, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .material-icons-outlined {

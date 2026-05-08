@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { ToastProps, ToastType } from '../components/JellyToast';
 
 export interface RedirectModalState {
   isOpen: boolean;
@@ -8,8 +9,8 @@ export interface RedirectModalState {
 }
 
 interface AppStore {
-  activeTab: 'home' | 'itinerary' | 'tools';
-  setActiveTab: (tab: 'home' | 'itinerary' | 'tools') => void;
+  activeTab: 'home' | 'itinerary' | 'tools' | 'ai_form' | 'ai_result';
+  setActiveTab: (tab: 'home' | 'itinerary' | 'tools' | 'ai_form' | 'ai_result') => void;
 
   redirectModal: RedirectModalState;
   openRedirectModal: (data: Omit<RedirectModalState, 'isOpen'>) => void;
@@ -18,11 +19,22 @@ interface AppStore {
   userId: string | null;
   setAuthenticated: (userId: string | null) => void;
 
+  toasts: ToastProps[];
+  showToast: (message: string, type?: ToastType) => void;
+  removeToast: (id: string) => void;
+
   toastMessage: string | null;
-  showToast: (message: string) => void;
 
   activeTripId?: string;
   setActiveTripId?: (id: string) => void;
+
+  isOffline: boolean;
+  setOffline: (offline: boolean) => void;
+  isDarkMode: boolean;
+  setDarkMode: (dark: boolean) => void;
+
+  aiResult: any;
+  setAiResult: (res: any) => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -36,9 +48,23 @@ export const useAppStore = create<AppStore>((set) => ({
   userId: null,
   setAuthenticated: (id) => set({ userId: id }),
 
+  isOffline: false,
+  setOffline: (offline) => set({ isOffline: offline }),
+  
+  isDarkMode: false,
+  setDarkMode: (dark) => set({ isDarkMode: dark }),
+
+  aiResult: null,
+  setAiResult: (res) => set({ aiResult: res }),
+
   toastMessage: null,
-  showToast: (message) => {
-    set({ toastMessage: message });
-    setTimeout(() => set({ toastMessage: null }), 3000);
+  toasts: [],
+  showToast: (message, type = 'info') => {
+    const id = Math.random().toString(36).substring(2, 9);
+    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
+    setTimeout(() => {
+      set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }));
+    }, 4000);
   },
+  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }))
 }));
