@@ -34,6 +34,7 @@ export const itineraryNodes = pgTable('itinerary_nodes', {
   category: varchar('category', { length: 64 }),
   lat: real('lat'),
   lng: real('lng'),
+  description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

@@ -1038,10 +1038,11 @@ function ItineraryListItem({
   const [editTitle, setEditTitle] = useState(item.title);
   const [editTime, setEditTime] = useState(item.time);
   const [editEmoji, setEditEmoji] = useState(item.emoji);
+  const [editNotes, setEditNotes] = useState(item.description || item.notes || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleSave = () => {
-    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji });
+    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes });
     setIsEditing(false);
   };
 
@@ -1056,9 +1057,6 @@ function ItineraryListItem({
       transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
       className="relative flex gap-6 sm:gap-10 items-start group"
     >
-      {/* Timeline line */}
-      <div className="absolute left-[24px] sm:left-[30px] top-[60px] bottom-[-40px] w-0.5 bg-gradient-to-b from-pink-300/30 via-slate-200 to-transparent z-0 hidden sm:block group-last:hidden" />
-
       {/* Time Badge */}
       <div className="flex flex-col items-center pt-2">
         <div className="w-[50px] sm:w-[60px] flex flex-col items-center">
@@ -1069,7 +1067,7 @@ function ItineraryListItem({
 
       {/* Content Card */}
       <GlassCard className={`flex-1 !p-5 sm:!p-6 !rounded-[32px] border border-white/80 shadow-lg relative z-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300`}>
-        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 w-full">
           {/* Icon/Emoji Wrapper */}
           <div className="relative group/emoji shrink-0">
             <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-[28px] flex items-center justify-center text-3xl sm:text-4xl shadow-sm border border-slate-100/50 transition-transform group-hover:scale-105 duration-500 ${item.category === 'flight' ? 'bg-gradient-to-br from-indigo-50 to-blue-50' : 'bg-white'}`}>
@@ -1109,7 +1107,13 @@ function ItineraryListItem({
                    autoFocus
                    value={editTitle}
                    onChange={e => setEditTitle(e.target.value)}
-                   className="text-lg font-black text-slate-800 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                   className="text-lg font-black text-slate-800 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
+                 />
+                 <textarea
+                   value={editNotes}
+                   onChange={e => setEditNotes(e.target.value)}
+                   placeholder="寫下你的旅行手帳日記，或是 AI 貼心提醒..."
+                   className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
                  />
                  <div className="flex items-center gap-3">
                     <input 
@@ -1125,9 +1129,9 @@ function ItineraryListItem({
                <>
                  <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-2 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
                  {item.description || item.notes ? (
-                   <p className="text-xs sm:text-sm font-bold text-slate-500 line-clamp-2">{item.description || item.notes}</p>
+                   <p className="text-xs sm:text-sm font-bold text-slate-500 whitespace-pre-line tracking-wide leading-relaxed">{item.description || item.notes}</p>
                  ) : (
-                   <p className="text-xs sm:text-sm font-bold text-slate-400 line-clamp-1 italic">點擊右側編輯新增描述或細節...</p>
+                   <p className="text-xs sm:text-sm font-bold text-slate-400 italic">點擊右側編輯新增手帳內容或細節...</p>
                  )}
                </>
             )}
@@ -1188,16 +1192,50 @@ function ItineraryList({
       )}
 
       <AnimatePresence initial={false} mode="popLayout">
-        {items.map((item: ItineraryNode, idx: number) => (
-          <ItineraryListItem
-            key={item.node_id}
-            item={item}
-            idx={idx}
-            onDelete={onDelete}
-            onUpdate={onUpdate}
-            isOffline={isOffline}
-          />
-        ))}
+        {items.map((item: ItineraryNode, idx: number) => {
+          const nextItem = items[idx + 1];
+          let timeGapStr = '';
+          if (nextItem && item.time && nextItem.time) {
+            const currentParts = item.time.split(':').map(Number);
+            const nextParts = nextItem.time.split(':').map(Number);
+            if (currentParts.length === 2 && nextParts.length === 2) {
+              const currentMins = currentParts[0] * 60 + currentParts[1];
+              const nextMins = nextParts[0] * 60 + nextParts[1];
+              const diff = nextMins - currentMins;
+              if (diff > 0) {
+                const h = Math.floor(diff / 60);
+                const m = diff % 60;
+                timeGapStr = h > 0 ? `${h} 小時 ${m > 0 ? m + ' 分鐘' : ''}` : `${m} 分鐘`;
+              }
+            }
+          }
+          return (
+            <div key={item.node_id} className="flex flex-col">
+              <ItineraryListItem
+                item={item}
+                idx={idx}
+                onDelete={onDelete}
+                onUpdate={onUpdate}
+                isOffline={isOffline}
+              />
+              {nextItem && timeGapStr && (
+                <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
+                  <div className="w-0.5 h-12 bg-gradient-to-b from-slate-200 to-slate-200" />
+                  <div className="flex items-center gap-2 ml-4 self-center animate-pulse">
+                    <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm">
+                      離下一站約 {timeGapStr}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {nextItem && !timeGapStr && (
+                 <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
+                    <div className="w-0.5 h-8 bg-gradient-to-b from-slate-200 to-slate-200" />
+                 </div>
+              )}
+            </div>
+          );
+        })}
       </AnimatePresence>
     </div>
   );

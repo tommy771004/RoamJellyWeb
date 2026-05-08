@@ -1080,7 +1080,7 @@ async function startServer() {
     const { trip_id, action, payload } = req.body as {
       trip_id?: string;
       action?: string;
-      payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null };
+      payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string };
     };
 
     if (!trip_id || action !== 'add_node' || !payload?.node_id || !payload.time || !payload.title) {
@@ -1100,6 +1100,7 @@ async function startServer() {
       category: payload.category,
       lat: payload.lat,
       lng: payload.lng,
+      description: payload.description,
     });
 
     await appendPlanningRecord({
@@ -1127,6 +1128,7 @@ async function startServer() {
         category: payload.category ?? 'other',
         lat: payload.lat ?? null,
         lng: payload.lng ?? null,
+        description: payload.description ?? '',
       },
     });
 

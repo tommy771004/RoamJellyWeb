@@ -75,6 +75,7 @@ export class AppRepository {
       category: node.category,
       lat: node.lat,
       lng: node.lng,
+      description: node.description,
     }).onConflictDoUpdate({
       target: schema.itineraryNodes.nodeId,
       set: {
@@ -86,6 +87,7 @@ export class AppRepository {
         category: node.category,
         lat: node.lat,
         lng: node.lng,
+        description: node.description,
       }
     });
   }

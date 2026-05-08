@@ -15,6 +15,8 @@ const COMPANION_OPTIONS = [
 const VIBE_OPTIONS = ['特種兵', '睡到自然醒', '隨興漫遊', '在地深度', '網美打卡'];
 const INTEREST_OPTIONS = ['大自然', '歷史文化', '購物血拼', '主題樂園', '在地美食', '戶外刺激'];
 const DIETARY_OPTIONS = ['無限制', '純素', '蛋奶素', '無麩質', '不吃海鮮'];
+const TRANSPORT_OPTIONS = ['大眾運輸', '自駕', '包車', '徒步為主'];
+const BUDGET_OPTIONS = ['窮遊', '小資', '舒適', '奢華'];
 
 export interface AiFormData {
   destination: string;
@@ -23,6 +25,8 @@ export interface AiFormData {
   vibes: string[];
   interests: string[];
   dietary: string[];
+  transport: string[];
+  budget: string;
 }
 
 export const MultiSelectPill: React.FC<{ 
@@ -60,7 +64,9 @@ export default function AiForm({
     companions: '',
     vibes: [],
     interests: [],
-    dietary: []
+    dietary: [],
+    transport: [],
+    budget: '',
   });
 
   const filteredDestinations = TRAVEL_GUIDE_DESTINATIONS.filter(dest => {
@@ -86,7 +92,7 @@ export default function AiForm({
     setStep(1);
   };
 
-  const toggleArrayItem = (field: 'vibes' | 'interests' | 'dietary', item: string) => {
+  const toggleArrayItem = (field: 'vibes' | 'interests' | 'dietary' | 'transport', item: string) => {
     setFormData(prev => {
       const arr = prev[field];
       if (arr.includes(item)) {
@@ -292,6 +298,34 @@ export default function AiForm({
                     label={diet}
                     selected={formData.dietary.includes(diet)}
                     onClick={() => toggleArrayItem('dietary', diet)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-5">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">交通方式</label>
+              <div className="flex flex-wrap gap-2">
+                {TRANSPORT_OPTIONS.map(trans => (
+                  <MultiSelectPill
+                    key={trans}
+                    label={trans}
+                    selected={formData.transport.includes(trans)}
+                    onClick={() => toggleArrayItem('transport', trans)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-5">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">預算等級</label>
+              <div className="flex flex-wrap gap-2">
+                {BUDGET_OPTIONS.map(budget => (
+                  <MultiSelectPill
+                    key={budget}
+                    label={budget}
+                    selected={formData.budget === budget}
+                    onClick={() => setFormData(p => ({ ...p, budget: p.budget === budget ? '' : budget }))}
                   />
                 ))}
               </div>
