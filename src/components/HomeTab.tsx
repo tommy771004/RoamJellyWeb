@@ -26,7 +26,18 @@ interface FlightCardProps {
 
 function FlightCard({ flight, isSaved, isTracked, onPress, onToggleSave, onToggleTrack }: FlightCardProps) {
   return (
-    <button onClick={onPress} className="block w-full h-full text-left appearance-none cursor-pointer border-none bg-transparent p-0 flex flex-col focus:outline-none focus:ring-2 focus:ring-fuchsia-400 rounded-[32px] transition-transform active:scale-[0.98]">
+    <div 
+      onClick={onPress} 
+      className="block w-full h-full text-left appearance-none cursor-pointer border-none bg-transparent p-0 flex flex-col focus:outline-none focus:ring-2 focus:ring-fuchsia-400 rounded-[32px] transition-transform active:scale-[0.98]"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onPress();
+        }
+      }}
+    >
       <GlassCard className="!p-5 hover:bg-white/70 transition-colors shadow-sm ring-1 ring-slate-100/50 flex-1 flex flex-col justify-between h-full">
       <div className="flex flex-row justify-between items-start mb-6">
         <div className="flex flex-col flex-1 pr-2 gap-y-2">
@@ -37,6 +48,22 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onToggleSave, onToggl
           <div className="bg-white/90 px-3.5 py-1.5 rounded-full border border-slate-100 shadow-sm w-fit mt-1">
             <span className="text-[13px] font-bold text-slate-500">{flight.title}</span>
           </div>
+
+          {flight.details && (
+            <div className="mt-4 flex flex-col gap-y-1 pl-1">
+              <div className="flex items-center gap-x-2">
+                <span className="text-[14px] font-bold text-slate-700">{flight.details.airline}</span>
+                <span className="text-[11px] font-black px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md uppercase tracking-wider">
+                  {flight.details.stops === 0 ? '直飛' : `${flight.details.stops} 轉`}
+                </span>
+              </div>
+              <div className="flex items-center gap-x-2 text-[15px] font-black text-slate-800">
+                <span>{flight.details.departure}</span>
+                <span className="text-slate-300">→</span>
+                <span>{flight.details.arrival}</span>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end">
           <span className="text-[26px] font-black text-transparent bg-clip-text bg-gradient-to-br from-[#d946ef] to-[#9333ea] tracking-tighter">
@@ -71,7 +98,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onToggleSave, onToggl
         </button>
       </div>
     </GlassCard>
-    </button>
+    </div>
   );
 }
 

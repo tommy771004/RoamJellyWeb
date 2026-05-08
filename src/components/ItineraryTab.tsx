@@ -253,7 +253,7 @@ export default function ItineraryTab() {
       try {
         await navigator.share({
           title: name,
-          text: textToShare,
+          text: `跟我一起在 RoamJelly 規劃旅程：${name}`,
           url: deepLink,
         });
         showToast('分享成功！');
@@ -261,8 +261,8 @@ export default function ItineraryTab() {
         if ((err as Error).name !== 'AbortError') {
           // fallback to clipboard
           try {
-            await navigator.clipboard.writeText(textToShare);
-            showToast('已複製連結到剪貼簿。');
+            await navigator.clipboard.writeText(deepLink);
+            showToast('已複製分享連結到剪貼簿。');
           } catch (e) {
             showToast('無法複製分享連結。');
           }
@@ -270,8 +270,8 @@ export default function ItineraryTab() {
       }
     } else {
       try {
-        await navigator.clipboard.writeText(textToShare);
-        showToast('已複製連結到剪貼簿。');
+        await navigator.clipboard.writeText(deepLink);
+        showToast('已複製分享連結到剪貼簿。');
       } catch (err) {
         showToast('分享未完成，請稍後再試。');
       }
@@ -482,8 +482,9 @@ export default function ItineraryTab() {
           <button
             onClick={() => void handleShare()}
             className="w-10 h-10 rounded-full bg-gradient-to-r from-fuchsia-400 to-purple-500 hover:opacity-90 active:scale-95 flex items-center justify-center border border-fuchsia-300 ml-2 shadow-sm transition-all"
+            title="分享旅程"
           >
-            <Plus size={20} color="white" strokeWidth={3} />
+            <Share2 size={18} color="white" strokeWidth={3} />
           </button>
         </div>
       </div>
@@ -1030,28 +1031,47 @@ function ItineraryListItem({
 
               {editingId === item.node_id && draft ? (
                 <div className="flex-1 flex flex-col gap-4 w-full">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-3xl bg-white shadow-sm p-3 rounded-2xl">{item.emoji}</span>
-                    <h3 className="text-lg font-black text-slate-800">編輯行程</h3>
+                  <div className="flex flex-col sm:flex-row items-center gap-3 mb-2">
+                    <span className="text-3xl bg-white shadow-sm p-3 rounded-2xl shrink-0">{draft.emoji || item.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-black text-slate-800">編輯行程節點</h3>
+                      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-none">Inline Editing Mode</p>
+                    </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex flex-col gap-1.5 flex-1 min-w-[80px]">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex flex-col gap-1.5 col-span-1">
                       <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Day</span>
                       <input
                         value={draft.day}
                         onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, day: e.target.value } : prev))}
                         inputMode="numeric"
-                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
+                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 transition-all"
                       />
                     </div>
-                    <div className="flex flex-col gap-1.5 flex-[2] min-w-[120px]">
+                    <div className="flex flex-col gap-1.5 col-span-1">
                       <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Time</span>
                       <input
                         value={draft.time}
                         onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, time: e.target.value } : prev))}
                         placeholder="例: 10:30"
-                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
+                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 transition-all"
                       />
+                    </div>
+                    <div className="flex flex-col gap-1.5 col-span-1">
+                      <span className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-widest">Quick Category</span>
+                      <select 
+                        value={draft.category}
+                        onChange={(e) => {
+                          const cat = e.target.value;
+                          const meta = getCategoryMeta(cat);
+                          setDraft((prev: any) => (prev ? { ...prev, category: cat, emoji: meta.icon } : prev));
+                        }}
+                        className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 transition-all appearance-none"
+                      >
+                        {CATEGORY_OPTIONS.map(opt => (
+                          <option key={opt} value={opt}>{getCategoryMeta(opt).label}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -1059,7 +1079,8 @@ function ItineraryListItem({
                     <input
                       value={draft.title}
                       onChange={(e) => setDraft((prev: any) => (prev ? { ...prev, title: e.target.value } : prev))}
-                      className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400"
+                      placeholder="活動名稱..."
+                      className="w-full rounded-2xl border border-slate-100 bg-white px-4 py-2 text-sm font-black text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-fuchsia-400 transition-all"
                     />
                   </div>
 
@@ -1121,6 +1142,18 @@ function ItineraryListItem({
                       className="flex-1 bg-slate-50 py-3.5 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-all"
                     >
                       <span className="text-slate-500 font-bold text-[13px] tracking-wide">取消</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('確定要刪除此行程嗎？')) {
+                          onDelete(item.node_id);
+                          cancelEdit();
+                        }
+                      }}
+                      className="p-3.5 rounded-2xl bg-rose-50 border border-rose-100 text-rose-500 hover:bg-rose-100 transition-all flex items-center justify-center shrink-0"
+                      title="刪除行程"
+                    >
+                      <Trash2 size={20} strokeWidth={2.5} />
                     </button>
                   </div>
                 </div>

@@ -7,6 +7,12 @@ export interface SearchItem {
   price: number;
   affiliate_url: string;
   type?: 'flight' | 'ticket' | 'other';
+  details?: {
+    airline?: string;
+    departure?: string;
+    arrival?: string;
+    stops?: number;
+  };
 }
 
 export interface TrackClickOutBody {

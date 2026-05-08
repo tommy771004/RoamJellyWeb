@@ -159,15 +159,21 @@ async function fetchFromOtaProvider(from: string, to: string, date: string): Pro
     if (!res.ok) return null;
     const json = (await res.json()) as unknown;
     if (!Array.isArray(json) || json.length === 0) return null;
-    return (json as Record<string, unknown>[]).map((item, idx) => ({
+    return (json as Record<string, any>[]).map((item, idx) => ({
       id: String(item.id ?? `ota_${idx}`),
       type: 'flight' as const,
-      provider: String(item.provider ?? 'OTA'),
-      title: String(item.title ?? `${from} \u2192 ${to}`),
+      provider: String(item.provider ?? 'Skyscanner (Global)'),
+      title: String(item.title ?? `${from} \u2192 ${to} \u00b7 Direct`),
       price: Number(item.price ?? 0),
       currency: String(item.currency ?? 'TWD'),
       emoji: '\u2708\uFE0F',
       affiliate_url: String(item.affiliate_url ?? ''),
+      details: item.details ?? {
+        airline: String(item.airline ?? 'Global Airways'),
+        departure: String(item.dep_time ?? '09:00'),
+        arrival: String(item.arr_time ?? '13:00'),
+        stops: Number(item.stops ?? 0)
+      }
     }));
   } catch {
     return null;
@@ -647,17 +653,41 @@ async function startServer() {
 
     // If no params, return "Popular Recommendations" (latest flights)
     if (!from || !to || !date) {
-      const flightRows = await repo.getAllFlights();
-      const results = flightRows.map((f: any) => ({
-        id: `flight_${f.id}`,
-        type: 'flight',
-        provider: f.provider,
-        title: `熱門推薦: ${f.provider}`,
-        price: f.price,
-        currency: 'TWD',
-        emoji: '✈️',
-        affiliate_url: 'https://jelly.roam'
-      }));
+      const results = [
+        {
+          id: 'flight_trend_1',
+          type: 'flight',
+          provider: 'Skyscanner Trends',
+          title: '台北 (TPE) -> 東京 (NRT) · 直飛 3h 15m',
+          price: 12500,
+          currency: 'TWD',
+          emoji: '✈️',
+          affiliate_url: 'https://skyscanner.example.com/trending/1',
+          details: { stops: 0, airline: 'EVA Air', departure: '08:00', arrival: '12:15' }
+        },
+        {
+          id: 'flight_trend_2',
+          type: 'flight',
+          provider: 'Amadeus Insights',
+          title: '台北 (TPE) -> 大阪 (KIX) · 直飛 2h 45m',
+          price: 9800,
+          currency: 'TWD',
+          emoji: '✈️',
+          affiliate_url: 'https://amadeus.example.com/trending/2',
+          details: { stops: 0, airline: 'Tigerair Taiwan', departure: '14:20', arrival: '17:05' }
+        },
+        {
+          id: 'flight_trend_3',
+          type: 'flight',
+          provider: 'Global Travel Data',
+          title: '台北 (TPE) -> 首爾 (ICN) · 直飛 2h 30m',
+          price: 11000,
+          currency: 'TWD',
+          emoji: '✈️',
+          affiliate_url: 'https://traveldata.example.com/trending/3',
+          details: { stops: 0, airline: 'Korean Air', departure: '10:15', arrival: '13:45' }
+        }
+      ];
       res.json({ status: 'success', data: results });
       return;
     }
@@ -688,15 +718,21 @@ async function startServer() {
         res.status(503).json({ status: 'error', message: 'no flight provider data available' });
         return;
       }
-      data = flightRows.map((flight) => ({
+      data = flightRows.map((flight, idx) => ({
         id: `flight_${flight.id}`,
         type: 'flight' as const,
-        provider: flight.provider,
-        title: `${from} -> ${to} (${flight.time})`,
-        price: flight.price,
+        provider: idx % 2 === 0 ? 'Skyscanner (Mock)' : 'Amadeus (Mock)',
+        title: `${from} -> ${to} · ${idx % 2 === 0 ? '直飛' : '1 轉'}`,
+        price: flight.price + (idx * 500),
         currency: 'TWD',
         emoji: '✈️',
         affiliate_url: `https://partner.example.com/flights/${encodeURIComponent(flight.id)}`,
+        details: {
+          airline: flight.provider,
+          departure: flight.time.split(' - ')[0] || '10:00',
+          arrival: flight.time.split(' - ')[1] || '14:30',
+          stops: idx % 2 === 0 ? 0 : 1
+        }
       }));
     }
 
