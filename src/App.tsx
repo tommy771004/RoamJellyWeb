@@ -259,6 +259,9 @@ export default function App() {
                      title: String(spot.name || spot.title || '景點'),
                      emoji: spot.emoji || '📍',
                      category: spot.category || 'other',
+                     description: spot.ai_note || '',
+                     lat: spot.lat,
+                     lng: spot.lng,
                      source: 'local' as const,
                    });
                  });

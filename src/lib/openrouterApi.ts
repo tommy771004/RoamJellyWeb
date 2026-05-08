@@ -57,6 +57,9 @@ export async function suggestItinerary(destination: string, days: number): Promi
             title: String(spot.name || spot.title || '景點'),
             emoji: pickIcon(spot.emoji, spot.category || 'other'),
             category: normalizeCategory(spot.category || 'other'),
+            description: spot.ai_note || '',
+            lat: spot.lat,
+            lng: spot.lng,
             source: 'local' as const,
           });
         });

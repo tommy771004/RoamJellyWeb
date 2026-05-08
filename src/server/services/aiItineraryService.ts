@@ -42,6 +42,8 @@ interface AiResponse {
       category: string; // flight, transport, landmark, food, shopping, nature, hotel, activity, nightlife, other
       intensity: "chill" | "moderate" | "hardcore"; // 體力消耗指標
       ai_note: string; // 根據使用者偏好的客製化提醒
+      lat?: number; // Approximate latitude of the spot
+      lng?: number; // Approximate longitude of the spot
     }>;
   }>;
 }

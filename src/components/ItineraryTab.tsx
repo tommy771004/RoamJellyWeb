@@ -44,14 +44,40 @@ const TRIP_ID =
     .trim();
 const CACHE_KEY = `roamjelly_itinerary_${TRIP_ID}`;
 
-// Tokyo bounding box for map normalization
-const LAT_MIN = 35.60, LAT_MAX = 35.75;
-const LNG_MIN = 139.65, LNG_MAX = 139.85;
+function getDynamicMapPercent(nodes: any[], lat: number, lng: number) {
+  if (!lat || !lng || nodes.length === 0) return { x: 50, y: 50 };
 
-function toMapPercent(lat: number, lng: number) {
-  const x = ((lng - LNG_MIN) / (LNG_MAX - LNG_MIN)) * 80 + 10;
-  const y = ((LAT_MAX - lat) / (LAT_MAX - LAT_MIN)) * 80 + 10;
-  return { x: Math.min(90, Math.max(10, x)), y: Math.min(90, Math.max(10, y)) };
+  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+  let hasValidCoords = false;
+  nodes.forEach(n => {
+    if (n.lat && n.lng) {
+      hasValidCoords = true;
+      if (n.lat < minLat) minLat = n.lat;
+      if (n.lat > maxLat) maxLat = n.lat;
+      if (n.lng < minLng) minLng = n.lng;
+      if (n.lng > maxLng) maxLng = n.lng;
+    }
+  });
+
+  if (!hasValidCoords) return { x: 50, y: 50 };
+
+  // Adding padding
+  const latDiff = maxLat - minLat || 0.01;
+  const lngDiff = maxLng - minLng || 0.01;
+
+  const paddedMinLat = minLat - latDiff * 0.2;
+  const paddedMaxLat = maxLat + latDiff * 0.2;
+  const paddedMinLng = minLng - lngDiff * 0.2;
+  const paddedMaxLng = maxLng + lngDiff * 0.2;
+
+  const x = ((lng - paddedMinLng) / (paddedMaxLng - paddedMinLng)) * 100;
+  // y is inverted because maps usually have origin at bottom (lower lat), but visually top is y=0
+  const y = ((paddedMaxLat - lat) / (paddedMaxLat - paddedMinLat)) * 100;
+
+  return { 
+    x: Math.min(100, Math.max(0, x)),
+    y: Math.min(100, Math.max(0, y))
+  };
 }
 
 const EMOJI_OPTIONS = ['🏯', '🗼', '🌸', '🍣', '🍜', '🎌', '⛩️', '🏔️', '🛍️', '🎡', '🌿', '🏖️'];
@@ -1098,7 +1124,11 @@ function ItineraryListItem({
             ) : (
                <>
                  <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-2 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
-                 <p className="text-xs sm:text-sm font-bold text-slate-400 line-clamp-1 italic">這是一個關於 {item.title} 的詳細介紹，推薦理由與預計停留時間...</p>
+                 {item.description || item.notes ? (
+                   <p className="text-xs sm:text-sm font-bold text-slate-500 line-clamp-2">{item.description || item.notes}</p>
+                 ) : (
+                   <p className="text-xs sm:text-sm font-bold text-slate-400 line-clamp-1 italic">點擊右側編輯新增描述或細節...</p>
+                 )}
                </>
             )}
           </div>
@@ -1202,16 +1232,16 @@ function MapView({ items }: { items: ItineraryNode[] }) {
           {(items as ItineraryNode[]).slice(0, -1).map((item: ItineraryNode, i: number) => {
             const next = items[i + 1];
             if (!item.lat || !item.lng || !next.lat || !next.lng) return <Fragment key={`line-${item.node_id}`} />;
-            const from = toMapPercent(item.lat, item.lng);
-            const to = toMapPercent(next.lat, next.lng);
+            const from = getDynamicMapPercent(items, item.lat, item.lng);
+            const to = getDynamicMapPercent(items, next.lat, next.lng);
             return (
               <line
                 key={`line-${item.node_id}`}
-                x1={from.x} y1={from.y}
-                x2={to.x}   y2={to.y}
+                x1={`${from.x}%`} y1={`${from.y}%`}
+                x2={`${to.x}%`}   y2={`${to.y}%`}
                 stroke="rgba(147,51,234,0.4)"
-                strokeWidth={0.8}
-                strokeDasharray="2 1.5"
+                strokeWidth={0.4}
+                strokeDasharray="1 1"
               />
             );
           })}
@@ -1220,8 +1250,8 @@ function MapView({ items }: { items: ItineraryNode[] }) {
       {/* Map pins */}
       {items.map((item: ItineraryNode, index: number) => {
         const pos = (item.lat && item.lng)
-          ? toMapPercent(item.lat, item.lng)
-          : { x: 25 + (index % 2) * 35, y: 18 + index * 20 };
+          ? getDynamicMapPercent(items, item.lat, item.lng)
+          : { x: 25 + (index % 2) * 50, y: 15 + index * 12 };
 
         return (
           <motion.div
