@@ -267,6 +267,8 @@ export default function ItineraryTab() {
     };
   }, [setOffline]);
 
+  const [weatherData, setWeatherData] = useState<any[]>([]);
+
   // Initial data load — trip info, favorites, collaborators, itinerary all in one shot
   useEffect(() => {
     const init = async () => {
@@ -288,6 +290,15 @@ export default function ItineraryTab() {
         setFavorites(favResult);
         setCollaborators(collabResult);
         setNodes(assignDaysBasedOnTimeAndOrder(itineraryResult, tripResult.startDate || '2026-06-15'));
+        
+        // Fetch weather
+        try {
+          const wRes = await fetch(`/api/weather?lat=35.6762&lng=139.6503`); // TODO: Use actual geocoded lat/lng based on destination
+          const wData = await wRes.json();
+          if (wData && wData.daily) {
+            setWeatherData(wData.daily);
+          }
+        } catch (e) {}
       } catch {
         const cached = readCachedItinerary();
         setNodes(assignDaysBasedOnTimeAndOrder(cached, '2026-06-15'));
@@ -779,13 +790,21 @@ export default function ItineraryTab() {
             {loading ? (
               <motion.div
                 key="loading"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 className="relative pl-6 mt-4 flex flex-col gap-8"
               >
-                {[0, 1, 2].map((i) => <ItinerarySkeletonCard key={i} />)}
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1, duration: 0.4, ease: 'easeOut' }}
+                  >
+                    <ItinerarySkeletonCard />
+                  </motion.div>
+                ))}
               </motion.div>
             ) : viewMode === 'list' ? (
               <motion.div
@@ -878,6 +897,7 @@ export default function ItineraryTab() {
                   aiLoading={aiLoading}
                   tripId={TRIP_ID}
                   destination={tripInfo?.destination || ''}
+                  weather={weatherData}
                 />
               </motion.div>
             ) : (
@@ -1050,10 +1070,11 @@ function ItineraryListItem({
   const [editTime, setEditTime] = useState(item.time);
   const [editEmoji, setEditEmoji] = useState(item.emoji);
   const [editNotes, setEditNotes] = useState(item.description || item.notes || '');
+  const [editImageUrl, setEditImageUrl] = useState(item.image_url || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleSave = () => {
-    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes });
+    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes, image_url: editImageUrl });
     setIsEditing(false);
   };
 
@@ -1080,7 +1101,8 @@ function ItineraryListItem({
         current_title: item.title,
         notes: item.description || item.notes
       });
-      onUpdate({ ...item, ...newNode });
+      const { ai_note, ...restNode } = newNode as any;
+      onUpdate({ ...item, ...restNode, description: ai_note || restNode.description });
     } catch (err) {
       console.error('Regenerate failed:', err);
     } finally {
@@ -1091,14 +1113,7 @@ function ItineraryListItem({
   const meta = getCategoryMeta(item.category);
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
-      className="relative flex gap-6 sm:gap-10 items-start group"
-    >
+    <div className="relative flex gap-6 sm:gap-10 items-start group w-full">
       {/* Time Badge */}
       <div className="flex flex-col items-center pt-2">
         <div className="w-[50px] sm:w-[60px] flex flex-col items-center">
@@ -1131,10 +1146,21 @@ function ItineraryListItem({
           </div>
 
           <div className="flex-1 text-center sm:text-left min-w-0">
-            <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
                <span className="px-3 py-0.5 rounded-full bg-pink-50 text-[10px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
                  {meta.label}
                </span>
+               {!isEditing && (
+                 <button 
+                   onClick={() => onUpdate({ ...item, is_visited: !item.is_visited })}
+                   className={`flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
+                 >
+                   <span className="material-symbols-outlined text-[14px]">
+                     {item.is_visited ? 'check_circle' : 'radio_button_unchecked'}
+                   </span>
+                   {item.is_visited ? '已打卡' : '未打卡'}
+                 </button>
+               )}
                {item.category === 'flight' && (
                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-indigo-500 flex items-center gap-1 animate-pulse">
                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
@@ -1157,6 +1183,12 @@ function ItineraryListItem({
                    placeholder="寫下你的旅行手帳日記，或是 AI 貼心提醒..."
                    className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
                  />
+                 <input
+                   value={editImageUrl}
+                   onChange={e => setEditImageUrl(e.target.value)}
+                   placeholder="貼上照片網址 (例如: https://...jpg)"
+                   className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                 />
                  <div className="flex items-center gap-3">
                     <input 
                       value={editTime}
@@ -1170,10 +1202,15 @@ function ItineraryListItem({
             ) : (
                <>
                  <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-2 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
+                 {item.image_url && (
+                   <div className="w-full h-40 sm:h-56 mt-3 mb-4 rounded-3xl overflow-hidden shadow-inner bg-slate-50 relative group/img cursor-pointer">
+                     <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-3xl hover:scale-105 transition-transform duration-700" loading="lazy" referrerPolicy="no-referrer" />
+                   </div>
+                 )}
                  {item.description || item.notes ? (
                    <p className="text-xs sm:text-sm font-bold text-slate-500 whitespace-pre-line tracking-wide leading-relaxed">{item.description || item.notes}</p>
                  ) : (
-                   <p className="text-xs sm:text-sm font-bold text-slate-400 italic">點擊右側編輯新增手帳內容或細節...</p>
+                   <p className="text-xs sm:text-sm font-bold text-slate-400 italic">點擊右側編輯新增手帳內容、細節或照片...</p>
                  )}
                </>
             )}
@@ -1214,7 +1251,7 @@ function ItineraryListItem({
           )}
         </div>
       </GlassCard>
-    </motion.div>
+    </div>
   );
 }
 function ItineraryList({
@@ -1226,6 +1263,7 @@ function ItineraryList({
   aiLoading,
   tripId,
   destination,
+  weather,
 }: {
   items: ItineraryNode[];
   day: number;
@@ -1235,9 +1273,37 @@ function ItineraryList({
   aiLoading: boolean;
   tripId: string;
   destination: string;
+  weather?: any;
 }) {
+  const getDailyWeather = () => {
+    if (!weather || !weather.length) return null;
+    // Assuming weather is a 14-day array, pick the one matching (day - 1)
+    const dayWeather = weather[day - 1];
+    if (!dayWeather) return null;
+    return dayWeather;
+  };
+
+  const dayWeather = getDailyWeather();
+
   return (
     <div className="flex flex-col gap-10 mt-6 min-h-[400px]">
+      {dayWeather && (
+        <div className="-mt-14 mb-4 ml-4">
+          <div className="flex items-center gap-3 w-fit px-4 py-2 bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100/50 rounded-2xl shadow-sm">
+            <span className="text-xl">
+              {dayWeather.rain_prob > 50 ? '🌧️' : dayWeather.rain_prob > 20 ? '⛅' : '☀️'}
+            </span>
+            <div className="flex flex-col">
+              <span className="text-xs font-black text-slate-700 tracking-wider uppercase">
+                {dayWeather.date} 天氣
+              </span>
+              <span className="text-[10px] font-bold text-slate-500">
+                {dayWeather.temp_min}°C - {dayWeather.temp_max}°C / 降雨率 {dayWeather.rain_prob}%
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
       {items.length === 0 && !aiLoading && (
         <GlassCard className="!p-16 !rounded-[48px] border border-white/60 bg-white/30 flex flex-col items-center justify-center text-center backdrop-blur-2xl shadow-inner">
           <div className="w-28 h-28 rounded-[40px] bg-white flex items-center justify-center text-6xl mb-8 shadow-xl border border-slate-100/50 animate-bounce">
@@ -1249,9 +1315,23 @@ function ItineraryList({
       )}
 
       {aiLoading && (
-        <div className="flex flex-col gap-8">
-           {[0, 1, 2].map(i => <ItinerarySkeletonCard key={i} />)}
-        </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex flex-col gap-8"
+        >
+           {[0, 1, 2].map(i => (
+             <motion.div
+               key={i}
+               initial={{ opacity: 0, scale: 0.95, y: 20 }}
+               animate={{ opacity: 1, scale: 1, y: 0 }}
+               transition={{ delay: i * 0.1, duration: 0.4, ease: 'easeOut' }}
+             >
+               <ItinerarySkeletonCard />
+             </motion.div>
+           ))}
+        </motion.div>
       )}
 
       <AnimatePresence initial={false} mode="popLayout">
@@ -1273,7 +1353,15 @@ function ItineraryList({
             }
           }
           return (
-            <div key={item.node_id} className="flex flex-col">
+            <motion.div 
+              key={item.node_id} 
+              layout
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, x: -30 }}
+              transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
+              className="flex flex-col w-full"
+            >
               <ItineraryListItem
                 item={item}
                 idx={idx}
@@ -1283,22 +1371,31 @@ function ItineraryList({
                 tripId={tripId}
                 destination={destination}
               />
-              {nextItem && timeGapStr && (
+              {nextItem && (timeGapStr || item.transport_to_next) && (
                 <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
-                  <div className="w-0.5 h-12 bg-gradient-to-b from-slate-200 to-slate-200" />
-                  <div className="flex items-center gap-2 ml-4 self-center animate-pulse">
-                    <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm">
-                      離下一站約 {timeGapStr}
-                    </span>
+                  <div className="w-0.5 min-h-[3rem] bg-gradient-to-b from-slate-200 to-slate-200" />
+                  <div className="flex flex-col justify-center ml-4 animate-pulse">
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[12px]">schedule</span>
+                        {timeGapStr ? `約 ${timeGapStr}` : '時間未定'}
+                      </span>
+                      {item.transport_to_next && (
+                        <span className="px-3 py-1 bg-indigo-50/80 rounded-full text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[12px]">directions_subway</span>
+                          {item.transport_to_next}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
-              {nextItem && !timeGapStr && (
+              {nextItem && !timeGapStr && !item.transport_to_next && (
                  <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
                     <div className="w-0.5 h-8 bg-gradient-to-b from-slate-200 to-slate-200" />
                  </div>
               )}
-            </div>
+            </motion.div>
           );
         })}
       </AnimatePresence>
@@ -1324,14 +1421,21 @@ function MapView({ items }: { items: ItineraryNode[] }) {
       <div className="absolute top-3 right-4 bg-white/70 rounded-full w-8 h-8 items-center justify-center">
         <span className="text-xs font-black text-slate-600">N↑</span>
       </div>
-      {/* Connecting lines via react-native-svg */}
+      {/* Connecting lines via SVG */}
       {items.length > 1 && (
         <svg
           width="100%"
           height="100%"
           viewBox="0 0 100 100"
+          preserveAspectRatio="none"
           style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' } as object}
         >
+          {/* Arrow marker definition for directional lines */}
+          <defs>
+            <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto" fill="rgba(236,72,153,0.7)">
+              <polygon points="0 0, 6 2, 0 4" />
+            </marker>
+          </defs>
           {(items as ItineraryNode[]).slice(0, -1).map((item: ItineraryNode, i: number) => {
             const next = items[i + 1];
             if (!item.lat || !item.lng || !next.lat || !next.lng) return <Fragment key={`line-${item.node_id}`} />;
@@ -1342,9 +1446,10 @@ function MapView({ items }: { items: ItineraryNode[] }) {
                 key={`line-${item.node_id}`}
                 x1={`${from.x}%`} y1={`${from.y}%`}
                 x2={`${to.x}%`}   y2={`${to.y}%`}
-                stroke="rgba(147,51,234,0.4)"
-                strokeWidth={0.4}
-                strokeDasharray="1 1"
+                stroke="rgba(236,72,153,0.6)"
+                strokeWidth={0.8}
+                strokeDasharray="2 1.5"
+                markerEnd="url(#arrowhead)"
               />
             );
           })}
@@ -1370,7 +1475,10 @@ function MapView({ items }: { items: ItineraryNode[] }) {
             }}
           >
             <div className="flex flex-col items-center">
-              <div className="bg-white/95 rounded-2xl px-2.5 py-2 border-2 border-white flex flex-col items-center shadow-lg">
+              <div className="bg-white/95 rounded-2xl px-2.5 py-2 border-2 border-white flex flex-col items-center shadow-lg relative cursor-default group">
+                <div className="absolute -top-3 -right-3 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-sm border border-white">
+                  {index + 1}
+                </div>
                 <span className="text-2xl">{item.emoji}</span>
               </div>
               <div

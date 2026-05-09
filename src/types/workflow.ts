@@ -88,10 +88,13 @@ export interface ItineraryNode {
   emoji: string;
   category: string;
   description?: string;
+  is_visited?: boolean;
   notes?: string;
   source: 'local' | 'remote';
   lat?: number;
   lng?: number;
+  transport_to_next?: string;
+  image_url?: string;
 }
 
 export interface ItineraryPlannerForm {

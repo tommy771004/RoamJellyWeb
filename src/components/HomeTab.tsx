@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff } from 'lucide-react';
+import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { FlightSkeletonCard } from './SkeletonCard';
 import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchHandbooks, createTripFact } from '../lib/workflowApi';
@@ -41,9 +41,9 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
         }
       }}
     >
-      <GlassCard className="!p-0 hover:bg-white transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-slate-100/50 flex-1 flex flex-col overflow-hidden rounded-[40px] border border-white group-hover/card:scale-[1.02]">
+      <GlassCard className="!p-0 hover:bg-white transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-slate-100/50 flex-1 flex flex-col overflow-hidden rounded-3xl border border-white group-hover/card:scale-[1.02]">
         {/* Card Header with Provider Info */}
-        <div className="p-5 pb-0 flex items-center justify-between">
+        <div className="p-6 pb-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-xl font-black text-fuchsia-500 border border-slate-100">
               {airlineInitial}
@@ -74,9 +74,9 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
         </div>
 
         {/* Flight Details Section */}
-        <div className="p-5 pt-8 flex flex-col items-center">
+        <div className="px-6 pt-6 pb-4 flex flex-col items-center">
             <div className="flex items-center justify-between w-full relative px-2">
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1/4 h-[1px] bg-slate-100 dashed" />
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1/4 border-t-2 border-dashed border-slate-200" />
                 <div className="flex flex-col items-center z-10 bg-white px-2">
                     <span className="text-2xl font-black text-slate-800 tracking-tight">{flight.details?.departure}</span>
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Depart</span>
@@ -104,7 +104,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
         </div>
 
         {/* Price and Action Section */}
-        <div className="mt-auto p-5 pt-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+        <div className="mt-auto px-6 py-5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
             <div className="flex flex-col">
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Estimated Price</span>
                 <div className="flex items-baseline gap-1">
@@ -420,7 +420,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="relative w-full md:max-w-xl bg-white rounded-[40px] shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-[210] overflow-hidden"
+            className="relative w-[92vw] max-w-[480px] md:max-w-xl bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-[210] overflow-hidden"
           >
             <div className="p-7 pb-5">
               <div className="flex flex-row justify-between items-center mb-5 pl-1">
@@ -554,7 +554,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="relative w-full md:max-w-xl bg-white rounded-[40px] shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-[210] overflow-hidden p-8"
+            className="relative w-[92vw] max-w-[480px] md:max-w-xl bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-[210] overflow-hidden p-6 md:p-8"
           >
             <div className="flex flex-row justify-between items-center mb-8">
               <div className="flex flex-col">
@@ -623,7 +623,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-full lg:max-w-[72rem] xl:max-w-[80rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto w-full">
+    <div className="p-6 md:p-10 max-w-full lg:max-w-[72rem] xl:max-w-[80rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
       <div className="flex flex-col items-center text-center lg:items-start lg:text-left mb-6 w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
         <h1 className="text-[44px] md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-cyan-500 tracking-tight mb-3">RoamJelly</h1>
         <p className="text-[17px] text-slate-500 font-semibold tracking-wide">探索機票與體驗，確認後再溫柔導流至供應商下單。</p>
@@ -631,7 +631,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
       {/* AI Form Banner */}
       <div className="mb-10 w-full">
-        <div className="bg-gradient-to-r from-pink-400 to-fuchsia-500 rounded-[32px] p-6 sm:p-8 flex items-center justify-between shadow-[0_15px_40px_rgba(217,70,239,0.3)] text-white relative overflow-hidden group hover:scale-[1.01] transition-transform cursor-pointer"
+        <div className="bg-gradient-to-r from-pink-400 to-fuchsia-500 rounded-3xl p-6 sm:p-8 flex items-center justify-between shadow-[0_15px_40px_rgba(217,70,239,0.3)] text-white relative overflow-hidden group hover:scale-[1.01] transition-transform cursor-pointer"
              onClick={() => setActiveTab('ai_form')}
         >
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none mix-blend-overlay"></div>
@@ -639,13 +639,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           
           <div className="relative z-10">
             <h3 className="text-2xl sm:text-3xl font-black mb-2 flex items-center gap-2 drop-shadow-md">
-              <span className="material-symbols-outlined text-[32px]">auto_awesome</span>
+              <Sparkles size={32} />
               AI 行程規劃
             </h3>
             <p className="text-white/90 text-sm sm:text-base font-bold">告訴我們你想去哪，秒速客製專屬行程！</p>
           </div>
           <div className="relative z-10 w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/50 group-hover:bg-white/40 transition-colors shadow-sm">
-            <span className="material-symbols-outlined">arrow_forward</span>
+            <ArrowRight size={24} />
           </div>
         </div>
       </div>
@@ -653,12 +653,12 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       <div className="flex flex-col lg:flex-row gap-8 w-full">
         {/* Left Side: Search Form */}
         <div className="w-full lg:w-[400px] xl:w-[460px] flex-shrink-0">
-          <GlassCard className="!p-0 overflow-visible ring-1 ring-white/60 shadow-[0_8px_40px_rgb(0,0,0,0.06)] bg-white/60 backdrop-blur-3xl rounded-[32px]">
+          <GlassCard className="!p-0 overflow-visible ring-1 ring-white/60 shadow-[0_8px_40px_rgb(0,0,0,0.06)] bg-white/60 backdrop-blur-3xl rounded-3xl">
             <div className="flex flex-col">
               {/* Main Search Inputs Area */}
-              <div className="p-5 flex flex-col gap-y-4 bg-white/20 rounded-[32px] relative overflow-visible">
-                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3">
-                    <div className="flex flex-col gap-y-1 bg-white/90 backdrop-blur-md rounded-[24px] px-5 py-3 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all flex-1 group hover:bg-white focus-within:bg-white">
+              <div className="p-6 flex flex-col gap-y-5 bg-white/30 rounded-3xl relative overflow-visible">
+                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4">
+                    <div className="flex flex-col gap-y-1.5 bg-white/90 backdrop-blur-md rounded-[20px] px-6 py-4 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all flex-1 group hover:bg-white focus-within:bg-white">
                       <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase group-hover:text-orange-400 transition-colors">出發地</span>
                       <input
                         value={searchForm.from}
@@ -673,7 +673,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       />
                     </div>
 
-                    <div className="flex flex-col gap-y-1 bg-white/90 backdrop-blur-md rounded-[24px] px-5 py-3 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all flex-1 group hover:bg-white focus-within:bg-white">
+                    <div className="flex flex-col gap-y-1.5 bg-white/90 backdrop-blur-md rounded-[20px] px-6 py-4 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all flex-1 group hover:bg-white focus-within:bg-white">
                       <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase group-hover:text-orange-400 transition-colors">目的地</span>
                       <input
                         value={searchForm.to}
@@ -716,7 +716,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       setShowDeparturePicker(false);
                       setShowDestinationPicker(false);
                     }}
-                    className={`flex flex-row items-center gap-x-3 bg-white/90 backdrop-blur-md rounded-[24px] px-5 py-4 border border-white shadow-sm cursor-pointer hover:bg-white transition-all ${showDatePicker ? 'ring-2 ring-orange-400/50' : ''}`}
+                    className={`flex flex-row items-center gap-x-3 bg-white/90 backdrop-blur-md rounded-[20px] px-6 py-4 border border-white shadow-sm cursor-pointer hover:bg-white transition-all ${showDatePicker ? 'ring-2 ring-orange-400/50' : ''}`}
                   >
                     <Calendar size={18} className="text-slate-400" />
                     <div className="flex flex-col flex-1">
@@ -746,7 +746,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     onClick={() => void handleSearch()}
                     disabled={isSearchDisabled || loading || isOffline}
                     title={isOffline ? '請連線網路以進行機票比價' : ''}
-                    className={`mt-6 rounded-[32px] py-5.5 flex flex-row items-center justify-center border-none appearance-none cursor-pointer transition-all active:scale-[0.95] ${
+                    className={`mt-6 rounded-full py-5 flex flex-row items-center justify-center border-none appearance-none cursor-pointer transition-all active:scale-[0.95] ${
                       isSearchDisabled || loading || isOffline
                         ? 'bg-slate-200/50 grayscale cursor-not-allowed opacity-60' 
                         : 'bg-gradient-to-r from-orange-500 via-orange-400 to-amber-500 hover:shadow-[0_25px_50px_rgba(249,115,22,0.5)] shadow-[0_12px_30px_rgba(245,158,11,0.3)] hover:scale-[1.025] hover:brightness-110 ring-2 ring-white/40'
@@ -923,7 +923,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center justify-center py-20 bg-white/40 backdrop-blur-xl rounded-[40px] border border-white mx-2 shadow-sm"
+                  className="flex flex-col items-center justify-center py-20 bg-white/40 backdrop-blur-xl rounded-3xl border border-white mx-2 shadow-sm"
                 >
                   <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-5xl mb-6 grayscale opacity-60">
                     🔍
@@ -942,7 +942,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             <span className="text-2xl font-black mb-4 text-slate-800 tracking-tight pl-2 flex items-center gap-2">熱門達人手帳 🌍</span>
             <div className="flex overflow-x-auto gap-4 pb-6 scrollbar-hide px-2">
               {communityTrips.map((trip) => (
-                <div key={trip.id} className="min-w-[280px] sm:min-w-[320px] rounded-[32px] overflow-hidden relative shadow-lg group">
+                <div key={trip.id} className="min-w-[280px] sm:min-w-[320px] rounded-3xl overflow-hidden relative shadow-lg group">
                   {/* Aspect ratio background */}
                   <div 
                     className="w-full h-[180px] bg-cover bg-center" 
@@ -964,7 +964,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       onClick={(e) => handleCloneTrip(e, trip)}
                       className="w-full py-3 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-bold text-[14px] flex items-center justify-center gap-2 transition-all active:scale-95 border border-white/50"
                     >
-                      <span className="material-symbols-outlined text-[18px]">file_copy</span>
+                      <Copy size={18} />
                       複製行程
                     </button>
                   </div>

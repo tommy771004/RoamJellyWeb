@@ -127,9 +127,17 @@ export default function AiForm({
         )}
       </div>
 
-      {step === 1 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in duration-300">
-          <div className="space-y-10">
+      <AnimatePresence mode="wait">
+        {step === 1 && (
+          <motion.div 
+            key="step1"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-10"
+          >
+            <div className="space-y-10">
             <div className="flex flex-col gap-4">
               <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">目的地</label>
               <div className="relative group">
@@ -247,12 +255,19 @@ export default function AiForm({
               <ArrowLeft className="rotate-180" size={20} />
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {step === 2 && (
-        <div className="flex flex-col gap-10 animate-in fade-in duration-300">
-          <div className="flex justify-end mb-[-20px]">
+        {step === 2 && (
+          <motion.div 
+            key="step2"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="flex flex-col gap-10"
+          >
+            <div className="flex justify-end mb-[-20px]">
              <button
                onClick={handleSubmit}
                className="text-pink-500 font-bold text-sm tracking-widest hover:text-pink-600 transition-colors bg-white/50 px-4 py-2 rounded-full border border-pink-100 shadow-sm"
@@ -346,9 +361,10 @@ export default function AiForm({
               魔法生成專屬行程
               <Sparkles size={20} />
             </button>
-          </div>
-        </div>
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

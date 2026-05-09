@@ -35,6 +35,9 @@ export const itineraryNodes = pgTable('itinerary_nodes', {
   lat: real('lat'),
   lng: real('lng'),
   description: text('description'),
+  isVisited: boolean('is_visited').default(false).notNull(),
+  transportToNext: text('transport_to_next'),
+  imageUrl: text('image_url'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

@@ -40,6 +40,7 @@ interface AiResponse {
       category: string; // flight, transport, landmark, food, shopping, nature, hotel, activity, nightlife, other
       intensity: "chill" | "moderate" | "hardcore"; // 體力消耗指標
       ai_note: string; // 根據使用者偏好的客製化提醒
+      transport_to_next?: string; // 預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)
       lat?: number; // Approximate latitude of the spot
       lng?: number; // Approximate longitude of the spot
     }>;
@@ -123,6 +124,7 @@ export async function regenerateSpot(params: {
   "emoji": "對應表情",
   "category": "landmark|food|shopping|nature|hotel|activity|nightlife|transport|other",
   "ai_note": "一句話的貼心提醒",
+  "transport_to_next": "預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)（可選）",
   "lat": 緯度數字（可選）,
   "lng": 經度數字（可選）
 }

@@ -28,6 +28,17 @@ function getCurrentSeason(): string {
   return '冬季';
 }
 
+function getCurrencyFromDestination(destination: string): string {
+  if (!destination) return 'TWD';
+  const dest = destination.toLowerCase();
+  if (dest.includes('日') || dest.includes('tokyo') || dest.includes('osaka')) return 'JPY';
+  if (dest.includes('韓') || dest.includes('seoul')) return 'KRW';
+  if (dest.includes('泰') || dest.includes('bangkok')) return 'THB';
+  if (dest.includes('美') || dest.includes('usa')) return 'USD';
+  if (dest.includes('歐') || dest.includes('paris') || dest.includes('london')) return 'EUR';
+  return 'TWD';
+}
+
 interface ExpenseForm {
   title: string;
   amount: string;
@@ -120,13 +131,24 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           fetchTripInfo(tripId).catch(() => null),
         ]);
         if (weatherData) setWeather(weatherData);
-        if (tripInfoData) setTripInfo(tripInfoData);
+
+        let initialCurrency = 'TWD';
+        if (tripInfoData) {
+          setTripInfo(tripInfoData);
+          initialCurrency = getCurrencyFromDestination(tripInfoData.destination);
+        }
+
         const memberNames = collaboratorsData.map((m: any) => m.name);
         setChecklist(checklistData);
         if (memberNames.length > 0) {
           setMembers(memberNames);
           // Only update initial form state once when we get members
-          setForm((prev) => ({ ...prev, payer: memberNames[0], splitWith: memberNames }));
+          setForm((prev) => ({ 
+            ...prev, 
+            payer: memberNames[0], 
+            splitWith: memberNames,
+            currency: initialCurrency
+          }));
         }
       } catch {
         setTip('工具包載入失敗，請稍後重試。');
@@ -228,7 +250,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
         }
 
         showToast('分帳已更新，已算出最新應付關係。', 'success');
-        setForm((prev) => ({ ...prev, title: '', amount: '' }));
+        setForm((prev) => ({ ...prev, title: '', amount: '', splitWith: members }));
       } catch {
         showToast('分帳送出失敗，請稍後再試。', 'warning');
       } finally {
@@ -502,11 +524,14 @@ function LedgerSection() {
                   actions.updateForm((prev) => ({ ...prev, payer: member }));
                   if (errors.payer) actions.clearFormError('payer');
                 }}
-                className={`rounded-full px-5 py-2 border transition-all active:scale-95 text-[13px] font-bold ${
-                  form.payer === member ? 'bg-fuchsia-500 border-fuchsia-500 text-white shadow-md shadow-fuchsia-200' : 'bg-white/80 border-slate-100 text-slate-600 hover:bg-fuchsia-50 hover:border-fuchsia-100'
+                className={`rounded-full px-4 py-2 border transition-all active:scale-95 text-[13px] font-bold flex items-center gap-2 max-w-full ${
+                  form.payer === member ? 'bg-fuchsia-500 border-fuchsia-500 text-white shadow-md shadow-fuchsia-200 ring-2 ring-fuchsia-300 ring-offset-1 z-10' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 opacity-70 hover:opacity-100'
                 }`}
               >
-                {member}
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${form.payer === member ? 'bg-white text-fuchsia-500 shadow-sm' : 'bg-slate-200 text-slate-500'}`}>
+                   {member.charAt(0).toUpperCase()}
+                </div>
+                <span className="truncate max-w-[150px]">{member}</span>
               </button>
             ))}
           </div>
@@ -525,12 +550,17 @@ function LedgerSection() {
                     actions.toggleSplitMember(member);
                     if (errors.splitWith) actions.clearFormError('splitWith');
                   }}
-                  className={`rounded-full px-5 py-2 border transition-all active:scale-95 text-[13px] font-bold flex items-center gap-2 ${
-                    selected ? 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-700 shadow-sm' : 'bg-white/80 border-slate-100 text-slate-500 hover:bg-fuchsia-50/50 hover:border-fuchsia-100'
+                  className={`rounded-full px-4 py-2 border transition-all active:scale-95 text-[13px] font-bold flex items-center gap-2 max-w-full ${
+                    selected ? 'bg-fuchsia-100 border-fuchsia-300 text-fuchsia-800 shadow-md ring-2 ring-fuchsia-200 ring-offset-1' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <div className={`w-3.5 h-3.5 rounded-full shrink-0 border transition-colors ${selected ? 'bg-fuchsia-500 border-fuchsia-500' : 'bg-transparent border-slate-300'}`} />
-                  {member}
+                  <div className={`relative w-4 h-4 rounded-full shrink-0 border transition-colors flex items-center justify-center ${selected ? 'bg-fuchsia-500 border-fuchsia-500' : 'bg-slate-100 border-slate-300'}`}>
+                    <Check size={10} className={`text-white transition-opacity ${selected ? 'opacity-100' : 'opacity-0'}`} strokeWidth={4} />
+                  </div>
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 shadow-sm ${selected ? 'bg-fuchsia-200 text-fuchsia-700' : 'bg-slate-200 text-slate-500'}`}>
+                     {member.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="truncate max-w-[150px]">{member}</span>
                 </button>
               );
             })}
@@ -663,16 +693,16 @@ function TripSelectorBar() {
             <button
               key={trip.tripId}
               onClick={() => setActiveTripId(trip.tripId)}
-              className={`px-5 py-4 flex flex-col rounded-[24px] border transition-all text-left shadow-sm ${
+              className={`px-5 py-4 flex flex-col rounded-[24px] border transition-all text-left shadow-sm shrink-0 min-w-[120px] ${
                 active 
                   ? 'bg-fuchsia-500 border-fuchsia-500 text-white shadow-fuchsia-200' 
                   : 'bg-white bg-opacity-60 backdrop-blur-md border-white/50 text-slate-500 hover:bg-white hover:text-fuchsia-500'
               }`}
             >
-              <span className={`text-[16px] font-bold ${active ? 'text-white' : 'text-[#2C302E]'}`}>
+              <span className={`text-[16px] font-bold whitespace-nowrap ${active ? 'text-white' : 'text-[#2C302E]'}`}>
                 {trip.name}
               </span>
-              <span className={`text-[11px] uppercase tracking-[0.1em] font-black mt-1 ${active ? 'text-white/80' : 'text-slate-400'}`}>
+              <span className={`text-[11px] uppercase tracking-[0.1em] font-black mt-1 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] ${active ? 'text-white/80' : 'text-slate-400'}`}>
                 {trip.destination}
               </span>
             </button>

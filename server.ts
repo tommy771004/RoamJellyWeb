@@ -696,7 +696,7 @@ async function startServer() {
       async (event: {
         trip_id?: string;
         action?: string;
-        payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null };
+        payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string };
       }) => {
         if (
           !event?.trip_id ||
@@ -726,6 +726,10 @@ async function startServer() {
           category: event.payload.category,
           lat: event.payload.lat,
           lng: event.payload.lng,
+          isVisited: event.payload.is_visited,
+          description: event.payload.description,
+          transport_to_next: event.payload.transport_to_next,
+          image_url: event.payload.image_url,
         });
 
         await appendPlanningRecord({
@@ -951,19 +955,23 @@ async function startServer() {
         `https://api.open-meteo.com/v1/forecast` +
         `?latitude=${lat}&longitude=${lng}` +
         `&current=temperature_2m,precipitation_probability` +
-        `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
-        `&timezone=Asia%2FTokyo&forecast_days=1`;
+        `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code` +
+        `&timezone=auto&forecast_days=14`;
       const apiRes = await fetch(url);
       if (!apiRes.ok) throw new Error('open-meteo upstream error');
-      const data = (await apiRes.json()) as {
-        current: { temperature_2m: number; precipitation_probability: number };
-        daily: { temperature_2m_max: number[]; temperature_2m_min: number[]; precipitation_probability_max: number[] };
-      };
+      const data = (await apiRes.json());
       res.json({
-        temp_current: Math.round(data.current.temperature_2m),
-        temp_max: Math.round(data.daily.temperature_2m_max[0]),
-        temp_min: Math.round(data.daily.temperature_2m_min[0]),
-        rain_prob: data.current.precipitation_probability ?? data.daily.precipitation_probability_max[0],
+        temp_current: Math.round(data.current?.temperature_2m || 0),
+        temp_max: Math.round(data.daily?.temperature_2m_max?.[0] || 0),
+        temp_min: Math.round(data.daily?.temperature_2m_min?.[0] || 0),
+        rain_prob: data.current?.precipitation_probability ?? data.daily?.precipitation_probability_max?.[0] ?? 0,
+        daily: data.daily?.time?.map((timeStr, idx) => ({
+           date: timeStr,
+           temp_max: Math.round(data.daily.temperature_2m_max[idx]),
+           temp_min: Math.round(data.daily.temperature_2m_min[idx]),
+           rain_prob: data.daily.precipitation_probability_max[idx],
+           weather_code: data.daily.weather_code[idx]
+        })) || []
       });
     } catch {
       res.status(503).json({ status: 'error', message: 'weather service unavailable' });
@@ -1283,7 +1291,7 @@ async function startServer() {
     const { trip_id, action, payload } = req.body as {
       trip_id?: string;
       action?: string;
-      payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string };
+      payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string };
     };
 
     if (!trip_id || action !== 'add_node' || !payload?.node_id || !payload.time || !payload.title) {
@@ -1303,7 +1311,10 @@ async function startServer() {
       category: payload.category,
       lat: payload.lat,
       lng: payload.lng,
+      isVisited: payload.is_visited,
       description: payload.description,
+      transport_to_next: payload.transport_to_next,
+      image_url: payload.image_url,
     });
 
     await appendPlanningRecord({
@@ -1332,6 +1343,8 @@ async function startServer() {
         lat: payload.lat ?? null,
         lng: payload.lng ?? null,
         description: payload.description ?? '',
+        transport_to_next: payload.transport_to_next ?? null,
+        image_url: payload.image_url ?? null,
       },
     });
 

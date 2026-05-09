@@ -76,6 +76,9 @@ export class AppRepository {
       lat: node.lat,
       lng: node.lng,
       description: node.description,
+      isVisited: node.is_visited ?? false,
+      transportToNext: node.transport_to_next,
+      imageUrl: node.image_url,
     }).onConflictDoUpdate({
       target: schema.itineraryNodes.nodeId,
       set: {
@@ -88,6 +91,9 @@ export class AppRepository {
         lat: node.lat,
         lng: node.lng,
         description: node.description,
+        isVisited: node.is_visited ?? false,
+        transportToNext: node.transport_to_next,
+        imageUrl: node.image_url,
       }
     });
   }

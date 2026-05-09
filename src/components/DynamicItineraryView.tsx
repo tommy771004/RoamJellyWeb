@@ -90,6 +90,13 @@ export default function DynamicItineraryView({
                         <span className="font-semibold opacity-60 mr-1">TIPS /</span> {spot.ai_note}
                       </div>
                     )}
+
+                    {/* Transport to next */}
+                    {spot.transport_to_next && j !== dayData.spots.length - 1 && (
+                      <div className="mt-4 mb-2 flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 w-fit px-3 py-1.5 rounded-lg border border-slate-100">
+                        <span className="text-[14px]">🚶🏻‍♂️</span> {spot.transport_to_next}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
