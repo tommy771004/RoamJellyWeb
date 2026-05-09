@@ -18,7 +18,9 @@ import {
   type TravelGuideDestination,
 } from '../data/travelGuideDestinations';
 import { LocationPickerPopup } from './LocationPickerPopup';
-import JapanGuideModal from './JapanGuideModal';
+import CountryGuideModal from './CountryGuideModal';
+import { getCountryGuide } from '../data/countryGuideData';
+import type { CountryGuide } from '../data/countryGuideData';
 
 interface FlightCardProps {
   flight: SearchItem;
@@ -304,7 +306,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
 
   const [flyingCard, setFlyingCard] = useState<{ id: number; startX: number; startY: number; width: number; height: number; handbook?: any } | null>(null);
-  const [showJapanGuide, setShowJapanGuide] = useState(false);
+  const [activeGuide, setActiveGuide] = useState<CountryGuide | null>(null);
 
   const expertHandbooks = [
     {
@@ -976,26 +978,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                           ))}
                         </div>
 
-                        {dest.id === 'jp' ? (
-                          <button
-                            className="mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-rose-600 active:scale-95 group/btn"
-                            onClick={(e) => { e.stopPropagation(); setShowJapanGuide(true); }}
-                          >
-                            <ExternalLink size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
-                            查看完整攻略
-                          </button>
-                        ) : (
-                          <a
-                            href={dest.guideUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-emerald-600 active:scale-95 group/btn"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <ExternalLink size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
-                            查看完整攻略
-                          </a>
-                        )}
+                        <button
+                          className="mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-emerald-600 active:scale-95 group/btn"
+                          onClick={(e) => { e.stopPropagation(); const g = getCountryGuide(dest.id); if (g) setActiveGuide(g); }}
+                        >
+                          <ExternalLink size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
+                          查看完整攻略
+                        </button>
                       </div>
                     </GlassCard>
                   </motion.div>
@@ -1065,7 +1054,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         </div>
       </div>
 
-      <JapanGuideModal open={showJapanGuide} onClose={() => setShowJapanGuide(false)} />
+      {activeGuide && (
+        <CountryGuideModal open={!!activeGuide} guide={activeGuide} onClose={() => setActiveGuide(null)} />
+      )}
 
       {showDeparturePicker && (
         <LocationPickerPopup 

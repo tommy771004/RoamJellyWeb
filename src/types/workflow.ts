@@ -113,6 +113,8 @@ export interface ItineraryPlannerForm {
   vibes?: string[];           // 旅遊節奏: 特種兵式/睡到自然醒/隨興漫遊/在地深度/網美打卡
   interests?: string[];       // 興趣偏好: 大自然/歷史文化/購物血拼/主題樂園/在地美食/戶外刺激
   budget?: string;            // 預算等級: 窮遊背包客/小資精打細算/舒適中等/奢華享受
+  dietary?: string[];         // 飲食需求: 無限制/純素/蛋奶素/無麩質/不吃海鮮
+  transport?: string[];       // 交通偏好: 大眾運輸/自駕租車/包車/徒步為主
 }
 
 export type TravelFactType = 'flight_outbound' | 'flight_inbound' | 'stay';

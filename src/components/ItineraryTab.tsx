@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence, Reorder, useDragControls, type PanInfo } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 
 
 import { 
@@ -33,7 +33,6 @@ import {
   fetchItinerary,
   fetchTripInfo,
   fetchTripFacts,
-  shareText,
   syncItinerary,
   deleteItineraryNode,
   addFavorite,
@@ -142,6 +141,8 @@ function buildDefaultPlannerForm(destination: string, days: number): ItineraryPl
     vibes: [] as string[],
     interests: [] as string[],
     budget: '',
+    dietary: [] as string[],
+    transport: [] as string[],
   } as any;
 }
 
@@ -175,8 +176,6 @@ export default function ItineraryTab() {
   const [showPlanner, setShowPlanner] = useState<boolean>(false);
   const [isPlanningNew, setIsPlanningNew] = useState<boolean>(false);
   const [collaboratorEditing, setCollaboratorEditing] = useState<{ userName: string; day: number; nodeId: string } | null>(null);
-  const [suggestedFlights, setSuggestedFlights] = useState<SearchItem[]>([]);
-  const [dismissedFlightIds, setDismissedFlightIds] = useState<string[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -211,7 +210,7 @@ export default function ItineraryTab() {
         mustVisitSpots: formData.interests,
         mustEatFoods: [],
         autoFlightSegments: [],
-        notes: `旅伴: ${formData.companions}, 氛圍: ${formData.vibes.join(',')}, 飲食: ${formData.dietary.join(',')}`,
+        notes: `旅伴: ${formData.companions}, 氛圍: ${formData.vibes.join(',')}, 飲食: ${formData.dietary.join(',')}, 交通: ${formData.transport.join(',')}`,
         travelFactsContext: '',
       };
       
@@ -292,6 +291,14 @@ export default function ItineraryTab() {
     void syncItinerary(payload);
     showToast(`✨ 已新增：${normalized.title}`);
   };
+
+  // Persist itinerary to localStorage for offline reading whenever it changes while online
+  useEffect(() => {
+    if (!activeTripId || isOffline || nodes.length === 0) return;
+    try {
+      localStorage.setItem(`roamjelly_itinerary_${activeTripId}`, JSON.stringify(nodes));
+    } catch {}
+  }, [nodes, activeTripId, isOffline]);
 
   // Online/offline tracking
   useEffect(() => {
@@ -618,8 +625,6 @@ export default function ItineraryTab() {
     if (isOffline) { showToast('離線中無法使用 AI 功能 📴'); return; }
     if (!activeTripId) { showToast('缺少行程 ID，無法生成行程'); return; }
     setAiLoading(true);
-    setSuggestedFlights([]);
-    setDismissedFlightIds([]);
     try {
       const destination = tripInfo?.destination || '您的目的地';
       
@@ -627,7 +632,10 @@ export default function ItineraryTab() {
       if (aiGenerateMode === 'selected_day') genDays = 1;
       else if (aiGenerateMode === 'generate_for_selected_days') genDays = rangeEndDay - rangeStartDay + 1;
       
-      const formToSend = { ...plannerForm, days: genDays };
+      const dietaryStr = (plannerForm.dietary || []).join(',');
+      const transportStr = (plannerForm.transport || []).join(',');
+      const extraNotes = [plannerForm.notes, dietaryStr && `飲食: ${dietaryStr}`, transportStr && `交通: ${transportStr}`].filter(Boolean).join(' / ');
+      const formToSend = { ...plannerForm, days: genDays, notes: extraNotes };
 
       const suggestionsRaw = await suggestItineraryWithForm({ destination, planner: formToSend });
 
@@ -1299,6 +1307,48 @@ export default function ItineraryTab() {
                               </div>
                             </div>
 
+                            {/* 飲食需求 */}
+                            <div className="flex flex-col gap-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">飲食需求</label>
+                              <div className="flex flex-wrap gap-2">
+                                {['無限制', '純素', '蛋奶素', '無麩質', '不吃海鮮'].map(opt => {
+                                  const dietary = plannerForm.dietary || [];
+                                  const selected = dietary.includes(opt);
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => setPlannerField('dietary', selected ? dietary.filter((v: string) => v !== opt) : [...dietary, opt])}
+                                      className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? 'bg-amber-100 text-amber-600 border-amber-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* 交通偏好 */}
+                            <div className="flex flex-col gap-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">交通偏好</label>
+                              <div className="flex flex-wrap gap-2">
+                                {['大眾運輸', '自駕租車', '包車', '徒步為主'].map(opt => {
+                                  const transport = plannerForm.transport || [];
+                                  const selected = transport.includes(opt);
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => setPlannerField('transport', selected ? transport.filter((v: string) => v !== opt) : [...transport, opt])}
+                                      className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? 'bg-teal-100 text-teal-600 border-teal-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
                             <div className="flex flex-col sm:flex-row gap-3">
                               <button
                                 onClick={() => setAiGenerateMode('selected_day')}
@@ -1332,7 +1382,7 @@ export default function ItineraryTab() {
                                   onChange={e => setRangeStartDay(Number(e.target.value))}
                                   className="bg-white border-slate-200 rounded-xl px-3 py-2 outline-none font-bold text-slate-700 focus:ring-2 focus:ring-pink-200 shadow-sm"
                                 >
-                                  {Array.from({ length: Math.max(totalDays, 10) }, (_, i) => (
+                                  {Array.from({ length: totalDays }, (_, i) => (
                                     <option key={i+1} value={i+1}>{i+1}</option>
                                   ))}
                                 </select>
@@ -1342,14 +1392,23 @@ export default function ItineraryTab() {
                                   onChange={e => setRangeEndDay(Number(e.target.value))}
                                   className="bg-white border-slate-200 rounded-xl px-3 py-2 outline-none font-bold text-slate-700 focus:ring-2 focus:ring-pink-200 shadow-sm"
                                 >
-                                  {Array.from({ length: Math.max(totalDays, 10) }, (_, i) => (
+                                  {Array.from({ length: totalDays }, (_, i) => (
                                     <option key={i+1} value={i+1}>{i+1}</option>
                                   ))}
                                 </select>
                               </div>
                             )}
 
-                            <button 
+                            <button
+                              onClick={() => void handleAutoFetchFlights()}
+                              disabled={flightsLoading || aiLoading}
+                              className="w-full py-3 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98] transition-all hover:bg-slate-100"
+                            >
+                              {flightsLoading ? <Loader2 size={14} className="animate-spin" /> : <span className="material-symbols-outlined text-[16px]">flight</span>}
+                              自動抓取航班做為 AI 規劃參考
+                            </button>
+
+                            <button
                               onClick={() => void handleAiSuggest()}
                               disabled={aiLoading}
                               className="w-full py-5 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] transition-all"
@@ -1363,89 +1422,6 @@ export default function ItineraryTab() {
                     </AnimatePresence>
                   </GlassCard>
                 </div>
-
-                {/* AI Suggested Flights Panel */}
-                <AnimatePresence>
-                  {suggestedFlights.filter(f => !dismissedFlightIds.includes(f.id)).length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -12 }}
-                      transition={{ duration: 0.3 }}
-                      className="flex flex-col gap-3"
-                    >
-                      <div className="flex items-center justify-between px-1">
-                        <div className="flex items-center gap-2">
-                          <Sparkles size={15} className="text-fuchsia-500" />
-                          <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.18em]">AI 建議航班</span>
-                        </div>
-                        <button
-                          onClick={() => setSuggestedFlights([])}
-                          className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                          全部隱藏
-                        </button>
-                      </div>
-                      <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
-                        {suggestedFlights
-                          .filter(f => !dismissedFlightIds.includes(f.id))
-                          .map((flight) => (
-                            <motion.div
-                              key={flight.id}
-                              layout
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              className="flex-shrink-0 w-[270px] bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl p-4 flex flex-col gap-3 shadow-sm"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{flight.details?.airline || flight.provider}</p>
-                                  <div className="flex items-center gap-1.5 mt-0.5">
-                                    <span className="font-black text-slate-800 text-sm">{flight.details?.departure}</span>
-                                    <span className="text-slate-300 text-[10px]">→</span>
-                                    <span className="font-black text-slate-800 text-sm">{flight.details?.arrival}</span>
-                                    {flight.details?.stops === 0 && (
-                                      <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-full">直飛</span>
-                                    )}
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => setDismissedFlightIds(p => [...p, flight.id])}
-                                  className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 hover:text-red-400 flex items-center justify-center text-xs flex-shrink-0 transition-colors"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-baseline gap-1">
-                                  <span className="text-[10px] font-bold text-slate-400">{flight.currency}</span>
-                                  <span className="text-lg font-black text-fuchsia-600">{flight.price.toLocaleString()}</span>
-                                </div>
-                                <button
-                                  onClick={() => openRedirectModal({
-                                    provider: flight.provider,
-                                    affiliateUrl: flight.affiliate_url,
-                                    itemId: flight.id,
-                                    airline: flight.details?.airline,
-                                    departure: flight.details?.departure,
-                                    arrival: flight.details?.arrival,
-                                    duration: flight.details?.duration,
-                                    stops: flight.details?.stops,
-                                    price: flight.price,
-                                    currency: flight.currency,
-                                    emoji: flight.emoji,
-                                  })}
-                                  className="px-3 py-1.5 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-fuchsia-600 transition-all active:scale-95 flex items-center gap-1.5"
-                                >
-                                  <span className="material-symbols-outlined text-[12px]">flight</span>
-                                  訂票
-                                </button>
-                              </div>
-                            </motion.div>
-                          ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
 
                 <ItineraryList
                   items={selectedDayNodes}
@@ -1596,20 +1572,6 @@ function DraggableFavoriteSpot({
 
 // ─── Itinerary List ───────────────────────────────────────────────────────────
 
-interface ItineraryListItemProps {
-  key?: React.Key;
-  item: ItineraryNode;
-  idx: number;
-  editingId: string | null;
-  draft: any | null;
-  setDraft: React.Dispatch<React.SetStateAction<any | null>>;
-  startEdit: (item: ItineraryNode) => void;
-  saveEdit: (item: ItineraryNode) => void;
-  cancelEdit: () => void;
-  isOffline: boolean;
-  onDelete: (node_id: string) => void;
-}
-
 function ItineraryListItem({
   item,
   idx,
@@ -1619,6 +1581,7 @@ function ItineraryListItem({
   tripId,
   destination,
   onEditingChange,
+  collaboratingUser
 }: {
   item: ItineraryNode;
   idx: number;
@@ -1882,84 +1845,6 @@ function ItineraryListItem({
     </div>
   );
 }
-function SortableItineraryItem({ item, idx, nextItem, onDelete, onUpdate, isOffline, tripId, destination, onEditingChange, collaboratingUser }: any) {
-  const controls = useDragControls();
-
-  let timeGapStr = '';
-  if (nextItem && item.time && nextItem.time) {
-    const currentParts = item.time.split(':').map(Number);
-    const nextParts = nextItem.time.split(':').map(Number);
-    if (currentParts.length === 2 && nextParts.length === 2) {
-      const currentMins = currentParts[0] * 60 + currentParts[1];
-      const nextMins = nextParts[0] * 60 + nextParts[1];
-      const diff = nextMins - currentMins;
-      if (diff > 0) {
-        const h = Math.floor(diff / 60);
-        const m = diff % 60;
-        timeGapStr = h > 0 ? `${h} 小時 ${m > 0 ? m + ' 分鐘' : ''}` : `${m} 分鐘`;
-      }
-    }
-  }
-
-  return (
-    <Reorder.Item 
-      value={item}
-      dragListener={false} 
-      dragControls={controls}
-      initial={{ opacity: 0, scale: 0.95, y: 30 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, x: -30 }}
-      transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
-      className="flex flex-col w-full relative group/reorder"
-    >
-      <ItineraryListItem
-        item={item}
-        idx={idx}
-        onDelete={onDelete}
-        onUpdate={onUpdate}
-        isOffline={isOffline}
-        tripId={tripId}
-        destination={destination}
-        onEditingChange={onEditingChange}
-        collaboratingUser={collaboratingUser}
-      />
-      
-      {/* Drag handle */}
-      <div 
-        className="absolute left-[-40px] top-1/2 -translate-y-1/2 opacity-0 group-hover/reorder:opacity-100 transition-opacity p-2 cursor-grab active:cursor-grabbing text-slate-300"
-        onPointerDown={(e) => controls.start(e)}
-        style={{ touchAction: 'none' }}
-      >
-         <GripVertical size={20} />
-      </div>
-
-      {nextItem && (timeGapStr || item.transport_to_next) && (
-        <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
-          <div className="w-0.5 min-h-[3rem] bg-gradient-to-b from-slate-200 to-slate-200" />
-          <div className="flex flex-col justify-center ml-4 animate-pulse">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">schedule</span>
-                {timeGapStr ? `約 ${timeGapStr}` : '時間未定'}
-              </span>
-              {item.transport_to_next && (
-                <span className="px-3 py-1 bg-indigo-50/80 rounded-full text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[12px]">directions_subway</span>
-                  {item.transport_to_next}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      {nextItem && !timeGapStr && !item.transport_to_next && (
-         <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
-            <div className="w-0.5 h-8 bg-gradient-to-b from-slate-200 to-slate-200" />
-         </div>
-      )}
-    </Reorder.Item>
-  );
-}
 
 function ItineraryList({
   items,
@@ -1974,6 +1859,7 @@ function ItineraryList({
   destination,
   weather,
   onEditingChange,
+  collaboratorEditing
 }: {
   items: ItineraryNode[];
   day: number;
