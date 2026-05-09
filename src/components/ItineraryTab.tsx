@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence, Reorder, type PanInfo } from 'motion/react';
+import { motion, AnimatePresence, Reorder, useDragControls, type PanInfo } from 'motion/react';
 
 
 import { 
@@ -94,7 +94,7 @@ function getDynamicMapPercent(nodes: any[], lat: number, lng: number) {
 }
 
 const EMOJI_OPTIONS = ['🏯', '🗼', '🌸', '🍣', '🍜', '🎌', '⛩️', '🏔️', '🛍️', '🎡', '🌿', '🏖️'];
-type AiGenerateMode = 'selected_day' | 'overwrite_all';
+type AiGenerateMode = 'selected_day' | 'overwrite_all' | 'generate_for_selected_days';
 
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
   flight: { label: '航班', icon: '✈️' },
@@ -169,6 +169,8 @@ export default function ItineraryTab() {
   const [plannerForm, setPlannerForm] = useState<ItineraryPlannerForm>(buildDefaultPlannerForm('', 5));
   const [flightsLoading, setFlightsLoading] = useState<boolean>(false);
   const [aiGenerateMode, setAiGenerateMode] = useState<AiGenerateMode>('selected_day');
+  const [rangeStartDay, setRangeStartDay] = useState<number>(1);
+  const [rangeEndDay, setRangeEndDay] = useState<number>(3);
   const [showPlanner, setShowPlanner] = useState<boolean>(false);
   const [isPlanningNew, setIsPlanningNew] = useState<boolean>(false);
   const [collaboratorEditing, setCollaboratorEditing] = useState<{ userName: string; day: number; nodeId: string } | null>(null);
@@ -201,7 +203,7 @@ export default function ItineraryTab() {
       
       const suggestRequest = {
         days: formData.days,
-        departureFrom: '台北',
+        departureFrom: formData.departure || '台北',
         arrivalTo: formData.destination,
         flightDate: '2026-06-15',
         countries: [formData.destination],
@@ -212,17 +214,41 @@ export default function ItineraryTab() {
         travelFactsContext: '',
       };
       
-      let suggestions = await suggestItineraryWithForm({ 
+      let suggestionsRaw = await suggestItineraryWithForm({ 
         destination: formData.destination, 
         planner: suggestRequest 
       });
 
+      let rawNodes: ItineraryNode[] = [];
+      if (Array.isArray(suggestionsRaw)) {
+        rawNodes = suggestionsRaw;
+      } else if (suggestionsRaw && suggestionsRaw.itinerary && Array.isArray(suggestionsRaw.itinerary)) {
+        suggestionsRaw.itinerary.forEach((dayData: any) => {
+          if (Array.isArray(dayData.spots)) {
+            dayData.spots.forEach((spot: any, i: number) => {
+              rawNodes.push({
+                node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+                day: dayData.day || 1,
+                time: spot.time || '10:00',
+                title: spot.name || spot.title || '景點',
+                emoji: spot.emoji || '📍',
+                category: spot.category || 'other',
+                description: spot.ai_note || '',
+                lat: spot.lat,
+                lng: spot.lng,
+                source: 'local' as const,
+              });
+            });
+          }
+        });
+      }
+
       // If we had nodes before, clear them (relevant for existing trip)
       await removeNodesBatch([...nodes]);
       
-      suggestions = assignDaysBasedOnTimeAndOrder(suggestions, plannerForm.flightDate);
+      const finalNodes = assignDaysBasedOnTimeAndOrder(rawNodes, plannerForm.flightDate);
 
-      for (const node of suggestions) {
+      for (const node of finalNodes) {
         const normalized = withAutoCategoryIcon(node);
         addNode(normalized);
         const payload: SyncItineraryPayload = { trip_id: currentTripId, action: 'add_node', payload: normalized };
@@ -619,44 +645,17 @@ export default function ItineraryTab() {
     setDismissedFlightIds([]);
     try {
       const destination = tripInfo?.destination || '您的目的地';
-      const travelFactsContext = useTripFactsStore.getState().getPlanningConstraints();
-      const aiResponse = await suggestItineraryWithForm({ destination, planner: { ...plannerForm, travelFactsContext } });
+      const suggestions = await suggestItineraryWithForm({ destination, planner: plannerForm });
 
-      // Extract ItineraryNode[] from the AiResponse object
-      const rawNodes: ItineraryNode[] = [];
-      if (aiResponse?.itinerary && Array.isArray(aiResponse.itinerary)) {
-        aiResponse.itinerary.forEach((dayData: any) => {
-          if (Array.isArray(dayData.spots)) {
-            dayData.spots.forEach((spot: any, i: number) => {
-              rawNodes.push({
-                node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
-                day: dayData.day || 1,
-                time: spot.time || '10:00',
-                title: String(spot.name || spot.title || '景點'),
-                emoji: spot.emoji || '📍',
-                category: spot.category || 'other',
-                description: spot.ai_note || '',
-                lat: spot.lat,
-                lng: spot.lng,
-                transport_to_next: spot.transport_to_next,
-                source: 'local' as const,
-              });
-            });
-          }
-        });
-      } else if (Array.isArray(aiResponse)) {
-        rawNodes.push(...aiResponse);
-      }
-
-      let finalNodes: ItineraryNode[];
+      let finalNodes: ItineraryNode[] = suggestions;
 
       if (aiGenerateMode === 'overwrite_all') {
         await removeNodesBatch([...nodes]);
-        finalNodes = assignDaysBasedOnTimeAndOrder(rawNodes, plannerForm.flightDate);
+        finalNodes = assignDaysBasedOnTimeAndOrder(suggestions, plannerForm.flightDate);
       } else {
         const currentDayNodes = nodes.filter((node: ItineraryNode) => node.day === safeSelectedDay);
         await removeNodesBatch(currentDayNodes);
-        finalNodes = rawNodes.map((node) => ({ ...node, day: safeSelectedDay }));
+        finalNodes = suggestions.map((node) => ({ ...node, day: selectedDay }));
       }
 
       for (const node of finalNodes) {
@@ -667,21 +666,10 @@ export default function ItineraryTab() {
         void syncItinerary(payload);
       }
 
-      showToast(
-        aiGenerateMode === 'overwrite_all'
-          ? `✨ 已一鍵覆蓋行程，共 ${finalNodes.length} 個新節點`
-          : `✨ 已重建 Day ${safeSelectedDay}，共 ${finalNodes.length} 個節點`
-      );
-
-      // Auto-fetch flight suggestions (non-blocking, best-effort)
-      if (plannerForm.departureFrom && plannerForm.arrivalTo) {
-        searchOffers({
-          from: plannerForm.departureFrom,
-          to: plannerForm.arrivalTo,
-          date: plannerForm.flightDate || new Date().toISOString().slice(0, 10),
-        })
-          .then((flights) => setSuggestedFlights(flights.slice(0, 3)))
-          .catch(() => {});
+      if (aiGenerateMode === 'overwrite_all') {
+        showToast(`✨ 已一鍵覆蓋行程，共 ${finalNodes.length} 個新節點`);
+      } else {
+        showToast(`✨ 已重建 Day ${selectedDay}，共 ${finalNodes.length} 個節點`);
       }
     } catch {
       showToast('AI 規劃失敗，請確認 OpenRouter API Key 是否設定。');
@@ -1287,17 +1275,52 @@ export default function ItineraryTab() {
                             <div className="flex flex-col sm:flex-row gap-3">
                               <button
                                 onClick={() => setAiGenerateMode('selected_day')}
-                                className={`flex-1 py-4.5 rounded-[22px] font-black text-xs uppercase tracking-widest transition-all border ${aiGenerateMode === 'selected_day' ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                                className={`flex-1 py-4.5 rounded-[22px] font-black text-[11px] uppercase tracking-widest transition-all border ${aiGenerateMode === 'selected_day' ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
                               >
                                 重建 Day {safeSelectedDay}
                               </button>
                               <button
+                                onClick={() => {
+                                  setAiGenerateMode('generate_for_selected_days');
+                                  setRangeStartDay(selectedDay);
+                                  setRangeEndDay(Math.min(totalDays, selectedDay + 1));
+                                }}
+                                className={`flex-1 py-4.5 rounded-[22px] font-black text-[11px] uppercase tracking-widest transition-all border ${aiGenerateMode === 'generate_for_selected_days' ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                              >
+                                指定天數區間
+                              </button>
+                              <button
                                 onClick={() => setAiGenerateMode('overwrite_all')}
-                                className={`flex-1 py-4.5 rounded-[22px] font-black text-xs uppercase tracking-widest transition-all border ${aiGenerateMode === 'overwrite_all' ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                                className={`flex-1 py-4.5 rounded-[22px] font-black text-[11px] uppercase tracking-widest transition-all border ${aiGenerateMode === 'overwrite_all' ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
                               >
                                 全局重新規劃
                               </button>
                             </div>
+
+                            {aiGenerateMode === 'generate_for_selected_days' && (
+                              <div className="flex gap-4 items-center justify-center bg-white/50 py-3 px-4 rounded-[22px] border border-slate-100 shadow-inner my-2">
+                                <span className="font-bold text-xs text-slate-600">產生範圍：Day </span>
+                                <select 
+                                  value={rangeStartDay} 
+                                  onChange={e => setRangeStartDay(Number(e.target.value))}
+                                  className="bg-white border-slate-200 rounded-xl px-3 py-2 outline-none font-bold text-slate-700 focus:ring-2 focus:ring-pink-200 shadow-sm"
+                                >
+                                  {Array.from({ length: Math.max(totalDays, 10) }, (_, i) => (
+                                    <option key={i+1} value={i+1}>{i+1}</option>
+                                  ))}
+                                </select>
+                                <span className="text-slate-400 font-bold px-1">至</span>
+                                <select 
+                                  value={rangeEndDay} 
+                                  onChange={e => setRangeEndDay(Number(e.target.value))}
+                                  className="bg-white border-slate-200 rounded-xl px-3 py-2 outline-none font-bold text-slate-700 focus:ring-2 focus:ring-pink-200 shadow-sm"
+                                >
+                                  {Array.from({ length: Math.max(totalDays, 10) }, (_, i) => (
+                                    <option key={i+1} value={i+1}>{i+1}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
 
                             <button 
                               onClick={() => void handleAiSuggest()}
@@ -1586,11 +1609,10 @@ function ItineraryListItem({
   const [editEmoji, setEditEmoji] = useState(item.emoji);
   const [editNotes, setEditNotes] = useState(item.description || item.notes || '');
   const [editImageUrl, setEditImageUrl] = useState(item.image_url || '');
-  const [editTransportToNext, setEditTransportToNext] = useState(item.transport_to_next || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleSave = () => {
-    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes, image_url: editImageUrl, transport_to_next: editTransportToNext });
+    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes, image_url: editImageUrl });
     setIsEditing(false);
     onEditingChange?.(item.node_id, item.day, false);
   };
@@ -1706,23 +1728,6 @@ function ItineraryListItem({
                    placeholder="貼上照片網址 (例如: https://...jpg)"
                    className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                  />
-                 <select
-                   value={editTransportToNext}
-                   onChange={e => setEditTransportToNext(e.target.value)}
-                   className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                 >
-                   <option value="">交通方式（可選）</option>
-                   <option value="步行約 5 分鐘">步行約 5 分鐘</option>
-                   <option value="步行約 10 分鐘">步行約 10 分鐘</option>
-                   <option value="步行約 15 分鐘">步行約 15 分鐘</option>
-                   <option value="搭乘捷運約 10 分鐘">搭乘捷運約 10 分鐘</option>
-                   <option value="搭乘捷運約 20 分鐘">搭乘捷運約 20 分鐘</option>
-                   <option value="搭乘公車約 15 分鐘">搭乘公車約 15 分鐘</option>
-                   <option value="搭乘計程車約 10 分鐘">搭乘計程車約 10 分鐘</option>
-                   <option value="搭乘計程車約 20 分鐘">搭乘計程車約 20 分鐘</option>
-                   <option value="自駕約 15 分鐘">自駕約 15 分鐘</option>
-                   <option value="自駕約 30 分鐘">自駕約 30 分鐘</option>
-                 </select>
                  <div className="flex items-center gap-3">
                     <input
                       value={editTime}
@@ -1797,6 +1802,83 @@ function ItineraryListItem({
     </div>
   );
 }
+function SortableItineraryItem({ item, idx, nextItem, onDelete, onUpdate, isOffline, tripId, destination }: any) {
+  const controls = useDragControls();
+
+  let timeGapStr = '';
+  if (nextItem && item.time && nextItem.time) {
+    const currentParts = item.time.split(':').map(Number);
+    const nextParts = nextItem.time.split(':').map(Number);
+    if (currentParts.length === 2 && nextParts.length === 2) {
+      const currentMins = currentParts[0] * 60 + currentParts[1];
+      const nextMins = nextParts[0] * 60 + nextParts[1];
+      const diff = nextMins - currentMins;
+      if (diff > 0) {
+        const h = Math.floor(diff / 60);
+        const m = diff % 60;
+        timeGapStr = h > 0 ? `${h} 小時 ${m > 0 ? m + ' 分鐘' : ''}` : `${m} 分鐘`;
+      }
+    }
+  }
+
+  return (
+    <Reorder.Item 
+      value={item}
+      dragListener={false} 
+      dragControls={controls}
+      initial={{ opacity: 0, scale: 0.95, y: 30 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, x: -30 }}
+      transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
+      className="flex flex-col w-full relative group/reorder"
+    >
+      <ItineraryListItem
+        item={item}
+        idx={idx}
+        onDelete={onDelete}
+        onUpdate={onUpdate}
+        isOffline={isOffline}
+        tripId={tripId}
+        destination={destination}
+      />
+      
+      {/* Drag handle */}
+      <div 
+        className="absolute left-[-40px] top-1/2 -translate-y-1/2 opacity-0 group-hover/reorder:opacity-100 transition-opacity p-2 cursor-grab active:cursor-grabbing text-slate-300"
+        onPointerDown={(e) => controls.start(e)}
+        style={{ touchAction: 'none' }}
+      >
+         <GripVertical size={20} />
+      </div>
+
+      {nextItem && (timeGapStr || item.transport_to_next) && (
+        <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
+          <div className="w-0.5 min-h-[3rem] bg-gradient-to-b from-slate-200 to-slate-200" />
+          <div className="flex flex-col justify-center ml-4 animate-pulse">
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[12px]">schedule</span>
+                {timeGapStr ? `約 ${timeGapStr}` : '時間未定'}
+              </span>
+              {item.transport_to_next && (
+                <span className="px-3 py-1 bg-indigo-50/80 rounded-full text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[12px]">directions_subway</span>
+                  {item.transport_to_next}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {nextItem && !timeGapStr && !item.transport_to_next && (
+         <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
+            <div className="w-0.5 h-8 bg-gradient-to-b from-slate-200 to-slate-200" />
+         </div>
+      )}
+    </Reorder.Item>
+  );
+}
+
 function ItineraryList({
   items,
   day,
@@ -1890,10 +1972,9 @@ function ItineraryList({
             const nextItem = items[idx + 1];
             let timeGapStr = '';
             
-            const normalizeTime = (t: string) => t.match(/\d{1,2}:\d{2}/)?.[0] ?? t;
             if (nextItem && item.time && nextItem.time) {
-              const currentParts = normalizeTime(item.time).split(':').map(Number);
-              const nextParts = normalizeTime(nextItem.time).split(':').map(Number);
+              const currentParts = item.time.split(':').map(Number);
+              const nextParts = nextItem.time.split(':').map(Number);
               if (currentParts.length === 2 && nextParts.length === 2) {
                 const currentMins = currentParts[0] * 60 + currentParts[1];
                 const nextMins = nextParts[0] * 60 + nextParts[1];
@@ -1923,7 +2004,6 @@ function ItineraryList({
                   isOffline={isOffline}
                   tripId={tripId}
                   destination={destination}
-                  onEditingChange={onEditingChange}
                 />
                 
                 {/* Drag handle for mobile/explicit drag */}

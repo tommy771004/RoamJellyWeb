@@ -256,7 +256,7 @@ export default function App() {
             destination: data.destination,
             planner: {
               days: data.days,
-              departureFrom: '台北',
+              departureFrom: data.departure || '台北',
               arrivalTo: data.destination,
               flightDate: '',
               countries: [],
