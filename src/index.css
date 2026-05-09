@@ -267,11 +267,6 @@ body {
  * 5. min-width on desktop to prevent compression
  * ──────────────────────────────────────────────────────────────────────────── */
 
-/* Scroll wrapper — enables horizontal scroll on narrow screens */
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
 
 /* ── Mobile-first: make every table element block-level ── */
 .responsive-table,
@@ -347,7 +342,6 @@ body {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    min-width: 560px; /* prevent table compression per designUI.md §3.2 */
   }
 
   /* Un-hide the thead and restore as table-header-group */

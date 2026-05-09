@@ -2,6 +2,9 @@ import React, { createContext, use, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CloudRain, Check, Sparkles, Sun, Send, CheckCircle2, Plane, Star, ExternalLink, SlidersHorizontal, ArrowDownUp } from 'lucide-react';
 import GlassCard from './GlassCard';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Button } from './ui/button';
 import {
   fetchChecklist,
   fetchCollaborators,
@@ -13,13 +16,11 @@ import {
   shareText,
   submitLedgerExpense,
   updateChecklist,
-  type TripSummary,
 } from '../lib/workflowApi';
-import type { TripInfo, WeatherData } from '../types/workflow';
+import type { TripInfo, WeatherData, TripSummary, ChecklistItem, Settlement } from '../types/workflow';
 import { suggestPackingList } from '../lib/openrouterApi';
 import { useToolsStore, Expense } from '../store/useToolsStore';
 import { useAppStore } from '../store/useAppStore';
-import type { ChecklistItem, Settlement } from '../types/workflow';
 
 function getCurrentSeason(): string {
   const month = new Date().getMonth() + 1;
@@ -400,14 +401,15 @@ function ChecklistSection() {
         </div>
       </GlassCard>
       
-      <button
+      <Button
         onClick={() => void actions.handleAiPackingList()}
         disabled={aiLoading}
-        className="w-full mt-2 py-4 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-bold text-[15px] shadow-[0_8px_20px_rgba(217,70,239,0.25)] hover:shadow-[0_12px_25px_rgba(217,70,239,0.35)] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+        size="lg"
+        className="w-full mt-2 rounded-full h-14 font-bold text-[15px]"
       >
-        <Sparkles size={18} />
-        <span>{aiLoading ? 'AI 正在規劃...' : 'Auto-Generate Packing List'}</span>
-      </button>
+        <Sparkles size={18} className="mr-2" />
+        {aiLoading ? 'AI 正在規劃...' : 'Auto-Generate Packing List'}
+      </Button>
     </section>
   );
 }
@@ -470,23 +472,24 @@ function LedgerSection() {
 
         {/* Add Expense Form */}
         <div className="flex flex-col gap-1.5">
-          <input
+          <Label htmlFor="expense-title">支出項目</Label>
+          <Input
+            id="expense-title"
             value={form.title}
             onChange={(e) => {
               actions.updateForm((prev) => ({ ...prev, title: e.target.value }));
               if (errors.title) actions.clearFormError('title');
             }}
             placeholder="項目名稱 (例如：晚餐)"
-            className={`rounded-2xl border bg-white/50 px-5 py-4 text-[15px] text-[#2C302E] outline-none focus:ring-2 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition-all placeholder:text-slate-400 ${
-              errors.title ? 'border-red-300 bg-red-50/50' : 'border-slate-100 shadow-sm'
-            }`}
+            error={errors.title}
           />
-          {errors.title && <span className="text-red-500 font-bold text-[11px] uppercase tracking-wide ml-2">{errors.title}</span>}
         </div>
 
         <div className="flex flex-row gap-3">
           <div className="flex flex-col gap-1.5 flex-[2]">
-            <input
+            <Label htmlFor="expense-amount">金額</Label>
+            <Input
+              id="expense-amount"
               value={form.amount}
               onChange={(e) => {
                 actions.updateForm((prev) => ({ ...prev, amount: e.target.value.replace(/[^0-9]/g, '') }));
@@ -494,17 +497,16 @@ function LedgerSection() {
               }}
               placeholder="金額 (例如: 1500)"
               inputMode="numeric"
-              className={`w-full rounded-2xl border bg-white/50 px-5 py-4 text-[15px] font-bold text-[#2C302E] outline-none focus:ring-2 focus:ring-fuchsia-500/30 focus:border-fuchsia-500 transition-all placeholder:text-slate-400 ${
-                errors.amount ? 'border-red-300 bg-red-50/50' : 'border-slate-100 shadow-sm'
-              }`}
+              error={errors.amount}
             />
-            {errors.amount && <span className="text-red-500 font-bold text-[11px] uppercase tracking-wide ml-2">{errors.amount}</span>}
           </div>
-          <div className="flex flex-col flex-1 max-w-[100px]">
+          <div className="flex flex-col gap-1.5 flex-1 max-w-[100px]">
+            <Label htmlFor="expense-currency">幣別</Label>
             <select
+              id="expense-currency"
               value={form.currency}
               onChange={(e) => actions.updateForm((prev) => ({ ...prev, currency: e.target.value }))}
-              className="w-full rounded-2xl border border-slate-100 bg-white/50 px-3 py-4 text-[15px] font-bold text-[#2C302E] outline-none focus:ring-2 focus:ring-fuchsia-500/30 shadow-sm appearance-none text-center cursor-pointer"
+              className="w-full flex h-12 rounded-xl border border-outline bg-surface text-on-surface px-3 py-2 text-sm ring-offset-surface outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm appearance-none text-center cursor-pointer transition-colors"
             >
               {['JPY', 'TWD', 'USD', 'EUR', 'KRW', 'THB'].map((cur) => (
                 <option key={cur} value={cur}>{cur}</option>
@@ -519,21 +521,23 @@ function LedgerSection() {
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-2">誰先墊付</span>
           <div className="flex flex-row flex-wrap gap-2">
             {members.map((member) => (
-              <button
+              <Button
                 key={member}
+                variant={form.payer === member ? 'default' : 'outline'}
+                size="sm"
                 onClick={() => {
                   actions.updateForm((prev) => ({ ...prev, payer: member }));
                   if (errors.payer) actions.clearFormError('payer');
                 }}
-                className={`rounded-full px-4 py-2 border transition-all active:scale-95 text-[13px] font-bold flex items-center gap-2 max-w-full ${
-                  form.payer === member ? 'bg-fuchsia-500 border-fuchsia-500 text-white shadow-md shadow-fuchsia-200 ring-2 ring-fuchsia-300 ring-offset-1 z-10' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 opacity-70 hover:opacity-100'
+                className={`rounded-full px-4 py-2 text-[13px] font-bold flex items-center gap-2 transition-all ${
+                  form.payer === member ? 'ring-2 ring-primary/50 ring-offset-1 z-10 shadow-md' : 'opacity-70 hover:opacity-100'
                 }`}
               >
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${form.payer === member ? 'bg-white text-fuchsia-500 shadow-sm' : 'bg-slate-200 text-slate-500'}`}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${form.payer === member ? 'bg-white text-primary shadow-sm' : 'bg-slate-200 text-slate-500'}`}>
                    {member.charAt(0).toUpperCase()}
                 </div>
                 <span className="truncate max-w-[150px]">{member}</span>
-              </button>
+              </Button>
             ))}
           </div>
           {errors.payer && <span className="text-red-500 font-bold text-[11px] uppercase tracking-wide ml-2">{errors.payer}</span>}
@@ -545,37 +549,40 @@ function LedgerSection() {
             {members.map((member) => {
               const selected = form.splitWith.includes(member);
               return (
-                <button
+                <Button
                   key={member}
+                  variant={selected ? 'secondary' : 'outline'}
+                  size="sm"
                   onClick={() => {
                     actions.toggleSplitMember(member);
                     if (errors.splitWith) actions.clearFormError('splitWith');
                   }}
-                  className={`rounded-full px-4 py-2 border transition-all active:scale-95 text-[13px] font-bold flex items-center gap-2 max-w-full ${
-                    selected ? 'bg-fuchsia-100 border-fuchsia-300 text-fuchsia-800 shadow-md ring-2 ring-fuchsia-200 ring-offset-1' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 opacity-70 hover:opacity-100'
+                  className={`rounded-full px-4 py-2 text-[13px] font-bold flex items-center gap-2 transition-all ${
+                    selected ? 'shadow-md ring-2 ring-primary/30 ring-offset-1 text-primary' : 'opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <div className={`relative w-4 h-4 rounded-full shrink-0 border transition-colors flex items-center justify-center ${selected ? 'bg-fuchsia-500 border-fuchsia-500' : 'bg-slate-100 border-slate-300'}`}>
+                  <div className={`relative w-4 h-4 rounded-full shrink-0 border transition-colors flex items-center justify-center ${selected ? 'bg-primary border-primary' : 'bg-slate-100 border-slate-300'}`}>
                     <Check size={10} className={`text-white transition-opacity ${selected ? 'opacity-100' : 'opacity-0'}`} strokeWidth={4} />
                   </div>
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 shadow-sm ${selected ? 'bg-fuchsia-200 text-fuchsia-700' : 'bg-slate-200 text-slate-500'}`}>
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 shadow-sm ${selected ? 'bg-primary/20 text-primary-700' : 'bg-slate-200 text-slate-500'}`}>
                      {member.charAt(0).toUpperCase()}
                   </div>
                   <span className="truncate max-w-[150px]">{member}</span>
-                </button>
+                </Button>
               );
             })}
           </div>
           {errors.splitWith && <span className="text-red-500 font-bold text-[11px] uppercase tracking-wide ml-2">{errors.splitWith}</span>}
         </div>
 
-        <button
+        <Button
           onClick={() => void actions.submitExpense()}
           disabled={submitting}
-          className={`w-full mt-4 py-4 rounded-[20px] transition-all font-bold text-[15px] ${submitting ? 'opacity-70 cursor-not-allowed bg-slate-200 text-slate-400' : 'bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white shadow-lg shadow-fuchsia-200/50 hover:shadow-xl hover:-translate-y-0.5 active:scale-95'}`}
+          size="lg"
+          className="w-full mt-4 py-6 rounded-2xl"
         >
           {submitting ? '計算中...' : '新增花費'}
-        </button>
+        </Button>
       </div>
     </GlassCard>
   );
@@ -644,22 +651,24 @@ function SettlementsSection() {
                     </td>
                     <td data-label="動作">
                       <div className="flex flex-row items-center gap-2 justify-end">
-                        <button
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => void actions.sendReminder()}
-                          className="flex items-center justify-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg px-3 py-2 transition-all active:scale-95 border border-slate-100"
                         >
-                          <Send size={14} className="opacity-70" />
+                          <Send size={14} className="opacity-70 mr-1.5" />
                           <span className="text-[11px] font-bold tracking-wide uppercase">提醒</span>
-                        </button>
+                        </Button>
                         
-                        <button
+                        <Button
+                          variant="default"
+                          size="sm"
                           onClick={() => void actions.handleClearSettlement(settlement)}
                           disabled={clearingId === settlement.id}
-                          className="flex items-center justify-center gap-1.5 bg-fuchsia-500 hover:bg-fuchsia-600 text-white rounded-lg px-4 py-2 transition-all active:scale-95 shadow-md shadow-fuchsia-200"
                         >
-                          <CheckCircle2 size={14} className="opacity-90" />
+                          <CheckCircle2 size={14} className="opacity-90 mr-1.5" />
                           <span className="text-[11px] font-bold tracking-wide uppercase">{clearingId === settlement.id ? '處理中' : '結清'}</span>
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>

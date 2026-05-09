@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy } from 'lucide-react';
 import GlassCard from './GlassCard';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 import { FlightSkeletonCard } from './SkeletonCard';
 import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchHandbooks, createTripFact } from '../lib/workflowApi';
 import { useSearchStore } from '../store/useSearchStore';
@@ -716,9 +718,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               {/* Main Search Inputs Area */}
               <div className="p-6 flex flex-col gap-y-5 bg-white/30 rounded-3xl relative overflow-visible">
                   <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4">
-                    <div className="flex flex-col gap-y-1.5 bg-white/90 backdrop-blur-md rounded-[20px] px-6 py-4 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all flex-1 group hover:bg-white focus-within:bg-white">
-                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase group-hover:text-orange-400 transition-colors">出發地</span>
-                      <input
+                    <div className="flex flex-col gap-1.5 flex-1">
+                      <Label htmlFor="search-from">出發地</Label>
+                      <Input
+                        id="search-from"
                         value={searchForm.from}
                         onFocus={() => {
                           setShowDeparturePicker(true);
@@ -727,24 +730,21 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         }}
                         onChange={(e) => updateField('from', e.target.value)}
                         placeholder="從哪裡出發？"
-                        className="bg-transparent text-[17px] font-bold text-slate-800 outline-none placeholder:text-slate-300 w-full"
                       />
                     </div>
 
-                    <div className="flex flex-col gap-y-1.5 bg-white/90 backdrop-blur-md rounded-[20px] px-6 py-4 border border-white shadow-sm focus-within:ring-2 focus-within:ring-orange-400/50 transition-all flex-1 group hover:bg-white focus-within:bg-white">
-                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase group-hover:text-orange-400 transition-colors">目的地</span>
-                      <input
+                    <div className="flex flex-col gap-1.5 flex-1">
+                      <Label htmlFor="search-to">目的地</Label>
+                      <Input
+                        id="search-to"
                         value={searchForm.to}
                         onFocus={() => {
                           setShowDestinationPicker(true);
                           setShowDeparturePicker(false);
                           setShowDatePicker(false);
                         }}
-                        onChange={(e) => {
-                          updateField('to', e.target.value);
-                        }}
+                        onChange={(e) => updateField('to', e.target.value)}
                         placeholder="要去哪裡冒險？"
-                        className="bg-transparent text-[17px] font-bold text-slate-800 outline-none placeholder:text-slate-300 w-full"
                       />
                     </div>
                   </div>
