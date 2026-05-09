@@ -761,6 +761,33 @@ async function startServer() {
         });
       },
     );
+
+    socket.on('editing_start', async (payload: { trip_id?: string; nodeId?: string; day?: number }) => {
+      const tripId = String(payload?.trip_id ?? '');
+      const nodeId = String(payload?.nodeId ?? '');
+      const day = Number(payload?.day ?? 1);
+      if (!tripId || !socket.data?.userId) return;
+
+      // Verify the user is a trip member before broadcasting
+      const role = await repo.getTripMemberRole(tripId, socket.data.userId).catch(() => null);
+      if (!role) return;
+
+      const userRecord = await repo.getUserById(socket.data.userId).catch(() => null);
+      const userName = userRecord?.displayName || String(socket.data.userId);
+
+      // Broadcast to all other members in the trip room
+      socket.to(tripId).emit('editing_start', { userName, nodeId, day });
+    });
+
+    socket.on('editing_stop', async (payload: { trip_id?: string }) => {
+      const tripId = String(payload?.trip_id ?? '');
+      if (!tripId || !socket.data?.userId) return;
+
+      const role = await repo.getTripMemberRole(tripId, socket.data.userId).catch(() => null);
+      if (!role) return;
+
+      socket.to(tripId).emit('editing_stop', {});
+    });
   });
 
   app.get('/api/trips/:trip_id/flights', async (req, res) => {
@@ -1078,6 +1105,24 @@ async function startServer() {
     );
   });
 
+  // ── Trip: Create new trip ────────────────────────────────────────────────────
+  app.post('/api/trips', async (req, res) => {
+    const userId = getRequestUserId(req);
+    if (!userId) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
+    const { name, destination } = req.body ?? {};
+    if (!name?.trim()) {
+      res.status(400).json({ status: 'error', message: 'name is required' });
+      return;
+    }
+    const tripId = `trip_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    await repo.createTrip({ id: tripId, name: String(name).trim(), destination: destination ? String(destination).trim() : undefined });
+    await repo.addTripMember(tripId, userId, 'owner');
+    res.status(201).json({ status: 'success', data: { id: tripId, name: String(name).trim(), destination: destination ?? null } });
+  });
+
   // ── Trip: public preview (requires auth, no membership needed) ──────────────
   app.get('/api/trips/:trip_id/preview', async (req, res) => {
     const userId = getRequestUserId(req);
@@ -1273,6 +1318,7 @@ async function startServer() {
       const lng = node.lng ?? knownCoords?.lng ?? null;
       return {
         id: node.nodeId,
+        node_id: node.nodeId,
         day: node.day,
         time: node.time,
         location: node.title,
@@ -1281,6 +1327,10 @@ async function startServer() {
         lat,
         lng,
         coords: lat != null ? null : { top: `${18 + index * 20}%`, left: `${25 + (index % 2) * 35}%` },
+        description: node.description ?? null,
+        is_visited: node.isVisited ?? false,
+        transport_to_next: node.transportToNext ?? null,
+        image_url: node.imageUrl ?? null,
       };
     });
 

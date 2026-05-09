@@ -21,6 +21,12 @@ export class AppRepository {
     return user || null;
   }
 
+  async getUserById(userId: string) {
+    if (!this.db) return null;
+    const [user] = await this.db.select().from(schema.users).where(eq(schema.users.userId, userId));
+    return user || null;
+  }
+
   async createUserWithPassword(username: string, displayName: string, passwordHash: string) {
     if (!this.db) return;
     await this.db.insert(schema.users).values({

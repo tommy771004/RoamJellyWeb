@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import HomeTab from './components/HomeTab';
-import ItineraryTab, { assignDaysBasedOnTimeAndOrder } from './components/ItineraryTab';
-import ToolsTab from './components/ToolsTab';
 import RedirectModal from './components/RedirectModal';
+import { assignDaysBasedOnTimeAndOrder } from './lib/itineraryUtils';
+
+const ItineraryTab = lazy(() => import('./components/ItineraryTab'));
+const ToolsTab = lazy(() => import('./components/ToolsTab'));
 import BottomTabs, { TABS } from './components/BottomTabs';
 import AiLoadingState from './components/AiLoadingState';
 import LoginScreen from './components/LoginScreen';
@@ -123,6 +125,14 @@ export default function App() {
   }, [isLoggedIn]); // Re-run pref loading when login state changes
 
   useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  useEffect(() => {
     setShowLogin(false);
   }, [activeTab]);
 
@@ -194,6 +204,17 @@ export default function App() {
         }}
       />
     );
+  }
+
+  // Compute slide direction synchronously before render so framer-motion sees it on the same frame.
+  const prevActiveTabRef = useRef<string>(activeTab);
+  const TAB_SLIDE_ORDER: Record<string, number> = { home: 0, itinerary: 1, ai_form: 1, ai_result: 1, tools: 2 };
+  let tabSlideDir = 1;
+  if (prevActiveTabRef.current !== activeTab) {
+    const prevIdx = TAB_SLIDE_ORDER[prevActiveTabRef.current] ?? 0;
+    const currIdx = TAB_SLIDE_ORDER[activeTab] ?? 0;
+    tabSlideDir = currIdx >= prevIdx ? 1 : -1;
+    prevActiveTabRef.current = activeTab;
   }
 
   const renderContent = () => {
@@ -379,7 +400,16 @@ export default function App() {
 
         {/* Right: User Avatar & Greetings */}
         <div className="flex items-center gap-2 sm:gap-3 z-20">
-          <button 
+          <button
+            onClick={() => setDarkMode(!isDarkMode)}
+            className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+            aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              {isDarkMode ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+          <button
             onClick={() => showToast('目前無新通知', 'info')}
             className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400">
             <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
@@ -422,17 +452,25 @@ export default function App() {
       </AnimatePresence>
       
       <div className="flex-1 relative z-10 w-full overflow-hidden flex flex-col">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" custom={tabSlideDir}>
           <motion.div
             key={!isLoggedIn && activeTab !== 'home' ? 'login' : activeTab}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ type: 'spring', bounce: 0.18, duration: 0.38 }}
+            custom={tabSlideDir}
+            variants={{
+              enter: (dir: number) => ({ opacity: 0, x: dir * 56, scale: 0.98 }),
+              center: { opacity: 1, x: 0, scale: 1 },
+              exit: (dir: number) => ({ opacity: 0, x: -dir * 40, scale: 0.99 }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ type: 'spring', bounce: 0.12, duration: 0.42 }}
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             className="pt-[80px]"
           >
-            {renderContent()}
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><span className="text-2xl animate-spin">✈️</span></div>}>
+              {renderContent()}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </div>

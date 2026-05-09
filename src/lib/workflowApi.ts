@@ -96,9 +96,12 @@ export async function fetchItinerary(tripId?: string): Promise<any> {
     return [];
   }
 }
-export async function fetchTripInfo(tripId: string): Promise<any> { 
+export async function fetchTripInfo(tripId: string): Promise<any> {
   const url = `/api/trips/${encodeURIComponent(tripId)}`;
-  const res = await fetch(url);
+  const token = getStoredToken();
+  const res = await fetch(url, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
   if (!res.ok) throw new Error('Trip not found');
   const data = await res.json();
   return data;
@@ -175,7 +178,7 @@ export async function fetchUserTrips(): Promise<any> {
   });
   if (!res.ok) return [];
   const data = await res.json();
-  return data.trips || [];
+  return Array.isArray(data) ? data : (data.trips || []);
 }
 export async function fetchWeather(city: string): Promise<any> { 
   const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);

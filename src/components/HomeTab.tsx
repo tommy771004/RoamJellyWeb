@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy } from 'lucide-react';
+import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy, Globe, ExternalLink } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -247,6 +247,49 @@ function FlightTable({
   );
 }
 
+const FEATURED_DESTINATIONS = [
+  {
+    id: 'jp',
+    name: '日本',
+    flag: '🇯🇵',
+    image: 'https://picsum.photos/seed/japan-shrine/600/400',
+    description: '東亞島國，以獨特文化、精緻料理與多彩自然景觀聞名。從千年古剎到繁華都會，橫跨北海道到九州八大地域，每個角落都值得深度探索。',
+    tags: ['文化', '美食', '自然'],
+    highlights: ['🗾 八大地域', '🌸 賞花勝地', '🍜 料理天堂', '🚅 JR 周遊券'],
+    guideUrl: 'https://travel-guide-tw.github.io/%E6%97%A5%E6%9C%AC/',
+  },
+  {
+    id: 'np',
+    name: '尼泊爾',
+    flag: '🇳🇵',
+    image: 'https://picsum.photos/seed/nepal-himalaya/600/400',
+    description: '喜馬拉雅山脈的故鄉，擁有世界最高峰聖母峰。融合豐富宗教文化與壯麗高山景觀，是登山健行與靈性旅行的聖地。',
+    tags: ['登山', '文化', '冒險'],
+    highlights: ['🏔️ 世界屋脊', '🕌 加德滿都', '🥾 健行天堂', '🌿 自然生態'],
+    guideUrl: 'https://travel-guide-tw.github.io/%E5%B0%BC%E6%B3%8A%E7%88%BE/',
+  },
+  {
+    id: 'no',
+    name: '挪威',
+    flag: '🇳🇴',
+    image: 'https://picsum.photos/seed/norway-fjord/600/400',
+    description: '北歐峽灣之國，壯闊的極光與冰川雕刻的峽灣地貌令人嘆為觀止。特羅姆瑟是追尋極光的最佳基地，峽灣巡遊更是一生必訪體驗。',
+    tags: ['極光', '峽灣', '自然'],
+    highlights: ['🌌 北極光', '🏔️ 峽灣奇景', '❄️ 特羅姆瑟', '🦌 馴鹿體驗'],
+    guideUrl: 'https://travel-guide-tw.github.io/%E6%8C%AA%E5%A8%81/',
+  },
+  {
+    id: 'ch',
+    name: '瑞士',
+    flag: '🇨🇭',
+    image: 'https://picsum.photos/seed/switzerland-alps/600/400',
+    description: '歐洲心臟，由 26 個州組成。阿爾卑斯山脈、瑞士高原與侏羅山構成壯麗地貌，精緻鐘錶工藝與多語言文化造就獨特魅力。',
+    tags: ['阿爾卑斯', '精品', '自然'],
+    highlights: ['🏔️ 阿爾卑斯山', '🕰️ 鐘錶工藝', '🧀 起司美食', '🚂 登山列車'],
+    guideUrl: 'https://travel-guide-tw.github.io/%E7%91%9E%E5%A3%AB/',
+  },
+];
+
 export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin?: () => void; isLoggedIn?: boolean }) {
   const { searchForm, updateField, results, setResults, loading, setLoading, searchError, setSearchError, savedItems, toggleSave, trackedPrices, toggleTrack } =
     useSearchStore();
@@ -352,7 +395,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       if (!res.ok) throw new Error();
       const data = await res.json();
       
-      showToast(`已成功將行程 ${trip.title} 複製到您的手帳！`, 'success');
+      showToast(`已成功將行程 ${trip.name ?? trip.title ?? ''} 複製到您的手帳！`, 'success');
       
       // Navigate to the newly cloned trip
       setTimeout(() => {
@@ -410,6 +453,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     }
   };
 
+  const toHHMM = (s: string | undefined) => s?.match(/\d{1,2}:\d{2}/)?.[0] ?? '09:00';
+
   const handleImportFlight = async (flight: SearchItem) => {
     if (!isLoggedIn && onRequireLogin) {
       onRequireLogin();
@@ -430,8 +475,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         factType: 'flight_outbound',
         source: 'imported_search',
         title: `${flight.details?.airline || flight.provider} ${depCode} → ${arrCode}`,
-        startAt: `${factDate}T${flight.details?.departure || '09:00'}:00.000Z`,
-        endAt: `${factDate}T${flight.details?.arrival || '13:00'}:00.000Z`,
+        startAt: `${factDate}T${toHHMM(flight.details?.departure)}:00.000Z`,
+        endAt: `${factDate}T${toHHMM(flight.details?.arrival) || '13:00'}:00.000Z`,
         locationName: arrCode,
         referenceCode: flight.details?.flightNumber || null,
         metadata: {
@@ -994,6 +1039,79 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               )}
             </AnimatePresence>
           ) : null}
+
+          {/* Featured Destinations Section */}
+          <div className="mt-16 mb-8 px-2">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Globe className="text-emerald-500" size={24} />
+                <h2 className="text-2xl font-black text-slate-800 tracking-tight">精選目的地指南</h2>
+              </div>
+              <span className="text-[10px] font-black tracking-[0.15em] uppercase text-slate-400 hidden sm:block">travel-guide-tw</span>
+            </div>
+
+            <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
+              <div className="flex gap-6 min-w-max">
+                {FEATURED_DESTINATIONS.map((dest) => (
+                  <motion.div
+                    key={dest.id}
+                    whileHover={{ y: -6 }}
+                    className="w-[260px] sm:w-[300px] group/dest"
+                  >
+                    <GlassCard className="!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all flex flex-col">
+                      {/* Cover Image */}
+                      <div className="relative h-44 overflow-hidden flex-shrink-0">
+                        <img
+                          src={dest.image}
+                          alt={dest.name}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover/dest:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end gap-2">
+                          <span className="text-3xl drop-shadow-lg">{dest.flag}</span>
+                          <h3 className="text-white font-black text-xl leading-tight drop-shadow-md">{dest.name}</h3>
+                        </div>
+                        {/* Tag pills on top-right */}
+                        <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
+                          {dest.tags.map((tag) => (
+                            <span key={tag} className="text-[9px] font-black text-white bg-white/20 backdrop-blur-md border border-white/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="p-5 flex flex-col flex-1">
+                        <p className="text-[13px] text-slate-600 font-medium mb-4 leading-relaxed line-clamp-3">
+                          {dest.description}
+                        </p>
+
+                        <div className="flex flex-wrap gap-1.5 mb-5">
+                          {dest.highlights.map((h) => (
+                            <span key={h} className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl">
+                              {h}
+                            </span>
+                          ))}
+                        </div>
+
+                        <a
+                          href={dest.guideUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-emerald-600 active:scale-95 group/btn"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
+                          查看完整攻略
+                        </a>
+                      </div>
+                    </GlassCard>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Expert Handbooks Section */}
           <div className="mt-16 mb-8 px-2">

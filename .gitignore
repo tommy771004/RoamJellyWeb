@@ -9,3 +9,5 @@ coverage/
 .superpowers/*
 .agents/*
 .claude/*
+replace.cjs
+replace.js

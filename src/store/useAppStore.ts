@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { ToastProps, ToastType } from '../components/JellyToast';
 
 export interface RedirectModalState {
@@ -45,36 +46,44 @@ interface AppStore {
   setAiResult: (res: any) => void;
 }
 
-export const useAppStore = create<AppStore>((set) => ({
-  activeTab: 'home',
-  setActiveTab: (tab) => set({ activeTab: tab }),
+export const useAppStore = create<AppStore>()(
+  persist(
+    (set) => ({
+      activeTab: 'home',
+      setActiveTab: (tab) => set({ activeTab: tab }),
 
-  redirectModal: { isOpen: false, provider: '', itemId: '' },
-  openRedirectModal: (data) => set({ redirectModal: { ...data, isOpen: true } }),
-  closeRedirectModal: () => set((state) => ({ redirectModal: { ...state.redirectModal, isOpen: false } })),
+      redirectModal: { isOpen: false, provider: '', itemId: '' },
+      openRedirectModal: (data) => set({ redirectModal: { ...data, isOpen: true } }),
+      closeRedirectModal: () => set((state) => ({ redirectModal: { ...state.redirectModal, isOpen: false } })),
 
-  userId: null,
-  setAuthenticated: (id) => set({ userId: id }),
+      userId: null,
+      setAuthenticated: (id) => set({ userId: id }),
 
-  isOffline: false,
-  setOffline: (offline) => set({ isOffline: offline }),
-  
-  isDarkMode: false,
-  setDarkMode: (dark) => set({ isDarkMode: dark }),
+      isOffline: false,
+      setOffline: (offline) => set({ isOffline: offline }),
 
-  aiResult: null,
-  setAiResult: (res) => set({ aiResult: res }),
+      isDarkMode: false,
+      setDarkMode: (dark) => set({ isDarkMode: dark }),
 
-  toastMessage: null,
-  toasts: [],
-  activeTripId: undefined,
-  setActiveTripId: (id) => set({ activeTripId: id }),
-  showToast: (message, type = 'info') => {
-    const id = Math.random().toString(36).substring(2, 9);
-    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
-    setTimeout(() => {
-      set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }));
-    }, 4000);
-  },
-  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }))
-}));
+      aiResult: null,
+      setAiResult: (res) => set({ aiResult: res }),
+
+      toastMessage: null,
+      toasts: [],
+      activeTripId: undefined,
+      setActiveTripId: (id) => set({ activeTripId: id }),
+      showToast: (message, type = 'info') => {
+        const id = Math.random().toString(36).substring(2, 9);
+        set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
+        setTimeout(() => {
+          set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }));
+        }, 4000);
+      },
+      removeToast: (id) => set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }))
+    }),
+    {
+      name: 'app-store',
+      partialize: (state) => ({ activeTripId: state.activeTripId, isDarkMode: state.isDarkMode }),
+    }
+  )
+);

@@ -32,17 +32,18 @@ import {
   fetchFavorites,
   fetchItinerary,
   fetchTripInfo,
+  fetchTripFacts,
   shareText,
   syncItinerary,
   deleteItineraryNode,
   addFavorite,
   deleteFavorite,
-  updateTripFact,
   regenerateItinerarySpot,
 } from '../lib/workflowApi';
 import { suggestItineraryWithForm } from '../lib/openrouterApi';
 import { useItineraryStore } from '../store/useItineraryStore';
 import { useAppStore } from '../store/useAppStore';
+import { useTripFactsStore } from '../store/useTripFactsStore';
 import type {
   Collaborator,
   FavoriteSpot,
@@ -54,6 +55,7 @@ import type {
 } from '../types/workflow';
 
 import AiForm, { AiFormData } from './AiForm';
+import { assignDaysBasedOnTimeAndOrder } from '../lib/itineraryUtils';
 
 function getDynamicMapPercent(nodes: any[], lat: number, lng: number) {
   if (!lat || !lng || nodes.length === 0) return { x: 50, y: 50 };
@@ -135,64 +137,11 @@ function buildDefaultPlannerForm(destination: string, days: number): ItineraryPl
     autoFlightSegments: [],
     notes: '',
     travelFactsContext: '',
-  };
-}
-
-export function assignDaysBasedOnTimeAndOrder(nodes: any[], startDateStr?: string): ItineraryNode[] {
-  let currentDay = 1;
-  let lastTimeMinutes = -1;
-
-  const baseDate = startDateStr ? new Date(startDateStr) : new Date();
-  if (isNaN(baseDate.getTime())) {
-    baseDate.setTime(Date.now());
-  }
-
-  return nodes.map((n) => {
-    const node: ItineraryNode = {
-      node_id: n.node_id || n.id || `node_${Date.now()}_${Math.random()}`,
-      day: 1, // Will be overridden
-      time: n.time || '10:00',
-      title: n.title || n.location || '未命名行程',
-      emoji: n.emoji || n.icon || '📍',
-      category: n.category || 'other',
-      source: n.source || 'remote',
-      lat: n.lat,
-      lng: n.lng,
-    };
-
-    if (n.day != null) {
-      currentDay = n.day;
-    } else {
-      const timeParts = String(node.time).split(":");
-      const hours = parseInt(timeParts[0] || "10", 10);
-      const mins = parseInt(timeParts[1] || "0", 10);
-      const timeMinutes = hours * 60 + mins;
-
-      if (lastTimeMinutes !== -1 && timeMinutes < lastTimeMinutes) {
-        currentDay++;
-      }
-      lastTimeMinutes = timeMinutes;
-    }
-
-    node.day = currentDay;
-
-    // Calculate timestamp
-    const nodeDate = new Date(baseDate);
-    nodeDate.setDate(nodeDate.getDate() + (node.day - 1));
-    const timeParts2 = String(node.time).split(":");
-    const hours = parseInt(timeParts2[0] || "10", 10);
-    const mins = parseInt(timeParts2[1] || "0", 10);
-    
-    const yyyy = nodeDate.getFullYear();
-    const mm = String(nodeDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(nodeDate.getDate()).padStart(2, '0');
-    const hh = String(hours).padStart(2, '0');
-    const mn = String(mins).padStart(2, '0');
-    
-    node.timestamp = `${yyyy}-${mm}-${dd}T${hh}:${mn}:00Z`;
-
-    return node;
-  });
+    companions: '',
+    vibes: [] as string[],
+    interests: [] as string[],
+    budget: '',
+  } as any;
 }
 
 export default function ItineraryTab() {
@@ -222,12 +171,15 @@ export default function ItineraryTab() {
   const [aiGenerateMode, setAiGenerateMode] = useState<AiGenerateMode>('selected_day');
   const [showPlanner, setShowPlanner] = useState<boolean>(false);
   const [isPlanningNew, setIsPlanningNew] = useState<boolean>(false);
+  const [collaboratorEditing, setCollaboratorEditing] = useState<{ userName: string; day: number; nodeId: string } | null>(null);
+  const [suggestedFlights, setSuggestedFlights] = useState<SearchItem[]>([]);
+  const [dismissedFlightIds, setDismissedFlightIds] = useState<string[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
 
   const { nodes, setNodes, addNode, updateNode, removeNode, collaborators, setCollaborators, isOffline, setOffline } =
     useItineraryStore();
-  const { showToast, activeTripId, setActiveTripId } = useAppStore();
+  const { showToast, activeTripId, setActiveTripId, openRedirectModal } = useAppStore();
 
   const handleAiFormSubmit = async (formData: AiFormData) => {
     setAiLoading(true);
@@ -288,7 +240,7 @@ export default function ItineraryTab() {
 
   const handleReorder = (newOrder: ItineraryNode[]) => {
     // Merge new order for current day back into the main nodes array
-    const otherDaysNodes = nodes.filter(n => n.day !== selectedDay);
+    const otherDaysNodes = nodes.filter(n => n.day !== safeSelectedDay);
     setNodes([...otherDaysNodes, ...newOrder]);
   };
 
@@ -296,7 +248,7 @@ export default function ItineraryTab() {
     if (!activeTripId) return;
     const newNode: ItineraryNode = {
       node_id: `node_manual_${Date.now()}`,
-      day: selectedDay,
+      day: safeSelectedDay,
       time: node.time || '10:00',
       title: node.title || '新行程',
       emoji: node.emoji || '📍',
@@ -357,26 +309,31 @@ export default function ItineraryTab() {
       }
       try {
         setLoading(true);
-        const [tripResult, favResult, collabResult, itineraryResult] = await Promise.all([
+        const [tripResult, favResult, collabResult, itineraryResult, factsResult] = await Promise.all([
           fetchTripInfo(activeTripId),
           fetchFavorites(activeTripId),
           fetchCollaborators(activeTripId),
           !isOffline ? fetchItinerary(activeTripId) : Promise.resolve(readCachedItinerary(activeTripId)),
+          fetchTripFacts(activeTripId).catch(() => []),
         ]);
         setTripInfo(tripResult);
         setPlannerForm(buildDefaultPlannerForm(tripResult.destination, tripResult.days));
         setFavorites(favResult);
         setCollaborators(collabResult);
-        setNodes(assignDaysBasedOnTimeAndOrder(itineraryResult, tripResult.startDate || '2026-06-15'));
-        
-        // Fetch weather
-        try {
-          const wRes = await fetch(`/api/weather?lat=35.6762&lng=139.6503`); 
-          const wData = await wRes.json();
-          if (wData && wData.daily) {
-            setWeatherData(wData.daily);
-          }
-        } catch (e) {}
+        if (Array.isArray(factsResult)) {
+          useTripFactsStore.getState().setFacts(factsResult);
+        }
+        const assignedNodes = assignDaysBasedOnTimeAndOrder(itineraryResult, tripResult.startDate || '2026-06-15');
+        setNodes(assignedNodes);
+
+        // Weather is supplementary — fire non-blocking so it doesn't delay the main UI
+        const firstNodeWithCoords = assignedNodes.find((n: any) => n.lat && n.lng);
+        if (firstNodeWithCoords) {
+          fetch(`/api/weather?lat=${firstNodeWithCoords.lat}&lng=${firstNodeWithCoords.lng}`)
+            .then((r) => r.json())
+            .then((wData) => { if (wData?.daily) setWeatherData(wData.daily); })
+            .catch(() => {});
+        }
       } catch {
         const cached = readCachedItinerary(activeTripId);
         setNodes(assignDaysBasedOnTimeAndOrder(cached, '2026-06-15'));
@@ -417,6 +374,13 @@ export default function ItineraryTab() {
         }
       });
 
+      socket.on('editing_start', (data: { userName: string; day: number; nodeId: string }) => {
+        setCollaboratorEditing(data);
+      });
+      socket.on('editing_stop', () => {
+        setCollaboratorEditing(null);
+      });
+
       socket.on('disconnect', () => {
         setIsSocketConnected(false);
         setTip('即時同步已中斷，正在等待重連。');
@@ -428,28 +392,26 @@ export default function ItineraryTab() {
 
     return () => {
       mounted = false;
+      socketRef.current?.off('editing_start');
+      socketRef.current?.off('editing_stop');
       socketRef.current?.disconnect();
       socketRef.current = null;
       setIsSocketConnected(false);
     };
   }, [isOffline, addNode, removeNode, activeTripId]);
 
+  const maxNodeDay = useMemo(() => Math.max(1, ...nodes.map((node: ItineraryNode) => node.day)), [nodes]);
+  const totalDays = Math.max(tripInfo?.days ?? 1, plannerForm.days, maxNodeDay);
+  // Clamp during render — avoids the extra render cycle from a setState-only effect
+  const safeSelectedDay = Math.min(selectedDay, totalDays);
+
   const selectedDayNodes = useMemo(
     () =>
       nodes
-        .filter((node: ItineraryNode) => node.day === selectedDay)
+        .filter((node: ItineraryNode) => node.day === safeSelectedDay)
         .map((node: ItineraryNode) => withAutoCategoryIcon(node)),
-    [nodes, selectedDay],
+    [nodes, safeSelectedDay],
   );
-
-  const maxNodeDay = useMemo(() => Math.max(1, ...nodes.map((node: ItineraryNode) => node.day)), [nodes]);
-  const totalDays = Math.max(tripInfo?.days ?? 1, plannerForm.days, maxNodeDay);
-
-  useEffect(() => {
-    if (selectedDay > totalDays) {
-      setSelectedDay(totalDays);
-    }
-  }, [selectedDay, totalDays]);
 
   const handleCreateTrip = async () => {
     if (!newTripName || !newTripDest) return;
@@ -603,6 +565,15 @@ export default function ItineraryTab() {
     }
   };
 
+  const handleEditingChange = (nodeId: string, day: number, isEditing: boolean) => {
+    const payload = { trip_id: activeTripId, nodeId, day };
+    if (isEditing) {
+      socketRef.current?.emit('editing_start', payload);
+    } else {
+      socketRef.current?.emit('editing_stop', payload);
+    }
+  };
+
   const removeNodesBatch = async (targetNodes: ItineraryNode[]) => {
     let failedCount = 0;
     for (const target of targetNodes) {
@@ -644,19 +615,48 @@ export default function ItineraryTab() {
     if (isOffline) { showToast('離線中無法使用 AI 功能 📴'); return; }
     if (!activeTripId) { showToast('缺少行程 ID，無法生成行程'); return; }
     setAiLoading(true);
+    setSuggestedFlights([]);
+    setDismissedFlightIds([]);
     try {
       const destination = tripInfo?.destination || '您的目的地';
-      const suggestions = await suggestItineraryWithForm({ destination, planner: plannerForm });
+      const travelFactsContext = useTripFactsStore.getState().getPlanningConstraints();
+      const aiResponse = await suggestItineraryWithForm({ destination, planner: { ...plannerForm, travelFactsContext } });
 
-      let finalNodes: ItineraryNode[] = suggestions;
+      // Extract ItineraryNode[] from the AiResponse object
+      const rawNodes: ItineraryNode[] = [];
+      if (aiResponse?.itinerary && Array.isArray(aiResponse.itinerary)) {
+        aiResponse.itinerary.forEach((dayData: any) => {
+          if (Array.isArray(dayData.spots)) {
+            dayData.spots.forEach((spot: any, i: number) => {
+              rawNodes.push({
+                node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+                day: dayData.day || 1,
+                time: spot.time || '10:00',
+                title: String(spot.name || spot.title || '景點'),
+                emoji: spot.emoji || '📍',
+                category: spot.category || 'other',
+                description: spot.ai_note || '',
+                lat: spot.lat,
+                lng: spot.lng,
+                transport_to_next: spot.transport_to_next,
+                source: 'local' as const,
+              });
+            });
+          }
+        });
+      } else if (Array.isArray(aiResponse)) {
+        rawNodes.push(...aiResponse);
+      }
+
+      let finalNodes: ItineraryNode[];
 
       if (aiGenerateMode === 'overwrite_all') {
         await removeNodesBatch([...nodes]);
-        finalNodes = assignDaysBasedOnTimeAndOrder(suggestions, plannerForm.flightDate);
+        finalNodes = assignDaysBasedOnTimeAndOrder(rawNodes, plannerForm.flightDate);
       } else {
-        const currentDayNodes = nodes.filter((node: ItineraryNode) => node.day === selectedDay);
+        const currentDayNodes = nodes.filter((node: ItineraryNode) => node.day === safeSelectedDay);
         await removeNodesBatch(currentDayNodes);
-        finalNodes = suggestions.map((node) => ({ ...node, day: selectedDay }));
+        finalNodes = rawNodes.map((node) => ({ ...node, day: safeSelectedDay }));
       }
 
       for (const node of finalNodes) {
@@ -667,10 +667,21 @@ export default function ItineraryTab() {
         void syncItinerary(payload);
       }
 
-      if (aiGenerateMode === 'overwrite_all') {
-        showToast(`✨ 已一鍵覆蓋行程，共 ${finalNodes.length} 個新節點`);
-      } else {
-        showToast(`✨ 已重建 Day ${selectedDay}，共 ${finalNodes.length} 個節點`);
+      showToast(
+        aiGenerateMode === 'overwrite_all'
+          ? `✨ 已一鍵覆蓋行程，共 ${finalNodes.length} 個新節點`
+          : `✨ 已重建 Day ${safeSelectedDay}，共 ${finalNodes.length} 個節點`
+      );
+
+      // Auto-fetch flight suggestions (non-blocking, best-effort)
+      if (plannerForm.departureFrom && plannerForm.arrivalTo) {
+        searchOffers({
+          from: plannerForm.departureFrom,
+          to: plannerForm.arrivalTo,
+          date: plannerForm.flightDate || new Date().toISOString().slice(0, 10),
+        })
+          .then((flights) => setSuggestedFlights(flights.slice(0, 3)))
+          .catch(() => {});
       }
     } catch {
       showToast('AI 規劃失敗，請確認 OpenRouter API Key 是否設定。');
@@ -746,7 +757,50 @@ export default function ItineraryTab() {
            <div className="h-px flex-1 bg-slate-100" />
            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest px-4">我的行程歷史</span>
            <div className="h-px flex-1 bg-slate-100" />
+           <button
+             onClick={() => setShowCreateTrip(true)}
+             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 text-white font-black text-[11px] uppercase tracking-widest hover:bg-slate-700 transition-all shadow-sm active:scale-95"
+           >
+             <Plus size={14} />
+             新增行程
+           </button>
         </div>
+
+        {/* Create Trip Form */}
+        {showCreateTrip && (
+          <div className="mb-8 p-6 rounded-[28px] border border-pink-100 bg-white shadow-lg flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+            <h3 className="font-black text-lg text-slate-800">建立新行程</h3>
+            <input
+              autoFocus
+              value={newTripName}
+              onChange={(e) => setNewTripName(e.target.value)}
+              placeholder="行程名稱（例如：東京五日遊）"
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-200 transition-all"
+            />
+            <input
+              value={newTripDest}
+              onChange={(e) => setNewTripDest(e.target.value)}
+              placeholder="目的地（例如：東京）"
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-200 transition-all"
+              onKeyDown={(e) => { if (e.key === 'Enter') void handleCreateTrip(); }}
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => void handleCreateTrip()}
+                disabled={!newTripName || !newTripDest}
+                className="px-6 py-3 rounded-xl bg-slate-800 text-white font-black text-sm disabled:opacity-30 hover:bg-slate-700 transition-all active:scale-95"
+              >
+                建立
+              </button>
+              <button
+                onClick={() => { setShowCreateTrip(false); setNewTripName(''); setNewTripDest(''); }}
+                className="px-6 py-3 rounded-xl bg-slate-100 text-slate-500 font-black text-sm hover:bg-slate-200 transition-all active:scale-95"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        )}
 
         {isTripsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -765,17 +819,17 @@ export default function ItineraryTab() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userTrips.map((trip) => (
               <motion.div
-                key={trip.id}
+                key={trip.tripId ?? trip.id}
                 whileHover={{ scale: 1.05, y: -12 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                onClick={() => setActiveTripId(trip.id)}
+                onClick={() => setActiveTripId(trip.tripId ?? trip.id)}
                 className="cursor-pointer group"
               >
                 <GlassCard className="!p-0 overflow-hidden rounded-[32px] border border-white/60 shadow-lg hover:shadow-2xl transition-all h-full flex flex-col">
                    <div className="h-40 bg-slate-100 flex items-center justify-center overflow-hidden relative">
                       <img 
-                        src={`https://source.unsplash.com/featured/?${trip.destination}`}
+                        src={`https://picsum.photos/400/300?random=${encodeURIComponent(trip.destination)}`}
                         alt={trip.destination}
                         className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-700"
                         onError={(e) => {
@@ -783,11 +837,13 @@ export default function ItineraryTab() {
                         }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      {(trip.days ?? null) != null && (
                       <div className="absolute bottom-4 left-6">
                          <span className="text-white/80 text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-white/20 backdrop-blur-md rounded-md">
                            {trip.days} DAYS
                          </span>
                       </div>
+                      )}
                    </div>
                    <div className="p-6 flex-1 flex flex-col">
                       <h3 className="text-2xl font-black text-slate-800 mb-1 group-hover:text-pink-500 transition-colors uppercase tracking-tight">{trip.name}</h3>
@@ -814,10 +870,68 @@ export default function ItineraryTab() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col pt-8 sm:pt-12 items-center justify-center min-h-[50vh]">
-        <Loader2 className="animate-spin text-pink-400 mb-4" size={32} />
-        <p className="text-slate-400 font-bold">載入行程中...</p>
-      </div>
+      <main className="flex-1 w-full overflow-y-auto animate-in fade-in duration-500">
+        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-6 pb-32">
+          {/* Header skeleton */}
+          <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div className="flex flex-col gap-3">
+              <div className="h-3.5 w-20 bg-slate-100 rounded-full animate-pulse" />
+              <div className="h-11 w-64 bg-slate-200/80 rounded-2xl animate-pulse" />
+              <div className="h-3.5 w-48 bg-slate-100 rounded-full animate-pulse" />
+            </div>
+            <div className="h-12 w-44 bg-slate-100 rounded-full animate-pulse" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Sidebar skeleton */}
+            <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6">
+              <div className="bg-white/40 backdrop-blur-sm rounded-3xl p-6 flex flex-col gap-3">
+                <div className="h-3 w-16 bg-slate-100 rounded-full animate-pulse mb-2" />
+                <div className="grid grid-cols-2 gap-3">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="h-16 bg-slate-100 rounded-2xl animate-pulse" />
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white/40 backdrop-blur-sm rounded-3xl p-6 h-28 animate-pulse" />
+              <div className="bg-white/40 backdrop-blur-sm rounded-3xl p-6 h-40 animate-pulse" />
+            </aside>
+
+            {/* Main content skeleton */}
+            <div className="lg:col-span-3 flex flex-col gap-8">
+              {/* Mobile day selector skeleton */}
+              <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+                {[1,2,3].map(i => (
+                  <div key={i} className="flex-shrink-0 h-11 w-24 bg-slate-100 rounded-full animate-pulse" />
+                ))}
+              </div>
+              {/* AI assistant card skeleton */}
+              <div className="bg-white/40 backdrop-blur-sm rounded-[32px] p-6 flex items-center gap-5">
+                <div className="w-16 h-16 rounded-[22px] bg-slate-200 animate-pulse shrink-0" />
+                <div className="flex flex-col gap-2 flex-1">
+                  <div className="h-6 w-52 bg-slate-200 rounded-full animate-pulse" />
+                  <div className="h-3 w-32 bg-slate-100 rounded-full animate-pulse" />
+                </div>
+                <div className="h-12 w-36 bg-slate-200 rounded-full animate-pulse hidden sm:block" />
+              </div>
+              {/* Itinerary node skeletons */}
+              <div className="relative pl-6 flex flex-col gap-8">
+                <div className="absolute left-6 top-0 bottom-0 w-px bg-slate-100" />
+                {[0, 1, 2, 3].map((i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08, duration: 0.35, ease: 'easeOut' }}
+                  >
+                    <ItinerarySkeletonCard />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     );
   }
 
@@ -890,15 +1004,15 @@ export default function ItineraryTab() {
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
-                const isActive = selectedDay === day;
+                const isActive = safeSelectedDay === day;
                 const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
                 return (
                   <button
                     key={day}
                     onClick={() => setSelectedDay(day)}
                     className={`px-4 py-3.5 rounded-2xl font-black text-sm transition-all flex flex-col items-center gap-1 border ${
-                      isActive 
-                        ? 'bg-pink-50 text-pink-600 border-pink-200 shadow-inner' 
+                      isActive
+                        ? 'bg-pink-50 text-pink-600 border-pink-200 shadow-inner'
                         : 'bg-white/60 text-slate-400 border-white hover:bg-white hover:text-pink-400'
                     }`}
                   >
@@ -937,7 +1051,7 @@ export default function ItineraryTab() {
                   <DraggableFavoriteSpot
                     key={spot.id}
                     spot={spot}
-                    selectedDay={selectedDay}
+                    selectedDay={safeSelectedDay}
                     isOffline={isOffline}
                     onAdd={addSpotToDay}
                     onDelete={handleDeleteFavorite}
@@ -996,14 +1110,14 @@ export default function ItineraryTab() {
           {/* Mobile Day Selector */}
           <div className="lg:hidden flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4">
             {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
-              const isActive = selectedDay === day;
+              const isActive = safeSelectedDay === day;
               return (
                 <button
                   key={day}
                   onClick={() => setSelectedDay(day)}
                   className={`px-8 py-3 rounded-full font-black text-sm whitespace-nowrap transition-all uppercase tracking-widest ${
-                    isActive 
-                      ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-200/50' 
+                    isActive
+                      ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-200/50'
                       : 'glass-card text-slate-400 hover:text-pink-400'
                   }`}
                 >
@@ -1042,6 +1156,13 @@ export default function ItineraryTab() {
                 transition={{ duration: 0.3 }}
                 className="flex-1 flex flex-col gap-8"
               >
+                {collaboratorEditing && (
+                  <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-fuchsia-50 border border-fuchsia-100 text-fuchsia-700 font-bold text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                    <span>{collaboratorEditing.userName} 正在編輯 Day {collaboratorEditing.day}</span>
+                  </div>
+                )}
+
                 {/* AI Assistant Quick Trigger */}
                 <div className="group relative">
                   <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 rounded-[32px] blur-2xl opacity-10 group-hover:opacity-20 transition-opacity duration-1000" />
@@ -1052,7 +1173,7 @@ export default function ItineraryTab() {
                           <Sparkles size={28} />
                         </div>
                         <div>
-                          <h3 className="font-black text-xl text-slate-800 leading-tight">需要微調 Day {selectedDay} 嗎？</h3>
+                          <h3 className="font-black text-xl text-slate-800 leading-tight">需要微調 Day {safeSelectedDay} 嗎？</h3>
                           <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-wider">AI 行程規劃助手</p>
                         </div>
                       </div>
@@ -1084,13 +1205,91 @@ export default function ItineraryTab() {
                                 className="w-full bg-white/50 border border-slate-100 rounded-3xl px-6 py-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[140px] shadow-inner text-base resize-none"
                               />
                             </div>
-                            
+
+                            {/* Travel Preferences */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {/* 旅伴 */}
+                              <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">旅伴</label>
+                                <div className="flex flex-wrap gap-2">
+                                  {['獨行俠', '情侶蜜遊', '親子同遊', '好友出遊', '銀髮樂齡'].map(opt => (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => setPlannerField('companions', plannerForm.companions === opt ? '' : opt)}
+                                      className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${plannerForm.companions === opt ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* 預算 */}
+                              <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">預算</label>
+                                <div className="flex flex-wrap gap-2">
+                                  {['窮遊背包客', '小資精打細算', '舒適中等', '奢華享受'].map(opt => (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => setPlannerField('budget', plannerForm.budget === opt ? '' : opt)}
+                                      className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${plannerForm.budget === opt ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 旅遊節奏 */}
+                            <div className="flex flex-col gap-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">旅遊節奏</label>
+                              <div className="flex flex-wrap gap-2">
+                                {['特種兵式', '睡到自然醒', '隨興漫遊', '在地深度', '網美打卡'].map(opt => {
+                                  const vibes = plannerForm.vibes || [];
+                                  const selected = vibes.includes(opt);
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => setPlannerField('vibes', selected ? vibes.filter((v: string) => v !== opt) : [...vibes, opt])}
+                                      className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? 'bg-fuchsia-100 text-fuchsia-600 border-fuchsia-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* 興趣偏好 */}
+                            <div className="flex flex-col gap-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">興趣偏好</label>
+                              <div className="flex flex-wrap gap-2">
+                                {['大自然', '歷史文化', '購物血拼', '主題樂園', '在地美食', '戶外刺激'].map(opt => {
+                                  const interests = plannerForm.interests || [];
+                                  const selected = interests.includes(opt);
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => setPlannerField('interests', selected ? interests.filter((v: string) => v !== opt) : [...interests, opt])}
+                                      className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? 'bg-indigo-100 text-indigo-600 border-indigo-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
                             <div className="flex flex-col sm:flex-row gap-3">
                               <button
                                 onClick={() => setAiGenerateMode('selected_day')}
                                 className={`flex-1 py-4.5 rounded-[22px] font-black text-xs uppercase tracking-widest transition-all border ${aiGenerateMode === 'selected_day' ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
                               >
-                                重建 Day {selectedDay}
+                                重建 Day {safeSelectedDay}
                               </button>
                               <button
                                 onClick={() => setAiGenerateMode('overwrite_all')}
@@ -1115,9 +1314,92 @@ export default function ItineraryTab() {
                   </GlassCard>
                 </div>
 
+                {/* AI Suggested Flights Panel */}
+                <AnimatePresence>
+                  {suggestedFlights.filter(f => !dismissedFlightIds.includes(f.id)).length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex flex-col gap-3"
+                    >
+                      <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-2">
+                          <Sparkles size={15} className="text-fuchsia-500" />
+                          <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.18em]">AI 建議航班</span>
+                        </div>
+                        <button
+                          onClick={() => setSuggestedFlights([])}
+                          className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          全部隱藏
+                        </button>
+                      </div>
+                      <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
+                        {suggestedFlights
+                          .filter(f => !dismissedFlightIds.includes(f.id))
+                          .map((flight) => (
+                            <motion.div
+                              key={flight.id}
+                              layout
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              className="flex-shrink-0 w-[270px] bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl p-4 flex flex-col gap-3 shadow-sm"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{flight.details?.airline || flight.provider}</p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className="font-black text-slate-800 text-sm">{flight.details?.departure}</span>
+                                    <span className="text-slate-300 text-[10px]">→</span>
+                                    <span className="font-black text-slate-800 text-sm">{flight.details?.arrival}</span>
+                                    {flight.details?.stops === 0 && (
+                                      <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-full">直飛</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => setDismissedFlightIds(p => [...p, flight.id])}
+                                  className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 hover:text-red-400 flex items-center justify-center text-xs flex-shrink-0 transition-colors"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-[10px] font-bold text-slate-400">{flight.currency}</span>
+                                  <span className="text-lg font-black text-fuchsia-600">{flight.price.toLocaleString()}</span>
+                                </div>
+                                <button
+                                  onClick={() => openRedirectModal({
+                                    provider: flight.provider,
+                                    affiliateUrl: flight.affiliate_url,
+                                    itemId: flight.id,
+                                    airline: flight.details?.airline,
+                                    departure: flight.details?.departure,
+                                    arrival: flight.details?.arrival,
+                                    duration: flight.details?.duration,
+                                    stops: flight.details?.stops,
+                                    price: flight.price,
+                                    currency: flight.currency,
+                                    emoji: flight.emoji,
+                                  })}
+                                  className="px-3 py-1.5 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-fuchsia-600 transition-all active:scale-95 flex items-center gap-1.5"
+                                >
+                                  <span className="material-symbols-outlined text-[12px]">flight</span>
+                                  訂票
+                                </button>
+                              </div>
+                            </motion.div>
+                          ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <ItineraryList
                   items={selectedDayNodes}
-                  day={selectedDay}
+                  day={safeSelectedDay}
                   onDelete={handleDeleteNode}
                   onUpdate={handleUpdateNode}
                   onReorder={handleReorder}
@@ -1127,6 +1409,7 @@ export default function ItineraryTab() {
                   tripId={activeTripId}
                   destination={tripInfo?.destination || ''}
                   weather={weatherData}
+                  onEditingChange={handleEditingChange}
                 />
               </motion.div>
             ) : (
@@ -1165,7 +1448,7 @@ export default function ItineraryTab() {
                   <DraggableFavoriteSpot
                     key={spot.id}
                     spot={spot}
-                    selectedDay={selectedDay}
+                    selectedDay={safeSelectedDay}
                     isOffline={isOffline}
                     onAdd={addSpotToDay}
                     onDelete={handleDeleteFavorite}
@@ -1284,6 +1567,7 @@ function ItineraryListItem({
   isOffline,
   tripId,
   destination,
+  onEditingChange,
 }: {
   item: ItineraryNode;
   idx: number;
@@ -1292,6 +1576,7 @@ function ItineraryListItem({
   isOffline: boolean;
   tripId: string;
   destination: string;
+  onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
   key?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -1301,11 +1586,13 @@ function ItineraryListItem({
   const [editEmoji, setEditEmoji] = useState(item.emoji);
   const [editNotes, setEditNotes] = useState(item.description || item.notes || '');
   const [editImageUrl, setEditImageUrl] = useState(item.image_url || '');
+  const [editTransportToNext, setEditTransportToNext] = useState(item.transport_to_next || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleSave = () => {
-    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes, image_url: editImageUrl });
+    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes, image_url: editImageUrl, transport_to_next: editTransportToNext });
     setIsEditing(false);
+    onEditingChange?.(item.node_id, item.day, false);
   };
 
   const handleNavigate = () => {
@@ -1419,19 +1706,45 @@ function ItineraryListItem({
                    placeholder="貼上照片網址 (例如: https://...jpg)"
                    className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                  />
+                 <select
+                   value={editTransportToNext}
+                   onChange={e => setEditTransportToNext(e.target.value)}
+                   className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                 >
+                   <option value="">交通方式（可選）</option>
+                   <option value="步行約 5 分鐘">步行約 5 分鐘</option>
+                   <option value="步行約 10 分鐘">步行約 10 分鐘</option>
+                   <option value="步行約 15 分鐘">步行約 15 分鐘</option>
+                   <option value="搭乘捷運約 10 分鐘">搭乘捷運約 10 分鐘</option>
+                   <option value="搭乘捷運約 20 分鐘">搭乘捷運約 20 分鐘</option>
+                   <option value="搭乘公車約 15 分鐘">搭乘公車約 15 分鐘</option>
+                   <option value="搭乘計程車約 10 分鐘">搭乘計程車約 10 分鐘</option>
+                   <option value="搭乘計程車約 20 分鐘">搭乘計程車約 20 分鐘</option>
+                   <option value="自駕約 15 分鐘">自駕約 15 分鐘</option>
+                   <option value="自駕約 30 分鐘">自駕約 30 分鐘</option>
+                 </select>
                  <div className="flex items-center gap-3">
-                    <input 
+                    <input
                       value={editTime}
                       onChange={e => setEditTime(e.target.value)}
                       className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-xl px-4 py-2 w-24 text-center outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                     />
                     <button onClick={handleSave} className="px-6 py-2 rounded-full bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">保存</button>
-                    <button onClick={() => setIsEditing(false)} className="px-6 py-2 rounded-full bg-slate-100 text-slate-400 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">取消</button>
+                    <button onClick={() => { setIsEditing(false); onEditingChange?.(item.node_id, item.day, false); }} className="px-6 py-2 rounded-full bg-slate-100 text-slate-400 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">取消</button>
                  </div>
                </div>
             ) : (
                <>
-                 <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-2 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
+                 <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-1.5 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
+                 {item.lat && item.lng && (
+                   <button
+                     onClick={handleNavigate}
+                     className="inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all mb-2"
+                   >
+                     <MapPin size={10} strokeWidth={3} />
+                     在地圖查看
+                   </button>
+                 )}
                  {item.image_url && (
                    <div className="w-full h-40 sm:h-56 mt-3 mb-4 rounded-3xl overflow-hidden shadow-inner bg-slate-50 relative group/img cursor-pointer">
                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-3xl hover:scale-105 transition-transform duration-700" loading="lazy" referrerPolicy="no-referrer" />
@@ -1466,7 +1779,7 @@ function ItineraryListItem({
                 {regenerating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
               </button>
               <button
-                onClick={() => setIsEditing(true)}
+                onClick={() => { setIsEditing(true); onEditingChange?.(item.node_id, item.day, true); }}
                 className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-pink-500 hover:border-pink-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
               >
                 <Pencil size={18} />
@@ -1496,6 +1809,7 @@ function ItineraryList({
   tripId,
   destination,
   weather,
+  onEditingChange,
 }: {
   items: ItineraryNode[];
   day: number;
@@ -1508,11 +1822,12 @@ function ItineraryList({
   tripId: string;
   destination: string;
   weather?: any;
+  onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
 }) {
   const getDailyWeather = () => {
     if (!weather || !weather.length) return null;
     // Assuming weather is a 14-day array, pick the one matching (day - 1)
-    const dayWeather = weather[day - 1];
+    const dayWeather = weather[day - 1] ?? null;
     if (!dayWeather) return null;
     return dayWeather;
   };
@@ -1575,9 +1890,10 @@ function ItineraryList({
             const nextItem = items[idx + 1];
             let timeGapStr = '';
             
+            const normalizeTime = (t: string) => t.match(/\d{1,2}:\d{2}/)?.[0] ?? t;
             if (nextItem && item.time && nextItem.time) {
-              const currentParts = item.time.split(':').map(Number);
-              const nextParts = nextItem.time.split(':').map(Number);
+              const currentParts = normalizeTime(item.time).split(':').map(Number);
+              const nextParts = normalizeTime(nextItem.time).split(':').map(Number);
               if (currentParts.length === 2 && nextParts.length === 2) {
                 const currentMins = currentParts[0] * 60 + currentParts[1];
                 const nextMins = nextParts[0] * 60 + nextParts[1];
@@ -1607,6 +1923,7 @@ function ItineraryList({
                   isOffline={isOffline}
                   tripId={tripId}
                   destination={destination}
+                  onEditingChange={onEditingChange}
                 />
                 
                 {/* Drag handle for mobile/explicit drag */}

@@ -48,6 +48,7 @@ interface AiResponse {
 }
 \`\`\`
 若使用者未提供飲食禁忌，請忽略該限制；若為情侶，請安排浪漫景點。
+根據旅伴類型、節奏偏好與興趣，客製化每日行程安排與景點選擇。
 
 Details: 
 - Trip length: ${days} days
@@ -57,6 +58,10 @@ Details:
 - Travel facts anchors: ${planner?.travelFactsContext || 'Not specified'}
 - Spots user likes: ${planner?.mustVisitSpots?.join(', ') || 'Not specified'}
 - Extra notes: ${planner?.notes || 'None'}
+- Travel companions: ${planner?.companions || 'Not specified'}
+- Trip pace/vibes: ${planner?.vibes?.join(', ') || 'Not specified'}
+- Interests: ${planner?.interests?.join(', ') || 'Not specified'}
+- Budget level: ${planner?.budget || 'Not specified'}
 
 注意：請直接輸出 JSON，不要有任何多餘的解釋文字或 markdown \`\`\` 包裝。
 `;
@@ -133,9 +138,12 @@ export async function regenerateSpot(params: {
 
   try {
     const text = await fetchOpenRouterWithFallback(apiKey, prompt);
-    const match = text.match(/\{[\s\S]*?\}/);
-    if (!match) throw new Error('No JSON found');
-    const parsed = JSON.parse(match[0]);
+    const jsonStart = text.indexOf('{');
+    const jsonEnd = text.lastIndexOf('}');
+    if (jsonStart === -1 || jsonEnd === -1 || jsonStart >= jsonEnd) {
+      throw new Error('No JSON object found in AI response');
+    }
+    const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
     if (parsed && typeof parsed.title === 'string') {
       return parsed;
     }
