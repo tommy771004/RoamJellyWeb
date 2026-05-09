@@ -3,6 +3,22 @@ import type { SearchItem, TrackClickOutBody } from '../types/workflow';
 export class SearchTimeoutError extends Error {}
 export class SearchServiceUnavailableError extends Error {}
 
+export async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const q = encodeURIComponent(`${title} ${city}`);
+    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja`;
+    const apiRes = await fetch(url);
+    if (!apiRes.ok) return null;
+    const items = await apiRes.json();
+    if (items && items.length > 0) {
+      return { lat: parseFloat(items[0].lat), lng: parseFloat(items[0].lon) };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export function getStoredToken(): string | null {
   return localStorage.getItem('access_token');
 }

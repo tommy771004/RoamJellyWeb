@@ -18,6 +18,7 @@ import {
   type TravelGuideDestination,
 } from '../data/travelGuideDestinations';
 import { LocationPickerPopup } from './LocationPickerPopup';
+import JapanGuideModal from './JapanGuideModal';
 
 interface FlightCardProps {
   flight: SearchItem;
@@ -303,6 +304,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
 
   const [flyingCard, setFlyingCard] = useState<{ id: number; startX: number; startY: number; width: number; height: number; handbook?: any } | null>(null);
+  const [showJapanGuide, setShowJapanGuide] = useState(false);
 
   const expertHandbooks = [
     {
@@ -634,7 +636,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-full lg:max-w-[90rem] xl:max-w-[1rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
+    <div className="p-4 sm:p-6 md:p-8 max-w-full lg:max-w-[90rem] xl:max-w-[150rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
       <div className="flex flex-col items-center text-center lg:items-start lg:text-left mb-6 w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
         <p className="text-[17px] text-slate-500 font-semibold tracking-wide">探索機票與體驗。</p>
       </div>
@@ -974,16 +976,26 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                           ))}
                         </div>
 
-                        <a
-                          href={dest.guideUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-emerald-600 active:scale-95 group/btn"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ExternalLink size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
-                          查看完整攻略
-                        </a>
+                        {dest.id === 'jp' ? (
+                          <button
+                            className="mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-rose-600 active:scale-95 group/btn"
+                            onClick={(e) => { e.stopPropagation(); setShowJapanGuide(true); }}
+                          >
+                            <ExternalLink size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
+                            查看完整攻略
+                          </button>
+                        ) : (
+                          <a
+                            href={dest.guideUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-emerald-600 active:scale-95 group/btn"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ExternalLink size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
+                            查看完整攻略
+                          </a>
+                        )}
                       </div>
                     </GlassCard>
                   </motion.div>
@@ -1052,6 +1064,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           </div>
         </div>
       </div>
+
+      <JapanGuideModal open={showJapanGuide} onClose={() => setShowJapanGuide(false)} />
 
       {showDeparturePicker && (
         <LocationPickerPopup 
