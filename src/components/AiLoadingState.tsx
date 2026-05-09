@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Compass } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const MESSAGES = [
+  'AI 正在為您規劃...',
   '正在注入您的靈魂偏好...',
   '正在篩選完美景點...',
   '正在為您生成專屬介面...',
@@ -26,24 +27,24 @@ export default function AiLoadingState() {
       
       <div className="relative z-10 flex flex-col items-center gap-8">
         <div className="relative">
-          <div className="absolute inset-0 bg-indigo-400/30 blur-2xl rounded-full scale-150" />
+          <div className="absolute inset-0 bg-indigo-400/30 blur-2xl rounded-full scale-150 animate-pulse" />
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             className="w-24 h-24 rounded-full bg-white shadow-xl flex items-center justify-center text-indigo-500 relative z-10 border border-indigo-100"
           >
-            <Compass size={48} strokeWidth={1.5} />
+            <Sparkles size={48} strokeWidth={1.5} />
           </motion.div>
         </div>
         
-        <div className="h-8 flex items-center justify-center">
+        <div className="h-8 flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
             <motion.p
               key={msgIndex}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="text-slate-600 font-medium tracking-wider text-lg"
+              className="text-slate-600 font-bold tracking-widest text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-pink-500"
             >
               {MESSAGES[msgIndex]}
             </motion.p>

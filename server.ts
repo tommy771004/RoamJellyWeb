@@ -1335,7 +1335,6 @@ async function startServer() {
       const lng = node.lng ?? knownCoords?.lng ?? null;
       return {
         id: node.nodeId,
-        node_id: node.nodeId,
         day: node.day,
         time: node.time,
         location: node.title,
@@ -1344,10 +1343,6 @@ async function startServer() {
         node_id: node.nodeId,
         title: node.title,
         emoji: node.emoji,
-        description: node.description,
-        is_visited: node.isVisited,
-        transport_to_next: node.transportToNext,
-        image_url: node.imageUrl,
         lat,
         lng,
         coords: lat != null ? null : { top: `${18 + index * 20}%`, left: `${25 + (index % 2) * 35}%` },

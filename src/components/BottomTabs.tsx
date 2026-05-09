@@ -14,7 +14,7 @@ export default function BottomTabs() {
 
   return (
     <nav className="md:hidden fixed bottom-6 w-full z-50 flex justify-center items-center px-4 pointer-events-none pb-safe">
-      <div className="bg-white/90 backdrop-blur-[30px] rounded-[32px] border border-white/60 shadow-[0_10px_40px_rgba(0,0,0,0.1)] flex justify-between items-center p-2 pointer-events-auto w-full max-w-[480px] mx-auto">
+      <div className="bg-white/20 backdrop-blur-[40px] backdrop-saturate-150 rounded-[32px] border border-white/40 shadow-[0_8px_32px_rgba(255,183,206,0.3),inset_0_1px_2px_rgba(255,255,255,0.8)] ring-1 ring-white/50 flex justify-between items-center p-2 pointer-events-auto w-full max-w-[480px] mx-auto overflow-hidden">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (

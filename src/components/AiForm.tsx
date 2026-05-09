@@ -124,8 +124,8 @@ export default function AiForm({
             key="step1"
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="grid grid-cols-1 md:grid-cols-2 gap-10"
           >
             <div className="space-y-10">
@@ -219,8 +219,8 @@ export default function AiForm({
             key="step2"
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col gap-10"
           >
             <div className="flex justify-end mb-[-20px]">

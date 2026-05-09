@@ -302,7 +302,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [showDestinationPicker, setShowDestinationPicker] = useState<boolean>(false);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
 
-  const [flyingCard, setFlyingCard] = useState<{ id: number; startX: number; startY: number } | null>(null);
+  const [flyingCard, setFlyingCard] = useState<{ id: number; startX: number; startY: number; width: number; height: number; handbook?: any } | null>(null);
 
   const expertHandbooks = [
     {
@@ -334,21 +334,24 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const handleCopyExpertItinerary = (e: React.MouseEvent, handbook: any) => {
     e.stopPropagation();
     
-    // Get button position for animation start
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    // Get card position for animation start
+    const cardElement = (e.currentTarget as HTMLElement).closest('.group\\/handbook');
+    const rect = cardElement ? cardElement.getBoundingClientRect() : (e.currentTarget as HTMLElement).getBoundingClientRect();
     setFlyingCard({
       id: Date.now(),
       startX: rect.left + rect.width / 2,
-      startY: rect.top + rect.height / 2
+      startY: rect.top + rect.height / 2,
+      width: rect.width || 320,
+      height: rect.height || 380,
+      handbook
     });
 
-    // Mock copy behavior
-    showToast(`已成功將行程 ${handbook.title} 複製到您的手帳！`, 'success');
-    
     // Reset animation after it finishes
     setTimeout(() => {
       setFlyingCard(null);
-    }, 1000);
+      // Mock copy behavior, pop up after animation finishes
+      showToast('已成功將行程複製到您的手帳！', 'success');
+    }, 1200); // 1.2s to match animation duration
   };
 
   const [communityTrips, setCommunityTrips] = useState<any[]>([]);
@@ -380,11 +383,15 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     e.stopPropagation();
     
     // Trigger animation
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const cardElement = (e.currentTarget as HTMLElement).closest('.group\\/trip') || (e.currentTarget as HTMLElement);
+    const rect = cardElement.getBoundingClientRect();
     setFlyingCard({
       id: Date.now(),
       startX: rect.left + rect.width / 2,
-      startY: rect.top + rect.height / 2
+      startY: rect.top + rect.height / 2,
+      width: rect.width || 320,
+      height: rect.height || 200,
+      handbook: trip
     });
 
     try {
@@ -627,10 +634,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-full lg:max-w-[72rem] xl:max-w-[80rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
+    <div className="p-4 sm:p-6 md:p-8 max-w-full lg:max-w-[90rem] xl:max-w-[1rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
       <div className="flex flex-col items-center text-center lg:items-start lg:text-left mb-6 w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
-        <h1 className="text-[44px] md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-cyan-500 tracking-tight mb-3">RoamJelly</h1>
-        <p className="text-[17px] text-slate-500 font-semibold tracking-wide">探索機票與體驗，確認後再溫柔導流至供應商下單。</p>
+        <p className="text-[17px] text-slate-500 font-semibold tracking-wide">探索機票與體驗。</p>
       </div>
 
       {/* AI Form Banner */}
@@ -1082,29 +1088,26 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               position: 'fixed',
               top: flyingCard.startY,
               left: flyingCard.startX,
-              width: 160,
-              height: 100,
+              width: flyingCard.width,
+              height: flyingCard.height,
               opacity: 1,
               scale: 1,
               zIndex: 9999,
-              borderRadius: '20px',
-              backgroundColor: '#f472b6',
-              boxShadow: '0 20px 50px rgba(244,114,182,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              borderRadius: '24px',
+              backgroundColor: 'white',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
               overflow: 'hidden',
               x: '-50%',
               y: '-50%'
             }}
             animate={{ 
-              top: [flyingCard.startY, flyingCard.startY - 150, window.innerHeight - 40],
+              top: [flyingCard.startY, flyingCard.startY - 100, window.innerHeight - 40],
               left: [flyingCard.startX, flyingCard.startX + (window.innerWidth / 2 - flyingCard.startX) * 0.5, window.innerWidth / 2],
-              width: [160, 100, 20],
-              height: [100, 60, 20],
-              scale: [1, 1.1, 0.1],
+              width: [flyingCard.width, 160, 20],
+              height: [flyingCard.height, 100, 20],
+              scale: [1, 1.05, 0.1],
               opacity: [1, 1, 0],
-              rotate: [0, 15, 720]
+              rotate: [0, -10, -360]
             }}
             exit={{ opacity: 0 }}
             transition={{ 
@@ -1113,10 +1116,24 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               times: [0, 0.4, 1]
             }}
           >
-            <div className="flex flex-col items-center gap-1">
-              <Sparkles color="white" size={24} />
-              <div className="w-12 h-1 bg-white/40 rounded-full" />
-            </div>
+            {flyingCard.handbook ? (
+              <div className="w-full h-full flex flex-col pointer-events-none">
+                <img 
+                  src={flyingCard.handbook.image || flyingCard.handbook.coverImage} 
+                  alt="" 
+                  className="w-full h-2/3 object-cover" 
+                />
+                <div className="p-4 flex-1 bg-white">
+                  <div className="w-3/4 h-4 bg-slate-200 rounded-full mb-2"></div>
+                  <div className="w-1/2 h-3 bg-slate-100 rounded-full"></div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-1 bg-fuchsia-400">
+                <Sparkles color="white" size={24} />
+                <div className="w-12 h-1 bg-white/40 rounded-full" />
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

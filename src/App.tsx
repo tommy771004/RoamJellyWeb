@@ -185,6 +185,8 @@ export default function App() {
     }
   };
 
+  const prevActiveTabRef = useRef<string>(activeTab);
+
   // Show nothing while checking localStorage (avoids flash)
   if (!authReady) {
     return (
@@ -207,7 +209,6 @@ export default function App() {
   }
 
   // Compute slide direction synchronously before render so framer-motion sees it on the same frame.
-  const prevActiveTabRef = useRef<string>(activeTab);
   const TAB_SLIDE_ORDER: Record<string, number> = { home: 0, itinerary: 1, ai_form: 1, ai_result: 1, tools: 2 };
   let tabSlideDir = 1;
   if (prevActiveTabRef.current !== activeTab) {
@@ -319,20 +320,24 @@ export default function App() {
           
           try {
             const { useItineraryStore } = await import('./store/useItineraryStore');
+            const { useAppStore } = await import('./store/useAppStore');
             const { syncItinerary } = await import('./lib/workflowApi');
-            const TRIP_ID =
-              (new URLSearchParams(window.location.search).get('trip_id')) ||
-              (import.meta as any).env?.VITE_TRIP_ID ||
-              '';
+            const { setNodes, addNode } = useItineraryStore.getState();
+            const { activeTripId } = useAppStore.getState();
+            const TRIP_ID = activeTripId || (new URLSearchParams(window.location.search).get('trip_id')) || (import.meta as any).env?.VITE_TRIP_ID || '';
 
             if (result.rawSuggestions?.length) {
-                const { setNodes, addNode } = useItineraryStore.getState();
                 setNodes([]); // Clear existing
-                for (const node of result.rawSuggestions) {
-                   addNode(node);
-                   if (TRIP_ID) {
-                      await syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
-                   }
+                if (TRIP_ID) {
+                  // Fire off all sync requests in parallel
+                  await Promise.all(result.rawSuggestions.map(async (node) => {
+                     addNode(node);
+                     return syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
+                  }));
+                } else {
+                  for (const node of result.rawSuggestions) {
+                    addNode(node);
+                  }
                 }
             }
           } catch (err) {
@@ -366,7 +371,7 @@ export default function App() {
       )}
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-white/30 backdrop-blur-[25px] rounded-b-[40px] border-b border-l border-white/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.8)] transition-colors duration-500">
+      <header className="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-white/20 backdrop-blur-[40px] backdrop-saturate-150 rounded-b-[40px] border-b border-l border-white/40 shadow-[0_8px_32px_rgba(255,183,206,0.3),inset_0_1px_2px_rgba(255,255,255,0.8)] ring-1 ring-white/50 transition-colors duration-500">
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20">
           <h1 className="text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>
@@ -454,7 +459,7 @@ export default function App() {
       <div className="flex-1 relative z-10 w-full overflow-hidden flex flex-col">
         <AnimatePresence mode="wait" custom={tabSlideDir}>
           <motion.div
-            key={!isLoggedIn && activeTab !== 'home' ? 'login' : activeTab}
+            key={!isLoggedIn && activeTab !== 'home' ? 'login' : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
               enter: (dir: number) => ({ opacity: 0, x: dir * 56, scale: 0.98 }),
