@@ -1350,6 +1350,7 @@ async function startServer() {
         is_visited: node.isVisited ?? false,
         transport_to_next: node.transportToNext ?? null,
         image_url: node.imageUrl ?? null,
+        linkedFactId: node.linkedFactId ?? null,
       };
     });
 
@@ -1360,7 +1361,7 @@ async function startServer() {
     const { trip_id, action, payload } = req.body as {
       trip_id?: string;
       action?: string;
-      payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string };
+      payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; linkedFactId?: string };
     };
 
     if (!trip_id || action !== 'add_node' || !payload?.node_id || !payload.time || !payload.title) {
@@ -1384,6 +1385,7 @@ async function startServer() {
       description: payload.description,
       transport_to_next: payload.transport_to_next,
       image_url: payload.image_url,
+      linkedFactId: payload.linkedFactId,
     });
 
     await appendPlanningRecord({
@@ -1414,6 +1416,7 @@ async function startServer() {
         description: payload.description ?? '',
         transport_to_next: payload.transport_to_next ?? null,
         image_url: payload.image_url ?? null,
+        linkedFactId: payload.linkedFactId,
       },
     });
 

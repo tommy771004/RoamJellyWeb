@@ -38,6 +38,7 @@ export const itineraryNodes = pgTable('itinerary_nodes', {
   isVisited: boolean('is_visited').default(false).notNull(),
   transportToNext: text('transport_to_next'),
   imageUrl: text('image_url'),
+  linkedFactId: text('linked_fact_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

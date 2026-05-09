@@ -474,35 +474,11 @@ export default function ItineraryTab() {
       return;
     }
     const deepLink = `${window.location.origin}/trip/${activeTripId}`;
-    const name = tripInfo?.name ?? '我的旅程';
-    const textToShare = `一起共編「${name}」，點我加入：${deepLink}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: name,
-          text: `跟我一起在 RoamJelly 規劃旅程：${name}`,
-          url: deepLink,
-        });
-        showToast('分享成功！');
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          // fallback to clipboard
-          try {
-            await navigator.clipboard.writeText(deepLink);
-            showToast('已複製分享連結到剪貼簿。');
-          } catch (e) {
-            showToast('無法複製分享連結。');
-          }
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(deepLink);
-        showToast('已複製分享連結到剪貼簿。');
-      } catch (err) {
-        showToast('分享未完成，請稍後再試。');
-      }
+    try {
+      await navigator.clipboard.writeText(deepLink);
+      showToast('🎉 行程連結已複製！邀請朋友加入吧', 'success');
+    } catch (e) {
+      showToast('分享失敗，請手動複製網址', 'warning');
     }
   };
 
@@ -645,17 +621,58 @@ export default function ItineraryTab() {
     setDismissedFlightIds([]);
     try {
       const destination = tripInfo?.destination || '您的目的地';
-      const suggestions = await suggestItineraryWithForm({ destination, planner: plannerForm });
+      
+      let genDays = plannerForm.days;
+      if (aiGenerateMode === 'selected_day') genDays = 1;
+      else if (aiGenerateMode === 'generate_for_selected_days') genDays = rangeEndDay - rangeStartDay + 1;
+      
+      const formToSend = { ...plannerForm, days: genDays };
 
-      let finalNodes: ItineraryNode[] = suggestions;
+      const suggestionsRaw = await suggestItineraryWithForm({ destination, planner: formToSend });
+
+      let suggestedNodes: ItineraryNode[] = [];
+      if (suggestionsRaw?.itinerary && Array.isArray(suggestionsRaw.itinerary)) {
+        suggestionsRaw.itinerary.forEach((dayData: any) => {
+          if (Array.isArray(dayData.spots)) {
+            dayData.spots.forEach((spot: any, i: number) => {
+              suggestedNodes.push({
+                node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+                day: dayData.day || 1,
+                time: spot.time || '10:00',
+                title: String(spot.name || spot.title || '景點'),
+                emoji: spot.emoji || '📍',
+                category: spot.category || 'other',
+                description: spot.ai_note || '',
+                lat: spot.lat,
+                lng: spot.lng,
+                source: 'local' as const
+              });
+            });
+          }
+        });
+      } else if (Array.isArray(suggestionsRaw)) {
+        suggestedNodes = suggestionsRaw;
+      }
+
+      let finalNodes: ItineraryNode[] = [];
 
       if (aiGenerateMode === 'overwrite_all') {
         await removeNodesBatch([...nodes]);
-        finalNodes = assignDaysBasedOnTimeAndOrder(suggestions, plannerForm.flightDate);
+        finalNodes = assignDaysBasedOnTimeAndOrder(suggestedNodes, plannerForm.flightDate);
+      } else if (aiGenerateMode === 'generate_for_selected_days') {
+        const targetDays = Array.from({ length: rangeEndDay - rangeStartDay + 1 }, (_, i) => rangeStartDay + i);
+        const currentDaysNodes = nodes.filter((node: ItineraryNode) => targetDays.includes(node.day));
+        await removeNodesBatch(currentDaysNodes);
+        
+        finalNodes = suggestedNodes.map((node) => {
+          let targetDay = rangeStartDay + (node.day - 1);
+          if (targetDay > rangeEndDay) targetDay = rangeEndDay;
+          return { ...node, day: targetDay };
+        });
       } else {
         const currentDayNodes = nodes.filter((node: ItineraryNode) => node.day === safeSelectedDay);
         await removeNodesBatch(currentDayNodes);
-        finalNodes = suggestions.map((node) => ({ ...node, day: selectedDay }));
+        finalNodes = suggestedNodes.map((node) => ({ ...node, day: selectedDay }));
       }
 
       for (const node of finalNodes) {
@@ -668,6 +685,8 @@ export default function ItineraryTab() {
 
       if (aiGenerateMode === 'overwrite_all') {
         showToast(`✨ 已一鍵覆蓋行程，共 ${finalNodes.length} 個新節點`);
+      } else if (aiGenerateMode === 'generate_for_selected_days') {
+        showToast(`✨ 已重建 Day ${rangeStartDay} 到 Day ${rangeEndDay}`);
       } else {
         showToast(`✨ 已重建 Day ${selectedDay}，共 ${finalNodes.length} 個節點`);
       }
@@ -948,6 +967,13 @@ export default function ItineraryTab() {
             >
               <ArrowLeft size={12} />
               返回專案列表
+            </button>
+            <button 
+              onClick={handleShare}
+              className="px-3 py-1 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-lg text-[10px] font-black text-pink-500 transition-colors uppercase tracking-widest flex items-center gap-1"
+            >
+              <Share2 size={12} />
+              分享行程
             </button>
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 flex items-center gap-3 font-serif tracking-tight leading-tight">
@@ -1433,6 +1459,7 @@ export default function ItineraryTab() {
                   destination={tripInfo?.destination || ''}
                   weather={weatherData}
                   onEditingChange={handleEditingChange}
+                  collaboratorEditing={collaboratorEditing}
                 />
               </motion.div>
             ) : (
@@ -1600,6 +1627,7 @@ function ItineraryListItem({
   tripId: string;
   destination: string;
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
+  collaboratingUser?: string;
   key?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -1609,10 +1637,13 @@ function ItineraryListItem({
   const [editEmoji, setEditEmoji] = useState(item.emoji);
   const [editNotes, setEditNotes] = useState(item.description || item.notes || '');
   const [editImageUrl, setEditImageUrl] = useState(item.image_url || '');
+  const [editLinkedFactId, setEditLinkedFactId] = useState(item.linkedFactId || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
+  const facts = useTripFactsStore(s => s.facts);
 
   const handleSave = () => {
-    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes, image_url: editImageUrl });
+    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes, image_url: editImageUrl, linkedFactId: editLinkedFactId || undefined });
     setIsEditing(false);
     onEditingChange?.(item.node_id, item.day, false);
   };
@@ -1689,6 +1720,18 @@ function ItineraryListItem({
                <span className="px-3 py-0.5 rounded-full bg-pink-50 text-[10px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
                  {meta.label}
                </span>
+               {item.linkedFactId && facts.find((f: any) => f.id === item.linkedFactId) && (
+                 <span className="px-3 py-0.5 rounded-full bg-cyan-50 text-[10px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-1">
+                   <span className="material-symbols-outlined text-[12px]">link</span>
+                   已綁定: {facts.find((f: any) => f.id === item.linkedFactId)?.title}
+                 </span>
+               )}
+               {collaboratingUser && (
+                 <span className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-fuchsia-50 text-[10px] font-black uppercase tracking-[0.1em] text-fuchsia-600 border border-fuchsia-100 animate-pulse">
+                   <span className="material-symbols-outlined text-[14px]">edit</span>
+                   {collaboratingUser} 編輯中
+                 </span>
+               )}
                {!isEditing && (
                  <button 
                    onClick={() => onUpdate({ ...item, is_visited: !item.is_visited })}
@@ -1728,6 +1771,20 @@ function ItineraryListItem({
                    placeholder="貼上照片網址 (例如: https://...jpg)"
                    className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                  />
+                 {facts && facts.length > 0 && (
+                   <select
+                     value={editLinkedFactId}
+                     onChange={e => setEditLinkedFactId(e.target.value)}
+                     className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                   >
+                     <option value="">無關聯 Travel Fact (未選擇)</option>
+                     {facts.map(f => (
+                       <option key={f.id} value={f.id}>
+                         {f.title} ({f.factType})
+                       </option>
+                     ))}
+                   </select>
+                 )}
                  <div className="flex items-center gap-3">
                     <input
                       value={editTime}
@@ -1802,7 +1859,7 @@ function ItineraryListItem({
     </div>
   );
 }
-function SortableItineraryItem({ item, idx, nextItem, onDelete, onUpdate, isOffline, tripId, destination }: any) {
+function SortableItineraryItem({ item, idx, nextItem, onDelete, onUpdate, isOffline, tripId, destination, onEditingChange, collaboratingUser }: any) {
   const controls = useDragControls();
 
   let timeGapStr = '';
@@ -1840,6 +1897,8 @@ function SortableItineraryItem({ item, idx, nextItem, onDelete, onUpdate, isOffl
         isOffline={isOffline}
         tripId={tripId}
         destination={destination}
+        onEditingChange={onEditingChange}
+        collaboratingUser={collaboratingUser}
       />
       
       {/* Drag handle */}
@@ -1905,6 +1964,7 @@ function ItineraryList({
   destination: string;
   weather?: any;
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
+  collaboratorEditing?: { userName: string; day: number; nodeId: string } | null;
 }) {
   const getDailyWeather = () => {
     if (!weather || !weather.length) return null;
@@ -2004,6 +2064,8 @@ function ItineraryList({
                   isOffline={isOffline}
                   tripId={tripId}
                   destination={destination}
+                  onEditingChange={onEditingChange}
+                  collaboratingUser={collaboratorEditing?.nodeId === item.node_id ? collaboratorEditing.userName : undefined}
                 />
                 
                 {/* Drag handle for mobile/explicit drag */}

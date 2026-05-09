@@ -1,0 +1,1 @@
+ALTER TABLE "itinerary_nodes" ADD COLUMN "linked_fact_id" text;

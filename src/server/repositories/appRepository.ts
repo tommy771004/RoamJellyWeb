@@ -85,6 +85,7 @@ export class AppRepository {
       isVisited: node.is_visited ?? false,
       transportToNext: node.transport_to_next,
       imageUrl: node.image_url,
+      linkedFactId: node.linkedFactId || node.linked_fact_id,
     }).onConflictDoUpdate({
       target: schema.itineraryNodes.nodeId,
       set: {
@@ -100,6 +101,7 @@ export class AppRepository {
         isVisited: node.is_visited ?? false,
         transportToNext: node.transport_to_next,
         imageUrl: node.image_url,
+        linkedFactId: node.linkedFactId || node.linked_fact_id,
       }
     });
   }
