@@ -3,8 +3,19 @@ import { fetchOpenRouterWithFallback } from './openrouterHelper';
 const apiKey = process.env.OPENROUTER_API_KEY;
 
 export async function generateItinerary(body: any) {
-  const { destination, planner } = body;
+  const { destination, planner, aiMode } = body;
   const days = planner?.days || 3;
+  
+  let generationContext = '';
+  if (aiMode) {
+    if (aiMode.mode === 'selected_day') {
+      generationContext = `\n【重要指示】目前我們正在重新規劃「第 ${aiMode.selectedDay} 天」的行程。請產生 ${days} 天份的行程（這將會對應到那單獨的一天），並特別留意上下文。`;
+    } else if (aiMode.mode === 'generate_for_selected_days') {
+      generationContext = `\n【重要指示】目前我們正在重新規劃「第 ${aiMode.rangeStartDay} 天到第 ${aiMode.rangeEndDay} 天」的區間。請產生 ${days} 天份的行程，讓使用者能接續原本的旅途步調。`;
+    } else if (aiMode.mode === 'overwrite_all') {
+      generationContext = `\n【重要指示】我們將全局重新規劃整趟 ${days} 天的行程。`;
+    }
+  }
   
   if (!apiKey) {
     // Artificial delay for fallback
@@ -56,7 +67,7 @@ Details:
 - Auto flight segments: ${planner?.autoFlightSegments?.join(' | ') || 'Not specified'}
 - Travel facts anchors: ${planner?.travelFactsContext || 'Not specified'}
 - Spots user likes: ${planner?.mustVisitSpots?.join(', ') || 'Not specified'}
-- Extra notes: ${planner?.notes || 'None'}
+- Extra notes: ${planner?.notes || 'None'}${generationContext}
 
 注意：請直接輸出 JSON，不要有任何多餘的解釋文字或 markdown \`\`\` 包裝。
 `;

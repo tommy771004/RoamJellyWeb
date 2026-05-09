@@ -16,6 +16,12 @@ const CATEGORY_ICON_MAP: Record<string, string> = {
 export interface SuggestItineraryInput {
   destination: string;
   planner: ItineraryPlannerForm;
+  aiMode?: {
+    mode: string;
+    rangeStartDay?: number;
+    rangeEndDay?: number;
+    selectedDay?: number;
+  };
 }
 
 function getApiKey(): string {

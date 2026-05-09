@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import GlassCard from './GlassCard';
-import { TRAVEL_GUIDE_DESTINATIONS } from '../data/travelGuideDestinations';
+import { TRAVEL_GUIDE_DESTINATIONS, TravelGuideDestination } from '../data/travelGuideDestinations';
+import { LocationPickerPopup } from './LocationPickerPopup';
 
 const COMPANION_OPTIONS = [
   { id: 'solo', label: '獨行俠', emoji: '🚶' },
@@ -19,6 +20,7 @@ const TRANSPORT_OPTIONS = ['大眾運輸', '自駕', '包車', '徒步為主'];
 const BUDGET_OPTIONS = ['窮遊', '小資', '舒適', '奢華'];
 
 export interface AiFormData {
+  departure: string;
   destination: string;
   days: number;
   companions: string;
@@ -58,7 +60,9 @@ export default function AiForm({
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDestDropdown, setShowDestDropdown] = useState(false);
+  const [showDepDropdown, setShowDepDropdown] = useState(false);
   const [formData, setFormData] = useState<AiFormData>({
+    departure: '',
     destination: '',
     days: 5,
     companions: '',
@@ -69,21 +73,8 @@ export default function AiForm({
     budget: '',
   });
 
-  const filteredDestinations = TRAVEL_GUIDE_DESTINATIONS.filter(dest => {
-    if (!formData.destination) return false;
-    const search = formData.destination.toLowerCase();
-    const aliasMatch = dest.searchAlias?.toLowerCase().includes(search);
-    const placeMatch = dest.place.toLowerCase().includes(search);
-    return aliasMatch || placeMatch;
-  }).sort((a, b) => {
-    const search = formData.destination.toLowerCase();
-    const aAlias = a.searchAlias?.toLowerCase() === search ? -2 : (a.searchAlias?.toLowerCase().startsWith(search) ? -1 : 0);
-    const bAlias = b.searchAlias?.toLowerCase() === search ? -2 : (b.searchAlias?.toLowerCase().startsWith(search) ? -1 : 0);
-    return aAlias - bAlias;
-  }).slice(0, 5);
-
   const handleNext = () => {
-    if (formData.destination && formData.companions) {
+    if (formData.departure && formData.destination && formData.companions) {
       setStep(2);
     }
   };
@@ -139,60 +130,25 @@ export default function AiForm({
           >
             <div className="space-y-10">
             <div className="flex flex-col gap-4">
+              <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">出發地</label>
+              <button 
+                onClick={() => setShowDepDropdown(true)}
+                className="w-full text-left bg-white/40 backdrop-blur-xl border border-white/60 rounded-[28px] py-6 pl-14 pr-6 text-lg text-slate-800 font-black focus:outline-none focus:ring-4 focus:ring-pink-100 shadow-xl shadow-slate-100/50 transition-all relative group"
+              >
+                <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-hover:text-pink-500 transition-colors" size={20} />
+                {formData.departure ? formData.departure : <span className="text-slate-300">例如：台北、高雄...</span>}
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
               <label className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] px-1">目的地</label>
-              <div className="relative group">
-                <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-500 transition-colors" size={20} />
-                <input 
-                  type="text" 
-                  placeholder="例如：日本、曼谷..." 
-                  value={formData.destination}
-                  onChange={e => {
-                    setFormData(p => ({ ...p, destination: e.target.value }));
-                    setShowDestDropdown(true);
-                  }}
-                  onBlur={() => setTimeout(() => setShowDestDropdown(false), 200)}
-                  onFocus={() => setShowDestDropdown(true)}
-                  className="w-full bg-white/40 backdrop-blur-xl border border-white/60 rounded-[28px] py-6 pl-14 pr-6 text-lg text-slate-800 font-black placeholder:text-slate-200 placeholder:font-black focus:outline-none focus:ring-4 focus:ring-pink-100 shadow-xl shadow-slate-100/50 transition-all"
-                />
-                
-                <AnimatePresence>
-                  {showDestDropdown && filteredDestinations.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white p-2 z-[100] overflow-hidden"
-                    >
-                      {filteredDestinations.map(dest => (
-                        <button
-                          key={dest.id}
-                          onClick={() => {
-                            const displayValue = dest.searchAlias ? `${dest.place} (${dest.searchAlias})` : dest.place;
-                            setFormData(p => ({ ...p, destination: displayValue }));
-                            setShowDestDropdown(false);
-                          }}
-                          className="w-full flex items-center justify-between px-6 py-4 hover:bg-pink-50 rounded-2xl transition-colors group/item"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-pink-100/50 flex items-center justify-center text-pink-500 group-hover/item:scale-110 transition-transform">
-                              <MapPin size={18} />
-                            </div>
-                            <div className="text-left">
-                              <p className="font-black text-slate-800 text-[15px]">{dest.place}</p>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{dest.country}</p>
-                            </div>
-                          </div>
-                          {dest.searchAlias && (
-                            <div className="bg-slate-800 text-white px-3 py-1 rounded-lg text-[10px] font-black group-hover/item:bg-pink-500 transition-colors">
-                              {dest.searchAlias}
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <button 
+                onClick={() => setShowDestDropdown(true)}
+                className="w-full text-left bg-white/40 backdrop-blur-xl border border-white/60 rounded-[28px] py-6 pl-14 pr-6 text-lg text-slate-800 font-black focus:outline-none focus:ring-4 focus:ring-pink-100 shadow-xl shadow-slate-100/50 transition-all relative group"
+              >
+                <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-hover:text-pink-500 transition-colors" size={20} />
+                {formData.destination ? formData.destination : <span className="text-slate-300">例如：日本、曼谷...</span>}
+              </button>
             </div>
 
             <div className="flex flex-col gap-4">
@@ -244,9 +200,9 @@ export default function AiForm({
           <div className="md:col-span-2 pt-6">
             <button
               onClick={handleNext}
-              disabled={!formData.destination || !formData.companions}
+              disabled={!formData.departure || !formData.destination || !formData.companions}
               className={`w-full py-6 rounded-full font-black text-sm uppercase tracking-[0.2em] text-white flex items-center justify-center gap-3 transition-all ${
-                !formData.destination || !formData.companions
+                !formData.departure || !formData.destination || !formData.companions
                   ? 'bg-slate-200 opacity-60 cursor-not-allowed'
                   : 'bg-slate-800 shadow-2xl shadow-slate-300 active:scale-95 hover:bg-slate-900'
               }`}
@@ -365,6 +321,32 @@ export default function AiForm({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showDepDropdown && (
+        <LocationPickerPopup 
+          title="出發地"
+          query={formData.departure}
+          onClose={() => setShowDepDropdown(false)}
+          onSelect={(dest) => {
+            const displayValue = dest.searchAlias ? `${dest.place} (${dest.searchAlias})` : dest.place;
+            setFormData(p => ({ ...p, departure: displayValue }));
+            setShowDepDropdown(false);
+          }}
+        />
+      )}
+
+      {showDestDropdown && (
+        <LocationPickerPopup 
+          title="目的地"
+          query={formData.destination}
+          onClose={() => setShowDestDropdown(false)}
+          onSelect={(dest) => {
+            const displayValue = dest.searchAlias ? `${dest.place} (${dest.searchAlias})` : dest.place;
+            setFormData(p => ({ ...p, destination: displayValue }));
+            setShowDestDropdown(false);
+          }}
+        />
+      )}
     </div>
   );
 }
