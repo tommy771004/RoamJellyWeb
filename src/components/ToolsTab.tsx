@@ -1,4 +1,5 @@
 import React, { createContext, use, useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { CloudRain, Check, Sparkles, Sun, Send, CheckCircle2, Plane, Star, ExternalLink, SlidersHorizontal, ArrowDownUp } from 'lucide-react';
 import GlassCard from './GlassCard';
 import {
@@ -427,14 +428,14 @@ function LedgerSection() {
         {expenses && expenses.length > 0 && (
           <div className="flex flex-col gap-3 mb-4 w-full">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-2">最新花費紀錄</span>
-            <div className="w-full overflow-x-auto md:overflow-visible pb-2 mt-2">
-              <table className="responsive-table !rounded-[24px]">
+            <div className="table-wrapper mt-2">
+              <table className="responsive-table">
                 <caption className="sr-only">最新花費清單</caption>
                 <thead>
                   <tr>
                     <th scope="col">支出項目</th>
                     <th scope="col">代墊人</th>
-                    <th scope="col" className="text-right">金額</th>
+                    <th scope="col" className="amount">金額</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -453,7 +454,7 @@ function LedgerSection() {
                           </span>
                         </div>
                       </td>
-                      <td data-label="金額" className="md:text-right font-variant-numeric:tabular-nums !text-right">
+                      <td data-label="金額" className="amount">
                         <div className="flex flex-col items-end">
                           <span className="font-black text-fuchsia-500 text-[16px]">{exp.currency} {exp.amount.toLocaleString()}</span>
                         </div>
@@ -607,14 +608,14 @@ function SettlementsSection() {
           </GlassCard>
         )}
         {settlements.length > 0 && (
-          <div className="w-full overflow-x-auto md:overflow-visible pb-2 mt-2">
-            <table className="responsive-table !rounded-[24px]">
+          <div className="table-wrapper mt-2">
+            <table className="responsive-table">
               <caption className="sr-only">結算清單</caption>
               <thead>
                 <tr>
                   <th scope="col">付款人</th>
                   <th scope="col">收款人</th>
-                  <th scope="col" className="text-right">結算金額</th>
+                  <th scope="col" className="amount">結算金額</th>
                   <th scope="col" className="text-right">動作</th>
                 </tr>
               </thead>
@@ -636,7 +637,7 @@ function SettlementsSection() {
                         </span>
                       </div>
                     </td>
-                    <td data-label="結算金額" className="md:text-right font-variant-numeric:tabular-nums !text-right">
+                    <td data-label="結算金額" className="amount">
                       <div className="flex justify-end">
                         <span className="font-black text-fuchsia-500 text-[18px]">{settlement.currency} {settlement.amount.toLocaleString()}</span>
                       </div>
@@ -724,7 +725,7 @@ export default function ToolsTab() {
 }
 
 function ToolsTabContent() {
-  const { activeTripId } = useAppStore();
+  const { activeTripId, setActiveTab } = useAppStore();
   const [flights, setFlights] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
@@ -753,9 +754,38 @@ function ToolsTabContent() {
     return result;
   }, [flights, filterMode]);
 
+  if (!activeTripId) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50/30 overflow-y-auto scroll-smooth">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-4xl w-full bg-white/70 backdrop-blur-2xl border border-white rounded-[48px] p-10 md:p-16 shadow-2xl flex flex-col md:flex-row items-center gap-10 md:gap-16 my-auto"
+        >
+          <div className="w-32 h-32 bg-fuchsia-100 rounded-[40px] flex items-center justify-center text-6xl shadow-inner shrink-0 animate-pulse">
+            🧳
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <h2 className="text-[32px] md:text-4xl font-black text-slate-800 mb-4 tracking-tight leading-tight">尚未選擇行程專案</h2>
+            <p className="text-slate-500 font-bold text-lg mb-10 leading-relaxed">
+              旅途工具包（天氣、清單、分帳）需要與特定行程連結，請先選擇或建立一個行程專案。
+            </p>
+            <button 
+              onClick={() => setActiveTab('itinerary')}
+              className="w-full md:w-auto px-12 py-5 rounded-[24px] bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3"
+            >
+              <Sparkles size={20} />
+              前往規劃我的行程
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <div className="pt-8 pb-32 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full h-full overflow-y-auto scrollbar-hide bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] absolute inset-0 transition-all duration-300">
-      <div className="flex flex-col max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto w-full gap-y-10 pl-0 pt-[50px]">
+    <div className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] transition-all duration-300">
+      <div className="pt-8 pb-32 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-10">
         <TripSelectorBar />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">

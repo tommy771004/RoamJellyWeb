@@ -168,7 +168,7 @@ body {
 }
 .dark .jelly-bg {
   background-image: none;
-  background-color: var(--color-surface); /* Will be overridden by Tailwind classes but just in case */
+  background-color: var(--color-surface);
 }
 
 .jelly-surface {
@@ -249,60 +249,124 @@ body {
   word-wrap: normal;
   white-space: nowrap;
   direction: ltr;
-  /* Support for all WebKit browsers. */
   -webkit-font-smoothing: antialiased;
-  /* Support for Safari and Chrome. */
   text-rendering: optimizeLegibility;
-  /* Support for Firefox. */
   -moz-osx-font-smoothing: grayscale;
-  /* Support for IE. */
   font-feature-settings: 'liga';
 }
 
-/* Responsive Table Styles (Route B / Mobile-Optimized) */
-.responsive-table {
+/* ── Responsive Table (designUI.md compliant) ────────────────────────────────
+ * Strategy: Desktop = table (比較型資料保留表格結構)
+ *           Mobile  = card-stack per <tr> (逐筆閱讀適合卡片式)
+ *
+ * Key techniques from designUI.md:
+ * 1. thead visually-hidden on mobile (accessible, not display:none)
+ * 2. table/thead/tbody/tr/th/td all set display:block on mobile
+ * 3. data-label::before provides column context on each mobile td
+ * 4. font-variant-numeric: tabular-nums on amount columns
+ * 5. min-width on desktop to prevent compression
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/* Scroll wrapper — enables horizontal scroll on narrow screens */
+.table-wrapper {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  overflow: hidden;
-  border-radius: 32px;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(25px);
-  border: 1.5px solid white;
+  overflow-x: auto;
 }
 
+/* ── Mobile-first: make every table element block-level ── */
+.responsive-table,
+.responsive-table thead,
+.responsive-table tbody,
+.responsive-table tr,
+.responsive-table th,
+.responsive-table td {
+  display: block;
+}
+
+/* Visually hide thead on mobile (screen-reader accessible — do NOT use display:none) */
 .responsive-table thead {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
-@media (min-width: 768px) {
-  .responsive-table thead {
-    display: table-header-group;
-    background: rgba(248, 250, 252, 0.5);
-  }
+/* Each <tr> becomes a standalone card on mobile */
+.responsive-table tbody tr {
+  margin-bottom: 1.25rem;
+  border-radius: 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
 }
 
-.responsive-table th {
-  padding: 1.25rem;
-  text-align: left;
-  font-size: 11px;
+/* Each <td>: flex row with label on the left, value on the right */
+.responsive-table td {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid rgba(241, 245, 249, 0.8);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.responsive-table td:last-child {
+  border-bottom: none;
+}
+
+/* data-label pseudo — restores column context that the hidden thead would provide */
+.responsive-table td::before {
+  content: attr(data-label);
+  font-size: 10px;
   font-weight: 900;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  border-bottom: 1.5px solid #f1f5f9;
+  letter-spacing: 0.07em;
+  flex-shrink: 0;
+  margin-right: 1rem;
+  line-height: 1;
 }
 
-.responsive-table tr {
-  display: block;
-  margin-bottom: 1.5rem;
-  border-radius: 24px;
-  border: 1.5px solid white;
-  background: white;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+/* Tabular figures for monetary/numeric columns */
+.responsive-table td[data-label="金額"],
+.responsive-table td[data-label="結算金額"],
+.responsive-table td[data-label="價格 (TWD)"],
+.responsive-table td.amount {
+  font-variant-numeric: tabular-nums;
 }
 
+/* ── Desktop (≥ 768px): restore standard table layout ── */
 @media (min-width: 768px) {
+  .responsive-table {
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 560px; /* prevent table compression per designUI.md §3.2 */
+  }
+
+  /* Un-hide the thead and restore as table-header-group */
+  .responsive-table thead {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    display: table-header-group;
+    background: rgba(248, 250, 252, 0.6);
+  }
+
+  .responsive-table tbody {
+    display: table-row-group;
+  }
+
+  /* <tr> reverts to a standard table row */
   .responsive-table tr {
     display: table-row;
     margin-bottom: 0;
@@ -311,59 +375,115 @@ body {
     background: transparent;
     box-shadow: none;
   }
-  .responsive-table tr {
-    border-bottom: 1px solid rgba(241, 245, 249, 0.5);
+
+  .responsive-table tbody tr {
+    border-bottom: 1px solid rgba(241, 245, 249, 0.6);
   }
-  .responsive-table tr:last-child {
+
+  .responsive-table tbody tr:last-child {
     border-bottom: none;
   }
-  .responsive-table tr:hover {
-    background: rgba(255, 255, 255, 0.6);
+
+  .responsive-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.5);
   }
-}
 
-.responsive-table td {
-  display: block;
-  padding: 1rem 1.25rem;
-  text-align: right;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #334155;
-  border-bottom: 1px solid #f8fafc;
-  position: relative;
-}
-
-.responsive-table td:last-child {
-  border-bottom: none;
-}
-
-@media (min-width: 768px) {
+  /* <th> and <td> revert to table-cell */
+  .responsive-table th,
   .responsive-table td {
     display: table-cell;
-    padding: 1.25rem;
-    text-align: left;
+    padding: 1rem 1.25rem;
     border-bottom: none;
+  }
+
+  .responsive-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 1.5px solid rgba(241, 245, 249, 0.8);
+  }
+
+  /* Hide pseudo-labels on desktop — header row provides context */
+  .responsive-table td::before {
+    display: none;
+  }
+
+  /* Amount columns: right-align on desktop */
+  .responsive-table td[data-label="金額"],
+  .responsive-table td[data-label="結算金額"],
+  .responsive-table td[data-label="價格 (TWD)"],
+  .responsive-table td.amount {
+    text-align: right;
   }
 }
 
-/* The core logic from the tutorial: data-label for mobile context */
-.responsive-table td:before {
-  content: attr(data-label);
-  position: absolute;
-  left: 1.25rem;
-  top: 50%;
-  transform: translateY(-50%);
+/* ── Scroll Table (designUI.md compliant) ──────────────────────────────────
+ * Always retains table layout, relies on .table-wrapper to scroll horizontally.
+ * Used for comparison data (e.g. Flight Search Results).
+ * ──────────────────────────────────────────────────────────────────────────── */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 650px; /* Forces horizontal scroll on mobile */
+}
+
+.scroll-table th,
+.scroll-table td {
+  padding: 1rem 1.25rem;
+}
+
+.scroll-table th {
+  text-align: left;
   font-size: 10px;
   font-weight: 900;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  pointer-events: none;
+  letter-spacing: 0.1em;
+  border-bottom: 1.5px solid rgba(241, 245, 249, 0.8);
+  background: rgba(248, 250, 252, 0.6);
+  white-space: nowrap;
 }
 
-@media (min-width: 768px) {
-  .responsive-table td:before {
-    display: none;
-  }
+.scroll-table tbody tr {
+  border-bottom: 1px solid rgba(241, 245, 249, 0.6);
+  transition: background-color 0.2s;
 }
 
+.scroll-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.scroll-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.scroll-table td {
+  border-bottom: 1px solid rgba(241, 245, 249, 0.6);
+}
+
+.scroll-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Numeric column alignment standard */
+.scroll-table th.amount,
+.scroll-table td.amount,
+.responsive-table th.amount,
+.responsive-table td.amount {
+  text-align: right;
+}
+
+.scroll-table td.amount,
+.responsive-table td.amount {
+  font-variant-numeric: tabular-nums;
+}

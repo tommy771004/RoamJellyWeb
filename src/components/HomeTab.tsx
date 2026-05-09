@@ -159,15 +159,15 @@ function FlightTable({
   onToggleTrack: (e: React.MouseEvent, f: SearchItem) => void;
 }) {
   return (
-    <div className="w-full overflow-x-auto md:overflow-visible pb-4">
-      <table className="responsive-table">
+    <div className="table-wrapper pb-4">
+      <table className="scroll-table">
         <caption className="sr-only">搜尋結果比較表</caption>
         <thead>
           <tr>
             <th scope="col">航空公司</th>
             <th scope="col">航班時間</th>
             <th scope="col">轉機</th>
-            <th scope="col" className="text-right">價格 (TWD)</th>
+            <th scope="col" className="amount">價格 (TWD)</th>
             <th scope="col" className="text-right">動作</th>
           </tr>
         </thead>
@@ -175,18 +175,18 @@ function FlightTable({
           {results.map((flight) => (
             <tr key={flight.id} className="cursor-pointer hover:bg-slate-50/50 transition-colors" onClick={() => onPress(flight)}>
               <td data-label="航空公司">
-                <div className="flex items-center gap-3 md:justify-start justify-end">
+                <div className="flex items-center gap-3 justify-start">
                   <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-sm font-black text-primary border border-slate-100 flex-shrink-0">
                     {flight.details?.airline?.charAt(0) || flight.provider.charAt(0)}
                   </div>
-                  <div className="flex flex-col items-end md:items-start overflow-hidden">
+                  <div className="flex flex-col items-start overflow-hidden">
                     <span className="text-slate-800 text-sm font-bold truncate max-w-[120px]">{flight.details?.airline || flight.provider}</span>
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{flight.provider}</span>
                   </div>
                 </div>
               </td>
               <td data-label="航班時間">
-                <div className="flex flex-col items-end md:items-start">
+                <div className="flex flex-col items-start">
                   <div className="flex items-center gap-2">
                     <span className="text-slate-800 font-black">{flight.details?.departure}</span>
                     <span className="text-slate-300 text-xs">→</span>
@@ -196,14 +196,14 @@ function FlightTable({
                 </div>
               </td>
               <td data-label="轉機">
-                <div className="flex flex-col items-end md:items-start">
+                <div className="flex flex-col items-start">
                   <span className={`text-xs font-black ${flight.details?.stops === 0 ? 'text-emerald-500' : 'text-fuchsia-500'}`}>
                     {flight.details?.stops === 0 ? '直飛' : `${flight.details?.stops} 轉`}
                   </span>
                 </div>
               </td>
-              <td data-label="價格 (TWD)" className="md:text-right font-variant-numeric:tabular-nums !text-right">
-                <div className="flex flex-col items-end text-lg font-black text-slate-800 tracking-tight">
+              <td data-label="價格 (TWD)" className="amount">
+                <div className="flex flex-col items-end text-lg font-black text-slate-800 tracking-tight justify-end">
                   <span className="text-fuchsia-600">{flight.price.toLocaleString()}</span>
                 </div>
               </td>
@@ -255,6 +255,55 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [showDestinationPicker, setShowDestinationPicker] = useState<boolean>(false);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
 
+  const [flyingCard, setFlyingCard] = useState<{ id: number; startX: number; startY: number } | null>(null);
+
+  const expertHandbooks = [
+    {
+      id: 101,
+      title: '京都賞楓 3 日遊',
+      author: '@TravelBlogger',
+      image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop',
+      days: 3,
+      tags: ['賞楓', '古都', '美食']
+    },
+    {
+      id: 102,
+      title: '曼谷美食 5 日深度行',
+      author: '@FoodieTraveler',
+      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=800&auto=format&fit=crop',
+      days: 5,
+      tags: ['巷弄美食', '按摩', '夜市']
+    },
+    {
+      id: 103,
+      title: '倫敦藝文漫步',
+      author: '@ArtHunter',
+      image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop',
+      days: 4,
+      tags: ['博物館', '文創', '地標']
+    }
+  ];
+
+  const handleCopyExpertItinerary = (e: React.MouseEvent, handbook: any) => {
+    e.stopPropagation();
+    
+    // Get button position for animation start
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setFlyingCard({
+      id: Date.now(),
+      startX: rect.left + rect.width / 2,
+      startY: rect.top + rect.height / 2
+    });
+
+    // Mock copy behavior
+    showToast(`已成功將行程 ${handbook.title} 複製到您的手帳！`, 'success');
+    
+    // Reset animation after it finishes
+    setTimeout(() => {
+      setFlyingCard(null);
+    }, 1000);
+  };
+
   const [communityTrips, setCommunityTrips] = useState<any[]>([]);
   const [viewType, setViewType] = useState<'grid' | 'table'>('grid');
 
@@ -282,6 +331,15 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   const handleCloneTrip = async (e: React.MouseEvent, trip: any) => {
     e.stopPropagation();
+    
+    // Trigger animation
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setFlyingCard({
+      id: Date.now(),
+      startX: rect.left + rect.width / 2,
+      startY: rect.top + rect.height / 2
+    });
+
     try {
       const { getStoredToken } = await import('../lib/workflowApi');
       const token = getStoredToken();
@@ -937,44 +995,114 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             </AnimatePresence>
           ) : null}
 
-          {/* Social Community Trips */}
-          <div className="mt-12 flex flex-col">
-            <span className="text-2xl font-black mb-4 text-slate-800 tracking-tight pl-2 flex items-center gap-2">熱門達人手帳 🌍</span>
-            <div className="flex overflow-x-auto gap-4 pb-6 scrollbar-hide px-2">
-              {communityTrips.map((trip) => (
-                <div key={trip.id} className="min-w-[280px] sm:min-w-[320px] rounded-3xl overflow-hidden relative shadow-lg group">
-                  {/* Aspect ratio background */}
-                  <div 
-                    className="w-full h-[180px] bg-cover bg-center" 
-                    style={{ 
-                      background: trip.cover?.startsWith('linear-gradient') ? trip.cover : (trip.cover ? `url(${trip.cover})` : '#f1f5f9'),
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }} 
-                  />
-                  {/* Dark overlay gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 pointer-events-none" />
-                  
-                  {/* Content */}
-                  <div className="absolute bottom-0 left-0 right-0 p-5 flex flex-col justify-end">
-                    <span className="text-white text-[13px] font-bold opacity-80 mb-1">{trip.author}</span>
-                    <span className="text-white text-[20px] font-black tracking-wide leading-tight mb-4 drop-shadow-md">{trip.title}</span>
-                    
-                    <button 
-                      onClick={(e) => handleCloneTrip(e, trip)}
-                      className="w-full py-3 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-bold text-[14px] flex items-center justify-center gap-2 transition-all active:scale-95 border border-white/50"
-                    >
-                      <Copy size={18} />
-                      複製行程
-                    </button>
-                  </div>
-                </div>
-              ))}
+          {/* Expert Handbooks Section */}
+          <div className="mt-16 mb-8 px-2">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles className="text-fuchsia-500" size={24} />
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight">熱門達人手帳</h2>
+            </div>
+            
+            <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
+              <div className="flex gap-6 min-w-max">
+                {expertHandbooks.map((handbook) => (
+                  <motion.div
+                    key={handbook.id}
+                    whileHover={{ y: -5 }}
+                    className="w-[280px] sm:w-[320px] group/handbook"
+                  >
+                    <GlassCard className="!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all">
+                      <div className="relative h-44 overflow-hidden">
+                        <img 
+                          src={handbook.image} 
+                          alt={handbook.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover/handbook:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-black text-white uppercase tracking-wider border border-white/30">
+                              {handbook.days} Days
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-6">
+                        <h3 className="text-xl font-black text-slate-800 mb-1 leading-tight">{handbook.title}</h3>
+                        <p className="text-sm font-bold text-slate-400 mb-4">{handbook.author}</p>
+                        
+                        <div className="flex flex-wrap gap-2 mb-6">
+                          {handbook.tags.map(tag => (
+                            <span key={tag} className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                        
+                        <button
+                          onClick={(e) => handleCopyExpertItinerary(e, handbook)}
+                          className="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-slate-800 active:scale-95 group/btn"
+                        >
+                          <Copy size={14} className="transition-transform group-hover/btn:rotate-12" />
+                          複製行程
+                        </button>
+                      </div>
+                    </GlassCard>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
+        </div>
+      </div>
 
-      </div>
-      </div>
+      {/* Animation Overlay for Flying Card */}
+      <AnimatePresence>
+        {flyingCard && (
+          <motion.div
+            key={flyingCard.id}
+            initial={{ 
+              position: 'fixed',
+              top: flyingCard.startY,
+              left: flyingCard.startX,
+              width: 160,
+              height: 100,
+              opacity: 1,
+              scale: 1,
+              zIndex: 9999,
+              borderRadius: '20px',
+              backgroundColor: '#f472b6',
+              boxShadow: '0 20px 50px rgba(244,114,182,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              x: '-50%',
+              y: '-50%'
+            }}
+            animate={{ 
+              top: [flyingCard.startY, flyingCard.startY - 150, window.innerHeight - 40],
+              left: [flyingCard.startX, flyingCard.startX + (window.innerWidth / 2 - flyingCard.startX) * 0.5, window.innerWidth / 2],
+              width: [160, 100, 20],
+              height: [100, 60, 20],
+              scale: [1, 1.1, 0.1],
+              opacity: [1, 1, 0],
+              rotate: [0, 15, 720]
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ 
+              duration: 1.2,
+              ease: [0.16, 1, 0.3, 1],
+              times: [0, 0.4, 1]
+            }}
+          >
+            <div className="flex flex-col items-center gap-1">
+              <Sparkles color="white" size={24} />
+              <div className="w-12 h-1 bg-white/40 rounded-full" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -2,14 +2,22 @@ const FREE_MODELS = [
   'google/gemini-2.0-pro-exp-02-05:free',
   'google/gemini-2.0-flash-lite-preview-02-05:free',
   'google/gemini-2.0-flash-thinking-exp:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
+  'google/gemini-2.0-flash-exp:free',
+  'deepseek/deepseek-r1:free',
   'deepseek/deepseek-r1-distill-llama-70b:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'meta-llama/llama-3.2-3b-instruct:free',
+  'qwen/qwen-2.5-72b-instruct:free',
   'qwen/qwen-2.5-coder-32b-instruct:free',
   'mistralai/mistral-nemo:free',
   'microsoft/phi-3-mini-128k-instruct:free',
-  'google/gemini-1.5-pro',
+  'microsoft/phi-3-medium-128k-instruct:free',
+  'huggingfaceh4/zephyr-7b-beta:free',
+  'nousresearch/hermes-3-llama-3.1-405b:free',
   'google/gemini-1.5-flash',
-  'openai/gpt-4o-mini'
+  'openai/gpt-4o-mini',
+  'google/gemini-1.5-pro'
 ];
 
 export async function fetchOpenRouterWithFallback(apiKey: string, prompt: string) {
