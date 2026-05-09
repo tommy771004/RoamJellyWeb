@@ -39,6 +39,7 @@ import {
   addFavorite,
   deleteFavorite,
   regenerateItinerarySpot,
+  geocodeSpot
 } from '../lib/workflowApi';
 import { suggestItineraryWithForm } from '../lib/openrouterApi';
 import { useItineraryStore } from '../store/useItineraryStore';
@@ -1648,13 +1649,37 @@ function ItineraryListItem({
     onEditingChange?.(item.node_id, item.day, false);
   };
 
-  const handleNavigate = () => {
-    if (!item.lat || !item.lng) return;
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleNavigate = async () => {
+    let lat = item.lat;
+    let lng = item.lng;
+    
+    if (!lat || !lng) {
+      setIsNavigating(true);
+      try {
+        const coords = await geocodeSpot(item.title, destination);
+        if (coords) {
+          lat = coords.lat;
+          lng = coords.lng;
+          // Optimistically update
+          onUpdate({ ...item, lat, lng });
+        }
+      } finally {
+        setIsNavigating(false);
+      }
+    }
+    
+    if (!lat || !lng) {
+      useAppStore.getState().showToast('無法取得景點座標', 'warning');
+      return;
+    }
+    
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const label = encodeURIComponent(item.title);
     const url = isIOS 
-      ? `maps://maps.apple.com/?q=${label}&ll=${item.lat},${item.lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lng}`;
+      ? `maps://maps.apple.com/?q=${label}&ll=${lat},${lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
     window.open(url, '_blank');
   };
 
@@ -1798,15 +1823,14 @@ function ItineraryListItem({
             ) : (
                <>
                  <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-1.5 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
-                 {item.lat && item.lng && (
-                   <button
-                     onClick={handleNavigate}
-                     className="inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all mb-2"
-                   >
-                     <MapPin size={10} strokeWidth={3} />
-                     在地圖查看
-                   </button>
-                 )}
+                 <button
+                   onClick={handleNavigate}
+                   disabled={isNavigating}
+                   className="inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all mb-2 disabled:opacity-50"
+                 >
+                   {isNavigating ? <Loader2 size={10} className="animate-spin" /> : <MapPin size={10} strokeWidth={3} />}
+                   在地圖查看
+                 </button>
                  {item.image_url && (
                    <div className="w-full h-40 sm:h-56 mt-3 mb-4 rounded-3xl overflow-hidden shadow-inner bg-slate-50 relative group/img cursor-pointer">
                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-3xl hover:scale-105 transition-transform duration-700" loading="lazy" referrerPolicy="no-referrer" />
@@ -1823,15 +1847,14 @@ function ItineraryListItem({
 
           {!isOffline && !isEditing && (
             <div className="flex flex-row sm:flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-              {item.lat && item.lng && (
-                <button
-                  onClick={handleNavigate}
-                  title="在地圖中導航"
-                  className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-emerald-500 hover:border-emerald-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
-                >
-                  <Navigation2 size={16} />
-                </button>
-              )}
+              <button
+                onClick={handleNavigate}
+                disabled={isNavigating}
+                title="在地圖中導航"
+                className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-emerald-500 hover:border-emerald-100 flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:opacity-50"
+              >
+                {isNavigating ? <Loader2 size={16} className="animate-spin" /> : <Navigation2 size={16} />}
+              </button>
               <button
                 onClick={() => void handleRegenerate()}
                 disabled={regenerating}
