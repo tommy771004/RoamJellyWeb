@@ -43,6 +43,7 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const isLoggedIn = !!userId;
   const lastActivityRef = useRef<number>(Date.now());
@@ -462,11 +463,44 @@ export default function App() {
               {isDarkMode ? 'light_mode' : 'dark_mode'}
             </span>
           </button>
-          <button
-            onClick={() => showToast('目前無新通知', 'info')}
-            className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400">
-            <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
-          </button>
+          <div className="relative hidden sm:block">
+            <button
+              onClick={() => setShowNotifications(v => !v)}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+              aria-label="通知"
+              aria-expanded={showNotifications}
+            >
+              <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
+            </button>
+            {showNotifications && (
+              <div
+                className="absolute right-0 top-12 w-72 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 z-50 overflow-hidden"
+                role="dialog"
+                aria-label="通知面板"
+              >
+                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                  <span className="font-bold text-[14px] text-slate-700">通知</span>
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="text-slate-400 hover:text-slate-600 text-[18px] leading-none"
+                    aria-label="關閉"
+                  >×</button>
+                </div>
+                <div className="flex flex-col items-center justify-center py-10 px-4 gap-2">
+                  <span className="text-3xl">🔔</span>
+                  <p className="text-[13px] text-slate-400 text-center font-medium">目前沒有新通知</p>
+                  <p className="text-[11px] text-slate-300 text-center">行程更新、協作邀請等訊息<br/>將在這裡顯示</p>
+                </div>
+              </div>
+            )}
+            {showNotifications && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowNotifications(false)}
+                aria-hidden="true"
+              />
+            )}
+          </div>
           
           <div 
             onClick={() => {

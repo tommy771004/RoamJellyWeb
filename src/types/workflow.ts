@@ -66,6 +66,14 @@ export interface Settlement {
   currency: string;
 }
 
+export interface SettlementHistoryEntry {
+  date: string;
+  clearedAt: string;
+  totalAmount: number;
+  count: number;
+  payers: string[];
+}
+
 export interface Collaborator {
   id: string;
   name: string;

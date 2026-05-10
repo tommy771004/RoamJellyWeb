@@ -16,8 +16,9 @@ import {
   shareText,
   submitLedgerExpense,
   updateChecklist,
+  fetchSettlementHistory,
 } from '../lib/workflowApi';
-import type { TripInfo, WeatherData, TripSummary, ChecklistItem, Settlement } from '../types/workflow';
+import type { TripInfo, WeatherData, TripSummary, ChecklistItem, Settlement, SettlementHistoryEntry } from '../types/workflow';
 import { suggestPackingList } from '../lib/openrouterApi';
 import { useToolsStore, Expense } from '../store/useToolsStore';
 import { useAppStore } from '../store/useAppStore';
@@ -65,6 +66,7 @@ interface ToolsTabState {
   destination: string;
   checklist: ChecklistItem[];
   settlements: Settlement[];
+  settlementHistory: SettlementHistoryEntry[];
   expenses: Expense[];
   members: string[];
   expenseByCurrency: Record<string, number>;
@@ -114,6 +116,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [tripInfo, setTripInfo] = useState<TripInfo | null>(null);
+  const [settlementHistory, setSettlementHistory] = useState<SettlementHistoryEntry[]>([]);
   const [form, setForm] = useState<ExpenseForm>({
     title: '',
     amount: '',
@@ -276,6 +279,8 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
         clearSettlementRecord(settlement.from, settlement.to, settlement.currency);
         if (tripId) {
            await clearSettlement(tripId);
+           const history = await fetchSettlementHistory(tripId);
+           setSettlementHistory(history);
         }
         showToast(`${settlement.from} → ${settlement.to} 已標記結清。`, 'success');
       } catch {
@@ -286,6 +291,11 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     },
   };
 
+  useEffect(() => {
+    if (!tripId) return;
+    void fetchSettlementHistory(tripId).then(setSettlementHistory).catch(() => {});
+  }, [tripId]);
+
   const state: ToolsTabState = {
     loading,
     tip,
@@ -293,6 +303,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     destination: tripInfo?.destination ?? '',
     checklist,
     settlements,
+    settlementHistory,
     expenses,
     members,
     expenseByCurrency,
@@ -706,6 +717,39 @@ function SettlementsSection() {
   );
 }
 
+function SettlementHistorySection() {
+  const { state: { settlementHistory } } = useToolsTabContext();
+  if (settlementHistory.length === 0) return null;
+  return (
+    <section className="flex flex-col mb-12">
+      <div className="flex items-center justify-between px-4 mb-4">
+        <h3 className="font-serif text-[20px] text-[#2C302E]">結清紀錄</h3>
+        <span className="text-[11px] text-slate-400 font-medium">{settlementHistory.length} 筆</span>
+      </div>
+      <div className="flex flex-col gap-3 w-full">
+        {settlementHistory.map((entry) => (
+          <GlassCard key={entry.date} className="!p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-green-50 border border-green-100 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={18} className="text-green-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-slate-700">
+                {new Date(entry.clearedAt).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })} 結清
+              </p>
+              <p className="text-[12px] text-slate-400 mt-0.5">
+                {entry.count} 筆費用 ・ 涉及 {entry.payers.length} 位成員
+              </p>
+            </div>
+            <span className="text-[13px] font-black text-green-600 shrink-0">
+              TWD {Math.round(entry.totalAmount).toLocaleString()}
+            </span>
+          </GlassCard>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ── Trip selector bar ─────────────────────────────────────────────────────────
 
 function TripSelectorBar() {
@@ -829,6 +873,7 @@ function ToolsTabContent() {
           <div className="flex flex-col gap-y-8">
             <LedgerSection />
             <SettlementsSection />
+            <SettlementHistorySection />
           </div>
         </div>
 

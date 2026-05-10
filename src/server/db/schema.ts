@@ -104,6 +104,7 @@ export const expenses = pgTable('expenses', {
   amount: real('amount').notNull(),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  clearedAt: timestamp('cleared_at'),
 });
 
 export const searchHistory = pgTable('search_history', {

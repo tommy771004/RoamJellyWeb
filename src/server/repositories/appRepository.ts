@@ -1,4 +1,4 @@
-import { eq, and, inArray, asc } from 'drizzle-orm';
+import { eq, and, inArray, asc, isNull, isNotNull } from 'drizzle-orm';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
 
@@ -327,7 +327,9 @@ export class AppRepository {
 
   async getAggregatedSettlements(tripId: string) {
     if (!this.db) return [];
-    const rows = await this.db.select().from(schema.expenses).where(eq(schema.expenses.tripId, tripId));
+    const rows = await this.db.select().from(schema.expenses).where(
+      and(eq(schema.expenses.tripId, tripId), isNull(schema.expenses.clearedAt))
+    );
     const members = await this.db.select().from(schema.tripMembers).where(eq(schema.tripMembers.tripId, tripId));
     
     if (members.length === 0 || rows.length === 0) return [];
@@ -383,8 +385,30 @@ export class AppRepository {
 
   async clearSettlements(tripId: string) {
     if (!this.db) return false;
-    await this.db.delete(schema.expenses).where(eq(schema.expenses.tripId, tripId));
+    await this.db
+      .update(schema.expenses)
+      .set({ clearedAt: new Date() })
+      .where(and(eq(schema.expenses.tripId, tripId), isNull(schema.expenses.clearedAt)));
     return true;
+  }
+
+  async getSettlementHistory(tripId: string) {
+    if (!this.db) return [];
+    const rows = await this.db
+      .select()
+      .from(schema.expenses)
+      .where(and(eq(schema.expenses.tripId, tripId), isNotNull(schema.expenses.clearedAt)))
+      .orderBy(asc(schema.expenses.clearedAt));
+
+    const grouped: Record<string, { clearedAt: string; totalAmount: number; count: number; payers: string[] }> = {};
+    for (const r of rows) {
+      const key = r.clearedAt!.toISOString().slice(0, 10);
+      if (!grouped[key]) grouped[key] = { clearedAt: r.clearedAt!.toISOString(), totalAmount: 0, count: 0, payers: [] };
+      grouped[key].totalAmount += r.amount;
+      grouped[key].count += 1;
+      if (!grouped[key].payers.includes(r.payerId)) grouped[key].payers.push(r.payerId);
+    }
+    return Object.entries(grouped).map(([date, g]) => ({ date, ...g })).reverse();
   }
 
   async getFavoritesByTrip(tripId: string) {

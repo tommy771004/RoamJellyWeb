@@ -38,9 +38,7 @@ export async function ensureClientAccessToken(): Promise<string> {
     console.error('Failed to get dev-token', error);
   }
 
-  const dummyToken = 'dummy_token';
-  setClientAccessToken(dummyToken);
-  return dummyToken;
+  throw new Error('No access token available. Please log in.');
 }
 
 export function setClientAccessToken(token: string) {
@@ -165,7 +163,7 @@ export async function addFavorite(tripId: string, title: string, emoji: string):
   } catch (error) {
     console.error('addFavorite failed', error);
   }
-  return { id: `fav_${Date.now()}`, title: title, emoji: emoji, lat: 35.6895, lng: 139.6917 }; 
+  return null;
 }
 export async function deleteFavorite(id: string): Promise<any> { 
   try {
@@ -455,4 +453,17 @@ export async function regenerateItinerarySpot(params: {
   }
   const data = await res.json();
   return data.data;
+}
+
+export async function fetchSettlementHistory(tripId: string): Promise<any[]> {
+  try {
+    const token = getStoredToken();
+    const res = await fetch(`/api/settlements/history?trip_id=${encodeURIComponent(tripId)}`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
 }

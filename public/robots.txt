@@ -1,0 +1,31 @@
+User-agent: *
+Allow: /
+
+# AI search bots — explicitly allowed for indexing and citation
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Training-only crawlers — disallowed (search bots above are still permitted)
+User-agent: CCBot
+Disallow: /
+
+# TODO:DOMAIN replace roamjelly.com with real domain before going live
+Sitemap: https://roamjelly.com/sitemap.xml

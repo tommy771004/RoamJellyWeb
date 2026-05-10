@@ -75,18 +75,6 @@ const SEARCH_HISTORY_MAX = 200;
 const PLANNING_LOG_MAX = 500;
 const PLANNING_SNAPSHOT_TTL_SECONDS = 6 * 60 * 60;
 
-const TOKYO_COORDS: Record<string, { lat: number; lng: number }> = {
-  淺草寺: { lat: 35.7148, lng: 139.7967 },
-  晴空塔: { lat: 35.7101, lng: 139.8107 },
-  上野公園: { lat: 35.7159, lng: 139.7738 },
-  築地市場: { lat: 35.6654, lng: 139.7707 },
-  新宿御苑: { lat: 35.6851, lng: 139.7099 },
-  台場: { lat: 35.6277, lng: 139.775 },
-  渋谷: { lat: 35.658, lng: 139.7016 },
-  秋葉原: { lat: 35.6984, lng: 139.7731 },
-  東京鐵塔: { lat: 35.6586, lng: 139.7454 },
-  明治神宮: { lat: 35.6763, lng: 139.6993 },
-};
 
 let redisClient: any | null = null;
 
@@ -1203,9 +1191,13 @@ async function startServer() {
   });
 
   app.get('/api/weather', async (req, res) => {
-    let lat = String(req.query.lat ?? '35.6762');
-    let lng = String(req.query.lng ?? '139.6503');
     const city = req.query.city ? String(req.query.city) : null;
+    if (!req.query.lat && !req.query.lng && !city) {
+      res.status(400).json({ status: 'error', message: 'lat/lng or city is required' });
+      return;
+    }
+    let lat = String(req.query.lat ?? '');
+    let lng = String(req.query.lng ?? '');
     try {
       if (city && !req.query.lat && !req.query.lng) {
         const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
@@ -1554,9 +1546,8 @@ async function startServer() {
 
     const nodes = await repo.getItineraryNodes(tripId);
     const formatted = nodes.map((node, index) => {
-      const knownCoords = TOKYO_COORDS[node.title];
-      const lat = node.lat ?? knownCoords?.lat ?? null;
-      const lng = node.lng ?? knownCoords?.lng ?? null;
+      const lat = node.lat ?? null;
+      const lng = node.lng ?? null;
       return {
         id: node.nodeId,
         day: node.day,
@@ -1845,6 +1836,18 @@ async function startServer() {
     await repo.clearSettlements(trip_id);
     const rows = await repo.getAggregatedSettlements(trip_id);
     res.json({ status: 'success', settlements: rows });
+  });
+
+  app.get('/api/settlements/history', async (req, res) => {
+    const tripId = String(req.query.trip_id ?? '').trim();
+    if (!tripId) {
+      res.status(400).json({ status: 'error', message: 'trip_id is required' });
+      return;
+    }
+    const allowed = await ensureTripRole(req, res, tripId, 'viewer');
+    if (!allowed) return;
+    const history = await repo.getSettlementHistory(tripId);
+    res.json(history);
   });
 
   app.get('/api/favorites', async (req, res) => {

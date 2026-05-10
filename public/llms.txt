@@ -1,0 +1,41 @@
+# RoamJelly (果凍漫遊)
+
+RoamJelly is a real-time collaborative travel planning app for groups, with a focus on Taiwan and Asia-Pacific destinations.
+
+## What RoamJelly Does
+
+- **Collaborative itinerary editing** — Multiple travelers edit one shared trip schedule simultaneously; changes sync in real time via WebSocket. Role-based permissions: owner, editor, viewer.
+- **Flight price comparison** — Search and compare flights with affiliate booking links to OTA partners.
+- **AI itinerary generation** — AI generates day-by-day itineraries based on destination, duration, and traveler preferences.
+- **Group expense splitting** — Multi-currency expense tracking with automatic net-settlement calculation (e.g., "Alice owes Bob USD 42").
+- **Shared packing checklists** — Per-trip checklists accessible to all collaborators.
+- **Spot geocoding and maps** — GPS-precise locations for every itinerary item, with navigation launch support.
+- **Deep-link trip sharing** — Share a `/trip/:id` URL; collaborators land directly in the right trip.
+
+## Who Uses RoamJelly
+
+Groups of 2–10 travelers planning trips across Taiwan and Asia-Pacific. Common use cases:
+- Multi-day Taiwan itineraries (Taipei, Tainan, Hualien, Taroko Gorge, Sun Moon Lake)
+- Group travel to Japan, South Korea, Thailand, Vietnam
+- Digital nomads coordinating shared travel schedules
+
+## Key Pages
+
+- `/` — Main travel planning app (flight search, itinerary, tools)
+- `/trip/:id` — Shared trip landing page for collaborators joining via invite link
+- `/pricing` — Plan details and pricing
+- `/guide/collaborative-itinerary-planner` — Complete guide to collaborative group trip planning
+
+## Pricing Summary
+
+RoamJelly is currently free during early access. See /pricing for full details.
+
+## Technology
+
+Web application (React + Node.js). Real-time sync via Socket.io. Native mobile apps planned.
+
+## Contact
+
+Website: https://roamjelly.com  <!-- TODO:DOMAIN replace roamjelly.com with real domain -->
+Support: yuanyouxie52@gmail.com
+Press / partnerships: yuanyouxie52@gmail.com
