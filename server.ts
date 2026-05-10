@@ -1203,9 +1203,22 @@ async function startServer() {
   });
 
   app.get('/api/weather', async (req, res) => {
-    const lat = String(req.query.lat ?? '35.6762');
-    const lng = String(req.query.lng ?? '139.6503');
+    let lat = String(req.query.lat ?? '35.6762');
+    let lng = String(req.query.lng ?? '139.6503');
+    const city = req.query.city ? String(req.query.city) : null;
     try {
+      if (city && !req.query.lat && !req.query.lng) {
+        const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+        const geoRes = await fetch(geoUrl);
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          if (geoData.results && geoData.results.length > 0) {
+            lat = String(geoData.results[0].latitude);
+            lng = String(geoData.results[0].longitude);
+          }
+        }
+      }
+
       const url =
         `https://api.open-meteo.com/v1/forecast` +
         `?latitude=${lat}&longitude=${lng}` +

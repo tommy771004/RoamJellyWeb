@@ -49,6 +49,7 @@ export interface WeatherData {
   temp_min: number;
   temp_max: number;
   rain_prob: number;
+  daily?: any[];
 }
 
 export interface ChecklistItem {

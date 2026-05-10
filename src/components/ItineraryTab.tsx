@@ -2029,21 +2029,21 @@ function ItineraryListItem({
                     value={editImageUrl}
                     onChange={e => setEditImageUrl(e.target.value)}
                     placeholder="貼上照片網址 (例如: https://...jpg)"
-                   className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                 />
-                 {facts && facts.length > 0 && (
-                   <select
-                     value={editLinkedFactId}
-                     onChange={e => setEditLinkedFactId(e.target.value)}
-                     className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                   >
-                     <option value="">無關聯 Travel Fact (未選擇)</option>
-                     {facts.map(f => (
-                       <option key={f.id} value={f.id}>
-                         {f.title} ({f.factType})
-                       </option>
-                     ))}
-                   </select>
+                    className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                  />
+                  {facts && facts.length > 0 && (
+                    <select
+                      value={editLinkedFactId}
+                      onChange={e => setEditLinkedFactId(e.target.value)}
+                      className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                    >
+                      <option value="">無關聯 Travel Fact (未選擇)</option>
+                      {facts.map(f => (
+                        <option key={f.id} value={f.id}>
+                          {f.title} ({f.factType})
+                        </option>
+                      ))}
+                    </select>
                   )}
                   <div className="flex items-center gap-3 flex-wrap">
                      <button type="button" onClick={handleSave} className="px-6 py-2 rounded-full bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">保存</button>

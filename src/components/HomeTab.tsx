@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy, Globe, ExternalLink } from 'lucide-react';
+import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy, Globe, ExternalLink, Bed, Ticket, CarFront } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -77,17 +77,18 @@ interface FlightCardProps {
 
 function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onToggleSave, onToggleTrack }: FlightCardProps) {
   const providerName = flight.details?.airline || flight.provider;
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <div 
-      onClick={onPress} 
+      onClick={() => setIsExpanded(!isExpanded)} 
       className="block w-full h-full text-left appearance-none cursor-pointer border-none bg-transparent p-0 flex flex-col focus:outline-none group/card"
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onPress();
+          setIsExpanded(!isExpanded);
         }
       }}
     >
@@ -165,6 +166,32 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
           </div>
         </div>
 
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden border-t border-slate-200/50 bg-slate-50/80"
+            >
+              <div className="p-4 px-5 text-sm flex flex-col gap-3">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Flight Details</span>
+                  <p className="text-slate-600 font-medium leading-relaxed">
+                    Operated by {flight.details?.airline || flight.provider}. This flight takes {flight.details?.duration || '3h 15m'} and offers an excellent travel experience. Please double-check terminal information upon arrival.
+                  </p>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Baggage & Extras</span>
+                  <p className="text-slate-600 font-medium leading-relaxed">
+                    Standard fare typically includes one cabin bag. Additional baggage allowance and seat selection may incur extra charges with {flight.provider}.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Separator with cutout effect */}
         <div className="relative flex items-center h-3 w-full">
           <div className="absolute left-[-6px] w-3 h-3 bg-[#FAFAFA] rounded-full border-r border-slate-200/60 shadow-inner" />
@@ -183,7 +210,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
           </div>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={onToggleTrack}
+              onClick={(e) => { e.stopPropagation(); onToggleTrack(e); }}
               className={`w-8 h-8 rounded-[10px] flex items-center justify-center transition-all active:scale-95 border ${
                 isTracked 
                   ? 'bg-slate-900 border-slate-900 text-white shadow-md' 
@@ -193,12 +220,20 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
               {isTracked ? <BellRing size={14} strokeWidth={2.5} /> : <Bell size={14} strokeWidth={2.5} />}
             </button>
             <button
-              onClick={onImportToTrip}
+              onClick={(e) => { e.stopPropagation(); onImportToTrip(e); }}
               className="h-8 px-3 rounded-[10px] flex items-center gap-1.5 transition-all active:scale-95 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg"
             >
               <PlaneTakeoff size={14} strokeWidth={2.5} />
-              <span className="text-[10px] font-black uppercase tracking-widest">帶入</span>
+              <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">帶入</span>
             </button>
+            {isExpanded && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onPress(); }}
+                className="h-8 px-4 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold transition-transform active:scale-95 shadow-md ml-1"
+              >
+                <span className="text-[10px] uppercase tracking-widest leading-none">購買</span>
+              </button>
+            )}
           </div>
         </div>
       </GlassCard>
@@ -796,7 +831,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           </div>
 
           {/* Horizontal Search Form */}
-          <GlassCard className="!p-1.5 md:!p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/80 backdrop-blur-3xl rounded-[32px] md:rounded-[36px] border border-white/60">
+          <GlassCard className={`!p-1.5 md:!p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/80 backdrop-blur-3xl rounded-[32px] md:rounded-[36px] border border-white/60 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none grayscale-[0.2]' : ''}`}>
             <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
               <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 flex-1">
                 {/* 出發地 */}
@@ -815,7 +850,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         setShowDestinationPicker(false);
                         setShowDatePicker(false);
                       }}
-                      onChange={(e) => updateField('from', e.target.value)}
+                      onChange={(e) => {
+                        updateField('from', e.target.value);
+                      }}
                       placeholder="台北 TPE"
                       autoComplete="off"
                     />
@@ -838,7 +875,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         setShowDeparturePicker(false);
                         setShowDatePicker(false);
                       }}
-                      onChange={(e) => updateField('to', e.target.value)}
+                      onChange={(e) => {
+                        updateField('to', e.target.value);
+                      }}
                       placeholder="東京 NRT"
                       autoComplete="off"
                     />
@@ -888,6 +927,35 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             </div>
             {dateError && <div className="text-[11px] text-rose-500 font-bold px-6 py-2 pb-1">{dateError}</div>}
           </GlassCard>
+        </div>
+
+        {/* Quick External Links */}
+        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 lg:gap-8 mb-10 px-2 lg:px-4">
+          <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-slate-600 hover:text-slate-900 transition-colors group">
+            <div className="text-[#B92A8E] group-hover:scale-110 transition-transform">
+              <Bed size={26} strokeWidth={2.5} />
+            </div>
+            <span className="font-bold text-[15px] tracking-wide">找住宿</span>
+          </a>
+          
+          <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+          
+          <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-slate-600 hover:text-slate-900 transition-colors group">
+            <div className="text-[#F18400] group-hover:scale-110 transition-transform">
+              <Ticket size={24} strokeWidth={2.5} />
+            </div>
+            <span className="font-bold text-[15px] tracking-wide">門票 & 觀光行程</span>
+          </a>
+
+          <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+          
+          <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-slate-600 hover:text-slate-900 transition-colors group">
+            <div className="text-[#EC4899] group-hover:scale-110 transition-transform relative">
+              <CarFront size={26} strokeWidth={2.5} />
+              <PlaneTakeoff size={12} strokeWidth={3} className="absolute -top-1.5 -left-1.5" />
+            </div>
+            <span className="font-bold text-[15px] tracking-wide">機場接送</span>
+          </a>
         </div>
 
         {/* Right Side / Bottom: Results */}

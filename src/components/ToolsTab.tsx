@@ -356,7 +356,7 @@ function WeatherCard() {
           </div>
         </div>
 
-        <div className="bg-fuchsia-50/50 rounded-[24px] p-4 flex items-center gap-4 border border-fuchsia-100/30">
+        <div className="bg-fuchsia-50/50 rounded-[24px] p-4 flex items-center gap-4 border border-fuchsia-100/30 mb-6">
           <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl shadow-sm shrink-0">
               👗
           </div>
@@ -365,6 +365,30 @@ function WeatherCard() {
             <span className="text-slate-500 text-sm font-medium leading-relaxed mt-0.5">{outfit.desc}</span>
           </div>
         </div>
+
+        {weather && weather.daily && weather.daily.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-fuchsia-100/50 pt-4">
+            <span className="text-[10px] uppercase tracking-widest text-fuchsia-600/70 font-bold mb-1">14-Day Forecast</span>
+            <div className="flex overflow-x-auto pb-4 -mx-2 px-2 gap-3 snap-x hide-scrollbar">
+              {weather.daily.map((day: any, idx: number) => {
+                const date = new Date(day.date);
+                const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(date);
+                const isRainy = day.rain_prob >= 50;
+                const DayIcon = isRainy ? CloudRain : Sun;
+                return (
+                  <div key={idx} className="flex flex-col items-center flex-shrink-0 bg-white/60 border border-fuchsia-50 shadow-sm rounded-2xl w-[68px] py-3 snap-center">
+                    <span className="text-xs font-bold text-slate-500 mb-2">{idx === 0 ? 'Today' : dayName}</span>
+                    <DayIcon size={20} className={isRainy ? 'text-blue-400' : 'text-amber-400'} />
+                    <div className="mt-3 flex gap-1 items-baseline font-bold">
+                      <span className="text-sm text-slate-700">{day.temp_max}°</span>
+                      <span className="text-[10px] text-slate-400">{day.temp_min}°</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </GlassCard>
   );
