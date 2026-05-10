@@ -218,7 +218,34 @@ export class AppRepository {
 
   async getChecklist(tripId: string) {
     if (!this.db) return [];
-    return await this.db.select().from(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId));
+    let rows = await this.db.select().from(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId));
+    
+    if (rows.length === 0) {
+      try {
+        // Only insert defaults if the trip actually exists
+        const tripExists = await this.db.select({ id: schema.trips.id }).from(schema.trips).where(eq(schema.trips.id, tripId));
+        if (tripExists.length === 0) {
+          console.warn(`Trip ${tripId} not found when generating default checklist, skipping insert`);
+          return [];
+        }
+
+        const defaults = [
+          { tripId, content: '護照 / 簽證', completed: false },
+          { tripId, content: '手機 / 充電線', completed: false },
+          { tripId, content: '轉換插頭', completed: false },
+          { tripId, content: '當地貨幣 / 信用卡', completed: false }
+        ];
+        await this.db.insert(schema.checklistItems).values(defaults);
+        rows = await this.db.select().from(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId));
+      } catch (e) {
+        console.error('Failed to insert default checklist item:', e);
+        return [
+          { id: 'default-1', tripId, content: '護照 / 簽證', completed: false },
+          { id: 'default-2', tripId, content: '手機 / 充電線', completed: false }
+        ];
+      }
+    }
+    return rows;
   }
 
   async updateChecklist(tripId: string, items: any[]) {
@@ -227,8 +254,8 @@ export class AppRepository {
     if (items.length > 0) {
       await this.db.insert(schema.checklistItems).values(items.map(it => ({
         tripId,
-        content: it.content,
-        completed: it.completed ?? false
+        content: it.content || it.text || '',
+        completed: it.completed ?? it.checked ?? false
       })));
     }
     return true;

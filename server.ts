@@ -872,6 +872,140 @@ async function startServer() {
     }
   });
 
+  app.post('/api/dev/generate-handbooks', async (req, res) => {
+    try {
+      const { GoogleGenAI, Type } = require('@google/genai');
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      // Execute script manually 
+      const fs = require('fs');
+      const path = require('path');
+      const destinations = [
+        { city: "東京", name: "日本東京精選5日遊", days: 5 },
+        { city: "首爾", name: "韓國首爾流行5日遊", days: 5 },
+        { city: "巴黎", name: "法國巴黎浪漫文藝7日遊", days: 7 },
+        { city: "倫敦", name: "英國倫敦深度8日遊", days: 8 },
+        { city: "大阪", name: "日本京都大阪5日遊", days: 5 },
+        { city: "曼谷", name: "泰國曼谷自由行5日遊", days: 5 },
+        { city: "羅馬", name: "義大利羅馬威尼斯10日遊", days: 10 },
+        { city: "琉森", name: "瑞士湖光山色10日遊", days: 10 },
+        { city: "紐約", name: "美國紐約繁華7日遊", days: 7 },
+        { city: "雪梨", name: "澳洲雪梨與藍山6日遊", days: 6 },
+        { city: "札幌", name: "日本北海道秘境6日遊", days: 6 },
+        { city: "新加坡", name: "新加坡文化4日遊", days: 4 },
+        { city: "清邁", name: "泰國清邁慢活5日遊", days: 5 },
+        { city: "洛杉磯", name: "美國洛杉磯與樂園7日遊", days: 7 },
+        { city: "峇里島", name: "印尼峇里島度假5日遊", days: 5 },
+        { city: "釜山", name: "韓國釜山自由行5日遊", days: 5 },
+        { city: "布拉格", name: "奧捷東歐風情8日遊", days: 8 },
+        { city: "巴塞隆納", name: "西班牙熱情8日遊", days: 8 },
+        { city: "雷克雅維克", name: "冰島極光10日遊", days: 10 },
+        { city: "皇后鎮", name: "紐西蘭南島8日遊", days: 8 }
+      ];
+
+      res.json({ status: 'started' }); // Send response early so it doesn't timeout
+
+      const results = [];
+      const fileOut = path.join(process.cwd(), 'src/data/expertHandbooksData.json');
+      for (let i = 0; i < destinations.length; i++) {
+        const dest = destinations[i];
+        console.log(`Generating data for ${dest.name}...`);
+        try {
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `請身為一個專業的旅遊達人，幫我規劃一個真實的「${dest.name}」旅遊行程。
+這個行程共 ${dest.days} 天。
+**絕對不要使用假資料或模擬資料(例如：不要寫"某美食", "知名餐廳")，請給出真實存在的景點、餐廳、住宿地點與交通方式。**
+請深入到「食、衣、住、行」，每天必須安排豐富詳細的行程，並符合以下要求：
+每「天」至少要包含 4 個節點 (Node)：
+1. 上午出發/景點 (提示今天的【衣】穿搭建議與【行】交通方式) -> category='spot'/'activity' (如果只寫出發可為 hotel)
+2. 午餐 (真實存在的餐廳/美食，提示【食】的細節) -> category='food'
+3. 下午景點 -> category='spot'/'shopping'
+4. 晚餐 (真實存在的餐廳) -> category='food'
+若要補充住宿可加 category='hotel'。
+回應只能是 JSON。
+請確保為合法的 JSON 並且不要包含 markdown 代碼塊：
+{
+  "id": "expert_curated_real_${i}",
+  "title": "${dest.name} 全攻略",
+  "author": "${dest.city}在地達人",
+  "image": "https://picsum.photos/seed/${600 + i}/800/600",
+  "days": ${dest.days},
+  "tags": ["真實推薦", "必去", "食衣住行"],
+  "cities": [{ "name": "${dest.city}", "reason": "真實推薦" }],
+  "nodes": [
+    {
+      "node_id": "隨機英數ID 例如 node_abc123",
+      "day": 1,
+      "time": "09:00",
+      "title": "真實的地點名稱",
+      "emoji": "🏨",
+      "category": "hotel", 
+      "description": "詳細描述。例如：【衣】今天天氣...適合穿... 【行】搭乘地鐵... ",
+      "lat": 真實緯度(數字),
+      "lng": 真實經度(數字)
+    }
+  ]
+}`,
+            config: {
+              temperature: 0.5,
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  title: { type: Type.STRING },
+                  author: { type: Type.STRING },
+                  image: { type: Type.STRING },
+                  days: { type: Type.INTEGER },
+                  tags: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  cities: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        name: { type: Type.STRING },
+                        reason: { type: Type.STRING }
+                      },
+                      required: ['name', 'reason']
+                    }
+                  },
+                  nodes: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        node_id: { type: Type.STRING },
+                        day: { type: Type.INTEGER },
+                        time: { type: Type.STRING },
+                        title: { type: Type.STRING },
+                        emoji: { type: Type.STRING },
+                        category: { type: Type.STRING, enum: ['spot', 'food', 'activity', 'transport', 'hotel', 'shopping'] },
+                        description: { type: Type.STRING },
+                        lat: { type: Type.NUMBER },
+                        lng: { type: Type.NUMBER }
+                      },
+                      required: ['node_id', 'day', 'time', 'title', 'emoji', 'category', 'description', 'lat', 'lng']
+                    }
+                  }
+                },
+                required: ['id', 'title', 'author', 'image', 'days', 'tags', 'cities', 'nodes']
+              }
+            }
+          });
+          const text = response.text;
+          // Safe parse
+          results.push(JSON.parse(text));
+          fs.writeFileSync(fileOut, JSON.stringify(results, null, 2), 'utf-8');
+        } catch (e: any) {
+          console.error(`Failed on ${dest.name}: `, e);
+        }
+      }
+      console.log('Background generation completed!');
+    } catch (err: any) {
+      console.error(err);
+    }
+  });
+
   app.get('/api/search', async (req, res) => {
     const from = String(req.query.from ?? '').trim().toUpperCase();
     const to = String(req.query.to ?? '').trim().toUpperCase();

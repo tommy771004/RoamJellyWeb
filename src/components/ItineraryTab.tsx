@@ -1,4 +1,5 @@
 import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 
 
@@ -20,7 +21,8 @@ import {
   RefreshCw,
   MapPin,
   ArrowDownUp,
-  Check
+  Check,
+  ChevronDown
 } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
@@ -266,6 +268,7 @@ export default function ItineraryTab() {
       lat: node.lat,
       lng: node.lng,
       description: node.description,
+      linkedFactId: node.linkedFactId,
     };
     const normalized = withAutoCategoryIcon(newNode);
     addNode(normalized);
@@ -618,7 +621,11 @@ export default function ItineraryTab() {
       const dietaryStr = (plannerForm.dietary || []).join(',');
       const transportStr = (plannerForm.transport || []).join(',');
       const extraNotes = [plannerForm.notes, dietaryStr && `飲食: ${dietaryStr}`, transportStr && `交通: ${transportStr}`].filter(Boolean).join(' / ');
-      const formToSend = { ...plannerForm, days: genDays, notes: extraNotes };
+      
+      const facts = useTripFactsStore.getState().facts.filter(f => f.tripId === activeTripId);
+      const travelFactsContext = facts.map(f => `[ID: ${f.id}] ${f.factType} - ${f.title}`).join('\n');
+      
+      const formToSend = { ...plannerForm, days: genDays, notes: extraNotes, travelFactsContext };
 
       const suggestionsRaw = await suggestItineraryWithForm({ destination, planner: formToSend });
 
@@ -637,6 +644,7 @@ export default function ItineraryTab() {
                 description: spot.ai_note || '',
                 lat: spot.lat,
                 lng: spot.lng,
+                linkedFactId: spot.linkedFactId,
                 source: 'local' as const
               });
             });
@@ -1679,23 +1687,24 @@ function ItineraryListItem({
   const meta = getCategoryMeta(item.category);
 
   return (
-    <div className="relative flex gap-6 sm:gap-10 items-start group w-full">
-      {/* Time Badge */}
-      <div className="flex flex-col items-center pt-2">
-        <div className="w-[50px] sm:w-[60px] flex flex-col items-center">
-           <span className="text-[12px] sm:text-[14px] font-black text-slate-800 tabular-nums uppercase tracking-tight">{item.time}</span>
-           <div className={`w-3.5 h-3.5 rounded-full border-[3px] border-white shadow-lg z-10 mt-2.5 ${item.category === 'flight' ? 'bg-indigo-500 ring-4 ring-indigo-50' : 'bg-pink-500 ring-4 ring-pink-50'}`} />
-        </div>
-      </div>
-
+    <div className="relative flex items-start group w-full">
       {/* Content Card */}
-      <GlassCard className={`flex-1 !p-5 sm:!p-6 !rounded-[32px] ${getCategoryStyle(item.category)} shadow-lg relative z-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300`}>
+      <GlassCard 
+        className={`flex-1 !p-5 sm:!p-6 !rounded-[32px] ${getCategoryStyle(item.category)} shadow-lg relative z-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${!isOffline && !isEditing ? 'cursor-pointer' : ''}`}
+        onClick={(e) => {
+           if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+           if (!isOffline && !isEditing) {
+              setIsEditing(true); 
+              onEditingChange?.(item.node_id, item.day, true);
+           }
+        }}
+      >
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 w-full">
           {/* Icon/Emoji Wrapper */}
           <div className="relative group/emoji shrink-0">
             <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-[28px] flex items-center justify-center text-3xl sm:text-4xl shadow-sm border border-slate-100/50 transition-transform group-hover:scale-105 duration-500 ${item.category === 'flight' ? 'bg-gradient-to-br from-indigo-50 to-blue-50' : 'bg-white'}`}>
               {isEditing ? (
-                 <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="animate-pulse active:scale-95 transition-transform">
+                 <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="animate-pulse active:scale-95 transition-transform">
                     {editEmoji}
                  </button>
               ) : (
@@ -1705,7 +1714,7 @@ function ItineraryListItem({
             {isEditing && showEmojiPicker && (
                <div className="absolute top-full left-0 mt-4 p-3 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white z-[100] flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
                  {EMOJI_OPTIONS.map(e => (
-                   <button key={e} onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl text-xl transition-colors">{e}</button>
+                   <button key={e} type="button" onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl text-xl transition-colors">{e}</button>
                  ))}
                </div>
             )}
@@ -1713,6 +1722,10 @@ function ItineraryListItem({
 
           <div className="flex-1 text-center sm:text-left min-w-0">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+               <span className="px-3 py-0.5 rounded-full bg-slate-800 text-[11px] font-black tracking-widest text-white border border-slate-900 flex items-center gap-1">
+                 <span className="material-symbols-outlined text-[14px]">schedule</span>
+                 {item.time}
+               </span>
                <span className="px-3 py-0.5 rounded-full bg-pink-50 text-[10px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
                  {meta.label}
                </span>
@@ -1730,6 +1743,7 @@ function ItineraryListItem({
                )}
                {!isEditing && (
                  <button 
+                   type="button"
                    onClick={() => onUpdate({ ...item, is_visited: !item.is_visited })}
                    className={`flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
                  >
@@ -1787,14 +1801,15 @@ function ItineraryListItem({
                       onChange={e => setEditTime(e.target.value)}
                       className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-xl px-4 py-2 w-24 text-center outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                     />
-                    <button onClick={handleSave} className="px-6 py-2 rounded-full bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">保存</button>
-                    <button onClick={() => { setIsEditing(false); onEditingChange?.(item.node_id, item.day, false); }} className="px-6 py-2 rounded-full bg-slate-100 text-slate-400 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">取消</button>
+                    <button type="button" onClick={handleSave} className="px-6 py-2 rounded-full bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">保存</button>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setIsEditing(false); onEditingChange?.(item.node_id, item.day, false); }} className="px-6 py-2 rounded-full bg-slate-100 text-slate-400 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">取消</button>
                  </div>
                </div>
             ) : (
                <>
                  <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-1.5 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
                  <button
+                   type="button"
                    onClick={handleNavigate}
                    disabled={isNavigating}
                    className="inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all mb-2 disabled:opacity-50"
@@ -1810,7 +1825,7 @@ function ItineraryListItem({
                  {item.description || item.notes ? (
                    <p className="text-xs sm:text-sm font-bold text-slate-500 whitespace-pre-line tracking-wide leading-relaxed">{item.description || item.notes}</p>
                  ) : (
-                   <p className="text-xs sm:text-sm font-bold text-slate-400 italic">點擊右側編輯新增手帳內容、細節或照片...</p>
+                   <p className="text-xs sm:text-sm font-bold text-slate-400 italic">點擊卡片編輯新增手帳內容、細節或照片...</p>
                  )}
                </>
             )}
@@ -1819,30 +1834,27 @@ function ItineraryListItem({
           {!isOffline && !isEditing && (
             <div className="flex flex-row sm:flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
               <button
+                type="button"
                 onClick={handleNavigate}
                 disabled={isNavigating}
                 title="在地圖中導航"
-                className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-emerald-500 hover:border-emerald-100 flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:opacity-50"
+                className="w-11 h-11 shrink-0 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-emerald-500 hover:border-emerald-100 flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:opacity-50"
               >
                 {isNavigating ? <Loader2 size={16} className="animate-spin" /> : <Navigation2 size={16} />}
               </button>
               <button
+                type="button"
                 onClick={() => void handleRegenerate()}
                 disabled={regenerating}
                 title="AI 換一個景點"
-                className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-fuchsia-500 hover:border-fuchsia-100 flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:opacity-30"
+                className="w-11 h-11 shrink-0 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-fuchsia-500 hover:border-fuchsia-100 flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:opacity-30"
               >
                 {regenerating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
               </button>
               <button
-                onClick={() => { setIsEditing(true); onEditingChange?.(item.node_id, item.day, true); }}
-                className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-pink-500 hover:border-pink-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
-              >
-                <Pencil size={18} />
-              </button>
-              <button
+                type="button"
                 onClick={() => onDelete(item.node_id)}
-                className="w-11 h-11 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-red-500 hover:border-red-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
+                className="w-11 h-11 shrink-0 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-red-500 hover:border-red-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
               >
                 <Trash2 size={18} />
               </button>
@@ -1991,7 +2003,7 @@ function ItineraryList({
                 </div>
 
                 {nextItem && (timeGapStr || item.transport_to_next) && (
-                  <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
+                  <div className="flex justify-start sm:pl-[64px] pl-[52px] my-1 relative z-0">
                     <div className="w-0.5 min-h-[3rem] bg-gradient-to-b from-slate-200 to-slate-200" />
                     <div className="flex flex-col justify-center ml-4 animate-pulse">
                       <div className="flex items-center gap-2">
@@ -2010,7 +2022,7 @@ function ItineraryList({
                   </div>
                 )}
                 {nextItem && !timeGapStr && !item.transport_to_next && (
-                   <div className="flex justify-start sm:pl-[29px] pl-[24px] my-1 relative z-0">
+                   <div className="flex justify-start sm:pl-[64px] pl-[52px] my-1 relative z-0">
                       <div className="w-0.5 h-8 bg-gradient-to-b from-slate-200 to-slate-200" />
                    </div>
                 )}
@@ -2034,6 +2046,8 @@ function ManualAddNode({ onAdd, isOffline, day }: { onAdd: (node: Partial<Itiner
   const [emoji, setEmoji] = useState('📍');
   const [category, setCategory] = useState('landmark');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [linkedFactId, setLinkedFactId] = useState('');
+  const facts = useTripFactsStore(s => s.facts);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2044,11 +2058,11 @@ function ManualAddNode({ onAdd, isOffline, day }: { onAdd: (node: Partial<Itiner
       emoji, 
       category,
       description: locationName ? `地點：${locationName}` : undefined,
-      // Manual nodes get default coordinates if needed, 
-      // but usually users just want the title/time for a custom list
+      linkedFactId: linkedFactId || undefined,
     });
     setTitle('');
     setLocationName('');
+    setLinkedFactId('');
     setIsAdding(false);
   };
 
@@ -2064,122 +2078,163 @@ function ManualAddNode({ onAdd, isOffline, day }: { onAdd: (node: Partial<Itiner
         <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-pink-100 group-hover:text-pink-400 transition-colors">
           <Plus size={20} />
         </div>
-        新增自訂行程節點
+        新增行程節點
       </motion.button>
     );
   }
 
-  return (
-    <GlassCard className="!p-10 !rounded-[48px] border-2 border-pink-100 shadow-[0_32px_64px_-16px_rgba(244,114,182,0.15)] animate-in zoom-in-95 duration-300 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400" />
-      
-      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-        <div className="flex items-center justify-between mb-2">
-           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center text-2xl">🗓️</div>
-             <div>
-               <h3 className="text-2xl font-black text-slate-800 tracking-tight">新增行程節點</h3>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Adding to Day {day}</p>
-             </div>
-           </div>
-           <button type="button" onClick={() => setIsAdding(false)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 hover:text-slate-600 transition-colors"><X size={20}/></button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="flex flex-col gap-3">
-            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">行程名稱</label>
-            <div className="relative group">
-              <Pencil className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" size={18} />
-              <input 
-                autoFocus
-                required
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="例如：參觀東京鐵塔"
-                className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-3">
-            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">時間</label>
-            <div className="relative group">
-              <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors">schedule</span>
-              <input 
-                type="time"
-                value={time}
-                onChange={e => setTime(e.target.value)}
-                className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm font-mono"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">詳細地點 (選填)</label>
-          <div className="relative group">
-            <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" size={18} />
-            <input 
-              value={locationName}
-              onChange={e => setLocationName(e.target.value)}
-              placeholder="輸入地點名稱或地址"
-              className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-           <div className="flex flex-col gap-3">
-              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">圖標 Emoji</label>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="w-16 h-16 shrink-0 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-3xl shadow-md hover:border-pink-200 transition-all hover:scale-105 active:scale-95"
-                >
-                  {emoji}
-                </button>
-                <div className="flex-1 flex flex-wrap gap-2 p-3 bg-slate-50/50 rounded-2xl border border-slate-100 overflow-y-auto max-h-[120px] no-scrollbar">
-                    {EMOJI_OPTIONS.slice(0, 15).map(em => (
-                      <button key={em} type="button" onClick={() => setEmoji(em)} className={`w-10 h-10 flex items-center justify-center rounded-xl text-xl transition-all ${emoji === em ? 'bg-pink-100 scale-110 shadow-sm' : 'hover:bg-white'}`}>{em}</button>
-                    ))}
-                    <button 
-                      type="button" 
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
-                      className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-300 hover:text-pink-500 hover:bg-white"
-                    >
-                      <Plus size={20} />
-                    </button>
-                </div>
-              </div>
-           </div>
-           <div className="flex flex-col gap-3">
-              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">分類</label>
-              <div className="relative">
-                <select 
-                  value={category}
-                  onChange={e => setCategory(e.target.value)}
-                  className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all appearance-none shadow-sm"
-                >
-                  {CATEGORY_OPTIONS.map(opt => (
-                    <option key={opt} value={opt}>{CATEGORY_META[opt].label}</option>
-                  ))}
-                </select>
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
-                  <ArrowDownUp size={16} />
-                </div>
-              </div>
-           </div>
-        </div>
-
-        <button 
-          type="submit"
-          className="w-full py-6 rounded-[24px] bg-slate-900 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-4"
+  return createPortal(
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" 
+          onClick={() => setIsAdding(false)}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 40, scale: 0.95 }}
+          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] overflow-hidden"
         >
-          <Check size={20} />
-          確認新增至 Day {day}
-        </button>
-      </form>
-    </GlassCard>
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400" />
+          <div className="p-8">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-[20px] bg-pink-50 flex items-center justify-center text-2xl">🗓️</div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-800 tracking-tight">新增行程節點</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Day {day}</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setIsAdding(false)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"><X size={20}/></button>
+              </div>
+              
+              <div className="flex flex-col gap-3">
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">行程名稱</label>
+                <div className="relative group">
+                  <Pencil className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" size={18} />
+                  <input 
+                    autoFocus
+                    required
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder="例如：參觀東京鐵塔"
+                    className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">時間</label>
+                <div className="relative group">
+                  <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" style={{ fontSize: '18px' }}>schedule</span>
+                  <input 
+                    type="time"
+                    value={time}
+                    onChange={e => setTime(e.target.value)}
+                    className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">地點</label>
+                <div className="flex gap-2">
+                  <div className="relative group flex-1">
+                    <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" size={18} />
+                    <input 
+                      value={locationName}
+                      onChange={e => setLocationName(e.target.value)}
+                      placeholder="文字輸入地點名稱或地址"
+                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                    />
+                  </div>
+                  <button type="button" onClick={() => alert('地圖選取 API 尚未實作')} className="shrink-0 px-4 py-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-500 hover:bg-indigo-100 font-bold text-sm tracking-wide flex items-center justify-center gap-2 active:scale-95 transition-all">
+                    <MapPin size={16} />
+                    地圖選取
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">圖標 Emoji</label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="w-full py-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center justify-center text-3xl shadow-sm hover:border-pink-200 transition-all active:scale-95"
+                    >
+                      {emoji}
+                    </button>
+                    {showEmojiPicker && (
+                      <div className="absolute top-full mt-2 left-0 z-50 p-3 bg-white rounded-2xl border border-slate-100 shadow-xl overflow-y-auto max-h-[160px] w-64 flex flex-wrap gap-2">
+                          {EMOJI_OPTIONS.map(em => (
+                            <button key={em} type="button" onClick={() => { setEmoji(em); setShowEmojiPicker(false); }} className={`w-10 h-10 flex items-center justify-center rounded-xl text-xl transition-all ${emoji === em ? 'bg-pink-100 scale-110 shadow-sm' : 'hover:bg-slate-50'}`}>{em}</button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">分類</label>
+                  <div className="relative">
+                    <select 
+                      value={category}
+                      onChange={e => setCategory(e.target.value)}
+                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all appearance-none shadow-sm h-full"
+                    >
+                      {CATEGORY_OPTIONS.map(opt => (
+                         <option key={opt} value={opt}>{CATEGORY_META[opt].label}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                      <ChevronDown size={18} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {facts && facts.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">關聯 Travel Fact</label>
+                  <div className="relative">
+                    <select
+                      value={linkedFactId}
+                      onChange={e => setLinkedFactId(e.target.value)}
+                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm appearance-none"
+                    >
+                      <option value="">無關聯 (未選擇)</option>
+                      {facts.map(f => (
+                        <option key={f.id} value={f.id}>
+                          {f.title} ({f.factType})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                      <ChevronDown size={18} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button 
+                type="submit"
+                className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-[13px] uppercase tracking-[0.15em] shadow-lg hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
+              >
+                <Plus size={18} strokeWidth={3} />
+                確認新增至 Day {day}
+              </button>
+            </form>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>,
+    document.body
   );
 }
 

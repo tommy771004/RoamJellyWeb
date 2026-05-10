@@ -54,6 +54,7 @@ interface AiResponse {
       transport_to_next?: string; // 預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)
       lat?: number; // Approximate latitude of the spot
       lng?: number; // Approximate longitude of the spot
+      linkedFactId?: string; // 如果該行程節點明確對應到 [Travel facts anchors] 中的某個已知項目，請填寫其 ID
     }>;
   }>;
 }
@@ -138,7 +139,8 @@ export async function regenerateSpot(params: {
   "ai_note": "一句話的貼心提醒",
   "transport_to_next": "預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)（可選）",
   "lat": 緯度數字（可選）,
-  "lng": 經度數字（可選）
+  "lng": 經度數字（可選）,
+  "linkedFactId": "如果這明確綁定到某個 Travel Fact 可選填"
 }
 
 注意：請直接輸出 JSON，不要有任何多餘說明。`;

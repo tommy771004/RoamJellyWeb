@@ -6,8 +6,6 @@ async function main() {
     console.log('No DB configured');
     return;
   }
-  console.log('Dropping schema public...');
-  await pool?.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
   
   console.log('Running migrations...');
   await migrate(db, { migrationsFolder: './migrations' });

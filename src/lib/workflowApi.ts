@@ -423,6 +423,7 @@ export async function regenerateItinerarySpot(params: {
   ai_note: string;
   lat?: number;
   lng?: number;
+  linkedFactId?: string;
 }> {
   const token = getStoredToken();
   const res = await fetch('/api/itinerary/regenerate-spot', {
