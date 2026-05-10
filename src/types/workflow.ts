@@ -82,8 +82,10 @@ export interface FavoriteSpot {
 export interface ItineraryNode {
   node_id: string;
   day: number;
+  date?: string;
   time: string;
   timestamp?: string;
+  sort_order?: number;
   title: string;
   emoji: string;
   category: string;

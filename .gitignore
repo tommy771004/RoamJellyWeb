@@ -9,3 +9,4 @@ coverage/
 .superpowers/*
 .agents/*
 .claude/*
+graphify-out/*

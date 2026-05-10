@@ -166,6 +166,33 @@ function summarizeTravelFacts(rows: any[]) {
   };
 }
 
+function normalizeDateOnlyInput(value: unknown): string | null {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
+}
+
+function buildNodeTimestamp(valueDate: unknown, valueTime: unknown): Date | null {
+  const date = normalizeDateOnlyInput(valueDate);
+  const time = String(valueTime ?? '').trim();
+  if (!date || !/^\d{1,2}:\d{2}$/.test(time)) return null;
+
+  const parsed = new Date(`${date}T${time}:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function toIsoTimestamp(value: unknown): string | null {
+  if (!value) return null;
+  const parsed = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+async function validateLinkedFactId(repo: AppRepository, tripId: string, linkedFactId?: string | null) {
+  if (!linkedFactId) return true;
+  const fact = await repo.getTripTravelFactById(linkedFactId);
+  return Boolean(fact && fact.tripId === tripId);
+}
+
 async function buildTripInfo(repo: AppRepository, tripId: string) {
   const trip = await repo.getTripById(tripId);
   if (!trip) return null;
@@ -691,7 +718,7 @@ async function startServer() {
       async (event: {
         trip_id?: string;
         action?: string;
-        payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string };
+        payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; linkedFactId?: string };
       }) => {
         if (
           !event?.trip_id ||
@@ -712,19 +739,29 @@ async function startServer() {
           return;
         }
 
+        const linkedFactAllowed = await validateLinkedFactId(repo, event.trip_id, event.payload.linkedFactId);
+        if (!linkedFactAllowed) {
+          socket.emit('error', { message: 'invalid linked travel fact' });
+          return;
+        }
+
         await repo.upsertItineraryNode(event.trip_id, {
           node_id: event.payload.node_id,
           day: event.payload.day,
+          date: normalizeDateOnlyInput(event.payload.date) ?? undefined,
           time: event.payload.time,
+          timestamp: event.payload.timestamp ?? buildNodeTimestamp(event.payload.date, event.payload.time)?.toISOString(),
+          sort_order: event.payload.sort_order,
           title: event.payload.title,
           emoji: event.payload.emoji,
           category: event.payload.category,
           lat: event.payload.lat,
           lng: event.payload.lng,
-          isVisited: event.payload.is_visited,
+          is_visited: event.payload.is_visited,
           description: event.payload.description,
           transport_to_next: event.payload.transport_to_next,
           image_url: event.payload.image_url,
+          linkedFactId: event.payload.linkedFactId,
         });
 
         await appendPlanningRecord({
@@ -746,12 +783,20 @@ async function startServer() {
           payload: {
             node_id: event.payload.node_id,
             day: Number(event.payload.day ?? 1),
+            date: normalizeDateOnlyInput(event.payload.date) ?? null,
             time: event.payload.time,
+            timestamp: event.payload.timestamp ?? buildNodeTimestamp(event.payload.date, event.payload.time)?.toISOString() ?? null,
+            sort_order: Number(event.payload.sort_order ?? 0),
             title: event.payload.title,
             emoji: event.payload.emoji ?? '📍',
             category: event.payload.category ?? 'other',
             lat: event.payload.lat ?? null,
             lng: event.payload.lng ?? null,
+            is_visited: event.payload.is_visited ?? false,
+            description: event.payload.description ?? '',
+            transport_to_next: event.payload.transport_to_next ?? null,
+            image_url: event.payload.image_url ?? null,
+            linkedFactId: event.payload.linkedFactId ?? null,
           },
         });
       },
@@ -833,7 +878,7 @@ async function startServer() {
 
   // ── Spot-level regenerate ─────────────────────────────────────────────────
   app.post('/api/itinerary/regenerate-spot', async (req, res) => {
-    const { trip_id, node_id, destination, day, current_time, current_title, notes } = req.body ?? {};
+    const { trip_id, node_id, destination, day, current_date, current_time, current_title, current_category, notes, preserve_time_window } = req.body ?? {};
 
     if (!trip_id || !node_id) {
       res.status(400).json({ status: 'error', message: 'trip_id and node_id are required' });
@@ -843,12 +888,49 @@ async function startServer() {
     const allowed = await ensureTripRole(req, res, String(trip_id), 'editor');
     if (!allowed) return;
 
+    const [facts, itineraryNodes] = await Promise.all([
+      repo.getTripTravelFacts(String(trip_id)),
+      repo.getItineraryNodes(String(trip_id)),
+    ]);
+
+    const normalizedNodes = itineraryNodes
+      .map((node) => ({
+        node_id: node.nodeId,
+        day: Number(node.day ?? 1),
+        date: normalizeDateOnlyInput(node.date) ?? formatDateOnly(node.timestamp) ?? null,
+        time: node.time ?? '10:00',
+        title: node.title ?? '未命名行程',
+        category: node.category ?? 'other',
+      }))
+      .sort((a, b) => {
+        if (a.day !== b.day) return a.day - b.day;
+        if ((a.date ?? '') !== (b.date ?? '')) return (a.date ?? '').localeCompare(b.date ?? '');
+        return (a.time ?? '').localeCompare(b.time ?? '');
+      });
+
+    const currentIndex = normalizedNodes.findIndex((node) => node.node_id === String(node_id));
+    if (currentIndex === -1) {
+      res.status(404).json({ status: 'error', message: 'itinerary node not found' });
+      return;
+    }
+    const previousNode = currentIndex > 0 ? normalizedNodes[currentIndex - 1] : undefined;
+    const nextNode = currentIndex >= 0 && currentIndex < normalizedNodes.length - 1 ? normalizedNodes[currentIndex + 1] : undefined;
+    const travelFactsContext = facts
+      .map((fact: any) => `[ID: ${fact.id}] ${fact.factType} - ${fact.title}`)
+      .join('\n');
+
     const spot = await regenerateSpot({
       destination: String(destination ?? ''),
       day: Number(day ?? 1),
+      currentDate: current_date ? String(current_date) : undefined,
       currentTime: String(current_time ?? '10:00'),
       currentTitle: String(current_title ?? ''),
+      currentCategory: current_category ? String(current_category) : undefined,
       notes: notes ? String(notes) : undefined,
+      preserveTimeWindow: preserve_time_window !== false,
+      previousNode,
+      nextNode,
+      travelFactsContext,
     });
 
     if (!spot) {
@@ -1465,7 +1547,10 @@ async function startServer() {
       return {
         id: node.nodeId,
         day: node.day,
+        date: normalizeDateOnlyInput(node.date) ?? formatDateOnly(node.timestamp) ?? null,
         time: node.time,
+        timestamp: toIsoTimestamp(node.timestamp),
+        sort_order: Number(node.sortOrder ?? index + 1),
         location: node.title,
         icon: node.emoji,
         category: node.category ?? 'other',
@@ -1490,7 +1575,7 @@ async function startServer() {
     const { trip_id, action, payload } = req.body as {
       trip_id?: string;
       action?: string;
-      payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; linkedFactId?: string };
+      payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; linkedFactId?: string };
     };
 
     if (!trip_id || action !== 'add_node' || !payload?.node_id || !payload.time || !payload.title) {
@@ -1501,10 +1586,19 @@ async function startServer() {
     const allowed = await ensureTripRole(req, res, trip_id, 'editor');
     if (!allowed) return;
 
+    const linkedFactAllowed = await validateLinkedFactId(repo, trip_id, payload.linkedFactId);
+    if (!linkedFactAllowed) {
+      res.status(400).json({ status: 'error', message: 'linked travel fact is invalid' });
+      return;
+    }
+
     await repo.upsertItineraryNode(trip_id, {
       node_id: payload.node_id,
       day: payload.day,
+      date: normalizeDateOnlyInput(payload.date) ?? undefined,
       time: payload.time,
+      timestamp: payload.timestamp ?? buildNodeTimestamp(payload.date, payload.time)?.toISOString(),
+      sort_order: payload.sort_order,
       title: payload.title,
       emoji: payload.emoji,
       category: payload.category,
@@ -1536,12 +1630,16 @@ async function startServer() {
       payload: {
         node_id: payload.node_id,
         day: Number(payload.day ?? 1),
+        date: normalizeDateOnlyInput(payload.date) ?? null,
         time: payload.time,
+        timestamp: payload.timestamp ?? buildNodeTimestamp(payload.date, payload.time)?.toISOString() ?? null,
+        sort_order: Number(payload.sort_order ?? 0),
         title: payload.title,
         emoji: payload.emoji ?? '📍',
         category: payload.category ?? 'other',
         lat: payload.lat ?? null,
         lng: payload.lng ?? null,
+        is_visited: payload.is_visited ?? false,
         description: payload.description ?? '',
         transport_to_next: payload.transport_to_next ?? null,
         image_url: payload.image_url ?? null,

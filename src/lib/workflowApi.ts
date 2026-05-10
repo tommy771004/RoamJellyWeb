@@ -412,15 +412,30 @@ export async function regenerateItinerarySpot(params: {
   node_id: string;
   destination: string;
   day: number;
+  current_date?: string;
   current_time: string;
   current_title: string;
+  current_category?: string;
   notes?: string;
+  preserve_time_window?: boolean;
+  previous_node?: {
+    time?: string;
+    title?: string;
+    category?: string;
+  };
+  next_node?: {
+    time?: string;
+    title?: string;
+    category?: string;
+  };
+  travel_facts_context?: string;
 }): Promise<{
   time: string;
   title: string;
   emoji: string;
   category: string;
   ai_note: string;
+  transport_to_next?: string;
   lat?: number;
   lng?: number;
   linkedFactId?: string;

@@ -1,6 +1,20 @@
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, asc } from 'drizzle-orm';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
+
+function coerceNodeTimestamp(node: any) {
+  if (node.timestamp) {
+    const parsed = new Date(node.timestamp);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  if (node.date && node.time) {
+    const parsed = new Date(`${node.date}T${node.time}:00`);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  return null;
+}
 
 export class AppRepository {
 
@@ -64,18 +78,33 @@ export class AppRepository {
 
   async getItineraryNodes(tripId: string) {
     if (!this.db) return [];
-    return await this.db.select().from(schema.itineraryNodes).where(eq(schema.itineraryNodes.tripId, tripId));
+    return await this.db
+      .select()
+      .from(schema.itineraryNodes)
+      .where(eq(schema.itineraryNodes.tripId, tripId))
+      .orderBy(
+        asc(schema.itineraryNodes.date),
+        asc(schema.itineraryNodes.day),
+        asc(schema.itineraryNodes.sortOrder),
+        asc(schema.itineraryNodes.time),
+        asc(schema.itineraryNodes.createdAt),
+      );
   }
 
   async upsertItineraryNode(tripId: string, node: any) {
     if (!this.db) return;
-    const ts = node.timestamp ? new Date(node.timestamp) : null;
+    const ts = coerceNodeTimestamp(node);
+    const sortOrder = Number.isFinite(Number(node.sort_order ?? node.sortOrder))
+      ? Number(node.sort_order ?? node.sortOrder)
+      : 0;
     await this.db.insert(schema.itineraryNodes).values({
       nodeId: node.node_id,
       tripId,
       day: node.day,
+      date: node.date ?? (ts ? ts.toISOString().slice(0, 10) : null),
       time: node.time,
       timestamp: ts,
+      sortOrder,
       title: node.title,
       emoji: node.emoji,
       category: node.category,
@@ -90,8 +119,10 @@ export class AppRepository {
       target: schema.itineraryNodes.nodeId,
       set: {
         day: node.day,
+        date: node.date ?? (ts ? ts.toISOString().slice(0, 10) : null),
         time: node.time,
         timestamp: ts,
+        sortOrder,
         title: node.title,
         emoji: node.emoji,
         category: node.category,
@@ -104,6 +135,28 @@ export class AppRepository {
         linkedFactId: node.linkedFactId || node.linked_fact_id,
       }
     });
+  }
+
+  async reorderItineraryNodes(tripId: string, nodes: Array<{ node_id: string; day?: number; date?: string | null; time?: string | null; timestamp?: string | null; sort_order?: number | null }>) {
+    if (!this.db) return;
+
+    for (const node of nodes) {
+      const ts = coerceNodeTimestamp(node);
+      const sortOrder = Number.isFinite(Number(node.sort_order))
+        ? Number(node.sort_order)
+        : 0;
+
+      await this.db
+        .update(schema.itineraryNodes)
+        .set({
+          day: node.day,
+          date: node.date ?? (ts ? ts.toISOString().slice(0, 10) : null),
+          time: node.time ?? undefined,
+          timestamp: ts,
+          sortOrder,
+        })
+        .where(and(eq(schema.itineraryNodes.tripId, tripId), eq(schema.itineraryNodes.nodeId, node.node_id)));
+    }
   }
 
   async getPublicTrips(limit: number) {

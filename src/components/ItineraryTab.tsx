@@ -57,7 +57,13 @@ import type {
 } from '../types/workflow';
 
 import AiForm, { AiFormData } from './AiForm';
-import { assignDaysBasedOnTimeAndOrder } from '../lib/itineraryUtils';
+import {
+  assignDaysBasedOnTimeAndOrder,
+  buildTimestampFromDateTime,
+  getDateForDay,
+  getDayForDate,
+  sortNodesForDisplay,
+} from '../lib/itineraryUtils';
 
 function getDynamicMapPercent(nodes: any[], lat: number, lng: number) {
   if (!lat || !lng || nodes.length === 0) return { x: 50, y: 50 };
@@ -148,6 +154,37 @@ function buildDefaultPlannerForm(destination: string, days: number): ItineraryPl
   } as any;
 }
 
+function normalizeScheduleForNode(
+  node: Partial<ItineraryNode>,
+  options: {
+    tripStartDate?: string | null;
+    fallbackDay: number;
+    fallbackSortOrder?: number;
+  },
+): Partial<ItineraryNode> {
+  const fallbackDay = Number(options.fallbackDay) > 0 ? Number(options.fallbackDay) : 1;
+  const normalizedDate =
+    node.date ||
+    getDateForDay(node.day ?? fallbackDay, options.tripStartDate) ||
+    getDateForDay(fallbackDay, options.tripStartDate);
+  const derivedDay = getDayForDate(normalizedDate, options.tripStartDate, node.day ?? fallbackDay);
+  const normalizedTime = node.time || '10:00';
+
+  return {
+    ...node,
+    day: derivedDay,
+    date: normalizedDate,
+    time: normalizedTime,
+    timestamp: buildTimestampFromDateTime(normalizedDate, normalizedTime) ?? node.timestamp,
+    sort_order:
+      typeof node.sort_order === 'number'
+        ? node.sort_order
+        : typeof options.fallbackSortOrder === 'number'
+          ? options.fallbackSortOrder
+          : undefined,
+  };
+}
+
 export default function ItineraryTab() {
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedDay, setSelectedDay] = useState<number>(1);
@@ -180,10 +217,18 @@ export default function ItineraryTab() {
   const [collaboratorEditing, setCollaboratorEditing] = useState<{ userName: string; day: number; nodeId: string } | null>(null);
 
   const socketRef = useRef<Socket | null>(null);
+  const reorderCommitTimerRef = useRef<number | null>(null);
+  const pendingReorderRef = useRef<ItineraryNode[] | null>(null);
 
   const { nodes, setNodes, addNode, updateNode, removeNode, collaborators, setCollaborators, isOffline, setOffline } =
     useItineraryStore();
   const { showToast, activeTripId, setActiveTripId, openRedirectModal } = useAppStore();
+
+  useEffect(() => () => {
+    if (reorderCommitTimerRef.current) {
+      window.clearTimeout(reorderCommitTimerRef.current);
+    }
+  }, []);
 
   const handleAiFormSubmit = async (formData: AiFormData) => {
     setAiLoading(true);
@@ -249,28 +294,89 @@ export default function ItineraryTab() {
     }
   };
 
+  const persistReorderedDayNodes = (orderedNodes: ItineraryNode[]) => {
+    if (isOffline || !activeTripId || orderedNodes.length === 0) return;
+
+    for (const node of orderedNodes) {
+      const payload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: node };
+      socketRef.current?.emit('sync_itinerary', payload);
+      void syncItinerary(payload);
+    }
+  };
+
   const handleReorder = (newOrder: ItineraryNode[]) => {
-    // Merge new order for current day back into the main nodes array
-    const otherDaysNodes = nodes.filter(n => n.day !== safeSelectedDay);
-    setNodes([...otherDaysNodes, ...newOrder]);
+    const reorderedNodes = sortNodesForDisplay(
+      newOrder.map((node, index) =>
+        withAutoCategoryIcon(
+          normalizeScheduleForNode(
+            {
+              ...node,
+              day: safeSelectedDay,
+              date: node.date || getDateForDay(safeSelectedDay, tripInfo?.startDate),
+              sort_order: index + 1,
+            },
+            {
+              tripStartDate: tripInfo?.startDate,
+              fallbackDay: safeSelectedDay,
+              fallbackSortOrder: index + 1,
+            },
+          ) as ItineraryNode,
+        ),
+      ),
+    );
+
+    pendingReorderRef.current = reorderedNodes;
+    const otherDaysNodes = nodes.filter((node) => node.day !== safeSelectedDay);
+    setNodes([...otherDaysNodes, ...reorderedNodes]);
+
+    if (reorderCommitTimerRef.current) {
+      window.clearTimeout(reorderCommitTimerRef.current);
+    }
+
+    reorderCommitTimerRef.current = window.setTimeout(() => {
+      if (pendingReorderRef.current) {
+        persistReorderedDayNodes(pendingReorderRef.current);
+        pendingReorderRef.current = null;
+      }
+    }, 350);
   };
 
   const handleManualAddNode = (node: Partial<ItineraryNode>) => {
     if (!activeTripId) return;
-    const newNode: ItineraryNode = {
-      node_id: `node_manual_${Date.now()}`,
-      day: safeSelectedDay,
-      time: node.time || '10:00',
-      title: node.title || '新行程',
-      emoji: node.emoji || '📍',
-      category: node.category || 'other',
-      source: 'local',
-      lat: node.lat,
-      lng: node.lng,
-      description: node.description,
-      linkedFactId: node.linkedFactId,
-    };
-    const normalized = withAutoCategoryIcon(newNode);
+    const fallbackSortOrder =
+      Math.max(
+        0,
+        ...nodes
+          .filter((existingNode: ItineraryNode) => existingNode.day === safeSelectedDay)
+          .map((existingNode: ItineraryNode) => existingNode.sort_order ?? 0),
+      ) + 1;
+    const normalized = withAutoCategoryIcon(
+      normalizeScheduleForNode(
+        {
+          node_id: `node_manual_${Date.now()}`,
+          day: node.day ?? safeSelectedDay,
+          date: node.date || getDateForDay(node.day ?? safeSelectedDay, tripInfo?.startDate),
+          time: node.time || '10:00',
+          title: node.title || '新行程',
+          emoji: node.emoji || '📍',
+          category: node.category || 'other',
+          source: 'local',
+          lat: node.lat,
+          lng: node.lng,
+          description: node.description,
+          linkedFactId: node.linkedFactId,
+          image_url: node.image_url,
+          transport_to_next: node.transport_to_next,
+          is_visited: node.is_visited ?? false,
+          sort_order: node.sort_order ?? fallbackSortOrder,
+        },
+        {
+          tripStartDate: tripInfo?.startDate,
+          fallbackDay: safeSelectedDay,
+          fallbackSortOrder,
+        },
+      ) as ItineraryNode,
+    );
     addNode(normalized);
     const payload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: normalized };
     socketRef.current?.emit('sync_itinerary', payload);
@@ -427,9 +533,11 @@ export default function ItineraryTab() {
 
   const selectedDayNodes = useMemo(
     () =>
-      nodes
-        .filter((node: ItineraryNode) => node.day === safeSelectedDay)
-        .map((node: ItineraryNode) => withAutoCategoryIcon(node)),
+      sortNodesForDisplay(
+        nodes
+          .filter((node: ItineraryNode) => node.day === safeSelectedDay)
+          .map((node: ItineraryNode) => withAutoCategoryIcon(node)),
+      ),
     [nodes, safeSelectedDay],
   );
 
@@ -480,19 +588,36 @@ export default function ItineraryTab() {
   const addSpotToDay = (spot: FavoriteSpot, day: number) => {
     if (isOffline || !activeTripId) return;
 
-    const node: ItineraryNode = {
-      node_id: `node_${Date.now()}`,
-      day,
-      time: formatCurrentTime(),
-      title: spot.title,
-      emoji: spot.emoji,
-      category: 'landmark',
-      source: 'local',
-      lat: spot.lat,
-      lng: spot.lng,
-    };
+    const fallbackSortOrder =
+      Math.max(
+        0,
+        ...nodes
+          .filter((existingNode: ItineraryNode) => existingNode.day === day)
+          .map((existingNode: ItineraryNode) => existingNode.sort_order ?? 0),
+      ) + 1;
 
-    const normalized = withAutoCategoryIcon(node);
+    const normalized = withAutoCategoryIcon(
+      normalizeScheduleForNode(
+        {
+          node_id: `node_${Date.now()}`,
+          day,
+          date: getDateForDay(day, tripInfo?.startDate),
+          time: formatCurrentTime(),
+          title: spot.title,
+          emoji: spot.emoji,
+          category: 'landmark',
+          source: 'local',
+          lat: spot.lat,
+          lng: spot.lng,
+          sort_order: fallbackSortOrder,
+        },
+        {
+          tripStartDate: tripInfo?.startDate,
+          fallbackDay: day,
+          fallbackSortOrder,
+        },
+      ) as ItineraryNode,
+    );
 
     addNode(normalized);
 
@@ -550,7 +675,23 @@ export default function ItineraryTab() {
 
   const handleUpdateNode = async (node: ItineraryNode) => {
     if (isOffline || !activeTripId) return;
-    const normalized = withAutoCategoryIcon(node);
+    const derivedDay = getDayForDate(node.date, tripInfo?.startDate, node.day);
+    const fallbackSortOrder =
+      derivedDay === node.day && typeof node.sort_order === 'number'
+        ? node.sort_order
+        : Math.max(
+            0,
+            ...nodes
+              .filter((existingNode: ItineraryNode) => existingNode.day === derivedDay && existingNode.node_id !== node.node_id)
+              .map((existingNode: ItineraryNode) => existingNode.sort_order ?? 0),
+          ) + 1;
+    const normalized = withAutoCategoryIcon(
+      normalizeScheduleForNode({ ...node, day: derivedDay, sort_order: node.sort_order ?? fallbackSortOrder }, {
+        tripStartDate: tripInfo?.startDate,
+        fallbackDay: derivedDay,
+        fallbackSortOrder,
+      }) as ItineraryNode,
+    );
     updateNode(normalized);
     const payload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: normalized };
     socketRef.current?.emit('sync_itinerary', payload);
@@ -664,15 +805,39 @@ export default function ItineraryTab() {
         const currentDaysNodes = nodes.filter((node: ItineraryNode) => targetDays.includes(node.day));
         await removeNodesBatch(currentDaysNodes);
         
-        finalNodes = suggestedNodes.map((node) => {
+        finalNodes = suggestedNodes.map((node, index) => {
           let targetDay = rangeStartDay + (node.day - 1);
           if (targetDay > rangeEndDay) targetDay = rangeEndDay;
-          return { ...node, day: targetDay };
+          return normalizeScheduleForNode(
+            {
+              ...node,
+              day: targetDay,
+              date: getDateForDay(targetDay, plannerForm.flightDate),
+            },
+            {
+              tripStartDate: plannerForm.flightDate,
+              fallbackDay: targetDay,
+              fallbackSortOrder: index + 1,
+            },
+          ) as ItineraryNode;
         });
       } else {
         const currentDayNodes = nodes.filter((node: ItineraryNode) => node.day === safeSelectedDay);
         await removeNodesBatch(currentDayNodes);
-        finalNodes = suggestedNodes.map((node) => ({ ...node, day: selectedDay }));
+        finalNodes = suggestedNodes.map((node, index) =>
+          normalizeScheduleForNode(
+            {
+              ...node,
+              day: selectedDay,
+              date: getDateForDay(selectedDay, plannerForm.flightDate),
+            },
+            {
+              tripStartDate: plannerForm.flightDate,
+              fallbackDay: selectedDay,
+              fallbackSortOrder: index + 1,
+            },
+          ) as ItineraryNode,
+        );
       }
 
       for (const node of finalNodes) {
@@ -1425,6 +1590,7 @@ export default function ItineraryTab() {
                   aiLoading={aiLoading}
                   tripId={activeTripId}
                   destination={tripInfo?.destination || ''}
+                  tripStartDate={tripInfo?.startDate}
                   weather={weatherData}
                   onEditingChange={handleEditingChange}
                   collaboratorEditing={collaboratorEditing}
@@ -1596,6 +1762,9 @@ function ItineraryListItem({
   isOffline,
   tripId,
   destination,
+  tripStartDate,
+  previousItem,
+  nextItem,
   onEditingChange,
   collaboratingUser
 }: {
@@ -1606,6 +1775,9 @@ function ItineraryListItem({
   isOffline: boolean;
   tripId: string;
   destination: string;
+  tripStartDate?: string | null;
+  previousItem?: ItineraryNode;
+  nextItem?: ItineraryNode;
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
   collaboratingUser?: string;
   key?: string;
@@ -1613,19 +1785,44 @@ function ItineraryListItem({
   const [isEditing, setIsEditing] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [editTitle, setEditTitle] = useState(item.title);
+  const [editDate, setEditDate] = useState(item.date || getDateForDay(item.day, tripStartDate) || '');
   const [editTime, setEditTime] = useState(item.time);
   const [editEmoji, setEditEmoji] = useState(item.emoji);
   const [editNotes, setEditNotes] = useState(item.description || item.notes || '');
+  const [editTransport, setEditTransport] = useState(item.transport_to_next || '');
   const [editImageUrl, setEditImageUrl] = useState(item.image_url || '');
   const [editLinkedFactId, setEditLinkedFactId] = useState(item.linkedFactId || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   const facts = useTripFactsStore(s => s.facts);
 
+  useEffect(() => {
+    setEditTitle(item.title);
+    setEditDate(item.date || getDateForDay(item.day, tripStartDate) || '');
+    setEditTime(item.time);
+    setEditEmoji(item.emoji);
+    setEditNotes(item.description || item.notes || '');
+    setEditTransport(item.transport_to_next || '');
+    setEditImageUrl(item.image_url || '');
+    setEditLinkedFactId(item.linkedFactId || '');
+  }, [item, tripStartDate]);
+
   const handleSave = () => {
-    onUpdate({ ...item, title: editTitle, time: normalizeClockInput(editTime), emoji: editEmoji, description: editNotes, image_url: editImageUrl, linkedFactId: editLinkedFactId || undefined });
+    onUpdate({
+      ...item,
+      day: getDayForDate(editDate, tripStartDate, item.day),
+      date: editDate || undefined,
+      time: normalizeClockInput(editTime),
+      title: editTitle,
+      emoji: editEmoji,
+      description: editNotes,
+      transport_to_next: editTransport || undefined,
+      image_url: editImageUrl,
+      linkedFactId: editLinkedFactId || undefined,
+      timestamp: buildTimestampFromDateTime(editDate, normalizeClockInput(editTime)) ?? item.timestamp,
+    });
     setIsEditing(false);
-    onEditingChange?.(item.node_id, item.day, false);
+    onEditingChange?.(item.node_id, getDayForDate(editDate, tripStartDate, item.day), false);
   };
 
   const [isNavigating, setIsNavigating] = useState(false);
@@ -1666,17 +1863,45 @@ function ItineraryListItem({
     if (!tripId || !destination) return;
     setRegenerating(true);
     try {
+      const travelFactsContext = facts.map((fact) => `[ID: ${fact.id}] ${fact.factType} - ${fact.title}`).join('\n');
       const newNode = await regenerateItinerarySpot({
         trip_id: tripId,
         node_id: item.node_id,
         destination: destination,
         day: item.day,
+        current_date: item.date || getDateForDay(item.day, tripStartDate),
         current_time: item.time,
         current_title: item.title,
-        notes: item.description || item.notes
+        current_category: item.category,
+        notes: item.description || item.notes,
+        preserve_time_window: true,
+        previous_node: previousItem
+          ? {
+              time: previousItem.time,
+              title: previousItem.title,
+              category: previousItem.category,
+            }
+          : undefined,
+        next_node: nextItem
+          ? {
+              time: nextItem.time,
+              title: nextItem.title,
+              category: nextItem.category,
+            }
+          : undefined,
+        travel_facts_context: travelFactsContext,
       });
       const { ai_note, ...restNode } = newNode as any;
-      onUpdate({ ...item, ...restNode, description: ai_note || restNode.description });
+      onUpdate({
+        ...item,
+        ...restNode,
+        time: restNode.time || item.time,
+        date: item.date,
+        day: item.day,
+        sort_order: item.sort_order,
+        description: ai_note || restNode.description,
+        timestamp: buildTimestampFromDateTime(item.date, restNode.time || item.time) ?? item.timestamp,
+      });
     } catch (err) {
       console.error('Regenerate failed:', err);
     } finally {
@@ -1721,10 +1946,16 @@ function ItineraryListItem({
           </div>
 
           <div className="flex-1 text-center sm:text-left min-w-0">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+               {item.date && (
+                 <span className="px-3 py-0.5 rounded-full bg-white/80 text-[11px] font-black tracking-widest text-slate-500 border border-slate-200 flex items-center gap-1">
+                   <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                   {item.date}
+                 </span>
+               )}
                <span className="px-3 py-0.5 rounded-full bg-slate-800 text-[11px] font-black tracking-widest text-white border border-slate-900 flex items-center gap-1">
-                 <span className="material-symbols-outlined text-[14px]">schedule</span>
-                 {item.time}
+                  <span className="material-symbols-outlined text-[14px]">schedule</span>
+                  {item.time}
                </span>
                <span className="px-3 py-0.5 rounded-full bg-pink-50 text-[10px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
                  {meta.label}
@@ -1761,24 +1992,43 @@ function ItineraryListItem({
                )}
             </div>
             
-            {isEditing ? (
-               <div className="flex flex-col gap-3">
-                 <input 
-                   autoFocus
-                   value={editTitle}
-                   onChange={e => setEditTitle(e.target.value)}
-                   className="text-lg font-black text-slate-800 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
-                 />
-                 <textarea
-                   value={editNotes}
-                   onChange={e => setEditNotes(e.target.value)}
-                   placeholder="寫下你的旅行手帳日記，或是 AI 貼心提醒..."
-                   className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
-                 />
-                 <input
-                   value={editImageUrl}
-                   onChange={e => setEditImageUrl(e.target.value)}
-                   placeholder="貼上照片網址 (例如: https://...jpg)"
+             {isEditing ? (
+                <div className="flex flex-col gap-3">
+                  <input 
+                    autoFocus
+                    value={editTitle}
+                    onChange={e => setEditTitle(e.target.value)}
+                    className="text-lg font-black text-slate-800 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={e => setEditDate(e.target.value)}
+                      className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                    />
+                    <input
+                      value={editTime}
+                      onChange={e => setEditTime(e.target.value)}
+                      className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                    />
+                  </div>
+                  <textarea
+                    value={editNotes}
+                    onChange={e => setEditNotes(e.target.value)}
+                    placeholder="寫下你的旅行手帳日記，或是 AI 貼心提醒..."
+                    className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
+                  />
+                  <input
+                    value={editTransport}
+                    onChange={e => setEditTransport(e.target.value)}
+                    placeholder="前往下一站交通資訊，例如：地鐵約 20 分鐘"
+                    className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                  />
+                  <input
+                    value={editImageUrl}
+                    onChange={e => setEditImageUrl(e.target.value)}
+                    placeholder="貼上照片網址 (例如: https://...jpg)"
                    className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                  />
                  {facts && facts.length > 0 && (
@@ -1794,17 +2044,12 @@ function ItineraryListItem({
                        </option>
                      ))}
                    </select>
-                 )}
-                 <div className="flex items-center gap-3">
-                    <input
-                      value={editTime}
-                      onChange={e => setEditTime(e.target.value)}
-                      className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-xl px-4 py-2 w-24 text-center outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                    />
-                    <button type="button" onClick={handleSave} className="px-6 py-2 rounded-full bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">保存</button>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); setIsEditing(false); onEditingChange?.(item.node_id, item.day, false); }} className="px-6 py-2 rounded-full bg-slate-100 text-slate-400 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">取消</button>
-                 </div>
-               </div>
+                  )}
+                  <div className="flex items-center gap-3 flex-wrap">
+                     <button type="button" onClick={handleSave} className="px-6 py-2 rounded-full bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">保存</button>
+                     <button type="button" onClick={(e) => { e.stopPropagation(); setIsEditing(false); onEditingChange?.(item.node_id, item.day, false); }} className="px-6 py-2 rounded-full bg-slate-100 text-slate-400 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">取消</button>
+                  </div>
+                </div>
             ) : (
                <>
                  <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-1.5 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
@@ -1817,14 +2062,20 @@ function ItineraryListItem({
                    {isNavigating ? <Loader2 size={10} className="animate-spin" /> : <MapPin size={10} strokeWidth={3} />}
                    在地圖查看
                  </button>
-                 {item.image_url && (
-                   <div className="w-full h-40 sm:h-56 mt-3 mb-4 rounded-3xl overflow-hidden shadow-inner bg-slate-50 relative group/img cursor-pointer">
-                     <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-3xl hover:scale-105 transition-transform duration-700" loading="lazy" referrerPolicy="no-referrer" />
-                   </div>
-                 )}
-                 {item.description || item.notes ? (
-                   <p className="text-xs sm:text-sm font-bold text-slate-500 whitespace-pre-line tracking-wide leading-relaxed">{item.description || item.notes}</p>
-                 ) : (
+                  {item.image_url && (
+                    <div className="w-full h-40 sm:h-56 mt-3 mb-4 rounded-3xl overflow-hidden shadow-inner bg-slate-50 relative group/img cursor-pointer">
+                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-3xl hover:scale-105 transition-transform duration-700" loading="lazy" referrerPolicy="no-referrer" />
+                    </div>
+                  )}
+                  {item.transport_to_next && (
+                    <div className="inline-flex items-center gap-1.5 mt-1 mb-2 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-black text-indigo-600 uppercase tracking-[0.12em]">
+                      <Navigation2 size={10} />
+                      {item.transport_to_next}
+                    </div>
+                  )}
+                  {item.description || item.notes ? (
+                    <p className="text-xs sm:text-sm font-bold text-slate-500 whitespace-pre-line tracking-wide leading-relaxed">{item.description || item.notes}</p>
+                  ) : (
                    <p className="text-xs sm:text-sm font-bold text-slate-400 italic">點擊卡片編輯新增手帳內容、細節或照片...</p>
                  )}
                </>
@@ -1877,6 +2128,7 @@ function ItineraryList({
   aiLoading,
   tripId,
   destination,
+  tripStartDate,
   weather,
   onEditingChange,
   collaboratorEditing
@@ -1891,6 +2143,7 @@ function ItineraryList({
   aiLoading: boolean;
   tripId: string;
   destination: string;
+  tripStartDate?: string | null;
   weather?: any;
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
   collaboratorEditing?: { userName: string; day: number; nodeId: string } | null;
@@ -1988,11 +2241,14 @@ function ItineraryList({
                 <ItineraryListItem
                   item={item}
                   idx={idx}
+                  previousItem={idx > 0 ? items[idx - 1] : undefined}
+                  nextItem={nextItem}
                   onDelete={onDelete}
                   onUpdate={onUpdate}
                   isOffline={isOffline}
                   tripId={tripId}
                   destination={destination}
+                  tripStartDate={tripStartDate}
                   onEditingChange={onEditingChange}
                   collaboratingUser={collaboratorEditing?.nodeId === item.node_id ? collaboratorEditing.userName : undefined}
                 />
@@ -2033,35 +2289,67 @@ function ItineraryList({
       </Reorder.Group>
 
       {/* Manual Add Node UI */}
-      <ManualAddNode onAdd={onManualAdd} isOffline={isOffline} day={day} />
+      <ManualAddNode onAdd={onManualAdd} isOffline={isOffline} day={day} tripStartDate={tripStartDate} />
     </div>
   );
 }
 
-function ManualAddNode({ onAdd, isOffline, day }: { onAdd: (node: Partial<ItineraryNode>) => void; isOffline: boolean; day: number }) {
+function ManualAddNode({
+  onAdd,
+  isOffline,
+  day,
+  tripStartDate,
+}: {
+  onAdd: (node: Partial<ItineraryNode>) => void;
+  isOffline: boolean;
+  day: number;
+  tripStartDate?: string | null;
+}) {
   const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState('');
   const [locationName, setLocationName] = useState('');
+  const [date, setDate] = useState(getDateForDay(day, tripStartDate) || '');
   const [time, setTime] = useState('10:00');
   const [emoji, setEmoji] = useState('📍');
   const [category, setCategory] = useState('landmark');
+  const [notes, setNotes] = useState('');
+  const [transportToNext, setTransportToNext] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [isVisited, setIsVisited] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [linkedFactId, setLinkedFactId] = useState('');
   const facts = useTripFactsStore(s => s.facts);
+
+  useEffect(() => {
+    if (!isAdding) {
+      setDate(getDateForDay(day, tripStartDate) || '');
+    }
+  }, [day, tripStartDate, isAdding]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
     onAdd({ 
       title, 
+      day: getDayForDate(date, tripStartDate, day),
+      date,
       time, 
       emoji, 
       category,
-      description: locationName ? `地點：${locationName}` : undefined,
+      description: [locationName ? `地點：${locationName}` : '', notes].filter(Boolean).join('\n'),
+      transport_to_next: transportToNext || undefined,
+      image_url: imageUrl || undefined,
+      is_visited: isVisited,
       linkedFactId: linkedFactId || undefined,
     });
     setTitle('');
     setLocationName('');
+    setNotes('');
+    setTransportToNext('');
+    setImageUrl('');
+    setDate(getDateForDay(day, tripStartDate) || '');
+    setTime('10:00');
+    setIsVisited(false);
     setLinkedFactId('');
     setIsAdding(false);
   };
@@ -2107,7 +2395,9 @@ function ManualAddNode({ onAdd, isOffline, day }: { onAdd: (node: Partial<Itiner
                   <div className="w-12 h-12 rounded-[20px] bg-pink-50 flex items-center justify-center text-2xl">🗓️</div>
                   <div>
                     <h3 className="text-xl font-black text-slate-800 tracking-tight">新增行程節點</h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Day {day}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Day {getDayForDate(date, tripStartDate, day)} {date ? `• ${date}` : ''}
+                    </p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setIsAdding(false)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"><X size={20}/></button>
@@ -2128,16 +2418,30 @@ function ManualAddNode({ onAdd, isOffline, day }: { onAdd: (node: Partial<Itiner
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3">
-                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">時間</label>
-                <div className="relative group">
-                  <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" style={{ fontSize: '18px' }}>schedule</span>
-                  <input 
-                    type="time"
-                    value={time}
-                    onChange={e => setTime(e.target.value)}
-                    className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm font-mono"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">日期</label>
+                  <div className="relative group">
+                    <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" style={{ fontSize: '18px' }}>calendar_today</span>
+                    <input 
+                      type="date"
+                      value={date}
+                      onChange={e => setDate(e.target.value)}
+                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">時間</label>
+                  <div className="relative group">
+                    <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" style={{ fontSize: '18px' }}>schedule</span>
+                    <input 
+                      type="time"
+                      value={time}
+                      onChange={e => setTime(e.target.value)}
+                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -2153,10 +2457,41 @@ function ManualAddNode({ onAdd, isOffline, day }: { onAdd: (node: Partial<Itiner
                       className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
                     />
                   </div>
-                  <button type="button" onClick={() => alert('地圖選取 API 尚未實作')} className="shrink-0 px-4 py-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-500 hover:bg-indigo-100 font-bold text-sm tracking-wide flex items-center justify-center gap-2 active:scale-95 transition-all">
+                  <button type="button" disabled className="shrink-0 px-4 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-300 font-bold text-sm tracking-wide flex items-center justify-center gap-2 cursor-not-allowed">
                     <MapPin size={16} />
-                    地圖選取
+                    地圖選取即將支援
                   </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">備註 / 手帳</label>
+                <textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="補充用餐提醒、預約資訊、旅伴備忘..."
+                  className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm min-h-[92px] resize-y"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">前往下一站交通</label>
+                  <input
+                    value={transportToNext}
+                    onChange={e => setTransportToNext(e.target.value)}
+                    placeholder="例如：地鐵約 20 分鐘"
+                    className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">照片網址</label>
+                  <input
+                    value={imageUrl}
+                    onChange={e => setImageUrl(e.target.value)}
+                    placeholder="https://images..."
+                    className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                  />
                 </div>
               </div>
 
@@ -2222,12 +2557,22 @@ function ManualAddNode({ onAdd, isOffline, day }: { onAdd: (node: Partial<Itiner
                 </div>
               )}
 
+              <label className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-50/70 border border-slate-100 text-sm font-bold text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={isVisited}
+                  onChange={e => setIsVisited(e.target.checked)}
+                  className="accent-emerald-500 w-4 h-4"
+                />
+                標記為已完成 / 已打卡
+              </label>
+
               <button 
                 type="submit"
                 className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-[13px] uppercase tracking-[0.15em] shadow-lg hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
               >
                 <Plus size={18} strokeWidth={3} />
-                確認新增至 Day {day}
+                確認新增至 Day {getDayForDate(date, tripStartDate, day)}
               </button>
             </form>
           </div>
