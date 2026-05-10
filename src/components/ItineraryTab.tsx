@@ -1501,6 +1501,31 @@ function CollaboratorAvatar({ collaborator, index, isOnline }: { collaborator: C
   );
 }
 
+// ─── Constants & Helpers ────────────────────────────────────────────────────────
+
+const getCategoryStyle = (category: string) => {
+  switch (category) {
+    case 'food':
+    case 'restaurant':
+      return 'border-orange-200 bg-gradient-to-br from-orange-50/70 to-amber-50/70';
+    case 'landmark':
+    case 'attraction':
+      return 'border-sky-200 bg-gradient-to-br from-sky-50/70 to-blue-50/70';
+    case 'activity':
+      return 'border-emerald-200 bg-gradient-to-br from-emerald-50/70 to-teal-50/70';
+    case 'shopping':
+      return 'border-purple-200 bg-gradient-to-br from-purple-50/70 to-fuchsia-50/70';
+    case 'hotel':
+    case 'accommodation':
+      return 'border-rose-200 bg-gradient-to-br from-rose-50/70 to-pink-50/70';
+    case 'transport':
+    case 'flight':
+      return 'border-indigo-200 bg-gradient-to-br from-indigo-50/70 to-slate-50/70';
+    default:
+      return 'border-white/80 bg-white/40';
+  }
+};
+
 // ─── Draggable Favorite Spot ─────────────────────────────────────────────────
 
 function DraggableFavoriteSpot({
@@ -1664,7 +1689,7 @@ function ItineraryListItem({
       </div>
 
       {/* Content Card */}
-      <GlassCard className={`flex-1 !p-5 sm:!p-6 !rounded-[32px] border border-white/80 shadow-lg relative z-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300`}>
+      <GlassCard className={`flex-1 !p-5 sm:!p-6 !rounded-[32px] ${getCategoryStyle(item.category)} shadow-lg relative z-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300`}>
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 w-full">
           {/* Icon/Emoji Wrapper */}
           <div className="relative group/emoji shrink-0">
