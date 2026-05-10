@@ -10,3 +10,4 @@ coverage/
 .agents/*
 .claude/*
 graphify-out/*
+.worktrees/
