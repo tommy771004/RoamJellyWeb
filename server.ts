@@ -313,17 +313,12 @@ async function fetchFromOtaProvider(from: string, to: string, date: string): Pro
         id: String(item.id ?? `ota_${idx}`),
         type: 'flight' as const,
         provider: String(item.provider ?? 'Skyscanner'),
-        title: String(item.title ?? `${from} → ${to} · Direct`),
+        title: String(item.title ?? `${from} → ${to}`),
         price: Number(item.price ?? 0),
         currency: String(item.currency ?? 'TWD'),
         emoji: '✈️',
         affiliate_url: String(item.affiliate_url ?? ''),
-        details: item.details ?? {
-          airline: String(item.airline ?? 'EVA Air'),
-          departure: String(item.dep_time ?? '09:00'),
-          arrival: String(item.arr_time ?? '13:00'),
-          stops: Number(item.stops ?? 0)
-        }
+        ...(item.details ? { details: item.details } : {})
       }));
     } catch {
       return null;

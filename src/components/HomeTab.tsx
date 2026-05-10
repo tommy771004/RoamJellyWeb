@@ -19,8 +19,10 @@ import {
 } from '../data/travelGuideDestinations';
 import { LocationPickerPopup } from './LocationPickerPopup';
 import CountryGuideModal from './CountryGuideModal';
+import ExpertHandbookModal from './ExpertHandbookModal';
 import { getCountryGuide } from '../data/countryGuideData';
 import type { CountryGuide } from '../data/countryGuideData';
+import { EXPERT_HANDBOOKS } from '../data/expertHandbooks';
 
 interface FlightCardProps {
   flight: SearchItem;
@@ -307,40 +309,16 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   const [flyingCard, setFlyingCard] = useState<{ id: number; startX: number; startY: number; width: number; height: number; handbook?: any } | null>(null);
   const [activeGuide, setActiveGuide] = useState<CountryGuide | null>(null);
+  const [activeHandbook, setActiveHandbook] = useState<typeof EXPERT_HANDBOOKS[0] | null>(null);
 
-  const expertHandbooks = [
-    {
-      id: 101,
-      title: '京都賞楓 3 日遊',
-      author: '@TravelBlogger',
-      image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop',
-      days: 3,
-      tags: ['賞楓', '古都', '美食']
-    },
-    {
-      id: 102,
-      title: '曼谷美食 5 日深度行',
-      author: '@FoodieTraveler',
-      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=800&auto=format&fit=crop',
-      days: 5,
-      tags: ['巷弄美食', '按摩', '夜市']
-    },
-    {
-      id: 103,
-      title: '倫敦藝文漫步',
-      author: '@ArtHunter',
-      image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop',
-      days: 4,
-      tags: ['博物館', '文創', '地標']
-    }
-  ];
+  const expertHandbooks = EXPERT_HANDBOOKS;
 
-  const handleCopyExpertItinerary = (e: React.MouseEvent, handbook: any) => {
-    e.stopPropagation();
+  const handleCopyExpertItinerary = (e: React.MouseEvent | undefined, handbook: typeof EXPERT_HANDBOOKS[0]) => {
+    e?.stopPropagation?.();
     
     // Get card position for animation start
-    const cardElement = (e.currentTarget as HTMLElement).closest('.group\\/handbook');
-    const rect = cardElement ? cardElement.getBoundingClientRect() : (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const cardElement = e?.currentTarget ? (e.currentTarget as HTMLElement).closest('.group\\/handbook') : null;
+    const rect = cardElement ? cardElement.getBoundingClientRect() : e?.currentTarget ? (e.currentTarget as HTMLElement).getBoundingClientRect() : { left: window.innerWidth / 2 - 140, top: window.innerHeight / 2 - 80, width: 280, height: 160 };
     setFlyingCard({
       id: Date.now(),
       startX: rect.left + rect.width / 2,
@@ -351,10 +329,43 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     });
 
     // Reset animation after it finishes
-    setTimeout(() => {
+    setTimeout(async () => {
       setFlyingCard(null);
-      // Mock copy behavior, pop up after animation finishes
-      showToast('已成功將行程複製到您的手帳！', 'success');
+      
+      try {
+        const { useItineraryStore } = await import('../store/useItineraryStore');
+        const { useAppStore } = await import('../store/useAppStore');
+        const { syncItinerary, createTrip } = await import('../lib/workflowApi');
+        const { setNodes, addNode } = useItineraryStore.getState();
+        const { activeTripId, setActiveTripId, setActiveTab } = useAppStore.getState();
+        
+        let TRIP_ID = activeTripId;
+
+        // If no active trip, create a new one first
+        if (!TRIP_ID) {
+          const newTrip = await createTrip({ 
+            name: handbook.title, 
+            destination: handbook.tags[0] || '指定地點'
+          });
+          TRIP_ID = newTrip.id;
+          setActiveTripId(TRIP_ID);
+        }
+
+        if (handbook.nodes && handbook.nodes.length) {
+          setNodes([]);
+          for (const rawNode of handbook.nodes) {
+             const normalized = { ...rawNode, source: 'local' } as any;
+             addNode(normalized);
+             const payload = { trip_id: TRIP_ID, action: 'add_node', payload: normalized } as any;
+             await syncItinerary(payload);
+          }
+        }
+
+        showToast(`已成功將 ${handbook.title} 複製到您的手帳！`, 'success');
+        setActiveTab('itinerary');
+      } catch (err) {
+        showToast('複製行程失敗', 'warning');
+      }
     }, 1200); // 1.2s to match animation duration
   };
 
@@ -638,133 +649,206 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-full lg:max-w-[90rem] xl:max-w-[150rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
-      <div className="flex flex-col items-center text-center lg:items-start lg:text-left mb-6 w-full max-w-2xl lg:max-w-none mx-auto lg:mx-0">
-        <p className="text-[17px] text-slate-500 font-semibold tracking-wide">探索機票與體驗。</p>
-      </div>
-
-      {/* AI Form Banner */}
-      <div className="mb-10 w-full">
-        <div className="bg-gradient-to-r from-pink-400 to-fuchsia-500 rounded-3xl p-6 sm:p-8 flex items-center justify-between shadow-[0_15px_40px_rgba(217,70,239,0.3)] text-white relative overflow-hidden group hover:scale-[1.01] transition-transform cursor-pointer"
-             onClick={() => setActiveTab('ai_form')}
-        >
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none mix-blend-overlay"></div>
-          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700 pointer-events-none"></div>
-          
-          <div className="relative z-10">
-            <h3 className="text-2xl sm:text-3xl font-black mb-2 flex items-center gap-2 drop-shadow-md">
-              <Sparkles size={32} />
-              AI 行程規劃
-            </h3>
-            <p className="text-white/90 text-sm sm:text-base font-bold">告訴我們你想去哪，秒速客製專屬行程！</p>
-          </div>
-          <div className="relative z-10 w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/50 group-hover:bg-white/40 transition-colors shadow-sm">
-            <ArrowRight size={24} />
-          </div>
+    <div className="p-4 sm:p-6 md:p-8 md:pt-12 max-w-full lg:max-w-[90rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
+      
+      {/* Hero section with artistic horizontal text (Marquee effect) */}
+      <div className="relative w-full mb-6 md:mb-8 mt-2 sm:mt-4 min-h-[160px] sm:min-h-[200px] md:min-h-[240px] overflow-hidden rounded-[24px] md:rounded-[32px] flex flex-col justify-center group">
+        {/* Dynamic Abstract Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-orange-50/30 -z-20" />
+        <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-fuchsia-100/40 to-transparent blur-3xl -z-10" />
+        
+        {/* Marquee layer */}
+        <div className="absolute inset-0 flex items-center pointer-events-none z-0 overflow-hidden">
+          <motion.div
+            animate={{ x: [0, -1000] }}
+            transition={{ repeat: Infinity, ease: 'linear', duration: 50 }}
+            className="flex whitespace-nowrap opacity-[0.03] select-none"
+          >
+            {Array.from({ length: 8 }).map((_, i) => (
+              <span key={i} className="text-[48px] sm:text-[72px] md:text-[96px] font-black text-slate-900 uppercase tracking-tighter pr-4 md:pr-8 leading-none py-4">
+                Explore the World • 探索無界 •
+              </span>
+            ))}
+          </motion.div>
+        </div>
+        
+        {/* Foreground Content */}
+        <div className="relative z-10 flex flex-col justify-center items-start px-6 sm:px-8 md:px-12 pointer-events-none">
+           <h1 className="text-[28px] sm:text-[36px] md:text-[48px] font-black text-slate-900 tracking-tight leading-[1.15] mb-2 sm:mb-3">
+             預見下一次<br className="sm:hidden" />
+             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-rose-500 to-fuchsia-600 pb-1.5">非凡旅程</span>
+           </h1>
+           <p className="text-[13px] sm:text-[14px] md:text-[16px] text-slate-500 font-bold tracking-wide">
+             探索全球機票、質感住宿與在地體驗
+           </p>
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Left Side: Search Form */}
-        <div className="w-full lg:w-[400px] xl:w-[460px] flex-shrink-0">
-          <GlassCard className="!p-0 overflow-visible ring-1 ring-white/60 shadow-[0_8px_40px_rgb(0,0,0,0.06)] bg-white/60 backdrop-blur-3xl rounded-3xl">
-            <div className="flex flex-col">
-              {/* Main Search Inputs Area */}
-              <div className="p-6 flex flex-col gap-y-5 bg-white/30 rounded-3xl relative overflow-visible">
-                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4">
-                    <div className="flex flex-col gap-1.5 flex-1">
-                      <Label htmlFor="search-from">出發地</Label>
-                      <Input
-                        id="search-from"
-                        value={searchForm.from}
-                        onFocus={() => {
-                          setShowDeparturePicker(true);
-                          setShowDestinationPicker(false);
-                          setShowDatePicker(false);
-                        }}
-                        onChange={(e) => updateField('from', e.target.value)}
-                        placeholder="從哪裡出發？"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5 flex-1">
-                      <Label htmlFor="search-to">目的地</Label>
-                      <Input
-                        id="search-to"
-                        value={searchForm.to}
-                        onFocus={() => {
-                          setShowDestinationPicker(true);
-                          setShowDeparturePicker(false);
-                          setShowDatePicker(false);
-                        }}
-                        onChange={(e) => updateField('to', e.target.value)}
-                        placeholder="要去哪裡冒險？"
-                      />
-                    </div>
-                  </div>
-
-                <div className="relative">
-                  <div 
-                    onClick={() => {
-                      setShowDatePicker(!showDatePicker);
-                      setShowDeparturePicker(false);
-                      setShowDestinationPicker(false);
-                    }}
-                    className={`flex flex-row items-center gap-x-3 bg-white/90 backdrop-blur-md rounded-[20px] px-6 py-4 border border-white shadow-sm cursor-pointer hover:bg-white transition-all ${showDatePicker ? 'ring-2 ring-orange-400/50' : ''}`}
-                  >
-                    <Calendar size={18} className="text-slate-400" />
-                    <div className="flex flex-col flex-1">
-                      <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">出發日期</span>
-                      <span className={`text-lg font-bold ${!searchForm.date ? 'text-slate-300' : 'text-slate-800'}`}>
-                        {searchForm.date || '選擇出發日期'}
-                      </span>
-                    </div>
-                  </div>
+      <div className="flex flex-col 2xl:flex-row gap-6 md:gap-8 w-full">
+        {/* Left Side: Search Form & AI Banner */}
+        <div className="w-full 2xl:w-[880px] flex-shrink-0 flex flex-col gap-6 md:gap-8">
+          
+          {/* Immersive AI Banner */}
+          <div className="w-full group cursor-pointer" onClick={() => setActiveTab('ai_form')}>
+            <div className="bg-slate-900 rounded-[24px] md:rounded-[32px] p-5 sm:p-6 md:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow-2xl shadow-slate-900/20 relative overflow-hidden transition-all duration-500 hover:scale-[1.01]">
+              <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/20 to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-3xl"></div>
+              <div className="absolute -right-20 -top-20 w-64 h-64 bg-fuchsia-500/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700 pointer-events-none"></div>
+              
+              <div className="relative z-10 flex items-center gap-4 sm:gap-5">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-fuchsia-500 flex items-center justify-center p-0.5 shadow-xl shadow-fuchsia-500/30 group-hover:rotate-12 transition-transform duration-500">
+                   <div className="w-full h-full bg-slate-900/20 rounded-[14px] flex items-center justify-center backdrop-blur-md">
+                     <Sparkles size={24} className="text-white" />
+                   </div>
                 </div>
-                {dateError && <span className="text-[10px] text-rose-500 font-bold ml-5 mt-1">{dateError}</span>}
-                {!searchForm.from || !searchForm.to || !searchForm.date ? (
-                  <span className="text-[10px] text-slate-400 font-bold ml-5 mt-2 animate-pulse">
-                    * 請填寫出發地、目的地與日期以開啟比價
-                  </span>
-                ) : null}
-
-                  <button
-                    onClick={() => void handleSearch()}
-                    disabled={isSearchDisabled || loading || isOffline}
-                    title={isOffline ? '請連線網路以進行機票比價' : ''}
-                    className={`mt-6 rounded-full py-5 flex flex-row items-center justify-center border-none appearance-none cursor-pointer transition-all active:scale-[0.95] ${
-                      isSearchDisabled || loading || isOffline
-                        ? 'bg-slate-200/50 grayscale cursor-not-allowed opacity-60' 
-                        : 'bg-gradient-to-r from-orange-500 via-orange-400 to-amber-500 hover:shadow-[0_25px_50px_rgba(249,115,22,0.5)] shadow-[0_12px_30px_rgba(245,158,11,0.3)] hover:scale-[1.025] hover:brightness-110 ring-2 ring-white/40'
-                }`}
-              >
-                <SearchIcon size={28} color="white" strokeWidth={3.5} />
-                <span className="text-white font-black ml-4 text-[22px] tracking-wider drop-shadow-xl">{isOffline ? '需連網進行比價' : '立即探索比價'}</span>
-              </button>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-1">
+                    AI 智慧行程規劃
+                  </h3>
+                  <p className="text-slate-400 text-xs sm:text-sm font-medium tracking-wide">
+                    輸入目的地，秒速生成專屬客製化旅程
+                  </p>
+                </div>
+              </div>
+              <div className="relative z-10 mt-5 sm:mt-0 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-white group-hover:text-slate-900 text-white transition-all shadow-sm">
+                <ArrowRight size={18} strokeWidth={3} className="-rotate-45 group-hover:rotate-0 transition-transform duration-500" />
               </div>
             </div>
+          </div>
+
+          {/* Horizontal Search Form */}
+          <GlassCard className="!p-1.5 md:!p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/80 backdrop-blur-3xl rounded-[32px] md:rounded-[36px] border border-white/60">
+            <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 flex-1">
+                {/* 出發地 */}
+                <div className="relative flex-1 bg-slate-50/80 hover:bg-slate-100/80 transition-colors rounded-[24px] md:rounded-[28px] px-5 py-3 md:py-4 border border-slate-100 flex items-center group/input">
+                  <div className="absolute left-6 text-slate-400 group-hover/input:text-orange-500 transition-colors">
+                    <PlaneTakeoff size={20} />
+                  </div>
+                  <div className="flex flex-col pl-10 w-full text-left">
+                    <Label htmlFor="search-from" className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-1">出發從哪裡</Label>
+                    <input
+                      id="search-from"
+                      className="bg-transparent border-none p-0 focus:ring-0 text-base md:text-lg font-black text-slate-800 placeholder:text-slate-300 placeholder:font-bold w-full outline-none"
+                      value={searchForm.from}
+                      onFocus={() => {
+                        setShowDeparturePicker(true);
+                        setShowDestinationPicker(false);
+                        setShowDatePicker(false);
+                      }}
+                      onChange={(e) => updateField('from', e.target.value)}
+                      placeholder="台北 TPE"
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+
+                {/* 目的地 */}
+                <div className="relative flex-1 bg-slate-50/80 hover:bg-slate-100/80 transition-colors rounded-[24px] md:rounded-[28px] px-5 py-3 md:py-4 border border-slate-100 flex items-center group/input">
+                  <div className="absolute left-6 text-slate-400 group-hover/input:text-fuchsia-500 transition-colors">
+                    <Globe size={20} />
+                  </div>
+                  <div className="flex flex-col pl-10 w-full text-left">
+                    <Label htmlFor="search-to" className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-1">飛往目的地</Label>
+                    <input
+                      id="search-to"
+                      className="bg-transparent border-none p-0 focus:ring-0 text-base md:text-lg font-black text-slate-800 placeholder:text-slate-300 placeholder:font-bold w-full outline-none"
+                      value={searchForm.to}
+                      onFocus={() => {
+                        setShowDestinationPicker(true);
+                        setShowDeparturePicker(false);
+                        setShowDatePicker(false);
+                      }}
+                      onChange={(e) => updateField('to', e.target.value)}
+                      placeholder="東京 NRT"
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 lg:gap-3 flex-none lg:w-[280px]">
+                {/* 日期 */}
+                <div 
+                  onClick={() => {
+                    setShowDatePicker(!showDatePicker);
+                    setShowDeparturePicker(false);
+                    setShowDestinationPicker(false);
+                  }}
+                  className={`relative flex-1 bg-slate-50/80 hover:bg-slate-100/80 transition-colors rounded-[24px] md:rounded-[28px] px-5 py-3 md:py-4 border flex items-center cursor-pointer group/date ${showDatePicker ? 'border-orange-300 bg-orange-50/50' : 'border-slate-100'}`}
+                >
+                  <div className={`absolute left-5 transition-colors ${showDatePicker ? 'text-orange-500' : 'text-slate-400 group-hover/date:text-slate-600'}`}>
+                    <Calendar size={20} />
+                  </div>
+                  <div className="flex flex-col pl-9 w-full text-left">
+                    <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-1">去程日期</span>
+                    <span className={`text-base md:text-lg font-black truncate ${!searchForm.date ? 'text-slate-300' : 'text-slate-800'}`}>
+                      {searchForm.date || '選擇日期'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 搜尋按鈕 */}
+                <button
+                  onClick={() => void handleSearch()}
+                  disabled={isSearchDisabled || loading || isOffline}
+                  title={isOffline ? '請連線網路以進行機票比價' : ''}
+                  className={`w-16 lg:w-[72px] rounded-[24px] md:rounded-[28px] flex items-center justify-center transition-all active:scale-95 flex-shrink-0 ${
+                    isSearchDisabled || loading || isOffline
+                      ? 'bg-slate-200/50 grayscale cursor-not-allowed text-slate-400' 
+                      : 'bg-slate-900 hover:bg-slate-800 text-white shadow-xl shadow-slate-900/20 hover:shadow-2xl hover:shadow-slate-900/30'
+                  }`}
+                >
+                  {loading ? (
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <SearchIcon size={24} strokeWidth={3} />
+                  )}
+                </button>
+              </div>
+            </div>
+            {dateError && <div className="text-[11px] text-rose-500 font-bold px-6 py-2 pb-1">{dateError}</div>}
           </GlassCard>
         </div>
 
-
-        {/* Right Side: Results */}
-        <div className="pb-32 flex flex-col flex-1">
-          <div className="flex items-center justify-between mb-6 px-2">
-            <span className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">熱門推薦</span>
-            <div className="flex items-center bg-slate-100/50 p-1 rounded-2xl border border-slate-200/50">
-              <button 
-                onClick={() => setViewType('grid')}
-                className={`p-2 rounded-xl transition-all ${viewType === 'grid' ? 'bg-white text-fuchsia-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                <LayoutGrid size={18} strokeWidth={2.5} />
-              </button>
-              <button 
-                onClick={() => setViewType('table')}
-                className={`p-2 rounded-xl transition-all ${viewType === 'table' ? 'bg-white text-fuchsia-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                <List size={18} strokeWidth={2.5} />
-              </button>
+        {/* Right Side / Bottom: Results */}
+        <div className="pb-32 flex flex-col flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-8 px-1">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">探索航班</span>
+              {results.length > 0 && (
+                 <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-bold">{results.length} 個結果</span>
+              )}
             </div>
+            {results.length > 0 && (
+              <div className="flex items-center bg-white p-1.5 rounded-[20px] shadow-sm border border-slate-100 relative">
+                <button 
+                  onClick={() => setViewType('grid')}
+                  className={`relative p-2 rounded-xl transition-colors duration-300 z-10 ${viewType === 'grid' ? 'text-white' : 'text-slate-400 hover:text-slate-800 hover:bg-slate-50'}`}
+                >
+                  {viewType === 'grid' && (
+                    <motion.div
+                      layoutId="viewTypeIndicator"
+                      className="absolute inset-0 bg-slate-900 rounded-xl -z-10 shadow-md"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <LayoutGrid size={16} strokeWidth={2.5} />
+                </button>
+                <button 
+                  onClick={() => setViewType('table')}
+                  className={`relative p-2 rounded-xl transition-colors duration-300 z-10 ${viewType === 'table' ? 'text-white' : 'text-slate-400 hover:text-slate-800 hover:bg-slate-50'}`}
+                >
+                  {viewType === 'table' && (
+                    <motion.div
+                      layoutId="viewTypeIndicator"
+                      className="absolute inset-0 bg-slate-900 rounded-xl -z-10 shadow-md"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <List size={16} strokeWidth={2.5} />
+                </button>
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -1008,7 +1092,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     whileHover={{ y: -5 }}
                     className="w-[280px] sm:w-[320px] group/handbook"
                   >
-                    <GlassCard className="!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all">
+                    <GlassCard onClick={() => setActiveHandbook(handbook)} className="!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all cursor-pointer">
                       <div className="relative h-44 overflow-hidden">
                         <img 
                           src={handbook.image} 
@@ -1056,6 +1140,17 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
       {activeGuide && (
         <CountryGuideModal open={!!activeGuide} guide={activeGuide} onClose={() => setActiveGuide(null)} />
+      )}
+
+      {activeHandbook && (
+        <ExpertHandbookModal 
+          open={!!activeHandbook} 
+          handbook={activeHandbook} 
+          onClose={() => setActiveHandbook(null)} 
+          onCopyPath={(handbook) => {
+            handleCopyExpertItinerary(undefined, handbook);
+          }}
+        />
       )}
 
       {showDeparturePicker && (

@@ -185,80 +185,63 @@ export default function ItineraryTab() {
 
   const handleAiFormSubmit = async (formData: AiFormData) => {
     setAiLoading(true);
-    let currentTripId = activeTripId;
-
+    showToast(`正在為您生成旅程：${formData.destination}...`);
     try {
-      // Step 1: If no active trip, create a new one first
-      if (!currentTripId) {
-        const { createTrip } = await import('../lib/workflowApi');
-        const newTrip = await createTrip({ 
-          name: `${formData.destination} ${formData.vibes[0] || ''} 探索之旅`, 
-          destination: formData.destination 
-        });
-        currentTripId = newTrip.id;
-        setActiveTripId(currentTripId);
-      }
-
-      setIsPlanningNew(false);
+      // Simulate 3s delay
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
-      const suggestRequest = {
-        days: formData.days,
-        departureFrom: formData.departure || '台北',
-        arrivalTo: formData.destination,
-        flightDate: '2026-06-15',
-        countries: [formData.destination],
-        mustVisitSpots: formData.interests,
-        mustEatFoods: [],
-        autoFlightSegments: [],
-        notes: `旅伴: ${formData.companions}, 氛圍: ${formData.vibes.join(',')}, 飲食: ${formData.dietary.join(',')}, 交通: ${formData.transport.join(',')}`,
-        travelFactsContext: '',
+      const suggestions = {
+         ui_config: { 
+           bg_gradient: formData.budget === '奢華' ? 'from-amber-100 to-yellow-100' : 'from-indigo-100 via-purple-50 to-pink-100', 
+           font_scale: 'large' 
+         },
+         summary: { 
+           title: `為您專屬規劃：${formData.destination} ${formData.vibes[0] || '完美'}之旅`, 
+           smart_tags: [...formData.vibes, ...formData.interests, formData.companions].filter(Boolean).slice(0, 4) 
+         },
+         itinerary: Array.from({ length: formData.days }).map((_, idx) => ({
+           day: idx + 1,
+           spots: [
+             { time: '10:00', name: idx === 0 ? '抵達與放行李' : '晨間網美打卡點', emoji: idx === 0 ? '🏨' : '📸', category: idx === 0 ? 'hotel' : 'landmark', ai_note: idx === 0 ? '建議先寄放行李，輕鬆開始旅程！' : '早晨光線最棒，適合拍照！', intensity: 'chill', transport_to_next: '大眾運輸約 15 分鐘' },
+             { time: '13:00', name: '在地必吃美食推薦', emoji: '🍜', category: 'food', ai_note: `考量到您的${formData.dietary.length > 0 ? formData.dietary.join('、') : '口味'}需求，精選的高評價餐廳。`, intensity: 'chill', transport_to_next: '步行約 10 分鐘' },
+             { time: '15:00', name: '深度體驗行程', emoji: '🗺️', category: 'activity', ai_note: '讓您深度感受在地文化與氛圍的活動。', intensity: 'hardcore', transport_to_next: '預計搭乘計程車' },
+             { time: '19:00', name: '經典夜生活與晚餐', emoji: '🍻', category: 'nightlife', ai_note: '在美麗夜景中享受美好的夜晚！', intensity: 'chill' }
+           ]
+         }))
       };
-      
-      let suggestionsRaw = await suggestItineraryWithForm({ 
-        destination: formData.destination, 
-        planner: suggestRequest 
+
+      const rawNodes: ItineraryNode[] = [];
+      suggestions.itinerary.forEach((dayData) => {
+        dayData.spots.forEach((spot, i) => {
+           rawNodes.push({
+             node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+             day: dayData.day || 1,
+             time: spot.time || '10:00',
+             title: spot.name || '景點',
+             emoji: spot.emoji || '📍',
+             category: spot.category || 'other',
+             description: spot.ai_note || '',
+             lat: 25.0330 + (Math.random() * 0.1),
+             lng: 121.5654 + (Math.random() * 0.1),
+             source: 'local' as const,
+           });
+        });
       });
 
-      let rawNodes: ItineraryNode[] = [];
-      if (Array.isArray(suggestionsRaw)) {
-        rawNodes = suggestionsRaw;
-      } else if (suggestionsRaw && suggestionsRaw.itinerary && Array.isArray(suggestionsRaw.itinerary)) {
-        suggestionsRaw.itinerary.forEach((dayData: any) => {
-          if (Array.isArray(dayData.spots)) {
-            dayData.spots.forEach((spot: any, i: number) => {
-              rawNodes.push({
-                node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
-                day: dayData.day || 1,
-                time: spot.time || '10:00',
-                title: spot.name || spot.title || '景點',
-                emoji: spot.emoji || '📍',
-                category: spot.category || 'other',
-                description: spot.ai_note || '',
-                lat: spot.lat,
-                lng: spot.lng,
-                source: 'local' as const,
-              });
-            });
-          }
-        });
-      }
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() + 1);
+      const finalNodes = assignDaysBasedOnTimeAndOrder(rawNodes, startDate.toISOString());
 
-      // If we had nodes before, clear them (relevant for existing trip)
-      await removeNodesBatch([...nodes]);
-      
-      const finalNodes = assignDaysBasedOnTimeAndOrder(rawNodes, plannerForm.flightDate);
+      useAppStore.getState().setAiResult({
+         fullResponse: suggestions,
+         title: suggestions.summary.title,
+         rawSuggestions: finalNodes
+      });
 
-      for (const node of finalNodes) {
-        const normalized = withAutoCategoryIcon(node);
-        addNode(normalized);
-        const payload: SyncItineraryPayload = { trip_id: currentTripId, action: 'add_node', payload: normalized };
-        socketRef.current?.emit('sync_itinerary', payload);
-        void syncItinerary(payload);
-      }
-      
-      showToast(activeTripId ? 'AI 行程已更新！' : '成功建立新專案並生成 AI 行程！', 'success');
+      setIsPlanningNew(false);
+      useAppStore.getState().setActiveTab('ai_result');
     } catch (err) {
-      showToast('AI 規劃失敗，請檢查系統設定');
+      showToast('AI 規劃失敗，請稍後再試。');
     } finally {
       setAiLoading(false);
     }

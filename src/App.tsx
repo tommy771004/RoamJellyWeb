@@ -252,22 +252,59 @@ export default function App() {
         setIsGenerating(true);
         showToast(`正在為您生成旅程：${data.destination}...`);
         try {
-          const { suggestItineraryWithForm } = await import('./lib/openrouterApi');
-          let suggestions = await suggestItineraryWithForm({ 
-            destination: data.destination,
-            planner: {
-              days: data.days,
-              departureFrom: data.departure || '台北',
-              arrivalTo: data.destination,
-              flightDate: '',
-              countries: [],
-              mustVisitSpots: [],
-              mustEatFoods: [],
-              autoFlightSegments: [],
-              travelFactsContext: '',
-              notes: `Companions: ${data.companions}, Vibes: ${data.vibes.join(',')}, Interests: ${data.interests.join(',')}, Dietary: ${data.dietary.join(',')}, Transport: ${data.transport.join(',')}, Budget: ${data.budget}`
-            }
-          });
+          // Simulate a 3-second API call with typing animation as requested
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          const suggestions = {
+             ui_config: { 
+               bg_gradient: data.budget === '奢華' ? 'from-amber-100 to-yellow-100' : 'from-indigo-100 via-purple-50 to-pink-100', 
+               font_scale: 'large' 
+             },
+             summary: { 
+               title: `為您專屬規劃：${data.destination} ${data.vibes[0] || '完美'}之旅`, 
+               smart_tags: [...data.vibes, ...data.interests, data.companions].filter(Boolean).slice(0, 4) 
+             },
+             itinerary: Array.from({ length: data.days }).map((_, idx) => ({
+               day: idx + 1,
+               spots: [
+                 { 
+                   time: '10:00', 
+                   name: idx === 0 ? '抵達與放行李' : '晨間網美打卡點', 
+                   emoji: idx === 0 ? '🏨' : '📸', 
+                   category: idx === 0 ? 'hotel' : 'landmark', 
+                   ai_note: idx === 0 ? '建議先寄放行李，輕鬆開始旅程！' : '早晨光線最棒，適合拍照！',
+                   intensity: 'chill',
+                   transport_to_next: '大眾運輸約 15 分鐘'
+                 },
+                 { 
+                   time: '13:00', 
+                   name: '在地必吃美食推薦', 
+                   emoji: '🍜', 
+                   category: 'food', 
+                   ai_note: `考量到您的${data.dietary.length > 0 ? data.dietary.join('、') : '口味'}需求，精選的高評價餐廳。`,
+                   intensity: 'chill',
+                   transport_to_next: '步行約 10 分鐘'
+                 },
+                 { 
+                   time: '15:00', 
+                   name: '深度體驗行程', 
+                   emoji: '🗺️', 
+                   category: 'activity', 
+                   ai_note: '讓您深度感受在地文化與氛圍的活動。',
+                   intensity: 'hardcore',
+                   transport_to_next: '預計搭乘計程車'
+                 },
+                 { 
+                   time: '19:00', 
+                   name: '經典夜生活與晚餐', 
+                   emoji: '🍻', 
+                   category: 'nightlife', 
+                   ai_note: '在美麗夜景中享受美好的夜晚！',
+                   intensity: 'chill'
+                 }
+               ]
+             }))
+          };
 
           // Convert AiResponse itinerary to ItineraryNode[]
           const nodes: any[] = [];
@@ -283,8 +320,8 @@ export default function App() {
                      emoji: spot.emoji || '📍',
                      category: spot.category || 'other',
                      description: spot.ai_note || '',
-                     lat: spot.lat,
-                     lng: spot.lng,
+                     lat: 25.0330 + (Math.random() * 0.1),
+                     lng: 121.5654 + (Math.random() * 0.1),
                      source: 'local' as const,
                    });
                  });
@@ -293,18 +330,19 @@ export default function App() {
           }
 
           // assign missing days correctly & populate timestamp
+          const { assignDaysBasedOnTimeAndOrder } = await import('./lib/itineraryUtils');
           const startDate = new Date();
           startDate.setDate(startDate.getDate() + 1);
           const finalNodes = assignDaysBasedOnTimeAndOrder(nodes, startDate.toISOString());
 
           useAppStore.getState().setAiResult({
              fullResponse: suggestions,
-             title: suggestions?.summary?.title || `${data.destination} ${data.days}天行程規劃`,
+             title: suggestions.summary.title,
              rawSuggestions: finalNodes
           });
           setActiveTab('ai_result');
         } catch (e) {
-          showToast('生成失敗，請更換目的地或稍後再試。', 'warning');
+          showToast('生成失敗，請稍後再試。', 'warning');
         } finally {
           setIsGenerating(false);
         }
@@ -321,10 +359,20 @@ export default function App() {
           try {
             const { useItineraryStore } = await import('./store/useItineraryStore');
             const { useAppStore } = await import('./store/useAppStore');
-            const { syncItinerary } = await import('./lib/workflowApi');
+            const { syncItinerary, createTrip } = await import('./lib/workflowApi');
             const { setNodes, addNode } = useItineraryStore.getState();
-            const { activeTripId } = useAppStore.getState();
-            const TRIP_ID = activeTripId || (new URLSearchParams(window.location.search).get('trip_id')) || (import.meta as any).env?.VITE_TRIP_ID || '';
+            const { activeTripId, setActiveTripId } = useAppStore.getState();
+            let TRIP_ID = activeTripId || (new URLSearchParams(window.location.search).get('trip_id')) || (import.meta as any).env?.VITE_TRIP_ID || '';
+
+            // If no active trip, create a new one first
+            if (!TRIP_ID) {
+              const newTrip = await createTrip({ 
+                name: result.title || `規劃之旅`, 
+                destination: '指定地點'
+              });
+              TRIP_ID = newTrip.id;
+              setActiveTripId(TRIP_ID);
+            }
 
             if (result.rawSuggestions?.length) {
                 setNodes([]); // Clear existing

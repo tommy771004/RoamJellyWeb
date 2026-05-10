@@ -108,7 +108,7 @@ export default function DynamicItineraryView({
           <button 
             onClick={() => onSave(result)}
             className="w-full mt-10 py-5 rounded-full bg-slate-900 border border-white/20 text-white font-bold text-lg shadow-xl hover:bg-slate-800 transition-transform duration-200 active:scale-[0.98] flex items-center justify-center gap-2">
-            <span>💾 儲存並開始編輯手帳</span>
+            <span>💾 Save to Trip</span>
           </button>
         )}
       </div>
