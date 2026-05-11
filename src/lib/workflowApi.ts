@@ -405,9 +405,8 @@ export async function searchOffers(form: any): Promise<SearchItem[]> {
       stack: error?.stack
     });
 
-    if (errorMessage.includes('pattern') || errorMessage.includes('pattern')) {
-       // This might be a browser specific error related to URL or Headers
-       throw new SearchServiceUnavailableError('目前連線不穩定，請重新整理頁面後再試一次。');
+    if (errorMessage.includes('message channel closed') || errorMessage.includes('asynchronous response')) {
+      throw new SearchServiceUnavailableError('瀏覽器擴充功能可能干擾搜尋，請嘗試在無痕模式下搜尋。');
     }
 
     throw new SearchServiceUnavailableError('搜尋服務暫時無法使用，請稍後再試。');
