@@ -323,6 +323,7 @@ export default function App() {
           useAppStore.getState().setAiResult({
              fullResponse: suggestions,
              title: suggestions.summary.title,
+             destination: data.destination,
              rawSuggestions: finalNodes
           });
           setActiveTab('ai_result');
@@ -369,12 +370,13 @@ export default function App() {
 
             // If no active trip or permission denied, create a new one first
             if (!TRIP_ID || !canEdit) {
-              const newTrip = await createTrip({ 
-                name: result.title || `規劃之旅`, 
-                destination: '指定地點'
+              const newTrip = await createTrip({
+                name: result.title || `規劃之旅`,
+                destination: result.destination || result.title || '旅遊行程'
               });
-              if (newTrip && newTrip.id) {
-                TRIP_ID = newTrip.id;
+              const newTripId = newTrip?.data?.id || newTrip?.id;
+              if (newTrip && newTripId) {
+                TRIP_ID = newTripId;
                 setActiveTripId(TRIP_ID);
                 // Redirect user parameter
                 const url = new URL(window.location.href);
@@ -385,19 +387,21 @@ export default function App() {
             }
 
             if (nodesToProcess.length > 0 && TRIP_ID) {
-               // Fire off all sync requests in parallel
-               await Promise.all(nodesToProcess.map(async (node: any) => {
+               const results = await Promise.all(nodesToProcess.map(async (node: any) => {
                   addNode(node);
                   return syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
                }));
+               const failed = results.filter(ok => !ok).length;
+               if (failed > 0) console.warn(`${failed} node(s) failed to sync`);
             } else if (!TRIP_ID) {
-               // Fallback if creating trip completely failed
                for (const node of nodesToProcess) {
                  addNode(node);
                }
             }
           } catch (err) {
              console.error('Failed to save to server', err);
+             showToast('行程儲存失敗，請重試。', 'warning');
+             return;
           }
 
           showToast('行程已為您準備好！', 'success');

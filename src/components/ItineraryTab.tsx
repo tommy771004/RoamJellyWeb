@@ -341,6 +341,7 @@ export default function ItineraryTab() {
       useAppStore.getState().setAiResult({
          fullResponse: suggestions,
          title: suggestions.summary.title,
+         destination: formData.destination,
          rawSuggestions: finalNodes
       });
 
@@ -612,11 +613,12 @@ export default function ItineraryTab() {
     try {
       const { createTrip } = await import('../lib/workflowApi');
       const newTrip = await createTrip({ name: newTripName, destination: newTripDest });
+      const newTripId = newTrip?.data?.id || newTrip?.id;
       showToast('成功建立新旅程！', 'success');
       setNewTripName('');
       setNewTripDest('');
       setShowCreateTrip(false);
-      setActiveTripId(newTrip.id);
+      if (newTripId) setActiveTripId(newTripId);
     } catch (e) {
       showToast('建立行程失敗，請稍後再試');
     }

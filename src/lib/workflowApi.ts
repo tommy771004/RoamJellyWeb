@@ -81,7 +81,7 @@ export async function fetchCollaborators(tripId: string): Promise<any> {
     });
     if (!res.ok) return [];
     const data = await res.json();
-    return data.collaborators || [];
+    return Array.isArray(data) ? data : (data.collaborators || []);
   } catch (error) {
     console.error('fetchCollaborators failed', error);
     return [];
