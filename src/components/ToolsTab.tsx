@@ -279,8 +279,12 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
         clearSettlementRecord(settlement.from, settlement.to, settlement.currency);
         if (tripId) {
            await clearSettlement(tripId);
-           const history = await fetchSettlementHistory(tripId);
+           const [history, fresh] = await Promise.all([
+             fetchSettlementHistory(tripId),
+             fetchSettlements(tripId),
+           ]);
            setSettlementHistory(history);
+           if (Array.isArray(fresh)) setSettlements(fresh);
         }
         showToast(`${settlement.from} → ${settlement.to} 已標記結清。`, 'success');
       } catch {
@@ -728,7 +732,7 @@ function SettlementHistorySection() {
       </div>
       <div className="flex flex-col gap-3 w-full">
         {settlementHistory.map((entry) => (
-          <GlassCard key={entry.date} className="!p-4 flex items-center gap-4">
+          <GlassCard key={entry.clearedAt} className="!p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-green-50 border border-green-100 flex items-center justify-center shrink-0">
               <CheckCircle2 size={18} className="text-green-500" />
             </div>
@@ -740,9 +744,13 @@ function SettlementHistorySection() {
                 {entry.count} 筆費用 ・ 涉及 {entry.payers.length} 位成員
               </p>
             </div>
-            <span className="text-[13px] font-black text-green-600 shrink-0">
-              TWD {Math.round(entry.totalAmount).toLocaleString()}
-            </span>
+            <div className="flex flex-col items-end gap-0.5 shrink-0">
+              {Object.entries(entry.currencyTotals ?? {}).map(([cur, amt]) => (
+                <span key={cur} className="text-[13px] font-black text-green-600">
+                  {cur} {Math.round(amt).toLocaleString()}
+                </span>
+              ))}
+            </div>
           </GlassCard>
         ))}
       </div>

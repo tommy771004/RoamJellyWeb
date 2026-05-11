@@ -400,13 +400,15 @@ export class AppRepository {
       .where(and(eq(schema.expenses.tripId, tripId), isNotNull(schema.expenses.clearedAt)))
       .orderBy(asc(schema.expenses.clearedAt));
 
-    const grouped: Record<string, { clearedAt: string; totalAmount: number; count: number; payers: string[] }> = {};
+    const grouped: Record<string, { clearedAt: string; count: number; payers: string[]; currencyTotals: Record<string, number> }> = {};
     for (const r of rows) {
-      const key = r.clearedAt!.toISOString().slice(0, 10);
-      if (!grouped[key]) grouped[key] = { clearedAt: r.clearedAt!.toISOString(), totalAmount: 0, count: 0, payers: [] };
-      grouped[key].totalAmount += r.amount;
+      const utc8 = new Date(r.clearedAt!.getTime() + 8 * 60 * 60 * 1000);
+      const key = utc8.toISOString().slice(0, 10);
+      if (!grouped[key]) grouped[key] = { clearedAt: r.clearedAt!.toISOString(), count: 0, payers: [], currencyTotals: {} };
       grouped[key].count += 1;
       if (!grouped[key].payers.includes(r.payerId)) grouped[key].payers.push(r.payerId);
+      const cur = r.currency ?? 'TWD';
+      grouped[key].currencyTotals[cur] = (grouped[key].currencyTotals[cur] ?? 0) + r.amount;
     }
     return Object.entries(grouped).map(([date, g]) => ({ date, ...g })).reverse();
   }

@@ -663,6 +663,10 @@ export default function ItineraryTab() {
     setAddingFavorite(true);
     try {
       const spot = await addFavorite(activeTripId, newSpotTitle.trim(), newSpotEmoji);
+      if (!spot) {
+        showToast('新增收藏失敗，請稍後再試。');
+        return;
+      }
       setFavorites((prev: FavoriteSpot[]) => [...prev, spot]);
       setNewSpotTitle('');
       setNewSpotEmoji('📍');
