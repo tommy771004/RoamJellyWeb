@@ -13,6 +13,10 @@ import * as schema from './src/server/db/schema';
 import { scrapeTripFlights } from './src/server/services/tripParser';
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
 
+// Vercel serverless: resolve the Express app once all routes are registered
+let _resolveApp!: (app: ReturnType<typeof express>) => void;
+const _appPromise = new Promise<ReturnType<typeof express>>(r => { _resolveApp = r; });
+
 const REAL_BACKEND_BASE_URL = process.env.REAL_BACKEND_BASE_URL?.replace(/\/+$/, '');
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 const SHOULD_SEED_DEMO_DATA = process.env.SEED_DEMO_DATA === 'true' && !REAL_BACKEND_BASE_URL;
@@ -2078,6 +2082,10 @@ async function startServer() {
     }
   }
 
+  // Expose app to Vercel serverless handler
+  _resolveApp(app);
+  if (process.env.VERCEL) return;
+
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
     if (REAL_BACKEND_BASE_URL) {
@@ -2107,7 +2115,14 @@ async function startServer() {
   });
 }
 
+// Vercel serverless handler — imported by api/index.ts
+export default async function handler(req: any, res: any) {
+  const app = await _appPromise;
+  return app(req, res);
+}
+
+// Start the server (local dev: also calls listen; Vercel: skips listen, resolves _appPromise)
 startServer().catch((error) => {
   console.error('Server failed to start', error);
-  process.exit(1);
+  if (!process.env.VERCEL) process.exit(1);
 });

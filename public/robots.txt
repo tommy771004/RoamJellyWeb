@@ -27,5 +27,4 @@ Allow: /
 User-agent: CCBot
 Disallow: /
 
-# TODO:DOMAIN replace roamjelly.com with real domain before going live
-Sitemap: https://roamjelly.com/sitemap.xml
+Sitemap: https://roam-jelly-web.vercel.app/sitemap.xml

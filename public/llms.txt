@@ -36,6 +36,6 @@ Web application (React + Node.js). Real-time sync via Socket.io. Native mobile a
 
 ## Contact
 
-Website: https://roamjelly.com  <!-- TODO:DOMAIN replace roamjelly.com with real domain -->
+Website: https://roam-jelly-web.vercel.app
 Support: yuanyouxie52@gmail.com
 Press / partnerships: yuanyouxie52@gmail.com
