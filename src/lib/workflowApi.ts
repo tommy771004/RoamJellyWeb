@@ -74,7 +74,10 @@ export async function registerUser(username: string, password: string, display_n
 export async function fetchCollaborators(tripId: string): Promise<any> {
   try {
     const url = `/api/collaborators?trip_id=${encodeURIComponent(tripId)}`;
-    const res = await fetch(url);
+    const token = getStoredToken();
+    const res = await fetch(url, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return data.collaborators || [];
@@ -169,13 +172,19 @@ export async function deleteFavorite(id: string): Promise<any> {
   } catch {}
   return true; 
 }
-export async function fetchChecklist(tripId: string): Promise<any> { 
-  const res = await fetch(`/api/checklist?trip_id=${tripId}`);
+export async function fetchChecklist(tripId: string): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/checklist?trip_id=${tripId}`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
   if (!res.ok) return [];
   return res.json();
 }
-export async function fetchSettlements(tripId: string): Promise<any> { 
-  const res = await fetch(`/api/settlements?trip_id=${tripId}`);
+export async function fetchSettlements(tripId: string): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/settlements?trip_id=${tripId}`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
   if (!res.ok) return [];
   return res.json();
 }
