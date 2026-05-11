@@ -1,32 +1,33 @@
-// These models are free-tier on OpenRouter (tagged with :free suffix).
-// List updated 2026-05-11 based on OpenRouter /api/v1/models (pricing.prompt === "0").
-// Ordered by capability: gemini > deepseek > llama > qwen > mistral > others.
+// Free-tier models sourced from https://openrouter.ai/api/v1/models (pricing.prompt === "0").
+// Last synced 2026-05-11. Ordered by expected capability for Chinese travel JSON generation.
+// Excluded: audio (lyria), OCR (qianfan-ocr), internal (openrouter/owl-alpha, openrouter/free), code-only (poolside/*), unknown (inclusionai/ring).
 const FREE_MODELS = [
-  // Google Gemma
+  // Large / high-capability
+  'openai/gpt-oss-120b:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'qwen/qwen3-next-80b-a3b-instruct:free',
+  // Mid-tier — confirmed present
   'google/gemma-4-31b-it:free',
   'google/gemma-4-26b-a4b-it:free',
-  'google/gemma-3-27b-it:free',
-  // DeepSeek
-  'deepseek/deepseek-r1:free',
-  'deepseek/deepseek-chat-v3-0324:free',
-  // Meta LLaMA
   'meta-llama/llama-3.3-70b-instruct:free',
-  'meta-llama/llama-4-scout:free',
-  'meta-llama/llama-3.2-3b-instruct:free',
-  // Qwen
-  'qwen/qwq-32b:free',
-  'qwen/qwen-2.5-72b-instruct:free',
-  // Nvidia
-  'nvidia/llama-3.1-nemotron-70b-instruct:free',
-  // Hermes
+  'openai/gpt-oss-20b:free',
+  'nvidia/nemotron-3-nano-30b-a3b:free',
+  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
   'nousresearch/hermes-3-llama-3.1-405b:free',
-  // Mistral / others
-  'mistralai/mistral-7b-instruct:free',
+  'z-ai/glm-4.5-air:free',
+  'qwen/qwen3-coder:free',
+  'minimax/minimax-m2.5:free',
+  // Small — confirmed present
+  'meta-llama/llama-3.2-3b-instruct:free',
+  'nvidia/nemotron-nano-12b-v2-vl:free',
+  'nvidia/nemotron-nano-9b-v2:free',
   'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
+  // Tiny — last resort
+  'liquid/lfm-2.5-1.2b-thinking:free',
+  'liquid/lfm-2.5-1.2b-instruct:free',
 ];
 
-// WARNING: These are PAID models on OpenRouter and will incur costs.
-// They are only used as a last-resort fallback when ALLOW_PAID_FALLBACK=true.
+// WARNING: PAID models — only used when ALLOW_PAID_FALLBACK=true.
 const PAID_FALLBACK_MODELS = [
   'google/gemini-1.5-flash',
   'openai/gpt-4o-mini',
@@ -41,6 +42,8 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export async function fetchOpenRouterWithFallback(apiKey: string, prompt: string) {
   let lastError: Error | null = null;
+  let rateLimitedCount = 0;
+  let notFoundCount = 0;
 
   for (const model of FALLBACK_MODELS) {
     try {
@@ -59,20 +62,27 @@ export async function fetchOpenRouterWithFallback(apiKey: string, prompt: string
         })
       });
 
-      // API key is invalid or forbidden — no point retrying any model.
+      // Auth failure — no point retrying any model.
       if (response.status === 401 || response.status === 403) {
         throw new Error(`API key invalid or forbidden (${response.status}). Stopping retries.`);
       }
 
-      // Rate limited — wait before trying the next model.
+      // Rate limited — wait then try next model.
       if (response.status === 429) {
         console.warn(`Rate limited on model ${model}, trying next model...`);
         await sleep(1200);
+        rateLimitedCount++;
         lastError = new Error(`429 rate limited on ${model}`);
         continue;
       }
 
-      // 5xx server errors — move to next model immediately.
+      // Model not found — skip silently (stale model ID in list).
+      if (response.status === 404) {
+        console.warn(`Model ${model} not found (404), skipping...`);
+        notFoundCount++;
+        continue;
+      }
+
       if (!response.ok) {
         const errText = await response.text().catch(() => '');
         throw new Error(`OpenRouter API Error (${model}): ${response.status} ${errText}`);
@@ -88,15 +98,17 @@ export async function fetchOpenRouterWithFallback(apiKey: string, prompt: string
         throw new Error(`Model ${model} returned empty content`);
       }
     } catch (err: any) {
-      // Propagate auth failures immediately — no further models will help.
       if (err.message?.includes('Stopping retries')) throw err;
       console.warn(`Failed with model ${model}, trying next...`, err.message);
       lastError = err;
     }
   }
 
-  const allRateLimited = lastError?.message?.startsWith('429');
-  throw allRateLimited
-    ? new Error('ALL_MODELS_RATE_LIMITED')
-    : (lastError || new Error('All fallback models failed.'));
+  // All models tried: distinguish rate-limit saturation from other failures.
+  const totalTried = FALLBACK_MODELS.length;
+  const unavailable = rateLimitedCount + notFoundCount;
+  if (unavailable === totalTried || rateLimitedCount > 0) {
+    throw new Error('ALL_MODELS_RATE_LIMITED');
+  }
+  throw lastError || new Error('All fallback models failed.');
 }
