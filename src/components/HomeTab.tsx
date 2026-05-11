@@ -629,62 +629,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       {/* Top subtle inner shadow / glass blur to conceal items scrolling behind header */}
       <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-white/60 to-transparent pointer-events-none z-20" />
       
-      {/* Hero section with artistic horizontal text (Marquee effect) */}
-      <div className="relative w-full mb-6 md:mb-10 mt-1 sm:mt-3 min-h-48 sm:min-h-56 md:min-h-72 overflow-hidden rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] flex flex-col justify-center group shadow-xl shadow-indigo-900/5 border border-white/60 bg-white/40 backdrop-blur-3xl">
-        {/* Dynamic Abstract Background (Aurora Effect) */}
-        <div className="absolute inset-0 transition-colors duration-1000 bg-gradient-to-br from-indigo-50/60 via-white/40 to-orange-50/60 -z-20 group-hover:from-indigo-100/60 group-hover:via-white/60 group-hover:to-rose-100/50" />
-        <div className="absolute -right-[10%] -top-[40%] w-[120%] h-[200%] bg-gradient-to-l from-pink-300/30 via-purple-300/20 to-transparent blur-[80px] -z-10 transform -rotate-12 transition-transform duration-1000 group-hover:rotate-0 group-hover:scale-110" />
-        <div className="absolute -left-[10%] -bottom-[40%] w-[80%] h-[150%] bg-gradient-to-tr from-cyan-300/20 via-sky-200/20 to-transparent blur-[80px] -z-10 transition-transform duration-1000 group-hover:-translate-y-10 group-hover:scale-110" />
-        <div className="absolute top-1/2 left-1/4 w-[50%] h-[50%] bg-rose-200/20 blur-[100px] rounded-full -z-10 animate-pulse pointer-events-none mix-blend-multiply" />
-        
-        {/* Marquee layer */}
-        <div className="absolute inset-0 flex items-center pointer-events-none z-0 overflow-hidden mix-blend-overlay">
-          <motion.div
-            animate={{ x: [0, -1000] }}
-            transition={{ repeat: Infinity, ease: 'linear', duration: 60 }}
-            className="flex whitespace-nowrap opacity-[0.04] select-none"
-          >
-            {Array.from({ length: 8 }).map((_, i) => (
-              <span key={i} className="text-5xl sm:text-7xl md:text-8xl font-black text-slate-800 uppercase tracking-tighter pr-4 md:pr-8 leading-none py-3 mix-blend-color-burn">
-                Explore The World • 探索無界 •
-              </span>
-            ))}
-          </motion.div>
-        </div>
-        
-        {/* Foreground Content */}
-        <div className="relative z-10 flex flex-col justify-center items-start px-6 sm:px-10 md:px-16 pointer-events-none w-full max-w-4xl">
-           <motion.div 
-             initial={{ opacity: 0, y: 15 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1], delay: 0.1 }}
-             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-xl border border-white shadow-sm mb-4 sm:mb-6"
-           >
-             <Sparkles size={14} className="text-orange-500" />
-             <span className="text-[11px] sm:text-[13px] font-bold text-slate-700 tracking-wider">AI Powered Travel</span>
-           </motion.div>
-           <motion.h1 
-             initial={{ opacity: 0, y: 20 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1], delay: 0.2 }}
-             className="text-4xl sm:text-5xl md:text-6xl lg:text-[72px] font-black text-slate-900 tracking-tighter leading-[1.05] mb-4 sm:mb-6"
-           >
-             預見下一次<br className="sm:hidden" />
-             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-fuchsia-600 pb-2 relative inline-block">
-               非凡旅程
-               <div className="absolute bottom-1 left-0 w-full h-[8px] bg-fuchsia-500/20 -rotate-1 skew-x-12 rounded-full" />
-             </span>
-           </motion.h1>
-           <motion.p 
-             initial={{ opacity: 0, y: 20 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1], delay: 0.3 }}
-             className="text-sm sm:text-base md:text-lg text-slate-600 font-bold tracking-wide"
-           >
-             探索全球機票、質感住宿與在地體驗
-           </motion.p>
-        </div>
-      </div>
+
 
       <div className="flex flex-col gap-6 md:gap-8 w-full max-w-7xl mx-auto">
         {/* Left Side: Search Form & AI Banner */}

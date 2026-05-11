@@ -1,6 +1,13 @@
-import { chromium } from 'playwright-extra';
+import { addExtra } from 'playwright-extra';
 // @ts-ignore
 import stealth from 'puppeteer-extra-plugin-stealth';
+import chromiumSparticuz from '@sparticuz/chromium';
+import * as playwrightCore from 'playwright-core';
+
+const chromium = addExtra(playwrightCore.chromium);
+
+// Ensure Vercel node-file-trace includes playwright by statically referencing it
+try { require('playwright'); } catch {}
 
 // Initialize stealth plugin to bypass basic bot detection
 chromium.use(stealth());
@@ -114,10 +121,15 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
   
   let browser;
   try {
-    // Launch browser (this may require npx playwright install in production)
+    const isVercel = !!process.env.VERCEL;
+    
+    // Launch browser (uses sparticuz/chromium on Vercel)
     browser = await chromium.launch({ 
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+      executablePath: isVercel ? await (chromiumSparticuz as any).executablePath() : undefined,
+      args: isVercel 
+        ? (chromiumSparticuz as any).args 
+        : ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
     });
     
     // Set realistic User-Agent and viewport

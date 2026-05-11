@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "tsx server.ts",
     "start": "node dist/server.cjs",
-    "build": "vite build && esbuild server.ts --platform=node --target=node18 --bundle --format=cjs --out-extension:.js=.cjs --outdir=dist",
-    "vercel-build": "vite build && esbuild server.ts --bundle --platform=node --target=node18 --format=cjs --outfile=api/_server.cjs --external:pg-native --external:bufferutil --external:utf-8-validate --external:playwright --external:playwright-extra --external:puppeteer-extra-plugin-stealth",
+    "build": "vite build && esbuild server.ts --platform=node --target=node18 --bundle --format=cjs --out-extension:.js=.cjs --outdir=dist --external:pg-native --external:bufferutil --external:utf-8-validate --external:playwright --external:playwright-extra --external:puppeteer-extra-plugin-stealth --external:@sparticuz/chromium --external:playwright-core",
+    "vercel-build": "vite build && esbuild server.ts --bundle --platform=node --target=node18 --format=cjs --outfile=api/_server.cjs --external:pg-native --external:bufferutil --external:utf-8-validate --external:playwright --external:playwright-extra --external:puppeteer-extra-plugin-stealth --external:@sparticuz/chromium --external:playwright-core",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "postinstall": "npx -y playwright install chromium",
@@ -19,6 +19,7 @@
   "dependencies": {
     "@google/genai": "^2.0.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@sparticuz/chromium": "^148.0.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "class-variance-authority": "^0.7.1",
@@ -33,6 +34,7 @@
     "motion": "^12.23.24",
     "pg": "^8.16.3",
     "playwright": "^1.59.1",
+    "playwright-core": "^1.59.1",
     "playwright-extra": "^4.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "react": "^19.0.0",
