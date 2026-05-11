@@ -294,11 +294,22 @@ export default function ItineraryTab() {
              emoji: spot.emoji || '📍',
              category: spot.category || 'other',
              description: spot.ai_note || '',
-             lat: 25.0330 + (Math.random() * 0.1),
-             lng: 121.5654 + (Math.random() * 0.1),
+             lat: undefined as any,
+             lng: undefined as any,
              source: 'local' as const,
            });
         });
+      });
+
+      // Geocode all spots in parallel; fall back silently if any fail
+      const geocodeResults = await Promise.allSettled(
+        rawNodes.map(n => geocodeSpot(n.title, formData.destination))
+      );
+      geocodeResults.forEach((r, i) => {
+        if (r.status === 'fulfilled' && r.value) {
+          rawNodes[i].lat = r.value.lat;
+          rawNodes[i].lng = r.value.lng;
+        }
       });
 
       const startDate = new Date();

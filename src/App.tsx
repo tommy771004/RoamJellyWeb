@@ -15,7 +15,7 @@ import AiForm from './components/AiForm';
 import DynamicItineraryView from './components/DynamicItineraryView';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, ensureClientAccessToken } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot } from './lib/workflowApi';
 import { JellyToast } from './components/JellyToast';
 
 /** Extract /trip/:tripId from the current URL path, null if no match. */
@@ -322,14 +322,25 @@ export default function App() {
                      emoji: spot.emoji || '📍',
                      category: spot.category || 'other',
                      description: spot.ai_note || '',
-                     lat: 25.0330 + (Math.random() * 0.1),
-                     lng: 121.5654 + (Math.random() * 0.1),
+                     lat: undefined as any,
+                     lng: undefined as any,
                      source: 'local' as const,
                    });
                  });
               }
             });
           }
+
+          // Geocode all spots in parallel; fall back silently if any fail
+          const geocodeResults = await Promise.allSettled(
+            nodes.map(n => geocodeSpot(n.title, data.destination))
+          );
+          geocodeResults.forEach((r, i) => {
+            if (r.status === 'fulfilled' && r.value) {
+              nodes[i].lat = r.value.lat;
+              nodes[i].lng = r.value.lng;
+            }
+          });
 
           // assign missing days correctly & populate timestamp
           const { assignDaysBasedOnTimeAndOrder } = await import('./lib/itineraryUtils');

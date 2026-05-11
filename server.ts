@@ -820,17 +820,32 @@ async function startServer() {
   });
 
   app.get('/api/trips/:trip_id/flights', async (req, res) => {
+    const tripId = req.params.trip_id;
+    const trip = await repo.getTripById(tripId).catch(() => null);
+    const destination = trip?.destination ?? '';
+
+    // Map common destination keywords to IATA codes
+    const DEST_IATA: [string, string][] = [
+      ['tokyo', 'NRT'], ['osaka', 'KIX'], ['kyoto', 'ITM'],
+      ['seoul', 'ICN'], ['paris', 'CDG'], ['bangkok', 'BKK'],
+      ['bali', 'DPS'], ['singapore', 'SIN'], ['hong kong', 'HKG'],
+      ['new york', 'JFK'], ['london', 'LHR'],
+    ];
+    const lower = destination.toLowerCase();
+    const matched = DEST_IATA.find(([k]) => lower.includes(k));
+    const arrCode = matched ? matched[1] : destination.slice(0, 3).toUpperCase() || 'NRT';
+
     const flightsData = await repo.getAllFlights();
     if (flightsData.length > 0) {
        res.json(flightsData.map(f => ({
          airline: f.provider,
          direct: true,
-         duration: '4h 00m',
+         duration: '3h 30m',
          price: f.price,
          depTime: f.time?.split(' - ')[0] || '10:00',
          depCode: 'TPE',
-         arrTime: f.time?.split(' - ')[1] || '14:00',
-         arrCode: 'NRT'
+         arrTime: f.time?.split(' - ')[1] || '13:30',
+         arrCode,
        })));
        return;
     }
@@ -840,15 +855,42 @@ async function startServer() {
   app.get('/api/trips/:trip_id/activities', async (req, res) => {
     const tripId = req.params.trip_id;
     const nodes = await repo.getItineraryNodes(tripId);
-    
+
+    const CATEGORY_IMG: Record<string, string> = {
+      hotel:     'photo-1566073771259-6a8506099945',
+      food:      'photo-1555396273-367ea4eb4db5',
+      landmark:  'photo-1513407030348-c983a97b98d8',
+      activity:  'photo-1467269204594-9661b134dd2b',
+      transport: 'photo-1436491865332-7a61a109cc05',
+      shopping:  'photo-1555529669-e69e7aa0ba9a',
+      nightlife: 'photo-1566417713940-fe7c737a9ef2',
+      spot:      'photo-1499856871958-5b9627545d1a',
+      other:     'photo-1506905925346-21bda4d32df4',
+    };
+    const CATEGORY_PRICE: Record<string, number> = {
+      hotel: 0, food: 320, landmark: 150, activity: 680,
+      transport: 0, shopping: 0, nightlife: 280, spot: 120, other: 100,
+    };
+    const CATEGORY_RATING: Record<string, number> = {
+      hotel: 4.5, food: 4.7, landmark: 4.6, activity: 4.8,
+      transport: 4.2, shopping: 4.3, nightlife: 4.5, spot: 4.6, other: 4.4,
+    };
+
     if (nodes.length > 0) {
-      res.json(nodes.map(node => ({
-        img: 'https://images.unsplash.com/photo-1542931287-023b922fa89b?auto=format&fit=crop&q=80&w=200&h=200', 
-        title: `${node.title} Admission Ticket`, 
-        rating: 4.8, 
-        reviews: '12k', 
-        price: 580 
-      })));
+      res.json(nodes
+        .filter(node => !['transport', 'hotel'].includes(node.category ?? ''))
+        .slice(0, 8)
+        .map(node => {
+          const cat = node.category ?? 'other';
+          const photoId = CATEGORY_IMG[cat] ?? CATEGORY_IMG.other;
+          return {
+            img: `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=200&h=200`,
+            title: `${node.title} Ticket`,
+            rating: CATEGORY_RATING[cat] ?? 4.5,
+            reviews: `${Math.floor(1000 + (node.title?.length ?? 5) * 137) % 9000 + 1000}`,
+            price: CATEGORY_PRICE[cat] ?? 100,
+          };
+        }));
       return;
     }
 
@@ -1185,9 +1227,9 @@ async function startServer() {
     const limit = Number(req.query.limit ?? 10);
     const trips = await repo.getPublicTrips(limit).catch(() => []);
     res.json(trips.length > 0 ? trips : [
-      { id: 'h1', title: '東京散策：巷弄裡的小秘密', author: 'Travel Guru', likes: 120, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800' },
-      { id: 'h2', title: '大阪美食地圖 2024', author: 'Travel Guru', likes: 85, cover: 'https://images.unsplash.com/photo-1590484512398-33fb39eff960?w=800' },
-      { id: 'h3', title: '京都紅葉季完全攻略', author: 'Travel Guru', likes: 210, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800' }
+      { id: 'h1', title: '東京散策：巷弄裡的小秘密', author: 'Miyuki Tanaka', likes: 124, cover: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=800&auto=format&fit=crop', _fallback: true },
+      { id: 'h2', title: '大阪美食地圖 2024', author: 'Chen Wei-Ming', likes: 89, cover: 'https://images.unsplash.com/photo-1590484512398-33fb39eff960?w=800&auto=format&fit=crop', _fallback: true },
+      { id: 'h3', title: '京都紅葉季完全攻略', author: 'Yuki Sato', likes: 213, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop', _fallback: true },
     ]);
   });
 

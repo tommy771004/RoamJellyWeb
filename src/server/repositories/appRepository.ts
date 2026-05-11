@@ -176,13 +176,27 @@ export class AppRepository {
       .where(eq(schema.tripMembers.role, 'owner'))
       .limit(limit);
       
-    // Transform to handbook format
+    const idHash = (s: string) => [...s].reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const DEST_COVERS: [string, string][] = [
+      ['tokyo', 'photo-1542051841857-5f90071e7989'],
+      ['osaka', 'photo-1590484512398-33fb39eff960'],
+      ['kyoto', 'photo-1493976040374-85c8e12f0c0e'],
+      ['seoul', 'photo-1538669715315-155098f0fb1d'],
+      ['paris', 'photo-1502602898657-3e91760cbb34'],
+      ['bali',  'photo-1537996194471-e657df975ab4'],
+    ];
+    const getCover = (dest: string) => {
+      const lower = (dest ?? '').toLowerCase();
+      const match = DEST_COVERS.find(([k]) => lower.includes(k));
+      const photoId = match ? match[1] : DEST_COVERS[0][1];
+      return `https://images.unsplash.com/${photoId}?w=800&auto=format&fit=crop`;
+    };
     return rows.map((r: any) => ({
        id: r.id,
        title: r.title,
        author: r.author || 'Anonymous',
-       likes: Math.floor(Math.random() * 1000), // Random likes for demo as we don't have likes count
-       cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800'
+       likes: 100 + (idHash(String(r.id)) % 900),
+       cover: getCover(r.destination ?? ''),
     }));
   }
 
