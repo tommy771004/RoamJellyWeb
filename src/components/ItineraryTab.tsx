@@ -1371,23 +1371,42 @@ export default function ItineraryTab() {
           )}
 
           {/* Mobile Day Selector */}
-          <div className="lg:hidden flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4">
-            {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
-              const isActive = safeSelectedDay === day;
-              return (
-                <button
-                  key={day}
-                  onClick={() => setSelectedDay(day)}
-                  className={`px-8 py-3 rounded-full font-black text-sm whitespace-nowrap transition-all uppercase tracking-widest ${
-                    isActive
-                      ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-200/50'
-                      : 'glass-card text-slate-400 hover:text-pink-400'
-                  }`}
-                >
-                  DAY {day}
-                </button>
-              );
-            })}
+          <div className="lg:hidden flex items-center gap-2 -mx-4 px-2">
+            <button
+              onClick={() => setSelectedDay(Math.max(1, safeSelectedDay - 1))}
+              disabled={safeSelectedDay <= 1}
+              className="w-9 h-9 rounded-full flex items-center justify-center bg-white/70 border border-slate-200 text-slate-400 disabled:opacity-30 hover:bg-pink-50 hover:text-pink-500 transition-all shrink-0 shadow-sm"
+            >
+              <ArrowLeft size={16} strokeWidth={2.5} />
+            </button>
+            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar flex-1">
+              {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
+                const isActive = safeSelectedDay === day;
+                const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
+                return (
+                  <motion.button
+                    key={day}
+                    onClick={() => setSelectedDay(day)}
+                    whileTap={{ scale: 0.93 }}
+                    className={`flex flex-col items-center px-5 py-2 rounded-2xl font-black text-xs whitespace-nowrap transition-all uppercase tracking-widest shrink-0 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-200/50'
+                        : 'bg-white/70 border border-slate-200 text-slate-400 hover:text-pink-400'
+                    }`}
+                  >
+                    <span>Day {day}</span>
+                    <span className={`text-[9px] font-bold mt-0.5 ${isActive ? 'text-white/70' : 'text-slate-300'}`}>{count} spots</span>
+                  </motion.button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setSelectedDay(Math.min(totalDays, safeSelectedDay + 1))}
+              disabled={safeSelectedDay >= totalDays}
+              className="w-9 h-9 rounded-full flex items-center justify-center bg-white/70 border border-slate-200 text-slate-400 disabled:opacity-30 hover:bg-pink-50 hover:text-pink-500 transition-all shrink-0 shadow-sm"
+            >
+              <ArrowRight size={16} strokeWidth={2.5} />
+            </button>
           </div>
 
           <AnimatePresence mode="wait">
@@ -2017,8 +2036,11 @@ function ItineraryListItem({
   return (
     <div className="relative flex items-start group w-full">
       {/* Content Card */}
-      <GlassCard 
-        className={`flex-1 !p-5 sm:!p-6 !rounded-[32px] ${getCategoryStyle(item.category)} shadow-lg relative z-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${!isOffline && !isEditing ? 'cursor-pointer' : ''}`}
+      {collaboratingUser && (
+        <div className="absolute -inset-1 rounded-[34px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-30 blur-sm z-0 animate-pulse pointer-events-none" />
+      )}
+      <GlassCard
+        className={`flex-1 !p-5 sm:!p-6 !rounded-[32px] ${getCategoryStyle(item.category)} shadow-lg relative z-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingUser ? 'ring-2 ring-fuchsia-400/60' : ''}`}
         onClick={(e) => {
            if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
            if (!isOffline && !isEditing) {
@@ -2070,10 +2092,15 @@ function ItineraryListItem({
                  </span>
                )}
                {collaboratingUser && (
-                 <span className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-fuchsia-50 text-[10px] font-black uppercase tracking-[0.1em] text-fuchsia-600 border border-fuchsia-100 animate-pulse">
-                   <span className="material-symbols-outlined text-[14px]">edit</span>
+                 <motion.span
+                   initial={{ scale: 0.8, opacity: 0 }}
+                   animate={{ scale: 1, opacity: 1 }}
+                   className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-fuchsia-100 text-[10px] font-black uppercase tracking-[0.1em] text-fuchsia-700 border border-fuchsia-200 shadow-sm shadow-fuchsia-200/50"
+                 >
+                   <span className="w-2 h-2 rounded-full bg-fuchsia-500 animate-ping inline-block" />
+                   <span className="w-2 h-2 rounded-full bg-fuchsia-500 absolute" />
                    {collaboratingUser} 編輯中
-                 </span>
+                 </motion.span>
                )}
                {!isEditing && (
                  <button 
@@ -2697,97 +2724,138 @@ function ManualAddNode({
 // ─── Map View ───────────────────────────────────────────────────────────
 
 function MapView({ items }: { items: ItineraryNode[] }) {
-  return (
-    <GlassCard className="h-[55vh] relative overflow-hidden !p-0 border-4 border-white/40 rounded-[2.5rem]">
-      <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(135deg, #bfdbfe 0%, #ddd6fe 50%, #fce7f3 100%)' } as object}
-      />
-      {[25, 50, 75].map((p) => (
-        <div key={`h-${p}`} className="absolute left-0 right-0 h-px bg-white/30" style={{ top: `${p}%` }} />
-      ))}
-      {[25, 50, 75].map((p) => (
-        <div key={`v-${p}`} className="absolute top-0 bottom-0 w-px bg-white/30" style={{ left: `${p}%` }} />
-      ))}
-      <div className="absolute top-3 right-4 bg-white/70 rounded-full w-8 h-8 items-center justify-center">
-        <span className="text-xs font-black text-slate-600">N↑</span>
-      </div>
-      {/* Connecting lines via SVG */}
-      {items.length > 1 && (
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' } as object}
-        >
-          {/* Arrow marker definition for directional lines */}
-          <defs>
-            <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto" fill="rgba(236,72,153,0.7)">
-              <polygon points="0 0, 6 2, 0 4" />
-            </marker>
-          </defs>
-          {(items as ItineraryNode[]).slice(0, -1).map((item: ItineraryNode, i: number) => {
-            const next = items[i + 1];
-            if (!item.lat || !item.lng || !next.lat || !next.lng) return <Fragment key={`line-${item.node_id}`} />;
-            const from = getDynamicMapPercent(items, item.lat, item.lng);
-            const to = getDynamicMapPercent(items, next.lat, next.lng);
-            return (
-              <line
-                key={`line-${item.node_id}`}
-                x1={`${from.x}%`} y1={`${from.y}%`}
-                x2={`${to.x}%`}   y2={`${to.y}%`}
-                stroke="rgba(236,72,153,0.6)"
-                strokeWidth={0.8}
-                strokeDasharray="2 1.5"
-                markerEnd="url(#arrowhead)"
-              />
-            );
-          })}
-        </svg>
-      )}
-      {/* Map pins */}
-      {items.map((item: ItineraryNode, index: number) => {
-        const pos = (item.lat && item.lng)
-          ? getDynamicMapPercent(items, item.lat, item.lng)
-          : { x: 25 + (index % 2) * 50, y: 15 + index * 12 };
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedNode = items.find(n => n.node_id === selectedId) ?? null;
 
-        return (
-          <motion.div
-            key={item.node_id}
-            initial={{ scale: 0, opacity: 0, y: -50 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.12, type: 'spring', bounce: 0.5, mass: 0.8 }}
-            style={{
-              position: 'absolute',
-              left: `${pos.x}%`,
-              top: `${pos.y}%`,
-              transform: 'translate(-50%, -100%)',
-            }}
-          >
-            <div className="flex flex-col items-center">
-              <div className="bg-white/95 rounded-2xl px-2.5 py-2 border-2 border-white flex flex-col items-center shadow-lg relative cursor-default group">
-                <div className="absolute -top-3 -right-3 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-sm border border-white">
-                  {index + 1}
-                </div>
-                <span className="text-2xl">{item.emoji}</span>
-              </div>
-              <div
-                className="w-2.5 h-2.5 bg-white -mt-1.5 border-r-2 border-b-2 border-white rotate-45"
-              />
-              <div className="bg-slate-800/80 px-2.5 py-0.5 rounded-full mt-1">
-                <span className="text-[10px] font-bold text-white whitespace-nowrap">{item.title}</span>
-              </div>
-            </div>
-          </motion.div>
-        );
-      })}
-      {items.length === 0 && (
-        <div className="absolute inset-0 items-center justify-center">
-          <span className="text-slate-400 font-semibold">目前沒有行程顯示在地圖上</span>
+  return (
+    <div className="flex flex-col gap-3">
+      <GlassCard className="h-[55vh] relative overflow-hidden !p-0 border-4 border-white/40 rounded-[2.5rem]">
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(135deg, #bfdbfe 0%, #ddd6fe 50%, #fce7f3 100%)' } as object}
+        />
+        {[25, 50, 75].map((p) => (
+          <div key={`h-${p}`} className="absolute left-0 right-0 h-px bg-white/30" style={{ top: `${p}%` }} />
+        ))}
+        {[25, 50, 75].map((p) => (
+          <div key={`v-${p}`} className="absolute top-0 bottom-0 w-px bg-white/30" style={{ left: `${p}%` }} />
+        ))}
+        <div className="absolute top-3 right-4 bg-white/70 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+          <span className="text-xs font-black text-slate-600">N↑</span>
         </div>
-      )}
-    </GlassCard>
+        {/* dismiss selection on map bg click */}
+        <div className="absolute inset-0" onClick={() => setSelectedId(null)} />
+
+        {/* Connecting lines via SVG */}
+        {items.length > 1 && (
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' } as object}
+          >
+            <defs>
+              <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto" fill="rgba(236,72,153,0.7)">
+                <polygon points="0 0, 6 2, 0 4" />
+              </marker>
+            </defs>
+            {(items as ItineraryNode[]).slice(0, -1).map((item: ItineraryNode, i: number) => {
+              const next = items[i + 1];
+              if (!item.lat || !item.lng || !next.lat || !next.lng) return <Fragment key={`line-${item.node_id}`} />;
+              const from = getDynamicMapPercent(items, item.lat, item.lng);
+              const to = getDynamicMapPercent(items, next.lat, next.lng);
+              return (
+                <line
+                  key={`line-${item.node_id}`}
+                  x1={`${from.x}%`} y1={`${from.y}%`}
+                  x2={`${to.x}%`}   y2={`${to.y}%`}
+                  stroke="rgba(236,72,153,0.6)"
+                  strokeWidth={0.8}
+                  strokeDasharray="2 1.5"
+                  markerEnd="url(#arrowhead)"
+                />
+              );
+            })}
+          </svg>
+        )}
+
+        {/* Map pins */}
+        {items.map((item: ItineraryNode, index: number) => {
+          const pos = (item.lat && item.lng)
+            ? getDynamicMapPercent(items, item.lat, item.lng)
+            : { x: 25 + (index % 2) * 50, y: 15 + index * 12 };
+          const isSelected = item.node_id === selectedId;
+
+          return (
+            <motion.div
+              key={item.node_id}
+              initial={{ scale: 0, opacity: 0, y: -50 }}
+              animate={{ scale: isSelected ? 1.2 : 1, opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.12, type: 'spring', bounce: 0.5, mass: 0.8 }}
+              style={{
+                position: 'absolute',
+                left: `${pos.x}%`,
+                top: `${pos.y}%`,
+                transform: 'translate(-50%, -100%)',
+                zIndex: isSelected ? 20 : 10,
+              }}
+              onClick={(e) => { e.stopPropagation(); setSelectedId(isSelected ? null : item.node_id); }}
+            >
+              <div className="flex flex-col items-center cursor-pointer">
+                <motion.div
+                  animate={isSelected ? { boxShadow: '0 0 0 3px rgba(168,85,247,0.6), 0 8px 24px rgba(0,0,0,0.15)' } : { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  className={`bg-white/95 rounded-2xl px-2.5 py-2 border-2 flex flex-col items-center relative transition-colors ${isSelected ? 'border-fuchsia-400' : 'border-white'}`}
+                >
+                  <div className={`absolute -top-3 -right-3 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-sm border border-white transition-colors ${isSelected ? 'bg-fuchsia-500' : 'bg-pink-500'}`}>
+                    {index + 1}
+                  </div>
+                  <span className="text-2xl">{item.emoji}</span>
+                </motion.div>
+                <div className={`w-2.5 h-2.5 -mt-1.5 border-r-2 border-b-2 rotate-45 transition-colors ${isSelected ? 'bg-fuchsia-400 border-fuchsia-400' : 'bg-white border-white'}`} />
+                <div className={`px-2.5 py-0.5 rounded-full mt-1 transition-colors ${isSelected ? 'bg-fuchsia-600/90' : 'bg-slate-800/80'}`}>
+                  <span className="text-[10px] font-bold text-white whitespace-nowrap">{item.title}</span>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+        {items.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-slate-400 font-semibold">目前沒有行程顯示在地圖上</span>
+          </div>
+        )}
+      </GlassCard>
+
+      {/* Selected node detail card */}
+      <AnimatePresence>
+        {selectedNode && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          >
+            <GlassCard className="!p-4 flex items-center gap-4 !rounded-2xl border border-fuchsia-100 bg-white/90">
+              <div className="w-12 h-12 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-2xl shrink-0 shadow-sm">
+                {selectedNode.emoji}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-slate-800 text-[15px] truncate">{selectedNode.title}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {selectedNode.time && <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{selectedNode.time}</span>}
+                  {selectedNode.category && <span className="text-[10px] font-bold text-fuchsia-500 bg-fuchsia-50 px-2 py-0.5 rounded-full uppercase tracking-wider">{selectedNode.category}</span>}
+                </div>
+                {selectedNode.description && <p className="text-[12px] text-slate-500 mt-1 line-clamp-2">{selectedNode.description}</p>}
+              </div>
+              <button onClick={() => setSelectedId(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors shrink-0">
+                <X size={14} />
+              </button>
+            </GlassCard>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 

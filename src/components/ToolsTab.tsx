@@ -464,12 +464,27 @@ function ChecklistSection() {
                   <label key={item.id} className={`flex items-center gap-4 group p-2 rounded-2xl transition-colors ${isOffline ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-fuchsia-50/50'}`} onClick={(e) => { e.preventDefault(); if (!isOffline) actions.toggleCheck(item); }}>
                     <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
                       <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
-                      <div className={`w-full h-full rounded-full border transition-all shadow-sm ${item.checked ? 'bg-fuchsia-500 border-fuchsia-500' : 'border-slate-200 bg-slate-50'}`}></div>
-                      <Check size={16} className={`text-white absolute transition-opacity ${item.checked ? 'opacity-100' : 'opacity-0'}`} strokeWidth={3} />
+                      <motion.div
+                        animate={item.checked ? { scale: [1, 1.2, 1], backgroundColor: '#a855f7' } : { scale: 1, backgroundColor: '#f8fafc' }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 28, duration: 0.3 }}
+                        className={`w-full h-full rounded-full border shadow-sm ${item.checked ? 'border-fuchsia-500' : 'border-slate-200'}`}
+                      />
+                      <motion.div
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        initial={false}
+                        animate={item.checked ? { scale: 1, opacity: 1 } : { scale: 0.5, opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 600, damping: 30 }}
+                      >
+                        <Check size={14} className="text-white" strokeWidth={3} />
+                      </motion.div>
                     </div>
-                    <span className={`text-[15px] font-medium transition-all ${item.checked ? 'line-through opacity-40 text-slate-500' : 'text-[#2C302E]'}`}>
+                    <motion.span
+                      animate={item.checked ? { opacity: 0.4, x: 0 } : { opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={`text-[15px] font-medium ${item.checked ? 'line-through text-slate-500' : 'text-[#2C302E]'}`}
+                    >
                       {item.text}
-                    </span>
+                    </motion.span>
                   </label>
                 ))}
               </div>
