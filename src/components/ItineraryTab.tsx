@@ -43,7 +43,7 @@ import {
   geocodeSpot,
   fetchSpotEnrichment,
 } from '../lib/workflowApi';
-import { suggestItineraryWithForm } from '../lib/openrouterApi';
+import { suggestItineraryWithForm, AiRateLimitedError } from '../lib/openrouterApi';
 import { haversineKm, estimateTransport } from '../lib/geoUtils';
 import { useItineraryStore } from '../store/useItineraryStore';
 import { useAppStore } from '../store/useAppStore';
@@ -347,7 +347,11 @@ export default function ItineraryTab() {
       setIsPlanningNew(false);
       useAppStore.getState().setActiveTab('ai_result');
     } catch (err) {
-      showToast('AI 規劃失敗，請稍後再試。');
+      if (err instanceof AiRateLimitedError) {
+        showToast(err.message, 'warning');
+      } else {
+        showToast('AI 規劃失敗，請稍後再試。', 'warning');
+      }
     } finally {
       setAiLoading(false);
     }

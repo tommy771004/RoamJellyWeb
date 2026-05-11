@@ -918,7 +918,10 @@ async function startServer() {
     try {
       const nodes = await generateItinerary(req.body);
       res.json({ status: 'success', data: nodes });
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === 'ALL_MODELS_RATE_LIMITED') {
+        return res.status(429).json({ status: 'error', code: 'RATE_LIMITED', message: 'AI 服務暫時繁忙，請稍後 1~2 分鐘再試。' });
+      }
       console.error(err);
       res.status(500).json({ status: 'error', message: 'Failed to generate itinerary' });
     }

@@ -1,17 +1,28 @@
 // These models are free-tier on OpenRouter (tagged with :free suffix).
-// List updated 2026-05-09 based on OpenRouter /api/v1/models (pricing.prompt === "0").
+// List updated 2026-05-11 based on OpenRouter /api/v1/models (pricing.prompt === "0").
 // Ordered by capability: gemini > deepseek > llama > qwen > mistral > others.
 const FREE_MODELS = [
   // Google Gemma
   'google/gemma-4-31b-it:free',
   'google/gemma-4-26b-a4b-it:free',
+  'google/gemma-3-27b-it:free',
+  // DeepSeek
+  'deepseek/deepseek-r1:free',
+  'deepseek/deepseek-chat-v3-0324:free',
   // Meta LLaMA
   'meta-llama/llama-3.3-70b-instruct:free',
+  'meta-llama/llama-4-scout:free',
   'meta-llama/llama-3.2-3b-instruct:free',
+  // Qwen
+  'qwen/qwq-32b:free',
+  'qwen/qwen-2.5-72b-instruct:free',
+  // Nvidia
+  'nvidia/llama-3.1-nemotron-70b-instruct:free',
   // Hermes
   'nousresearch/hermes-3-llama-3.1-405b:free',
-  // Mistral
-  'cognitivecomputations/dolphin-mistral-24b-venice-edition:free'
+  // Mistral / others
+  'mistralai/mistral-7b-instruct:free',
+  'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
 ];
 
 // WARNING: These are PAID models on OpenRouter and will incur costs.
@@ -53,10 +64,10 @@ export async function fetchOpenRouterWithFallback(apiKey: string, prompt: string
         throw new Error(`API key invalid or forbidden (${response.status}). Stopping retries.`);
       }
 
-      // Rate limited — wait briefly before trying the next model.
+      // Rate limited — wait before trying the next model.
       if (response.status === 429) {
-        console.warn(`Rate limited on model ${model}, waiting before next...`);
-        await sleep(500);
+        console.warn(`Rate limited on model ${model}, trying next model...`);
+        await sleep(1200);
         lastError = new Error(`429 rate limited on ${model}`);
         continue;
       }
@@ -84,5 +95,8 @@ export async function fetchOpenRouterWithFallback(apiKey: string, prompt: string
     }
   }
 
-  throw lastError || new Error('All fallback models failed.');
+  const allRateLimited = lastError?.message?.startsWith('429');
+  throw allRateLimited
+    ? new Error('ALL_MODELS_RATE_LIMITED')
+    : (lastError || new Error('All fallback models failed.'));
 }
