@@ -21,7 +21,7 @@ const JWT_DEV_TOKEN_ENABLED = process.env.ENABLE_DEV_TOKEN_ENDPOINT !== 'false';
 const AUTH_REQUIRED = process.env.AUTH_REQUIRED === 'true' || process.env.NODE_ENV === 'production';
 const OTA_PROVIDER_URL = process.env.OTA_PROVIDER_URL?.replace(/\/+$/, '');
 const OTA_PARTNER_BASE = process.env.OTA_PARTNER_BASE?.replace(/\/+$/, '') ?? '';
-
+export const app = express();
 const PORT = 3000;
 
 type TripRole = 'owner' | 'editor' | 'viewer';
@@ -482,7 +482,6 @@ async function startServer() {
     }
   }
 
-  const app = express();
   const httpServer = createServer(app);
   const io = new SocketServer(httpServer, {
     cors: {
