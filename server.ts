@@ -13,9 +13,13 @@ import * as schema from './src/server/db/schema';
 import { scrapeTripFlights } from './src/server/services/tripParser';
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
 
-// Vercel serverless: resolve the Express app once all routes are registered
+// Vercel serverless: resolve/reject the app promise once startServer() finishes setup
 let _resolveApp!: (app: ReturnType<typeof express>) => void;
-const _appPromise = new Promise<ReturnType<typeof express>>(r => { _resolveApp = r; });
+let _rejectApp!: (err: unknown) => void;
+const _appPromise = new Promise<ReturnType<typeof express>>((resolve, reject) => {
+  _resolveApp = resolve;
+  _rejectApp = reject;
+});
 
 const REAL_BACKEND_BASE_URL = process.env.REAL_BACKEND_BASE_URL?.replace(/\/+$/, '');
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
@@ -2116,12 +2120,18 @@ async function startServer() {
 
 // Vercel serverless handler — imported by api/index.ts
 export default async function handler(req: any, res: any) {
-  const app = await _appPromise;
-  return app(req, res);
+  try {
+    const app = await _appPromise;
+    return app(req, res);
+  } catch (err) {
+    console.error('Handler: app init failed', err);
+    res.status(500).json({ error: 'Server initialization failed', detail: String(err) });
+  }
 }
 
 // Start the server (local dev: also calls listen; Vercel: skips listen, resolves _appPromise)
 startServer().catch((error) => {
   console.error('Server failed to start', error);
+  _rejectApp(error);
   if (!process.env.VERCEL) process.exit(1);
 });
