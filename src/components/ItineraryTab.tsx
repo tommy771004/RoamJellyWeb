@@ -40,9 +40,11 @@ import {
   addFavorite,
   deleteFavorite,
   regenerateItinerarySpot,
-  geocodeSpot
+  geocodeSpot,
+  fetchSpotEnrichment,
 } from '../lib/workflowApi';
 import { suggestItineraryWithForm } from '../lib/openrouterApi';
+import { haversineKm, estimateTransport } from '../lib/geoUtils';
 import { useItineraryStore } from '../store/useItineraryStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTripFactsStore } from '../store/useTripFactsStore';
@@ -1166,23 +1168,38 @@ export default function ItineraryTab() {
           </div>
         )}
 
+      {/* Cover Image Banner */}
+      {tripInfo?.coverImage && (
+        <div className="relative w-full h-36 md:h-48 rounded-[28px] overflow-hidden mb-6 print:hidden">
+          <img src={tripInfo.coverImage} alt={tripInfo.destination} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/90" />
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="group">
-          <div className="flex items-center gap-2 mb-2">
-            <button 
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <button
               onClick={handleBackToTrips}
               className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-[10px] font-black text-slate-500 transition-colors uppercase tracking-widest flex items-center gap-1"
             >
               <ArrowLeft size={12} />
               返回專案列表
             </button>
-            <button 
+            <button
               onClick={handleShare}
               className="px-3 py-1 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-lg text-[10px] font-black text-pink-500 transition-colors uppercase tracking-widest flex items-center gap-1"
             >
               <Share2 size={12} />
               分享行程
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="px-3 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-black text-slate-500 transition-colors uppercase tracking-widest flex items-center gap-1 print:hidden"
+            >
+              <span className="material-symbols-outlined text-[12px]">print</span>
+              列印行程
             </button>
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 flex items-center gap-3 font-serif tracking-tight leading-tight">
@@ -1330,6 +1347,29 @@ export default function ItineraryTab() {
 
         {/* Right Column: Content */}
         <div className="lg:col-span-3 flex flex-col gap-6">
+          {/* Memory Album — Trip Recap Banner */}
+          {tripInfo?.endDate && new Date(tripInfo.endDate) < new Date() && (
+            <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-fuchsia-50 via-pink-50 to-rose-50 border border-pink-100 p-6 print:hidden">
+              <div className="absolute top-3 right-4 text-4xl opacity-20 select-none">📸</div>
+              <p className="text-[10px] font-black text-fuchsia-500 uppercase tracking-widest mb-1">旅程回顧</p>
+              <h3 className="font-black text-slate-800 text-xl mb-3">{tripInfo.name} · 旅行記憶</h3>
+              <div className="flex flex-wrap gap-2">
+                {nodes
+                  .filter(n => n.emoji && n.title)
+                  .slice(0, 12)
+                  .map(n => (
+                    <span key={n.node_id} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 rounded-full text-[12px] font-bold text-slate-700 border border-pink-100 shadow-sm">
+                      <span>{n.emoji}</span>
+                      <span className="line-clamp-1 max-w-[100px]">{n.title}</span>
+                    </span>
+                  ))}
+              </div>
+              {nodes.length > 12 && (
+                <p className="text-[11px] text-slate-400 mt-2">還有 {nodes.length - 12} 個旅遊景點...</p>
+              )}
+            </div>
+          )}
+
           {/* Mobile Day Selector */}
           <div className="lg:hidden flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4">
             {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
@@ -1760,38 +1800,57 @@ function DraggableFavoriteSpot({
   onDelete: (id: string) => void | Promise<void>;
   key?: string;
 }) {
+  const [enrichment, setEnrichment] = useState<{ description?: string; wiki_url?: string; thumbnail?: string }>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchSpotEnrichment(spot.title).then(data => { if (!cancelled) setEnrichment(data); });
+    return () => { cancelled = true; };
+  }, [spot.title]);
+
   return (
     <motion.div
       layout
       whileHover={{ y: -2 }}
-      className="group relative flex items-center justify-between p-4 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[28px] shadow-sm hover:shadow-xl transition-all"
+      className="group relative flex flex-col gap-2 p-4 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[28px] shadow-sm hover:shadow-xl transition-all"
     >
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-[20px] bg-white flex items-center justify-center text-2xl shadow-sm border border-slate-100/50 group-hover:scale-105 transition-transform">
-          {spot.emoji}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-[20px] bg-white flex items-center justify-center text-2xl shadow-sm border border-slate-100/50 group-hover:scale-105 transition-transform overflow-hidden shrink-0">
+            {enrichment.thumbnail
+              ? <img src={enrichment.thumbnail} alt={spot.title} className="w-full h-full object-cover" />
+              : spot.emoji}
+          </div>
+          <div>
+            <h4 className="font-black text-slate-800 text-[15px] leading-tight">{spot.title}</h4>
+            <p className="text-[10px] font-black text-slate-400 mt-0.5 uppercase tracking-[0.1em]">口袋名單</p>
+          </div>
         </div>
-        <div>
-          <h4 className="font-black text-slate-800 text-[15px] leading-tight">{spot.title}</h4>
-          <p className="text-[10px] font-black text-slate-400 mt-0.5 uppercase tracking-[0.1em]">口袋名單</p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onAdd(spot, selectedDay)}
+            disabled={isOffline}
+            className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all hover:bg-slate-900"
+            title="加入今天"
+          >
+            <Plus size={18} strokeWidth={3} />
+          </button>
+          <button
+            onClick={() => onDelete(spot.id)}
+            className="w-10 h-10 rounded-full bg-white/50 text-slate-300 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
+          >
+            <Trash2 size={16} />
+          </button>
         </div>
       </div>
-      
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onAdd(spot, selectedDay)}
-          disabled={isOffline}
-          className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all hover:bg-slate-900"
-          title="加入今天"
-        >
-          <Plus size={18} strokeWidth={3} />
-        </button>
-        <button
-          onClick={() => onDelete(spot.id)}
-          className="w-10 h-10 rounded-full bg-white/50 text-slate-300 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
-        >
-          <Trash2 size={16} />
-        </button>
-      </div>
+      {enrichment.description && (
+        <div className="flex flex-col gap-1 pl-16">
+          <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">{enrichment.description}</p>
+          {enrichment.wiki_url && (
+            <a href={enrichment.wiki_url} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-fuchsia-500 hover:underline">維基百科 →</a>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -2302,30 +2361,38 @@ function ItineraryList({
                    <GripVertical size={20} />
                 </div>
 
-                {nextItem && (timeGapStr || item.transport_to_next) && (
-                  <div className="flex justify-start sm:pl-[64px] pl-[52px] my-1 relative z-0">
-                    <div className="w-0.5 min-h-[3rem] bg-gradient-to-b from-slate-200 to-slate-200" />
-                    <div className="flex flex-col justify-center ml-4 animate-pulse">
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[12px]">schedule</span>
-                          {timeGapStr ? `約 ${timeGapStr}` : '時間未定'}
-                        </span>
-                        {item.transport_to_next && (
-                          <span className="px-3 py-1 bg-indigo-50/80 rounded-full text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[12px]">directions_subway</span>
-                            {item.transport_to_next}
-                          </span>
-                        )}
+                {(() => {
+                  const autoTransport = (!item.transport_to_next && nextItem &&
+                    item.lat && item.lng && nextItem.lat && nextItem.lng)
+                    ? estimateTransport(haversineKm(item.lat, item.lng, nextItem.lat!, nextItem.lng!))
+                    : null;
+                  const showBadge = nextItem && (timeGapStr || item.transport_to_next || autoTransport);
+                  return showBadge ? (
+                    <div className="flex justify-start sm:pl-[64px] pl-[52px] my-1 relative z-0">
+                      <div className="w-0.5 min-h-[3rem] bg-gradient-to-b from-slate-200 to-slate-200" />
+                      <div className="flex flex-col justify-center ml-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {timeGapStr && (
+                            <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[12px]">schedule</span>
+                              約 {timeGapStr}
+                            </span>
+                          )}
+                          {(item.transport_to_next || autoTransport) && (
+                            <span className="px-3 py-1 bg-indigo-50/80 rounded-full text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1.5">
+                              <span>{autoTransport?.emoji ?? '🚇'}</span>
+                              {item.transport_to_next ?? autoTransport?.label}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                {nextItem && !timeGapStr && !item.transport_to_next && (
-                   <div className="flex justify-start sm:pl-[64px] pl-[52px] my-1 relative z-0">
+                  ) : nextItem ? (
+                    <div className="flex justify-start sm:pl-[64px] pl-[52px] my-1 relative z-0">
                       <div className="w-0.5 h-8 bg-gradient-to-b from-slate-200 to-slate-200" />
-                   </div>
-                )}
+                    </div>
+                  ) : null;
+                })()}
               </Reorder.Item>
             );
           })}

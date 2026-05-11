@@ -297,10 +297,16 @@ export class AppRepository {
         }
 
         const defaults = [
-          { tripId, content: '護照 / 簽證', completed: false },
-          { tripId, content: '手機 / 充電線', completed: false },
-          { tripId, content: '轉換插頭', completed: false },
-          { tripId, content: '當地貨幣 / 信用卡', completed: false }
+          { tripId, content: '護照 / 簽證', completed: false, category: 'documents' },
+          { tripId, content: '當地貨幣 / 信用卡', completed: false, category: 'documents' },
+          { tripId, content: '手機 / 充電線', completed: false, category: 'electronics' },
+          { tripId, content: '轉換插頭', completed: false, category: 'electronics' },
+          { tripId, content: '行動電源', completed: false, category: 'electronics' },
+          { tripId, content: '換洗衣物', completed: false, category: 'clothing' },
+          { tripId, content: '舒適步行鞋', completed: false, category: 'clothing' },
+          { tripId, content: '盥洗用品', completed: false, category: 'toiletries' },
+          { tripId, content: '防曬乳', completed: false, category: 'toiletries' },
+          { tripId, content: '常備藥品', completed: false, category: 'other' },
         ];
         await this.db.insert(schema.checklistItems).values(defaults);
         rows = await this.db.select().from(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId));
@@ -322,7 +328,8 @@ export class AppRepository {
       await this.db.insert(schema.checklistItems).values(items.map(it => ({
         tripId,
         content: it.content || it.text || '',
-        completed: it.completed ?? it.checked ?? false
+        completed: it.completed ?? it.checked ?? false,
+        category: it.category ?? 'other',
       })));
     }
     return true;

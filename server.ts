@@ -211,6 +211,22 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
 
   const maxNodeDay = nodes.reduce((max, node) => Math.max(max, Number(node.day ?? 1)), 1);
 
+  const DEST_COVERS: [string, string][] = [
+    ['tokyo', 'photo-1542051841857-5f90071e7989'],
+    ['osaka', 'photo-1590484512398-33fb39eff960'],
+    ['kyoto', 'photo-1493976040374-85c8e12f0c0e'],
+    ['seoul', 'photo-1538669715315-155098f0fb1d'],
+    ['paris', 'photo-1502602898657-3e91760cbb34'],
+    ['bali',  'photo-1537996194471-e657df975ab4'],
+    ['singapore', 'photo-1525625293386-3f8f99389edd'],
+    ['bangkok', 'photo-1508009603885-50cf7c8dd0d5'],
+    ['new york', 'photo-1485871981521-5b1fd3805eee'],
+    ['london', 'photo-1513635269975-59663e0ac1ad'],
+  ];
+  const destLower = (trip.destination ?? '').toLowerCase();
+  const coverMatch = DEST_COVERS.find(([k]) => destLower.includes(k));
+  const coverImage = `https://images.unsplash.com/${coverMatch ? coverMatch[1] : DEST_COVERS[0][1]}?w=1200&auto=format&fit=crop`;
+
   return {
     trip_id: trip.id,
     id: trip.id,
@@ -219,6 +235,7 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
     days: dateBasedDays ?? maxNodeDay,
     startDate,
     endDate,
+    coverImage,
   };
 }
 
@@ -1233,6 +1250,27 @@ async function startServer() {
     ]);
   });
 
+  // ── Spot enrichment via Wikipedia ─────────────────────────────────────────
+  app.get('/api/spots/enrich', async (req, res) => {
+    const name = String(req.query.name ?? '').trim();
+    if (!name) { res.json({}); return; }
+    try {
+      const wikiRes = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`
+      );
+      if (wikiRes.ok) {
+        const data: any = await wikiRes.json();
+        res.json({
+          description: data.extract ? String(data.extract).slice(0, 220) : null,
+          wiki_url: data.content_urls?.desktop?.page ?? null,
+          thumbnail: data.thumbnail?.source ?? null,
+        });
+        return;
+      }
+    } catch { /* fall through */ }
+    res.json({});
+  });
+
   app.get('/api/weather', async (req, res) => {
     const city = req.query.city ? String(req.query.city) : null;
     if (!req.query.lat && !req.query.lng && !city) {
@@ -1799,7 +1837,7 @@ async function startServer() {
     }
     const tripId = String(req.query.trip_id ?? '').trim();
     const rows = tripId ? await repo.getChecklist(tripId) : [];
-    res.json(rows.map((row) => ({ id: row.id, text: row.content, checked: Boolean(row.completed) })));
+    res.json(rows.map((row) => ({ id: row.id, text: row.content, checked: Boolean(row.completed), category: row.category ?? 'other' })));
   });
 
   app.post('/api/checklist', async (req, res) => {

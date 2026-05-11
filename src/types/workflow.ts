@@ -36,6 +36,7 @@ export interface TripInfo {
   days: number;
   startDate?: string | null;
   endDate?: string | null;
+  coverImage?: string;
 }
 
 export interface TripSummary {
@@ -52,10 +53,13 @@ export interface WeatherData {
   daily?: any[];
 }
 
+export type ChecklistCategory = 'documents' | 'electronics' | 'clothing' | 'toiletries' | 'other';
+
 export interface ChecklistItem {
   id: string;
   text: string;
   checked: boolean;
+  category?: ChecklistCategory;
 }
 
 export interface Settlement {
@@ -86,6 +90,9 @@ export interface FavoriteSpot {
   emoji: string;
   lat: number;
   lng: number;
+  wiki_desc?: string;
+  wiki_url?: string;
+  thumbnail?: string;
 }
 
 export interface ItineraryNode {

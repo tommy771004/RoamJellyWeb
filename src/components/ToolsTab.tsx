@@ -438,21 +438,44 @@ function ChecklistSection() {
       </div>
       
       <GlassCard className="!p-6 mb-4">
-        <div className="flex flex-col gap-3">
-          {checklist.length === 0 && <span className="text-sm text-slate-400 italic">目前沒有行李項目</span>}
-          {checklist.map((item) => (
-            <label key={item.id} className={`flex items-center gap-4 group p-2 rounded-2xl transition-colors ${isOffline ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-fuchsia-50/50'}`} onClick={(e) => { e.preventDefault(); if (!isOffline) actions.toggleCheck(item); }}>
-              <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
-                <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
-                <div className={`w-full h-full rounded-full border transition-all shadow-sm ${item.checked ? 'bg-fuchsia-500 border-fuchsia-500' : 'border-slate-200 bg-slate-50'}`}></div>
-                <Check size={16} className={`text-white absolute transition-opacity ${item.checked ? 'opacity-100' : 'opacity-0'}`} strokeWidth={3} />
+        {checklist.length === 0 && <span className="text-sm text-slate-400 italic">目前沒有行李項目</span>}
+        {(() => {
+          const CAT_META: Record<string, { label: string; emoji: string }> = {
+            documents:   { label: '證件', emoji: '🪪' },
+            electronics: { label: '電子', emoji: '🔌' },
+            clothing:    { label: '服裝', emoji: '👕' },
+            toiletries:  { label: '盥洗', emoji: '🧴' },
+            other:       { label: '其他', emoji: '🎒' },
+          };
+          const ORDER = ['documents', 'electronics', 'clothing', 'toiletries', 'other'];
+          const grouped = ORDER.map(cat => ({
+            cat,
+            meta: CAT_META[cat],
+            items: checklist.filter((i: any) => (i.category ?? 'other') === cat),
+          })).filter(g => g.items.length > 0);
+          return grouped.map(({ cat, meta, items: catItems }) => (
+            <div key={cat} className="mb-4 last:mb-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base leading-none">{meta.emoji}</span>
+                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{meta.label}</span>
               </div>
-              <span className={`text-[15px] font-medium transition-all ${item.checked ? 'line-through opacity-40 text-slate-500' : 'text-[#2C302E]'}`}>
-                {item.text}
-              </span>
-            </label>
-          ))}
-        </div>
+              <div className="flex flex-col gap-2">
+                {catItems.map((item: any) => (
+                  <label key={item.id} className={`flex items-center gap-4 group p-2 rounded-2xl transition-colors ${isOffline ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-fuchsia-50/50'}`} onClick={(e) => { e.preventDefault(); if (!isOffline) actions.toggleCheck(item); }}>
+                    <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
+                      <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
+                      <div className={`w-full h-full rounded-full border transition-all shadow-sm ${item.checked ? 'bg-fuchsia-500 border-fuchsia-500' : 'border-slate-200 bg-slate-50'}`}></div>
+                      <Check size={16} className={`text-white absolute transition-opacity ${item.checked ? 'opacity-100' : 'opacity-0'}`} strokeWidth={3} />
+                    </div>
+                    <span className={`text-[15px] font-medium transition-all ${item.checked ? 'line-through opacity-40 text-slate-500' : 'text-[#2C302E]'}`}>
+                      {item.text}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ));
+        })()}
       </GlassCard>
       
       <Button

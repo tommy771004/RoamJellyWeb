@@ -461,3 +461,11 @@ export async function fetchSettlementHistory(tripId: string): Promise<any[]> {
     return [];
   }
 }
+
+export async function fetchSpotEnrichment(name: string): Promise<{ description?: string; wiki_url?: string; thumbnail?: string }> {
+  try {
+    const res = await fetch(`/api/spots/enrich?name=${encodeURIComponent(name)}`);
+    if (res.ok) return res.json();
+  } catch { /* ignore */ }
+  return {};
+}

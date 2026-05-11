@@ -95,6 +95,7 @@ export const checklistItems = pgTable('checklist_items', {
   tripId: varchar('trip_id', { length: 128 }).notNull().references(() => trips.id),
   content: text('content').notNull(),
   completed: boolean('completed').default(false).notNull(),
+  category: varchar('category', { length: 64 }).default('other'),
 });
 
 export const expenses = pgTable('expenses', {
