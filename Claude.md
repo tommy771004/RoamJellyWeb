@@ -8,10 +8,10 @@
 
 ## 0. 30 秒快速摘要
 
-- 這是單一 repo 的全端 TypeScript 專案: Vite React 前端 + Express 後端 + Socket.io 即時同步。
-- 前端採 React Native 元件語法，透過 react-native-web 在 Web 執行。
-- 後端資料層使用 PostgreSQL (Drizzle ORM)；Redis 為快取與事件暫存，缺省可退回記憶體。
-- 核心商業流程有三條:
+- 單一 repo 全端 TypeScript: Vite React 前端 + Express 後端 + Socket.io 即時同步。
+- 前端 React Native 語法，react-native-web 跑 Web。
+- 後端 PostgreSQL (Drizzle ORM)；Redis 快取/事件暫存，無 Redis 退回記憶體。
+- 核心流程三條:
   - 搜尋比價 + Clickout 導流
   - 行程共編 + 即時同步
   - 旅途工具包 (清單/分帳/提醒)
@@ -36,9 +36,9 @@
 
 ### 1.2 重要特性
 
-- 同一個 Node 進程同時提供 API、Socket 與開發時 Vite middleware。
-- AUTH_REQUIRED 在 production 預設啟用；開發可用 /api/auth/dev-token 自動拿 JWT。
-- 提供 REAL_BACKEND_BASE_URL 代理模式，可把 /api/* 轉發到真實後端。
+- 單 Node 進程提供 API + Socket + Vite middleware。
+- AUTH_REQUIRED production 預設開；開發用 /api/auth/dev-token 拿 JWT。
+- REAL_BACKEND_BASE_URL 代理模式，把 /api/* 轉發真實後端。
 
 ---
 
@@ -103,8 +103,8 @@
 ### Workflow A: 搜尋與導流變現
 
 1. HomeTab 送出搜尋 -> GET /api/search
-2. server.ts 先查 Redis key cache:search:{from}_{to}_{date}
-3. 命中快取直接回傳；未命中由 flights table 組裝資料並寫回快取
+2. server.ts 查 Redis key cache:search:{from}_{to}_{date}
+3. 命中快取回傳；未命中由 flights table 組裝並寫回快取
 4. 前端點卡片 -> 開 RedirectModal
 5. 確認後:
    - POST /api/track/clickout (202 accepted, 非阻塞寫入)
@@ -123,7 +123,7 @@
    - GET /api/favorites
    - GET /api/collaborators
    - GET /api/itinerary
-2. 連上 Socket 後 emit join_room
+2. Socket 連線後 emit join_room
 3. 新增/修改節點:
    - HTTP: POST /api/itinerary/sync
    - Socket: emit sync_itinerary
@@ -150,7 +150,7 @@
 3. 新增分帳:
    - POST /api/ledger/expense
    - server 計算 share 並更新 settlements 聚合
-4. 前端可分享提醒文字 (Web Share 或 clipboard)
+4. 前端分享提醒文字 (Web Share 或 clipboard)
 
 對應資料:
 
@@ -219,7 +219,7 @@
 - editor: 可編輯行程/收藏/分帳
 - owner: 最高
 
-伺服器透過 ensureTripRole + hasRequiredRole 在各端點做授權檢查。
+端點透過 ensureTripRole + hasRequiredRole 授權。
 
 ---
 
@@ -292,36 +292,36 @@
 
 ## 9. AI 修改程式時的操作準則
 
-1. 優先遵守 workflowApi.ts 與 server.ts 現有 contract，不要在前端硬寫新 API。
-2. 新增資料欄位時，必須同步更新:
+1. 遵守 workflowApi.ts 與 server.ts 現有 contract，不在前端硬寫新 API。
+2. 新增資料欄位須同步更新:
    - schema.ts
    - migration SQL
    - repository
    - types/workflow.ts
    - workflowApi.ts 映射
-3. 行程同步功能變更需同時處理 HTTP 與 Socket 兩條路徑。
-4. 任何 trip 相關寫入都必須保留 role 檢查。
-5. 錯誤體驗維持產品語氣: 對使用者顯示溫和文案，不回傳內部細節。
+3. 行程同步變更需同時處理 HTTP 與 Socket 兩條路徑。
+4. trip 相關寫入必須保留 role 檢查。
+5. 錯誤體驗維持產品語氣：對使用者顯示溫和文案，不回傳內部細節。
 
 ---
 
 ## 10. 目前已知架構現象 (給 AI 避坑)
 
-1. 檔名 geminiApi.ts 但實際呼叫 OpenRouter，調整 AI 功能時先看實作內容。
-2. 專案表面定位為 RN 跨平台，但當前主要交付路徑是 Web + Node 單體。
-3. Redis 是強化而非硬依賴，無 Redis 時仍可運作 (fallback memory)。
-4. /api/search 先嘗試 OTA_PROVIDER_URL 外部 API；空白或失敗時 fallback 至 flights 表。
-5. VITE_DEV_AUTO_LOGIN 同時控制 App.tsx 登入間跳過與 workflowApi token 自動取得。
+1. 檔名 geminiApi.ts 但實際呼叫 OpenRouter，調整 AI 功能先看實作內容。
+2. 專案表面定位 RN 跨平台，當前交付路徑是 Web + Node 單體。
+3. Redis 非硬依賴，無 Redis 仍可運作 (fallback memory)。
+4. /api/search 先嘗試 OTA_PROVIDER_URL 外部 API；空白或失敗 fallback 至 flights 表。
+5. VITE_DEV_AUTO_LOGIN 同時控制 App.tsx 登入跳過與 workflowApi token 自動取得。
 
 ---
 
 ## 11. 快速定位問題指南
 
-- 搜尋沒有資料: 先檢查 flights seed 與 /api/search 回傳 503 條件。
+- 搜尋無資料: 檢查 flights seed 與 /api/search 503 條件。
 - 共編不同步: 檢查 socket token、join_room、trip_members 權限、sync_itinerary payload。
-- 分帳異常: 檢查 split_with 是否包含 payer，與 settlements 聚合查詢。
+- 分帳異常: 檢查 split_with 是否含 payer，與 settlements 聚合查詢。
 - 收藏定位失敗: 檢查 /api/favorites POST 內 geocodeSpot upstream。
-- 前端 401: 檢查 dev token 自動登入是否被關閉與 Authorization header。
+- 前端 401: 檢查 dev token 自動登入是否關閉與 Authorization header。
 
 ---
 
@@ -332,7 +332,7 @@
 - 完整度: 高 (約 90%)
 - 已完成:
   - /api/search 快取流程 (Redis + fallback memory)
-  - OTA provider adapter：先呼叫 OTA_PROVIDER_URL，失敗則 fallback 至 flights 表
+  - OTA provider adapter：先呼叫 OTA_PROVIDER_URL，失敗 fallback 至 flights 表
   - clickout 非阻塞記錄
   - 導流確認彈窗與外部開啟
 - 缺口:
@@ -349,7 +349,7 @@
   - /api/collaborators trip scoped (?trip_id= 參數)
   - itinerary_nodes lat/lng 完整領域映射
 - 缺口:
-  - 分享連結 deep-link 尚未對應 native app 路徑 (Universal Link)
+  - 分享連結 deep-link 未對應 native app 路徑 (Universal Link)
 
 ### 12.3 Workflow C 旅途工具與分帳
 
@@ -360,8 +360,8 @@
   - 餘數分配修正：第一批非代墊人吸收 +1 誤差，確保總金額精確
   - weather 查詢與提醒分享
   - 幣別小計顯示（取代混合加總）
-- 缺口:
-  - 結清歷史沒有展示區（展示 clearedAt 不為 null 的紀錄，方便實際核對）
+  - 結清歷史展示區：expenses.cleared_at soft-delete + GET /api/settlements/history + SettlementHistorySection
+- 缺口: 無
 
 ---
 
@@ -370,23 +370,23 @@
 ### 13.1 功能頁面按鈕狀態
 
 - 已補齊:
-  - Itinerary 協作者區「+」按鈕，現已接到邀請分享流程
-  - Home 的「追蹤降價」「收藏」已同步後端 (user_saved_items / user_tracked_prices 表)
+  - Itinerary 協作者區「+」按鈕已接邀請分享流程
+  - Home「追蹤降價」「收藏」已同步後端 (user_saved_items / user_tracked_prices 表)
+  - 結清歷史展示區：SettlementHistorySection + /api/settlements/history + expenses.cleared_at 欄位
 
 ### 13.2 假資料與暫代實作
 
 - Demo seed 依賴:
   - trip_999 / demo_user / flights / collaborators / checklist / favorites
 - 暫代型行為:
-  - /api/search 先嘗試 OTA_PROVIDER_URL，未設定時使用 DB 航班資料
+  - /api/search 先嘗試 OTA_PROVIDER_URL，未設定時用 DB 航班資料
   - affiliate_url 目前為示意 partner.example.com 組裝
 
 ### 13.3 待辦 (Remaining)
 
 1. affiliate_url 接入真實 OTA 簽約連結（需外部合作）。
-2. Universal Link / App Link 支援，使 deep-link 在 native app 也能開啟。
-3. 結清歷史展示區（展示 clearedAt 不為 null 的記錄，方便實際核對）。
+2. Universal Link / App Link 支援，deep-link 在 native app 也能開啟。
 
 ---
 
-本文件定位為 AI 上下文入口。若與程式碼衝突，以程式碼為準，並回頭更新本文件版本。
+本文件定位 AI 上下文入口。若與程式碼衝突，以程式碼為準，並回頭更新本文件版本。
