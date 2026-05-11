@@ -1,4 +1,5 @@
 import type { ItineraryNode, ItineraryPlannerForm } from '../types/workflow';
+import { getStoredToken } from './workflowApi';
 
 const CATEGORY_ICON_MAP: Record<string, string> = {
   flight: '✈️',
@@ -84,9 +85,13 @@ export class AiRateLimitedError extends Error {
 }
 
 export async function suggestItineraryWithForm(input: SuggestItineraryInput): Promise<any> {
+  const token = getStoredToken();
   const res = await fetch('/api/generate/itinerary', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(input)
   });
 
