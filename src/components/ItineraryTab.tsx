@@ -59,6 +59,7 @@ import type {
 } from '../types/workflow';
 
 import AiForm, { AiFormData } from './AiForm';
+import DatePickerPopup from './DatePickerPopup';
 import {
   assignDaysBasedOnTimeAndOrder,
   buildTimestampFromDateTime,
@@ -258,6 +259,26 @@ export default function ItineraryTab() {
     }
   }, []);
 
+  const normalizeAiCategory = (raw?: string): string => {
+    if (!raw) return 'other';
+    const s = raw.toLowerCase().trim();
+    const map: Record<string, string> = {
+      accommodation: 'hotel', lodging: 'hotel', stay: 'hotel',
+      restaurant: 'food', dining: 'food', cafe: 'food', coffee: 'food', eat: 'food',
+      attraction: 'landmark', museum: 'landmark', temple: 'landmark', sight: 'landmark', sightseeing: 'landmark',
+      nature: 'nature', park: 'nature', beach: 'nature', mountain: 'nature',
+      shopping: 'shopping', market: 'shopping', mall: 'shopping',
+      transport: 'transport', taxi: 'transport', bus: 'transport', train: 'transport', transit: 'transport',
+      flight: 'flight', airport: 'flight',
+      activity: 'activity', tour: 'activity', experience: 'activity', sport: 'activity',
+      nightlife: 'nightlife', bar: 'nightlife', club: 'nightlife', night: 'nightlife',
+    };
+    for (const [k, v] of Object.entries(map)) {
+      if (s.includes(k)) return v;
+    }
+    return CATEGORY_OPTIONS.includes(s) ? s : 'other';
+  };
+
   const handleAiFormSubmit = async (formData: AiFormData) => {
     setAiLoading(true);
     showToast(`正在為您生成旅程：${formData.destination}...`);
@@ -290,10 +311,10 @@ export default function ItineraryTab() {
            rawNodes.push({
              node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
              day: dayData.day || 1,
-             time: spot.time || '10:00',
+             time: normalizeClockInput(spot.time || '10:00'),
              title: spot.name || '景點',
              emoji: spot.emoji || '📍',
-             category: spot.category || 'other',
+             category: normalizeAiCategory(spot.category),
              description: spot.ai_note || '',
              lat: undefined as any,
              lng: undefined as any,
@@ -668,6 +689,17 @@ export default function ItineraryTab() {
       setTip('行程同步暫時失敗，稍後會再嘗試。');
       setTimeout(() => setTip(''), 2000);
     });
+
+    if ((!spot.lat || !spot.lng) && tripInfo?.destination) {
+      void geocodeSpot(spot.title, tripInfo.destination).then(coords => {
+        if (!coords) return;
+        const patched = { ...normalized, lat: coords.lat, lng: coords.lng };
+        updateNode(patched);
+        const syncPayload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: patched };
+        socketRef.current?.emit('sync_itinerary', syncPayload);
+        void syncItinerary(syncPayload);
+      });
+    }
 
     showToast(`${normalized.emoji} ${spot.title} 已加入 Day ${day}！`);
   };
@@ -1914,7 +1946,8 @@ function ItineraryListItem({
   const [editImageUrl, setEditImageUrl] = useState(item.image_url || '');
   const [editLinkedFactId, setEditLinkedFactId] = useState(item.linkedFactId || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   const facts = useTripFactsStore(s => s.facts);
 
   useEffect(() => {
@@ -2130,12 +2163,22 @@ function ItineraryListItem({
                     className="text-lg font-black text-slate-800 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input
-                      type="date"
-                      value={editDate}
-                      onChange={e => setEditDate(e.target.value)}
-                      className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowDatePicker(true)}
+                      className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none hover:ring-4 hover:ring-pink-100 transition-all text-left flex items-center gap-2"
+                    >
+                      <span className="text-pink-400">📅</span>
+                      {editDate || '選擇日期'}
+                    </button>
+                    {showDatePicker && (
+                      <DatePickerPopup
+                        allowPast
+                        selectedDate={editDate}
+                        onSelect={setEditDate}
+                        onClose={() => setShowDatePicker(false)}
+                      />
+                    )}
                     <input
                       value={editTime}
                       onChange={e => setEditTime(e.target.value)}

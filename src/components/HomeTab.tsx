@@ -23,6 +23,7 @@ import ExpertHandbookModal from './ExpertHandbookModal';
 import { getCountryGuide } from '../data/countryGuideData';
 import type { CountryGuide } from '../data/countryGuideData';
 import { EXPERT_HANDBOOKS } from '../data/expertHandbooks';
+import DatePickerPopup from './DatePickerPopup';
 
 const AIRLINE_CODES: Record<string, string> = {
   'EVA Air': 'BR', '長榮航空': 'BR',
@@ -618,137 +619,6 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     } catch {
       showToast('帶入旅程失敗，請稍後再試。', 'warning');
     }
-  };
-
-  // Rendered location and date picker popups are located at the bottom of the component
-
-  const DatePickerPopup = ({ 
-    onClose, 
-    onSelect,
-    selectedDate
-  }: { 
-    onClose: () => void; 
-    onSelect: (date: string) => void;
-    selectedDate: string;
-  }) => {
-    const today = new Date();
-    const [viewDate, setViewDate] = useState(selectedDate ? new Date(selectedDate) : new Date());
-    
-    // Safety check for invalid dates
-    const effectiveViewDate = isNaN(viewDate.getTime()) ? new Date() : viewDate;
-
-    const month = effectiveViewDate.getMonth();
-    const year = effectiveViewDate.getFullYear();
-
-    const monthStart = new Date(year, month, 1);
-    const monthEnd = new Date(year, month + 1, 0);
-    const startDate = new Date(monthStart);
-    startDate.setDate(monthStart.getDate() - monthStart.getDay());
-
-    const days = [];
-    let currDay = new Date(startDate);
-    while (currDay <= monthEnd || days.length % 7 !== 0) {
-      days.push(new Date(currDay));
-      currDay.setDate(currDay.getDate() + 1);
-      if (days.length > 42) break; // Prevent infinite loop
-    }
-
-    const changeMonth = (offset: number) => {
-      const next = new Date(year, month + offset, 1);
-      setViewDate(next);
-    };
-
-    const formatDate = (date: Date) => {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    };
-
-    const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
-
-    const content = (
-      <AnimatePresence>
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" 
-            onClick={onClose} 
-          />
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="relative w-[90vw] md:w-[480px] max-w-[480px] md:max-w-xl min-w-[300px] md:min-w-[480px] shrink-0 bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-[210] overflow-hidden p-6 md:p-8"
-          >
-            <div className="flex flex-row justify-between items-center mb-8">
-              <div className="flex flex-col">
-                <span className="text-2xl font-black text-slate-800 tracking-tight">{year}年 {monthNames[month]}</span>
-                <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Select Travel Date</span>
-              </div>
-              <div className="flex gap-x-3">
-                <button onClick={() => changeMonth(-1)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-all">
-                  <ChevronLeft size={24} className="text-slate-600" />
-                </button>
-                <button onClick={() => changeMonth(1)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-all">
-                  <ChevronRight size={24} className="text-slate-600" />
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {['日', '一', '二', '三', '四', '五', '六'].map(d => (
-                <div key={d} className="text-center text-[11px] font-black text-slate-400 uppercase tracking-widest pb-2">{d}</div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 gap-1">
-              {days.map((date, i) => {
-                const isCurrentMonth = date.getMonth() === month;
-                const isSelected = formatDate(date) === selectedDate;
-                const isToday = formatDate(date) === formatDate(today);
-                const isPast = date < new Date(today.setHours(0,0,0,0));
-
-                return (
-                  <button
-                    key={i}
-                    disabled={isPast && !isToday}
-                    onClick={() => {
-                      if (!isPast || isToday) onSelect(formatDate(date));
-                    }}
-                    className={`
-                      relative py-2.5 rounded-xl text-sm font-bold transition-all
-                      ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'}
-                      ${isSelected 
-                        ? 'bg-pink-500 text-white shadow-md shadow-pink-500/20 z-10' 
-                        : isPast && !isToday ? 'text-slate-300 cursor-not-allowed' : 'text-slate-700 hover:bg-pink-50 hover:text-pink-600'}
-                    `}
-                  >
-                    {date.getDate()}
-                    {isToday && !isSelected && (
-                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-pink-400 rounded-full" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-6 flex justify-center">
-              <button 
-                onClick={onClose}
-                className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-400 hover:text-pink-500 transition-colors"
-              >
-                關閉暫存
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </AnimatePresence>
-    );
-
-    return typeof document !== 'undefined' ? createPortal(content, document.body) : null;
   };
 
   return (
