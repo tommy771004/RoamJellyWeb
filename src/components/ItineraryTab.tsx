@@ -665,16 +665,16 @@ export default function ItineraryTab() {
     if (!newSpotTitle.trim() || isOffline || !activeTripId) return;
     setAddingFavorite(true);
     try {
-      const spot = await addFavorite(activeTripId, newSpotTitle.trim(), newSpotEmoji);
-      if (!spot) {
-        showToast('新增收藏失敗，請稍後再試。');
+      const result = await addFavorite(activeTripId, newSpotTitle.trim(), newSpotEmoji);
+      if (!result || result.error) {
+        showToast(result?.error ?? '新增收藏失敗，請稍後再試。', 'warning');
         return;
       }
-      setFavorites((prev: FavoriteSpot[]) => [...prev, spot]);
+      setFavorites((prev: FavoriteSpot[]) => [...prev, result.spot]);
       setNewSpotTitle('');
       setNewSpotEmoji('📍');
       setShowEmojiPicker(false);
-      showToast(`${spot.emoji} ${spot.title} 已加入收藏（座標已自動定位）`);
+      showToast(`${result.spot.emoji} ${result.spot.title} 已加入收藏（座標已自動定位）`);
     } catch {
       showToast('新增收藏失敗，請稍後再試。');
     } finally {

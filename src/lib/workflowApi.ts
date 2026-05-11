@@ -143,27 +143,21 @@ export async function deleteItineraryNode(nodeId: string): Promise<any> {
   });
   return res.ok;
 }
-export async function addFavorite(tripId: string, title: string, emoji: string): Promise<any> { 
+export async function addFavorite(tripId: string, title: string, emoji: string): Promise<{ spot?: any; error?: string } | null> {
   try {
     const token = getStoredToken();
-    const payload = {
-      trip_id: tripId,
-      title: title,
-      emoji: emoji,
-    };
-    
     const res = await fetch(`/api/favorites`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ trip_id: tripId, title, emoji }),
     });
-    if (res.ok) {
-        return await res.json();
-    }
-  } catch (error) {
-    console.error('addFavorite failed', error);
+    if (res.ok) return { spot: await res.json() };
+    if (res.status === 404) return { error: '找不到此景點，請確認名稱是否正確。' };
+    if (res.status === 422) return { error: '景點名稱無法定位，請嘗試更具體的地名。' };
+    return { error: `新增失敗（${res.status}），請稍後再試。` };
+  } catch {
+    return { error: '網路連線失敗，請確認網路後再試。' };
   }
-  return null;
 }
 export async function deleteFavorite(id: string): Promise<any> { 
   try {

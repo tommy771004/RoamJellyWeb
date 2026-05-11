@@ -328,9 +328,23 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function WeatherCard() {
-  const { state: { weather, destination } } = useToolsTabContext();
+  const { state: { weather, destination, loading } } = useToolsTabContext();
   const { isOffline } = useAppStore();
   const Icon = weather && weather.rain_prob >= 50 ? CloudRain : Sun;
+
+  if (!weather && loading) {
+    return (
+      <GlassCard className="!p-6 sm:!p-8 mb-8 flex flex-col gap-4 animate-pulse">
+        <div className="h-5 w-32 bg-slate-200 rounded-full" />
+        <div className="h-3 w-24 bg-slate-100 rounded-full" />
+        <div className="flex items-end justify-between mt-2">
+          <div className="h-8 w-24 bg-fuchsia-100 rounded-full" />
+          <div className="h-14 w-16 bg-slate-100 rounded-xl" />
+        </div>
+        <div className="h-12 w-full bg-slate-100 rounded-xl" />
+      </GlassCard>
+    );
+  }
   
   const getOutfitSuggestion = (temp?: number, rainProb?: number) => {
     if (!temp) return { title: '輕便舒適穿搭', desc: '建議搭飛機時洋蔥式穿搭，並預備舒適好走的鞋子。' };
@@ -411,6 +425,7 @@ function WeatherCard() {
 
 function ChecklistSection() {
   const { state: { checklist, aiLoading }, actions } = useToolsTabContext();
+  const { isOffline } = useAppStore();
   const packedCount = checklist.filter((i) => i.checked).length;
   
   return (
@@ -426,7 +441,7 @@ function ChecklistSection() {
         <div className="flex flex-col gap-3">
           {checklist.length === 0 && <span className="text-sm text-slate-400 italic">目前沒有行李項目</span>}
           {checklist.map((item) => (
-            <label key={item.id} className="flex items-center gap-4 group cursor-pointer p-2 rounded-2xl hover:bg-fuchsia-50/50 transition-colors" onClick={(e) => { e.preventDefault(); actions.toggleCheck(item); }}>
+            <label key={item.id} className={`flex items-center gap-4 group p-2 rounded-2xl transition-colors ${isOffline ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-fuchsia-50/50'}`} onClick={(e) => { e.preventDefault(); if (!isOffline) actions.toggleCheck(item); }}>
               <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
                 <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
                 <div className={`w-full h-full rounded-full border transition-all shadow-sm ${item.checked ? 'bg-fuchsia-500 border-fuchsia-500' : 'border-slate-200 bg-slate-50'}`}></div>
@@ -442,7 +457,7 @@ function ChecklistSection() {
       
       <Button
         onClick={() => void actions.handleAiPackingList()}
-        disabled={aiLoading}
+        disabled={aiLoading || isOffline}
         size="lg"
         className="w-full mt-2 rounded-full h-14 font-bold text-[15px]"
       >
@@ -455,6 +470,7 @@ function ChecklistSection() {
 
 function LedgerSection() {
   const { state: { form, errors, members, submitting, expenses }, actions } = useToolsTabContext();
+  const { isOffline } = useAppStore();
   return (
     <GlassCard className="!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300">
       <div className="absolute -top-10 -left-10 w-32 h-32 bg-purple-100/40 rounded-full blur-[20px] pointer-events-none" />
@@ -616,7 +632,7 @@ function LedgerSection() {
 
         <Button
           onClick={() => void actions.submitExpense()}
-          disabled={submitting}
+          disabled={submitting || isOffline}
           size="lg"
           className="w-full mt-4 py-6 rounded-2xl"
         >
@@ -629,6 +645,7 @@ function LedgerSection() {
 
 function SettlementsSection() {
   const { state: { settlements, expenseByCurrency, clearingId }, actions } = useToolsTabContext();
+  const { isOffline } = useAppStore();
   const currencyEntries = Object.entries(expenseByCurrency);
   return (
     <section className="flex flex-col mb-32">
@@ -703,7 +720,7 @@ function SettlementsSection() {
                           variant="default"
                           size="sm"
                           onClick={() => void actions.handleClearSettlement(settlement)}
-                          disabled={clearingId === settlement.id}
+                          disabled={clearingId === settlement.id || isOffline}
                         >
                           <CheckCircle2 size={14} className="opacity-90 mr-1.5" />
                           <span className="text-[11px] font-bold tracking-wide uppercase">{clearingId === settlement.id ? '處理中' : '結清'}</span>
