@@ -6,13 +6,13 @@ import { assignDaysBasedOnTimeAndOrder } from './lib/itineraryUtils';
 
 const ItineraryTab = lazy(() => import('./components/ItineraryTab'));
 const ToolsTab = lazy(() => import('./components/ToolsTab'));
+const LoginScreen = lazy(() => import('./components/LoginScreen'));
+const TripLandingPage = lazy(() => import('./components/TripLandingPage'));
+const JellyAssistant = lazy(() => import('./components/JellyAssistant'));
+const AiForm = lazy(() => import('./components/AiForm'));
+const DynamicItineraryView = lazy(() => import('./components/DynamicItineraryView'));
 import BottomTabs, { TABS } from './components/BottomTabs';
 import AiLoadingState from './components/AiLoadingState';
-import LoginScreen from './components/LoginScreen';
-import TripLandingPage from './components/TripLandingPage';
-import JellyAssistant from './components/JellyAssistant';
-import AiForm from './components/AiForm';
-import DynamicItineraryView from './components/DynamicItineraryView';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
 import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot } from './lib/workflowApi';
@@ -78,7 +78,10 @@ export default function App() {
 
     // Events to monitor activity
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
-    events.forEach(event => window.addEventListener(event, updateActivity));
+    const passiveEvents = new Set(['scroll', 'touchstart', 'mousemove']);
+    events.forEach(event =>
+      window.addEventListener(event, updateActivity, passiveEvents.has(event) ? { passive: true } : undefined)
+    );
 
     const interval = setInterval(checkSession, 30000); // Check every 30 seconds
 

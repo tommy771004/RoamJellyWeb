@@ -25,6 +25,8 @@ import type { CountryGuide } from '../data/countryGuideData';
 import { EXPERT_HANDBOOKS } from '../data/expertHandbooks';
 import DatePickerPopup from './DatePickerPopup';
 
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
 const AIRLINE_CODES: Record<string, string> = {
   'EVA Air': 'BR', '長榮航空': 'BR',
   'China Airlines': 'CI', '中華航空': 'CI',
@@ -404,8 +406,6 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [activeHandbook, setActiveHandbook] = useState<typeof EXPERT_HANDBOOKS[0] | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
 
-  const expertHandbooks = EXPERT_HANDBOOKS;
-
   const handleCopyExpertItinerary = (e: React.MouseEvent | undefined, handbook: typeof EXPERT_HANDBOOKS[0]) => {
     e?.stopPropagation?.();
     
@@ -552,8 +552,6 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     () => !searchForm.from.trim() || !searchForm.to.trim() || !searchForm.date.trim(),
     [searchForm],
   );
-
-  const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
   const handleSearch = async () => {
     if (!DATE_REGEX.test(searchForm.date.trim())) {
@@ -1138,6 +1136,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         <img
                           src={dest.image}
                           alt={dest.name}
+                          loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-700 group-hover/dest:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -1193,7 +1192,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             
             <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
               <div className="flex gap-6 min-w-max">
-                {expertHandbooks.map((handbook) => (
+                {EXPERT_HANDBOOKS.map((handbook) => (
                   <motion.div
                     key={handbook.id}
                     whileHover={{ y: -5 }}
@@ -1201,9 +1200,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   >
                     <GlassCard onClick={() => setActiveHandbook(handbook)} className="!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all cursor-pointer">
                       <div className="relative h-44 overflow-hidden">
-                        <img 
-                          src={handbook.image} 
+                        <img
+                          src={handbook.image}
                           alt={handbook.title}
+                          loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-700 group-hover/handbook:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
