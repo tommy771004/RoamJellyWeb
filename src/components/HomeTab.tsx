@@ -260,7 +260,7 @@ function FlightTable({
 }) {
   return (
     <div className="overflow-x-auto pb-4 w-full">
-      <table className="w-full min-w-[750px] border-separate" style={{ borderSpacing: '0 8px' }}>
+      <table className="w-full min-w-[600px] border-separate" style={{ borderSpacing: '0 8px' }}>
         <caption className="sr-only">搜尋結果比較表</caption>
         <thead>
           <tr className="[&>th]:font-bold [&>th]:text-slate-400 [&>th]:text-[11px] [&>th]:uppercase [&>th]:tracking-widest [&>th]:pb-3 border-b border-slate-200">
@@ -313,7 +313,7 @@ function FlightTable({
                     className="h-9 px-3 rounded-[10px] flex items-center gap-1 transition-all active:scale-95 border bg-slate-900 border-slate-900 text-white hover:bg-slate-800 shadow-sm"
                   >
                     <PlaneTakeoff size={14} strokeWidth={2.5} />
-                    <span className="text-[10px] font-bold tracking-widest hidden sm:inline tracking-widest">帶入</span>
+                    <span className="text-[10px] font-bold tracking-widest hidden sm:inline">帶入</span>
                   </button>
                   <button
                     onClick={(e) => onToggleTrack(e, flight)}
@@ -755,7 +755,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     <div className="p-4 sm:p-6 md:p-8 md:pt-12 max-w-full lg:max-w-[90rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
       
       {/* Hero section with artistic horizontal text (Marquee effect) */}
-      <div className="relative w-full mb-4 md:mb-6 mt-1 sm:mt-3 min-h-[140px] sm:min-h-[180px] md:min-h-[220px] overflow-hidden rounded-[18px] sm:rounded-[24px] md:rounded-[32px] flex flex-col justify-center group shadow-sm border border-black/5">
+      <div className="relative w-full mb-4 md:mb-6 mt-1 sm:mt-3 min-h-36 sm:min-h-48 md:min-h-56 overflow-hidden rounded-2xl sm:rounded-3xl md:rounded-[32px] flex flex-col justify-center group shadow-sm border border-black/5">
         {/* Dynamic Abstract Background */}
         <div className="absolute inset-0 transition-colors duration-1000 bg-gradient-to-br from-indigo-50/80 via-white to-orange-50/80 -z-20 group-hover:from-indigo-100/80 group-hover:via-white group-hover:to-rose-50/80" />
         <div className="absolute right-0 top-[-20%] w-3/4 h-[140%] bg-gradient-to-l from-pink-200/40 via-fuchsia-200/20 to-transparent blur-3xl -z-10 transform rotate-12 transition-transform duration-1000 group-hover:rotate-6 group-hover:scale-110" />
@@ -769,7 +769,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             className="flex whitespace-nowrap opacity-[0.04] select-none"
           >
             {Array.from({ length: 8 }).map((_, i) => (
-              <span key={i} className="text-[48px] sm:text-[64px] md:text-[88px] font-black text-slate-900 uppercase tracking-tighter pr-4 md:pr-8 leading-none py-3">
+              <span key={i} className="text-5xl sm:text-7xl md:text-8xl font-black text-slate-900 uppercase tracking-tighter pr-4 md:pr-8 leading-none py-3">
                 Explore the World • 探索無界 •
               </span>
             ))}
@@ -787,14 +787,14 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
              <Sparkles size={12} className="text-orange-500" />
              <span className="text-[10px] sm:text-xs font-bold text-slate-700 tracking-wide">AI Powered Travel</span>
            </motion.div>
-           <h1 className="text-[24px] sm:text-[32px] md:text-[44px] font-black text-slate-900 tracking-tight leading-[1.1] mb-2 sm:mb-3 max-w-[80%]">
+           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.1] mb-2 sm:mb-3 max-w-[80%]">
              預見下一次<br className="sm:hidden" />
              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-fuchsia-600 pb-1 relative inline-block">
                非凡旅程
                <div className="absolute -bottom-1 left-0 w-full h-[6px] bg-fuchsia-500/20 -rotate-1 skew-x-12 rounded-full" />
              </span>
            </h1>
-           <p className="text-[11px] sm:text-[13px] md:text-[15px] text-slate-500 font-bold tracking-wide">
+           <p className="text-xs sm:text-sm md:text-base text-slate-500 font-bold tracking-wide">
              探索全球機票、質感住宿與在地體驗
            </p>
         </div>
@@ -836,8 +836,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
           {/* Horizontal Search Form */}
           <GlassCard className={`!p-1.5 md:!p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/80 backdrop-blur-3xl rounded-[32px] md:rounded-[36px] border border-white/60 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none grayscale-[0.2]' : ''}`}>
-            <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
-              <div className="flex flex-col sm:flex-row gap-2 lg:gap-3 flex-1">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 md:gap-3 flex-1">
                 {/* 出發地 */}
                 <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[20px] md:rounded-[24px] px-5 py-3 md:py-3.5 border border-slate-200/60 flex items-center group/input">
                   <div className="absolute left-6 text-slate-400 group-hover/input:text-orange-500 group-focus-within/input:text-orange-500 transition-colors">
@@ -889,7 +889,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 </div>
               </div>
 
-              <div className="flex gap-2 lg:gap-3 flex-none lg:w-[280px]">
+              <div className="flex gap-2 md:gap-3 flex-none md:w-64">
                 {/* 日期 */}
                 <div 
                   onClick={() => {
@@ -915,7 +915,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   onClick={() => void handleSearch()}
                   disabled={isSearchDisabled || loading || isOffline}
                   title={isOffline ? '請連線網路以進行機票比價' : ''}
-                  className={`w-16 lg:w-[76px] rounded-[20px] md:rounded-[24px] flex items-center justify-center transition-all duration-300 active:scale-95 flex-shrink-0 ${
+                  className={`w-16 md:w-20 rounded-[20px] md:rounded-[24px] flex items-center justify-center transition-all duration-300 active:scale-95 flex-shrink-0 ${
                     isSearchDisabled || loading || isOffline
                       ? 'bg-slate-100 border border-slate-200 grayscale cursor-not-allowed text-slate-300 shadow-inner' 
                       : 'bg-slate-900 hover:bg-slate-800 text-white shadow-[0_8px_20px_rgba(15,23,42,0.15)] hover:shadow-[0_12px_25px_rgba(15,23,42,0.25)] hover:-translate-y-0.5 border border-transparent'
@@ -934,7 +934,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         </div>
 
         {/* Quick External Links */}
-        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 lg:gap-8 mb-10 px-2 lg:px-4">
+        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 lg:gap-8 mb-4 md:mb-8 px-2 lg:px-4">
           <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-slate-600 hover:text-slate-900 transition-colors group">
             <div className="text-[#B92A8E] group-hover:scale-110 transition-transform">
               <Bed size={26} strokeWidth={2.5} />
@@ -963,11 +963,11 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         </div>
 
         {/* Right Side / Bottom: Results */}
-        <div className="pb-32 flex flex-col flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-8 px-1">
+        <div className="pb-16 md:pb-32 flex flex-col flex-1 min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8 px-1">
             <div className="flex flex-col items-start gap-1">
               <div className="flex items-center gap-3">
-                 <h2 className="text-[28px] md:text-[34px] font-black text-slate-900 tracking-tighter leading-none">探索航班與活動</h2>
+                 <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter leading-none">探索航班與活動</h2>
                  {filteredResults.length > 0 && (
                    <span className="px-2.5 py-1 bg-slate-900 text-white rounded-[8px] text-[10px] font-black tracking-widest uppercase shadow-sm">
                      {filteredResults.length} 個結果
@@ -977,7 +977,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">Explore Travels</p>
             </div>
             {results.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+              <div className="flex flex-row flex-wrap items-center gap-2 justify-end">
                 <div className="flex items-center bg-white/70 backdrop-blur-md p-1.5 rounded-[12px] shadow-sm border border-slate-200/60 relative">
                   {(['all', 'flight', 'ticket', 'other'] as const).map((type) => (
                     <button 
@@ -1029,7 +1029,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {[0, 1, 2, 3, 4, 5].map((i) => <FlightSkeletonCard key={i} />)}
             </div>
           ) : null}
@@ -1052,7 +1052,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
                   >
                     {filteredResults.map((flight, index) => (
                       <motion.div
@@ -1201,7 +1201,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     輸入出發地、目的地與日期，找出最聰明的飛航選擇。
                   </h3>
                   
-                  <div className="text-2xl sm:text-[32px] font-black text-slate-900 mb-4 tracking-tight text-center leading-tight">
+                  <div className="flex flex-wrap gap-2 justify-center mb-4">
                      {['東京 NRT', '大阪 KIX', '倫敦 LHR', '紐約 JFK'].map((city, idx) => (
                        <button 
                          key={city}
@@ -1221,7 +1221,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           ) : null}
 
           {/* Featured Destinations Section */}
-          <div className="mt-16 mb-8 px-2">
+          <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Globe className="text-emerald-500" size={24} />
@@ -1291,7 +1291,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           </div>
 
           {/* Expert Handbooks Section */}
-          <div className="mt-16 mb-8 px-2">
+          <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="text-fuchsia-500" size={24} />
               <h2 className="text-2xl font-black text-slate-800 tracking-tight">熱門達人手帳</h2>
