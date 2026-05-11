@@ -1,16 +1,21 @@
 {
   "version": 2,
-  "buildCommand": "vite build",
-  "outputDirectory": "dist",
-  "framework": null,
-  "functions": {
-    "api/index.ts": {
-      "memory": 512,
-      "maxDuration": 30
+  "builds": [
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
     }
-  },
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.ts" },
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/guide/(.*)", "dest": "/guide/$1" },
+    { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?))", "dest": "/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
