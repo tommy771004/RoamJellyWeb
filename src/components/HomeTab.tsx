@@ -479,9 +479,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     // Initial fetch for recommendations and handbooks
     const loadInitialData = async () => {
       try {
+        const seedDate = new Date();
+        seedDate.setDate(seedDate.getDate() + 30);
+        const seedDateStr = seedDate.toISOString().slice(0, 10);
+
         const [handbooks, recommendations] = await Promise.all([
           fetchHandbooks(),
-          Promise.resolve([])
+          searchOffers({ from: 'TPE', to: 'TYO', date: seedDateStr }).catch(() => [])
         ]);
         setCommunityTrips(handbooks);
         if (results.length === 0) setResults(recommendations);
