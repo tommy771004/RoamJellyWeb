@@ -752,14 +752,22 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 md:pt-12 max-w-full lg:max-w-[90rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto">
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.98, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+      className="relative p-4 sm:p-6 md:p-8 lg:p-10 md:pt-12 max-w-full lg:max-w-[90rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+    >
+      {/* Top subtle inner shadow / glass blur to conceal items scrolling behind header */}
+      <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-white/60 to-transparent pointer-events-none z-20" />
       
       {/* Hero section with artistic horizontal text (Marquee effect) */}
-      <div className="relative w-full mb-4 md:mb-6 mt-1 sm:mt-3 min-h-36 sm:min-h-48 md:min-h-56 overflow-hidden rounded-2xl sm:rounded-3xl md:rounded-[32px] flex flex-col justify-center group shadow-sm border border-black/5">
-        {/* Dynamic Abstract Background */}
-        <div className="absolute inset-0 transition-colors duration-1000 bg-gradient-to-br from-indigo-50/80 via-white to-orange-50/80 -z-20 group-hover:from-indigo-100/80 group-hover:via-white group-hover:to-rose-50/80" />
-        <div className="absolute right-0 top-[-20%] w-3/4 h-[140%] bg-gradient-to-l from-pink-200/40 via-fuchsia-200/20 to-transparent blur-3xl -z-10 transform rotate-12 transition-transform duration-1000 group-hover:rotate-6 group-hover:scale-110" />
-        <div className="absolute left-[-10%] bottom-[-20%] w-1/2 h-full bg-gradient-to-tr from-sky-200/40 to-transparent blur-3xl -z-10 transition-transform duration-1000 group-hover:-translate-y-10 group-hover:scale-110" />
+      <div className="relative w-full mb-6 md:mb-10 mt-1 sm:mt-3 min-h-48 sm:min-h-56 md:min-h-72 overflow-hidden rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] flex flex-col justify-center group shadow-xl shadow-indigo-900/5 border border-white/60 bg-white/40 backdrop-blur-3xl">
+        {/* Dynamic Abstract Background (Aurora Effect) */}
+        <div className="absolute inset-0 transition-colors duration-1000 bg-gradient-to-br from-indigo-50/60 via-white/40 to-orange-50/60 -z-20 group-hover:from-indigo-100/60 group-hover:via-white/60 group-hover:to-rose-100/50" />
+        <div className="absolute -right-[10%] -top-[40%] w-[120%] h-[200%] bg-gradient-to-l from-pink-300/30 via-purple-300/20 to-transparent blur-[80px] -z-10 transform -rotate-12 transition-transform duration-1000 group-hover:rotate-0 group-hover:scale-110" />
+        <div className="absolute -left-[10%] -bottom-[40%] w-[80%] h-[150%] bg-gradient-to-tr from-cyan-300/20 via-sky-200/20 to-transparent blur-[80px] -z-10 transition-transform duration-1000 group-hover:-translate-y-10 group-hover:scale-110" />
+        <div className="absolute top-1/2 left-1/4 w-[50%] h-[50%] bg-rose-200/20 blur-[100px] rounded-full -z-10 animate-pulse pointer-events-none mix-blend-multiply" />
         
         {/* Marquee layer */}
         <div className="absolute inset-0 flex items-center pointer-events-none z-0 overflow-hidden mix-blend-overlay">
@@ -769,34 +777,44 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             className="flex whitespace-nowrap opacity-[0.04] select-none"
           >
             {Array.from({ length: 8 }).map((_, i) => (
-              <span key={i} className="text-5xl sm:text-7xl md:text-8xl font-black text-slate-900 uppercase tracking-tighter pr-4 md:pr-8 leading-none py-3">
-                Explore the World • 探索無界 •
+              <span key={i} className="text-5xl sm:text-7xl md:text-8xl font-black text-slate-800 uppercase tracking-tighter pr-4 md:pr-8 leading-none py-3 mix-blend-color-burn">
+                Explore The World • 探索無界 •
               </span>
             ))}
           </motion.div>
         </div>
         
         {/* Foreground Content */}
-        <div className="relative z-10 flex flex-col justify-center items-start px-5 sm:px-8 md:px-12 pointer-events-none">
+        <div className="relative z-10 flex flex-col justify-center items-start px-6 sm:px-10 md:px-16 pointer-events-none w-full max-w-4xl">
            <motion.div 
              initial={{ opacity: 0, y: 15 }}
              animate={{ opacity: 1, y: 0 }}
-             transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
-             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/60 backdrop-blur-md border border-white/80 shadow-sm mb-3 sm:mb-4"
+             transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1], delay: 0.1 }}
+             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-xl border border-white shadow-sm mb-4 sm:mb-6"
            >
-             <Sparkles size={12} className="text-orange-500" />
-             <span className="text-[10px] sm:text-xs font-bold text-slate-700 tracking-wide">AI Powered Travel</span>
+             <Sparkles size={14} className="text-orange-500" />
+             <span className="text-[11px] sm:text-[13px] font-bold text-slate-700 tracking-wider">AI Powered Travel</span>
            </motion.div>
-           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.1] mb-2 sm:mb-3 max-w-[80%]">
+           <motion.h1 
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1], delay: 0.2 }}
+             className="text-4xl sm:text-5xl md:text-6xl lg:text-[72px] font-black text-slate-900 tracking-tighter leading-[1.05] mb-4 sm:mb-6"
+           >
              預見下一次<br className="sm:hidden" />
-             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-fuchsia-600 pb-1 relative inline-block">
+             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-fuchsia-600 pb-2 relative inline-block">
                非凡旅程
-               <div className="absolute -bottom-1 left-0 w-full h-[6px] bg-fuchsia-500/20 -rotate-1 skew-x-12 rounded-full" />
+               <div className="absolute bottom-1 left-0 w-full h-[8px] bg-fuchsia-500/20 -rotate-1 skew-x-12 rounded-full" />
              </span>
-           </h1>
-           <p className="text-xs sm:text-sm md:text-base text-slate-500 font-bold tracking-wide">
+           </motion.h1>
+           <motion.p 
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1], delay: 0.3 }}
+             className="text-sm sm:text-base md:text-lg text-slate-600 font-bold tracking-wide"
+           >
              探索全球機票、質感住宿與在地體驗
-           </p>
+           </motion.p>
         </div>
       </div>
 
@@ -806,90 +824,95 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           
           {/* Immersive AI Banner */}
           <div className="w-full group cursor-pointer" onClick={() => setActiveTab('ai_form')}>
-            <div className="bg-slate-900 rounded-[20px] md:rounded-[28px] p-5 sm:p-6 md:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow-2xl shadow-slate-900/20 relative overflow-hidden transition-all duration-500 hover:shadow-fuchsia-500/10 hover:-translate-y-0.5">
+            <div className="bg-slate-900 rounded-[24px] md:rounded-[32px] p-6 sm:p-8 md:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow-2xl shadow-slate-900/20 relative overflow-hidden transition-all duration-500 hover:shadow-fuchsia-500/20 hover:-translate-y-1 border border-white/10">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay"></div>
               <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/30 via-transparent to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-2xl"></div>
               <div className="absolute -right-20 -top-20 w-64 h-64 bg-fuchsia-500/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000 ease-out pointer-events-none"></div>
               <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-sky-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000 ease-out pointer-events-none delay-75"></div>
               
-              <div className="relative z-10 flex items-center gap-4 sm:gap-5">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-fuchsia-500 flex items-center justify-center p-0.5 shadow-xl shadow-fuchsia-500/30 group-hover:rotate-6 transition-transform duration-500 shrink-0">
-                   <div className="w-full h-full bg-slate-900/40 rounded-[14px] flex items-center justify-center backdrop-blur-md">
-                     <Sparkles size={24} strokeWidth={2.5} className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+              <div className="relative z-10 flex items-center gap-5 sm:gap-6">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-pink-400 to-fuchsia-500 flex items-center justify-center p-[2px] shadow-xl shadow-fuchsia-500/30 group-hover:rotate-6 transition-transform duration-500 shrink-0">
+                   <div className="w-full h-full bg-slate-900/60 rounded-[14px] flex items-center justify-center backdrop-blur-md">
+                     <Sparkles size={28} strokeWidth={2.5} className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]" />
                    </div>
                 </div>
-                <div className="flex flex-col">
-                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-1 flex items-center gap-2">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
                     AI 智慧行程規劃
-                    <span className="px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-[9px] font-bold uppercase tracking-widest border border-fuchsia-500/30 backdrop-blur-sm">Beta</span>
+                    <span className="px-2.5 py-1 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-bold uppercase tracking-widest border border-fuchsia-500/30 backdrop-blur-sm">Beta</span>
                   </h3>
-                  <p className="text-slate-400 text-xs sm:text-sm font-medium tracking-wide">
+                  <p className="text-slate-400 text-sm sm:text-base font-medium tracking-wide">
                     輸入目的地，秒速生成專屬客製化旅航計畫
                   </p>
                 </div>
               </div>
-              <div className="relative z-10 mt-5 sm:mt-0 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-white group-hover:text-slate-900 text-white transition-all shadow-sm group-active:scale-95 shrink-0 self-end sm:self-auto">
-                <ArrowRight size={18} strokeWidth={2.5} className="-rotate-45 group-hover:rotate-0 transition-transform duration-500" />
+              <div className="relative z-10 mt-6 sm:mt-0 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-white group-hover:text-slate-900 text-white transition-all shadow-sm group-active:scale-95 shrink-0 self-end sm:self-auto">
+                <ArrowRight size={20} strokeWidth={2.5} className="-rotate-45 group-hover:rotate-0 transition-transform duration-500" />
               </div>
             </div>
           </div>
 
           {/* Horizontal Search Form */}
-          <GlassCard className={`!p-1.5 md:!p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/80 backdrop-blur-3xl rounded-[32px] md:rounded-[36px] border border-white/60 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none grayscale-[0.2]' : ''}`}>
-            <div className="flex flex-col md:flex-row gap-2 md:gap-3">
-              <div className="flex flex-col sm:flex-row gap-2 md:gap-3 flex-1">
-                {/* 出發地 */}
-                <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[20px] md:rounded-[24px] px-5 py-3 md:py-3.5 border border-slate-200/60 flex items-center group/input">
-                  <div className="absolute left-6 text-slate-400 group-hover/input:text-orange-500 group-focus-within/input:text-orange-500 transition-colors">
-                    <PlaneTakeoff size={20} />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+          >
+            <GlassCard className={`!p-2 md:!p-3 shadow-xl shadow-slate-200/50 bg-white/90 backdrop-blur-3xl rounded-[32px] md:rounded-[2.5rem] border border-white/80 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none grayscale-[0.2]' : ''}`}>
+              <div className="flex flex-col md:flex-row gap-2 md:gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 md:gap-3 flex-1">
+                  {/* 出發地 */}
+                  <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[20px] md:rounded-[2rem] px-5 sm:px-6 py-3.5 md:py-4 border border-slate-200/60 flex items-center group/input">
+                    <div className="absolute left-6 text-slate-400 group-hover/input:text-orange-500 group-focus-within/input:text-orange-500 transition-colors">
+                      <PlaneTakeoff size={20} />
+                    </div>
+                    <div className="flex flex-col pl-10 w-full text-left">
+                      <Label htmlFor="search-from" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">出發從哪裡</Label>
+                      <input
+                        id="search-from"
+                        className="bg-transparent border-none p-0 focus:ring-0 text-base md:text-lg font-black text-slate-900 placeholder:text-slate-300 placeholder:font-bold w-full outline-none leading-none h-6"
+                        value={searchForm.from}
+                        onFocus={() => {
+                          setShowDeparturePicker(true);
+                          setShowDestinationPicker(false);
+                          setShowDatePicker(false);
+                        }}
+                        onChange={(e) => {
+                          updateField('from', e.target.value);
+                        }}
+                        placeholder="台北 TPE"
+                        autoComplete="off"
+                      />
+                    </div>
                   </div>
-                  <div className="flex flex-col pl-10 w-full text-left">
-                    <Label htmlFor="search-from" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">出發從哪裡</Label>
-                    <input
-                      id="search-from"
-                      className="bg-transparent border-none p-0 focus:ring-0 text-base md:text-lg font-black text-slate-900 placeholder:text-slate-300 placeholder:font-bold w-full outline-none leading-none h-6"
-                      value={searchForm.from}
-                      onFocus={() => {
-                        setShowDeparturePicker(true);
-                        setShowDestinationPicker(false);
-                        setShowDatePicker(false);
-                      }}
-                      onChange={(e) => {
-                        updateField('from', e.target.value);
-                      }}
-                      placeholder="台北 TPE"
-                      autoComplete="off"
-                    />
+
+                  {/* 目的地 */}
+                  <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[20px] md:rounded-[2rem] px-5 sm:px-6 py-3.5 md:py-4 border border-slate-200/60 flex items-center group/input">
+                    <div className="absolute left-6 text-slate-400 group-hover/input:text-fuchsia-500 group-focus-within/input:text-fuchsia-500 transition-colors">
+                      <Globe size={20} />
+                    </div>
+                    <div className="flex flex-col pl-10 w-full text-left">
+                      <Label htmlFor="search-to" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">飛往目的地</Label>
+                      <input
+                        id="search-to"
+                        className="bg-transparent border-none p-0 focus:ring-0 text-base md:text-lg font-black text-slate-900 placeholder:text-slate-300 placeholder:font-bold w-full outline-none leading-none h-6"
+                        value={searchForm.to}
+                        onFocus={() => {
+                          setShowDestinationPicker(true);
+                          setShowDeparturePicker(false);
+                          setShowDatePicker(false);
+                        }}
+                        onChange={(e) => {
+                          updateField('to', e.target.value);
+                        }}
+                        placeholder="東京 NRT"
+                        autoComplete="off"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* 目的地 */}
-                <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[20px] md:rounded-[24px] px-5 py-3 md:py-3.5 border border-slate-200/60 flex items-center group/input">
-                  <div className="absolute left-6 text-slate-400 group-hover/input:text-fuchsia-500 group-focus-within/input:text-fuchsia-500 transition-colors">
-                    <Globe size={20} />
-                  </div>
-                  <div className="flex flex-col pl-10 w-full text-left">
-                    <Label htmlFor="search-to" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">飛往目的地</Label>
-                    <input
-                      id="search-to"
-                      className="bg-transparent border-none p-0 focus:ring-0 text-base md:text-lg font-black text-slate-900 placeholder:text-slate-300 placeholder:font-bold w-full outline-none leading-none h-6"
-                      value={searchForm.to}
-                      onFocus={() => {
-                        setShowDestinationPicker(true);
-                        setShowDeparturePicker(false);
-                        setShowDatePicker(false);
-                      }}
-                      onChange={(e) => {
-                        updateField('to', e.target.value);
-                      }}
-                      placeholder="東京 NRT"
-                      autoComplete="off"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2 md:gap-3 flex-none md:w-64">
+              <div className="flex gap-2 md:gap-3 flex-none md:w-auto">
                 {/* 日期 */}
                 <div 
                   onClick={() => {
@@ -897,12 +920,12 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     setShowDeparturePicker(false);
                     setShowDestinationPicker(false);
                   }}
-                  className={`relative flex-1 transition-all duration-300 rounded-[20px] md:rounded-[24px] px-5 py-3 md:py-3.5 border flex items-center cursor-pointer group/date ${showDatePicker ? 'border-orange-300 bg-orange-50 shadow-[0_4px_20px_rgba(249,115,22,0.08)]' : 'bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/60'}`}
+                  className={`relative flex-1 md:w-56 transition-all duration-300 rounded-[20px] md:rounded-[2rem] px-5 sm:px-6 py-3.5 md:py-4 border flex items-center cursor-pointer group/date ${showDatePicker ? 'border-orange-300 bg-orange-50 shadow-[0_4px_20px_rgba(249,115,22,0.08)]' : 'bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/60'}`}
                 >
-                  <div className={`absolute left-5 transition-colors ${showDatePicker ? 'text-orange-500' : 'text-slate-400 group-hover/date:text-slate-600'}`}>
+                  <div className={`absolute left-6 transition-colors ${showDatePicker ? 'text-orange-500' : 'text-slate-400 group-hover/date:text-slate-600'}`}>
                     <Calendar size={20} />
                   </div>
-                  <div className="flex flex-col pl-9 w-full text-left">
+                  <div className="flex flex-col pl-10 w-full text-left">
                     <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1">去程日期</span>
                     <span className={`text-base md:text-lg font-black truncate leading-none h-6 flex items-center ${!searchForm.date ? 'text-slate-300' : 'text-slate-900'}`}>
                       {searchForm.date || '選擇日期'}
@@ -915,7 +938,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   onClick={() => void handleSearch()}
                   disabled={isSearchDisabled || loading || isOffline}
                   title={isOffline ? '請連線網路以進行機票比價' : ''}
-                  className={`w-16 md:w-20 rounded-[20px] md:rounded-[24px] flex items-center justify-center transition-all duration-300 active:scale-95 flex-shrink-0 ${
+                  className={`w-16 md:w-20 rounded-[20px] md:rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-95 flex-shrink-0 ${
                     isSearchDisabled || loading || isOffline
                       ? 'bg-slate-100 border border-slate-200 grayscale cursor-not-allowed text-slate-300 shadow-inner' 
                       : 'bg-slate-900 hover:bg-slate-800 text-white shadow-[0_8px_20px_rgba(15,23,42,0.15)] hover:shadow-[0_12px_25px_rgba(15,23,42,0.25)] hover:-translate-y-0.5 border border-transparent'
@@ -931,6 +954,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             </div>
             {dateError && <div className="text-[11px] text-rose-500 font-bold px-6 py-2 pb-1">{dateError}</div>}
           </GlassCard>
+          </motion.div>
         </div>
 
         {/* Quick External Links */}
@@ -1450,6 +1474,6 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
