@@ -1,5 +1,3 @@
-// CommonJS entry for Vercel serverless (api/package.json overrides "type":"module").
-// @vercel/node bundles this file with ncc, resolving all TypeScript imports from server.ts.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { default: handler } = require('../server');
-module.exports = handler;
+// Vercel serverless entry — @vercel/node bundles this with ncc (enabled because
+// "type":"module" is NOT in root package.json, so bundling is not suppressed).
+export { default } from '../server';
