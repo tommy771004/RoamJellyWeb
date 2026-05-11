@@ -6,18 +6,19 @@ import { TRAVEL_GUIDE_DESTINATIONS, TravelGuideDestination } from '../data/trave
 import { LocationPickerPopup } from './LocationPickerPopup';
 
 const COMPANION_OPTIONS = [
-  { id: 'solo', label: '獨行俠', emoji: '🚶' },
+  { id: 'solo', label: '獨自行走', emoji: '🚶' },
   { id: 'couple', label: '浪漫雙人', emoji: '💑' },
   { id: 'family', label: '親子育兒', emoji: '👨‍👩‍👧‍👦' },
   { id: 'elderly', label: '帶長輩', emoji: '👵' },
   { id: 'friends', label: '三五好友', emoji: '🍻' },
+  { id: 'pets', label: '毛小孩', emoji: '🐕' },
 ];
 
-const VIBE_OPTIONS = ['特種兵', '睡到自然醒', '隨興漫遊', '在地深度', '網美打卡'];
-const INTEREST_OPTIONS = ['大自然', '歷史文化', '購物血拼', '主題樂園', '在地美食', '戶外刺激'];
-const DIETARY_OPTIONS = ['無限制', '純素', '蛋奶素', '無麩質', '不吃海鮮'];
-const TRANSPORT_OPTIONS = ['大眾運輸', '自駕', '包車', '徒步為主'];
-const BUDGET_OPTIONS = ['窮遊', '小資', '舒適', '奢華'];
+const VIBE_OPTIONS = ['特種兵急行軍', '睡到自然醒', '隨興漫遊', '在地深度文化', '網美打卡秘境', '奢華極致享受', '文青慢活步調', '夜生活狂歡'];
+const INTEREST_OPTIONS = ['大自然與絕景', '歷史文化遺產', '購物血拼逛街', '主題遊樂園', '在地特色美食', '戶外刺激冒險', '藝術與博物館', '溫泉桑拿放鬆', '海島水上活動', '特色網美咖啡', '尋訪動漫朝聖'];
+const DIETARY_OPTIONS = ['無限制', '純素食', '蛋奶素', '海鮮素', '無麩質', '不吃牛', '不吃海鮮', '清真認證'];
+const TRANSPORT_OPTIONS = ['大眾運輸', '自駕租車', '包車導覽', '徒步與腳踏車'];
+const BUDGET_OPTIONS = ['背包窮遊', '精打細算小資', '舒適無虞', '奢華尊榮'];
 
 export interface AiFormData {
   departure: string;
@@ -187,7 +188,7 @@ export default function AiForm({
 
           <div className="flex flex-col gap-3 sm:gap-4">
             <label className="text-[11px] sm:text-xs font-black uppercase text-slate-500 tracking-[0.2em] px-2 shadow-sm text-shadow-sm">與誰同行？</label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {COMPANION_OPTIONS.map(opt => {
                 const isSelected = formData.companions === opt.id;
                 return (

@@ -262,28 +262,27 @@ export default function ItineraryTab() {
     setAiLoading(true);
     showToast(`正在為您生成旅程：${formData.destination}...`);
     try {
-      // Simulate 3s delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const suggestions = {
-         ui_config: { 
-           bg_gradient: formData.budget === '奢華' ? 'from-amber-100 to-yellow-100' : 'from-indigo-100 via-purple-50 to-pink-100', 
-           font_scale: 'large' 
-         },
-         summary: { 
-           title: `為您專屬規劃：${formData.destination} ${formData.vibes[0] || '完美'}之旅`, 
-           smart_tags: [...formData.vibes, ...formData.interests, formData.companions].filter(Boolean).slice(0, 4) 
-         },
-         itinerary: Array.from({ length: formData.days }).map((_, idx) => ({
-           day: idx + 1,
-           spots: [
-             { time: '10:00', name: idx === 0 ? '抵達與放行李' : '晨間網美打卡點', emoji: idx === 0 ? '🏨' : '📸', category: idx === 0 ? 'hotel' : 'landmark', ai_note: idx === 0 ? '建議先寄放行李，輕鬆開始旅程！' : '早晨光線最棒，適合拍照！', intensity: 'chill', transport_to_next: '大眾運輸約 15 分鐘' },
-             { time: '13:00', name: '在地必吃美食推薦', emoji: '🍜', category: 'food', ai_note: `考量到您的${formData.dietary.length > 0 ? formData.dietary.join('、') : '口味'}需求，精選的高評價餐廳。`, intensity: 'chill', transport_to_next: '步行約 10 分鐘' },
-             { time: '15:00', name: '深度體驗行程', emoji: '🗺️', category: 'activity', ai_note: '讓您深度感受在地文化與氛圍的活動。', intensity: 'hardcore', transport_to_next: '預計搭乘計程車' },
-             { time: '19:00', name: '經典夜生活與晚餐', emoji: '🍻', category: 'nightlife', ai_note: '在美麗夜景中享受美好的夜晚！', intensity: 'chill' }
-           ]
-         }))
-      };
+      const suggestions = await suggestItineraryWithForm({
+        destination: formData.destination,
+        planner: {
+          days: formData.days,
+          departureFrom: formData.departure,
+          arrivalTo: formData.destination,
+          flightDate: '',
+          countries: [],
+          mustVisitSpots: [],
+          mustEatFoods: [],
+          autoFlightSegments: [],
+          travelFactsContext: '',
+          notes: '',
+          companions: formData.companions,
+          vibes: formData.vibes,
+          interests: formData.interests,
+          budget: formData.budget,
+          dietary: formData.dietary,
+          transport: formData.transport,
+        }
+      });
 
       const rawNodes: ItineraryNode[] = [];
       suggestions.itinerary.forEach((dayData) => {

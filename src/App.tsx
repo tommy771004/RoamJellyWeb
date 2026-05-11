@@ -16,6 +16,7 @@ import DynamicItineraryView from './components/DynamicItineraryView';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
 import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot } from './lib/workflowApi';
+import { suggestItineraryWithForm } from './lib/openrouterApi';
 import { JellyToast } from './components/JellyToast';
 
 /** Extract /trip/:tripId from the current URL path, null if no match. */
@@ -254,59 +255,27 @@ export default function App() {
         setIsGenerating(true);
         showToast(`正在為您生成旅程：${data.destination}...`);
         try {
-          // Simulate a 3-second API call with typing animation as requested
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          const suggestions = {
-             ui_config: { 
-               bg_gradient: data.budget === '奢華' ? 'from-amber-100 to-yellow-100' : 'from-indigo-100 via-purple-50 to-pink-100', 
-               font_scale: 'large' 
-             },
-             summary: { 
-               title: `為您專屬規劃：${data.destination} ${data.vibes[0] || '完美'}之旅`, 
-               smart_tags: [...data.vibes, ...data.interests, data.companions].filter(Boolean).slice(0, 4) 
-             },
-             itinerary: Array.from({ length: data.days }).map((_, idx) => ({
-               day: idx + 1,
-               spots: [
-                 { 
-                   time: '10:00', 
-                   name: idx === 0 ? '抵達與放行李' : '晨間網美打卡點', 
-                   emoji: idx === 0 ? '🏨' : '📸', 
-                   category: idx === 0 ? 'hotel' : 'landmark', 
-                   ai_note: idx === 0 ? '建議先寄放行李，輕鬆開始旅程！' : '早晨光線最棒，適合拍照！',
-                   intensity: 'chill',
-                   transport_to_next: '大眾運輸約 15 分鐘'
-                 },
-                 { 
-                   time: '13:00', 
-                   name: '在地必吃美食推薦', 
-                   emoji: '🍜', 
-                   category: 'food', 
-                   ai_note: `考量到您的${data.dietary.length > 0 ? data.dietary.join('、') : '口味'}需求，精選的高評價餐廳。`,
-                   intensity: 'chill',
-                   transport_to_next: '步行約 10 分鐘'
-                 },
-                 { 
-                   time: '15:00', 
-                   name: '深度體驗行程', 
-                   emoji: '🗺️', 
-                   category: 'activity', 
-                   ai_note: '讓您深度感受在地文化與氛圍的活動。',
-                   intensity: 'hardcore',
-                   transport_to_next: '預計搭乘計程車'
-                 },
-                 { 
-                   time: '19:00', 
-                   name: '經典夜生活與晚餐', 
-                   emoji: '🍻', 
-                   category: 'nightlife', 
-                   ai_note: '在美麗夜景中享受美好的夜晚！',
-                   intensity: 'chill'
-                 }
-               ]
-             }))
-          };
+          const suggestions = await suggestItineraryWithForm({
+            destination: data.destination,
+            planner: {
+              days: data.days,
+              departureFrom: data.departure,
+              arrivalTo: data.destination,
+              flightDate: '',
+              countries: [],
+              mustVisitSpots: [],
+              mustEatFoods: [],
+              autoFlightSegments: [],
+              travelFactsContext: '',
+              notes: '',
+              companions: data.companions,
+              vibes: data.vibes,
+              interests: data.interests,
+              budget: data.budget,
+              dietary: data.dietary,
+              transport: data.transport,
+            }
+          });
 
           // Convert AiResponse itinerary to ItineraryNode[]
           const nodes: any[] = [];

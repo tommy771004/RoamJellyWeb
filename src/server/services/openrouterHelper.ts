@@ -2,43 +2,16 @@
 // List updated 2026-05-09 based on OpenRouter /api/v1/models (pricing.prompt === "0").
 // Ordered by capability: gemini > deepseek > llama > qwen > mistral > others.
 const FREE_MODELS = [
-  // Google Gemini
-  'google/gemini-2.5-pro-exp-03-25:free',
-  'google/gemini-2.0-flash-exp:free',
-  'google/gemini-2.0-flash-thinking-exp:free',
-  'google/gemini-2.0-flash-lite-preview-02-05:free',
-  'google/gemini-2.0-pro-exp-02-05:free',
-  'google/gemini-exp-1206:free',
-  // DeepSeek
-  'deepseek/deepseek-r1:free',
-  'deepseek/deepseek-r1-distill-llama-70b:free',
-  'deepseek/deepseek-r1-zero:free',
-  'deepseek/deepseek-chat-v3-0324:free',
-  'deepseek/deepseek-v3-base:free',
+  // Google Gemma
+  'google/gemma-4-31b-it:free',
+  'google/gemma-4-26b-a4b-it:free',
   // Meta LLaMA
-  'meta-llama/llama-4-scout:free',
-  'meta-llama/llama-4-maverick:free',
   'meta-llama/llama-3.3-70b-instruct:free',
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'meta-llama/llama-3.2-11b-vision-instruct:free',
   'meta-llama/llama-3.2-3b-instruct:free',
-  // Qwen
-  'qwen/qwen3-235b-a22b:free',
-  'qwen/qwen3-30b-a3b:free',
-  'qwen/qwen3-14b:free',
-  'qwen/qwen3-8b:free',
-  'qwen/qwen-2.5-72b-instruct:free',
-  'qwen/qwen-2.5-coder-32b-instruct:free',
-  // Mistral
-  'mistralai/mistral-small-3.1-24b-instruct:free',
-  'mistralai/mistral-nemo:free',
-  // Microsoft
-  'microsoft/phi-4:free',
-  'microsoft/phi-3-medium-128k-instruct:free',
-  'microsoft/phi-3-mini-128k-instruct:free',
-  // Others
+  // Hermes
   'nousresearch/hermes-3-llama-3.1-405b:free',
-  'huggingfaceh4/zephyr-7b-beta:free',
+  // Mistral
+  'cognitivecomputations/dolphin-mistral-24b-venice-edition:free'
 ];
 
 // WARNING: These are PAID models on OpenRouter and will incur costs.

@@ -61,6 +61,7 @@ interface AiResponse {
 \`\`\`
 若使用者未提供飲食禁忌，請忽略該限制；若為情侶，請安排浪漫景點。
 根據旅伴類型、節奏偏好與興趣，客製化每日行程安排與景點選擇。
+請極度客製化，發揮創意，**不要給出制式的「抵達與放行李」、「在地必吃美食推薦」、「深度體驗行程」、「經典夜生活」這種通用名稱**，請務必給出真實的當地景點名稱或特色店家名稱，並依據使用者選取的 Travel Vibes 和 Interests 打造有靈魂的旅程。
 
 Details: 
 - Trip length: ${days} days
@@ -69,6 +70,12 @@ Details:
 - Auto flight segments: ${planner?.autoFlightSegments?.join(' | ') || 'Not specified'}
 - Travel facts anchors: ${planner?.travelFactsContext || 'Not specified'}
 - Spots user likes: ${planner?.mustVisitSpots?.join(', ') || 'Not specified'}
+- Companions: ${planner?.companions || 'Not specified'}
+- Travel Vibes: ${planner?.vibes?.length ? planner.vibes.join(', ') : 'Not specified'}
+- Interests: ${planner?.interests?.length ? planner.interests.join(', ') : 'Not specified'}
+- Dietary Restrictions: ${planner?.dietary?.length ? planner.dietary.join(', ') : 'None'}
+- Transport: ${planner?.transport?.length ? planner.transport.join(', ') : 'Not specified'}
+- Budget Level: ${planner?.budget || 'Not specified'}
 - Extra notes: ${planner?.notes || 'None'}
 
 注意：請直接輸出 JSON，不要有任何多餘的解釋文字或 markdown \`\`\` 包裝。
