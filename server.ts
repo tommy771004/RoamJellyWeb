@@ -424,7 +424,10 @@ async function startServer() {
   const repo = new AppRepository(db);
 
   if (REDIS_URL) {
-    const candidate = createClient({ url: REDIS_URL });
+    const candidate = createClient({
+      url: REDIS_URL,
+      socket: { connectTimeout: 3000, reconnectStrategy: false },
+    });
     candidate.on('error', (error: unknown) => {
       console.error('Redis client error', error);
     });
