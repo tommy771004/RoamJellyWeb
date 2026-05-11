@@ -12,7 +12,6 @@ export const pool = DATABASE_URL ? new Pool({
   connectionString: DATABASE_URL,
   max: Number(process.env.PG_POOL_MAX ?? 10),
   idleTimeoutMillis: Number(process.env.PG_POOL_IDLE_TIMEOUT_MS ?? 30_000),
-  connectionTimeoutMillis: 5000,
 }) : null;
 
 export const db = pool ? drizzle(pool, { schema }) : null;

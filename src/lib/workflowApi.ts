@@ -72,6 +72,7 @@ export async function registerUser(username: string, password: string, display_n
 }
 
 export async function fetchCollaborators(tripId: string): Promise<any> {
+  if (!tripId) return [];
   try {
     const url = `/api/collaborators?trip_id=${encodeURIComponent(tripId)}`;
     const token = getStoredToken();
@@ -114,6 +115,7 @@ export async function fetchItinerary(tripId?: string): Promise<any> {
   }
 }
 export async function fetchTripInfo(tripId: string): Promise<any> {
+  if (!tripId) return null;
   const url = `/api/trips/${encodeURIComponent(tripId)}`;
   const token = getStoredToken();
   const res = await fetch(url, {
@@ -172,7 +174,8 @@ export async function deleteFavorite(id: string): Promise<any> {
   } catch {}
   return true; 
 }
-export async function fetchChecklist(tripId: string): Promise<any> {
+export async function fetchChecklist(tripId: string): Promise<any> { 
+  if (!tripId) return [];
   const token = getStoredToken();
   const res = await fetch(`/api/checklist?trip_id=${tripId}`, {
     headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
@@ -180,7 +183,8 @@ export async function fetchChecklist(tripId: string): Promise<any> {
   if (!res.ok) return [];
   return res.json();
 }
-export async function fetchSettlements(tripId: string): Promise<any> {
+export async function fetchSettlements(tripId: string): Promise<any> { 
+  if (!tripId) return [];
   const token = getStoredToken();
   const res = await fetch(`/api/settlements?trip_id=${tripId}`, {
     headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
@@ -198,13 +202,19 @@ export async function fetchUserTrips(): Promise<any> {
   return Array.isArray(data) ? data : (data.trips || []);
 }
 export async function fetchWeather(city: string): Promise<any> { 
-  const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+  const token = getStoredToken();
+  const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
   if (!res.ok) return { currentTemp: 22, condition: 'Sunny' };
   return res.json();
 }
 export async function fetchHandbooks(): Promise<any[]> {
   try {
-    const res = await fetch('/api/handbooks');
+    const token = getStoredToken();
+    const res = await fetch('/api/handbooks', {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
     if (!res.ok) return [];
     return res.json();
   } catch (error) {
@@ -274,10 +284,7 @@ export async function joinTrip(id: string): Promise<any> {
 
 export async function fetchTripFlights(tripId: string) {
   try {
-    const token = getStoredToken();
-    const res = await fetch(`/api/trips/${tripId}/flights`, {
-      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
-    });
+    const res = await fetch(`/api/trips/${tripId}/flights`);
     if (!res.ok) return [];
     const data = await res.json();
     return data;
@@ -288,10 +295,7 @@ export async function fetchTripFlights(tripId: string) {
 
 export async function fetchTripActivities(tripId: string) {
   try {
-    const token = getStoredToken();
-    const res = await fetch(`/api/trips/${tripId}/activities`, {
-      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
-    });
+    const res = await fetch(`/api/trips/${tripId}/activities`);
     if (!res.ok) return [];
     const data = await res.json();
     return data;
@@ -405,8 +409,9 @@ export async function searchOffers(form: any): Promise<SearchItem[]> {
       stack: error?.stack
     });
 
-    if (errorMessage.includes('message channel closed') || errorMessage.includes('asynchronous response')) {
-      throw new SearchServiceUnavailableError('瀏覽器擴充功能可能干擾搜尋，請嘗試在無痕模式下搜尋。');
+    if (errorMessage.includes('pattern') || errorMessage.includes('pattern')) {
+       // This might be a browser specific error related to URL or Headers
+       throw new SearchServiceUnavailableError('目前連線不穩定，請重新整理頁面後再試一次。');
     }
 
     throw new SearchServiceUnavailableError('搜尋服務暫時無法使用，請稍後再試。');

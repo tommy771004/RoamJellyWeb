@@ -106,7 +106,7 @@ function useToolsTabContext() {
 function ToolsTabProvider({ children }: { children: React.ReactNode }) {
   const { checklist, setChecklist, revertCheckItem, settlements, setSettlements, members, setMembers, expenses, addExpense, clearSettlementRecord } =
     useToolsStore();
-  const { showToast, activeTripId: tripId, userId } = useAppStore();
+  const { showToast, activeTripId: tripId } = useAppStore();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -127,35 +127,30 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const init = async () => {
-      if (!tripId || !userId) {
-        setLoading(false);
-        return;
-      }
       try {
         setLoading(true);
-        const [checklistData, collaboratorsData, tripInfoData] = await Promise.all([
+        const [checklistData, collaboratorsData, weatherData, tripInfoData] = await Promise.all([
           fetchChecklist(tripId),
           fetchCollaborators(tripId),
+          fetchWeather(tripInfo?.destination || '您的目的地').catch(() => null),
           fetchTripInfo(tripId).catch(() => null),
         ]);
+        if (weatherData) setWeather(weatherData);
 
         let initialCurrency = 'TWD';
         if (tripInfoData) {
           setTripInfo(tripInfoData);
           initialCurrency = getCurrencyFromDestination(tripInfoData.destination);
-          const dest = tripInfoData.destination?.trim();
-          if (dest) {
-            fetchWeather(dest).then((w) => { if (w) setWeather(w); }).catch(() => null);
-          }
         }
 
         const memberNames = collaboratorsData.map((m: any) => m.name);
         setChecklist(checklistData);
         if (memberNames.length > 0) {
           setMembers(memberNames);
-          setForm((prev) => ({
-            ...prev,
-            payer: memberNames[0],
+          // Only update initial form state once when we get members
+          setForm((prev) => ({ 
+            ...prev, 
+            payer: memberNames[0], 
             splitWith: memberNames,
             currency: initialCurrency
           }));
@@ -167,7 +162,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       }
     };
     void init();
-  }, [tripId, userId, setChecklist, setMembers]);
+  }, [tripId, setChecklist, setMembers]);
 
   const expenseByCurrency = useMemo(
     () =>

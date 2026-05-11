@@ -1,3 +1,11 @@
+// Suppress url.parse DeprecationWarning caused by Express 4.x and node-postgres
+const originalEmitWarning = process.emitWarning;
+process.emitWarning = function(warning: string | Error, ...args: any[]) {
+  const msg = typeof warning === 'string' ? warning : warning.message;
+  if (msg && msg.includes('url.parse')) return;
+  return originalEmitWarning.call(process, warning, ...args);
+};
+
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
@@ -22,6 +30,7 @@ const _appPromise = new Promise<ReturnType<typeof express>>((resolve, reject) =>
 });
 
 const REAL_BACKEND_BASE_URL = process.env.REAL_BACKEND_BASE_URL?.replace(/\/+$/, '');
+const SERPAPI_KEY = process.env.SERPAPI_KEY;
 const SHOULD_SEED_DEMO_DATA = process.env.SEED_DEMO_DATA === 'true' && !REAL_BACKEND_BASE_URL;
 const REDIS_URL = process.env.REDIS_URL?.trim();
 const JWT_DEV_TOKEN_ENABLED = process.env.ENABLE_DEV_TOKEN_ENDPOINT !== 'false';
@@ -281,7 +290,60 @@ async function setSearchCacheData(cacheKey: string, data: SearchItem[]): Promise
 }
 
 async function fetchFromOtaProvider(from: string, to: string, date: string): Promise<SearchItem[] | null> {
-  // Trip.com Scraper — skip on Vercel (no Playwright binary)
+  // If we have a SerpApi key, use Google Flights via SerpApi
+  if (SERPAPI_KEY) {
+    try {
+      console.log(`Fetching real flight data from SerpApi (Google Flights) for ${from} -> ${to} on ${date}`);
+      const params = new URLSearchParams({
+        engine: 'google_flights',
+        departure_id: from,
+        arrival_id: to,
+        outbound_date: date,
+        currency: 'TWD',
+        hl: 'zh-tw',
+        gl: 'tw',
+        api_key: SERPAPI_KEY
+      });
+
+      const url = `https://serpapi.com/search.json?${params.toString()}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+
+      if (!res.ok) {
+        console.error(`SerpApi error: ${res.status}`);
+      } else {
+        const json = await res.json() as any;
+        
+        if (json.error) {
+          console.error('SerpApi returned error:', json.error);
+        } else if (json.best_flights) {
+          return json.best_flights.slice(0, 10).map((flight: any, idx: number) => {
+            const leg = flight.flights[0];
+            return {
+              id: `serp_${idx}_${Date.now()}`,
+              type: 'flight' as const,
+              provider: 'Google Flights',
+              title: `${from} → ${to} · ${flight.type === 'Nonstop' ? '直飛' : flight.type}`,
+              price: flight.price,
+              currency: 'TWD',
+              emoji: '✈️',
+              affiliate_url: 'https://www.google.com/travel/flights',
+              details: {
+                airline: leg.airline,
+                departure: leg.departure_airport.time.split(' ')[1] || '08:00',
+                arrival: leg.arrival_airport.time.split(' ')[1] || '12:00',
+                stops: flight.type === 'Nonstop' ? 0 : 1,
+                duration: `${Math.floor(flight.total_duration / 60)}h ${flight.total_duration % 60}m`
+              }
+            };
+          });
+        }
+      }
+    } catch (error) {
+      console.error('SerpApi call failed:', error);
+    }
+  }
+
+  // Fallback to Trip.com Scraper (Route B) — skip on Vercel (no Playwright binary)
   if (!process.env.VERCEL) {
     console.log(`Fallback to Trip.com scraper for ${from} -> ${to} on ${date}`);
     const scrapedFlights = await scrapeTripFlights(from, to, date);
@@ -424,10 +486,7 @@ async function startServer() {
   const repo = new AppRepository(db);
 
   if (REDIS_URL) {
-    const candidate = createClient({
-      url: REDIS_URL,
-      socket: { connectTimeout: 3000, reconnectStrategy: false },
-    });
+    const candidate = createClient({ url: REDIS_URL });
     candidate.on('error', (error: unknown) => {
       console.error('Redis client error', error);
     });
