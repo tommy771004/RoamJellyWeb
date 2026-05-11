@@ -274,7 +274,10 @@ export async function joinTrip(id: string): Promise<any> {
 
 export async function fetchTripFlights(tripId: string) {
   try {
-    const res = await fetch(`/api/trips/${tripId}/flights`);
+    const token = getStoredToken();
+    const res = await fetch(`/api/trips/${tripId}/flights`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return data;
@@ -285,7 +288,10 @@ export async function fetchTripFlights(tripId: string) {
 
 export async function fetchTripActivities(tripId: string) {
   try {
-    const res = await fetch(`/api/trips/${tripId}/activities`);
+    const token = getStoredToken();
+    const res = await fetch(`/api/trips/${tripId}/activities`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return data;
