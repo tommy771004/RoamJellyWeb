@@ -347,7 +347,7 @@ export default function App() {
             const { syncItinerary, createTrip } = await import('./lib/workflowApi');
             const { setNodes, addNode } = useItineraryStore.getState();
             const { activeTripId, setActiveTripId } = useAppStore.getState();
-            let TRIP_ID = activeTripId || (new URLSearchParams(window.location.search).get('trip_id')) || (import.meta as any).env?.VITE_TRIP_ID || '';
+            let TRIP_ID = activeTripId || (new URLSearchParams(window.location.search).get('trip_id')) || '';
 
             // If no active trip, create a new one first
             if (!TRIP_ID) {

@@ -473,8 +473,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   const resolveCurrentTripId = () =>
     activeTripId ||
-    (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('trip_id') : '') ||
-    ((typeof import.meta !== 'undefined' && (import.meta as { env?: Record<string, string> }).env?.VITE_TRIP_ID) || '').trim();
+    (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('trip_id') : '');
 
   useEffect(() => {
     // Initial fetch for recommendations and handbooks

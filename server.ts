@@ -1219,6 +1219,21 @@ async function startServer() {
     ]);
   });
 
+  app.get('/api/geocode', async (req, res) => {
+    const q = String(req.query.q ?? '').trim();
+    if (!q) { res.json({ lat: null, lng: null }); return; }
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=ja`;
+      const apiRes = await fetch(url, { headers: { 'User-Agent': 'RoamJellyApp/1.0' } });
+      if (!apiRes.ok) { res.json({ lat: null, lng: null }); return; }
+      const data = (await apiRes.json()) as Array<{ lat: string; lon: string }>;
+      if (data.length === 0) { res.json({ lat: null, lng: null }); return; }
+      res.json({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+    } catch {
+      res.json({ lat: null, lng: null });
+    }
+  });
+
   // ── Spot enrichment via Wikipedia ─────────────────────────────────────────
   app.get('/api/spots/enrich', async (req, res) => {
     const name = String(req.query.name ?? '').trim();

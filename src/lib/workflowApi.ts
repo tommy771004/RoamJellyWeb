@@ -6,12 +6,12 @@ export class SearchServiceUnavailableError extends Error {}
 export async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng: number } | null> {
   try {
     const q = encodeURIComponent(`${title} ${city}`);
-    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja`;
+    const url = `/api/geocode?q=${q}`;
     const apiRes = await fetch(url);
     if (!apiRes.ok) return null;
-    const items = await apiRes.json();
-    if (items && items.length > 0) {
-      return { lat: parseFloat(items[0].lat), lng: parseFloat(items[0].lon) };
+    const data = await apiRes.json();
+    if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
+      return { lat: data.lat, lng: data.lng };
     }
   } catch {
     return null;
