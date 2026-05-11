@@ -335,11 +335,13 @@ async function fetchFromOtaProvider(from: string, to: string, date: string): Pro
     }
   }
 
-  // Fallback to Trip.com Scraper (Route B)
-  console.log(`Fallback to Trip.com scraper for ${from} -> ${to} on ${date}`);
-  const scrapedFlights = await scrapeTripFlights(from, to, date);
-  if (scrapedFlights && scrapedFlights.length > 0) {
-    return scrapedFlights;
+  // Fallback to Trip.com Scraper (Route B) — skip on Vercel (no Playwright binary)
+  if (!process.env.VERCEL) {
+    console.log(`Fallback to Trip.com scraper for ${from} -> ${to} on ${date}`);
+    const scrapedFlights = await scrapeTripFlights(from, to, date);
+    if (scrapedFlights && scrapedFlights.length > 0) {
+      return scrapedFlights;
+    }
   }
 
   // Legacy fallback to internal OTA provider if URL exists
@@ -536,7 +538,8 @@ async function startServer() {
         req.path !== '/api/auth/register' &&
         req.path !== '/api/auth/login' &&
         !req.path.startsWith('/api/search') &&
-        req.path !== '/api/weather'
+        req.path !== '/api/weather' &&
+        req.path !== '/api/handbooks'
       ) {
         res.status(401).json({ status: 'error', message: 'missing bearer token' });
         return;
