@@ -344,34 +344,57 @@ export default function App() {
           try {
             const { useItineraryStore } = await import('./store/useItineraryStore');
             const { useAppStore } = await import('./store/useAppStore');
-            const { syncItinerary, createTrip } = await import('./lib/workflowApi');
+            const { syncItinerary, createTrip, ensureClientAccessToken } = await import('./lib/workflowApi');
+            
+            // Ensure we have a token before doing operations
+            await ensureClientAccessToken().catch(() => null);
+            
             const { setNodes, addNode } = useItineraryStore.getState();
             const { activeTripId, setActiveTripId } = useAppStore.getState();
             let TRIP_ID = activeTripId || (new URLSearchParams(window.location.search).get('trip_id')) || '';
+            let canEdit = true;
+            let nodesToProcess = result.rawSuggestions || [];
 
-            // If no active trip, create a new one first
-            if (!TRIP_ID) {
+            if (TRIP_ID && nodesToProcess.length > 0) {
+              const testNode = nodesToProcess[0];
+              const ok = await syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: testNode });
+              if (ok) {
+                 // Success! First node is stored. We will process the rest.
+                 nodesToProcess = nodesToProcess.slice(1);
+                 setNodes([testNode]);
+              } else {
+                 canEdit = false;
+              }
+            }
+
+            // If no active trip or permission denied, create a new one first
+            if (!TRIP_ID || !canEdit) {
               const newTrip = await createTrip({ 
                 name: result.title || `規劃之旅`, 
                 destination: '指定地點'
               });
-              TRIP_ID = newTrip.id;
-              setActiveTripId(TRIP_ID);
+              if (newTrip && newTrip.id) {
+                TRIP_ID = newTrip.id;
+                setActiveTripId(TRIP_ID);
+                // Redirect user parameter
+                const url = new URL(window.location.href);
+                url.searchParams.set('trip_id', TRIP_ID);
+                window.history.replaceState({}, '', url.toString());
+              }
+              setNodes([]); // Start fresh for the new trip
             }
 
-            if (result.rawSuggestions?.length) {
-                setNodes([]); // Clear existing
-                if (TRIP_ID) {
-                  // Fire off all sync requests in parallel
-                  await Promise.all(result.rawSuggestions.map(async (node) => {
-                     addNode(node);
-                     return syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
-                  }));
-                } else {
-                  for (const node of result.rawSuggestions) {
-                    addNode(node);
-                  }
-                }
+            if (nodesToProcess.length > 0 && TRIP_ID) {
+               // Fire off all sync requests in parallel
+               await Promise.all(nodesToProcess.map(async (node: any) => {
+                  addNode(node);
+                  return syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
+               }));
+            } else if (!TRIP_ID) {
+               // Fallback if creating trip completely failed
+               for (const node of nodesToProcess) {
+                 addNode(node);
+               }
             }
           } catch (err) {
              console.error('Failed to save to server', err);

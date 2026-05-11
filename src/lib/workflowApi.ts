@@ -202,11 +202,12 @@ export async function fetchUserTrips(): Promise<any> {
   return Array.isArray(data) ? data : (data.trips || []);
 }
 export async function fetchWeather(city: string): Promise<any> { 
+  if (!city || city === '您的目的地' || city === '指定地點') return null;
   const token = getStoredToken();
   const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`, {
     headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
   });
-  if (!res.ok) return { currentTemp: 22, condition: 'Sunny' };
+  if (!res.ok) return null;
   return res.json();
 }
 export async function fetchHandbooks(): Promise<any[]> {
