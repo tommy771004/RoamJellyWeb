@@ -485,7 +485,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
         const [handbooks, recommendations] = await Promise.all([
           fetchHandbooks(),
-          searchOffers({ from: 'TPE', to: 'TYO', date: seedDateStr }).catch(() => [])
+          searchOffers({ from: searchForm.from || 'TPE', to: searchForm.to || 'TYO', date: seedDateStr }).catch(() => [])
         ]);
         setCommunityTrips(handbooks);
         if (results.length === 0) setResults(recommendations);

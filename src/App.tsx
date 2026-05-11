@@ -26,12 +26,13 @@ function getTripLandingId(): string | null {
 }
 
 export default function App() {
-  const { 
-    activeTab, setActiveTab, 
-    redirectModal, closeRedirectModal, 
+  const {
+    activeTab, setActiveTab,
+    redirectModal, closeRedirectModal,
     userId, toasts, removeToast, showToast, setAuthenticated,
     isOffline, setOffline,
-    isDarkMode, setDarkMode 
+    isDarkMode, setDarkMode,
+    notifications, clearNotifications,
   } = useAppStore();
   const { loadPreferences, toggleSave, savedItems } = useSearchStore();
 
@@ -466,11 +467,14 @@ export default function App() {
           <div className="relative hidden sm:block">
             <button
               onClick={() => setShowNotifications(v => !v)}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400 relative"
               aria-label="通知"
               aria-expanded={showNotifications}
             >
               <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
+              {notifications.length > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
+              )}
             </button>
             {showNotifications && (
               <div
@@ -480,17 +484,38 @@ export default function App() {
               >
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                   <span className="font-bold text-[14px] text-slate-700">通知</span>
-                  <button
-                    onClick={() => setShowNotifications(false)}
-                    className="text-slate-400 hover:text-slate-600 text-[18px] leading-none"
-                    aria-label="關閉"
-                  >×</button>
+                  <div className="flex items-center gap-2">
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearNotifications}
+                        className="text-[11px] text-slate-400 hover:text-slate-600"
+                      >全部清除</button>
+                    )}
+                    <button
+                      onClick={() => setShowNotifications(false)}
+                      className="text-slate-400 hover:text-slate-600 text-[18px] leading-none"
+                      aria-label="關閉"
+                    >×</button>
+                  </div>
                 </div>
-                <div className="flex flex-col items-center justify-center py-10 px-4 gap-2">
-                  <span className="text-3xl">🔔</span>
-                  <p className="text-[13px] text-slate-400 text-center font-medium">目前沒有新通知</p>
-                  <p className="text-[11px] text-slate-300 text-center">行程更新、協作邀請等訊息<br/>將在這裡顯示</p>
-                </div>
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 px-4 gap-2">
+                    <span className="text-3xl">🔔</span>
+                    <p className="text-[13px] text-slate-400 text-center font-medium">目前沒有新通知</p>
+                    <p className="text-[11px] text-slate-300 text-center">行程更新、協作邀請等訊息<br/>將在這裡顯示</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col max-h-72 overflow-y-auto">
+                    {notifications.map(n => (
+                      <div key={n.id} className="px-4 py-3 border-b border-slate-50 last:border-0">
+                        <p className="text-[13px] text-slate-700">{n.text}</p>
+                        <p className="text-[11px] text-slate-300 mt-0.5">
+                          {new Date(n.at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             {showNotifications && (

@@ -44,6 +44,10 @@ interface AppStore {
 
   aiResult: any;
   setAiResult: (res: any) => void;
+
+  notifications: Array<{ id: string; text: string; at: number }>;
+  addNotification: (text: string) => void;
+  clearNotifications: () => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -67,6 +71,12 @@ export const useAppStore = create<AppStore>()(
 
       aiResult: null,
       setAiResult: (res) => set({ aiResult: res }),
+
+      notifications: [],
+      addNotification: (text) => set((state) => ({
+        notifications: [{ id: Math.random().toString(36).slice(2), text, at: Date.now() }, ...state.notifications].slice(0, 20),
+      })),
+      clearNotifications: () => set({ notifications: [] }),
 
       toastMessage: null,
       toasts: [],

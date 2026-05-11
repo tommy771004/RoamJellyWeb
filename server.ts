@@ -20,6 +20,7 @@ const REDIS_URL = process.env.REDIS_URL?.trim();
 const JWT_DEV_TOKEN_ENABLED = process.env.ENABLE_DEV_TOKEN_ENDPOINT !== 'false';
 const AUTH_REQUIRED = process.env.AUTH_REQUIRED === 'true' || process.env.NODE_ENV === 'production';
 const OTA_PROVIDER_URL = process.env.OTA_PROVIDER_URL?.replace(/\/+$/, '');
+const OTA_PARTNER_BASE = process.env.OTA_PARTNER_BASE?.replace(/\/+$/, '') ?? '';
 
 const PORT = 3000;
 
@@ -1099,7 +1100,7 @@ async function startServer() {
         price: f.price,
         currency: 'TWD',
         emoji: '✈️',
-        affiliate_url: `https://example.com/flight/${f.id}`,
+        affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flight/${encodeURIComponent(f.id)}` : `https://example.com/flight/${f.id}`,
         details: { stops: 0, airline: f.provider, departure: f.time?.split(' - ')[0] || '10:00', arrival: f.time?.split(' - ')[1] || '14:00' }
       }));
       res.json({ status: 'success', data: results });
@@ -1149,7 +1150,7 @@ async function startServer() {
           price: flight.price + (idx * 300),
           currency: 'TWD',
           emoji: '✈️',
-          affiliate_url: `https://partner.example.com/flights/${encodeURIComponent(flight.id)}`,
+          affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flights/${encodeURIComponent(flight.id)}` : `https://partner.example.com/flights/${encodeURIComponent(flight.id)}`,
           details: {
             airline: provider,
             departure: flight.time.split(' - ')[0] || '10:00',
@@ -1720,6 +1721,7 @@ async function startServer() {
     if (!allowed) return;
 
     const snapshot = await getPlanningSnapshot(tripId);
+    res.set('Cache-Control', 'private, max-age=300');
     res.json({ status: 'success', data: snapshot ?? [] });
   });
 

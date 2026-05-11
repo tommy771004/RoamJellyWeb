@@ -248,7 +248,7 @@ export default function ItineraryTab() {
 
   const { nodes, setNodes, addNode, updateNode, removeNode, collaborators, setCollaborators, isOffline, setOffline } =
     useItineraryStore();
-  const { showToast, activeTripId, setActiveTripId, openRedirectModal } = useAppStore();
+  const { showToast, activeTripId, setActiveTripId, openRedirectModal, addNotification } = useAppStore();
 
   useEffect(() => () => {
     if (reorderCommitTimerRef.current) {
@@ -521,8 +521,11 @@ export default function ItineraryTab() {
         if (!event?.payload) return;
         if (event.action === 'remove_node') {
           removeNode((event.payload as { node_id: string }).node_id);
+          addNotification('協作者刪除了一個行程節點');
         } else if (event.action === 'add_node') {
-          addNode({ ...(event.payload as ItineraryNode), source: 'remote' });
+          const node = event.payload as ItineraryNode;
+          addNode({ ...node, source: 'remote' });
+          addNotification(`協作者新增了「${node.title ?? '行程節點'}」`);
         }
       });
 
