@@ -6,16 +6,26 @@ import { assignDaysBasedOnTimeAndOrder } from './lib/itineraryUtils';
 
 const ItineraryTab = lazy(() => import('./components/ItineraryTab'));
 const ToolsTab = lazy(() => import('./components/ToolsTab'));
+const LoginScreen = lazy(() => import('./components/LoginScreen'));
+const TripLandingPage = lazy(() => import('./components/TripLandingPage'));
+const JellyAssistant = lazy(() => import('./components/JellyAssistant'));
+const AiForm = lazy(() => import('./components/AiForm'));
+const DynamicItineraryView = lazy(() => import('./components/DynamicItineraryView'));
+import { 
+  Bell, 
+  Sun, 
+  Moon, 
+  LogOut, 
+  Settings, 
+  Menu,
+  ChevronDown
+} from 'lucide-react';
 import BottomTabs, { TABS } from './components/BottomTabs';
 import AiLoadingState from './components/AiLoadingState';
-import LoginScreen from './components/LoginScreen';
-import TripLandingPage from './components/TripLandingPage';
-import JellyAssistant from './components/JellyAssistant';
-import AiForm from './components/AiForm';
-import DynamicItineraryView from './components/DynamicItineraryView';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, ensureClientAccessToken } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot } from './lib/workflowApi';
+import { suggestItineraryWithForm } from './lib/openrouterApi';
 import { JellyToast } from './components/JellyToast';
 
 /** Extract /trip/:tripId from the current URL path, null if no match. */
@@ -26,12 +36,13 @@ function getTripLandingId(): string | null {
 }
 
 export default function App() {
-  const { 
-    activeTab, setActiveTab, 
-    redirectModal, closeRedirectModal, 
+  const {
+    activeTab, setActiveTab,
+    redirectModal, closeRedirectModal,
     userId, toasts, removeToast, showToast, setAuthenticated,
     isOffline, setOffline,
-    isDarkMode, setDarkMode 
+    isDarkMode, setDarkMode,
+    notifications, clearNotifications,
   } = useAppStore();
   const { loadPreferences, toggleSave, savedItems } = useSearchStore();
 
@@ -43,6 +54,7 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const isLoggedIn = !!userId;
   const lastActivityRef = useRef<number>(Date.now());
@@ -75,7 +87,10 @@ export default function App() {
 
     // Events to monitor activity
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
-    events.forEach(event => window.addEventListener(event, updateActivity));
+    const passiveEvents = new Set(['scroll', 'touchstart', 'mousemove']);
+    events.forEach(event =>
+      window.addEventListener(event, updateActivity, passiveEvents.has(event) ? { passive: true } : undefined)
+    );
 
     const interval = setInterval(checkSession, 30000); // Check every 30 seconds
 
@@ -252,59 +267,27 @@ export default function App() {
         setIsGenerating(true);
         showToast(`正在為您生成旅程：${data.destination}...`);
         try {
-          // Simulate a 3-second API call with typing animation as requested
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          const suggestions = {
-             ui_config: { 
-               bg_gradient: data.budget === '奢華' ? 'from-amber-100 to-yellow-100' : 'from-indigo-100 via-purple-50 to-pink-100', 
-               font_scale: 'large' 
-             },
-             summary: { 
-               title: `為您專屬規劃：${data.destination} ${data.vibes[0] || '完美'}之旅`, 
-               smart_tags: [...data.vibes, ...data.interests, data.companions].filter(Boolean).slice(0, 4) 
-             },
-             itinerary: Array.from({ length: data.days }).map((_, idx) => ({
-               day: idx + 1,
-               spots: [
-                 { 
-                   time: '10:00', 
-                   name: idx === 0 ? '抵達與放行李' : '晨間網美打卡點', 
-                   emoji: idx === 0 ? '🏨' : '📸', 
-                   category: idx === 0 ? 'hotel' : 'landmark', 
-                   ai_note: idx === 0 ? '建議先寄放行李，輕鬆開始旅程！' : '早晨光線最棒，適合拍照！',
-                   intensity: 'chill',
-                   transport_to_next: '大眾運輸約 15 分鐘'
-                 },
-                 { 
-                   time: '13:00', 
-                   name: '在地必吃美食推薦', 
-                   emoji: '🍜', 
-                   category: 'food', 
-                   ai_note: `考量到您的${data.dietary.length > 0 ? data.dietary.join('、') : '口味'}需求，精選的高評價餐廳。`,
-                   intensity: 'chill',
-                   transport_to_next: '步行約 10 分鐘'
-                 },
-                 { 
-                   time: '15:00', 
-                   name: '深度體驗行程', 
-                   emoji: '🗺️', 
-                   category: 'activity', 
-                   ai_note: '讓您深度感受在地文化與氛圍的活動。',
-                   intensity: 'hardcore',
-                   transport_to_next: '預計搭乘計程車'
-                 },
-                 { 
-                   time: '19:00', 
-                   name: '經典夜生活與晚餐', 
-                   emoji: '🍻', 
-                   category: 'nightlife', 
-                   ai_note: '在美麗夜景中享受美好的夜晚！',
-                   intensity: 'chill'
-                 }
-               ]
-             }))
-          };
+          const suggestions = await suggestItineraryWithForm({
+            destination: data.destination,
+            planner: {
+              days: data.days,
+              departureFrom: data.departure,
+              arrivalTo: data.destination,
+              flightDate: '',
+              countries: [],
+              mustVisitSpots: [],
+              mustEatFoods: [],
+              autoFlightSegments: [],
+              travelFactsContext: '',
+              notes: '',
+              companions: data.companions,
+              vibes: data.vibes,
+              interests: data.interests,
+              budget: data.budget,
+              dietary: data.dietary,
+              transport: data.transport,
+            }
+          });
 
           // Convert AiResponse itinerary to ItineraryNode[]
           const nodes: any[] = [];
@@ -320,14 +303,44 @@ export default function App() {
                      emoji: spot.emoji || '📍',
                      category: spot.category || 'other',
                      description: spot.ai_note || '',
-                     lat: 25.0330 + (Math.random() * 0.1),
-                     lng: 121.5654 + (Math.random() * 0.1),
+                     ai_note: spot.ai_note || '',
+                     intensity: spot.intensity,
+                     lat: undefined as any,
+                     lng: undefined as any,
                      source: 'local' as const,
                    });
                  });
               }
             });
+          } else if (Array.isArray(suggestions)) {
+            suggestions.forEach((spot: any, i: number) => {
+              nodes.push({
+                node_id: spot.node_id || `ai_${Date.now()}_${spot.day || 1}_${i}`,
+                day: spot.day || 1,
+                time: spot.time || "10:00",
+                title: String(spot.name || spot.title || '景點'),
+                emoji: spot.emoji || '📍',
+                category: spot.category || 'other',
+                description: spot.ai_note || '',
+                ai_note: spot.ai_note || '',
+                intensity: spot.intensity,
+                lat: spot.lat,
+                lng: spot.lng,
+                source: 'local' as const,
+              });
+            });
           }
+
+          // Geocode all spots in parallel; fall back silently if any fail
+          const geocodeResults = await Promise.allSettled(
+            nodes.map(n => geocodeSpot(n.title, data.destination))
+          );
+          geocodeResults.forEach((r, i) => {
+            if (r.status === 'fulfilled' && r.value) {
+              nodes[i].lat = r.value.lat;
+              nodes[i].lng = r.value.lng;
+            }
+          });
 
           // assign missing days correctly & populate timestamp
           const { assignDaysBasedOnTimeAndOrder } = await import('./lib/itineraryUtils');
@@ -337,7 +350,8 @@ export default function App() {
 
           useAppStore.getState().setAiResult({
              fullResponse: suggestions,
-             title: suggestions.summary.title,
+             title: suggestions?.summary?.title || data.destination || '行程規劃',
+             destination: data.destination,
              rawSuggestions: finalNodes
           });
           setActiveTab('ai_result');
@@ -359,37 +373,76 @@ export default function App() {
           try {
             const { useItineraryStore } = await import('./store/useItineraryStore');
             const { useAppStore } = await import('./store/useAppStore');
-            const { syncItinerary, createTrip } = await import('./lib/workflowApi');
+            const { syncItinerary, createTrip, ensureClientAccessToken } = await import('./lib/workflowApi');
+            
+            // Ensure we have a token before doing operations
+            await ensureClientAccessToken().catch(() => null);
+            
             const { setNodes, addNode } = useItineraryStore.getState();
             const { activeTripId, setActiveTripId } = useAppStore.getState();
-            let TRIP_ID = activeTripId || (new URLSearchParams(window.location.search).get('trip_id')) || (import.meta as any).env?.VITE_TRIP_ID || '';
+            let TRIP_ID = activeTripId || (new URLSearchParams(window.location.search).get('trip_id')) || '';
+            let canEdit = true;
+            let nodesToProcess = result.rawSuggestions || [];
 
-            // If no active trip, create a new one first
-            if (!TRIP_ID) {
-              const newTrip = await createTrip({ 
-                name: result.title || `規劃之旅`, 
-                destination: '指定地點'
-              });
-              TRIP_ID = newTrip.id;
-              setActiveTripId(TRIP_ID);
+            if (TRIP_ID && nodesToProcess.length > 0) {
+              const testNode = nodesToProcess[0];
+              try {
+                await syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: testNode });
+                // Success! First node is stored. We will process the rest.
+                nodesToProcess = nodesToProcess.slice(1);
+                setNodes([testNode]);
+              } catch {
+                canEdit = false;
+              }
             }
 
-            if (result.rawSuggestions?.length) {
-                setNodes([]); // Clear existing
-                if (TRIP_ID) {
-                  // Fire off all sync requests in parallel
-                  await Promise.all(result.rawSuggestions.map(async (node) => {
-                     addNode(node);
-                     return syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
-                  }));
-                } else {
-                  for (const node of result.rawSuggestions) {
-                    addNode(node);
-                  }
-                }
+            // If no active trip or permission denied, create a new one first
+            if (!TRIP_ID || !canEdit) {
+              const newTrip = await createTrip({
+                name: result.title || `規劃之旅`,
+                destination: result.destination || result.title || '旅遊行程'
+              });
+              const newTripId = newTrip?.data?.id || newTrip?.id;
+              if (newTrip && newTripId) {
+                TRIP_ID = newTripId;
+                // Defer setting activeTripId until after the insert to avoid fetch overriding local updates
+                // and to avoid premature loading.
+                // Redirect user parameter
+                const url = new URL(window.location.href);
+                url.searchParams.set('trip_id', TRIP_ID);
+                window.history.replaceState({}, '', url.toString());
+              }
+              setNodes([]); // Start fresh for the new trip
+            }
+
+            if (nodesToProcess.length > 0 && TRIP_ID) {
+              const results = await Promise.allSettled(nodesToProcess.map(async (node: any) => {
+                  addNode(node);
+                  return syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
+               }));
+              const failed = results.filter(result => result.status === 'rejected').length;
+              if (failed > 0) {
+                const failedNodeIds = results.flatMap((result, index) =>
+                 result.status === 'rejected' ? [nodesToProcess[index]?.node_id] : [],
+                );
+                const currentNodes = useItineraryStore.getState().nodes;
+                setNodes(currentNodes.filter((node: any) => !failedNodeIds.includes(node.node_id)));
+                console.warn(`${failed} node(s) failed to sync`);
+              }
+            } else if (!TRIP_ID) {
+               for (const node of nodesToProcess) {
+                 addNode(node);
+               }
+            }
+            
+            // Set activeTripId here so that ItineraryTab starts with the latest trip ID securely.
+            if (TRIP_ID) {
+               setActiveTripId(TRIP_ID);
             }
           } catch (err) {
              console.error('Failed to save to server', err);
+             showToast('行程儲存失敗，請重試。', 'warning');
+             return;
           }
 
           showToast('行程已為您準備好！', 'success');
@@ -419,16 +472,17 @@ export default function App() {
       )}
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-white/20 backdrop-blur-[40px] backdrop-saturate-150 rounded-b-[40px] border-b border-l border-white/40 shadow-[0_8px_32px_rgba(255,183,206,0.3),inset_0_1px_2px_rgba(255,255,255,0.8)] ring-1 ring-white/50 transition-colors duration-500">
+      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.05)] transition-colors duration-500">
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20">
-          <h1 className="text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>
+          <h1 className="text-[22px] sm:text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>
         </div>
         
         {/* Desktop Navigation (Center, hidden on mobile) */}
         <nav className="hidden md:flex flex-row items-center justify-center gap-2 absolute left-1/2 -translate-x-1/2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
+            const Icon = tab.Icon;
             return (
               <button
                 key={tab.id}
@@ -439,12 +493,11 @@ export default function App() {
                     : 'text-pink-500/70 hover:bg-white/50 hover:text-pink-500'
                 }`}
               >
-                <span 
-                  className="material-symbols-outlined text-[22px]" 
-                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
-                >
-                  {tab.icon}
-                </span>
+                <Icon 
+                  size={18}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={isActive ? 'text-pink-600' : 'text-pink-500/70'}
+                />
                 <span className="font-bold text-sm tracking-wide">{tab.label}</span>
               </button>
             );
@@ -458,15 +511,70 @@ export default function App() {
             className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
             aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
           >
-            <span className="material-symbols-outlined text-[20px]">
-              {isDarkMode ? 'light_mode' : 'dark_mode'}
-            </span>
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          <button
-            onClick={() => showToast('目前無新通知', 'info')}
-            className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400">
-            <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
-          </button>
+          <div className="relative hidden sm:block">
+            <button
+              onClick={() => setShowNotifications(v => !v)}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400 relative"
+              aria-label="通知"
+              aria-expanded={showNotifications}
+            >
+              <Bell size={20} />
+              {notifications.length > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white shadow-sm" />
+              )}
+            </button>
+            {showNotifications && (
+              <div
+                className="absolute right-0 top-12 w-72 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 z-50 overflow-hidden"
+                role="dialog"
+                aria-label="通知面板"
+              >
+                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                  <span className="font-bold text-[14px] text-slate-700">通知</span>
+                  <div className="flex items-center gap-2">
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearNotifications}
+                        className="text-[11px] text-slate-400 hover:text-slate-600"
+                      >全部清除</button>
+                    )}
+                    <button
+                      onClick={() => setShowNotifications(false)}
+                      className="text-slate-400 hover:text-slate-600 text-[18px] leading-none"
+                      aria-label="關閉"
+                    >×</button>
+                  </div>
+                </div>
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 px-4 gap-2">
+                    <span className="text-3xl">🔔</span>
+                    <p className="text-[13px] text-slate-400 text-center font-medium">目前沒有新通知</p>
+                    <p className="text-[11px] text-slate-300 text-center">行程更新、協作邀請等訊息<br/>將在這裡顯示</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col max-h-72 overflow-y-auto">
+                    {notifications.map(n => (
+                      <div key={n.id} className="px-4 py-3 border-b border-slate-50 last:border-0">
+                        <p className="text-[13px] text-slate-700">{n.text}</p>
+                        <p className="text-[11px] text-slate-300 mt-0.5">
+                          {new Date(n.at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {showNotifications && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowNotifications(false)}
+                aria-hidden="true"
+              />
+            )}
+          </div>
           
           <div 
             onClick={() => {
