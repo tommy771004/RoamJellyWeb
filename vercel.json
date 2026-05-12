@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "ignoreBuildStep": "bash -c '[[ \"$VERCEL_GIT_COMMIT_REF\" == \"main\" ]] && exit 1 || exit 0'",
+  "builds": [
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["api/_server.cjs"],
+        "maxDuration": 60
+      }
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/guide/(.*)", "dest": "/guide/$1" },
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?))", "dest": "/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+
+}
+
