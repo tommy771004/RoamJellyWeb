@@ -6,6 +6,7 @@ export interface SearchItem {
   currency: string;
   price: number;
   affiliate_url: string;
+  bookingUrl?: string;
   type?: 'flight' | 'ticket' | 'other';
   details?: {
     airline?: string;
@@ -37,6 +38,8 @@ export interface TripInfo {
   startDate?: string | null;
   endDate?: string | null;
   coverImage?: string;
+  isPublic?: boolean;
+  forkCount?: number;
 }
 
 export interface TripSummary {
@@ -146,6 +149,22 @@ export interface ItineraryPlannerForm {
   transport?: string[];       // 交通偏好: 大眾運輸/自駕租車/包車/徒步為主
 }
 
+export interface AiPreferenceProfile {
+  departure?: string;
+  companions?: string;
+  vibes?: string[];
+  interests?: string[];
+  dietary?: string[];
+  transport?: string[];
+  budget?: string;
+}
+
+export interface UserPreferencesResponse {
+  saved_items: string[];
+  tracked_prices: string[];
+  ai_profile: AiPreferenceProfile | null;
+}
+
 export type TravelFactType = 'flight_outbound' | 'flight_inbound' | 'stay';
 export type TravelFactSource = 'imported_search' | 'manual' | 'ai_inferred';
 
@@ -155,6 +174,9 @@ export interface TravelFactMetadata {
   depCode?: string;
   arrCode?: string;
   provider?: string;
+  bookingUrl?: string;
+  price?: number;
+  currency?: string;
   address?: string;
   checkInTime?: string;
   checkOutTime?: string;
