@@ -6,7 +6,12 @@ export const useItineraryStore = create<any>((set) => ({
 
   nodes: [],
   setNodes: (nodes: any[]) => set({ nodes }),
-  addNode: (node: any) => set((state: any) => ({ nodes: [...state.nodes, node] })),
+  addNode: (node: any) =>
+    set((state: any) => ({
+      nodes: state.nodes.some((n: any) => n.node_id === node.node_id)
+        ? state.nodes.map((n: any) => (n.node_id === node.node_id ? { ...n, ...node } : n))
+        : [...state.nodes, node],
+    })),
   updateNode: (node: any) =>
     set((state: any) => ({
       nodes: state.nodes.map((n: any) => (n.node_id === node.node_id ? node : n)),
