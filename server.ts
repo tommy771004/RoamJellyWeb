@@ -69,7 +69,7 @@ type SearchHistoryRecord = {
 
 type PlanningRecord = {
   trip_id: string;
-  action: 'add_node' | 'remove_node';
+  action: 'add_node' | 'remove_node' | 'patch_node';
   node_id: string;
   day?: number;
   time?: string;
@@ -190,6 +190,107 @@ function toIsoTimestamp(value: unknown): string | null {
   if (!value) return null;
   const parsed = value instanceof Date ? value : new Date(String(value));
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+function mapItineraryNodeRow(node: any, index: number) {
+  const lat = node.lat ?? null;
+  const lng = node.lng ?? null;
+  return {
+    id: node.nodeId,
+    day: node.day,
+    date: normalizeDateOnlyInput(node.date) ?? formatDateOnly(node.timestamp) ?? null,
+    time: node.time,
+    timestamp: toIsoTimestamp(node.timestamp),
+    sort_order: Number(node.sortOrder ?? index + 1),
+    location: node.title,
+    icon: node.emoji,
+    category: node.category ?? 'other',
+    node_id: node.nodeId,
+    title: node.title,
+    emoji: node.emoji,
+    lat,
+    lng,
+    coords: lat != null ? null : { top: `${18 + index * 20}%`, left: `${25 + (index % 2) * 35}%` },
+    description: node.description ?? null,
+    ai_note: node.aiNote ?? null,
+    intensity: node.intensity ?? null,
+    is_visited: node.isVisited ?? false,
+    transport_to_next: node.transportToNext ?? null,
+    image_url: node.imageUrl ?? null,
+    attachments: Array.isArray(node.attachments) ? node.attachments : [],
+    linkedFactId: node.linkedFactId ?? null,
+  };
+}
+
+function normalizeItineraryPatchChanges(existingNode: ReturnType<typeof mapItineraryNodeRow>, rawChanges: any) {
+  const nextChanges: Record<string, unknown> = {};
+  if (!rawChanges || typeof rawChanges !== 'object') {
+    return nextChanges;
+  }
+
+  if ('day' in rawChanges && Number.isFinite(Number(rawChanges.day))) {
+    nextChanges.day = Number(rawChanges.day);
+  }
+  if ('date' in rawChanges) {
+    nextChanges.date = normalizeDateOnlyInput(rawChanges.date);
+  }
+  if ('time' in rawChanges) {
+    nextChanges.time = String(rawChanges.time ?? '').trim() || existingNode.time || '10:00';
+  }
+  if ('timestamp' in rawChanges) {
+    nextChanges.timestamp = toIsoTimestamp(rawChanges.timestamp);
+  }
+  if ('sort_order' in rawChanges && Number.isFinite(Number(rawChanges.sort_order))) {
+    nextChanges.sort_order = Number(rawChanges.sort_order);
+  }
+  if ('title' in rawChanges) {
+    nextChanges.title = String(rawChanges.title ?? '').trim() || existingNode.title;
+  }
+  if ('emoji' in rawChanges) {
+    nextChanges.emoji = String(rawChanges.emoji ?? '').trim() || existingNode.emoji || '📍';
+  }
+  if ('category' in rawChanges) {
+    nextChanges.category = String(rawChanges.category ?? '').trim() || existingNode.category || 'other';
+  }
+  if ('lat' in rawChanges) {
+    nextChanges.lat = Number.isFinite(Number(rawChanges.lat)) ? Number(rawChanges.lat) : null;
+  }
+  if ('lng' in rawChanges) {
+    nextChanges.lng = Number.isFinite(Number(rawChanges.lng)) ? Number(rawChanges.lng) : null;
+  }
+  if ('description' in rawChanges) {
+    nextChanges.description = String(rawChanges.description ?? '');
+  }
+  if ('ai_note' in rawChanges) {
+    nextChanges.ai_note = rawChanges.ai_note == null ? null : String(rawChanges.ai_note);
+  }
+  if ('intensity' in rawChanges) {
+    nextChanges.intensity = rawChanges.intensity == null ? null : String(rawChanges.intensity);
+  }
+  if ('is_visited' in rawChanges) {
+    nextChanges.is_visited = Boolean(rawChanges.is_visited);
+  }
+  if ('transport_to_next' in rawChanges) {
+    nextChanges.transport_to_next = String(rawChanges.transport_to_next ?? '');
+  }
+  if ('image_url' in rawChanges) {
+    nextChanges.image_url = String(rawChanges.image_url ?? '');
+  }
+  if ('attachments' in rawChanges) {
+    nextChanges.attachments = Array.isArray(rawChanges.attachments) ? rawChanges.attachments : [];
+  }
+  if ('linkedFactId' in rawChanges) {
+    nextChanges.linkedFactId = String(rawChanges.linkedFactId ?? '').trim();
+  }
+
+  if ('date' in nextChanges || 'time' in nextChanges) {
+    nextChanges.timestamp = buildNodeTimestamp(
+      nextChanges.date ?? existingNode.date,
+      nextChanges.time ?? existingNode.time,
+    )?.toISOString() ?? existingNode.timestamp ?? null;
+  }
+
+  return nextChanges;
 }
 
 async function validateLinkedFactId(repo: AppRepository, tripId: string, linkedFactId?: string | null) {
@@ -756,15 +857,9 @@ async function startServer() {
       async (event: {
         trip_id?: string;
         action?: string;
-        payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; ai_note?: string; intensity?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; attachments?: Array<{ id?: string; name?: string; type?: string; url?: string }>; linkedFactId?: string };
+        payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; ai_note?: string; intensity?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; attachments?: Array<{ id?: string; name?: string; type?: string; url?: string }>; linkedFactId?: string; changes?: Record<string, unknown> };
       }) => {
-        if (
-          !event?.trip_id ||
-          event.action !== 'add_node' ||
-          !event.payload?.node_id ||
-          !event.payload.time ||
-          !event.payload.title
-        ) {
+        if (!event?.trip_id || !event.action || !event.payload?.node_id) {
           return;
         }
 
@@ -774,6 +869,69 @@ async function startServer() {
         const role = await repo.getTripMemberRole(event.trip_id, userId);
         if (!role || !hasRequiredRole(role, 'editor')) {
           socket.emit('error', { message: 'forbidden: editor role required' });
+          return;
+        }
+
+        if (event.action === 'patch_node') {
+          if (!event.payload.changes || typeof event.payload.changes !== 'object') {
+            return;
+          }
+
+          const existing = await repo.findItineraryNode(event.payload.node_id);
+          if (!existing || existing.tripId !== event.trip_id) {
+            socket.emit('error', { message: 'node not found' });
+            return;
+          }
+
+          const existingNode = mapItineraryNodeRow(existing, 0);
+          const normalizedChanges = normalizeItineraryPatchChanges(existingNode, event.payload.changes);
+          const nextLinkedFactId = 'linkedFactId' in normalizedChanges
+            ? String(normalizedChanges.linkedFactId ?? '')
+            : String(existingNode.linkedFactId ?? '');
+
+          const linkedFactAllowed = await validateLinkedFactId(repo, event.trip_id, nextLinkedFactId);
+          if (!linkedFactAllowed) {
+            socket.emit('error', { message: 'invalid linked travel fact' });
+            return;
+          }
+
+          const mergedNode = {
+            ...existingNode,
+            ...normalizedChanges,
+            linkedFactId: nextLinkedFactId,
+          };
+
+          await repo.upsertItineraryNode(event.trip_id, mergedNode);
+
+          await appendPlanningRecord({
+            trip_id: event.trip_id,
+            action: 'patch_node',
+            node_id: event.payload.node_id,
+            day: Number(mergedNode.day ?? 1),
+            time: String(mergedNode.time ?? ''),
+            title: String(mergedNode.title ?? ''),
+            category: String(mergedNode.category ?? 'other'),
+            source: 'socket',
+            timestamp: new Date().toISOString(),
+          });
+          await updatePlanningSnapshot(repo, event.trip_id);
+
+          socket.to(event.trip_id).emit('sync_itinerary', {
+            trip_id: event.trip_id,
+            action: 'patch_node',
+            payload: {
+              node_id: event.payload.node_id,
+              changes: normalizedChanges,
+            },
+          });
+          return;
+        }
+
+        if (
+          event.action !== 'add_node' ||
+          !event.payload.time ||
+          !event.payload.title
+        ) {
           return;
         }
 
@@ -1814,36 +1972,10 @@ async function startServer() {
     const allowed = await ensureTripRole(req, res, tripId, 'viewer');
     if (!allowed) return;
 
-    const nodes = await repo.getItineraryNodes(tripId);
-    const formatted = nodes.map((node, index) => {
-      const lat = node.lat ?? null;
-      const lng = node.lng ?? null;
-      return {
-        id: node.nodeId,
-        day: node.day,
-        date: normalizeDateOnlyInput(node.date) ?? formatDateOnly(node.timestamp) ?? null,
-        time: node.time,
-        timestamp: toIsoTimestamp(node.timestamp),
-        sort_order: Number(node.sortOrder ?? index + 1),
-        location: node.title,
-        icon: node.emoji,
-        category: node.category ?? 'other',
-        node_id: node.nodeId,
-        title: node.title,
-        emoji: node.emoji,
-        lat,
-        lng,
-        coords: lat != null ? null : { top: `${18 + index * 20}%`, left: `${25 + (index % 2) * 35}%` },
-        description: node.description ?? null,
-        ai_note: node.aiNote ?? null,
-        intensity: node.intensity ?? null,
-        is_visited: node.isVisited ?? false,
-        transport_to_next: node.transportToNext ?? null,
-        image_url: node.imageUrl ?? null,
-        attachments: Array.isArray(node.attachments) ? node.attachments : [],
-        linkedFactId: node.linkedFactId ?? null,
-      };
-    });
+    const day = Number(req.query.day ?? NaN);
+    const safeDay = Number.isFinite(day) && day > 0 ? day : undefined;
+    const nodes = await repo.getItineraryNodes(tripId, { day: safeDay });
+    const formatted = nodes.map((node, index) => mapItineraryNodeRow(node, index));
 
     res.json(formatted);
   });
@@ -1852,16 +1984,79 @@ async function startServer() {
     const { trip_id, action, payload } = req.body as {
       trip_id?: string;
       action?: string;
-      payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; ai_note?: string; intensity?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; attachments?: Array<{ id?: string; name?: string; type?: string; url?: string }>; linkedFactId?: string };
+      payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; ai_note?: string; intensity?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; attachments?: Array<{ id?: string; name?: string; type?: string; url?: string }>; linkedFactId?: string; changes?: Record<string, unknown> };
     };
 
-    if (!trip_id || action !== 'add_node' || !payload?.node_id || !payload.time || !payload.title) {
+    if (!trip_id || !action || !payload?.node_id) {
       res.status(400).json({ status: 'error', message: 'invalid sync payload' });
       return;
     }
 
     const allowed = await ensureTripRole(req, res, trip_id, 'editor');
     if (!allowed) return;
+
+    if (action === 'patch_node') {
+      if (!payload.changes || typeof payload.changes !== 'object') {
+        res.status(400).json({ status: 'error', message: 'invalid patch payload' });
+        return;
+      }
+
+      const existing = await repo.findItineraryNode(payload.node_id);
+      if (!existing || existing.tripId !== trip_id) {
+        res.status(404).json({ status: 'error', message: 'node not found' });
+        return;
+      }
+
+      const existingNode = mapItineraryNodeRow(existing, 0);
+      const normalizedChanges = normalizeItineraryPatchChanges(existingNode, payload.changes);
+      const nextLinkedFactId = 'linkedFactId' in normalizedChanges
+        ? String(normalizedChanges.linkedFactId ?? '')
+        : String(existingNode.linkedFactId ?? '');
+
+      const linkedFactAllowed = await validateLinkedFactId(repo, trip_id, nextLinkedFactId);
+      if (!linkedFactAllowed) {
+        res.status(400).json({ status: 'error', message: 'linked travel fact is invalid' });
+        return;
+      }
+
+      const mergedNode = {
+        ...existingNode,
+        ...normalizedChanges,
+        linkedFactId: nextLinkedFactId,
+      };
+
+      await repo.upsertItineraryNode(trip_id, mergedNode);
+
+      await appendPlanningRecord({
+        trip_id,
+        action: 'patch_node',
+        node_id: payload.node_id,
+        day: Number(mergedNode.day ?? 1),
+        time: String(mergedNode.time ?? ''),
+        title: String(mergedNode.title ?? ''),
+        category: String(mergedNode.category ?? 'other'),
+        source: 'api',
+        timestamp: new Date().toISOString(),
+      });
+      await updatePlanningSnapshot(repo, trip_id);
+
+      io.to(trip_id).emit('sync_itinerary', {
+        trip_id,
+        action: 'patch_node',
+        payload: {
+          node_id: payload.node_id,
+          changes: normalizedChanges,
+        },
+      });
+
+      res.json({ status: 'success' });
+      return;
+    }
+
+    if (action !== 'add_node' || !payload.time || !payload.title) {
+      res.status(400).json({ status: 'error', message: 'invalid sync payload' });
+      return;
+    }
 
     const linkedFactAllowed = await validateLinkedFactId(repo, trip_id, payload.linkedFactId);
     if (!linkedFactAllowed) {
