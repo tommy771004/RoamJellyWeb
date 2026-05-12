@@ -114,6 +114,10 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
   let browser;
   try {
     const isVercel = !!process.env.VERCEL;
+    if (isVercel) {
+      console.log('Detected Vercel environment. Bypassing Playwright scraper to avoid 10s serverless limit and plugin dependency errors. Falling back to DB flights.');
+      throw new Error('Vercel environment bypass');
+    }
     
     // Launch browser (uses sparticuz/chromium on Vercel)
     browser = await playwrightCore.chromium.launch({ 
@@ -135,19 +139,17 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
     const page = await context.newPage();
     
     console.log('Navigating to page...');
-    // Reduce timeout drastically for Vercel
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 12000 });
+    // Reduce timeout drastically for Vercel (Free tier limit is 10s total, so max 3s here)
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: isVercel ? 3000 : 12000 });
     
     // Simulate human interaction while loading (faster)
     console.log('Simulating human mouse/scroll behavior...');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(200);
     await page.mouse.wheel(0, 400);
-    await page.waitForTimeout(500);
-    await page.mouse.wheel(0, 300);
     
     // Wait for either the main flight list OR the filter list (which loads even when flights are blocked by bot detection)
     try {
-      await page.waitForSelector('.flight-list, .Baggage-Card, .flight-item, .filter-item-wrapper', { timeout: 5000 });
+      await page.waitForSelector('.flight-list, .Baggage-Card, .flight-item, .filter-item-wrapper', { timeout: isVercel ? 2000 : 5000 });
       console.log('Flight container or filter detected, starting DOM parsing.');
     } catch (e) {
       console.log('Timeout waiting for flight container. Page structure might have changed or captcha triggered.');

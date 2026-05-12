@@ -21,7 +21,7 @@ export default function DynamicItineraryView({
   const titleClass = isLargeFont ? 'text-5xl' : 'text-4xl';
   
   const summary = aiResponse?.summary || {};
-  const itinerary = aiResponse?.itinerary || [];
+  const itinerary = Array.isArray(aiResponse) ? [{ day: 1, spots: aiResponse }] : (aiResponse?.itinerary || []);
   
   return (
     <div className={`flex-1 w-full h-full flex flex-col relative overflow-y-auto bg-gradient-to-br ${gradient} transition-colors duration-1000`}>
@@ -92,7 +92,7 @@ export default function DynamicItineraryView({
                     )}
 
                     {/* Transport to next */}
-                    {spot.transport_to_next && j !== dayData.spots.length - 1 && (
+                    {spot.transport_to_next && j !== (dayData.spots?.length || 0) - 1 && (
                       <div className="mt-4 mb-2 flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 w-fit px-3 py-1.5 rounded-lg border border-slate-100">
                         <span className="text-[14px]">🚶🏻‍♂️</span> {spot.transport_to_next}
                       </div>

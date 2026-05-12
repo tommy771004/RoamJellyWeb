@@ -301,6 +301,21 @@ export default function App() {
                  });
               }
             });
+          } else if (Array.isArray(suggestions)) {
+            suggestions.forEach((spot: any, i: number) => {
+              nodes.push({
+                node_id: spot.node_id || `ai_${Date.now()}_${spot.day || 1}_${i}`,
+                day: spot.day || 1,
+                time: spot.time || "10:00",
+                title: String(spot.name || spot.title || '景點'),
+                emoji: spot.emoji || '📍',
+                category: spot.category || 'other',
+                description: spot.ai_note || '',
+                lat: spot.lat,
+                lng: spot.lng,
+                source: 'local' as const,
+              });
+            });
           }
 
           // Geocode all spots in parallel; fall back silently if any fail
@@ -322,7 +337,7 @@ export default function App() {
 
           useAppStore.getState().setAiResult({
              fullResponse: suggestions,
-             title: suggestions.summary.title,
+             title: suggestions?.summary?.title || data.destination || '行程規劃',
              destination: data.destination,
              rawSuggestions: finalNodes
           });
@@ -377,7 +392,8 @@ export default function App() {
               const newTripId = newTrip?.data?.id || newTrip?.id;
               if (newTrip && newTripId) {
                 TRIP_ID = newTripId;
-                setActiveTripId(TRIP_ID);
+                // Defer setting activeTripId until after the insert to avoid fetch overriding local updates
+                // and to avoid premature loading.
                 // Redirect user parameter
                 const url = new URL(window.location.href);
                 url.searchParams.set('trip_id', TRIP_ID);
@@ -397,6 +413,11 @@ export default function App() {
                for (const node of nodesToProcess) {
                  addNode(node);
                }
+            }
+            
+            // Set activeTripId here so that ItineraryTab starts with the latest trip ID securely.
+            if (TRIP_ID) {
+               setActiveTripId(TRIP_ID);
             }
           } catch (err) {
              console.error('Failed to save to server', err);

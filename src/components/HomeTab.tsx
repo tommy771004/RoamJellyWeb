@@ -6,10 +6,11 @@ import GlassCard from './GlassCard';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { FlightSkeletonCard } from './SkeletonCard';
-import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchHandbooks, createTripFact } from '../lib/workflowApi';
+import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchHandbooks, createTripFact, syncItinerary } from '../lib/workflowApi';
 import { useSearchStore } from '../store/useSearchStore';
 import { useAppStore } from '../store/useAppStore';
-import type { SearchItem } from '../types/workflow';
+import { useItineraryStore } from '../store/useItineraryStore';
+import type { SearchItem, SyncItineraryPayload } from '../types/workflow';
 import {
   TRAVEL_GUIDE_DESTINATIONS,
   TRAVEL_GUIDE_REGIONS,
@@ -596,7 +597,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       const depCode = searchForm.from?.trim() || flight.details?.depCode || 'TPE';
       const arrCode = searchForm.to?.trim() || flight.details?.arrCode || 'NRT';
       const factDate = searchForm.date?.trim() || new Date().toISOString().slice(0, 10);
-      await createTripFact(tripId, {
+      const newFact = await createTripFact(tripId, {
         factType: 'flight_outbound',
         source: 'imported_search',
         title: `${flight.details?.airline || flight.provider} ${depCode} → ${arrCode}`,
@@ -612,7 +613,32 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           provider: flight.provider,
         },
       });
+
+      const payload: SyncItineraryPayload = {
+        trip_id: tripId,
+        action: 'add_node',
+        payload: {
+           node_id: `node_flight_${Date.now()}`,
+           day: 1,
+           date: factDate,
+           time: toHHMM(flight.details?.departure),
+           title: `${flight.details?.airline || flight.provider} 航班`,
+           emoji: '✈️',
+           category: 'flight',
+           description: `航班代號: ${flight.details?.flightNumber || '未知'}\n預定金額: ${flight.currency} ${flight.price}\n來源: ${flight.provider}`,
+           linkedFactId: newFact?.id,
+           source: 'remote'
+        },
+      };
+      // Update local store immediately so the node appears in the UI
+      useItineraryStore.getState().addNode(payload.payload);
+      
+      await syncItinerary(payload);
+
       showToast(`已把 ${flight.provider} 航班帶入旅程錨點。`, 'success');
+      setTimeout(() => {
+        useAppStore.getState().setActiveTab('itinerary');
+      }, 500);
     } catch {
       showToast('帶入旅程失敗，請稍後再試。', 'warning');
     }

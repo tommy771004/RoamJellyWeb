@@ -1319,7 +1319,7 @@ async function startServer() {
     }
     const tripId = String(req.query.trip_id ?? '').trim();
     const rows = tripId ? await repo.getCollaboratorsByTrip(tripId) : await repo.getCollaborators();
-    res.json(rows.map((r) => ({ id: r.id, name: r.name, avatar: r.avatar })));
+    res.json(rows.map((r) => ({ id: r.userId, name: r.name, avatar: r.avatar })));
   });
 
   // ── User Preferences ────────────────────────────────────────────────────────

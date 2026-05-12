@@ -22,7 +22,8 @@ import {
   MapPin,
   ArrowDownUp,
   Check,
-  ChevronDown
+  ChevronDown,
+  Clock
 } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
@@ -215,7 +216,7 @@ function normalizeScheduleForNode(
 }
 
 export default function ItineraryTab() {
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'map' | 'calendar'>('list');
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [tip, setTip] = useState('');
@@ -875,7 +876,21 @@ export default function ItineraryTab() {
           }
         });
       } else if (Array.isArray(suggestionsRaw)) {
-        suggestedNodes = suggestionsRaw;
+        suggestionsRaw.forEach((spot: any, i: number) => {
+          suggestedNodes.push({
+            node_id: spot.node_id || `ai_${Date.now()}_${spot.day || 1}_${i}`,
+            day: spot.day || 1,
+            time: spot.time || '10:00',
+            title: String(spot.name || spot.title || '景點'),
+            emoji: spot.emoji || '📍',
+            category: spot.category || 'other',
+            description: spot.ai_note || '',
+            lat: spot.lat,
+            lng: spot.lng,
+            linkedFactId: spot.linkedFactId,
+            source: 'local' as const
+          });
+        });
       }
 
       let finalNodes: ItineraryNode[] = [];
@@ -1269,6 +1284,12 @@ export default function ItineraryTab() {
           >
             EXPLORE
           </button>
+          <button 
+            onClick={() => setViewMode('calendar')}
+            className={`px-8 py-3 rounded-full font-black text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'calendar' ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-xl shadow-pink-200/50' : 'text-slate-400 hover:text-pink-500 hover:bg-white/40'}`}
+          >
+            CALENDAR
+          </button>
         </div>
       </div>
 
@@ -1283,6 +1304,9 @@ export default function ItineraryTab() {
               {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
                 const isActive = safeSelectedDay === day;
                 const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
+                const dateStr = getDateForDay(day, tripInfo?.startDate) || '';
+                const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+
                 return (
                   <button
                     key={day}
@@ -1294,6 +1318,7 @@ export default function ItineraryTab() {
                     }`}
                   >
                     <span>DAY {day}</span>
+                    {displayDate && <span className="text-[10px] opacity-70 tracking-tighter">{displayDate}</span>}
                     <span className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">{count} SPOTS</span>
                   </button>
                 );
@@ -1420,6 +1445,9 @@ export default function ItineraryTab() {
               {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
                 const isActive = safeSelectedDay === day;
                 const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
+                const dateStr = getDateForDay(day, tripInfo?.startDate) || '';
+                const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+
                 return (
                   <motion.button
                     key={day}
@@ -1432,6 +1460,7 @@ export default function ItineraryTab() {
                     }`}
                   >
                     <span>Day {day}</span>
+                    {displayDate && <span className={`text-[10px] opacity-80 mt-0.5 tracking-tighter ${isActive ? 'text-white/90' : ''}`}>{displayDate}</span>}
                     <span className={`text-[9px] font-bold mt-0.5 ${isActive ? 'text-white/70' : 'text-slate-300'}`}>{count} spots</span>
                   </motion.button>
                 );
@@ -1736,7 +1765,7 @@ export default function ItineraryTab() {
                   collaboratorEditing={collaboratorEditing}
                 />
               </motion.div>
-            ) : (
+            ) : viewMode === 'map' ? (
               <motion.div
                 key="map"
                 initial={{ opacity: 0, scale: 0.98 }}
@@ -1745,7 +1774,18 @@ export default function ItineraryTab() {
                 transition={{ duration: 0.4 }}
                 className="w-full"
               >
-                <MapView items={selectedDayNodes} />
+                <MapView items={selectedDayNodes} allNodes={nodes} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="calendar"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.4 }}
+                className="w-full"
+              >
+                <CalendarView nodes={nodes} tripStartDate={tripInfo?.startDate} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -1800,7 +1840,7 @@ function CollaboratorAvatar({ collaborator, index, isOnline }: { collaborator: C
     >
       <div className={`w-12 h-12 rounded-full border-[3px] border-white shadow-xl overflow-hidden transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1 relative ${isOnline ? 'ring-2 ring-emerald-400 ring-offset-2' : ''}`}>
         <div className="w-full h-full bg-pink-50 flex items-center justify-center text-xl">
-           {collaborator.avatar.length > 2 ? <img src={collaborator.avatar} className="w-full h-full object-cover" /> : collaborator.avatar}
+           {(collaborator.avatar?.length ?? 0) > 2 ? <img src={collaborator.avatar} className="w-full h-full object-cover" /> : (collaborator.avatar ?? '👤')}
         </div>
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
       </div>
@@ -2771,106 +2811,306 @@ function ManualAddNode({
 
 // ─── Map View ───────────────────────────────────────────────────────────
 
-function MapView({ items }: { items: ItineraryNode[] }) {
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix leafet default icon path issues in Vite
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+function MapUpdater({ selectedLat, selectedLng, items, allItems }: { selectedLat?: number, selectedLng?: number, items: ItineraryNode[], allItems?: ItineraryNode[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (selectedLat && selectedLng) {
+      map.setView([selectedLat, selectedLng], 15, { animate: true });
+    } else {
+      let validItems = items.filter(n => n.lat && n.lng);
+      if (validItems.length === 0 && allItems && allItems.length > 0) {
+        validItems = allItems.filter(n => n.lat && n.lng);
+      }
+      if (validItems.length > 0) {
+        const bounds = L.latLngBounds(validItems.map(n => [n.lat!, n.lng!]));
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+      }
+    }
+  }, [selectedLat, selectedLng, items, allItems, map]);
+  return null;
+}
+
+function CustomMarker({ item, isSelected, onClick }: { item: ItineraryNode, isSelected: boolean, onClick: () => void }) {
+  const iconHtml = `
+    <div class="relative flex flex-col items-center">
+      <div class="bg-white/95 rounded-2xl px-2.5 py-2 border-2 ${isSelected ? 'border-fuchsia-400 scale-110 shadow-pink-200/50' : 'border-white'} flex items-center justify-center shadow-lg transition-transform ${isSelected ? 'z-50' : ''} cursor-pointer group hover:scale-110">
+        <span class="text-xl leading-none group-hover:scale-110 transition-transform">${item.emoji}</span>
+      </div>
+      <div class="w-3 h-3 -mt-2 border-r-2 border-b-2 rotate-45 ${isSelected ? 'bg-fuchsia-400 border-fuchsia-400' : 'bg-white border-white'}"></div>
+      <div class="mt-1 px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-fuchsia-600/90 text-white shadow-md' : 'bg-slate-800/80 text-white/90'} transition-all"><span class="text-[10px] font-bold whitespace-nowrap block max-w-[100px] truncate">${item.title}</span></div>
+    </div>
+  `;
+
+  const customIcon = L.divIcon({
+    html: iconHtml,
+    className: 'bg-transparent border-none',
+    iconSize: [120, 80],
+    iconAnchor: [60, 60],
+    popupAnchor: [0, -60],
+  });
+
+  return (
+    <Marker 
+      position={[item.lat!, item.lng!]} 
+      icon={customIcon}
+      eventHandlers={{ click: onClick }}
+      zIndexOffset={isSelected ? 1000 : 0}
+    />
+  );
+}
+
+function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripStartDate?: string }) {
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  
+  // Calculate start date
+  const start = tripStartDate ? new Date(tripStartDate) : new Date();
+  
+  // Get nodes mapped by date string (YYYY-MM-DD local)
+  const nodesByDate: Record<string, ItineraryNode[]> = {};
+  
+  nodes.forEach(node => {
+    // calculate date
+    let d = new Date(start);
+    if (node.date) {
+      d = new Date(node.date);
+    } else {
+      d.setDate(d.getDate() + (node.day - 1));
+    }
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (!nodesByDate[dateStr]) nodesByDate[dateStr] = [];
+    nodesByDate[dateStr].push(node);
+  });
+  
+  const allDates = Object.keys(nodesByDate).sort();
+  let viewMonth = start.getMonth();
+  let viewYear = start.getFullYear();
+  if (allDates.length > 0) {
+    const firstDate = new Date(allDates[0]);
+    viewMonth = firstDate.getMonth();
+    viewYear = firstDate.getFullYear();
+  }
+  
+  const [currentMonth, setCurrentMonth] = useState(new Date(viewYear, viewMonth, 1));
+  
+  // build calendar grid
+  const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay(); 
+  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+  
+  const days = [];
+  for (let i = 0; i < firstDay; i++) {
+    days.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i));
+  }
+  
+  const selectedNode = nodes.find(n => n.node_id === selectedNodeId);
+  const facts = useTripFactsStore(s => s.facts);
+  
+  return (
+    <div className="flex flex-col lg:flex-row gap-6 h-[75vh]">
+       {/* Main calendar grid */}
+       <div className={`flex-1 flex flex-col glass-card !p-0 overflow-hidden border-2 border-white/60 shadow-xl ${selectedNodeId ? 'hidden lg:flex' : 'flex'}`}>
+          <div className="flex items-center justify-between p-5 border-b border-pink-100 bg-white/40">
+             <button 
+               onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} 
+               className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
+               title="上個月"
+             >
+               <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+             </button>
+             <h2 className="text-xl font-black text-slate-700 tracking-widest">
+               {currentMonth.getFullYear()}年 {currentMonth.getMonth() + 1}月
+             </h2>
+             <button 
+               onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} 
+               className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
+               title="下個月"
+             >
+               <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+             </button>
+          </div>
+          
+          <div className="grid grid-cols-7 gap-px bg-pink-100/50 flex-1 overflow-y-auto">
+             {['日', '一', '二', '三', '四', '五', '六'].map(d => (
+                <div key={d} className="bg-white/70 backdrop-blur-md text-center py-3 text-xs font-black text-pink-400 capitalize tracking-widest sticky top-0 z-10 shadow-sm">{d}</div>
+             ))}
+             {days.map((d, i) => {
+                if (!d) return <div key={`empty-${i}`} className="bg-white/40 min-h-[120px]" />;
+                const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const dayNodes = nodesByDate[dateStr] || [];
+                dayNodes.sort((a,b) => (a.time || '').localeCompare(b.time || ''));
+                
+                const isToday = new Date().toDateString() === d.toDateString();
+                
+                return (
+                  <div key={dateStr} className={`bg-white/80 backdrop-blur-sm min-h-[120px] p-2 flex flex-col transition-colors border-t border-transparent hover:border-pink-200 ${isToday ? 'bg-pink-50/80 ring-2 ring-pink-300 inset-0' : ''}`}>
+                     <span className={`text-sm font-black mb-2 px-1 ${isToday ? 'text-pink-600' : 'text-slate-400'}`}>
+                        {d.getDate()}
+                     </span>
+                     <div className="flex flex-col gap-1.5 overflow-y-auto no-scrollbar flex-1 pb-1">
+                        {dayNodes.map(node => (
+                           <button 
+                             key={node.node_id}
+                             onClick={() => setSelectedNodeId(node.node_id)}
+                             className={`text-left px-2 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent flex gap-1.5 shadow-sm active:scale-95 ${selectedNodeId === node.node_id ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-pink-200/50 scale-105' : 'bg-white text-slate-600 hover:border-pink-200 hover:shadow-md'}`}
+                           >
+                             <div className="flex flex-col w-full min-w-0">
+                               <div className="flex items-center gap-1 w-full min-w-0">
+                                 <span className="shrink-0 text-[14px]">{node.emoji}</span>
+                                 <span className="truncate flex-1">{node.title}</span>
+                               </div>
+                               {node.time && <span className={`text-[9px] mt-0.5 tracking-wider ${selectedNodeId === node.node_id ? 'text-white/80' : 'text-slate-400'}`}>{node.time}</span>}
+                             </div>
+                           </button>
+                        ))}
+                     </div>
+                  </div>
+                )
+             })}
+          </div>
+       </div>
+       
+       {/* Sidebar details */}
+       {selectedNodeId && selectedNode && (
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="w-full lg:w-96 flex-shrink-0 flex flex-col gap-4 h-full relative z-20"
+          >
+             <GlassCard className="!p-4 flex items-center justify-between border-2 border-white/60 flex-shrink-0">
+                <span className="font-black text-sm text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Sparkles size={16} className="text-pink-400"/> 詳細內容
+                </span>
+                <button onClick={() => setSelectedNodeId(null)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors shadow-sm cursor-pointer border border-slate-200/50"><X size={16} strokeWidth={3} /></button>
+             </GlassCard>
+             
+             <GlassCard className="!p-6 flex flex-col gap-5 overflow-y-auto no-scrollbar border-2 border-white/60 flex-1 relative">
+                {selectedNode.image_url && (
+                  <div className="w-full h-48 bg-slate-100 rounded-[2rem] overflow-hidden shadow-inner border border-white relative group">
+                     <img src={selectedNode.image_url} alt="spot" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
+                  </div>
+                )}
+                
+                <div className="flex items-start gap-4 mt-2">
+                   <div className="w-14 h-14 shrink-0 rounded-[1.5rem] bg-gradient-to-br from-pink-50 to-fuchsia-50 text-3xl flex items-center justify-center border border-white shadow-md shadow-pink-100/50">
+                     {selectedNode.emoji}
+                   </div>
+                   <div className="flex-1 pt-1">
+                     <h3 className="font-black text-xl text-slate-800 leading-tight mb-2">{selectedNode.title}</h3>
+                     {selectedNode.time && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-xs font-black text-slate-500 uppercase tracking-[0.1em] border border-white shadow-sm">
+                           <Clock size={12} strokeWidth={3} /> {selectedNode.time}
+                        </div>
+                     )}
+                   </div>
+                </div>
+                
+                {selectedNode.description && (
+                  <div className="relative mt-2">
+                     <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-pink-400 to-fuchsia-400 rounded-full opacity-50" />
+                     <p className="text-[13px] text-slate-600 leading-relaxed font-medium pl-3 whitespace-pre-wrap">{selectedNode.description}</p>
+                  </div>
+                )}
+                
+                {selectedNode.transport_to_next && (
+                  <div className="mt-4 p-4 rounded-[2rem] bg-gradient-to-r from-indigo-50 to-blue-50 border border-white shadow-sm flex items-start gap-3">
+                     <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-indigo-500 shadow-sm shrink-0">
+                        <Navigation2 size={16} strokeWidth={2.5} />
+                     </div>
+                     <div className="flex flex-col pt-0.5">
+                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">前往下一站</span>
+                        <span className="text-[13px] font-bold text-slate-700">{selectedNode.transport_to_next}</span>
+                     </div>
+                  </div>
+                )}
+                
+                {selectedNode.linkedFactId && facts.find((f: any) => f.id === selectedNode.linkedFactId) && (
+                  <div className="mt-2 p-4 rounded-[2rem] bg-gradient-to-r from-emerald-50 to-teal-50 border border-white shadow-sm flex items-center gap-3 relative overflow-hidden">
+                     <div className="absolute top-0 right-0 p-3 opacity-20 text-4xl pointer-events-none">✨</div>
+                     <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-emerald-500 shadow-sm shrink-0 relative z-10">
+                        <span className="material-symbols-outlined text-[16px]">link</span>
+                     </div>
+                     <div className="flex flex-col relative z-10 min-w-0 flex-1">
+                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">已綁定 Travel Fact</span>
+                        <span className="text-xs font-bold text-slate-700 truncate">{facts.find((f: any) => f.id === selectedNode.linkedFactId)?.title}</span>
+                     </div>
+                  </div>
+                )}
+             </GlassCard>
+          </motion.div>
+       )}
+    </div>
+  );
+}
+
+function MapView({ items, allNodes }: { items: ItineraryNode[], allNodes?: ItineraryNode[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedNode = items.find(n => n.node_id === selectedId) ?? null;
+  const validItems = items.filter(n => n.lat && n.lng);
+
+  // default center fallback: Tokyo
+  let defaultCenter: [number, number] = [35.6762, 139.6503];
+  if (validItems.length > 0) defaultCenter = [validItems[0].lat!, validItems[0].lng!];
+  else if (allNodes) {
+    const allValid = allNodes.filter(n => n.lat && n.lng);
+    if (allValid.length > 0) defaultCenter = [allValid[0].lat!, allValid[0].lng!];
+  }
 
   return (
     <div className="flex flex-col gap-3">
       <GlassCard className="h-[55vh] relative overflow-hidden !p-0 border-4 border-white/40 rounded-[2.5rem]">
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(135deg, #bfdbfe 0%, #ddd6fe 50%, #fce7f3 100%)' } as object}
-        />
-        {[25, 50, 75].map((p) => (
-          <div key={`h-${p}`} className="absolute left-0 right-0 h-px bg-white/30" style={{ top: `${p}%` }} />
-        ))}
-        {[25, 50, 75].map((p) => (
-          <div key={`v-${p}`} className="absolute top-0 bottom-0 w-px bg-white/30" style={{ left: `${p}%` }} />
-        ))}
-        <div className="absolute top-3 right-4 bg-white/70 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
-          <span className="text-xs font-black text-slate-600">N↑</span>
-        </div>
-        {/* dismiss selection on map bg click */}
-        <div className="absolute inset-0" onClick={() => setSelectedId(null)} />
+        <MapContainer 
+          center={defaultCenter} 
+          zoom={13} 
+          scrollWheelZoom={true} 
+          className="w-full h-full z-10"
+          zoomControl={true}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://carto.com/">Carto</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
+          />
+          <MapUpdater 
+            selectedLat={selectedNode?.lat} 
+            selectedLng={selectedNode?.lng} 
+            items={validItems} 
+            allItems={allNodes}
+          />
+          
+          {validItems.length > 1 && (
+            <Polyline 
+              positions={validItems.map(item => [item.lat!, item.lng!])}
+              pathOptions={{ color: 'rgba(236,72,153,0.6)', weight: 3, dashArray: '5, 8' }}
+            />
+          )}
 
-        {/* Connecting lines via SVG */}
-        {items.length > 1 && (
-          <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-            style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' } as object}
-          >
-            <defs>
-              <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto" fill="rgba(236,72,153,0.7)">
-                <polygon points="0 0, 6 2, 0 4" />
-              </marker>
-            </defs>
-            {(items as ItineraryNode[]).slice(0, -1).map((item: ItineraryNode, i: number) => {
-              const next = items[i + 1];
-              if (!item.lat || !item.lng || !next.lat || !next.lng) return <Fragment key={`line-${item.node_id}`} />;
-              const from = getDynamicMapPercent(items, item.lat, item.lng);
-              const to = getDynamicMapPercent(items, next.lat, next.lng);
-              return (
-                <line
-                  key={`line-${item.node_id}`}
-                  x1={`${from.x}%`} y1={`${from.y}%`}
-                  x2={`${to.x}%`}   y2={`${to.y}%`}
-                  stroke="rgba(236,72,153,0.6)"
-                  strokeWidth={0.8}
-                  strokeDasharray="2 1.5"
-                  markerEnd="url(#arrowhead)"
-                />
-              );
-            })}
-          </svg>
-        )}
-
-        {/* Map pins */}
-        {items.map((item: ItineraryNode, index: number) => {
-          const pos = (item.lat && item.lng)
-            ? getDynamicMapPercent(items, item.lat, item.lng)
-            : { x: 25 + (index % 2) * 50, y: 15 + index * 12 };
-          const isSelected = item.node_id === selectedId;
-
-          return (
-            <motion.div
+          {validItems.map((item) => (
+            <CustomMarker 
               key={item.node_id}
-              initial={{ scale: 0, opacity: 0, y: -50 }}
-              animate={{ scale: isSelected ? 1.2 : 1, opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.12, type: 'spring', bounce: 0.5, mass: 0.8 }}
-              style={{
-                position: 'absolute',
-                left: `${pos.x}%`,
-                top: `${pos.y}%`,
-                transform: 'translate(-50%, -100%)',
-                zIndex: isSelected ? 20 : 10,
-              }}
-              onClick={(e) => { e.stopPropagation(); setSelectedId(isSelected ? null : item.node_id); }}
-            >
-              <div className="flex flex-col items-center cursor-pointer">
-                <motion.div
-                  animate={isSelected ? { boxShadow: '0 0 0 3px rgba(168,85,247,0.6), 0 8px 24px rgba(0,0,0,0.15)' } : { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  className={`bg-white/95 rounded-2xl px-2.5 py-2 border-2 flex flex-col items-center relative transition-colors ${isSelected ? 'border-fuchsia-400' : 'border-white'}`}
-                >
-                  <div className={`absolute -top-3 -right-3 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-sm border border-white transition-colors ${isSelected ? 'bg-fuchsia-500' : 'bg-pink-500'}`}>
-                    {index + 1}
-                  </div>
-                  <span className="text-2xl">{item.emoji}</span>
-                </motion.div>
-                <div className={`w-2.5 h-2.5 -mt-1.5 border-r-2 border-b-2 rotate-45 transition-colors ${isSelected ? 'bg-fuchsia-400 border-fuchsia-400' : 'bg-white border-white'}`} />
-                <div className={`px-2.5 py-0.5 rounded-full mt-1 transition-colors ${isSelected ? 'bg-fuchsia-600/90' : 'bg-slate-800/80'}`}>
-                  <span className="text-[10px] font-bold text-white whitespace-nowrap">{item.title}</span>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
+              item={item}
+              isSelected={item.node_id === selectedId}
+              onClick={() => setSelectedId(item.node_id === selectedId ? null : item.node_id)}
+            />
+          ))}
+        </MapContainer>
+        
         {items.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-slate-400 font-semibold">目前沒有行程顯示在地圖上</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-[1000]">
+            <span className="text-slate-400 font-semibold bg-white px-6 py-3 rounded-full shadow-sm">目前沒有行程顯示在地圖上</span>
           </div>
         )}
       </GlassCard>
@@ -2884,20 +3124,20 @@ function MapView({ items }: { items: ItineraryNode[] }) {
             exit={{ opacity: 0, y: 8 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           >
-            <GlassCard className="!p-4 flex items-center gap-4 !rounded-2xl border border-fuchsia-100 bg-white/90">
-              <div className="w-12 h-12 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-2xl shrink-0 shadow-sm">
+            <GlassCard className="!p-4 flex items-center gap-4 !rounded-2xl border border-fuchsia-100 bg-white/90 shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-2xl shrink-0 shadow-sm border border-fuchsia-100/50">
                 {selectedNode.emoji}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-black text-slate-800 text-[15px] truncate">{selectedNode.title}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {selectedNode.time && <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{selectedNode.time}</span>}
-                  {selectedNode.category && <span className="text-[10px] font-bold text-fuchsia-500 bg-fuchsia-50 px-2 py-0.5 rounded-full uppercase tracking-wider">{selectedNode.category}</span>}
+                <div className="flex items-center gap-2 mt-0.5 max-w-full overflow-x-auto no-scrollbar shrink-0">
+                  {selectedNode.time && <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">{selectedNode.time}</span>}
+                  {selectedNode.category && <span className="text-[10px] font-bold text-fuchsia-500 bg-fuchsia-50/80 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 border border-fuchsia-100/50">{selectedNode.category}</span>}
                 </div>
-                {selectedNode.description && <p className="text-[12px] text-slate-500 mt-1 line-clamp-2">{selectedNode.description}</p>}
+                {selectedNode.description && <p className="text-[12px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{selectedNode.description}</p>}
               </div>
-              <button onClick={() => setSelectedId(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors shrink-0">
-                <X size={14} />
+              <button onClick={() => setSelectedId(null)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0 outline-none">
+                <X size={14} strokeWidth={3} />
               </button>
             </GlassCard>
           </motion.div>

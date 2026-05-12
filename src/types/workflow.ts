@@ -114,6 +114,7 @@ export interface ItineraryNode {
   transport_to_next?: string;
   image_url?: string;
   linkedFactId?: string;
+  linked_fact_id?: string;
 }
 
 export interface ItineraryPlannerForm {
