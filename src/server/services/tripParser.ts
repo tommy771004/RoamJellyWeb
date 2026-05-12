@@ -90,13 +90,19 @@ const IATA_MAP: Record<string, string> = {
   '法蘭克福': 'fra',
 };
 
+const IATA_LOOKUP: Record<string, string> = Object.fromEntries(
+  Object.entries(IATA_MAP).map(([key, value]) => [key.trim().toLowerCase(), value.trim().toLowerCase()]),
+);
+
 function getIata(city: string): string {
-  if (!city) return 'tpe';
-  if (IATA_MAP[city]) return IATA_MAP[city];
-  for (const [key, val] of Object.entries(IATA_MAP)) {
-      if (city.includes(key)) return val;
+  const normalizedCity = city.trim().toLowerCase();
+  if (!normalizedCity) return 'tpe';
+  if (/^[a-z]{3}$/i.test(normalizedCity)) return normalizedCity;
+  if (IATA_LOOKUP[normalizedCity]) return IATA_LOOKUP[normalizedCity];
+  for (const [key, val] of Object.entries(IATA_LOOKUP)) {
+      if (normalizedCity.includes(key)) return val;
   }
-  return city;
+  return normalizedCity;
 }
 
 /**
