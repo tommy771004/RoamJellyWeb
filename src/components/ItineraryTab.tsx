@@ -2236,7 +2236,7 @@ export default function ItineraryTab() {
                        spot={spot}
                        selectedDay={safeSelectedDay}
                        isOffline={isOffline}
-                       onAdd={(node) => { addSpotToDay(node); setShowMobileFavorites(false); }}
+                       onAdd={(node, day) => { addSpotToDay(node, day); setShowMobileFavorites(false); }}
                        onDelete={handleDeleteFavorite}
                        onDragStart={setDraggingFavorite}
                        onDragEnd={() => setDraggingFavorite(null)}
@@ -2349,7 +2349,7 @@ function DraggableFavoriteSpot({
       layout
       whileHover={{ y: -2 }}
       draggable={!isOffline}
-      onDragStart={(event) => {
+      onDragStart={(event: any) => {
         if (isOffline) return;
         event.dataTransfer.effectAllowed = 'copy';
         event.dataTransfer.setData('text/plain', spot.id);
@@ -3997,7 +3997,7 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                            {redirectPayload && bookingLabel && (
                              <button
                                type="button"
-                               onClick={() => openRedirectModal(redirectPayload)}
+                               onClick={() => useAppStore.getState().openRedirectModal(redirectPayload)}
                                className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-200 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-widest text-cyan-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50 hover:shadow-md"
                              >
                                <ExternalLink size={14} strokeWidth={3} />

@@ -1375,24 +1375,17 @@ async function startServer() {
 
     // If no params, return "Popular Recommendations" (latest flights)
     if (!from || !to || !date) {
-      let topFlights = await repo.getTopFlights(5).catch(() => []);
-      if (!topFlights || topFlights.length === 0) {
-        topFlights = [
-          { id: 'f1', provider: 'EVA Air', time: '08:00 - 12:15', price: 12500 },
-          { id: 'f2', provider: 'Starlux Airlines', time: '10:30 - 14:45', price: 14200 },
-          { id: 'f3', provider: 'China Airlines', time: '12:00 - 16:15', price: 11800 }
-        ];
-      }
+      const topFlights = await repo.getTopFlights(5).catch(() => []);
       const results = topFlights.map((f: any, idx: number) => ({
         id: f.id || `flight_trend_${idx}`,
         type: 'flight',
         provider: f.provider,
-        title: `台北 (TPE) -> 目的地 · 直飛`, // Simple fallback for title if not in db
+        title: `${f.origin_code || 'TPE'} -> ${f.destination_code || '目的地'}`,
         price: f.price,
         currency: 'TWD',
         emoji: '✈️',
-        affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flight/${encodeURIComponent(f.id)}` : `https://example.com/flight/${f.id}`,
-        details: { stops: 0, airline: f.provider, departure: f.time?.split(' - ')[0] || '10:00', arrival: f.time?.split(' - ')[1] || '14:00' }
+        affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flight/${encodeURIComponent(f.id)}` : `https://www.trip.com/flights/${f.origin_code}-to-${f.destination_code}/tickets-${f.origin_code}-${f.destination_code}/?flighttype=ow&dcity=${f.origin_code || 'tpe'}&acity=${f.destination_code || 'nrt'}`,
+        details: { stops: f.stops || 0, airline: f.provider, departure: f.time?.split(' - ')[0] || '10:00', arrival: f.time?.split(' - ')[1] || '14:00' }
       }));
       res.json({ status: 'success', data: results });
       return;
@@ -1413,45 +1406,9 @@ async function startServer() {
       return;
     }
 
-    // Try OTA provider first; fall back to local flights table
-    let data: SearchItem[];
+    // Try OTA provider first; if no data, return empty array to keep it real
     const otaData = await fetchFromOtaProvider(from, to, date);
-    if (otaData && otaData.length > 0) {
-      data = otaData;
-    } else {
-      let flightRows = await repo.getTopFlights(4).catch(() => []);
-      if (!flightRows || flightRows.length === 0) {
-        flightRows = [
-          { id: 'f4', provider: 'Tigerair Taiwan', time: '14:20 - 17:05', price: 8500 },
-          { id: 'f5', provider: 'Peach Aviation', time: '16:55 - 20:40', price: 7900 }
-        ];
-      }
-      if (flightRows.length === 0) {
-        res.status(503).json({ status: 'error', message: 'no flight provider data available' });
-        return;
-      }
-          data = flightRows.map((flight, idx) => {
-        const providers = ['EVA Air', 'China Airlines', 'Starlux Airlines', 'Tigerair Taiwan', 'Peach Aviation', 'Skyscanner', 'Expedia'];
-        const provider = providers[idx % providers.length];
-        return {
-          id: `flight_${flight.id}`,
-          type: 'flight' as const,
-          provider: provider,
-          title: `${from} -> ${to} · ${idx % 2 === 0 ? '直飛' : '1 轉'}`,
-          price: flight.price + (idx * 300),
-          currency: 'TWD',
-          emoji: '✈️',
-          affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flights/${encodeURIComponent(flight.id)}` : `https://partner.example.com/flights/${encodeURIComponent(flight.id)}`,
-          details: {
-            airline: provider,
-            departure: flight.time.split(' - ')[0] || '10:00',
-            arrival: flight.time.split(' - ')[1] || '14:30',
-            stops: idx % 2 === 0 ? 0 : 1,
-            duration: idx === 0 ? '3h 15m' : (idx === 1 ? '2h 45m' : '4h 10m')
-          }
-        };
-      });
-    }
+    const data: SearchItem[] = otaData || [];
 
     await setSearchCacheData(cacheKey, data);
     await appendSearchHistory({
@@ -1475,11 +1432,7 @@ async function startServer() {
   app.get('/api/handbooks', async (req, res) => {
     const limit = Number(req.query.limit ?? 10);
     const trips = await repo.getPublicTrips(limit).catch(() => []);
-    res.json(trips.length > 0 ? trips : [
-      { id: 'h1', title: '東京散策：巷弄裡的小秘密', author: 'Miyuki Tanaka', likes: 124, cover: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=800&auto=format&fit=crop', _fallback: true },
-      { id: 'h2', title: '大阪美食地圖 2024', author: 'Chen Wei-Ming', likes: 89, cover: 'https://images.unsplash.com/photo-1590484512398-33fb39eff960?w=800&auto=format&fit=crop', _fallback: true },
-      { id: 'h3', title: '京都紅葉季完全攻略', author: 'Yuki Sato', likes: 213, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop', _fallback: true },
-    ]);
+    res.json(trips);
   });
 
   app.get('/api/geocode', async (req, res) => {

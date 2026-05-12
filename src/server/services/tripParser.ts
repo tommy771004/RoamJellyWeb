@@ -115,11 +115,12 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
   // Construct dynamic URL based on Trip.com's structure
   const url = `https://tw.trip.com/flights/${originIATA}-to-${destIATA}/tickets-${originIATA}-${destIATA}/?flighttype=ow&dcity=${originIATA}&acity=${destIATA}&ddate=${date}`;
   const isVercel = !!process.env.VERCEL;
-  const shouldBypassOnVercel = process.env.TRIP_SCRAPER_BYPASS_ON_VERCEL === 'true';
+  
+  // Vercel Serverless Functions have limits, but we want real scraping now.
+  const shouldScrapeOnVercel = true;
 
-  // Allow Vercel scraping by default. Only bypass when explicitly configured.
-  if (isVercel && shouldBypassOnVercel) {
-    console.warn('Trip.com scraper bypassed on Vercel by TRIP_SCRAPER_BYPASS_ON_VERCEL=true.');
+  if (isVercel && !shouldScrapeOnVercel) {
+    console.log('Skipping Trip.com scraper on Vercel to prevent 504 timeouts.');
     return [];
   }
   
@@ -127,13 +128,12 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
   
   let browser;
   try {
-    // Launch browser (uses sparticuz/chromium on Vercel)
+    const executablePath = await (chromiumSparticuz as any).executablePath();
+    // Launch browser (uses sparticuz/chromium)
     browser = await playwrightCore.chromium.launch({ 
       headless: true,
-      executablePath: isVercel ? await (chromiumSparticuz as any).executablePath() : undefined,
-      args: isVercel 
-        ? (chromiumSparticuz as any).args 
-        : ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+      executablePath: executablePath || undefined,
+      args: [...((chromiumSparticuz as any).args || []), '--disable-blink-features=AutomationControlled']
     });
     
     // Set realistic User-Agent and viewport
@@ -143,31 +143,36 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
       locale: 'zh-TW',
       timezoneId: 'Asia/Taipei',
     });
-    
+
+    await context.addInitScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
+
     const page = await context.newPage();
     
     console.log('Navigating to page...');
-    // Reduce timeout drastically for Vercel (Free tier limit is 10s total, so max 3s here)
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: isVercel ? 3000 : 12000 });
+    // Increase timeout for real scraping (Vercel has limit, but we can try slightly longer)
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: isVercel ? 12000 : 60000 });
     
-    // Simulate human interaction while loading (faster)
+    // Simulate human interaction while loading, and wait longer since Trip.com takes a while to load flights
     console.log('Simulating human mouse/scroll behavior...');
-    await page.waitForTimeout(200);
-    await page.mouse.wheel(0, 400);
+    await page.waitForTimeout(2000);
+    await page.mouse.wheel(0, 600);
+    await page.waitForTimeout(3000);
+    await page.mouse.wheel(0, 600);
+    await page.waitForTimeout(1000);
     
-    // Wait for either the main flight list OR the filter list (which loads even when flights are blocked by bot detection)
+    // Wait for the actual flight items (not just the list container which renders immediately)
     try {
-      await page.waitForSelector('.flight-list, .Baggage-Card, .flight-item, .filter-item-wrapper', { timeout: isVercel ? 2000 : 5000 });
-      console.log('Flight container or filter detected, starting DOM parsing.');
+      await page.waitForSelector('.flight-item, div[data-testid="flight-card"]', { timeout: isVercel ? 15000 : 45000 });
+      console.log('Flight items detected, starting DOM parsing.');
     } catch (e) {
       console.log('Timeout waiting for flight container. Page structure might have changed or captcha triggered.');
-      throw new Error('觸發防爬蟲機制或加載過慢');
+      throw new Error('Timeout or Captcha triggered');
     }
     
     // Parse the DOM to extract flight items (fallback to filters if main list is hidden by bot protection)
     const rawFlights = await page.evaluate(() => {
        // Method A: Try parsing the actual flight items if they rendered
-       const flightNodes = Array.from(document.querySelectorAll('.flight-item, .flight-card-container, div[data-testid="flight-card"], .o-flight-card'));
+       const flightNodes = Array.from(document.querySelectorAll('.m-flight-list .flight-item, .flight-list .flight-item, .flight-card-container, div[data-testid="flight-card"], .o-flight-card, .flight-item'));
        
        if (flightNodes.length > 0) {
            return flightNodes.map((node, index) => {
@@ -201,34 +206,7 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
            });
        }
 
-       // Method B: Anti-bot bypass -> extract real prices and airlines from the filter sidebar
-       const filterNodes = Array.from(document.querySelectorAll('.filter-item-wrapper'));
-       const syntheticFlights: any[] = [];
-       const rx = /^(.*?)\s*（\d+）\s*TWD([0-9,]+)$/;
-       let index = 0;
-       filterNodes.forEach(node => {
-          const txt = node.textContent || '';
-          const match = txt.match(rx);
-          if (match) {
-             const airline = match[1].trim();
-             const price = parseInt(match[2].replace(/,/g, ''), 10);
-             // Generate synthetic plausible times for these real airlines
-             const depHour = 8 + (index * 2) % 12;
-             const finalDep = `${String(depHour).padStart(2, '0')}:00`;
-             const finalArr = `${String(depHour + 2).padStart(2, '0')}:30`;
-             const stops = (airline.includes('虎航') || airline.includes('樂桃') || airline.includes('香港航空')) ? 0 : 1;
-             syntheticFlights.push({
-                index: index++,
-                airline,
-                departure: finalDep,
-                arrival: finalArr,
-                price,
-                duration: stops === 0 ? '2h 30m' : '5h 15m',
-                stops
-             });
-          }
-       });
-       return syntheticFlights;
+       return [];
     });
     
     await browser.close();
@@ -236,6 +214,11 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
     // Filter and transform to our standard format
     const validFlights = rawFlights.filter((f): f is NonNullable<typeof f> => f !== null && f.price > 0).slice(0, 10);
     
+    if (validFlights.length === 0) {
+      console.log(`Parsed 0 flights.`);
+      return [];
+    }
+
     console.log(`Parsed ${validFlights.length} flights successfully from DOM or filters.`);
     
     return validFlights.map((f) => ({
@@ -257,18 +240,9 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
     }));
     
   } catch (error: any) {
-    const errorMessage = typeof error?.message === 'string' ? error.message : String(error ?? '');
-    const isExpectedFallback =
-      errorMessage.includes('觸發防爬蟲機制') ||
-      (isVercel && /(timeout|target closed|browser has been closed|failed to launch|executable|navigation)/i.test(errorMessage));
-
-    if (isExpectedFallback) {
-      console.warn('Trip.com Scraper blocked or timed out, returning no Trip.com data so the API can fall back to other providers.');
-    } else {
-      console.error('Trip.com Scraper Error:', error);
-    }
-    
     if (browser) await browser.close();
+    
+    console.warn('Trip.com scraper failed or blocked. Returning empty array.');
 
     return [];
   }
