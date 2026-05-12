@@ -1,6 +1,12 @@
 {
   "version": 2,
-  "ignoreBuildStep": "bash -c '[[ \"$VERCEL_GIT_COMMIT_REF\" == \"main\" ]] && exit 1 || exit 0'",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "**": false,
+      "main": true
+    }
+  },
   "builds": [
     {
       "src": "api/index.js",
