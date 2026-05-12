@@ -85,6 +85,10 @@ export const useToolsStore = create<any>((set, get) => ({
     const newExpenses = [...state.expenses, expense];
     return { expenses: newExpenses, settlements: calculateSettlements(newExpenses) };
   }),
+  removeExpense: (expenseId: string) => set((state: any) => {
+    const newExpenses = state.expenses.filter((expense: Expense) => expense.id !== expenseId);
+    return { expenses: newExpenses, settlements: calculateSettlements(newExpenses) };
+  }),
   
   settlements: [],
   setSettlements: (settlements: any[]) => set({ settlements }),
