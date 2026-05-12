@@ -69,6 +69,7 @@ import type {
   FavoriteSpot,
   ItineraryAttachment,
   ItineraryNode,
+  ItineraryNodePatchChanges,
   ItineraryPlannerForm,
   SearchItem,
   SyncItineraryPayload,
@@ -243,6 +244,45 @@ function normalizeScheduleForNode(
   };
 }
 
+function getLoadedDaysFromNodes(nodes: ItineraryNode[]): number[] {
+  return Array.from(
+    new Set(
+      nodes
+        .map((node) => Number(node.day ?? 1))
+        .filter((day) => Number.isFinite(day) && day > 0),
+    ),
+  ).sort((a, b) => a - b);
+}
+
+function buildNodePatchChanges(previousNode: ItineraryNode, nextNode: ItineraryNode): ItineraryNodePatchChanges {
+  const changes: ItineraryNodePatchChanges = {};
+
+  if (previousNode.day !== nextNode.day) changes.day = nextNode.day;
+  if ((previousNode.date || '') !== (nextNode.date || '')) changes.date = nextNode.date || null;
+  if ((previousNode.time || '') !== (nextNode.time || '')) changes.time = nextNode.time || '10:00';
+  if ((previousNode.timestamp || '') !== (nextNode.timestamp || '')) changes.timestamp = nextNode.timestamp || null;
+  if ((previousNode.sort_order ?? 0) !== (nextNode.sort_order ?? 0)) changes.sort_order = nextNode.sort_order ?? 0;
+  if ((previousNode.title || '') !== (nextNode.title || '')) changes.title = nextNode.title;
+  if ((previousNode.emoji || '') !== (nextNode.emoji || '')) changes.emoji = nextNode.emoji;
+  if ((previousNode.category || 'other') !== (nextNode.category || 'other')) changes.category = nextNode.category;
+  if ((previousNode.description || '') !== (nextNode.description || '')) changes.description = nextNode.description || '';
+  if ((previousNode.ai_note || '') !== (nextNode.ai_note || '')) changes.ai_note = nextNode.ai_note ?? null;
+  if ((previousNode.intensity || '') !== (nextNode.intensity || '')) changes.intensity = nextNode.intensity ?? null;
+  if (Boolean(previousNode.is_visited) !== Boolean(nextNode.is_visited)) changes.is_visited = Boolean(nextNode.is_visited);
+  if ((previousNode.lat ?? null) !== (nextNode.lat ?? null)) changes.lat = nextNode.lat ?? null;
+  if ((previousNode.lng ?? null) !== (nextNode.lng ?? null)) changes.lng = nextNode.lng ?? null;
+  if ((previousNode.transport_to_next || '') !== (nextNode.transport_to_next || '')) changes.transport_to_next = nextNode.transport_to_next || '';
+  if ((previousNode.image_url || '') !== (nextNode.image_url || '')) changes.image_url = nextNode.image_url || '';
+  if (JSON.stringify(previousNode.attachments || []) !== JSON.stringify(nextNode.attachments || [])) {
+    changes.attachments = nextNode.attachments || [];
+  }
+  if ((previousNode.linkedFactId || '') !== (nextNode.linkedFactId || '')) {
+    changes.linkedFactId = nextNode.linkedFactId || '';
+  }
+
+  return changes;
+}
+
 export default function ItineraryTab() {
   const [viewMode, setViewMode] = useState<'list' | 'map' | 'calendar'>('list');
   const [selectedDay, setSelectedDay] = useState<number>(1);
@@ -277,6 +317,8 @@ export default function ItineraryTab() {
   const [nodeEditingLocks, setNodeEditingLocks] = useState<Record<string, { userName: string; day: number }>>({});
   const [expenseTargetNode, setExpenseTargetNode] = useState<ItineraryNode | null>(null);
   const [isUpdatingPublicState, setIsUpdatingPublicState] = useState(false);
+  const [loadedDays, setLoadedDays] = useState<number[]>([]);
+  const [loadingDay, setLoadingDay] = useState<number | null>(null);
 
   const socketRef = useRef<Socket | null>(null);
   const reorderCommitTimerRef = useRef<number | null>(null);
@@ -286,9 +328,15 @@ export default function ItineraryTab() {
   const pendingReconnectSummaryRef = useRef(false);
   const [recentlySyncedNodeIds, setRecentlySyncedNodeIds] = useState<string[]>([]);
 
-  const { nodes, setNodes, addNode, updateNode, removeNode, collaborators, setCollaborators, isOffline, setOffline } =
+  const { nodes, setNodes, replaceDayNodes, addNode, updateNode, patchNode, removeNode, collaborators, setCollaborators, isOffline, setOffline } =
     useItineraryStore();
   const { showToast, activeTripId, setActiveTripId, openRedirectModal, addNotification } = useAppStore();
+
+  useEffect(() => {
+    setSelectedDay(1);
+    setLoadedDays([]);
+    setLoadingDay(null);
+  }, [activeTripId]);
 
   useEffect(() => () => {
     if (reorderCommitTimerRef.current) {
@@ -407,7 +455,20 @@ export default function ItineraryTab() {
     if (isOffline || !activeTripId || orderedNodes.length === 0) return;
 
     for (const node of orderedNodes) {
-      const payload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: node };
+      const payload: SyncItineraryPayload = {
+        trip_id: activeTripId,
+        action: 'patch_node',
+        payload: {
+          node_id: node.node_id,
+          changes: {
+            day: node.day,
+            date: node.date || null,
+            time: node.time,
+            timestamp: node.timestamp || null,
+            sort_order: node.sort_order ?? 0,
+          },
+        },
+      };
       socketRef.current?.emit('sync_itinerary', payload);
       void syncItinerary(payload).catch(() => {
         setTip('排序同步失敗，重新整理後可回到最後儲存版本。');
@@ -503,9 +564,9 @@ export default function ItineraryTab() {
   useEffect(() => {
     if (!activeTripId || isOffline || nodes.length === 0) return;
     try {
-      localStorage.setItem(`roamjelly_itinerary_${activeTripId}`, JSON.stringify(nodes));
+      writeCachedItineraryForLoadedDays(activeTripId, nodes, loadedDays);
     } catch {}
-  }, [nodes, activeTripId, isOffline]);
+  }, [nodes, activeTripId, isOffline, loadedDays]);
 
   // Online/offline tracking
   useEffect(() => {
@@ -553,15 +614,19 @@ export default function ItineraryTab() {
     const init = async () => {
       if (!activeTripId) {
         setLoading(false);
+        setLoadedDays([]);
         return;
       }
+
+      const initialDay = 1;
       try {
         setLoading(true);
+        setLoadingDay(initialDay);
         const [tripResult, favResult, collabResult, itineraryResult, factsResult] = await Promise.all([
           fetchTripInfo(activeTripId),
           fetchFavorites(activeTripId),
           fetchCollaborators(activeTripId),
-          !isOffline ? fetchItinerary(activeTripId) : Promise.resolve(readCachedItinerary(activeTripId)),
+          !isOffline ? fetchItinerary(activeTripId, { day: initialDay }) : Promise.resolve(readCachedItinerary(activeTripId)),
           fetchTripFacts(activeTripId).catch(() => []),
         ]);
         setTripInfo(tripResult);
@@ -580,11 +645,12 @@ export default function ItineraryTab() {
         }
         const assignedNodes = assignDaysBasedOnTimeAndOrder(itineraryResult, tripResult.startDate || '2026-06-15');
         setNodes(assignedNodes);
+        setLoadedDays(isOffline ? getLoadedDaysFromNodes(assignedNodes) : [initialDay]);
 
         if (pendingReconnectSummaryRef.current && !isOffline) {
           const offlineSnapshot = offlineSnapshotRef.current.length > 0
-            ? offlineSnapshotRef.current
-            : readCachedItinerary(activeTripId);
+            ? offlineSnapshotRef.current.filter((node: ItineraryNode) => node.day === initialDay)
+            : readCachedItinerary(activeTripId).filter((node: ItineraryNode) => node.day === initialDay);
           const diffSummary = summarizeItineraryDiff(offlineSnapshot, assignedNodes);
 
           if (diffSummary.totalChanges > 0) {
@@ -617,9 +683,12 @@ export default function ItineraryTab() {
         }
       } catch {
         const cached = readCachedItinerary(activeTripId);
-        setNodes(assignDaysBasedOnTimeAndOrder(cached, '2026-06-15'));
+        const assignedCached = assignDaysBasedOnTimeAndOrder(cached, '2026-06-15');
+        setNodes(assignedCached);
+        setLoadedDays(getLoadedDaysFromNodes(assignedCached));
         setTip('同步服務暫時不可用，先顯示最近的離線內容。');
       } finally {
+        setLoadingDay(null);
         setLoading(false);
       }
     };
@@ -651,6 +720,11 @@ export default function ItineraryTab() {
         if (event.action === 'remove_node') {
           removeNode((event.payload as { node_id: string }).node_id);
           addNotification('協作者刪除了一個行程節點');
+        } else if (event.action === 'patch_node') {
+          const patch = event.payload as { node_id: string; changes: ItineraryNodePatchChanges };
+          if (!patch?.node_id || !patch?.changes) return;
+          patchNode(patch.node_id, { ...patch.changes, source: 'remote' });
+          addNotification('協作者更新了一個行程節點');
         } else if (event.action === 'add_node') {
           const node = event.payload as ItineraryNode;
           addNode({ ...node, source: 'remote' });
@@ -706,7 +780,7 @@ export default function ItineraryTab() {
       setIsSocketConnected(false);
       setNodeEditingLocks({});
     };
-  }, [isOffline, addNode, removeNode, activeTripId, showToast]);
+  }, [isOffline, addNode, patchNode, removeNode, activeTripId, showToast]);
 
   const maxNodeDay = useMemo(() => {
     if (nodes.length === 0) return 1;
@@ -756,6 +830,32 @@ export default function ItineraryTab() {
       ),
     [nodes, safeSelectedDay],
   );
+
+  useEffect(() => {
+    const loadSelectedDay = async () => {
+      if (!activeTripId || isOffline || loadedDays.includes(safeSelectedDay)) return;
+
+      try {
+        setLoadingDay(safeSelectedDay);
+        const itineraryResult = await fetchItinerary(activeTripId, { day: safeSelectedDay });
+        const assignedNodes = assignDaysBasedOnTimeAndOrder(itineraryResult, tripInfo?.startDate || '2026-06-15');
+        replaceDayNodes(safeSelectedDay, assignedNodes.filter((node: ItineraryNode) => node.day === safeSelectedDay));
+        setLoadedDays((prev: number[]) => Array.from(new Set([...prev, safeSelectedDay])).sort((a, b) => a - b));
+      } catch {
+        const cachedDayNodes = readCachedItinerary(activeTripId).filter((node) => node.day === safeSelectedDay);
+        if (cachedDayNodes.length > 0) {
+          replaceDayNodes(safeSelectedDay, cachedDayNodes);
+          setLoadedDays((prev: number[]) => Array.from(new Set([...prev, safeSelectedDay])).sort((a, b) => a - b));
+        } else {
+          showToast(`Day ${safeSelectedDay} 載入失敗，請稍後再試。`, 'warning');
+        }
+      } finally {
+        setLoadingDay((current: number | null) => (current === safeSelectedDay ? null : current));
+      }
+    };
+
+    void loadSelectedDay();
+  }, [activeTripId, isOffline, loadedDays, replaceDayNodes, safeSelectedDay, showToast, tripInfo?.startDate]);
 
   const handleExportIcs = () => {
     if (!tripInfo) return;
@@ -886,7 +986,17 @@ export default function ItineraryTab() {
         if (!coords) return;
         const patched = { ...normalized, lat: coords.lat, lng: coords.lng };
         updateNode(patched);
-        const syncPayload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: patched };
+        const syncPayload: SyncItineraryPayload = {
+          trip_id: activeTripId,
+          action: 'patch_node',
+          payload: {
+            node_id: normalized.node_id,
+            changes: {
+              lat: coords.lat,
+              lng: coords.lng,
+            },
+          },
+        };
         socketRef.current?.emit('sync_itinerary', syncPayload);
         void syncItinerary(syncPayload).catch(() => {
           updateNode(normalized);
@@ -969,8 +1079,17 @@ export default function ItineraryTab() {
         fallbackSortOrder,
       }) as ItineraryNode,
     );
+    const changes = buildNodePatchChanges(previousNode, normalized);
+    if (Object.keys(changes).length === 0) return;
     updateNode(normalized);
-    const payload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: normalized };
+    const payload: SyncItineraryPayload = {
+      trip_id: activeTripId,
+      action: 'patch_node',
+      payload: {
+        node_id: normalized.node_id,
+        changes,
+      },
+    };
     socketRef.current?.emit('sync_itinerary', payload);
     try {
       await syncItinerary(payload);
@@ -1566,7 +1685,10 @@ export default function ItineraryTab() {
                         : 'bg-white/60 text-slate-400 border-white hover:bg-white hover:text-pink-400'
                     }`}
                   >
-                    <span>DAY {day}</span>
+                    <span className="flex items-center gap-1">
+                      <span>DAY {day}</span>
+                      {loadingDay === day && <Loader2 size={12} className="animate-spin" />}
+                    </span>
                     {displayDate && <span className="text-[10px] opacity-70 tracking-tighter">{displayDate}</span>}
                     <span className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">{count} SPOTS</span>
                   </button>
@@ -1703,7 +1825,10 @@ export default function ItineraryTab() {
                         : 'bg-white/40 border-white/60 text-slate-500 backdrop-blur-sm'
                     }`}
                   >
-                    <span className="text-[10px] mb-1 opacity-70 uppercase tracking-widest">DAY</span>
+                    <span className="text-[10px] mb-1 opacity-70 uppercase tracking-widest flex items-center gap-1 justify-center">
+                      <span>DAY</span>
+                      {loadingDay === day && <Loader2 size={11} className="animate-spin" />}
+                    </span>
                     <span className="text-lg sm:text-xl leading-none">{day}</span>
                     {displayDate && <span className={`text-[10px] font-bold mt-1.5 opacity-60 tracking-tight`}>{displayDate}</span>}
                   </motion.button>
@@ -4060,6 +4185,17 @@ function readCachedItinerary(tripId: string): ItineraryNode[] {
   } catch {
     return [];
   }
+}
+
+function writeCachedItineraryForLoadedDays(tripId: string, nodes: ItineraryNode[], loadedDays: number[]) {
+  if (typeof window === 'undefined' || !tripId || loadedDays.length === 0) return;
+  const loadedDaySet = new Set(loadedDays);
+  const cached = readCachedItinerary(tripId);
+  const merged = [
+    ...cached.filter((node) => !loadedDaySet.has(Number(node.day ?? 1))),
+    ...nodes.filter((node) => loadedDaySet.has(Number(node.day ?? 1))),
+  ];
+  window.localStorage.setItem(`roamjelly_itinerary_${tripId}`, JSON.stringify(merged));
 }
 
 function summarizeItineraryDiff(previousNodes: ItineraryNode[], nextNodes: ItineraryNode[]) {

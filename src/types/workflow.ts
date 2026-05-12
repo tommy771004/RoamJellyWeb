@@ -130,6 +130,36 @@ export interface ItineraryNode {
   attachments?: ItineraryAttachment[];
 }
 
+export interface ItineraryNodePatchChanges {
+  day?: number;
+  date?: string | null;
+  time?: string;
+  timestamp?: string | null;
+  sort_order?: number;
+  title?: string;
+  emoji?: string;
+  category?: string;
+  description?: string;
+  ai_note?: string | null;
+  intensity?: ItineraryNode['intensity'] | null;
+  is_visited?: boolean;
+  lat?: number | null;
+  lng?: number | null;
+  transport_to_next?: string;
+  image_url?: string;
+  attachments?: ItineraryAttachment[];
+  linkedFactId?: string;
+}
+
+export interface FetchItineraryOptions {
+  day?: number;
+}
+
+export interface SyncItineraryPatchPayload {
+  node_id: string;
+  changes: ItineraryNodePatchChanges;
+}
+
 export interface ItineraryPlannerForm {
   days: number;
   departureFrom: string;
@@ -220,6 +250,6 @@ export interface UpsertTravelFactBody {
 
 export interface SyncItineraryPayload {
   trip_id: string;
-  action: 'add_node' | 'remove_node';
-  payload: ItineraryNode | { node_id: string };
+  action: 'add_node' | 'remove_node' | 'patch_node';
+  payload: ItineraryNode | { node_id: string } | SyncItineraryPatchPayload;
 }

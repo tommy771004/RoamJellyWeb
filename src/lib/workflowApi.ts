@@ -1,5 +1,6 @@
 import type {
   AiPreferenceProfile,
+  FetchItineraryOptions,
   SearchItem,
   TrackClickOutBody,
   UserPreferencesResponse,
@@ -148,8 +149,14 @@ export async function fetchFavorites(tripId?: string): Promise<any> {
   }
 }
 
-export async function fetchItinerary(tripId?: string): Promise<any> {
-  const url = tripId ? `/api/itinerary?trip_id=${encodeURIComponent(tripId)}` : '/api/itinerary';
+export async function fetchItinerary(tripId?: string, options?: FetchItineraryOptions): Promise<any> {
+  const params = new URLSearchParams();
+  if (tripId) params.set('trip_id', tripId);
+  if (Number.isFinite(Number(options?.day)) && Number(options?.day) > 0) {
+    params.set('day', String(Number(options?.day)));
+  }
+  const queryString = params.toString();
+  const url = queryString ? `/api/itinerary?${queryString}` : '/api/itinerary';
   try {
     const token = getStoredToken();
     const res = await fetch(url, {
