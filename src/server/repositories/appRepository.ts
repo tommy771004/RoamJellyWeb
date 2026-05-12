@@ -215,8 +215,12 @@ export class AppRepository {
     return member?.role || null;
   }
 
-  async getItineraryNodes(tripId: string) {
+  async getItineraryNodes(tripId: string, options?: { day?: number }) {
     if (!this.db) return [];
+    const whereClause = Number.isFinite(Number(options?.day))
+      ? and(eq(schema.itineraryNodes.tripId, tripId), eq(schema.itineraryNodes.day, Number(options?.day)))
+      : eq(schema.itineraryNodes.tripId, tripId);
+
     try {
       const rows = await this.db
         .select({
@@ -224,7 +228,7 @@ export class AppRepository {
           attachments: schema.itineraryNodes.attachments,
         })
         .from(schema.itineraryNodes)
-        .where(eq(schema.itineraryNodes.tripId, tripId))
+        .where(whereClause)
         .orderBy(
           asc(schema.itineraryNodes.date),
           asc(schema.itineraryNodes.day),
@@ -244,7 +248,7 @@ export class AppRepository {
       const rows = await this.db
         .select(itineraryNodeSelectBase)
         .from(schema.itineraryNodes)
-        .where(eq(schema.itineraryNodes.tripId, tripId))
+        .where(whereClause)
         .orderBy(
           asc(schema.itineraryNodes.date),
           asc(schema.itineraryNodes.day),
