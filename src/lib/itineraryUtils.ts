@@ -92,6 +92,8 @@ export function assignDaysBasedOnTimeAndOrder(nodes: any[], startDateStr?: strin
       emoji: n.emoji || n.icon || '📍',
       category: n.category || 'other',
       description: n.description ?? n.ai_note ?? n.notes,
+      ai_note: n.ai_note ?? n.aiNote ?? undefined,
+      intensity: n.intensity ?? undefined,
       is_visited: n.is_visited ?? n.isVisited ?? false,
       source: n.source || 'remote',
       lat: n.lat,
