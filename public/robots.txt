@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+
+# AI search bots — explicitly allowed for indexing and citation
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Training-only crawlers — disallowed (search bots above are still permitted)
+User-agent: CCBot
+Disallow: /
+
+Sitemap: https://roam-jelly-web.vercel.app/sitemap.xml
