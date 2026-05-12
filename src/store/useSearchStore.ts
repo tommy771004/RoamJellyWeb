@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { SearchItem } from '../types/workflow';
+import { fetchUserPreferences, updateUserAiProfile } from '../lib/workflowApi';
+import type { AiPreferenceProfile, SearchItem } from '../types/workflow';
 
 export interface SearchFormState {
   from: string;
@@ -29,6 +30,9 @@ interface SearchStore {
 
   trackedPrices: string[];
   toggleTrack: (id: string) => void;
+
+  aiProfile: AiPreferenceProfile | null;
+  saveAiProfile: (profile: AiPreferenceProfile) => Promise<void>;
 
   loadPreferences: () => Promise<void>;
 }
@@ -61,7 +65,22 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
       : [...state.trackedPrices, id]
   })),
 
+  aiProfile: null,
+  saveAiProfile: async (profile) => {
+    const savedProfile = await updateUserAiProfile(profile);
+    set({ aiProfile: savedProfile });
+  },
+
   loadPreferences: async () => {
-    // Intentionally empty for basic restore
+    try {
+      const data = await fetchUserPreferences();
+      set({
+        savedItems: data?.saved_items ?? [],
+        trackedPrices: data?.tracked_prices ?? [],
+        aiProfile: data?.ai_profile ?? null,
+      });
+    } catch (error) {
+      console.error('loadPreferences failed', error);
+    }
   }
 }));
