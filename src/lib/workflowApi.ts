@@ -3,15 +3,25 @@ import type { SearchItem, TrackClickOutBody } from '../types/workflow';
 export class SearchTimeoutError extends Error {}
 export class SearchServiceUnavailableError extends Error {}
 
+async function parseApiError(res: Response, fallback: string): Promise<Error> {
+  try {
+    const data = await res.json();
+    const message = String(data?.message ?? fallback).trim() || fallback;
+    return new Error(message);
+  } catch {
+    return new Error(fallback);
+  }
+}
+
 export async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng: number } | null> {
   try {
     const q = encodeURIComponent(`${title} ${city}`);
-    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja`;
+    const url = `/api/geocode?q=${q}`;
     const apiRes = await fetch(url);
     if (!apiRes.ok) return null;
-    const items = await apiRes.json();
-    if (items && items.length > 0) {
-      return { lat: parseFloat(items[0].lat), lng: parseFloat(items[0].lon) };
+    const data = await apiRes.json();
+    if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
+      return { lat: data.lat, lng: data.lng };
     }
   } catch {
     return null;
@@ -23,24 +33,54 @@ export function getStoredToken(): string | null {
   return localStorage.getItem('access_token');
 }
 
+export async function createGuestSession(displayName?: string): Promise<{ token: string; user_id: string }> {
+  const res = await fetch('/api/auth/guest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ display_name: displayName?.trim() || undefined }),
+  });
+
+  if (!res.ok) {
+    throw await parseApiError(res, '無法建立訪客身分，請稍後再試。');
+  }
+
+  const data = await res.json();
+  const token = String(data?.token ?? '').trim();
+  const userId = String(data?.user_id ?? '').trim();
+
+  if (!token || !userId) {
+    throw new Error('訪客登入失敗，請稍後再試。');
+  }
+
+  setClientAccessToken(token);
+  localStorage.setItem('user_id', userId);
+  localStorage.setItem('last_activity', Date.now().toString());
+  return { token, user_id: userId };
+}
+
 export async function ensureClientAccessToken(): Promise<string> {
   const token = getStoredToken();
   if (token) return token;
   
   try {
     const res = await fetch('/api/auth/dev-token', { method: 'POST' });
-    const data = await res.json();
-    if (res.ok && data.token) {
-      setClientAccessToken(data.token);
-      return data.token;
+    if (res.ok) {
+      const data = await res.json();
+      if (data.token) {
+        setClientAccessToken(data.token);
+        return data.token;
+      }
     }
   } catch (error) {
     console.error('Failed to get dev-token', error);
   }
 
-  const dummyToken = 'dummy_token';
-  setClientAccessToken(dummyToken);
-  return dummyToken;
+  const guest = await createGuestSession().catch(() => null);
+  if (guest?.token) {
+    return guest.token;
+  }
+
+  throw new Error('No access token available. Please log in.');
 }
 
 export function setClientAccessToken(token: string) {
@@ -74,12 +114,16 @@ export async function registerUser(username: string, password: string, display_n
 }
 
 export async function fetchCollaborators(tripId: string): Promise<any> {
+  if (!tripId) return [];
   try {
     const url = `/api/collaborators?trip_id=${encodeURIComponent(tripId)}`;
-    const res = await fetch(url);
+    const token = getStoredToken();
+    const res = await fetch(url, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
     if (!res.ok) return [];
     const data = await res.json();
-    return data.collaborators || [];
+    return Array.isArray(data) ? data : (data.collaborators || []);
   } catch (error) {
     console.error('fetchCollaborators failed', error);
     return [];
@@ -113,6 +157,7 @@ export async function fetchItinerary(tripId?: string): Promise<any> {
   }
 }
 export async function fetchTripInfo(tripId: string): Promise<any> {
+  if (!tripId) return null;
   const url = `/api/trips/${encodeURIComponent(tripId)}`;
   const token = getStoredToken();
   const res = await fetch(url, {
@@ -135,7 +180,10 @@ export async function syncItinerary(payload: any): Promise<any> {
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
     body: JSON.stringify(payload)
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '行程同步失敗');
+  }
+  return true;
 }
 export async function deleteItineraryNode(nodeId: string): Promise<any> { 
   const token = getStoredToken();
@@ -143,29 +191,26 @@ export async function deleteItineraryNode(nodeId: string): Promise<any> {
     method: 'DELETE',
     headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '刪除行程失敗');
+  }
+  return true;
 }
-export async function addFavorite(tripId: string, title: string, emoji: string): Promise<any> { 
+export async function addFavorite(tripId: string, title: string, emoji: string): Promise<{ spot?: any; error?: string } | null> {
   try {
     const token = getStoredToken();
-    const payload = {
-      trip_id: tripId,
-      title: title,
-      emoji: emoji,
-    };
-    
     const res = await fetch(`/api/favorites`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ trip_id: tripId, title, emoji }),
     });
-    if (res.ok) {
-        return await res.json();
-    }
-  } catch (error) {
-    console.error('addFavorite failed', error);
+    if (res.ok) return { spot: await res.json() };
+    if (res.status === 404) return { error: '找不到此景點，請確認名稱是否正確。' };
+    if (res.status === 422) return { error: '景點名稱無法定位，請嘗試更具體的地名。' };
+    return { error: `新增失敗（${res.status}），請稍後再試。` };
+  } catch {
+    return { error: '網路連線失敗，請確認網路後再試。' };
   }
-  return { id: `fav_${Date.now()}`, title: title, emoji: emoji, lat: 35.6895, lng: 139.6917 }; 
 }
 export async function deleteFavorite(id: string): Promise<any> { 
   try {
@@ -178,12 +223,20 @@ export async function deleteFavorite(id: string): Promise<any> {
   return true; 
 }
 export async function fetchChecklist(tripId: string): Promise<any> { 
-  const res = await fetch(`/api/checklist?trip_id=${tripId}`);
+  if (!tripId) return [];
+  const token = getStoredToken();
+  const res = await fetch(`/api/checklist?trip_id=${tripId}`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
   if (!res.ok) return [];
   return res.json();
 }
 export async function fetchSettlements(tripId: string): Promise<any> { 
-  const res = await fetch(`/api/settlements?trip_id=${tripId}`);
+  if (!tripId) return [];
+  const token = getStoredToken();
+  const res = await fetch(`/api/settlements?trip_id=${tripId}`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
   if (!res.ok) return [];
   return res.json();
 }
@@ -197,13 +250,20 @@ export async function fetchUserTrips(): Promise<any> {
   return Array.isArray(data) ? data : (data.trips || []);
 }
 export async function fetchWeather(city: string): Promise<any> { 
-  const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
-  if (!res.ok) return { currentTemp: 22, condition: 'Sunny' };
+  if (!city || city === '您的目的地' || city === '指定地點') return null;
+  const token = getStoredToken();
+  const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
+  if (!res.ok) return null;
   return res.json();
 }
 export async function fetchHandbooks(): Promise<any[]> {
   try {
-    const res = await fetch('/api/handbooks');
+    const token = getStoredToken();
+    const res = await fetch('/api/handbooks', {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
     if (!res.ok) return [];
     return res.json();
   } catch (error) {
@@ -218,16 +278,27 @@ export async function clearSettlement(tripId: string, from_name?: string, to_nam
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
     body: JSON.stringify({ trip_id: tripId, from_name, to_name, currency })
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '結清失敗');
+  }
+  return await res.json();
 }
 export async function submitLedgerExpense(tripId: string, expense: any): Promise<any> { 
   const token = getStoredToken();
+  const payload = {
+    trip_id: tripId,
+    ...expense,
+    split_with: expense?.split_with ?? expense?.splitWith ?? [],
+  };
   const res = await fetch('/api/ledger/expense', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-    body: JSON.stringify({ trip_id: tripId, ...expense })
+    body: JSON.stringify(payload)
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '分帳送出失敗');
+  }
+  return await res.json();
 }
 export async function updateChecklist(payload: any): Promise<any> { 
   const token = getStoredToken();
@@ -236,39 +307,34 @@ export async function updateChecklist(payload: any): Promise<any> {
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
     body: JSON.stringify(payload)
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '清單同步失敗');
+  }
+  return await res.json();
 }
 export interface TripSummary {}
 
 export async function fetchTripPreview(id: string): Promise<any> {
-    try {
-        const token = getStoredToken();
-        const res = await fetch(`/api/trips/${id}/preview`, {
-            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
-        });
-        if (res.ok) {
-            return await res.json();
-        }
-    } catch (e) {
-        console.error('fetchTripPreview error', e);
-    }
-    return null;
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${id}/preview`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
+  if (!res.ok) {
+    throw await parseApiError(res, '無法載入旅程資訊');
+  }
+  return await res.json();
 }
 
 export async function joinTrip(id: string): Promise<any> {
-    try {
-        const token = getStoredToken();
-        const res = await fetch(`/api/trips/${id}/join`, {
-            method: 'POST',
-            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
-        });
-        if (res.ok) {
-            return await res.json();
-        }
-    } catch (e) {
-        console.error('joinTrip error', e);
-    }
-    return null;
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${id}/join`, {
+    method: 'POST',
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
+  if (!res.ok) {
+    throw await parseApiError(res, '加入旅程失敗');
+  }
+  return await res.json();
 }
 
 export async function fetchTripFlights(tripId: string) {
@@ -412,17 +478,33 @@ export async function regenerateItinerarySpot(params: {
   node_id: string;
   destination: string;
   day: number;
+  current_date?: string;
   current_time: string;
   current_title: string;
+  current_category?: string;
   notes?: string;
+  preserve_time_window?: boolean;
+  previous_node?: {
+    time?: string;
+    title?: string;
+    category?: string;
+  };
+  next_node?: {
+    time?: string;
+    title?: string;
+    category?: string;
+  };
+  travel_facts_context?: string;
 }): Promise<{
   time: string;
   title: string;
   emoji: string;
   category: string;
   ai_note: string;
+  transport_to_next?: string;
   lat?: number;
   lng?: number;
+  linkedFactId?: string;
 }> {
   const token = getStoredToken();
   const res = await fetch('/api/itinerary/regenerate-spot', {
@@ -439,4 +521,25 @@ export async function regenerateItinerarySpot(params: {
   }
   const data = await res.json();
   return data.data;
+}
+
+export async function fetchSettlementHistory(tripId: string): Promise<any[]> {
+  try {
+    const token = getStoredToken();
+    const res = await fetch(`/api/settlements/history?trip_id=${encodeURIComponent(tripId)}`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchSpotEnrichment(name: string): Promise<{ description?: string; wiki_url?: string; thumbnail?: string }> {
+  try {
+    const res = await fetch(`/api/spots/enrich?name=${encodeURIComponent(name)}`);
+    if (res.ok) return res.json();
+  } catch { /* ignore */ }
+  return {};
 }
