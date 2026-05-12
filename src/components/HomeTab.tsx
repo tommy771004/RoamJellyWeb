@@ -456,11 +456,18 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
         if (handbook.nodes && handbook.nodes.length) {
           setNodes([]);
+          const syncedNodes: any[] = [];
           for (const rawNode of handbook.nodes) {
              const normalized = { ...rawNode, source: 'local' } as any;
              addNode(normalized);
              const payload = { trip_id: TRIP_ID, action: 'add_node', payload: normalized } as any;
-             await syncItinerary(payload);
+             try {
+               await syncItinerary(payload);
+               syncedNodes.push(normalized);
+             } catch {
+               setNodes(syncedNodes);
+               throw new Error('clone sync failed');
+             }
           }
         }
 
@@ -642,7 +649,12 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       // Update local store immediately so the node appears in the UI
       useItineraryStore.getState().addNode(payload.payload);
       
-      await syncItinerary(payload);
+      try {
+        await syncItinerary(payload);
+      } catch {
+        useItineraryStore.getState().removeNode(payload.payload.node_id);
+        throw new Error('flight import sync failed');
+      }
 
       showToast(`已把 ${flight.provider} 航班帶入旅程錨點。`, 'success');
       setTimeout(() => {
