@@ -264,6 +264,8 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
     startDate,
     endDate,
     coverImage,
+    isPublic: Boolean(trip.isPublic),
+    forkCount: Number(trip.forkCount ?? 0),
   };
 }
 
@@ -1209,8 +1211,8 @@ async function startServer() {
   });
 
   app.get('/api/search', async (req, res) => {
-    const from = String(req.query.from ?? '').trim().toUpperCase();
-    const to = String(req.query.to ?? '').trim().toUpperCase();
+    const from = String(req.query.from ?? '').trim();
+    const to = String(req.query.to ?? '').trim();
     const date = String(req.query.date ?? '').trim();
 
     // If no params, return "Popular Recommendations" (latest flights)
@@ -1238,7 +1240,7 @@ async function startServer() {
       return;
     }
 
-    const cacheKey = `${from}_${to}_${date}`;
+    const cacheKey = `${from.toUpperCase()}_${to.toUpperCase()}_${date}`;
     const cached = await getSearchCacheData(cacheKey);
     if (cached) {
       await appendSearchHistory({
@@ -1432,11 +1434,53 @@ async function startServer() {
       res.status(401).json({ status: 'error', message: 'unauthorized' });
       return;
     }
-    const [savedItems, trackedPrices] = await Promise.all([
+    const [savedItems, trackedPrices, aiProfile] = await Promise.all([
       repo.getUserSavedItems(userId),
       repo.getUserTrackedPrices(userId),
+      repo.getUserAiProfile(userId),
     ]);
-    res.json({ saved_items: savedItems, tracked_prices: trackedPrices });
+    res.json({
+      saved_items: savedItems.map((item: any) => item.itemId),
+      tracked_prices: trackedPrices.map((item: any) => item.itemId),
+      ai_profile: aiProfile ? {
+        departure: aiProfile.preferredDeparture ?? '',
+        companions: aiProfile.preferredCompanions ?? '',
+        vibes: Array.isArray(aiProfile.preferredVibes) ? aiProfile.preferredVibes : [],
+        interests: Array.isArray(aiProfile.preferredInterests) ? aiProfile.preferredInterests : [],
+        dietary: Array.isArray(aiProfile.preferredDietary) ? aiProfile.preferredDietary : [],
+        transport: Array.isArray(aiProfile.preferredTransport) ? aiProfile.preferredTransport : [],
+        budget: aiProfile.preferredBudget ?? '',
+      } : null,
+    });
+  });
+
+  app.patch('/api/user/preferences/profile', async (req, res) => {
+    const userId = getRequestUserId(req);
+    if (!userId) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
+
+    const profile = {
+      departure: String(req.body?.departure ?? '').trim(),
+      companions: String(req.body?.companions ?? '').trim(),
+      vibes: Array.isArray(req.body?.vibes) ? req.body.vibes : [],
+      interests: Array.isArray(req.body?.interests) ? req.body.interests : [],
+      dietary: Array.isArray(req.body?.dietary) ? req.body.dietary : [],
+      transport: Array.isArray(req.body?.transport) ? req.body.transport : [],
+      budget: String(req.body?.budget ?? '').trim(),
+    };
+
+    const row = await repo.upsertUserAiProfile(userId, profile);
+    res.json({
+      departure: row?.preferredDeparture ?? profile.departure,
+      companions: row?.preferredCompanions ?? profile.companions,
+      vibes: Array.isArray(row?.preferredVibes) ? row.preferredVibes : profile.vibes,
+      interests: Array.isArray(row?.preferredInterests) ? row.preferredInterests : profile.interests,
+      dietary: Array.isArray(row?.preferredDietary) ? row.preferredDietary : profile.dietary,
+      transport: Array.isArray(row?.preferredTransport) ? row.preferredTransport : profile.transport,
+      budget: row?.preferredBudget ?? profile.budget,
+    });
   });
 
   app.post('/api/user/saves', async (req, res) => {
@@ -1560,9 +1604,16 @@ async function startServer() {
 
     let trip = await repo.getTripById(tripId);
     let nodes = await repo.getItineraryNodes(tripId);
+    const facts = await repo.getTripTravelFacts(tripId);
     
     if (!trip) {
       res.status(404).json({ status: 'error', message: 'trip not found' });
+      return;
+    }
+
+    const role = await repo.getTripMemberRole(tripId, userId);
+    if (!role && !trip.isPublic) {
+      res.status(403).json({ status: 'error', message: 'trip is not public' });
       return;
     }
 
@@ -1576,19 +1627,75 @@ async function startServer() {
     // Add user as owner
     await repo.addTripMember(newTripId, userId, 'owner');
 
+    const factIdMap = new Map<string, string>();
+    for (const fact of facts) {
+      const createdFact = await repo.createTripTravelFact(newTripId, {
+        factType: fact.factType,
+        source: fact.source,
+        title: fact.title,
+        startAt: fact.startAt,
+        endAt: fact.endAt,
+        locationName: fact.locationName,
+        lat: fact.lat,
+        lng: fact.lng,
+        referenceCode: fact.referenceCode,
+        metadata: fact.metadata ?? null,
+      });
+      if (createdFact?.id) {
+        factIdMap.set(fact.id, createdFact.id);
+      }
+    }
+
     // Copy nodes
     for (const node of nodes) {
       await repo.upsertItineraryNode(newTripId, {
         node_id: `node_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         day: node.day,
+        date: node.date,
         time: node.time || '10:00',
+        timestamp: node.timestamp,
+        sort_order: node.sortOrder,
         title: node.title,
         emoji: node.emoji || '📍',
         category: node.category || 'spot',
+        description: node.description,
+        ai_note: node.aiNote,
+        intensity: node.intensity,
+        is_visited: node.isVisited,
+        lat: node.lat,
+        lng: node.lng,
+        transport_to_next: node.transportToNext,
+        image_url: node.imageUrl,
+        attachments: Array.isArray(node.attachments) ? node.attachments : [],
+        linkedFactId: node.linkedFactId ? (factIdMap.get(node.linkedFactId) ?? undefined) : undefined,
       });
     }
 
+    await repo.incrementTripForkCount(tripId);
+
     res.json({ status: 'success', data: { new_trip_id: newTripId } });
+  });
+
+  app.patch('/api/trips/:trip_id/public', async (req, res) => {
+    const tripId = req.params.trip_id;
+    const allowed = await ensureTripRole(req, res, tripId, 'owner');
+    if (!allowed) return;
+
+    const isPublic = Boolean(req.body?.isPublic);
+    const updated = await repo.updateTripPublicState(tripId, isPublic);
+    if (!updated) {
+      res.status(404).json({ status: 'error', message: 'trip not found' });
+      return;
+    }
+
+    res.json({
+      status: 'success',
+      data: {
+        trip_id: updated.id,
+        isPublic: Boolean(updated.isPublic),
+        forkCount: Number(updated.forkCount ?? 0),
+      },
+    });
   });
 
   app.get('/api/trips/:trip_id', async (req, res) => {
@@ -2147,7 +2254,7 @@ async function startServer() {
         ];
         
         for (const mt of demoTrips) {
-          await repo.createTrip({ id: mt.id, name: mt.name, destination: mt.destination });
+          await repo.createTrip({ id: mt.id, name: mt.name, destination: mt.destination, isPublic: true, forkCount: 0 });
           await repo.addTripMember(mt.id, mt.userId, mt.role);
           await repo.upsertItineraryNode(mt.id, {
             node_id: `node_start_${mt.id}`,
