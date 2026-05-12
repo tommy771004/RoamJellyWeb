@@ -114,17 +114,19 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
   const destIATA = getIata(destination);
   // Construct dynamic URL based on Trip.com's structure
   const url = `https://tw.trip.com/flights/${originIATA}-to-${destIATA}/tickets-${originIATA}-${destIATA}/?flighttype=ow&dcity=${originIATA}&acity=${destIATA}&ddate=${date}`;
+  const isVercel = !!process.env.VERCEL;
+  const shouldBypassOnVercel = process.env.TRIP_SCRAPER_BYPASS_ON_VERCEL === 'true';
+
+  // Allow Vercel scraping by default. Only bypass when explicitly configured.
+  if (isVercel && shouldBypassOnVercel) {
+    console.warn('Trip.com scraper bypassed on Vercel by TRIP_SCRAPER_BYPASS_ON_VERCEL=true.');
+    return [];
+  }
   
   console.log(`Starting Playwright tripParser for: ${url}`);
   
   let browser;
   try {
-    const isVercel = !!process.env.VERCEL;
-    if (isVercel) {
-      console.log('Detected Vercel environment. Bypassing Playwright scraper to avoid 10s serverless limit and plugin dependency errors. Falling back to DB flights.');
-      throw new Error('Vercel environment bypass');
-    }
-    
     // Launch browser (uses sparticuz/chromium on Vercel)
     browser = await playwrightCore.chromium.launch({ 
       headless: true,
@@ -255,7 +257,12 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
     }));
     
   } catch (error: any) {
-    if (error.message && error.message.includes('觸發防爬蟲機制')) {
+    const errorMessage = typeof error?.message === 'string' ? error.message : String(error ?? '');
+    const isExpectedFallback =
+      errorMessage.includes('觸發防爬蟲機制') ||
+      (isVercel && /(timeout|target closed|browser has been closed|failed to launch|executable|navigation)/i.test(errorMessage));
+
+    if (isExpectedFallback) {
       console.warn('Trip.com Scraper blocked or timed out, returning no Trip.com data so the API can fall back to other providers.');
     } else {
       console.error('Trip.com Scraper Error:', error);
