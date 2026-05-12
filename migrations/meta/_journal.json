@@ -43,6 +43,13 @@
       "when": 1778334557169,
       "tag": "0005_nasty_pete_wisdom",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778362200000,
+      "tag": "0006_ordered_daybreak",
+      "breakpoints": true
     }
   ]
 }
