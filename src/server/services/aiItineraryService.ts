@@ -54,12 +54,14 @@ interface AiResponse {
       transport_to_next?: string; // 預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)
       lat?: number; // Approximate latitude of the spot
       lng?: number; // Approximate longitude of the spot
+      linkedFactId?: string; // 如果該行程節點明確對應到 [Travel facts anchors] 中的某個已知項目，請填寫其 ID
     }>;
   }>;
 }
 \`\`\`
 若使用者未提供飲食禁忌，請忽略該限制；若為情侶，請安排浪漫景點。
 根據旅伴類型、節奏偏好與興趣，客製化每日行程安排與景點選擇。
+請極度客製化，發揮創意，**不要給出制式的「抵達與放行李」、「在地必吃美食推薦」、「深度體驗行程」、「經典夜生活」這種通用名稱**，請務必給出真實的當地景點名稱或特色店家名稱，並依據使用者選取的 Travel Vibes 和 Interests 打造有靈魂的旅程。
 
 Details: 
 - Trip length: ${days} days
@@ -68,6 +70,12 @@ Details:
 - Auto flight segments: ${planner?.autoFlightSegments?.join(' | ') || 'Not specified'}
 - Travel facts anchors: ${planner?.travelFactsContext || 'Not specified'}
 - Spots user likes: ${planner?.mustVisitSpots?.join(', ') || 'Not specified'}
+- Companions: ${planner?.companions || 'Not specified'}
+- Travel Vibes: ${planner?.vibes?.length ? planner.vibes.join(', ') : 'Not specified'}
+- Interests: ${planner?.interests?.length ? planner.interests.join(', ') : 'Not specified'}
+- Dietary Restrictions: ${planner?.dietary?.length ? planner.dietary.join(', ') : 'None'}
+- Transport: ${planner?.transport?.length ? planner.transport.join(', ') : 'Not specified'}
+- Budget Level: ${planner?.budget || 'Not specified'}
 - Extra notes: ${planner?.notes || 'None'}
 
 注意：請直接輸出 JSON，不要有任何多餘的解釋文字或 markdown \`\`\` 包裝。
@@ -106,42 +114,37 @@ Details:
 export async function regenerateSpot(params: {
   destination: string;
   day: number;
+  currentDate?: string;
   currentTime: string;
   currentTitle: string;
+  currentCategory?: string;
   notes?: string;
+  preserveTimeWindow?: boolean;
+  previousNode?: {
+    time?: string;
+    title?: string;
+    category?: string;
+  };
+  nextNode?: {
+    time?: string;
+    title?: string;
+    category?: string;
+  };
+  travelFactsContext?: string;
 }): Promise<{
   time: string;
   title: string;
   emoji: string;
   category: string;
   ai_note: string;
+  transport_to_next?: string;
   lat?: number;
   lng?: number;
+  linkedFactId?: string;
 } | null> {
   if (!apiKey) return null;
 
-  const prompt = `你是旅遊規劃 AI，請**只輸出一個 JSON 物件**（不要陣列、不要 markdown），替換使用者不滿意的景點。
-
-被替換的景點：
-- 目的地: ${params.destination}
-- Day: ${params.day}
-- 時間: ${params.currentTime}
-- 原景點名稱: ${params.currentTitle}
-- 使用者備註: ${params.notes || '無'}
-
-請直接輸出一個 JSON 物件，欄位如下：
-{
-  "time": "HH:MM",
-  "title": "景點名稱（在 ${params.destination} 附近的替代景點）",
-  "emoji": "對應表情",
-  "category": "landmark|food|shopping|nature|hotel|activity|nightlife|transport|other",
-  "ai_note": "一句話的貼心提醒",
-  "transport_to_next": "預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)（可選）",
-  "lat": 緯度數字（可選）,
-  "lng": 經度數字（可選）
-}
-
-注意：請直接輸出 JSON，不要有任何多餘說明。`;
+  const prompt = buildRegenerateSpotPrompt(params);
 
   try {
     const text = await fetchOpenRouterWithFallback(apiKey, prompt);
@@ -159,4 +162,61 @@ export async function regenerateSpot(params: {
   }
 
   return null;
+}
+
+export function buildRegenerateSpotPrompt(params: {
+  destination: string;
+  day: number;
+  currentDate?: string;
+  currentTime: string;
+  currentTitle: string;
+  currentCategory?: string;
+  notes?: string;
+  preserveTimeWindow?: boolean;
+  previousNode?: {
+    time?: string;
+    title?: string;
+    category?: string;
+  };
+  nextNode?: {
+    time?: string;
+    title?: string;
+    category?: string;
+  };
+  travelFactsContext?: string;
+}) {
+  return `你是旅遊規劃 AI，請**只輸出一個 JSON 物件**（不要陣列、不要 markdown），替換使用者不滿意的景點。
+
+被替換的景點：
+- 目的地: ${params.destination}
+- Day: ${params.day}
+- 日期: ${params.currentDate || '未提供'}
+- 時間: ${params.currentTime}
+- 原景點名稱: ${params.currentTitle}
+- 原分類: ${params.currentCategory || 'other'}
+- 使用者備註: ${params.notes || '無'}
+- 時間策略: ${params.preserveTimeWindow ? '盡量保留原本時間窗，不要打亂前後節點節奏' : '可微調時間'}
+- 上一個節點: ${params.previousNode ? `${params.previousNode.time || '時間未定'} ${params.previousNode.title || '未提供'} (${params.previousNode.category || 'other'})` : '無'}
+- 下一個節點: ${params.nextNode ? `${params.nextNode.time || '時間未定'} ${params.nextNode.title || '未提供'} (${params.nextNode.category || 'other'})` : '無'}
+
+Travel Facts / Anchor：
+${params.travelFactsContext || '無'}
+
+請直接輸出一個 JSON 物件，欄位如下：
+{
+  "time": "HH:MM",
+  "title": "景點名稱（在 ${params.destination} 附近、符合上下文的替代景點）",
+  "emoji": "對應表情",
+  "category": "landmark|food|shopping|nature|hotel|activity|nightlife|transport|other",
+  "ai_note": "一句話的貼心提醒，說明為何適合替換",
+  "transport_to_next": "預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)（可選）",
+  "lat": 緯度數字（可選）,
+  "lng": 經度數字（可選）,
+  "linkedFactId": "如果這明確綁定到某個 Travel Fact 可選填"
+}
+
+注意：
+1. 若沒有充分理由，time 請維持 ${params.currentTime}。
+2. 替換後請考量上下個節點的節奏、距離與旅程錨點。
+3. 請直接輸出 JSON，不要有任何多餘說明。`;
 }
