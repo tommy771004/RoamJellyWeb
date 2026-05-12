@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import GlassCard from './GlassCard';
 import { TRAVEL_GUIDE_DESTINATIONS, TravelGuideDestination } from '../data/travelGuideDestinations';
 import { LocationPickerPopup } from './LocationPickerPopup';
+import { useSearchStore } from '../store/useSearchStore';
 
 const COMPANION_OPTIONS = [
   { id: 'solo', label: '獨自行走', emoji: '🚶' },
@@ -30,6 +31,12 @@ export interface AiFormData {
   dietary: string[];
   transport: string[];
   budget: string;
+}
+
+function normalizeProfileList(values?: string[]) {
+  return Array.isArray(values)
+    ? values.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    : [];
 }
 
 export const MultiSelectPill: React.FC<{ 
@@ -59,6 +66,7 @@ export default function AiForm({
   onSubmit: (data: AiFormData) => void;
   onCancel?: () => void;
 }) {
+  const { aiProfile, saveAiProfile } = useSearchStore();
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDestDropdown, setShowDestDropdown] = useState(false);
@@ -74,6 +82,21 @@ export default function AiForm({
     transport: [],
     budget: '',
   });
+
+  useEffect(() => {
+    if (!aiProfile) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      departure: prev.departure || aiProfile.departure || '',
+      companions: prev.companions || aiProfile.companions || '',
+      vibes: prev.vibes.length ? prev.vibes : normalizeProfileList(aiProfile.vibes),
+      interests: prev.interests.length ? prev.interests : normalizeProfileList(aiProfile.interests),
+      dietary: prev.dietary.length ? prev.dietary : normalizeProfileList(aiProfile.dietary),
+      transport: prev.transport.length ? prev.transport : normalizeProfileList(aiProfile.transport),
+      budget: prev.budget || aiProfile.budget || '',
+    }));
+  }, [aiProfile]);
 
   const handleNext = () => {
     if (formData.departure && formData.destination && formData.companions) {
@@ -97,6 +120,15 @@ export default function AiForm({
   };
 
   const handleSubmit = () => {
+    void saveAiProfile({
+      departure: formData.departure,
+      companions: formData.companions,
+      vibes: formData.vibes,
+      interests: formData.interests,
+      dietary: formData.dietary,
+      transport: formData.transport,
+      budget: formData.budget,
+    });
     onSubmit(formData);
   };
 

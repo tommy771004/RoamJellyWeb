@@ -2,6 +2,8 @@ import { eq, and, inArray, asc, isNull, isNotNull } from 'drizzle-orm';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
 
+let hasWarnedMissingAttachmentsColumn = false;
+
 function coerceNodeTimestamp(node: any) {
   if (node.timestamp) {
     const parsed = new Date(node.timestamp);
@@ -14,6 +16,143 @@ function coerceNodeTimestamp(node: any) {
   }
 
   return null;
+}
+
+function normalizeAttachments(attachments: any) {
+  return Array.isArray(attachments) ? attachments : [];
+}
+
+function normalizeStringArray(values: any) {
+  return Array.isArray(values)
+    ? values.filter((value) => typeof value === 'string' && value.trim().length > 0)
+    : [];
+}
+
+function collectErrorMetadata(error: any) {
+  const codes = new Set<string>();
+  const messages: string[] = [];
+  const visited = new Set<any>();
+
+  let current = error;
+  while (current && !visited.has(current)) {
+    visited.add(current);
+    if (typeof current.code === 'string') {
+      codes.add(current.code);
+    }
+    if (typeof current.message === 'string') {
+      messages.push(current.message);
+    }
+    current = current.cause;
+  }
+
+  return { codes, messages };
+}
+
+function isMissingColumnError(error: any, columnName: string) {
+  const { codes, messages } = collectErrorMetadata(error);
+  const loweredColumn = columnName.toLowerCase();
+
+  if (codes.has('42703')) {
+    return true;
+  }
+
+  return messages.some((message) => {
+    const lowered = message.toLowerCase();
+    return lowered.includes('does not exist') && lowered.includes(loweredColumn);
+  });
+}
+
+function warnMissingAttachmentsColumnOnce() {
+  if (hasWarnedMissingAttachmentsColumn) return;
+  hasWarnedMissingAttachmentsColumn = true;
+  console.warn('itinerary_nodes.attachments column is missing in the current database schema; retrying without attachments support. Run the latest DB migrations to restore full functionality.');
+}
+
+const itineraryNodeSelectBase = {
+  nodeId: schema.itineraryNodes.nodeId,
+  tripId: schema.itineraryNodes.tripId,
+  day: schema.itineraryNodes.day,
+  date: schema.itineraryNodes.date,
+  time: schema.itineraryNodes.time,
+  timestamp: schema.itineraryNodes.timestamp,
+  sortOrder: schema.itineraryNodes.sortOrder,
+  title: schema.itineraryNodes.title,
+  emoji: schema.itineraryNodes.emoji,
+  category: schema.itineraryNodes.category,
+  lat: schema.itineraryNodes.lat,
+  lng: schema.itineraryNodes.lng,
+  description: schema.itineraryNodes.description,
+  aiNote: schema.itineraryNodes.aiNote,
+  intensity: schema.itineraryNodes.intensity,
+  isVisited: schema.itineraryNodes.isVisited,
+  transportToNext: schema.itineraryNodes.transportToNext,
+  imageUrl: schema.itineraryNodes.imageUrl,
+  linkedFactId: schema.itineraryNodes.linkedFactId,
+  createdAt: schema.itineraryNodes.createdAt,
+};
+
+function buildItineraryNodeWritePayload(tripId: string, node: any, includeAttachments: boolean) {
+  const ts = coerceNodeTimestamp(node);
+  const sortOrder = Number.isFinite(Number(node.sort_order ?? node.sortOrder))
+    ? Number(node.sort_order ?? node.sortOrder)
+    : 0;
+  const attachments = normalizeAttachments(node.attachments);
+
+  const values: Record<string, any> = {
+    nodeId: node.node_id,
+    tripId,
+    day: node.day,
+    date: node.date ?? (ts ? ts.toISOString().slice(0, 10) : null),
+    time: node.time,
+    timestamp: ts,
+    sortOrder,
+    title: node.title,
+    emoji: node.emoji,
+    category: node.category,
+    lat: node.lat,
+    lng: node.lng,
+    description: node.description,
+    aiNote: node.ai_note ?? node.aiNote,
+    intensity: node.intensity,
+    isVisited: node.is_visited ?? false,
+    transportToNext: node.transport_to_next,
+    imageUrl: node.image_url,
+    linkedFactId: node.linkedFactId || node.linked_fact_id,
+  };
+
+  const updateSet: Record<string, any> = {
+    day: values.day,
+    date: values.date,
+    time: values.time,
+    timestamp: values.timestamp,
+    sortOrder: values.sortOrder,
+    title: values.title,
+    emoji: values.emoji,
+    category: values.category,
+    lat: values.lat,
+    lng: values.lng,
+    description: values.description,
+    aiNote: values.aiNote,
+    intensity: values.intensity,
+    isVisited: values.isVisited,
+    transportToNext: values.transportToNext,
+    imageUrl: values.imageUrl,
+    linkedFactId: values.linkedFactId,
+  };
+
+  if (includeAttachments) {
+    values.attachments = attachments;
+    updateSet.attachments = attachments;
+  }
+
+  return { values, updateSet };
+}
+
+function withNormalizedAttachments<T extends Record<string, any>>(row: T) {
+  return {
+    ...row,
+    attachments: normalizeAttachments(row.attachments),
+  };
 }
 
 export class AppRepository {
@@ -78,69 +217,68 @@ export class AppRepository {
 
   async getItineraryNodes(tripId: string) {
     if (!this.db) return [];
-    return await this.db
-      .select()
-      .from(schema.itineraryNodes)
-      .where(eq(schema.itineraryNodes.tripId, tripId))
-      .orderBy(
-        asc(schema.itineraryNodes.date),
-        asc(schema.itineraryNodes.day),
-        asc(schema.itineraryNodes.sortOrder),
-        asc(schema.itineraryNodes.time),
-        asc(schema.itineraryNodes.createdAt),
-      );
+    try {
+      const rows = await this.db
+        .select({
+          ...itineraryNodeSelectBase,
+          attachments: schema.itineraryNodes.attachments,
+        })
+        .from(schema.itineraryNodes)
+        .where(eq(schema.itineraryNodes.tripId, tripId))
+        .orderBy(
+          asc(schema.itineraryNodes.date),
+          asc(schema.itineraryNodes.day),
+          asc(schema.itineraryNodes.sortOrder),
+          asc(schema.itineraryNodes.time),
+          asc(schema.itineraryNodes.createdAt),
+        );
+
+      return rows.map(withNormalizedAttachments);
+    } catch (error) {
+      if (!isMissingColumnError(error, 'attachments')) {
+        throw error;
+      }
+
+      warnMissingAttachmentsColumnOnce();
+
+      const rows = await this.db
+        .select(itineraryNodeSelectBase)
+        .from(schema.itineraryNodes)
+        .where(eq(schema.itineraryNodes.tripId, tripId))
+        .orderBy(
+          asc(schema.itineraryNodes.date),
+          asc(schema.itineraryNodes.day),
+          asc(schema.itineraryNodes.sortOrder),
+          asc(schema.itineraryNodes.time),
+          asc(schema.itineraryNodes.createdAt),
+        );
+
+      return rows.map(withNormalizedAttachments);
+    }
   }
 
   async upsertItineraryNode(tripId: string, node: any) {
     if (!this.db) return;
-    const ts = coerceNodeTimestamp(node);
-    const sortOrder = Number.isFinite(Number(node.sort_order ?? node.sortOrder))
-      ? Number(node.sort_order ?? node.sortOrder)
-      : 0;
-    await this.db.insert(schema.itineraryNodes).values({
-      nodeId: node.node_id,
-      tripId,
-      day: node.day,
-      date: node.date ?? (ts ? ts.toISOString().slice(0, 10) : null),
-      time: node.time,
-      timestamp: ts,
-      sortOrder,
-      title: node.title,
-      emoji: node.emoji,
-      category: node.category,
-      lat: node.lat,
-      lng: node.lng,
-      description: node.description,
-      aiNote: node.ai_note ?? node.aiNote,
-      intensity: node.intensity,
-      isVisited: node.is_visited ?? false,
-      transportToNext: node.transport_to_next,
-      imageUrl: node.image_url,
-      attachments: Array.isArray(node.attachments) ? node.attachments : [],
-      linkedFactId: node.linkedFactId || node.linked_fact_id,
-    }).onConflictDoUpdate({
-      target: schema.itineraryNodes.nodeId,
-      set: {
-        day: node.day,
-        date: node.date ?? (ts ? ts.toISOString().slice(0, 10) : null),
-        time: node.time,
-        timestamp: ts,
-        sortOrder,
-        title: node.title,
-        emoji: node.emoji,
-        category: node.category,
-        lat: node.lat,
-        lng: node.lng,
-        description: node.description,
-        aiNote: node.ai_note ?? node.aiNote,
-        intensity: node.intensity,
-        isVisited: node.is_visited ?? false,
-        transportToNext: node.transport_to_next,
-        imageUrl: node.image_url,
-        attachments: Array.isArray(node.attachments) ? node.attachments : [],
-        linkedFactId: node.linkedFactId || node.linked_fact_id,
+    const withAttachments = buildItineraryNodeWritePayload(tripId, node, true);
+
+    try {
+      await this.db.insert(schema.itineraryNodes).values(withAttachments.values).onConflictDoUpdate({
+        target: schema.itineraryNodes.nodeId,
+        set: withAttachments.updateSet,
+      });
+    } catch (error) {
+      if (!isMissingColumnError(error, 'attachments')) {
+        throw error;
       }
-    });
+
+      warnMissingAttachmentsColumnOnce();
+      const fallback = buildItineraryNodeWritePayload(tripId, node, false);
+
+      await this.db.insert(schema.itineraryNodes).values(fallback.values).onConflictDoUpdate({
+        target: schema.itineraryNodes.nodeId,
+        set: fallback.updateSet,
+      });
+    }
   }
 
   async reorderItineraryNodes(tripId: string, nodes: Array<{ node_id: string; day?: number; date?: string | null; time?: string | null; timestamp?: string | null; sort_order?: number | null }>) {
@@ -167,19 +305,19 @@ export class AppRepository {
 
   async getPublicTrips(limit: number) {
     if (!this.db) return [];
-    // For demo purposes, we will treat all trips as public and join with users to get author names
     const rows = await this.db
       .select({
         id: schema.trips.id,
         title: schema.trips.name,
         destination: schema.trips.destination,
+        forkCount: schema.trips.forkCount,
         author: schema.users.displayName,
         createdAt: schema.trips.createdAt,
       })
       .from(schema.trips)
       .leftJoin(schema.tripMembers, eq(schema.trips.id, schema.tripMembers.tripId))
       .leftJoin(schema.users, eq(schema.tripMembers.userId, schema.users.userId))
-      .where(eq(schema.tripMembers.role, 'owner'))
+      .where(and(eq(schema.tripMembers.role, 'owner'), eq(schema.trips.isPublic, true)))
       .limit(limit);
       
     const idHash = (s: string) => [...s].reduce((acc, c) => acc + c.charCodeAt(0), 0);
@@ -201,7 +339,8 @@ export class AppRepository {
        id: r.id,
        title: r.title,
        author: r.author || 'Anonymous',
-       likes: 100 + (idHash(String(r.id)) % 900),
+       forkCount: Number(r.forkCount ?? 0),
+       likes: Number(r.forkCount ?? 0),
        cover: getCover(r.destination ?? ''),
     }));
   }
@@ -239,6 +378,43 @@ export class AppRepository {
     return await this.db.select().from(schema.userTrackedPrices).where(eq(schema.userTrackedPrices.userId, userId));
   }
 
+  async getUserAiProfile(userId: string) {
+    if (!this.db) return null;
+    const [profile] = await this.db.select().from(schema.userAiProfiles).where(eq(schema.userAiProfiles.userId, userId));
+    return profile || null;
+  }
+
+  async upsertUserAiProfile(userId: string, profile: {
+    departure?: string;
+    companions?: string;
+    vibes?: string[];
+    interests?: string[];
+    dietary?: string[];
+    transport?: string[];
+    budget?: string;
+  }) {
+    if (!this.db) return null;
+
+    const values = {
+      userId,
+      preferredDeparture: profile.departure?.trim() || null,
+      preferredCompanions: profile.companions?.trim() || null,
+      preferredVibes: normalizeStringArray(profile.vibes),
+      preferredInterests: normalizeStringArray(profile.interests),
+      preferredDietary: normalizeStringArray(profile.dietary),
+      preferredTransport: normalizeStringArray(profile.transport),
+      preferredBudget: profile.budget?.trim() || null,
+      updatedAt: new Date(),
+    };
+
+    const [row] = await this.db.insert(schema.userAiProfiles).values(values).onConflictDoUpdate({
+      target: schema.userAiProfiles.userId,
+      set: values,
+    }).returning();
+
+    return row || null;
+  }
+
   async getTripsByUser(userId: string) {
     if (!this.db) return [];
     const members = await this.db.select().from(schema.tripMembers).where(eq(schema.tripMembers.userId, userId));
@@ -253,9 +429,31 @@ export class AppRepository {
     return trip || null;
   }
 
-  async createTrip(data: { id: string, name: string, destination?: string }) {
+  async createTrip(data: { id: string, name: string, destination?: string, isPublic?: boolean, forkCount?: number }) {
     if (!this.db) return;
     await this.db.insert(schema.trips).values(data);
+  }
+
+  async updateTripPublicState(tripId: string, isPublic: boolean) {
+    if (!this.db) return null;
+    const [row] = await this.db
+      .update(schema.trips)
+      .set({ isPublic })
+      .where(eq(schema.trips.id, tripId))
+      .returning();
+    return row || null;
+  }
+
+  async incrementTripForkCount(tripId: string) {
+    if (!this.db) return null;
+    const trip = await this.getTripById(tripId);
+    if (!trip) return null;
+    const [row] = await this.db
+      .update(schema.trips)
+      .set({ forkCount: Number(trip.forkCount ?? 0) + 1 })
+      .where(eq(schema.trips.id, tripId))
+      .returning();
+    return row || null;
   }
 
   async addTripMember(tripId: string, userId: string, role: string) {

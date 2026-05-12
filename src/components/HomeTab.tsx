@@ -515,6 +515,11 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   const handleCloneTrip = async (e: React.MouseEvent, trip: any) => {
     e.stopPropagation();
+
+    if (!isLoggedIn && onRequireLogin) {
+      onRequireLogin();
+      return;
+    }
     
     // Trigger animation
     const cardElement = (e.currentTarget as HTMLElement).closest('.group\\/trip') || (e.currentTarget as HTMLElement);
@@ -627,6 +632,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           arrCode,
           flightNumber: flight.details?.flightNumber,
           provider: flight.provider,
+          bookingUrl: flight.bookingUrl || flight.affiliate_url,
+          price: flight.price,
+          currency: flight.currency,
         },
       });
 
@@ -1108,6 +1116,72 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               )}
             </AnimatePresence>
           ) : null}
+
+          {communityTrips.length > 0 && (
+            <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
+              <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Globe className="text-sky-500" size={24} />
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight">公開模板大廳</h2>
+                </div>
+                <span className="text-[10px] font-black tracking-[0.15em] uppercase text-slate-400">fork-and-remix</span>
+              </div>
+
+              <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
+                <div className="flex gap-6 min-w-max">
+                  {communityTrips.map((trip) => (
+                    <motion.div
+                      key={trip.id}
+                      whileHover={{ y: -6 }}
+                      className="w-[280px] sm:w-[320px] group/trip"
+                    >
+                      <GlassCard className="!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all flex flex-col">
+                        <div className="relative h-44 overflow-hidden flex-shrink-0">
+                          <img
+                            src={trip.cover}
+                            alt={trip.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover/trip:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[10px] font-black tracking-widest uppercase text-white">
+                            Public Template
+                          </div>
+                          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
+                            <div>
+                              <p className="text-white text-[10px] font-black uppercase tracking-[0.15em] opacity-80">by {trip.author || 'Anonymous'}</p>
+                              <h3 className="text-white font-black text-xl leading-tight drop-shadow-md line-clamp-2">{trip.title}</h3>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-5 flex flex-col flex-1">
+                          <div className="flex items-center gap-2 mb-5 flex-wrap">
+                            {trip.destination && (
+                              <span className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl">
+                                #{trip.destination}
+                              </span>
+                            )}
+                            <span className="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-xl">
+                              已被複製 {trip.forkCount ?? trip.likes ?? 0} 次
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={(event) => handleCloneTrip(event, trip)}
+                            className="mt-auto w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-sky-600 active:scale-95 group/btn"
+                          >
+                            <Copy size={14} className="transition-transform group-hover/btn:rotate-12" />
+                            一鍵複製到我的草稿
+                          </button>
+                        </div>
+                      </GlassCard>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Featured Destinations Section */}
           <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">

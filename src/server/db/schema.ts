@@ -13,6 +13,8 @@ export const trips = pgTable('trips', {
   id: varchar('id', { length: 128 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   destination: varchar('destination', { length: 255 }),
+  isPublic: boolean('is_public').default(false).notNull(),
+  forkCount: integer('fork_count').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -64,6 +66,19 @@ export const userTrackedPrices = pgTable('user_tracked_prices', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: varchar('user_id', { length: 128 }).notNull().references(() => users.userId),
   itemId: varchar('item_id', { length: 128 }).notNull(),
+});
+
+export const userAiProfiles = pgTable('user_ai_profiles', {
+  userId: varchar('user_id', { length: 128 }).primaryKey().references(() => users.userId),
+  preferredDeparture: varchar('preferred_departure', { length: 255 }),
+  preferredCompanions: varchar('preferred_companions', { length: 64 }),
+  preferredVibes: jsonb('preferred_vibes').default([]).notNull(),
+  preferredInterests: jsonb('preferred_interests').default([]).notNull(),
+  preferredDietary: jsonb('preferred_dietary').default([]).notNull(),
+  preferredTransport: jsonb('preferred_transport').default([]).notNull(),
+  preferredBudget: varchar('preferred_budget', { length: 64 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const favorites = pgTable('favorites', {
