@@ -51,12 +51,12 @@ export class AppRepository {
     }).onConflictDoNothing();
   }
 
-  async ensureUser(userId: string, username: string) {
+  async ensureUser(userId: string, username: string, displayName?: string) {
     if (!this.db) return;
     await this.db.insert(schema.users).values({
       userId,
       username,
-      displayName: username,
+      displayName: displayName || username,
     }).onConflictDoNothing();
   }
 
@@ -111,9 +111,12 @@ export class AppRepository {
       lat: node.lat,
       lng: node.lng,
       description: node.description,
+      aiNote: node.ai_note ?? node.aiNote,
+      intensity: node.intensity,
       isVisited: node.is_visited ?? false,
       transportToNext: node.transport_to_next,
       imageUrl: node.image_url,
+      attachments: Array.isArray(node.attachments) ? node.attachments : [],
       linkedFactId: node.linkedFactId || node.linked_fact_id,
     }).onConflictDoUpdate({
       target: schema.itineraryNodes.nodeId,
@@ -129,9 +132,12 @@ export class AppRepository {
         lat: node.lat,
         lng: node.lng,
         description: node.description,
+        aiNote: node.ai_note ?? node.aiNote,
+        intensity: node.intensity,
         isVisited: node.is_visited ?? false,
         transportToNext: node.transport_to_next,
         imageUrl: node.image_url,
+        attachments: Array.isArray(node.attachments) ? node.attachments : [],
         linkedFactId: node.linkedFactId || node.linked_fact_id,
       }
     });
