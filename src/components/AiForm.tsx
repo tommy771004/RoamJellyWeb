@@ -212,13 +212,13 @@ export default function AiForm({
             </div>
           </div>
 
-          <div className="md:col-span-2 pt-8 sm:pt-12">
+          <div className="md:col-span-2 pt-4 sm:pt-12 sticky bottom-6 sm:static z-[100]">
             <button
               onClick={handleNext}
               disabled={!formData.departure || !formData.destination || !formData.companions}
-              className={`w-full py-5 sm:py-6 rounded-[28px] sm:rounded-[32px] font-black text-sm sm:text-base uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all duration-300 ${
+              className={`w-full py-5 sm:py-6 rounded-[28px] sm:rounded-[32px] font-black text-sm sm:text-base uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all duration-300 shadow-[0_-10px_40px_rgba(255,255,255,0.8)] sm:shadow-none ${
                 !formData.departure || !formData.destination || !formData.companions
-                  ? 'bg-white/50 backdrop-blur-md text-slate-400 border border-white/60 opacity-60 cursor-not-allowed'
+                  ? 'bg-white/90 backdrop-blur-xl text-slate-400 border border-white opacity-90 cursor-not-allowed'
                   : 'bg-slate-900 border border-white/20 text-white shadow-2xl shadow-slate-900/40 hover:shadow-fuchsia-500/20 active:scale-95 hover:bg-slate-800 hover:-translate-y-1'
               }`}
             >
@@ -318,10 +318,10 @@ export default function AiForm({
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 sm:pt-8 w-full relative z-20">
+          <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 sm:pt-8 w-full sticky sm:static bottom-6 z-[100]">
             <button
               onClick={handleBack}
-              className="w-full sm:w-1/3 py-5 sm:py-6 rounded-[28px] sm:rounded-[32px] font-black text-xs sm:text-sm uppercase tracking-widest bg-white/60 backdrop-blur-md border border-white text-slate-500 hover:text-slate-700 hover:bg-white shadow-sm hover:shadow-md transition-all active:scale-95"
+              className="w-full sm:w-1/3 py-5 sm:py-6 rounded-[28px] sm:rounded-[32px] font-black text-xs sm:text-sm uppercase tracking-widest bg-white/90 backdrop-blur-xl border border-white text-slate-500 hover:text-slate-700 hover:bg-white shadow-[0_-10px_40px_rgba(255,255,255,0.8)] sm:shadow-none hover:shadow-md transition-all active:scale-95"
             >
               返回修改
             </button>

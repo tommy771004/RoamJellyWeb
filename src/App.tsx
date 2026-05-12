@@ -11,6 +11,15 @@ const TripLandingPage = lazy(() => import('./components/TripLandingPage'));
 const JellyAssistant = lazy(() => import('./components/JellyAssistant'));
 const AiForm = lazy(() => import('./components/AiForm'));
 const DynamicItineraryView = lazy(() => import('./components/DynamicItineraryView'));
+import { 
+  Bell, 
+  Sun, 
+  Moon, 
+  LogOut, 
+  Settings, 
+  Menu,
+  ChevronDown
+} from 'lucide-react';
 import BottomTabs, { TABS } from './components/BottomTabs';
 import AiLoadingState from './components/AiLoadingState';
 import { useAppStore } from './store/useAppStore';
@@ -462,6 +471,7 @@ export default function App() {
         <nav className="hidden md:flex flex-row items-center justify-center gap-2 absolute left-1/2 -translate-x-1/2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
+            const Icon = tab.Icon;
             return (
               <button
                 key={tab.id}
@@ -472,12 +482,11 @@ export default function App() {
                     : 'text-pink-500/70 hover:bg-white/50 hover:text-pink-500'
                 }`}
               >
-                <span 
-                  className="material-symbols-outlined text-[22px]" 
-                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
-                >
-                  {tab.icon}
-                </span>
+                <Icon 
+                  size={18}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={isActive ? 'text-pink-600' : 'text-pink-500/70'}
+                />
                 <span className="font-bold text-sm tracking-wide">{tab.label}</span>
               </button>
             );
@@ -491,9 +500,7 @@ export default function App() {
             className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
             aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
           >
-            <span className="material-symbols-outlined text-[20px]">
-              {isDarkMode ? 'light_mode' : 'dark_mode'}
-            </span>
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
           <div className="relative hidden sm:block">
             <button
@@ -502,9 +509,9 @@ export default function App() {
               aria-label="通知"
               aria-expanded={showNotifications}
             >
-              <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
+              <Bell size={20} />
               {notifications.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white shadow-sm" />
               )}
             </button>
             {showNotifications && (

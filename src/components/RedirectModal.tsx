@@ -31,7 +31,7 @@ export default function RedirectModal({
   onConfirm,
   onSave 
 }: RedirectModalProps) {
-  const airlineInitial = airline ? airline.charAt(0) : provider.charAt(0);
+  const airlineInitial = (airline || provider || '?').charAt(0).toUpperCase();
 
   return (
     <motion.div

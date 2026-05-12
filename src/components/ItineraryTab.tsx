@@ -24,7 +24,18 @@ import {
   ArrowDownUp,
   Check,
   ChevronDown,
-  Clock
+  Clock,
+  Printer,
+  Users,
+  Plane,
+  Link,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  ExternalLink,
+  CheckCircle2,
+  Settings2,
+  Bookmark
 } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
@@ -245,6 +256,7 @@ export default function ItineraryTab() {
   const [rangeEndDay, setRangeEndDay] = useState<number>(3);
   const [showPlanner, setShowPlanner] = useState<boolean>(false);
   const [isPlanningNew, setIsPlanningNew] = useState<boolean>(false);
+  const [showMobileFavorites, setShowMobileFavorites] = useState<boolean>(false);
   const [collaboratorEditing, setCollaboratorEditing] = useState<{ userName: string; day: number; nodeId: string } | null>(null);
 
   const socketRef = useRef<Socket | null>(null);
@@ -285,6 +297,9 @@ export default function ItineraryTab() {
     setAiLoading(true);
     showToast(`正在為您生成旅程：${formData.destination}...`);
     try {
+      // Sync plannerForm.days so totalDays reflects user's selection immediately (e.g. 4 days)
+      setPlannerForm(prev => ({ ...prev, days: formData.days }));
+
       const suggestions = await suggestItineraryWithForm({
         destination: formData.destination,
         planner: {
@@ -509,7 +524,14 @@ export default function ItineraryTab() {
           fetchTripFacts(activeTripId).catch(() => []),
         ]);
         setTripInfo(tripResult);
-        setPlannerForm(buildDefaultPlannerForm(tripResult.destination, tripResult.days));
+        
+        // If the trip has an absurdly long date range (e.g. 35 days) but is fresh (no nodes),
+        // don't overwhelm the planner form with a 35-day count. Cap default planning to a week.
+        const initialPlannerDays = (tripResult.days > 14 && (!itineraryResult || itineraryResult.length === 0))
+          ? 5 
+          : (tripResult.days || 5);
+
+        setPlannerForm(buildDefaultPlannerForm(tripResult.destination, initialPlannerDays));
         setFavorites(favResult);
         setCollaborators(collabResult);
         if (Array.isArray(factsResult)) {
@@ -595,8 +617,42 @@ export default function ItineraryTab() {
     };
   }, [isOffline, addNode, removeNode, activeTripId]);
 
-  const maxNodeDay = useMemo(() => Math.max(1, ...nodes.map((node: ItineraryNode) => node.day)), [nodes]);
-  const totalDays = Math.max(tripInfo?.days ?? 1, plannerForm.days, maxNodeDay);
+  const maxNodeDay = useMemo(() => {
+    if (nodes.length === 0) return 1;
+    return Math.max(1, ...nodes.map((node: ItineraryNode) => node.day));
+  }, [nodes]);
+
+  // Priority: If we are planning, use plannerForm.days. 
+  // If we have nodes, ensure we cover them.
+  // tripInfo.days is a fallback/suggestion from travel facts range, 
+  // but if the user intended a short planning session (e.g. 4 days), we shouldn't force 35 tabs.
+  const totalDays = useMemo(() => {
+    const planDays = plannerForm.days || 1;
+    const infoDays = tripInfo?.days || 1;
+    
+    // CASE 1: No nodes yet. 
+    if (nodes.length === 0) {
+      if (infoDays > 14 && planDays < infoDays) {
+        return planDays; 
+      }
+      return Math.max(planDays, infoDays);
+    }
+
+    // CASE 2: We have nodes. 
+    // If infoDays is unrealistically long compared to our actual content (maxNodeDay),
+    // we prefer the content's range.
+    if (maxNodeDay > 0 && infoDays > (maxNodeDay + 7)) {
+      // If planDays is also huge (likely synced from infoDays), override it.
+      if (planDays === infoDays || planDays > (maxNodeDay + 14)) {
+         return maxNodeDay;
+      }
+      return Math.max(planDays, maxNodeDay);
+    }
+
+    // CASE 3: Standard union of indicators
+    return Math.max(planDays, infoDays, maxNodeDay);
+  }, [plannerForm.days, tripInfo?.days, maxNodeDay, nodes.length]);
+
   // Clamp during render — avoids the extra render cycle from a setState-only effect
   const safeSelectedDay = Math.min(selectedDay, totalDays);
 
@@ -964,16 +1020,18 @@ export default function ItineraryTab() {
   if (!activeTripId) {
     if (isPlanningNew) {
       return (
-        <div className="flex-1 flex flex-col pt-8 sm:pt-12 bg-[#fcfdff] min-h-screen overflow-y-auto scroll-smooth">
-          <div className="max-w-4xl mx-auto w-full px-4">
+        <div className="flex-1 flex flex-col pt-8 sm:pt-12 bg-[#fcfdff] min-h-[100dvh] max-h-[100dvh] overflow-y-auto scroll-smooth">
+          <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
             <button 
               onClick={() => setIsPlanningNew(false)}
-              className="mb-8 px-4 py-2 rounded-xl bg-slate-100 text-slate-500 font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-slate-200 transition-all"
+              className="mb-4 sm:mb-8 px-4 py-2 rounded-xl bg-slate-100 text-slate-500 font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-slate-200 w-max transition-all"
             >
               <ArrowLeft size={14} />
               返回清單
             </button>
-            <AiForm onSubmit={handleAiFormSubmit} />
+            <div className="flex-1">
+              <AiForm onSubmit={handleAiFormSubmit} />
+            </div>
           </div>
         </div>
       );
@@ -1078,7 +1136,7 @@ export default function ItineraryTab() {
                    <div className="p-6 flex-1 flex flex-col">
                       <h3 className="text-2xl font-black text-slate-800 mb-1 group-hover:text-pink-500 transition-colors uppercase tracking-tight">{trip.name}</h3>
                       <p className="text-slate-400 font-bold text-sm mb-4 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[18px]">location_on</span>
+                        <MapPin size={18} className="shrink-0" />
                         {trip.destination}
                       </p>
                       <div className="mt-auto flex items-center justify-between">
@@ -1240,25 +1298,28 @@ export default function ItineraryTab() {
               onClick={() => window.print()}
               className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95 print:hidden"
             >
-              <span className="material-symbols-outlined text-[14px]">print</span>
+              <Printer size={14} className="shrink-0" />
               
             </button>
           </div>
           
           <div className="hidden lg:block">
             <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 flex items-center gap-3 font-serif tracking-tight leading-tight">
-              <div className="flex items-center gap-3">
-                {tripInfo?.name || tripInfo?.destination || '未命名目的地'} <span className="text-3xl md:text-4xl animate-bounce group-hover:scale-125 transition-transform">✨</span>
+              <div className="flex items-center gap-2 group/title">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
+                   {tripInfo?.name || tripInfo?.destination || '未命名目的地'}
+                </span>
+                <span className="text-3xl md:text-4xl animate-bounce group-hover/title:scale-125 transition-transform">✨</span>
               </div>
             </h1>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-slate-500 font-bold text-[15px]">
-               <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[20px] text-pink-400">calendar_month</span>
-                  <span>{tripInfo?.startDate && tripInfo?.endDate ? `${tripInfo.startDate} - ${tripInfo.endDate} • ` : null}{totalDays} 天</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-slate-500 font-bold text-[14px]">
+               <div className="flex items-center gap-2 px-3 py-1 bg-fuchsia-50/50 rounded-full border border-fuchsia-100/50 shadow-sm">
+                  <Calendar size={16} className="text-fuchsia-500 shrink-0" />
+                  <span className="text-slate-700 tracking-tight">{tripInfo?.startDate && tripInfo?.endDate ? `${tripInfo.startDate} - ${tripInfo.endDate} • ` : null}<span className="text-fuchsia-600 font-black">{totalDays}</span> 天</span>
                </div>
-               <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[20px] text-pink-400">group</span>
-                  <span>{collaborators.length} 位旅行者</span>
+               <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50/50 rounded-full border border-indigo-100/50 shadow-sm">
+                  <Users size={16} className="text-indigo-500 shrink-0" />
+                  <span className="text-slate-700 tracking-tight"><span className="text-indigo-600 font-black">{collaborators.length}</span> 位旅行者</span>
                </div>
             </div>
           </div>
@@ -1288,17 +1349,22 @@ export default function ItineraryTab() {
 
       <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left Column: Filters & Info */}
-        <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit">
-          <GlassCard className="!p-6 shadow-sm ring-1 ring-slate-100/50">
-            <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400 mb-5 flex items-center gap-2">
-              <span>旅程天數</span> <span className="text-lg">📅</span>
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
+        <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pr-2 no-scrollbar">
+          <GlassCard className="!p-6 shadow-xl shadow-slate-200/40 ring-1 ring-white/60 bg-white/70 backdrop-blur-3xl overflow-hidden rounded-[32px] border border-white">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-black text-[11px] uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                 <span>旅程天數</span> <span className="text-sm">📅</span>
+              </h3>
+              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                <Settings2 size={14} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 relative z-10">
               {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
                 const isActive = safeSelectedDay === day;
                 const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
                 const dateStr = getDateForDay(day, tripInfo?.startDate) || '';
-                const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }) : '';
 
                 return (
                   <button
@@ -1385,7 +1451,7 @@ export default function ItineraryTab() {
                       ))}
                     </div>
                   )}
-                  {addingFavorite && <p className="text-[9px] font-bold text-pink-500 mt-2 animate-pulse uppercase tracking-widest text-center">GEOCODING...</p>}
+                  {addingFavorite && <p className="text-[10px] font-bold text-pink-500 mt-2 animate-pulse uppercase tracking-widest text-center">GEOCODING...</p>}
                 </div>
              )}
           </GlassCard>
@@ -1432,7 +1498,7 @@ export default function ItineraryTab() {
                 const isActive = safeSelectedDay === day;
                 const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
                 const dateStr = getDateForDay(day, tripInfo?.startDate) || '';
-                const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }) : '';
 
                 return (
                   <motion.button
@@ -1445,9 +1511,9 @@ export default function ItineraryTab() {
                         : 'bg-white/40 border-white/60 text-slate-500 backdrop-blur-sm'
                     }`}
                   >
-                    <span className="text-[9px] sm:text-[10px] mb-0.5 sm:mb-1 opacity-70">DAY</span>
+                    <span className="text-[10px] mb-1 opacity-70 uppercase tracking-widest">DAY</span>
                     <span className="text-lg sm:text-xl leading-none">{day}</span>
-                    {displayDate && <span className={`text-[8px] sm:text-[9px] font-bold mt-1 sm:mt-1.5 opacity-60 tracking-tighter`}>{displayDate}</span>}
+                    {displayDate && <span className={`text-[10px] font-bold mt-1.5 opacity-60 tracking-tight`}>{displayDate}</span>}
                   </motion.button>
                 );
               })}
@@ -1485,7 +1551,7 @@ export default function ItineraryTab() {
               >
                 {collaboratorEditing && (
                   <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-fuchsia-50 border border-fuchsia-100 text-fuchsia-700 font-bold text-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                    <Pencil size={18} />
                     <span>{collaboratorEditing.userName} 正在編輯 Day {collaboratorEditing.day}</span>
                   </div>
                 )}
@@ -1708,7 +1774,7 @@ export default function ItineraryTab() {
                               disabled={flightsLoading || aiLoading}
                               className="w-full py-3 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98] transition-all hover:bg-slate-100"
                             >
-                              {flightsLoading ? <Loader2 size={14} className="animate-spin" /> : <span className="material-symbols-outlined text-[16px]">flight</span>}
+                              {flightsLoading ? <Loader2 size={14} className="animate-spin" /> : <Plane size={16} />}
                               自動抓取航班做為 AI 規劃參考
                             </button>
 
@@ -1773,37 +1839,86 @@ export default function ItineraryTab() {
 
       {tip ? <span className="fixed bottom-28 left-0 right-0 text-center text-xs font-black text-slate-400 pointer-events-none animate-pulse">{tip}</span> : null}
 
-      {/* Floating Action Button (Mobile Only) */}
-      <button 
-        onClick={() => setIsPlanningNew(true)}
-        className="md:hidden fixed bottom-24 right-5 p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl z-50 active:scale-90 transition-all group overflow-hidden shadow-pink-200/50"
-      >
-        <div className="bg-gradient-to-tr from-pink-500 to-fuchsia-600 w-14 h-14 rounded-full flex items-center justify-center shadow-inner relative">
-          <div className="absolute inset-0 bg-white/10 rounded-full" />
-          <Sparkles size={24} className="text-white drop-shadow-sm" />
-        </div>
-      </button>
+      {/* Floating Action Buttons (Mobile Only) */}
+      <div className="md:hidden fixed bottom-24 right-5 flex flex-col gap-4 z-50">
+        {!loading && favorites.length > 0 && (
+          <button 
+            onClick={() => setShowMobileFavorites(true)}
+            className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl active:scale-90 transition-all group overflow-hidden shadow-fuchsia-200/50 relative"
+          >
+            <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center shadow-inner text-fuchsia-500 relative">
+              <div className="absolute inset-0 bg-fuchsia-500/10 rounded-full" />
+              <Bookmark size={22} className="drop-shadow-sm" />
+              <span className="absolute -top-1 -right-1 bg-fuchsia-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                {favorites.length}
+              </span>
+            </div>
+          </button>
+        )}
+        <button 
+          onClick={() => setIsPlanningNew(true)}
+          className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl active:scale-90 transition-all group overflow-hidden shadow-pink-200/50"
+        >
+          <div className="bg-gradient-to-tr from-pink-500 to-fuchsia-600 w-14 h-14 rounded-full flex items-center justify-center shadow-inner relative">
+            <div className="absolute inset-0 bg-white/10 rounded-full" />
+            <Sparkles size={24} className="text-white drop-shadow-sm" />
+          </div>
+        </button>
+      </div>
 
-      {/* Favorites panel hidden below main if needed, but on desktop it's in sidebar */}
-      {!loading && nodes.length > 0 && (
-         <div className="lg:hidden mt-20">
-           <GlassCard className="!p-6">
-              <h3 className="font-black text-xl text-slate-800 mb-6">口袋名單</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {favorites.map((spot: FavoriteSpot) => (
-                  <DraggableFavoriteSpot
-                    key={spot.id}
-                    spot={spot}
-                    selectedDay={safeSelectedDay}
-                    isOffline={isOffline}
-                    onAdd={addSpotToDay}
-                    onDelete={handleDeleteFavorite}
-                  />
-                ))}
+      <AnimatePresence>
+        {showMobileFavorites && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileFavorites(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] lg:hidden"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 max-h-[85vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-[210] flex flex-col lg:hidden"
+            >
+              <div className="shrink-0 p-6 pb-2 border-b border-slate-100 flex items-center justify-between bg-white/90 backdrop-blur-xl rounded-t-3xl sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-fuchsia-500 shadow-sm border border-fuchsia-100/50">
+                    <Bookmark size={20} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-xl text-slate-800 tracking-tight">口袋名單</h3>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Saved Spots</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowMobileFavorites(false)}
+                  className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors"
+                >
+                  <X size={20} />
+                </button>
               </div>
-           </GlassCard>
-         </div>
-      )}
+              
+              <div className="p-6 overflow-y-auto w-full no-scrollbar overscroll-contain">
+                 <div className="flex flex-col gap-4">
+                   {favorites.map((spot: FavoriteSpot) => (
+                     <DraggableFavoriteSpot
+                       key={spot.id}
+                       spot={spot}
+                       selectedDay={safeSelectedDay}
+                       isOffline={isOffline}
+                       onAdd={(node) => { addSpotToDay(node); setShowMobileFavorites(false); }}
+                       onDelete={handleDeleteFavorite}
+                     />
+                   ))}
+                 </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       </div>
     </main>
   );
@@ -1901,7 +2016,7 @@ function DraggableFavoriteSpot({
           </div>
           <div>
             <h4 className="font-black text-slate-800 text-[13px] leading-tight">{spot.title}</h4>
-            <p className="text-[9px] font-black text-slate-400 mt-0.5 uppercase tracking-[0.1em]">口袋名單</p>
+            <p className="text-[10px] font-black text-slate-400 mt-0.5 uppercase tracking-[0.1em]">口袋名單</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -1925,7 +2040,7 @@ function DraggableFavoriteSpot({
         <div className="flex flex-col gap-1 pl-12">
           <p className="text-[10px] text-slate-400 leading-relaxed line-clamp-2">{enrichment.description}</p>
           {enrichment.wiki_url && (
-            <a href={enrichment.wiki_url} target="_blank" rel="noreferrer" className="text-[9px] font-bold text-fuchsia-500 hover:underline">維基百科 →</a>
+            <a href={enrichment.wiki_url} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-fuchsia-500 hover:underline">維基百科 →</a>
           )}
         </div>
       )}
@@ -2097,14 +2212,14 @@ function ItineraryListItem({
     <div className="relative flex items-stretch group w-full px-1 pl-6 sm:px-0 sm:pl-8 lg:pl-10">
       {/* Timeline Thread */}
       <div className="absolute left-2.5 sm:left-3.5 lg:left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-slate-200 via-slate-200 to-slate-200/50 rounded-full group-last:bottom-auto group-last:h-12" />
-      <div className="absolute left-1 sm:left-2 lg:left-2.5 top-5 sm:top-6 w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-4.5 lg:h-4.5 rounded-full border-[3px] lg:border-4 border-white bg-slate-300 shadow-sm z-20 group-hover:bg-fuchsia-400 group-hover:scale-125 transition-all duration-500" />
+      <div className={`absolute left-1 sm:left-2 lg:left-2.5 top-5 sm:top-6 w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-4.5 lg:h-4.5 rounded-full border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? 'bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]' : 'bg-slate-300 group-hover:bg-fuchsia-400'}`} />
 
       {/* Content Card */}
       {collaboratingUser && (
         <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
       <GlassCard
-        className={`flex-1 !p-1.5 sm:!p-2.5 md:!p-3 !rounded-[16px] sm:!rounded-[20px] ${getCategoryStyle(item.category)} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-700 border border-white/80 relative z-10 ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingUser ? 'ring-2 ring-fuchsia-400/60' : ''}`}
+        className={`flex-1 !p-1.5 sm:!p-2.5 md:!p-3 !rounded-[16px] sm:!rounded-[20px] ${getCategoryStyle(item.category)} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-700 border border-white/80 relative z-10 ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingUser ? 'ring-2 ring-fuchsia-400/60' : ''} ${item.linkedFactId ? 'ring-2 ring-sky-300/40 border-sky-200/50 shadow-[0_0_15px_-5px_rgba(14,165,233,0.3)]' : ''}`}
         onClick={(e) => {
            if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
            if (!isOffline && !isEditing) {
@@ -2113,6 +2228,11 @@ function ItineraryListItem({
            }
         }}
       >
+        {item.linkedFactId && !isEditing && (
+          <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-sky-500 text-white shadow-sm ring-2 ring-white z-20">
+            <Link size={10} strokeWidth={3} />
+          </div>
+        )}
         <div className="flex flex-col gap-2 sm:gap-2 w-full">
           <div className="flex flex-row items-center sm:items-start gap-2 sm:gap-2.5">
             <div className={`relative w-6 h-6 sm:w-8 sm:h-8 shrink-0 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-sm sm:text-base shadow-inner border border-slate-100/50 transition-all group-hover:scale-110 group-hover:rotate-3 duration-700 ${item.category === 'flight' ? 'bg-gradient-to-br from-indigo-50 to-blue-50' : 'bg-white'}`}>
@@ -2140,13 +2260,13 @@ function ItineraryListItem({
                )}
                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
                {item.date && (
-                 <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/80 text-[8px] sm:text-[9px] font-black tracking-widest text-slate-500 border border-slate-200 flex items-center gap-0.5">
-                   <span className="material-symbols-outlined text-[10px] sm:text-[11px]">calendar_today</span>
+                 <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/80 text-[10px] sm:text-[11px] font-black tracking-widest text-slate-500 border border-slate-200 flex items-center gap-0.5">
+                   <Calendar size={11} className="sm:w-[13px] sm:h-[13px]" />
                    {item.date}
                  </span>
                )}
-               <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-800 text-[8px] sm:text-[9px] font-black tracking-widest text-white border border-slate-900 flex items-center gap-0.5">
-                  <span className="material-symbols-outlined text-[10px] sm:text-[11px]">schedule</span>
+               <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-800 text-[10px] sm:text-[11px] font-black tracking-widest text-white border border-slate-900 flex items-center gap-0.5">
+                  <Clock size={11} className="sm:w-[13px] sm:h-[13px]" />
                   {item.time}
                </span>
                <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
@@ -2154,7 +2274,7 @@ function ItineraryListItem({
                </span>
                {item.linkedFactId && facts.find((f: any) => f.id === item.linkedFactId) && (
                  <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-0.5">
-                   <span className="material-symbols-outlined text-[10px] sm:text-[11px]">link</span>
+                   <Link size={11} className="sm:w-[13px] sm:h-[13px]" />
                    已綁定: {facts.find((f: any) => f.id === item.linkedFactId)?.title}
                  </span>
                )}
@@ -2173,11 +2293,9 @@ function ItineraryListItem({
                  <button 
                    type="button"
                    onClick={() => onUpdate({ ...item, is_visited: !item.is_visited })}
-                   className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
+                   className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em] transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
                  >
-                   <span className="material-symbols-outlined text-[11px] sm:text-[13px]">
-                     {item.is_visited ? 'check_circle' : 'radio_button_unchecked'}
-                   </span>
+                    {item.is_visited ? <CheckCircle2 size={13} className="text-emerald-500" /> : <div className="w-3 h-3 rounded-full border-2 border-slate-300" />}
                    {item.is_visited ? '已打卡' : '未打卡'}
                  </button>
                )}
@@ -2285,21 +2403,53 @@ function ItineraryListItem({
                   )}
                   
                   {item.transport_to_next && (
-                    <div className="inline-flex items-center gap-1 mb-2 sm:mb-2.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-800 text-[7px] sm:text-[8px] font-black text-white uppercase tracking-widest shadow-sm shadow-slate-200">
-                      <Navigation2 size={8} strokeWidth={3} className="text-indigo-400 sm:w-2 sm:h-2" />
-                      <span className="opacity-60 mr-1">MOVE TO NEXT:</span>
+                    <div className="inline-flex items-center gap-1 mb-2 sm:mb-2.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-800 text-[10px] sm:text-[11px] font-black text-white uppercase tracking-widest shadow-sm shadow-slate-200">
+                      <Navigation2 size={10} strokeWidth={3} className="text-indigo-400" />
+                      <span className="opacity-60 mr-1">MOVE:</span>
                       {item.transport_to_next}
                     </div>
                   )}
 
                   { (item.description || item.notes) ? (
-                    <p className="text-[9px] sm:text-[10px] font-medium text-slate-600 whitespace-pre-line tracking-tight leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all duration-700 font-sans opacity-90 group-hover:opacity-100">
+                    <p className="text-[11px] font-medium text-slate-600 whitespace-pre-line tracking-tight leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all duration-700 font-sans opacity-90 group-hover:opacity-100">
                       {item.description || item.notes}
                     </p>
                   ) : (
-                    <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 italic opacity-50 group-hover:opacity-80 transition-opacity">
+                    <p className="text-[10px] font-bold text-slate-400 italic opacity-50 group-hover:opacity-80 transition-opacity">
                       點擊卡片編輯手帳內容、細節或照片...
                     </p>
+                  )}
+
+                  {item.linkedFactId && facts.find(f => f.id === item.linkedFactId) && (
+                    <div className="mt-2 p-2 rounded-xl bg-sky-50/50 border border-sky-100 flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-1 duration-500">
+                      <div className="flex items-center gap-1.5 text-[10px] font-black text-sky-700 uppercase tracking-widest">
+                        <Link size={10} />
+                        <span>ASSOCIATED TRAVEL FACT</span>
+                      </div>
+                      <div className="text-[11px] font-bold text-slate-700">
+                        {facts.find(f => f.id === item.linkedFactId)?.title}
+                      </div>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1">
+                        {facts.find(f => f.id === item.linkedFactId)?.factType.includes('flight') && (
+                          <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
+                            <Plane size={10} className="text-slate-400" />
+                            <span>{facts.find(f => f.id === item.linkedFactId)?.metadata?.flightNumber || 'FLIGHT'}</span>
+                          </div>
+                        )}
+                        {facts.find(f => f.id === item.linkedFactId)?.metadata?.address && (
+                          <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
+                            <MapPin size={10} className="text-slate-400" />
+                            <span className="truncate max-w-[150px]">{facts.find(f => f.id === item.linkedFactId)?.metadata?.address}</span>
+                          </div>
+                        )}
+                        {facts.find(f => f.id === item.linkedFactId)?.startAt && (
+                          <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
+                            <Clock size={10} className="text-slate-400" />
+                            <span>{facts.find(f => f.id === item.linkedFactId)?.startAt}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                   
                   <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-100/50 flex items-center justify-between">
@@ -2307,17 +2457,11 @@ function ItineraryListItem({
                         <button
                           type="button"
                           onClick={() => onUpdate({ ...item, is_visited: !item.is_visited })}
-                          className={`sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-inner' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'}`}
+                          className={`sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-inner' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'}`}
                         >
                           <Check size={12} strokeWidth={3} className={item.is_visited ? 'scale-110' : 'scale-90 opacity-40'} />
                           {item.is_visited ? '已打卡' : '未打卡'}
                         </button>
-                        {item.linkedFactId && (
-                           <div className="flex items-center gap-1 px-3 py-1.5 bg-sky-50 text-sky-600 border border-sky-100 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-sm">
-                              <span className="material-symbols-outlined text-[10px] sm:text-[12px]">link</span>
-                              FACT LINKED
-                           </div>
-                        )}
                      </div>
                      {!isOffline && (
                         <div className="flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
@@ -2400,7 +2544,7 @@ function ItineraryList({
                 <span className="text-[10px] sm:text-xs font-black text-slate-700 tracking-wider uppercase">
                   {dayWeather.date} 預報
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5">
                   <span className="text-slate-700">{dayWeather.temp_min}°C - {dayWeather.temp_max}°C</span>
                   <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                   降雨率 <span className={dayWeather.rain_prob > 50 ? 'text-blue-500' : 'text-slate-600'}>{dayWeather.rain_prob}%</span>
@@ -2416,7 +2560,7 @@ function ItineraryList({
               🏝️
             </div>
             <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2 sm:mb-3 tracking-tight">Day {day} 還是空白的</h3>
-            <p className="text-slate-400 font-bold max-w-[320px] leading-relaxed uppercase text-[9px] sm:text-[10px] tracking-[0.2em] px-4">使用 AI 助理或從側選單/下方拖入景點開始您的旅程</p>
+            <p className="text-slate-400 font-bold max-w-[320px] leading-relaxed uppercase text-[10px] tracking-[0.2em] px-4">使用 AI 助理或從側選單/下方拖入景點開始您的旅程</p>
           </GlassCard>
         )}
 
@@ -2502,13 +2646,13 @@ function ItineraryList({
                       <div className="flex flex-col justify-center ml-3 sm:ml-4">
                         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                           {timeGapStr && (
-                            <span className="px-2.5 sm:px-3 py-1 bg-slate-50/80 rounded-full text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1 sm:gap-1.5">
-                              <span className="material-symbols-outlined text-[10px] sm:text-[12px]">schedule</span>
+                            <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
+                              <Clock size={12} />
                               約 {timeGapStr}
                             </span>
                           )}
                           {(item.transport_to_next || autoTransport) && (
-                            <span className="px-2.5 sm:px-3 py-1 bg-indigo-50/80 rounded-full text-[9px] sm:text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1 sm:gap-1.5">
+                            <span className="px-3 py-1 bg-indigo-50/80 rounded-full text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1.5">
                               <span>{autoTransport?.emoji ?? '🚇'}</span>
                               {item.transport_to_next ?? autoTransport?.label}
                             </span>
@@ -2662,7 +2806,7 @@ function ManualAddNode({
                 <div className="flex flex-col gap-3">
                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">日期</label>
                   <div className="relative group">
-                    <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" style={{ fontSize: '18px' }}>calendar_today</span>
+                    <Calendar size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" />
                     <input 
                       type="date"
                       value={date}
@@ -2674,7 +2818,7 @@ function ManualAddNode({
                 <div className="flex flex-col gap-3">
                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">時間</label>
                   <div className="relative group">
-                    <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" style={{ fontSize: '18px' }}>schedule</span>
+                    <Clock size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-pink-400 transition-colors" />
                     <input 
                       type="time"
                       value={time}
@@ -2943,7 +3087,7 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
                title="上個月"
              >
-               <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+               <ChevronLeft size={20} />
              </button>
              <h2 className="text-xl font-black text-slate-700 tracking-widest">
                {currentMonth.getFullYear()}年 {currentMonth.getMonth() + 1}月
@@ -2953,7 +3097,7 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
                title="下個月"
              >
-               <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+               <ChevronRight size={20} />
              </button>
           </div>
           
@@ -3057,7 +3201,7 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                      
                      <div className="flex items-center gap-2 mb-1">
                        <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-cyan-500 shadow-sm shrink-0 relative z-10">
-                          <span className="material-symbols-outlined text-[14px]">link</span>
+                          <Link size={14} className="text-slate-400" />
                        </div>
                        <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">關聯的 Travel Fact</span>
                      </div>
@@ -3071,14 +3215,14 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                            
                            {(fact.startAt || fact.endAt) && (
                              <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                               <span className="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
+                               <Clock size={14} className="text-slate-400" />
                                <span>{fact.startAt || '--'} {fact.endAt ? `至 ${fact.endAt}` : ''}</span>
                              </div>
                            )}
                            
                            {fact.locationName && (
                              <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                               <span className="material-symbols-outlined text-[14px] text-slate-400">location_on</span>
+                               <MapPin size={14} className="text-slate-400" />
                                <span>{fact.locationName}</span>
                              </div>
                            )}

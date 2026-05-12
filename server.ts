@@ -226,6 +226,18 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
 
   const maxNodeDay = nodes.reduce((max, node) => Math.max(max, Number(node.day ?? 1)), 1);
 
+  // Heuristic: If we have itinerary nodes, and the date-based range from travel facts is huge (e.g. 35 days)
+  // while nodes only span a small range (e.g. 4 days), prioritize the nodes range.
+  let finalDays = dateBasedDays ?? maxNodeDay;
+  if (nodes.length > 0 && dateBasedDays && dateBasedDays > maxNodeDay + 7) {
+    finalDays = maxNodeDay;
+  }
+  
+  // Cap absurd day counts from default date ranges if no items are planned there
+  if (nodes.length === 0 && (finalDays ?? 0) > 21) {
+    finalDays = 5; // Default to 5 if it's an empty "huge" trip
+  }
+
   const DEST_COVERS: [string, string][] = [
     ['tokyo', 'photo-1542051841857-5f90071e7989'],
     ['osaka', 'photo-1590484512398-33fb39eff960'],
@@ -247,7 +259,7 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
     id: trip.id,
     name: trip.name,
     destination: trip.destination ?? '',
-    days: dateBasedDays ?? maxNodeDay,
+    days: finalDays,
     startDate,
     endDate,
     coverImage,

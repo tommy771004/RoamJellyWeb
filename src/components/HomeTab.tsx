@@ -108,10 +108,10 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
                 <div className="flex items-center gap-1 leading-none mb-1">
                   <span className="text-xs font-semibold text-slate-900">{flight.details?.airline || flight.provider}</span>
                   <div className="w-1 h-1 rounded-full bg-slate-300" />
-                  <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{flight.provider}</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{flight.provider}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] font-bold text-fuchsia-600 bg-fuchsia-50 px-1 py-[2px] rounded-sm tracking-tight">VERIFIED</span>
+                  <span className="text-[10px] font-bold text-fuchsia-600 bg-fuchsia-50 px-1 py-[2px] rounded-sm tracking-tight">VERIFIED</span>
                 </div>
               </div>
             </div>
@@ -144,7 +144,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
               <span className="text-xl font-black text-slate-900 tracking-tighter leading-none mb-1">
                 {flight.details?.departure}
               </span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">
                 Depart
               </span>
             </div>
@@ -153,7 +153,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
               <span className="text-xl font-black text-slate-900 tracking-tighter leading-none mb-1">
                 {flight.details?.arrival}
               </span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">
                 Arrive
               </span>
             </div>
@@ -162,11 +162,11 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
           {/* Flight Info Badges */}
           <div className="flex items-center gap-2 mt-1 text-slate-500 px-1">
             <div className="flex items-center gap-1">
-               <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm ${flight.details?.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
+               <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm ${flight.details?.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
                  {flight.details?.stops === 0 ? '直飛 DIRECT' : `${flight.details?.stops} 轉 STOP`}
                </span>
             </div>
-            <span className="text-[9px] font-bold uppercase tracking-tight">{flight.details?.duration || '3h 15m'}</span>
+            <span className="text-[10px] font-bold uppercase tracking-tight">{flight.details?.duration || '3h 15m'}</span>
           </div>
         </div>
 
@@ -206,7 +206,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
         {/* Bottom Section: Price & CTA */}
         <div className="p-4 pt-2 bg-gradient-to-b from-transparent to-slate-50/80 flex items-end justify-between mt-auto">
           <div className="flex flex-col">
-            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Estimated Price</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Estimated Price</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xs font-bold text-slate-400">{flight.currency}</span>
               <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">{flight.price.toLocaleString()}</span>
@@ -283,7 +283,7 @@ function FlightTable({
                   <AirlineLogo providerName={flight.details?.airline || flight.provider} className="w-10 h-10 rounded-[10px] text-lg" />
                   <div className="flex flex-col items-start overflow-hidden">
                     <span className="text-slate-900 text-[13px] font-bold truncate max-w-[140px] leading-tight">{flight.details?.airline || flight.provider}</span>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{flight.provider}</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{flight.provider}</span>
                   </div>
                 </div>
               </td>
@@ -414,7 +414,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       if (onRequireLogin) {
         onRequireLogin();
       } else {
-        showToast('請先登入後再進行此操作', 'error');
+        showToast('請先登入後再進行此操作', 'warning');
       }
       return;
     }
@@ -686,7 +686,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="flex flex-col gap-0.5 sm:gap-1 flex-1">
                   <h3 className="text-[22px] sm:text-3xl font-black text-white tracking-tight flex items-center gap-2 sm:gap-3">
                     AI 智慧行程規劃
-                    <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest border border-fuchsia-500/30 backdrop-blur-sm self-start mt-1 sm:mt-0">Beta</span>
+                    <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-bold uppercase tracking-widest border border-fuchsia-500/30 backdrop-blur-sm self-start mt-1 sm:mt-0">Beta</span>
                   </h3>
                   <p className="text-slate-400 text-[12px] sm:text-base font-medium tracking-wide">
                     輸入目的地，秒速生成專屬客製化旅航計畫
@@ -714,7 +714,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       <PlaneTakeoff size={18} className="md:w-[20px] md:h-[20px]" />
                     </div>
                     <div className="flex flex-col pl-8 md:pl-10 w-full text-left">
-                      <Label htmlFor="search-from" className="text-[9px] md:text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0 md:mb-1 cursor-text">出發從哪裡</Label>
+                      <Label htmlFor="search-from" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">出發從哪裡</Label>
                       <input
                         id="search-from"
                         className="bg-transparent border-none p-0 focus:ring-0 text-[15px] md:text-lg font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none h-5 md:h-6"
@@ -739,7 +739,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       <Globe size={18} className="md:w-[20px] md:h-[20px]" />
                     </div>
                     <div className="flex flex-col pl-8 md:pl-10 w-full text-left">
-                      <Label htmlFor="search-to" className="text-[9px] md:text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0 md:mb-1 cursor-text">飛往目的地</Label>
+                      <Label htmlFor="search-to" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">飛往目的地</Label>
                       <input
                         id="search-to"
                         className="bg-transparent border-none p-0 focus:ring-0 text-[15px] md:text-lg font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none h-5 md:h-6"
@@ -773,7 +773,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     <Calendar size={18} className="md:w-[20px] md:h-[20px]" />
                   </div>
                   <div className="flex flex-col pl-8 md:pl-10 w-full text-left">
-                    <span className="text-[9px] md:text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0 md:mb-1">去程日期</span>
+                    <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1">去程日期</span>
                     <span className={`text-[15px] md:text-lg font-black truncate leading-none h-5 md:h-6 flex items-center ${!searchForm.date ? 'text-slate-300' : 'text-slate-900'}`}>
                       {searchForm.date || '選擇日期'}
                     </span>
@@ -843,7 +843,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                    )}
                  </h2>
                  {filteredResults.length > 0 && (
-                   <span className="px-2 md:px-2.5 py-0.5 md:py-1 bg-slate-900 text-white rounded-[6px] md:rounded-[8px] text-[9px] md:text-[10px] font-black tracking-widest uppercase shadow-sm">
+                   <span className="px-2 md:px-2.5 py-0.5 md:py-1 bg-slate-900 text-white rounded-[6px] md:rounded-[8px] text-[10px] font-black tracking-widest uppercase shadow-sm">
                      {filteredResults.length} 個結果
                    </span>
                  )}
@@ -1132,7 +1132,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         {/* Tag pills on top-right */}
                         <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
                           {dest.tags.map((tag) => (
-                            <span key={tag} className="text-[9px] font-black text-white bg-white/20 backdrop-blur-md border border-white/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            <span key={tag} className="text-[10px] font-black text-white bg-white/20 backdrop-blur-md border border-white/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
                               {tag}
                             </span>
                           ))}
