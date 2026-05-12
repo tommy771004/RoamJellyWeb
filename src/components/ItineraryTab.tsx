@@ -54,6 +54,7 @@ import {
   addFavorite,
   deleteFavorite,
   regenerateItinerarySpot,
+  updateTripPublicState,
   geocodeSpot,
   fetchSpotEnrichment,
   submitLedgerExpense,
@@ -71,6 +72,7 @@ import type {
   ItineraryPlannerForm,
   SearchItem,
   SyncItineraryPayload,
+  TravelFact,
   TripInfo,
 } from '../types/workflow';
 
@@ -274,6 +276,7 @@ export default function ItineraryTab() {
   const [draggingFavorite, setDraggingFavorite] = useState<FavoriteSpot | null>(null);
   const [nodeEditingLocks, setNodeEditingLocks] = useState<Record<string, { userName: string; day: number }>>({});
   const [expenseTargetNode, setExpenseTargetNode] = useState<ItineraryNode | null>(null);
+  const [isUpdatingPublicState, setIsUpdatingPublicState] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const reorderCommitTimerRef = useRef<number | null>(null);
@@ -810,6 +813,26 @@ export default function ItineraryTab() {
       showToast('🎉 行程連結已複製！邀請朋友加入吧', 'success');
     } catch (e) {
       showToast('分享失敗，請手動複製網址', 'warning');
+    }
+  };
+
+  const handleTogglePublicTemplate = async () => {
+    if (!activeTripId || !tripInfo || isUpdatingPublicState) return;
+    const nextPublicState = !tripInfo.isPublic;
+    setIsUpdatingPublicState(true);
+    try {
+      const response = await updateTripPublicState(activeTripId, nextPublicState);
+      const data = response?.data ?? response ?? {};
+      setTripInfo((prev: TripInfo | null) => prev ? {
+        ...prev,
+        isPublic: Boolean(data.isPublic ?? nextPublicState),
+        forkCount: Number(data.forkCount ?? prev.forkCount ?? 0),
+      } : prev);
+      showToast(nextPublicState ? '已發布到公開模板大廳。' : '已從公開模板大廳下架。', 'success');
+    } catch (error: any) {
+      showToast(error?.message || '更新公開模板狀態失敗。', 'warning');
+    } finally {
+      setIsUpdatingPublicState(false);
     }
   };
 
@@ -1380,6 +1403,13 @@ export default function ItineraryTab() {
             </button>
             <div className="flex gap-2">
               <button
+                onClick={handleTogglePublicTemplate}
+                disabled={isUpdatingPublicState}
+                className="px-3 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg text-[10px] font-black uppercase tracking-widest disabled:opacity-60"
+              >
+                {tripInfo?.isPublic ? '公開中' : '發布'}
+              </button>
+              <button
                 onClick={handleShare}
                 className="w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
               >
@@ -1401,6 +1431,14 @@ export default function ItineraryTab() {
           <div className="flex items-center gap-2 text-slate-700 font-black text-[10px] uppercase tracking-widest flex-wrap">
             <span className="bg-white/90 backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm">{totalDays} DAYS</span>
             <span className="bg-white/90 backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm">{collaborators.length} TRAVELERS</span>
+            <span className={`backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm ${tripInfo?.isPublic ? 'bg-emerald-100/90 text-emerald-700' : 'bg-white/90 text-slate-500'}`}>
+              {tripInfo?.isPublic ? 'PUBLIC TEMPLATE' : 'PRIVATE DRAFT'}
+            </span>
+            {!!tripInfo?.forkCount && (
+              <span className="bg-white/90 backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm text-slate-500">
+                FORKS {tripInfo.forkCount}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -1422,6 +1460,14 @@ export default function ItineraryTab() {
             >
               <Share2 size={12} strokeWidth={3} />
               分享
+            </button>
+            <button
+              onClick={handleTogglePublicTemplate}
+              disabled={isUpdatingPublicState}
+              className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95 disabled:opacity-60 ${tripInfo?.isPublic ? 'bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-600' : 'bg-white hover:bg-slate-50 border border-slate-100 text-slate-500'}`}
+            >
+              <Lock size={12} strokeWidth={3} />
+              {tripInfo?.isPublic ? '取消公開' : '發布模板'}
             </button>
             <button
               onClick={handleExportIcs}
@@ -1457,6 +1503,14 @@ export default function ItineraryTab() {
                   <Users size={16} className="text-indigo-500 shrink-0" />
                   <span className="text-slate-700 tracking-tight"><span className="text-indigo-600 font-black">{collaborators.length}</span> 位旅行者</span>
                </div>
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full border shadow-sm ${tripInfo?.isPublic ? 'bg-emerald-50/60 border-emerald-100/60' : 'bg-slate-50/70 border-slate-100/70'}`}>
+                <Share2 size={16} className={tripInfo?.isPublic ? 'text-emerald-500 shrink-0' : 'text-slate-400 shrink-0'} />
+                <span className="text-slate-700 tracking-tight">{tripInfo?.isPublic ? '公開模板已上架' : '目前為私人草稿'}</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 bg-amber-50/50 rounded-full border border-amber-100/50 shadow-sm">
+                <Bookmark size={16} className="text-amber-500 shrink-0" />
+                <span className="text-slate-700 tracking-tight"><span className="text-amber-600 font-black">{tripInfo?.forkCount ?? 0}</span> 次複製</span>
+              </div>
             </div>
           </div>
         </div>
@@ -2269,6 +2323,9 @@ function ItineraryListItem({
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const facts = useTripFactsStore(s => s.facts);
+  const linkedFact = item.linkedFactId ? facts.find((fact) => fact.id === item.linkedFactId) : undefined;
+  const linkedFactRedirect = getTravelFactRedirectPayload(linkedFact);
+  const linkedFactBookingLabel = getTravelFactBookingLabel(linkedFact);
 
   useEffect(() => {
     setEditTitle(item.title);
@@ -2483,10 +2540,10 @@ function ItineraryListItem({
                    {item.intensity === 'hardcore' ? '高強度' : item.intensity === 'chill' ? '輕鬆' : '適中'}
                  </span>
                )}
-               {item.linkedFactId && facts.find((f: any) => f.id === item.linkedFactId) && (
+               {linkedFact && (
                  <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-0.5">
                    <Link size={11} className="sm:w-[13px] sm:h-[13px]" />
-                   已綁定: {facts.find((f: any) => f.id === item.linkedFactId)?.title}
+                   已綁定: {linkedFact.title}
                  </span>
                )}
                {collaboratingLock && (
@@ -2703,35 +2760,48 @@ function ItineraryListItem({
                     </p>
                   )}
 
-                  {item.linkedFactId && facts.find(f => f.id === item.linkedFactId) && (
+                  {linkedFact && (
                     <div className="mt-2 p-2 rounded-xl bg-sky-50/50 border border-sky-100 flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-1 duration-500">
                       <div className="flex items-center gap-1.5 text-[10px] font-black text-sky-700 uppercase tracking-widest">
                         <Link size={10} />
                         <span>ASSOCIATED TRAVEL FACT</span>
                       </div>
                       <div className="text-[11px] font-bold text-slate-700">
-                        {facts.find(f => f.id === item.linkedFactId)?.title}
+                        {linkedFact.title}
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1">
-                        {facts.find(f => f.id === item.linkedFactId)?.factType.includes('flight') && (
+                        {linkedFact.factType.includes('flight') && (
                           <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
                             <Plane size={10} className="text-slate-400" />
-                            <span>{facts.find(f => f.id === item.linkedFactId)?.metadata?.flightNumber || 'FLIGHT'}</span>
+                            <span>{linkedFact.metadata?.flightNumber || 'FLIGHT'}</span>
                           </div>
                         )}
-                        {facts.find(f => f.id === item.linkedFactId)?.metadata?.address && (
+                        {linkedFact.metadata?.address && (
                           <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
                             <MapPin size={10} className="text-slate-400" />
-                            <span className="truncate max-w-[150px]">{facts.find(f => f.id === item.linkedFactId)?.metadata?.address}</span>
+                            <span className="truncate max-w-[150px]">{linkedFact.metadata?.address}</span>
                           </div>
                         )}
-                        {facts.find(f => f.id === item.linkedFactId)?.startAt && (
+                        {linkedFact.startAt && (
                           <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
                             <Clock size={10} className="text-slate-400" />
-                            <span>{facts.find(f => f.id === item.linkedFactId)?.startAt}</span>
+                            <span>{linkedFact.startAt}</span>
                           </div>
                         )}
                       </div>
+                      {linkedFactRedirect && linkedFactBookingLabel && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            useAppStore.getState().openRedirectModal(linkedFactRedirect);
+                          }}
+                          className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-sky-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md"
+                        >
+                          <ExternalLink size={11} strokeWidth={3} />
+                          <span>{linkedFactBookingLabel}</span>
+                        </button>
+                      )}
                     </div>
                   )}
                   
@@ -3736,8 +3806,10 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                      </div>
                      
                      {(() => {
-                       const fact = facts.find((f: any) => f.id === selectedNode.linkedFactId);
+                       const fact = facts.find((f: any) => f.id === selectedNode.linkedFactId) as TravelFact | undefined;
                        if (!fact) return null;
+                       const redirectPayload = getTravelFactRedirectPayload(fact);
+                       const bookingLabel = getTravelFactBookingLabel(fact);
                        return (
                          <div className="flex flex-col gap-2 relative z-10 pl-1">
                            <span className="text-sm font-bold text-slate-800">{fact.title}</span>
@@ -3796,6 +3868,16 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                                  </div>
                                )}
                              </div>
+                           )}
+                           {redirectPayload && bookingLabel && (
+                             <button
+                               type="button"
+                               onClick={() => openRedirectModal(redirectPayload)}
+                               className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-200 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-widest text-cyan-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50 hover:shadow-md"
+                             >
+                               <ExternalLink size={14} strokeWidth={3} />
+                               <span>{bookingLabel}</span>
+                             </button>
                            )}
                          </div>
                        );
@@ -3919,6 +4001,28 @@ function normalizeClockInput(value: string): string {
   const hh = Math.min(Math.max(0, Number(match[1])), 23);
   const mm = Math.min(Math.max(0, Number(match[2])), 59);
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function getTravelFactBookingLabel(fact?: TravelFact | null) {
+  if (!fact?.metadata?.bookingUrl) return null;
+  return fact.factType.includes('flight') ? '前往預訂' : '查看價格';
+}
+
+function getTravelFactRedirectPayload(fact?: TravelFact | null) {
+  const bookingUrl = fact?.metadata?.bookingUrl?.trim();
+  if (!fact || !bookingUrl) return null;
+
+  return {
+    provider: fact.metadata?.provider || fact.metadata?.airline || fact.title,
+    affiliateUrl: bookingUrl,
+    itemId: fact.id,
+    airline: fact.metadata?.airline || fact.metadata?.provider || fact.title,
+    departure: fact.metadata?.depCode || '出發',
+    arrival: fact.metadata?.arrCode || fact.locationName || '目的地',
+    price: typeof fact.metadata?.price === 'number' ? fact.metadata.price : undefined,
+    currency: fact.metadata?.currency,
+    emoji: fact.factType.includes('flight') ? '✈️' : '🏨',
+  };
 }
 
 function parseCsvInput(text: string): string[] {
