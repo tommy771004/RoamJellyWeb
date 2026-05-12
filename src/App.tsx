@@ -303,6 +303,8 @@ export default function App() {
                      emoji: spot.emoji || '📍',
                      category: spot.category || 'other',
                      description: spot.ai_note || '',
+                     ai_note: spot.ai_note || '',
+                     intensity: spot.intensity,
                      lat: undefined as any,
                      lng: undefined as any,
                      source: 'local' as const,
@@ -320,6 +322,8 @@ export default function App() {
                 emoji: spot.emoji || '📍',
                 category: spot.category || 'other',
                 description: spot.ai_note || '',
+                ai_note: spot.ai_note || '',
+                intensity: spot.intensity,
                 lat: spot.lat,
                 lng: spot.lng,
                 source: 'local' as const,
@@ -382,13 +386,13 @@ export default function App() {
 
             if (TRIP_ID && nodesToProcess.length > 0) {
               const testNode = nodesToProcess[0];
-              const ok = await syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: testNode });
-              if (ok) {
-                 // Success! First node is stored. We will process the rest.
-                 nodesToProcess = nodesToProcess.slice(1);
-                 setNodes([testNode]);
-              } else {
-                 canEdit = false;
+              try {
+                await syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: testNode });
+                // Success! First node is stored. We will process the rest.
+                nodesToProcess = nodesToProcess.slice(1);
+                setNodes([testNode]);
+              } catch {
+                canEdit = false;
               }
             }
 
@@ -412,12 +416,19 @@ export default function App() {
             }
 
             if (nodesToProcess.length > 0 && TRIP_ID) {
-               const results = await Promise.all(nodesToProcess.map(async (node: any) => {
+              const results = await Promise.allSettled(nodesToProcess.map(async (node: any) => {
                   addNode(node);
                   return syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
                }));
-               const failed = results.filter(ok => !ok).length;
-               if (failed > 0) console.warn(`${failed} node(s) failed to sync`);
+              const failed = results.filter(result => result.status === 'rejected').length;
+              if (failed > 0) {
+                const failedNodeIds = results.flatMap((result, index) =>
+                 result.status === 'rejected' ? [nodesToProcess[index]?.node_id] : [],
+                );
+                const currentNodes = useItineraryStore.getState().nodes;
+                setNodes(currentNodes.filter((node: any) => !failedNodeIds.includes(node.node_id)));
+                console.warn(`${failed} node(s) failed to sync`);
+              }
             } else if (!TRIP_ID) {
                for (const node of nodesToProcess) {
                  addNode(node);
