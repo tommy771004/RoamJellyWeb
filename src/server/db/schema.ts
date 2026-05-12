@@ -27,17 +27,22 @@ export const itineraryNodes = pgTable('itinerary_nodes', {
   nodeId: varchar('node_id', { length: 128 }).primaryKey(),
   tripId: varchar('trip_id', { length: 128 }).notNull().references(() => trips.id),
   day: integer('day').notNull(),
+  date: varchar('date', { length: 32 }),
   time: varchar('time', { length: 64 }),
   timestamp: timestamp('timestamp'),
+  sortOrder: integer('sort_order').default(0).notNull(),
   title: varchar('title', { length: 255 }).notNull(),
   emoji: varchar('emoji', { length: 32 }),
   category: varchar('category', { length: 64 }),
   lat: real('lat'),
   lng: real('lng'),
   description: text('description'),
+  aiNote: text('ai_note'),
+  intensity: varchar('intensity', { length: 32 }),
   isVisited: boolean('is_visited').default(false).notNull(),
   transportToNext: text('transport_to_next'),
   imageUrl: text('image_url'),
+  attachments: jsonb('attachments'),
   linkedFactId: text('linked_fact_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -93,6 +98,7 @@ export const checklistItems = pgTable('checklist_items', {
   tripId: varchar('trip_id', { length: 128 }).notNull().references(() => trips.id),
   content: text('content').notNull(),
   completed: boolean('completed').default(false).notNull(),
+  category: varchar('category', { length: 64 }).default('other'),
 });
 
 export const expenses = pgTable('expenses', {
@@ -102,6 +108,7 @@ export const expenses = pgTable('expenses', {
   amount: real('amount').notNull(),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  clearedAt: timestamp('cleared_at'),
 });
 
 export const searchHistory = pgTable('search_history', {
