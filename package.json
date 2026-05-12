@@ -6,7 +6,7 @@
     "dev": "tsx server.ts",
     "start": "node dist/server.cjs",
     "build": "vite build && esbuild server.ts --platform=node --target=node18 --bundle --format=cjs --out-extension:.js=.cjs --outdir=dist --external:pg-native --external:bufferutil --external:utf-8-validate --external:playwright --external:@sparticuz/chromium --external:playwright-core",
-    "vercel-build": "vite build && esbuild server.ts --bundle --platform=node --target=node18 --format=cjs --outfile=api/_server.cjs --external:pg-native --external:bufferutil --external:utf-8-validate --external:playwright --external:@sparticuz/chromium --external:playwright-core",
+    "vercel-build": "npm run db:migrate && vite build && esbuild server.ts --bundle --platform=node --target=node18 --format=cjs --outfile=api/_server.cjs --external:pg-native --external:bufferutil --external:utf-8-validate --external:playwright --external:@sparticuz/chromium --external:playwright-core",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "postinstall": "npx -y playwright install chromium",
