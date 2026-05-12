@@ -1,3 +1,11 @@
+// Suppress url.parse DeprecationWarning caused by Express 4.x and node-postgres
+const originalEmitWarning = process.emitWarning;
+process.emitWarning = function(warning: string | Error, ...args: any[]) {
+  const msg = typeof warning === 'string' ? warning : warning.message;
+  if (msg && msg.includes('url.parse')) return;
+  return originalEmitWarning.call(process, warning, ...args);
+};
+
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
@@ -13,14 +21,23 @@ import * as schema from './src/server/db/schema';
 import { scrapeTripFlights } from './src/server/services/tripParser';
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
 
+// Vercel serverless: resolve/reject the app promise once startServer() finishes setup
+let _resolveApp!: (app: ReturnType<typeof express>) => void;
+let _rejectApp!: (err: unknown) => void;
+const _appPromise = new Promise<ReturnType<typeof express>>((resolve, reject) => {
+  _resolveApp = resolve;
+  _rejectApp = reject;
+});
+
 const REAL_BACKEND_BASE_URL = process.env.REAL_BACKEND_BASE_URL?.replace(/\/+$/, '');
-const SERPAPI_KEY = process.env.SERPAPI_KEY;
 const SHOULD_SEED_DEMO_DATA = process.env.SEED_DEMO_DATA === 'true' && !REAL_BACKEND_BASE_URL;
 const REDIS_URL = process.env.REDIS_URL?.trim();
 const JWT_DEV_TOKEN_ENABLED = process.env.ENABLE_DEV_TOKEN_ENDPOINT !== 'false';
+const GUEST_AUTH_ENABLED = process.env.ENABLE_GUEST_AUTH !== 'false';
 const AUTH_REQUIRED = process.env.AUTH_REQUIRED === 'true' || process.env.NODE_ENV === 'production';
 const OTA_PROVIDER_URL = process.env.OTA_PROVIDER_URL?.replace(/\/+$/, '');
-
+const OTA_PARTNER_BASE = process.env.OTA_PARTNER_BASE?.replace(/\/+$/, '') ?? '';
+export const app = express();
 const PORT = 3000;
 
 type TripRole = 'owner' | 'editor' | 'viewer';
@@ -75,18 +92,6 @@ const SEARCH_HISTORY_MAX = 200;
 const PLANNING_LOG_MAX = 500;
 const PLANNING_SNAPSHOT_TTL_SECONDS = 6 * 60 * 60;
 
-const TOKYO_COORDS: Record<string, { lat: number; lng: number }> = {
-  淺草寺: { lat: 35.7148, lng: 139.7967 },
-  晴空塔: { lat: 35.7101, lng: 139.8107 },
-  上野公園: { lat: 35.7159, lng: 139.7738 },
-  築地市場: { lat: 35.6654, lng: 139.7707 },
-  新宿御苑: { lat: 35.6851, lng: 139.7099 },
-  台場: { lat: 35.6277, lng: 139.775 },
-  渋谷: { lat: 35.658, lng: 139.7016 },
-  秋葉原: { lat: 35.6984, lng: 139.7731 },
-  東京鐵塔: { lat: 35.6586, lng: 139.7454 },
-  明治神宮: { lat: 35.6763, lng: 139.6993 },
-};
 
 let redisClient: any | null = null;
 
@@ -166,6 +171,33 @@ function summarizeTravelFacts(rows: any[]) {
   };
 }
 
+function normalizeDateOnlyInput(value: unknown): string | null {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
+}
+
+function buildNodeTimestamp(valueDate: unknown, valueTime: unknown): Date | null {
+  const date = normalizeDateOnlyInput(valueDate);
+  const time = String(valueTime ?? '').trim();
+  if (!date || !/^\d{1,2}:\d{2}$/.test(time)) return null;
+
+  const parsed = new Date(`${date}T${time}:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function toIsoTimestamp(value: unknown): string | null {
+  if (!value) return null;
+  const parsed = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+async function validateLinkedFactId(repo: AppRepository, tripId: string, linkedFactId?: string | null) {
+  if (!linkedFactId) return true;
+  const fact = await repo.getTripTravelFactById(linkedFactId);
+  return Boolean(fact && fact.tripId === tripId);
+}
+
 async function buildTripInfo(repo: AppRepository, tripId: string) {
   const trip = await repo.getTripById(tripId);
   if (!trip) return null;
@@ -195,14 +227,43 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
 
   const maxNodeDay = nodes.reduce((max, node) => Math.max(max, Number(node.day ?? 1)), 1);
 
+  // Heuristic: If we have itinerary nodes, and the date-based range from travel facts is huge (e.g. 35 days)
+  // while nodes only span a small range (e.g. 4 days), prioritize the nodes range.
+  let finalDays = dateBasedDays ?? maxNodeDay;
+  if (nodes.length > 0 && dateBasedDays && dateBasedDays > maxNodeDay + 7) {
+    finalDays = maxNodeDay;
+  }
+  
+  // Cap absurd day counts from default date ranges if no items are planned there
+  if (nodes.length === 0 && (finalDays ?? 0) > 21) {
+    finalDays = 5; // Default to 5 if it's an empty "huge" trip
+  }
+
+  const DEST_COVERS: [string, string][] = [
+    ['tokyo', 'photo-1542051841857-5f90071e7989'],
+    ['osaka', 'photo-1590484512398-33fb39eff960'],
+    ['kyoto', 'photo-1493976040374-85c8e12f0c0e'],
+    ['seoul', 'photo-1538669715315-155098f0fb1d'],
+    ['paris', 'photo-1502602898657-3e91760cbb34'],
+    ['bali',  'photo-1537996194471-e657df975ab4'],
+    ['singapore', 'photo-1525625293386-3f8f99389edd'],
+    ['bangkok', 'photo-1508009603885-50cf7c8dd0d5'],
+    ['new york', 'photo-1485871981521-5b1fd3805eee'],
+    ['london', 'photo-1513635269975-59663e0ac1ad'],
+  ];
+  const destLower = (trip.destination ?? '').toLowerCase();
+  const coverMatch = DEST_COVERS.find(([k]) => destLower.includes(k));
+  const coverImage = `https://images.unsplash.com/${coverMatch ? coverMatch[1] : DEST_COVERS[0][1]}?w=1200&auto=format&fit=crop`;
+
   return {
     trip_id: trip.id,
     id: trip.id,
     name: trip.name,
     destination: trip.destination ?? '',
-    days: dateBasedDays ?? maxNodeDay,
+    days: finalDays,
     startDate,
     endDate,
+    coverImage,
   };
 }
 
@@ -241,64 +302,15 @@ async function setSearchCacheData(cacheKey: string, data: SearchItem[]): Promise
 }
 
 async function fetchFromOtaProvider(from: string, to: string, date: string): Promise<SearchItem[] | null> {
-  // If we have a SerpApi key, use Google Flights via SerpApi
-  if (SERPAPI_KEY) {
-    try {
-      console.log(`Fetching real flight data from SerpApi (Google Flights) for ${from} -> ${to} on ${date}`);
-      const params = new URLSearchParams({
-        engine: 'google_flights',
-        departure_id: from,
-        arrival_id: to,
-        outbound_date: date,
-        currency: 'TWD',
-        hl: 'zh-tw',
-        gl: 'tw',
-        api_key: SERPAPI_KEY
-      });
-
-      const url = `https://serpapi.com/search.json?${params.toString()}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-
-      if (!res.ok) {
-        console.error(`SerpApi error: ${res.status}`);
-      } else {
-        const json = await res.json() as any;
-        
-        if (json.error) {
-          console.error('SerpApi returned error:', json.error);
-        } else if (json.best_flights) {
-          return json.best_flights.slice(0, 10).map((flight: any, idx: number) => {
-            const leg = flight.flights[0];
-            return {
-              id: `serp_${idx}_${Date.now()}`,
-              type: 'flight' as const,
-              provider: 'Google Flights',
-              title: `${from} → ${to} · ${flight.type === 'Nonstop' ? '直飛' : flight.type}`,
-              price: flight.price,
-              currency: 'TWD',
-              emoji: '✈️',
-              affiliate_url: 'https://www.google.com/travel/flights',
-              details: {
-                airline: leg.airline,
-                departure: leg.departure_airport.time.split(' ')[1] || '08:00',
-                arrival: leg.arrival_airport.time.split(' ')[1] || '12:00',
-                stops: flight.type === 'Nonstop' ? 0 : 1,
-                duration: `${Math.floor(flight.total_duration / 60)}h ${flight.total_duration % 60}m`
-              }
-            };
-          });
-        }
-      }
-    } catch (error) {
-      console.error('SerpApi call failed:', error);
+  // Use Trip.com Scraper as primary flight provider
+  try {
+    console.log(`Fetching flights from Trip.com scraper for ${from} -> ${to} on ${date}`);
+    const scrapedFlights = await scrapeTripFlights(from, to, date);
+    if (scrapedFlights && scrapedFlights.length > 0) {
+      return scrapedFlights;
     }
-  }
-
-  // Fallback to Trip.com Scraper (Route B)
-  console.log(`Fallback to Trip.com scraper for ${from} -> ${to} on ${date}`);
-  const scrapedFlights = await scrapeTripFlights(from, to, date);
-  if (scrapedFlights && scrapedFlights.length > 0) {
-    return scrapedFlights;
+  } catch (error) {
+    console.error('Trip.com scraper failed:', error);
   }
 
   // Legacy fallback to internal OTA provider if URL exists
@@ -449,7 +461,6 @@ async function startServer() {
     }
   }
 
-  const app = express();
   const httpServer = createServer(app);
   const io = new SocketServer(httpServer, {
     cors: {
@@ -493,10 +504,12 @@ async function startServer() {
         AUTH_REQUIRED &&
         req.path.startsWith('/api') &&
         req.path !== '/api/auth/dev-token' &&
+        req.path !== '/api/auth/guest' &&
         req.path !== '/api/auth/register' &&
         req.path !== '/api/auth/login' &&
         !req.path.startsWith('/api/search') &&
-        req.path !== '/api/weather'
+        req.path !== '/api/weather' &&
+        req.path !== '/api/handbooks'
       ) {
         res.status(401).json({ status: 'error', message: 'missing bearer token' });
         return;
@@ -587,6 +600,27 @@ async function startServer() {
     });
   }
 
+  if (GUEST_AUTH_ENABLED) {
+    app.post('/api/auth/guest', async (req, res) => {
+      const rawDisplayName = String(req.body?.display_name ?? '').trim();
+      const displayName = (rawDisplayName || '訪客旅人').slice(0, 32);
+      const suffix = Math.random().toString(36).slice(2, 8);
+      const userId = `guest_${Date.now().toString(36)}_${suffix}`;
+      const username = userId;
+
+      await repo.ensureUser(userId, username, displayName);
+
+      const token = signAccessToken({ userId });
+      res.status(201).json({
+        status: 'success',
+        token,
+        user_id: userId,
+        user: { id: userId, display_name: displayName },
+        expires_in: process.env.JWT_EXPIRES_IN ?? '12h',
+      });
+    });
+  }
+
   // ── Auth: Register ──────────────────────────────────────────────────────────
   app.post('/api/auth/register', async (req, res) => {
     const username = String(req.body?.username ?? '').trim();
@@ -671,6 +705,26 @@ async function startServer() {
     }
   });
 
+  const activeEditingLocks = new Map<
+    string,
+    {
+      tripId: string;
+      nodeId: string;
+      day: number;
+      userId: string;
+      userName: string;
+      socketId: string;
+    }
+  >();
+
+  const releaseLocksForSocket = (socketId: string) => {
+    for (const [lockKey, lock] of activeEditingLocks.entries()) {
+      if (lock.socketId !== socketId) continue;
+      activeEditingLocks.delete(lockKey);
+      io.to(lock.tripId).emit('editing_stop', { nodeId: lock.nodeId, day: lock.day });
+    }
+  };
+
   io.on('connection', (socket) => {
     socket.on('join_room', async (payload: { trip_id?: string }) => {
       if (!payload?.trip_id) return;
@@ -684,6 +738,15 @@ async function startServer() {
       }
 
       socket.join(payload.trip_id);
+
+      for (const lock of activeEditingLocks.values()) {
+        if (lock.tripId !== payload.trip_id || lock.userId === userId) continue;
+        socket.emit('editing_start', {
+          userName: lock.userName,
+          nodeId: lock.nodeId,
+          day: lock.day,
+        });
+      }
     });
 
     socket.on(
@@ -691,7 +754,7 @@ async function startServer() {
       async (event: {
         trip_id?: string;
         action?: string;
-        payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string };
+        payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; ai_note?: string; intensity?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; attachments?: Array<{ id?: string; name?: string; type?: string; url?: string }>; linkedFactId?: string };
       }) => {
         if (
           !event?.trip_id ||
@@ -712,19 +775,32 @@ async function startServer() {
           return;
         }
 
+        const linkedFactAllowed = await validateLinkedFactId(repo, event.trip_id, event.payload.linkedFactId);
+        if (!linkedFactAllowed) {
+          socket.emit('error', { message: 'invalid linked travel fact' });
+          return;
+        }
+
         await repo.upsertItineraryNode(event.trip_id, {
           node_id: event.payload.node_id,
           day: event.payload.day,
+          date: normalizeDateOnlyInput(event.payload.date) ?? undefined,
           time: event.payload.time,
+          timestamp: event.payload.timestamp ?? buildNodeTimestamp(event.payload.date, event.payload.time)?.toISOString(),
+          sort_order: event.payload.sort_order,
           title: event.payload.title,
           emoji: event.payload.emoji,
           category: event.payload.category,
           lat: event.payload.lat,
           lng: event.payload.lng,
-          isVisited: event.payload.is_visited,
+          is_visited: event.payload.is_visited,
           description: event.payload.description,
+          ai_note: event.payload.ai_note,
+          intensity: event.payload.intensity,
           transport_to_next: event.payload.transport_to_next,
           image_url: event.payload.image_url,
+          attachments: Array.isArray(event.payload.attachments) ? event.payload.attachments : [],
+          linkedFactId: event.payload.linkedFactId,
         });
 
         await appendPlanningRecord({
@@ -746,12 +822,23 @@ async function startServer() {
           payload: {
             node_id: event.payload.node_id,
             day: Number(event.payload.day ?? 1),
+            date: normalizeDateOnlyInput(event.payload.date) ?? null,
             time: event.payload.time,
+            timestamp: event.payload.timestamp ?? buildNodeTimestamp(event.payload.date, event.payload.time)?.toISOString() ?? null,
+            sort_order: Number(event.payload.sort_order ?? 0),
             title: event.payload.title,
             emoji: event.payload.emoji ?? '📍',
             category: event.payload.category ?? 'other',
             lat: event.payload.lat ?? null,
             lng: event.payload.lng ?? null,
+            is_visited: event.payload.is_visited ?? false,
+            description: event.payload.description ?? '',
+            ai_note: event.payload.ai_note ?? null,
+            intensity: event.payload.intensity ?? null,
+            transport_to_next: event.payload.transport_to_next ?? null,
+            image_url: event.payload.image_url ?? null,
+            attachments: Array.isArray(event.payload.attachments) ? event.payload.attachments : [],
+            linkedFactId: event.payload.linkedFactId ?? null,
           },
         });
       },
@@ -769,34 +856,82 @@ async function startServer() {
 
       const userRecord = await repo.getUserById(socket.data.userId).catch(() => null);
       const userName = userRecord?.displayName || String(socket.data.userId);
+      const lockKey = `${tripId}:${nodeId}`;
+      const existingLock = activeEditingLocks.get(lockKey);
+
+      if (existingLock && existingLock.userId !== socket.data.userId) {
+        socket.emit('editing_denied', {
+          nodeId,
+          day: existingLock.day,
+          userName: existingLock.userName,
+        });
+        return;
+      }
+
+      activeEditingLocks.set(lockKey, {
+        tripId,
+        nodeId,
+        day,
+        userId: String(socket.data.userId),
+        userName,
+        socketId: socket.id,
+      });
 
       // Broadcast to all other members in the trip room
       socket.to(tripId).emit('editing_start', { userName, nodeId, day });
     });
 
-    socket.on('editing_stop', async (payload: { trip_id?: string }) => {
+    socket.on('editing_stop', async (payload: { trip_id?: string; nodeId?: string }) => {
       const tripId = String(payload?.trip_id ?? '');
+      const nodeId = String(payload?.nodeId ?? '');
       if (!tripId || !socket.data?.userId) return;
 
       const role = await repo.getTripMemberRole(tripId, socket.data.userId).catch(() => null);
       if (!role) return;
 
-      socket.to(tripId).emit('editing_stop', {});
+      if (!nodeId) return;
+
+      const lockKey = `${tripId}:${nodeId}`;
+      const existingLock = activeEditingLocks.get(lockKey);
+      if (existingLock && existingLock.userId === socket.data.userId) {
+        activeEditingLocks.delete(lockKey);
+      }
+
+      socket.to(tripId).emit('editing_stop', { nodeId });
+    });
+
+    socket.on('disconnect', () => {
+      releaseLocksForSocket(socket.id);
     });
   });
 
   app.get('/api/trips/:trip_id/flights', async (req, res) => {
+    const tripId = req.params.trip_id;
+    const trip = await repo.getTripById(tripId).catch(() => null);
+    const destination = trip?.destination ?? '';
+
+    // Map common destination keywords to IATA codes
+    const DEST_IATA: [string, string][] = [
+      ['tokyo', 'NRT'], ['osaka', 'KIX'], ['kyoto', 'ITM'],
+      ['seoul', 'ICN'], ['paris', 'CDG'], ['bangkok', 'BKK'],
+      ['bali', 'DPS'], ['singapore', 'SIN'], ['hong kong', 'HKG'],
+      ['new york', 'JFK'], ['london', 'LHR'],
+    ];
+    const lower = destination.toLowerCase();
+    const matched = DEST_IATA.find(([k]) => lower.includes(k));
+    const arrCode = matched ? matched[1] : destination.slice(0, 3).toUpperCase() || 'NRT';
+
     const flightsData = await repo.getAllFlights();
     if (flightsData.length > 0) {
        res.json(flightsData.map(f => ({
          airline: f.provider,
          direct: true,
-         duration: '4h 00m',
+         duration: '3h 30m',
          price: f.price,
          depTime: f.time?.split(' - ')[0] || '10:00',
          depCode: 'TPE',
-         arrTime: f.time?.split(' - ')[1] || '14:00',
-         arrCode: 'NRT'
+         arrTime: f.time?.split(' - ')[1] || '13:30',
+         arrCode,
        })));
        return;
     }
@@ -806,15 +941,42 @@ async function startServer() {
   app.get('/api/trips/:trip_id/activities', async (req, res) => {
     const tripId = req.params.trip_id;
     const nodes = await repo.getItineraryNodes(tripId);
-    
+
+    const CATEGORY_IMG: Record<string, string> = {
+      hotel:     'photo-1566073771259-6a8506099945',
+      food:      'photo-1555396273-367ea4eb4db5',
+      landmark:  'photo-1513407030348-c983a97b98d8',
+      activity:  'photo-1467269204594-9661b134dd2b',
+      transport: 'photo-1436491865332-7a61a109cc05',
+      shopping:  'photo-1555529669-e69e7aa0ba9a',
+      nightlife: 'photo-1566417713940-fe7c737a9ef2',
+      spot:      'photo-1499856871958-5b9627545d1a',
+      other:     'photo-1506905925346-21bda4d32df4',
+    };
+    const CATEGORY_PRICE: Record<string, number> = {
+      hotel: 0, food: 320, landmark: 150, activity: 680,
+      transport: 0, shopping: 0, nightlife: 280, spot: 120, other: 100,
+    };
+    const CATEGORY_RATING: Record<string, number> = {
+      hotel: 4.5, food: 4.7, landmark: 4.6, activity: 4.8,
+      transport: 4.2, shopping: 4.3, nightlife: 4.5, spot: 4.6, other: 4.4,
+    };
+
     if (nodes.length > 0) {
-      res.json(nodes.map(node => ({
-        img: 'https://images.unsplash.com/photo-1542931287-023b922fa89b?auto=format&fit=crop&q=80&w=200&h=200', 
-        title: `${node.title} Admission Ticket`, 
-        rating: 4.8, 
-        reviews: '12k', 
-        price: 580 
-      })));
+      res.json(nodes
+        .filter(node => !['transport', 'hotel'].includes(node.category ?? ''))
+        .slice(0, 8)
+        .map(node => {
+          const cat = node.category ?? 'other';
+          const photoId = CATEGORY_IMG[cat] ?? CATEGORY_IMG.other;
+          return {
+            img: `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=200&h=200`,
+            title: `${node.title} Ticket`,
+            rating: CATEGORY_RATING[cat] ?? 4.5,
+            reviews: `${Math.floor(1000 + (node.title?.length ?? 5) * 137) % 9000 + 1000}`,
+            price: CATEGORY_PRICE[cat] ?? 100,
+          };
+        }));
       return;
     }
 
@@ -825,7 +987,10 @@ async function startServer() {
     try {
       const nodes = await generateItinerary(req.body);
       res.json({ status: 'success', data: nodes });
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === 'ALL_MODELS_RATE_LIMITED') {
+        return res.status(429).json({ status: 'error', code: 'RATE_LIMITED', message: 'AI 服務暫時繁忙，請稍後 1~2 分鐘再試。' });
+      }
       console.error(err);
       res.status(500).json({ status: 'error', message: 'Failed to generate itinerary' });
     }
@@ -833,7 +998,7 @@ async function startServer() {
 
   // ── Spot-level regenerate ─────────────────────────────────────────────────
   app.post('/api/itinerary/regenerate-spot', async (req, res) => {
-    const { trip_id, node_id, destination, day, current_time, current_title, notes } = req.body ?? {};
+    const { trip_id, node_id, destination, day, current_date, current_time, current_title, current_category, notes, preserve_time_window } = req.body ?? {};
 
     if (!trip_id || !node_id) {
       res.status(400).json({ status: 'error', message: 'trip_id and node_id are required' });
@@ -843,12 +1008,49 @@ async function startServer() {
     const allowed = await ensureTripRole(req, res, String(trip_id), 'editor');
     if (!allowed) return;
 
+    const [facts, itineraryNodes] = await Promise.all([
+      repo.getTripTravelFacts(String(trip_id)),
+      repo.getItineraryNodes(String(trip_id)),
+    ]);
+
+    const normalizedNodes = itineraryNodes
+      .map((node) => ({
+        node_id: node.nodeId,
+        day: Number(node.day ?? 1),
+        date: normalizeDateOnlyInput(node.date) ?? formatDateOnly(node.timestamp) ?? null,
+        time: node.time ?? '10:00',
+        title: node.title ?? '未命名行程',
+        category: node.category ?? 'other',
+      }))
+      .sort((a, b) => {
+        if (a.day !== b.day) return a.day - b.day;
+        if ((a.date ?? '') !== (b.date ?? '')) return (a.date ?? '').localeCompare(b.date ?? '');
+        return (a.time ?? '').localeCompare(b.time ?? '');
+      });
+
+    const currentIndex = normalizedNodes.findIndex((node) => node.node_id === String(node_id));
+    if (currentIndex === -1) {
+      res.status(404).json({ status: 'error', message: 'itinerary node not found' });
+      return;
+    }
+    const previousNode = currentIndex > 0 ? normalizedNodes[currentIndex - 1] : undefined;
+    const nextNode = currentIndex >= 0 && currentIndex < normalizedNodes.length - 1 ? normalizedNodes[currentIndex + 1] : undefined;
+    const travelFactsContext = facts
+      .map((fact: any) => `[ID: ${fact.id}] ${fact.factType} - ${fact.title}`)
+      .join('\n');
+
     const spot = await regenerateSpot({
       destination: String(destination ?? ''),
       day: Number(day ?? 1),
+      currentDate: current_date ? String(current_date) : undefined,
       currentTime: String(current_time ?? '10:00'),
       currentTitle: String(current_title ?? ''),
+      currentCategory: current_category ? String(current_category) : undefined,
       notes: notes ? String(notes) : undefined,
+      preserveTimeWindow: preserve_time_window !== false,
+      previousNode,
+      nextNode,
+      travelFactsContext,
     });
 
     if (!spot) {
@@ -869,6 +1071,140 @@ async function startServer() {
     } catch (err) {
       console.error(err);
       res.status(500).json({ status: 'error', message: 'Failed to generate packing list' });
+    }
+  });
+
+  app.post('/api/dev/generate-handbooks', async (req, res) => {
+    try {
+      const { GoogleGenAI, Type } = require('@google/genai');
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      // Execute script manually 
+      const fs = require('fs');
+      const path = require('path');
+      const destinations = [
+        { city: "東京", name: "日本東京精選5日遊", days: 5 },
+        { city: "首爾", name: "韓國首爾流行5日遊", days: 5 },
+        { city: "巴黎", name: "法國巴黎浪漫文藝7日遊", days: 7 },
+        { city: "倫敦", name: "英國倫敦深度8日遊", days: 8 },
+        { city: "大阪", name: "日本京都大阪5日遊", days: 5 },
+        { city: "曼谷", name: "泰國曼谷自由行5日遊", days: 5 },
+        { city: "羅馬", name: "義大利羅馬威尼斯10日遊", days: 10 },
+        { city: "琉森", name: "瑞士湖光山色10日遊", days: 10 },
+        { city: "紐約", name: "美國紐約繁華7日遊", days: 7 },
+        { city: "雪梨", name: "澳洲雪梨與藍山6日遊", days: 6 },
+        { city: "札幌", name: "日本北海道秘境6日遊", days: 6 },
+        { city: "新加坡", name: "新加坡文化4日遊", days: 4 },
+        { city: "清邁", name: "泰國清邁慢活5日遊", days: 5 },
+        { city: "洛杉磯", name: "美國洛杉磯與樂園7日遊", days: 7 },
+        { city: "峇里島", name: "印尼峇里島度假5日遊", days: 5 },
+        { city: "釜山", name: "韓國釜山自由行5日遊", days: 5 },
+        { city: "布拉格", name: "奧捷東歐風情8日遊", days: 8 },
+        { city: "巴塞隆納", name: "西班牙熱情8日遊", days: 8 },
+        { city: "雷克雅維克", name: "冰島極光10日遊", days: 10 },
+        { city: "皇后鎮", name: "紐西蘭南島8日遊", days: 8 }
+      ];
+
+      res.json({ status: 'started' }); // Send response early so it doesn't timeout
+
+      const results = [];
+      const fileOut = path.join(process.cwd(), 'src/data/expertHandbooksData.json');
+      for (let i = 0; i < destinations.length; i++) {
+        const dest = destinations[i];
+        console.log(`Generating data for ${dest.name}...`);
+        try {
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `請身為一個專業的旅遊達人，幫我規劃一個真實的「${dest.name}」旅遊行程。
+這個行程共 ${dest.days} 天。
+**絕對不要使用假資料或模擬資料(例如：不要寫"某美食", "知名餐廳")，請給出真實存在的景點、餐廳、住宿地點與交通方式。**
+請深入到「食、衣、住、行」，每天必須安排豐富詳細的行程，並符合以下要求：
+每「天」至少要包含 4 個節點 (Node)：
+1. 上午出發/景點 (提示今天的【衣】穿搭建議與【行】交通方式) -> category='spot'/'activity' (如果只寫出發可為 hotel)
+2. 午餐 (真實存在的餐廳/美食，提示【食】的細節) -> category='food'
+3. 下午景點 -> category='spot'/'shopping'
+4. 晚餐 (真實存在的餐廳) -> category='food'
+若要補充住宿可加 category='hotel'。
+回應只能是 JSON。
+請確保為合法的 JSON 並且不要包含 markdown 代碼塊：
+{
+  "id": "expert_curated_real_${i}",
+  "title": "${dest.name} 全攻略",
+  "author": "${dest.city}在地達人",
+  "image": "https://picsum.photos/seed/${600 + i}/800/600",
+  "days": ${dest.days},
+  "tags": ["真實推薦", "必去", "食衣住行"],
+  "cities": [{ "name": "${dest.city}", "reason": "真實推薦" }],
+  "nodes": [
+    {
+      "node_id": "隨機英數ID 例如 node_abc123",
+      "day": 1,
+      "time": "09:00",
+      "title": "真實的地點名稱",
+      "emoji": "🏨",
+      "category": "hotel", 
+      "description": "詳細描述。例如：【衣】今天天氣...適合穿... 【行】搭乘地鐵... ",
+      "lat": 真實緯度(數字),
+      "lng": 真實經度(數字)
+    }
+  ]
+}`,
+            config: {
+              temperature: 0.5,
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  title: { type: Type.STRING },
+                  author: { type: Type.STRING },
+                  image: { type: Type.STRING },
+                  days: { type: Type.INTEGER },
+                  tags: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  cities: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        name: { type: Type.STRING },
+                        reason: { type: Type.STRING }
+                      },
+                      required: ['name', 'reason']
+                    }
+                  },
+                  nodes: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        node_id: { type: Type.STRING },
+                        day: { type: Type.INTEGER },
+                        time: { type: Type.STRING },
+                        title: { type: Type.STRING },
+                        emoji: { type: Type.STRING },
+                        category: { type: Type.STRING, enum: ['spot', 'food', 'activity', 'transport', 'hotel', 'shopping'] },
+                        description: { type: Type.STRING },
+                        lat: { type: Type.NUMBER },
+                        lng: { type: Type.NUMBER }
+                      },
+                      required: ['node_id', 'day', 'time', 'title', 'emoji', 'category', 'description', 'lat', 'lng']
+                    }
+                  }
+                },
+                required: ['id', 'title', 'author', 'image', 'days', 'tags', 'cities', 'nodes']
+              }
+            }
+          });
+          const text = response.text;
+          // Safe parse
+          results.push(JSON.parse(text));
+          fs.writeFileSync(fileOut, JSON.stringify(results, null, 2), 'utf-8');
+        } catch (e: any) {
+          console.error(`Failed on ${dest.name}: `, e);
+        }
+      }
+      console.log('Background generation completed!');
+    } catch (err: any) {
+      console.error(err);
     }
   });
 
@@ -895,7 +1231,7 @@ async function startServer() {
         price: f.price,
         currency: 'TWD',
         emoji: '✈️',
-        affiliate_url: `https://example.com/flight/${f.id}`,
+        affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flight/${encodeURIComponent(f.id)}` : `https://example.com/flight/${f.id}`,
         details: { stops: 0, airline: f.provider, departure: f.time?.split(' - ')[0] || '10:00', arrival: f.time?.split(' - ')[1] || '14:00' }
       }));
       res.json({ status: 'success', data: results });
@@ -945,7 +1281,7 @@ async function startServer() {
           price: flight.price + (idx * 300),
           currency: 'TWD',
           emoji: '✈️',
-          affiliate_url: `https://partner.example.com/flights/${encodeURIComponent(flight.id)}`,
+          affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flights/${encodeURIComponent(flight.id)}` : `https://partner.example.com/flights/${encodeURIComponent(flight.id)}`,
           details: {
             airline: provider,
             departure: flight.time.split(' - ')[0] || '10:00',
@@ -980,16 +1316,69 @@ async function startServer() {
     const limit = Number(req.query.limit ?? 10);
     const trips = await repo.getPublicTrips(limit).catch(() => []);
     res.json(trips.length > 0 ? trips : [
-      { id: 'h1', title: '東京散策：巷弄裡的小秘密', author: 'Travel Guru', likes: 120, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800' },
-      { id: 'h2', title: '大阪美食地圖 2024', author: 'Travel Guru', likes: 85, cover: 'https://images.unsplash.com/photo-1590484512398-33fb39eff960?w=800' },
-      { id: 'h3', title: '京都紅葉季完全攻略', author: 'Travel Guru', likes: 210, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800' }
+      { id: 'h1', title: '東京散策：巷弄裡的小秘密', author: 'Miyuki Tanaka', likes: 124, cover: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=800&auto=format&fit=crop', _fallback: true },
+      { id: 'h2', title: '大阪美食地圖 2024', author: 'Chen Wei-Ming', likes: 89, cover: 'https://images.unsplash.com/photo-1590484512398-33fb39eff960?w=800&auto=format&fit=crop', _fallback: true },
+      { id: 'h3', title: '京都紅葉季完全攻略', author: 'Yuki Sato', likes: 213, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop', _fallback: true },
     ]);
   });
 
-  app.get('/api/weather', async (req, res) => {
-    const lat = String(req.query.lat ?? '35.6762');
-    const lng = String(req.query.lng ?? '139.6503');
+  app.get('/api/geocode', async (req, res) => {
+    const q = String(req.query.q ?? '').trim();
+    if (!q) { res.json({ lat: null, lng: null }); return; }
     try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=ja`;
+      const apiRes = await fetch(url, { headers: { 'User-Agent': 'RoamJellyApp/1.0' } });
+      if (!apiRes.ok) { res.json({ lat: null, lng: null }); return; }
+      const data = (await apiRes.json()) as Array<{ lat: string; lon: string }>;
+      if (data.length === 0) { res.json({ lat: null, lng: null }); return; }
+      res.json({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+    } catch {
+      res.json({ lat: null, lng: null });
+    }
+  });
+
+  // ── Spot enrichment via Wikipedia ─────────────────────────────────────────
+  app.get('/api/spots/enrich', async (req, res) => {
+    const name = String(req.query.name ?? '').trim();
+    if (!name) { res.json({}); return; }
+    try {
+      const wikiRes = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`
+      );
+      if (wikiRes.ok) {
+        const data: any = await wikiRes.json();
+        res.json({
+          description: data.extract ? String(data.extract).slice(0, 220) : null,
+          wiki_url: data.content_urls?.desktop?.page ?? null,
+          thumbnail: data.thumbnail?.source ?? null,
+        });
+        return;
+      }
+    } catch { /* fall through */ }
+    res.json({});
+  });
+
+  app.get('/api/weather', async (req, res) => {
+    const city = req.query.city ? String(req.query.city) : null;
+    if (!req.query.lat && !req.query.lng && !city) {
+      res.status(400).json({ status: 'error', message: 'lat/lng or city is required' });
+      return;
+    }
+    let lat = String(req.query.lat ?? '');
+    let lng = String(req.query.lng ?? '');
+    try {
+      if (city && !req.query.lat && !req.query.lng) {
+        const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+        const geoRes = await fetch(geoUrl);
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          if (geoData.results && geoData.results.length > 0) {
+            lat = String(geoData.results[0].latitude);
+            lng = String(geoData.results[0].longitude);
+          }
+        }
+      }
+
       const url =
         `https://api.open-meteo.com/v1/forecast` +
         `?latitude=${lat}&longitude=${lng}` +
@@ -1033,7 +1422,7 @@ async function startServer() {
     }
     const tripId = String(req.query.trip_id ?? '').trim();
     const rows = tripId ? await repo.getCollaboratorsByTrip(tripId) : await repo.getCollaborators();
-    res.json(rows.map((r) => ({ id: r.id, name: r.name, avatar: r.avatar })));
+    res.json(rows.map((r) => ({ id: r.userId, name: r.name, avatar: r.avatar })));
   });
 
   // ── User Preferences ────────────────────────────────────────────────────────
@@ -1135,13 +1524,8 @@ async function startServer() {
     res.status(201).json({ status: 'success', data: { id: tripId, name: String(name).trim(), destination: destination ?? null } });
   });
 
-  // ── Trip: public preview (requires auth, no membership needed) ──────────────
+  // ── Trip: public preview (no auth required) ─────────────────────────────────
   app.get('/api/trips/:trip_id/preview', async (req, res) => {
-    const userId = getRequestUserId(req);
-    if (!userId) {
-      res.status(401).json({ status: 'error', message: 'unauthorized' });
-      return;
-    }
     const info = await buildTripInfo(repo, req.params.trip_id);
     if (!info) {
       res.status(404).json({ status: 'error', message: 'trip not found' });
@@ -1325,13 +1709,15 @@ async function startServer() {
 
     const nodes = await repo.getItineraryNodes(tripId);
     const formatted = nodes.map((node, index) => {
-      const knownCoords = TOKYO_COORDS[node.title];
-      const lat = node.lat ?? knownCoords?.lat ?? null;
-      const lng = node.lng ?? knownCoords?.lng ?? null;
+      const lat = node.lat ?? null;
+      const lng = node.lng ?? null;
       return {
         id: node.nodeId,
         day: node.day,
+        date: normalizeDateOnlyInput(node.date) ?? formatDateOnly(node.timestamp) ?? null,
         time: node.time,
+        timestamp: toIsoTimestamp(node.timestamp),
+        sort_order: Number(node.sortOrder ?? index + 1),
         location: node.title,
         icon: node.emoji,
         category: node.category ?? 'other',
@@ -1342,9 +1728,12 @@ async function startServer() {
         lng,
         coords: lat != null ? null : { top: `${18 + index * 20}%`, left: `${25 + (index % 2) * 35}%` },
         description: node.description ?? null,
+        ai_note: node.aiNote ?? null,
+        intensity: node.intensity ?? null,
         is_visited: node.isVisited ?? false,
         transport_to_next: node.transportToNext ?? null,
         image_url: node.imageUrl ?? null,
+        attachments: Array.isArray(node.attachments) ? node.attachments : [],
         linkedFactId: node.linkedFactId ?? null,
       };
     });
@@ -1356,7 +1745,7 @@ async function startServer() {
     const { trip_id, action, payload } = req.body as {
       trip_id?: string;
       action?: string;
-      payload?: { node_id?: string; day?: number; time?: string; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; linkedFactId?: string };
+      payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; ai_note?: string; intensity?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; attachments?: Array<{ id?: string; name?: string; type?: string; url?: string }>; linkedFactId?: string };
     };
 
     if (!trip_id || action !== 'add_node' || !payload?.node_id || !payload.time || !payload.title) {
@@ -1367,10 +1756,19 @@ async function startServer() {
     const allowed = await ensureTripRole(req, res, trip_id, 'editor');
     if (!allowed) return;
 
+    const linkedFactAllowed = await validateLinkedFactId(repo, trip_id, payload.linkedFactId);
+    if (!linkedFactAllowed) {
+      res.status(400).json({ status: 'error', message: 'linked travel fact is invalid' });
+      return;
+    }
+
     await repo.upsertItineraryNode(trip_id, {
       node_id: payload.node_id,
       day: payload.day,
+      date: normalizeDateOnlyInput(payload.date) ?? undefined,
       time: payload.time,
+      timestamp: payload.timestamp ?? buildNodeTimestamp(payload.date, payload.time)?.toISOString(),
+      sort_order: payload.sort_order,
       title: payload.title,
       emoji: payload.emoji,
       category: payload.category,
@@ -1378,8 +1776,11 @@ async function startServer() {
       lng: payload.lng,
       is_visited: payload.is_visited,
       description: payload.description,
+      ai_note: payload.ai_note,
+      intensity: payload.intensity,
       transport_to_next: payload.transport_to_next,
       image_url: payload.image_url,
+      attachments: Array.isArray(payload.attachments) ? payload.attachments : [],
       linkedFactId: payload.linkedFactId,
     });
 
@@ -1402,13 +1803,19 @@ async function startServer() {
       payload: {
         node_id: payload.node_id,
         day: Number(payload.day ?? 1),
+        date: normalizeDateOnlyInput(payload.date) ?? null,
         time: payload.time,
+        timestamp: payload.timestamp ?? buildNodeTimestamp(payload.date, payload.time)?.toISOString() ?? null,
+        sort_order: Number(payload.sort_order ?? 0),
         title: payload.title,
         emoji: payload.emoji ?? '📍',
         category: payload.category ?? 'other',
         lat: payload.lat ?? null,
         lng: payload.lng ?? null,
+        is_visited: payload.is_visited ?? false,
         description: payload.description ?? '',
+        ai_note: payload.ai_note ?? null,
+        intensity: payload.intensity ?? null,
         transport_to_next: payload.transport_to_next ?? null,
         image_url: payload.image_url ?? null,
         linkedFactId: payload.linkedFactId,
@@ -1484,6 +1891,7 @@ async function startServer() {
     if (!allowed) return;
 
     const snapshot = await getPlanningSnapshot(tripId);
+    res.set('Cache-Control', 'private, max-age=300');
     res.json({ status: 'success', data: snapshot ?? [] });
   });
 
@@ -1519,7 +1927,7 @@ async function startServer() {
     }
     const tripId = String(req.query.trip_id ?? '').trim();
     const rows = tripId ? await repo.getChecklist(tripId) : [];
-    res.json(rows.map((row) => ({ id: row.id, text: row.content, checked: Boolean(row.completed) })));
+    res.json(rows.map((row) => ({ id: row.id, text: row.content, checked: Boolean(row.completed), category: row.category ?? 'other' })));
   });
 
   app.post('/api/checklist', async (req, res) => {
@@ -1600,6 +2008,18 @@ async function startServer() {
     await repo.clearSettlements(trip_id);
     const rows = await repo.getAggregatedSettlements(trip_id);
     res.json({ status: 'success', settlements: rows });
+  });
+
+  app.get('/api/settlements/history', async (req, res) => {
+    const tripId = String(req.query.trip_id ?? '').trim();
+    if (!tripId) {
+      res.status(400).json({ status: 'error', message: 'trip_id is required' });
+      return;
+    }
+    const allowed = await ensureTripRole(req, res, tripId, 'viewer');
+    if (!allowed) return;
+    const history = await repo.getSettlementHistory(tripId);
+    res.json(history);
   });
 
   app.get('/api/favorites', async (req, res) => {
@@ -1745,6 +2165,10 @@ async function startServer() {
     }
   }
 
+  // Expose app to Vercel serverless handler
+  _resolveApp(app);
+  if (process.env.VERCEL) return;
+
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
     if (REAL_BACKEND_BASE_URL) {
@@ -1774,7 +2198,20 @@ async function startServer() {
   });
 }
 
+// Vercel serverless handler — imported by api/index.ts
+export default async function handler(req: any, res: any) {
+  try {
+    const app = await _appPromise;
+    return app(req, res);
+  } catch (err) {
+    console.error('Handler: app init failed', err);
+    res.status(500).json({ error: 'Server initialization failed', detail: String(err) });
+  }
+}
+
+// Start the server (local dev: also calls listen; Vercel: skips listen, resolves _appPromise)
 startServer().catch((error) => {
   console.error('Server failed to start', error);
-  process.exit(1);
+  _rejectApp(error);
+  if (!process.env.VERCEL) process.exit(1);
 });
