@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { loginUser, registerUser, setClientAccessToken } from '../lib/workflowApi';
+import { createGuestSession, loginUser, registerUser, setClientAccessToken } from '../lib/workflowApi';
 
 interface Props {
   onLogin: (userId: string) => void;
@@ -60,6 +60,19 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
       onLogin(userId);
     } catch (err) {
       setError(err instanceof Error ? err.message : '發生錯誤，請再試一次');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const guest = await createGuestSession(displayName.trim() || username.trim() || undefined);
+      onLogin(guest.user_id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '訪客登入失敗，請再試一次');
     } finally {
       setLoading(false);
     }
@@ -247,6 +260,22 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
                 {mode === 'login' ? '登入' : '建立帳號'}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => void handleGuestLogin()}
+            disabled={loading}
+            className="flex justify-center border appearance-none cursor-pointer outline-none transition-all active:scale-95 w-full bg-white/70 border-slate-200 hover:bg-white mt-3"
+            style={{
+              paddingTop: 14,
+              paddingBottom: 14,
+              borderRadius: 24,
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ color: '#475569', fontWeight: '900', fontSize: 14, letterSpacing: '0.04em' }}>
+              先用訪客身分體驗
+            </span>
           </button>
 
           {onCancel && (

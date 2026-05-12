@@ -66,6 +66,8 @@ export async function suggestItinerary(destination: string, days: number): Promi
             emoji: pickIcon(spot.emoji, spot.category || 'other'),
             category: normalizeCategory(spot.category || 'other'),
             description: spot.ai_note || '',
+            ai_note: spot.ai_note || '',
+            intensity: spot.intensity,
             lat: spot.lat,
             lng: spot.lng,
             source: 'local' as const,

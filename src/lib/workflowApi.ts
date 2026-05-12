@@ -3,6 +3,16 @@ import type { SearchItem, TrackClickOutBody } from '../types/workflow';
 export class SearchTimeoutError extends Error {}
 export class SearchServiceUnavailableError extends Error {}
 
+async function parseApiError(res: Response, fallback: string): Promise<Error> {
+  try {
+    const data = await res.json();
+    const message = String(data?.message ?? fallback).trim() || fallback;
+    return new Error(message);
+  } catch {
+    return new Error(fallback);
+  }
+}
+
 export async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng: number } | null> {
   try {
     const q = encodeURIComponent(`${title} ${city}`);
@@ -23,19 +33,51 @@ export function getStoredToken(): string | null {
   return localStorage.getItem('access_token');
 }
 
+export async function createGuestSession(displayName?: string): Promise<{ token: string; user_id: string }> {
+  const res = await fetch('/api/auth/guest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ display_name: displayName?.trim() || undefined }),
+  });
+
+  if (!res.ok) {
+    throw await parseApiError(res, '無法建立訪客身分，請稍後再試。');
+  }
+
+  const data = await res.json();
+  const token = String(data?.token ?? '').trim();
+  const userId = String(data?.user_id ?? '').trim();
+
+  if (!token || !userId) {
+    throw new Error('訪客登入失敗，請稍後再試。');
+  }
+
+  setClientAccessToken(token);
+  localStorage.setItem('user_id', userId);
+  localStorage.setItem('last_activity', Date.now().toString());
+  return { token, user_id: userId };
+}
+
 export async function ensureClientAccessToken(): Promise<string> {
   const token = getStoredToken();
   if (token) return token;
   
   try {
     const res = await fetch('/api/auth/dev-token', { method: 'POST' });
-    const data = await res.json();
-    if (res.ok && data.token) {
-      setClientAccessToken(data.token);
-      return data.token;
+    if (res.ok) {
+      const data = await res.json();
+      if (data.token) {
+        setClientAccessToken(data.token);
+        return data.token;
+      }
     }
   } catch (error) {
     console.error('Failed to get dev-token', error);
+  }
+
+  const guest = await createGuestSession().catch(() => null);
+  if (guest?.token) {
+    return guest.token;
   }
 
   throw new Error('No access token available. Please log in.');
@@ -138,7 +180,10 @@ export async function syncItinerary(payload: any): Promise<any> {
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
     body: JSON.stringify(payload)
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '行程同步失敗');
+  }
+  return true;
 }
 export async function deleteItineraryNode(nodeId: string): Promise<any> { 
   const token = getStoredToken();
@@ -146,7 +191,10 @@ export async function deleteItineraryNode(nodeId: string): Promise<any> {
     method: 'DELETE',
     headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '刪除行程失敗');
+  }
+  return true;
 }
 export async function addFavorite(tripId: string, title: string, emoji: string): Promise<{ spot?: any; error?: string } | null> {
   try {
@@ -230,16 +278,27 @@ export async function clearSettlement(tripId: string, from_name?: string, to_nam
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
     body: JSON.stringify({ trip_id: tripId, from_name, to_name, currency })
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '結清失敗');
+  }
+  return await res.json();
 }
 export async function submitLedgerExpense(tripId: string, expense: any): Promise<any> { 
   const token = getStoredToken();
+  const payload = {
+    trip_id: tripId,
+    ...expense,
+    split_with: expense?.split_with ?? expense?.splitWith ?? [],
+  };
   const res = await fetch('/api/ledger/expense', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-    body: JSON.stringify({ trip_id: tripId, ...expense })
+    body: JSON.stringify(payload)
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '分帳送出失敗');
+  }
+  return await res.json();
 }
 export async function updateChecklist(payload: any): Promise<any> { 
   const token = getStoredToken();
@@ -248,39 +307,34 @@ export async function updateChecklist(payload: any): Promise<any> {
     headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
     body: JSON.stringify(payload)
   });
-  return res.ok;
+  if (!res.ok) {
+    throw await parseApiError(res, '清單同步失敗');
+  }
+  return await res.json();
 }
 export interface TripSummary {}
 
 export async function fetchTripPreview(id: string): Promise<any> {
-    try {
-        const token = getStoredToken();
-        const res = await fetch(`/api/trips/${id}/preview`, {
-            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
-        });
-        if (res.ok) {
-            return await res.json();
-        }
-    } catch (e) {
-        console.error('fetchTripPreview error', e);
-    }
-    return null;
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${id}/preview`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
+  if (!res.ok) {
+    throw await parseApiError(res, '無法載入旅程資訊');
+  }
+  return await res.json();
 }
 
 export async function joinTrip(id: string): Promise<any> {
-    try {
-        const token = getStoredToken();
-        const res = await fetch(`/api/trips/${id}/join`, {
-            method: 'POST',
-            headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
-        });
-        if (res.ok) {
-            return await res.json();
-        }
-    } catch (e) {
-        console.error('joinTrip error', e);
-    }
-    return null;
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${id}/join`, {
+    method: 'POST',
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
+  if (!res.ok) {
+    throw await parseApiError(res, '加入旅程失敗');
+  }
+  return await res.json();
 }
 
 export async function fetchTripFlights(tripId: string) {

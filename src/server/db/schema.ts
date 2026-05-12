@@ -37,9 +37,12 @@ export const itineraryNodes = pgTable('itinerary_nodes', {
   lat: real('lat'),
   lng: real('lng'),
   description: text('description'),
+  aiNote: text('ai_note'),
+  intensity: varchar('intensity', { length: 32 }),
   isVisited: boolean('is_visited').default(false).notNull(),
   transportToNext: text('transport_to_next'),
   imageUrl: text('image_url'),
+  attachments: jsonb('attachments'),
   linkedFactId: text('linked_fact_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

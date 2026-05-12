@@ -35,7 +35,8 @@ import {
   ExternalLink,
   CheckCircle2,
   Settings2,
-  Bookmark
+  Bookmark,
+  Lock
 } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
@@ -55,6 +56,7 @@ import {
   regenerateItinerarySpot,
   geocodeSpot,
   fetchSpotEnrichment,
+  submitLedgerExpense,
 } from '../lib/workflowApi';
 import { suggestItineraryWithForm, AiRateLimitedError } from '../lib/openrouterApi';
 import { haversineKm, estimateTransport } from '../lib/geoUtils';
@@ -64,6 +66,7 @@ import { useTripFactsStore } from '../store/useTripFactsStore';
 import type {
   Collaborator,
   FavoriteSpot,
+  ItineraryAttachment,
   ItineraryNode,
   ItineraryPlannerForm,
   SearchItem,
@@ -196,6 +199,17 @@ function buildDefaultPlannerForm(destination: string, days: number): ItineraryPl
   } as any;
 }
 
+function getCurrencyFromDestination(destination: string): string {
+  if (!destination) return 'TWD';
+  const lower = destination.toLowerCase();
+  if (lower.includes('日') || lower.includes('tokyo') || lower.includes('osaka') || lower.includes('kyoto')) return 'JPY';
+  if (lower.includes('韓') || lower.includes('seoul')) return 'KRW';
+  if (lower.includes('泰') || lower.includes('bangkok')) return 'THB';
+  if (lower.includes('美') || lower.includes('usa') || lower.includes('new york')) return 'USD';
+  if (lower.includes('歐') || lower.includes('paris') || lower.includes('london')) return 'EUR';
+  return 'TWD';
+}
+
 function normalizeScheduleForNode(
   node: Partial<ItineraryNode>,
   options: {
@@ -257,11 +271,17 @@ export default function ItineraryTab() {
   const [showPlanner, setShowPlanner] = useState<boolean>(false);
   const [isPlanningNew, setIsPlanningNew] = useState<boolean>(false);
   const [showMobileFavorites, setShowMobileFavorites] = useState<boolean>(false);
-  const [collaboratorEditing, setCollaboratorEditing] = useState<{ userName: string; day: number; nodeId: string } | null>(null);
+  const [draggingFavorite, setDraggingFavorite] = useState<FavoriteSpot | null>(null);
+  const [nodeEditingLocks, setNodeEditingLocks] = useState<Record<string, { userName: string; day: number }>>({});
+  const [expenseTargetNode, setExpenseTargetNode] = useState<ItineraryNode | null>(null);
 
   const socketRef = useRef<Socket | null>(null);
   const reorderCommitTimerRef = useRef<number | null>(null);
   const pendingReorderRef = useRef<ItineraryNode[] | null>(null);
+  const reconnectHighlightTimerRef = useRef<number | null>(null);
+  const offlineSnapshotRef = useRef<ItineraryNode[]>([]);
+  const pendingReconnectSummaryRef = useRef(false);
+  const [recentlySyncedNodeIds, setRecentlySyncedNodeIds] = useState<string[]>([]);
 
   const { nodes, setNodes, addNode, updateNode, removeNode, collaborators, setCollaborators, isOffline, setOffline } =
     useItineraryStore();
@@ -270,6 +290,9 @@ export default function ItineraryTab() {
   useEffect(() => () => {
     if (reorderCommitTimerRef.current) {
       window.clearTimeout(reorderCommitTimerRef.current);
+    }
+    if (reconnectHighlightTimerRef.current) {
+      window.clearTimeout(reconnectHighlightTimerRef.current);
     }
   }, []);
 
@@ -333,6 +356,8 @@ export default function ItineraryTab() {
              emoji: spot.emoji || '📍',
              category: normalizeAiCategory(spot.category),
              description: spot.ai_note || '',
+             ai_note: spot.ai_note || '',
+             intensity: spot.intensity,
              lat: undefined as any,
              lng: undefined as any,
              source: 'local' as const,
@@ -381,7 +406,10 @@ export default function ItineraryTab() {
     for (const node of orderedNodes) {
       const payload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: node };
       socketRef.current?.emit('sync_itinerary', payload);
-      void syncItinerary(payload);
+      void syncItinerary(payload).catch(() => {
+        setTip('排序同步失敗，重新整理後可回到最後儲存版本。');
+        setTimeout(() => setTip(''), 2500);
+      });
     }
   };
 
@@ -461,7 +489,10 @@ export default function ItineraryTab() {
     addNode(normalized);
     const payload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: normalized };
     socketRef.current?.emit('sync_itinerary', payload);
-    void syncItinerary(payload);
+    void syncItinerary(payload).catch(() => {
+      removeNode(normalized.node_id);
+      showToast('新增行程失敗，已還原。', 'warning');
+    });
     showToast(`✨ 已新增：${normalized.title}`);
   };
 
@@ -474,6 +505,13 @@ export default function ItineraryTab() {
   }, [nodes, activeTripId, isOffline]);
 
   // Online/offline tracking
+  useEffect(() => {
+    if (isOffline) {
+      pendingReconnectSummaryRef.current = true;
+      offlineSnapshotRef.current = nodes;
+    }
+  }, [isOffline, nodes]);
+
   useEffect(() => {
     const onOnline = () => setOffline(false);
     const onOffline = () => setOffline(true);
@@ -540,6 +578,32 @@ export default function ItineraryTab() {
         const assignedNodes = assignDaysBasedOnTimeAndOrder(itineraryResult, tripResult.startDate || '2026-06-15');
         setNodes(assignedNodes);
 
+        if (pendingReconnectSummaryRef.current && !isOffline) {
+          const offlineSnapshot = offlineSnapshotRef.current.length > 0
+            ? offlineSnapshotRef.current
+            : readCachedItinerary(activeTripId);
+          const diffSummary = summarizeItineraryDiff(offlineSnapshot, assignedNodes);
+
+          if (diffSummary.totalChanges > 0) {
+            const summaryMessage = buildReconnectSummaryMessage(diffSummary);
+            showToast(summaryMessage, 'success');
+            addNotification(summaryMessage);
+
+            if (diffSummary.addedNodeIds.length > 0) {
+              setRecentlySyncedNodeIds(diffSummary.addedNodeIds);
+              if (reconnectHighlightTimerRef.current) {
+                window.clearTimeout(reconnectHighlightTimerRef.current);
+              }
+              reconnectHighlightTimerRef.current = window.setTimeout(() => {
+                setRecentlySyncedNodeIds([]);
+              }, 3200);
+            }
+          }
+
+          pendingReconnectSummaryRef.current = false;
+          offlineSnapshotRef.current = assignedNodes;
+        }
+
         // Weather is supplementary — fire non-blocking so it doesn't delay the main UI
         const firstNodeWithCoords = assignedNodes.find((n: any) => n.lat && n.lng);
         if (firstNodeWithCoords) {
@@ -592,14 +656,36 @@ export default function ItineraryTab() {
       });
 
       socket.on('editing_start', (data: { userName: string; day: number; nodeId: string }) => {
-        setCollaboratorEditing(data);
+        if (!data?.nodeId) return;
+        setNodeEditingLocks((prev) => ({
+          ...prev,
+          [data.nodeId]: { userName: data.userName, day: data.day },
+        }));
       });
-      socket.on('editing_stop', () => {
-        setCollaboratorEditing(null);
+      socket.on('editing_stop', (data: { nodeId?: string }) => {
+        if (!data?.nodeId) {
+          setNodeEditingLocks({});
+          return;
+        }
+        setNodeEditingLocks((prev) => {
+          const next = { ...prev };
+          delete next[data.nodeId as string];
+          return next;
+        });
+      });
+      socket.on('editing_denied', (data: { userName?: string; nodeId?: string; day?: number }) => {
+        if (data?.nodeId && data?.userName) {
+          setNodeEditingLocks((prev) => ({
+            ...prev,
+            [data.nodeId as string]: { userName: data.userName as string, day: Number(data.day ?? 1) },
+          }));
+        }
+        showToast(`${data?.userName ?? '旅伴'} 正在編輯這個景點，請稍後再試。`, 'warning');
       });
 
       socket.on('disconnect', () => {
         setIsSocketConnected(false);
+        setNodeEditingLocks({});
         setTip('即時同步已中斷，正在等待重連。');
         setTimeout(() => setTip(''), 2000);
       });
@@ -611,11 +697,13 @@ export default function ItineraryTab() {
       mounted = false;
       socketRef.current?.off('editing_start');
       socketRef.current?.off('editing_stop');
+      socketRef.current?.off('editing_denied');
       socketRef.current?.disconnect();
       socketRef.current = null;
       setIsSocketConnected(false);
+      setNodeEditingLocks({});
     };
-  }, [isOffline, addNode, removeNode, activeTripId]);
+  }, [isOffline, addNode, removeNode, activeTripId, showToast]);
 
   const maxNodeDay = useMemo(() => {
     if (nodes.length === 0) return 1;
@@ -665,6 +753,21 @@ export default function ItineraryTab() {
       ),
     [nodes, safeSelectedDay],
   );
+
+  const handleExportIcs = () => {
+    if (!tripInfo) return;
+    const icsContent = buildIcsCalendar(tripInfo.name || tripInfo.destination || 'RoamJelly Trip', nodes);
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${(tripInfo.name || tripInfo.destination || 'roamjelly-trip').replace(/\s+/g, '-').toLowerCase()}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    showToast('已匯出 ICS，可加入 Apple Calendar 或 Google Calendar。', 'success');
+  };
 
   const handleCreateTrip = async () => {
     if (!newTripName || !newTripDest) return;
@@ -750,7 +853,8 @@ export default function ItineraryTab() {
     const payload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: normalized };
     socketRef.current?.emit('sync_itinerary', payload);
     void syncItinerary(payload).catch(() => {
-      setTip('行程同步暫時失敗，稍後會再嘗試。');
+      removeNode(normalized.node_id);
+      setTip('行程同步失敗，未儲存的景點已還原。');
       setTimeout(() => setTip(''), 2000);
     });
 
@@ -761,7 +865,11 @@ export default function ItineraryTab() {
         updateNode(patched);
         const syncPayload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: patched };
         socketRef.current?.emit('sync_itinerary', syncPayload);
-        void syncItinerary(syncPayload);
+        void syncItinerary(syncPayload).catch(() => {
+          updateNode(normalized);
+          setTip('景點定位同步失敗，已保留原始資料。');
+          setTimeout(() => setTip(''), 2000);
+        });
       });
     }
 
@@ -801,6 +909,8 @@ export default function ItineraryTab() {
   };
 
   const handleDeleteNode = async (node_id: string) => {
+    const removedNode = nodes.find((node: ItineraryNode) => node.node_id === node_id);
+    if (!removedNode) return;
     removeNode(node_id);
     try {
       await deleteItineraryNode(node_id);
@@ -810,12 +920,15 @@ export default function ItineraryTab() {
         payload: { node_id } as ItineraryNode,
       });
     } catch {
-      showToast('刪除失敗，請稍後再試。');
+      addNode(removedNode);
+      showToast('刪除失敗，已還原。', 'warning');
     }
   };
 
   const handleUpdateNode = async (node: ItineraryNode) => {
     if (isOffline || !activeTripId) return;
+    const previousNode = nodes.find((existingNode: ItineraryNode) => existingNode.node_id === node.node_id);
+    if (!previousNode) return;
     const derivedDay = getDayForDate(node.date, tripInfo?.startDate, node.day);
     const fallbackSortOrder =
       derivedDay === node.day && typeof node.sort_order === 'number'
@@ -839,7 +952,8 @@ export default function ItineraryTab() {
     try {
       await syncItinerary(payload);
     } catch {
-      showToast('更新行程失敗，請稍後再試。');
+      updateNode(previousNode);
+      showToast('更新行程失敗，已還原。', 'warning');
     }
   };
 
@@ -859,6 +973,7 @@ export default function ItineraryTab() {
       try {
         await deleteItineraryNode(target.node_id);
       } catch {
+        addNode(target);
         failedCount += 1;
       }
     }
@@ -924,6 +1039,8 @@ export default function ItineraryTab() {
                 emoji: spot.emoji || '📍',
                 category: spot.category || 'other',
                 description: spot.ai_note || '',
+                ai_note: spot.ai_note || '',
+                intensity: spot.intensity,
                 lat: spot.lat,
                 lng: spot.lng,
                 linkedFactId: spot.linkedFactId,
@@ -942,6 +1059,8 @@ export default function ItineraryTab() {
             emoji: spot.emoji || '📍',
             category: spot.category || 'other',
             description: spot.ai_note || '',
+            ai_note: spot.ai_note || '',
+            intensity: spot.intensity,
             lat: spot.lat,
             lng: spot.lng,
             linkedFactId: spot.linkedFactId,
@@ -1000,7 +1119,11 @@ export default function ItineraryTab() {
         addNode(normalized);
         const payload: SyncItineraryPayload = { trip_id: activeTripId, action: 'add_node', payload: normalized };
         socketRef.current?.emit('sync_itinerary', payload);
-        void syncItinerary(payload);
+        void syncItinerary(payload).catch(() => {
+          removeNode(normalized.node_id);
+          setTip('部分 AI 行程同步失敗，未儲存項目已還原。');
+          setTimeout(() => setTip(''), 2500);
+        });
       }
 
       if (aiGenerateMode === 'overwrite_all') {
@@ -1262,6 +1385,12 @@ export default function ItineraryTab() {
               >
                 <Share2 size={16} strokeWidth={3} />
               </button>
+              <button
+                onClick={handleExportIcs}
+                className="w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
+              >
+                <Calendar size={16} strokeWidth={3} />
+              </button>
             </div>
         </div>
 
@@ -1285,21 +1414,28 @@ export default function ItineraryTab() {
               className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95"
             >
               <ArrowLeft size={12} strokeWidth={3} />
-              
+              返回
             </button>
             <button
               onClick={handleShare}
               className="px-4 py-2 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-xl text-[10px] font-black text-pink-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95"
             >
               <Share2 size={12} strokeWidth={3} />
-              
+              分享
+            </button>
+            <button
+              onClick={handleExportIcs}
+              className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl text-[10px] font-black text-emerald-600 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95"
+            >
+              <Calendar size={12} strokeWidth={3} />
+              ICS
             </button>
             <button
               onClick={() => window.print()}
               className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95 print:hidden"
             >
               <Printer size={14} className="shrink-0" />
-              
+              PDF
             </button>
           </div>
           
@@ -1405,7 +1541,7 @@ export default function ItineraryTab() {
           <GlassCard className="!p-6">
              <div className="flex items-center justify-between mb-5">
                 <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">口袋名單</span>
-                <span className="text-[10px] font-bold text-pink-400">點擊 + 加入</span>
+               <span className="text-[10px] font-bold text-pink-400">拖曳或點擊 + 加入</span>
              </div>
              <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto no-scrollbar pr-1 -mr-1">
                 {favorites.map((spot: FavoriteSpot) => (
@@ -1416,6 +1552,8 @@ export default function ItineraryTab() {
                     isOffline={isOffline}
                     onAdd={addSpotToDay}
                     onDelete={handleDeleteFavorite}
+                    onDragStart={setDraggingFavorite}
+                    onDragEnd={() => setDraggingFavorite(null)}
                   />
                 ))}
              </div>
@@ -1549,10 +1687,13 @@ export default function ItineraryTab() {
                 transition={{ duration: 0.3 }}
                 className="flex-1 flex flex-col gap-8"
               >
-                {collaboratorEditing && (
+                {Object.values(nodeEditingLocks).some((lock) => lock.day === safeSelectedDay) && (
                   <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-fuchsia-50 border border-fuchsia-100 text-fuchsia-700 font-bold text-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                    <Pencil size={18} />
-                    <span>{collaboratorEditing.userName} 正在編輯 Day {collaboratorEditing.day}</span>
+                    <Lock size={18} />
+                    <span>
+                      {Object.values(nodeEditingLocks).filter((lock) => lock.day === safeSelectedDay).slice(0, 2).map((lock) => lock.userName).join('、')}
+                      正在編輯 Day {safeSelectedDay} 的景點
+                    </span>
                   </div>
                 )}
 
@@ -1800,14 +1941,21 @@ export default function ItineraryTab() {
                   onUpdate={handleUpdateNode}
                   onReorder={handleReorder}
                   onManualAdd={handleManualAddNode}
+                  onQuickExpense={setExpenseTargetNode}
+                  draggingFavorite={draggingFavorite}
+                  onFavoriteDrop={(spot, dropDay) => {
+                    addSpotToDay(spot, dropDay);
+                    setDraggingFavorite(null);
+                  }}
                   isOffline={isOffline}
                   aiLoading={aiLoading}
                   tripId={activeTripId}
                   destination={tripInfo?.destination || ''}
                   tripStartDate={tripInfo?.startDate}
                   weather={weatherData}
+                  recentlySyncedNodeIds={recentlySyncedNodeIds}
                   onEditingChange={handleEditingChange}
-                  collaboratorEditing={collaboratorEditing}
+                  nodeEditingLocks={nodeEditingLocks}
                 />
               </motion.div>
             ) : viewMode === 'map' ? (
@@ -1911,6 +2059,8 @@ export default function ItineraryTab() {
                        isOffline={isOffline}
                        onAdd={(node) => { addSpotToDay(node); setShowMobileFavorites(false); }}
                        onDelete={handleDeleteFavorite}
+                       onDragStart={setDraggingFavorite}
+                       onDragEnd={() => setDraggingFavorite(null)}
                      />
                    ))}
                  </div>
@@ -1919,6 +2069,16 @@ export default function ItineraryTab() {
           </>
         )}
       </AnimatePresence>
+
+      {expenseTargetNode && activeTripId && (
+        <QuickExpenseModal
+          tripId={activeTripId}
+          destination={tripInfo?.destination || ''}
+          node={expenseTargetNode}
+          members={collaborators.map((member: Collaborator) => member.name).filter(Boolean)}
+          onClose={() => setExpenseTargetNode(null)}
+        />
+      )}
       </div>
     </main>
   );
@@ -1985,12 +2145,16 @@ function DraggableFavoriteSpot({
   isOffline,
   onAdd,
   onDelete,
+  onDragStart,
+  onDragEnd,
 }: {
   spot: FavoriteSpot;
   selectedDay: number;
   isOffline: boolean;
   onAdd: (spot: FavoriteSpot, day: number) => void;
   onDelete: (id: string) => void | Promise<void>;
+  onDragStart?: (spot: FavoriteSpot) => void;
+  onDragEnd?: () => void;
   key?: string;
 }) {
   const [enrichment, setEnrichment] = useState<{ description?: string; wiki_url?: string; thumbnail?: string }>({});
@@ -2005,6 +2169,14 @@ function DraggableFavoriteSpot({
     <motion.div
       layout
       whileHover={{ y: -2 }}
+      draggable={!isOffline}
+      onDragStart={(event) => {
+        if (isOffline) return;
+        event.dataTransfer.effectAllowed = 'copy';
+        event.dataTransfer.setData('text/plain', spot.id);
+        onDragStart?.(spot);
+      }}
+      onDragEnd={() => onDragEnd?.()}
       className="group relative flex flex-col gap-2 p-3 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[20px] shadow-sm hover:shadow-xl transition-all"
     >
       <div className="flex items-center justify-between">
@@ -2061,8 +2233,10 @@ function ItineraryListItem({
   tripStartDate,
   previousItem,
   nextItem,
+  isRecentlySynced,
+  onQuickExpense,
   onEditingChange,
-  collaboratingUser
+  collaboratingLock
 }: {
   item: ItineraryNode;
   idx: number;
@@ -2074,8 +2248,10 @@ function ItineraryListItem({
   tripStartDate?: string | null;
   previousItem?: ItineraryNode;
   nextItem?: ItineraryNode;
+  isRecentlySynced?: boolean;
+  onQuickExpense?: (node: ItineraryNode) => void;
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
-  collaboratingUser?: string;
+  collaboratingLock?: { userName: string; day: number };
   key?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -2087,6 +2263,7 @@ function ItineraryListItem({
   const [editDescription, setEditDescription] = useState(item.description || item.notes || '');
   const [editTransport, setEditTransport] = useState(item.transport_to_next || '');
   const [editImageUrl, setEditImageUrl] = useState(item.image_url || '');
+  const [editAttachments, setEditAttachments] = useState<ItineraryAttachment[]>(item.attachments || []);
   const [editLinkedFactId, setEditLinkedFactId] = useState(item.linkedFactId || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -2101,8 +2278,30 @@ function ItineraryListItem({
     setEditDescription(item.description || item.notes || '');
     setEditTransport(item.transport_to_next || '');
     setEditImageUrl(item.image_url || '');
+    setEditAttachments(item.attachments || []);
     setEditLinkedFactId(item.linkedFactId || '');
   }, [item, tripStartDate]);
+
+  const handleAttachmentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const uploaded = await Promise.all(
+      files.map(async (file) => ({
+        id: `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        url: await readFileAsDataUrl(file),
+      })),
+    );
+
+    setEditAttachments((prev) => [...prev, ...uploaded]);
+    event.target.value = '';
+  };
+
+  const removeAttachment = (attachmentId: string) => {
+    setEditAttachments((prev) => prev.filter((attachment) => attachment.id !== attachmentId));
+  };
 
   const handleSave = () => {
     onUpdate({
@@ -2115,6 +2314,7 @@ function ItineraryListItem({
       description: editDescription,
       transport_to_next: editTransport || undefined,
       image_url: editImageUrl,
+      attachments: editAttachments,
       linkedFactId: editLinkedFactId || undefined,
       timestamp: buildTimestampFromDateTime(editDate, normalizeClockInput(editTime)) ?? item.timestamp,
     });
@@ -2188,7 +2388,7 @@ function ItineraryListItem({
           : undefined,
         travel_facts_context: travelFactsContext,
       });
-      const { ai_note, ...restNode } = newNode as any;
+      const { ai_note, intensity, ...restNode } = newNode as any;
       onUpdate({
         ...item,
         ...restNode,
@@ -2196,6 +2396,8 @@ function ItineraryListItem({
         date: item.date,
         day: item.day,
         sort_order: item.sort_order,
+        ai_note: ai_note || undefined,
+        intensity: intensity || undefined,
         description: ai_note || restNode.description,
         timestamp: buildTimestampFromDateTime(item.date, restNode.time || item.time) ?? item.timestamp,
       });
@@ -2215,13 +2417,17 @@ function ItineraryListItem({
       <div className={`absolute left-1 sm:left-2 lg:left-2.5 top-5 sm:top-6 w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-4.5 lg:h-4.5 rounded-full border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? 'bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]' : 'bg-slate-300 group-hover:bg-fuchsia-400'}`} />
 
       {/* Content Card */}
-      {collaboratingUser && (
+      {collaboratingLock && (
         <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
       <GlassCard
-        className={`flex-1 !p-1.5 sm:!p-2.5 md:!p-3 !rounded-[16px] sm:!rounded-[20px] ${getCategoryStyle(item.category)} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-700 border border-white/80 relative z-10 ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingUser ? 'ring-2 ring-fuchsia-400/60' : ''} ${item.linkedFactId ? 'ring-2 ring-sky-300/40 border-sky-200/50 shadow-[0_0_15px_-5px_rgba(14,165,233,0.3)]' : ''}`}
+        className={`flex-1 !p-1.5 sm:!p-2.5 md:!p-3 !rounded-[16px] sm:!rounded-[20px] ${getCategoryStyle(item.category)} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-700 border border-white/80 relative z-10 ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingLock ? 'ring-2 ring-fuchsia-400/60' : ''} ${isRecentlySynced ? 'ring-2 ring-emerald-300/80 bg-emerald-50/40 shadow-[0_0_18px_-6px_rgba(16,185,129,0.45)]' : ''} ${item.linkedFactId ? 'ring-2 ring-sky-300/40 border-sky-200/50 shadow-[0_0_15px_-5px_rgba(14,165,233,0.3)]' : ''}`}
         onClick={(e) => {
            if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+          if (collaboratingLock && !isEditing) {
+            useAppStore.getState().showToast(`${collaboratingLock.userName} 正在編輯這個景點。`, 'warning');
+            return;
+          }
            if (!isOffline && !isEditing) {
               setIsEditing(true); 
               onEditingChange?.(item.node_id, item.day, true);
@@ -2272,13 +2478,18 @@ function ItineraryListItem({
                <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
                  {meta.label}
                </span>
+               {item.intensity && (
+                 <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] border ${item.intensity === 'hardcore' ? 'bg-rose-50 text-rose-600 border-rose-100' : item.intensity === 'chill' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                   {item.intensity === 'hardcore' ? '高強度' : item.intensity === 'chill' ? '輕鬆' : '適中'}
+                 </span>
+               )}
                {item.linkedFactId && facts.find((f: any) => f.id === item.linkedFactId) && (
                  <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-0.5">
                    <Link size={11} className="sm:w-[13px] sm:h-[13px]" />
                    已綁定: {facts.find((f: any) => f.id === item.linkedFactId)?.title}
                  </span>
                )}
-               {collaboratingUser && (
+               {collaboratingLock && (
                  <motion.span
                    initial={{ scale: 0.8, opacity: 0 }}
                    animate={{ scale: 1, opacity: 1 }}
@@ -2286,7 +2497,17 @@ function ItineraryListItem({
                  >
                    <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 animate-ping inline-block" />
                    <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 absolute" />
-                   {collaboratingUser} 編輯中
+                   {collaboratingLock.userName} 編輯中
+                 </motion.span>
+               )}
+               {isRecentlySynced && (
+                 <motion.span
+                   initial={{ scale: 0.85, opacity: 0 }}
+                   animate={{ scale: 1, opacity: 1 }}
+                   className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700 border border-emerald-200 shadow-sm"
+                 >
+                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                   剛同步
                  </motion.span>
                )}
                {!isEditing && (
@@ -2362,6 +2583,46 @@ function ItineraryListItem({
                     placeholder="貼上照片網址 (例如: https://...jpg)"
                     className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                   />
+                  <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white/50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">附件 / 票券</label>
+                      <label className="px-3 py-2 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors">
+                        上傳圖片或 PDF
+                        <input type="file" accept="image/*,.pdf,application/pdf" multiple className="hidden" onChange={handleAttachmentUpload} />
+                      </label>
+                    </div>
+                    {editAttachments.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {editAttachments.map((attachment) => {
+                          const isImage = attachment.type.startsWith('image/');
+                          return (
+                            <div key={attachment.id} className="relative group/attachment rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+                              <button
+                                type="button"
+                                onClick={() => window.open(attachment.url, '_blank', 'noopener,noreferrer')}
+                                className={`flex items-center gap-2 ${isImage ? 'p-1' : 'px-3 py-2'} text-left`}
+                              >
+                                {isImage ? (
+                                  <img src={attachment.url} alt={attachment.name} className="w-20 h-20 object-cover rounded-[12px]" />
+                                ) : (
+                                  <span className="text-xs font-black text-slate-700">📄 {attachment.name}</span>
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeAttachment(attachment.id)}
+                                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 text-slate-500 hover:text-rose-500 shadow-sm opacity-0 group-hover/attachment:opacity-100 transition-opacity"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs font-bold text-slate-400">可放電子票、QR code 截圖或 PDF 憑證。</p>
+                    )}
+                  </div>
                   {facts && facts.length > 0 && (
                     <select
                       value={editLinkedFactId}
@@ -2399,6 +2660,28 @@ function ItineraryListItem({
                     <div className="w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative">
                       <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-[12px] sm:rounded-[16px] group-hover:scale-105 transition-transform duration-1000" loading="lazy" referrerPolicy="no-referrer" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    </div>
+                  )}
+
+                  {item.attachments && item.attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2 sm:mb-2.5">
+                      {item.attachments.map((attachment) => {
+                        const isImage = attachment.type.startsWith('image/');
+                        return (
+                          <button
+                            key={attachment.id}
+                            type="button"
+                            onClick={() => window.open(attachment.url, '_blank', 'noopener,noreferrer')}
+                            className={`rounded-[14px] border border-slate-100 bg-white shadow-sm overflow-hidden hover:shadow-md transition-all ${isImage ? 'p-1' : 'px-3 py-2 text-left'}`}
+                          >
+                            {isImage ? (
+                              <img src={attachment.url} alt={attachment.name} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-[10px]" />
+                            ) : (
+                              <span className="text-[11px] font-black text-slate-700 whitespace-nowrap">📄 {attachment.name}</span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                   
@@ -2465,10 +2748,13 @@ function ItineraryListItem({
                      </div>
                      {!isOffline && (
                         <div className="flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
-                           <button onClick={(e) => { e.stopPropagation(); void handleRegenerate(); }} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-fuchsia-500 hover:border-fuchsia-100 hover:shadow-md transition-all active:scale-90" title="AI 換一個建議">
+                        <button onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; onQuickExpense?.(item); }} disabled={Boolean(collaboratingLock)} className="px-3 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 hover:shadow-md transition-all active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest" title="為這個景點快速記一筆">
+                          💸 記一筆
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; void handleRegenerate(); }} disabled={Boolean(collaboratingLock)} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-fuchsia-500 hover:border-fuchsia-100 hover:shadow-md transition-all active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed" title="AI 換一個建議">
                               <RefreshCw size={16} strokeWidth={3} />
                            </button>
-                           <button onClick={(e) => { e.stopPropagation(); onDelete(item.node_id); }} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-100 hover:shadow-md transition-all active:scale-90" title="刪除此節點">
+                          <button onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; onDelete(item.node_id); }} disabled={Boolean(collaboratingLock)} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-100 hover:shadow-md transition-all active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed" title="刪除此節點">
                               <Trash2 size={18} strokeWidth={2.5} />
                            </button>
                         </div>
@@ -2496,14 +2782,18 @@ function ItineraryList({
   onUpdate,
   onReorder,
   onManualAdd,
+  onQuickExpense,
+  draggingFavorite,
+  onFavoriteDrop,
   isOffline,
   aiLoading,
   tripId,
   destination,
   tripStartDate,
   weather,
+  recentlySyncedNodeIds,
   onEditingChange,
-  collaboratorEditing
+  nodeEditingLocks
 }: {
   items: ItineraryNode[];
   day: number;
@@ -2511,15 +2801,27 @@ function ItineraryList({
   onUpdate: (node: ItineraryNode) => void;
   onReorder: (newOrder: ItineraryNode[]) => void;
   onManualAdd: (node: Partial<ItineraryNode>) => void;
+  onQuickExpense?: (node: ItineraryNode) => void;
+  draggingFavorite?: FavoriteSpot | null;
+  onFavoriteDrop?: (spot: FavoriteSpot, day: number) => void;
   isOffline: boolean;
   aiLoading: boolean;
   tripId: string;
   destination: string;
   tripStartDate?: string | null;
   weather?: any;
+  recentlySyncedNodeIds?: string[];
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
-  collaboratorEditing?: { userName: string; day: number; nodeId: string } | null;
+  nodeEditingLocks?: Record<string, { userName: string; day: number }>;
 }) {
+  const [isFavoriteDragOver, setIsFavoriteDragOver] = useState(false);
+
+  useEffect(() => {
+    if (!draggingFavorite) {
+      setIsFavoriteDragOver(false);
+    }
+  }, [draggingFavorite]);
+
   const getDailyWeather = () => {
     if (!weather || !weather.length) return null;
     // Assuming weather is a 14-day array, pick the one matching (day - 1)
@@ -2529,9 +2831,42 @@ function ItineraryList({
   };
 
   const dayWeather = getDailyWeather();
+  const canDropFavorite = Boolean(draggingFavorite && !isOffline && onFavoriteDrop);
 
   return (
-      <div className="flex flex-col gap-6 sm:gap-10 sm:mt-6 mt-2 min-h-[400px]">
+      <div
+        className={`flex flex-col gap-6 sm:gap-10 sm:mt-6 mt-2 min-h-[400px] rounded-[36px] transition-all ${isFavoriteDragOver ? 'bg-fuchsia-50/30 ring-2 ring-fuchsia-300/60 ring-offset-4 ring-offset-transparent' : ''}`}
+        onDragOver={(event) => {
+          if (!canDropFavorite) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'copy';
+          if (!isFavoriteDragOver) setIsFavoriteDragOver(true);
+        }}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setIsFavoriteDragOver(false);
+          }
+        }}
+        onDrop={(event) => {
+          if (!canDropFavorite || !draggingFavorite) return;
+          event.preventDefault();
+          onFavoriteDrop?.(draggingFavorite, day);
+          setIsFavoriteDragOver(false);
+        }}
+      >
+        <AnimatePresence>
+          {isFavoriteDragOver && draggingFavorite && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="mx-2 sm:mx-0 rounded-[28px] border-2 border-dashed border-fuchsia-300 bg-white/80 px-5 py-4 text-center shadow-lg shadow-fuchsia-100/50"
+            >
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-fuchsia-500">拖放加入 Day {day}</p>
+              <p className="mt-1 text-sm font-bold text-slate-700">將「{draggingFavorite.title}」加入今天的行程</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {dayWeather && (
           <div className="-mt-8 sm:-mt-14 mb-4 sm:mb-6 ml-6 sm:ml-10 relative z-10 w-fit">
             <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-2 sm:py-3 bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-[16px] shadow-sm transform hover:scale-105 transition-transform duration-300">
@@ -2589,6 +2924,7 @@ function ItineraryList({
           {items.map((item: ItineraryNode, idx: number) => {
             const nextItem = items[idx + 1];
             let timeGapStr = '';
+            let timeGapMinutes = 0;
             
             if (nextItem && item.time && nextItem.time) {
               const currentParts = item.time.split(':').map(Number);
@@ -2598,6 +2934,7 @@ function ItineraryList({
                 const nextMins = nextParts[0] * 60 + nextParts[1];
                 const diff = nextMins - currentMins;
                 if (diff > 0) {
+                  timeGapMinutes = diff;
                   const h = Math.floor(diff / 60);
                   const m = diff % 60;
                   timeGapStr = h > 0 ? `${h} 小時 ${m > 0 ? m + ' 分鐘' : ''}` : `${m} 分鐘`;
@@ -2621,12 +2958,14 @@ function ItineraryList({
                   nextItem={nextItem}
                   onDelete={onDelete}
                   onUpdate={onUpdate}
+                  onQuickExpense={onQuickExpense}
                   isOffline={isOffline}
                   tripId={tripId}
                   destination={destination}
                   tripStartDate={tripStartDate}
+                  isRecentlySynced={recentlySyncedNodeIds?.includes(item.node_id)}
                   onEditingChange={onEditingChange}
-                  collaboratingUser={collaboratorEditing?.nodeId === item.node_id ? collaboratorEditing.userName : undefined}
+                  collaboratingLock={nodeEditingLocks?.[item.node_id]}
                 />
                 
                 {/* Drag handle for mobile/explicit drag */}
@@ -2639,6 +2978,7 @@ function ItineraryList({
                     item.lat && item.lng && nextItem.lat && nextItem.lng)
                     ? estimateTransport(haversineKm(item.lat, item.lng, nextItem.lat!, nextItem.lng!))
                     : null;
+                  const hasTransitConflict = Boolean(autoTransport && timeGapMinutes > 0 && autoTransport.minutes > timeGapMinutes);
                   const showBadge = nextItem && (timeGapStr || item.transport_to_next || autoTransport);
                   return showBadge ? (
                     <div className="flex justify-start sm:pl-[60px] pl-[40px] my-1 relative z-0">
@@ -2652,9 +2992,15 @@ function ItineraryList({
                             </span>
                           )}
                           {(item.transport_to_next || autoTransport) && (
-                            <span className="px-3 py-1 bg-indigo-50/80 rounded-full text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1.5">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-1.5 ${hasTransitConflict ? 'bg-rose-50/90 text-rose-600 border-rose-200' : 'bg-indigo-50/80 text-indigo-500 border-indigo-100'}`}>
                               <span>{autoTransport?.emoji ?? '🚇'}</span>
                               {item.transport_to_next ?? autoTransport?.label}
+                            </span>
+                          )}
+                          {hasTransitConflict && (
+                            <span className="px-3 py-1 bg-rose-50/90 rounded-full text-[10px] font-black text-rose-600 uppercase tracking-widest border border-rose-200 shadow-sm flex items-center gap-1.5">
+                              <span>⚠️</span>
+                              交通時間可能塞不下
                             </span>
                           )}
                         </div>
@@ -2964,6 +3310,189 @@ function ManualAddNode({
       </div>
     </AnimatePresence>,
     document.body
+  );
+}
+
+function QuickExpenseModal({
+  tripId,
+  destination,
+  node,
+  members,
+  onClose,
+}: {
+  tripId: string;
+  destination: string;
+  node: ItineraryNode;
+  members: string[];
+  onClose: () => void;
+}) {
+  const fallbackMember = members[0] || localStorage.getItem('user_id') || '我';
+  const participantList = members.length > 0 ? members : [fallbackMember];
+  const [title, setTitle] = useState(`${node.title}${node.date ? ` (${node.date})` : ''}`);
+  const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState(getCurrencyFromDestination(destination));
+  const [payer, setPayer] = useState(participantList[0] || fallbackMember);
+  const [splitWith, setSplitWith] = useState<string[]>(participantList);
+  const [submitting, setSubmitting] = useState(false);
+  const { showToast } = useAppStore();
+
+  const toggleSplitMember = (member: string) => {
+    setSplitWith((prev) => {
+      const exists = prev.includes(member);
+      if (exists) {
+        return prev.filter((item) => item !== member);
+      }
+      return [...prev, member];
+    });
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const numericAmount = Number(amount);
+    if (!title.trim()) {
+      showToast('請補上消費名稱。', 'warning');
+      return;
+    }
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      showToast('金額需為大於 0 的數字。', 'warning');
+      return;
+    }
+    if (!payer.trim()) {
+      showToast('請選擇代墊人。', 'warning');
+      return;
+    }
+
+    const normalizedSplit = splitWith.includes(payer) ? splitWith : [...splitWith, payer];
+    if (normalizedSplit.length === 0) {
+      showToast('至少要有一位分攤成員。', 'warning');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await submitLedgerExpense(tripId, {
+        title: title.trim(),
+        amount: numericAmount,
+        currency,
+        payer,
+        splitWith: normalizedSplit,
+      });
+      showToast(`已為 ${node.title} 記下一筆 ${currency} ${numericAmount.toLocaleString()}。`, 'success');
+      onClose();
+    } catch {
+      showToast('記帳失敗，請稍後再試。', 'warning');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return createPortal(
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[220] flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-slate-900/45 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 24, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 24, scale: 0.96 }}
+          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-[230] overflow-hidden"
+        >
+          <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400" />
+          <form onSubmit={handleSubmit} className="p-7 sm:p-8 flex flex-col gap-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Quick Expense</p>
+                <h3 className="mt-2 text-2xl font-black text-slate-800 tracking-tight">為景點快速記一筆</h3>
+                <p className="mt-2 text-sm font-bold text-slate-500">
+                  {node.title}
+                  {node.date ? ` ・ ${node.date}` : ''}
+                  {node.time ? ` ・ ${node.time}` : ''}
+                </p>
+              </div>
+              <button type="button" onClick={onClose} className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">消費名稱</label>
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">金額</label>
+                <input
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                  placeholder="例如 980"
+                  className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">幣別</label>
+                <input
+                  value={currency}
+                  onChange={(event) => setCurrency(event.target.value.toUpperCase())}
+                  className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">代墊人</label>
+              <select
+                value={payer}
+                onChange={(event) => setPayer(event.target.value)}
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
+              >
+                {participantList.map((member) => (
+                  <option key={member} value={member}>{member}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">參與旅伴</label>
+              <div className="flex flex-wrap gap-2">
+                {participantList.map((member) => {
+                  const selected = splitWith.includes(member);
+                  return (
+                    <button
+                      key={member}
+                      type="button"
+                      onClick={() => toggleSplitMember(member)}
+                      className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'}`}
+                    >
+                      {member}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full mt-2 rounded-2xl bg-slate-900 text-white py-4 font-black text-sm uppercase tracking-[0.18em] shadow-lg hover:bg-slate-800 transition-all disabled:opacity-50"
+            >
+              {submitting ? '送出中...' : '確認記帳'}
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
@@ -3427,4 +3956,138 @@ function readCachedItinerary(tripId: string): ItineraryNode[] {
   } catch {
     return [];
   }
+}
+
+function summarizeItineraryDiff(previousNodes: ItineraryNode[], nextNodes: ItineraryNode[]) {
+  const previousMap = new Map(previousNodes.map((node) => [node.node_id, node]));
+  const nextMap = new Map(nextNodes.map((node) => [node.node_id, node]));
+
+  const addedNodeIds: string[] = [];
+  let updatedCount = 0;
+  let removedCount = 0;
+
+  for (const nextNode of nextNodes) {
+    const previousNode = previousMap.get(nextNode.node_id);
+    if (!previousNode) {
+      addedNodeIds.push(nextNode.node_id);
+      continue;
+    }
+
+    const previousSignature = [
+      previousNode.day,
+      previousNode.date,
+      previousNode.time,
+      previousNode.title,
+      previousNode.description,
+      previousNode.transport_to_next,
+      previousNode.image_url,
+      previousNode.is_visited,
+    ].join('|');
+
+    const nextSignature = [
+      nextNode.day,
+      nextNode.date,
+      nextNode.time,
+      nextNode.title,
+      nextNode.description,
+      nextNode.transport_to_next,
+      nextNode.image_url,
+      nextNode.is_visited,
+    ].join('|');
+
+    if (previousSignature !== nextSignature) {
+      updatedCount += 1;
+    }
+  }
+
+  for (const previousNode of previousNodes) {
+    if (!nextMap.has(previousNode.node_id)) {
+      removedCount += 1;
+    }
+  }
+
+  return {
+    addedCount: addedNodeIds.length,
+    updatedCount,
+    removedCount,
+    addedNodeIds,
+    totalChanges: addedNodeIds.length + updatedCount + removedCount,
+  };
+}
+
+function buildReconnectSummaryMessage(diff: {
+  addedCount: number;
+  updatedCount: number;
+  removedCount: number;
+}) {
+  const parts = [
+    diff.addedCount > 0 ? `新增 ${diff.addedCount} 個景點` : '',
+    diff.updatedCount > 0 ? `更新 ${diff.updatedCount} 個景點` : '',
+    diff.removedCount > 0 ? `刪除 ${diff.removedCount} 個景點` : '',
+  ].filter(Boolean);
+
+  return parts.length > 0
+    ? `您離線期間，旅伴已${parts.join('、')}。`
+    : '您已重新連線，行程已同步到最新版本。';
+}
+
+function escapeIcsText(value: string) {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n');
+}
+
+function formatDateToIcs(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}${month}${day}T${hours}${minutes}00`;
+}
+
+function buildIcsCalendar(tripName: string, nodes: ItineraryNode[]) {
+  const orderedNodes = sortNodesForDisplay([...nodes]).filter((node) => node.date && node.time);
+  const nowStamp = formatDateToIcs(new Date());
+  const events = orderedNodes.map((node, index) => {
+    const start = new Date(`${node.date}T${normalizeClockInput(node.time)}:00`);
+    const nextNode = orderedNodes[index + 1];
+    const nextStart = nextNode?.date && nextNode?.time ? new Date(`${nextNode.date}T${normalizeClockInput(nextNode.time)}:00`) : null;
+    const end = nextStart && nextStart > start
+      ? nextStart
+      : new Date(start.getTime() + 60 * 60 * 1000);
+
+    return [
+      'BEGIN:VEVENT',
+      `UID:${node.node_id}@roamjelly.app`,
+      `DTSTAMP:${nowStamp}`,
+      `DTSTART:${formatDateToIcs(start)}`,
+      `DTEND:${formatDateToIcs(end)}`,
+      `SUMMARY:${escapeIcsText(node.title)}`,
+      `DESCRIPTION:${escapeIcsText(node.description || node.ai_note || '')}`,
+      `LOCATION:${escapeIcsText(node.title)}`,
+      'END:VEVENT',
+    ].join('\r\n');
+  });
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//RoamJelly//Trip Export//EN',
+    'CALSCALE:GREGORIAN',
+    `X-WR-CALNAME:${escapeIcsText(tripName)}`,
+    ...events,
+    'END:VCALENDAR',
+  ].join('\r\n');
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error ?? new Error('file read failed'));
+    reader.readAsDataURL(file);
+  });
 }

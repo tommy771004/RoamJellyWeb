@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
+import { Search } from 'lucide-react';
 import { 
   TRAVEL_GUIDE_REGIONS, 
   TRAVEL_GUIDE_SOURCE_REPO, 
@@ -20,15 +21,20 @@ export const LocationPickerPopup = ({
   query: string;
 }) => {
   const [selectedRegion, setSelectedRegion] = useState<string>('全部地區');
+  const [searchQuery, setSearchQuery] = useState(query);
+
+  useEffect(() => {
+    setSearchQuery(query);
+  }, [query]);
   
   const filteredDestinations = useMemo(() => {
-    return matchTravelDestinations(query || '', selectedRegion)
+    return matchTravelDestinations(searchQuery || '', selectedRegion)
       .sort((a, b) => a.place.localeCompare(b.place, 'zh-Hant'));
-  }, [query, selectedRegion]);
+  }, [searchQuery, selectedRegion]);
 
   const content = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[200] flex items-end justify-center p-0 md:items-center md:p-4">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -37,12 +43,13 @@ export const LocationPickerPopup = ({
           onClick={onClose}
         />
         <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          initial={{ opacity: 0, y: 30, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 30, scale: 0.95 }}
-          className="relative w-[90vw] md:w-[480px] max-w-[480px] md:max-w-xl min-w-[300px] md:min-w-[480px] shrink-0 bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-[210] overflow-hidden"
+          exit={{ opacity: 0, y: 30, scale: 0.98 }}
+          className="relative z-[210] flex h-[82dvh] w-full flex-col overflow-hidden rounded-t-[32px] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.25)] border border-white md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-3xl md:shadow-[0_32px_80px_rgba(0,0,0,0.35)]"
         >
-          <div className="p-7 pb-5">
+          <div className="sticky top-0 z-20 bg-white/95 px-5 pb-4 pt-4 backdrop-blur-xl md:px-7 md:pb-5 md:pt-7">
+            <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-slate-200 md:hidden" />
             <div className="flex flex-row justify-between items-center mb-5 pl-1">
               <div className="flex flex-col">
                 <span className="font-black tracking-tight text-slate-800 text-xl">{title}</span>
@@ -83,8 +90,22 @@ export const LocationPickerPopup = ({
               ))}
             </div>
 
+            <div className="relative">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜尋國家、城市或景點別名"
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50/80 py-3.5 pl-11 pr-4 text-[14px] font-bold text-slate-700 outline-none transition-all focus:border-fuchsia-200 focus:bg-white focus:ring-4 focus:ring-fuchsia-100"
+                autoFocus
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
+          </div>
+
             {/* Cities Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[40vh] overflow-y-auto pr-1 pb-2">
+            <div className="grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-4 pr-1 sm:grid-cols-3 md:px-7 md:pb-5 md:pt-0">
               {filteredDestinations.length > 0 ? (
                 filteredDestinations.map((dest) => (
                   <button
@@ -99,12 +120,11 @@ export const LocationPickerPopup = ({
               ) : (
                 <div className="col-span-full py-10 flex flex-col items-center">
                   <span className="text-[40px] mb-3 grayscale opacity-30">🏔️</span>
-                  <span className="text-sm text-slate-400 font-bold">目前該地區尚無推薦地點</span>
+                  <span className="text-sm text-slate-400 font-bold">找不到符合條件的地點</span>
                 </div>
               )}
             </div>
-          </div>
-          <div className="bg-slate-50/50 p-4 border-t border-slate-100/50 flex justify-center">
+          <div className="bg-slate-50/50 p-4 border-t border-slate-100/50 flex justify-center shrink-0">
             <span className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-400/80">
               {TRAVEL_GUIDE_SOURCE_REPO}
             </span>

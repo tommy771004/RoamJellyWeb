@@ -104,7 +104,7 @@ function useToolsTabContext() {
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 function ToolsTabProvider({ children }: { children: React.ReactNode }) {
-  const { checklist, setChecklist, revertCheckItem, settlements, setSettlements, members, setMembers, expenses, addExpense, clearSettlementRecord } =
+  const { checklist, setChecklist, revertCheckItem, settlements, setSettlements, members, setMembers, expenses, addExpense, removeExpense } =
     useToolsStore();
   const { showToast, activeTripId: tripId } = useAppStore();
 
@@ -237,6 +237,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       setErrors({});
+      let optimisticExpenseId: string | null = null;
       try {
         setSubmitting(true);
         const expense = {
@@ -248,15 +249,22 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           splitWith: form.splitWith,
           date: new Date().toISOString()
         };
+        optimisticExpenseId = expense.id;
         addExpense(expense);
         
         if (tripId) {
-          await submitLedgerExpense(tripId, expense);
+          const result = await submitLedgerExpense(tripId, expense);
+          if (Array.isArray(result?.settlements)) {
+            setSettlements(result.settlements);
+          }
         }
 
         showToast('分帳已更新，已算出最新應付關係。', 'success');
         setForm((prev) => ({ ...prev, title: '', amount: '', splitWith: members }));
       } catch {
+        if (optimisticExpenseId) {
+          removeExpense(optimisticExpenseId);
+        }
         showToast('分帳送出失敗，請稍後再試。', 'warning');
       } finally {
         setSubmitting(false);
@@ -276,9 +284,8 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     async handleClearSettlement(settlement) {
       setClearingId(settlement.id);
       try {
-        clearSettlementRecord(settlement.from, settlement.to, settlement.currency);
         if (tripId) {
-           await clearSettlement(tripId);
+           await clearSettlement(tripId, settlement.from, settlement.to, settlement.currency);
            const [history, fresh] = await Promise.all([
              fetchSettlementHistory(tripId),
              fetchSettlements(tripId),

@@ -33,6 +33,7 @@ const REAL_BACKEND_BASE_URL = process.env.REAL_BACKEND_BASE_URL?.replace(/\/+$/,
 const SHOULD_SEED_DEMO_DATA = process.env.SEED_DEMO_DATA === 'true' && !REAL_BACKEND_BASE_URL;
 const REDIS_URL = process.env.REDIS_URL?.trim();
 const JWT_DEV_TOKEN_ENABLED = process.env.ENABLE_DEV_TOKEN_ENDPOINT !== 'false';
+const GUEST_AUTH_ENABLED = process.env.ENABLE_GUEST_AUTH !== 'false';
 const AUTH_REQUIRED = process.env.AUTH_REQUIRED === 'true' || process.env.NODE_ENV === 'production';
 const OTA_PROVIDER_URL = process.env.OTA_PROVIDER_URL?.replace(/\/+$/, '');
 const OTA_PARTNER_BASE = process.env.OTA_PARTNER_BASE?.replace(/\/+$/, '') ?? '';
@@ -503,6 +504,7 @@ async function startServer() {
         AUTH_REQUIRED &&
         req.path.startsWith('/api') &&
         req.path !== '/api/auth/dev-token' &&
+        req.path !== '/api/auth/guest' &&
         req.path !== '/api/auth/register' &&
         req.path !== '/api/auth/login' &&
         !req.path.startsWith('/api/search') &&
@@ -598,6 +600,27 @@ async function startServer() {
     });
   }
 
+  if (GUEST_AUTH_ENABLED) {
+    app.post('/api/auth/guest', async (req, res) => {
+      const rawDisplayName = String(req.body?.display_name ?? '').trim();
+      const displayName = (rawDisplayName || '訪客旅人').slice(0, 32);
+      const suffix = Math.random().toString(36).slice(2, 8);
+      const userId = `guest_${Date.now().toString(36)}_${suffix}`;
+      const username = userId;
+
+      await repo.ensureUser(userId, username, displayName);
+
+      const token = signAccessToken({ userId });
+      res.status(201).json({
+        status: 'success',
+        token,
+        user_id: userId,
+        user: { id: userId, display_name: displayName },
+        expires_in: process.env.JWT_EXPIRES_IN ?? '12h',
+      });
+    });
+  }
+
   // ── Auth: Register ──────────────────────────────────────────────────────────
   app.post('/api/auth/register', async (req, res) => {
     const username = String(req.body?.username ?? '').trim();
@@ -682,6 +705,26 @@ async function startServer() {
     }
   });
 
+  const activeEditingLocks = new Map<
+    string,
+    {
+      tripId: string;
+      nodeId: string;
+      day: number;
+      userId: string;
+      userName: string;
+      socketId: string;
+    }
+  >();
+
+  const releaseLocksForSocket = (socketId: string) => {
+    for (const [lockKey, lock] of activeEditingLocks.entries()) {
+      if (lock.socketId !== socketId) continue;
+      activeEditingLocks.delete(lockKey);
+      io.to(lock.tripId).emit('editing_stop', { nodeId: lock.nodeId, day: lock.day });
+    }
+  };
+
   io.on('connection', (socket) => {
     socket.on('join_room', async (payload: { trip_id?: string }) => {
       if (!payload?.trip_id) return;
@@ -695,6 +738,15 @@ async function startServer() {
       }
 
       socket.join(payload.trip_id);
+
+      for (const lock of activeEditingLocks.values()) {
+        if (lock.tripId !== payload.trip_id || lock.userId === userId) continue;
+        socket.emit('editing_start', {
+          userName: lock.userName,
+          nodeId: lock.nodeId,
+          day: lock.day,
+        });
+      }
     });
 
     socket.on(
@@ -702,7 +754,7 @@ async function startServer() {
       async (event: {
         trip_id?: string;
         action?: string;
-        payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; linkedFactId?: string };
+        payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; ai_note?: string; intensity?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; attachments?: Array<{ id?: string; name?: string; type?: string; url?: string }>; linkedFactId?: string };
       }) => {
         if (
           !event?.trip_id ||
@@ -743,8 +795,11 @@ async function startServer() {
           lng: event.payload.lng,
           is_visited: event.payload.is_visited,
           description: event.payload.description,
+          ai_note: event.payload.ai_note,
+          intensity: event.payload.intensity,
           transport_to_next: event.payload.transport_to_next,
           image_url: event.payload.image_url,
+          attachments: Array.isArray(event.payload.attachments) ? event.payload.attachments : [],
           linkedFactId: event.payload.linkedFactId,
         });
 
@@ -778,8 +833,11 @@ async function startServer() {
             lng: event.payload.lng ?? null,
             is_visited: event.payload.is_visited ?? false,
             description: event.payload.description ?? '',
+            ai_note: event.payload.ai_note ?? null,
+            intensity: event.payload.intensity ?? null,
             transport_to_next: event.payload.transport_to_next ?? null,
             image_url: event.payload.image_url ?? null,
+            attachments: Array.isArray(event.payload.attachments) ? event.payload.attachments : [],
             linkedFactId: event.payload.linkedFactId ?? null,
           },
         });
@@ -798,19 +856,52 @@ async function startServer() {
 
       const userRecord = await repo.getUserById(socket.data.userId).catch(() => null);
       const userName = userRecord?.displayName || String(socket.data.userId);
+      const lockKey = `${tripId}:${nodeId}`;
+      const existingLock = activeEditingLocks.get(lockKey);
+
+      if (existingLock && existingLock.userId !== socket.data.userId) {
+        socket.emit('editing_denied', {
+          nodeId,
+          day: existingLock.day,
+          userName: existingLock.userName,
+        });
+        return;
+      }
+
+      activeEditingLocks.set(lockKey, {
+        tripId,
+        nodeId,
+        day,
+        userId: String(socket.data.userId),
+        userName,
+        socketId: socket.id,
+      });
 
       // Broadcast to all other members in the trip room
       socket.to(tripId).emit('editing_start', { userName, nodeId, day });
     });
 
-    socket.on('editing_stop', async (payload: { trip_id?: string }) => {
+    socket.on('editing_stop', async (payload: { trip_id?: string; nodeId?: string }) => {
       const tripId = String(payload?.trip_id ?? '');
+      const nodeId = String(payload?.nodeId ?? '');
       if (!tripId || !socket.data?.userId) return;
 
       const role = await repo.getTripMemberRole(tripId, socket.data.userId).catch(() => null);
       if (!role) return;
 
-      socket.to(tripId).emit('editing_stop', {});
+      if (!nodeId) return;
+
+      const lockKey = `${tripId}:${nodeId}`;
+      const existingLock = activeEditingLocks.get(lockKey);
+      if (existingLock && existingLock.userId === socket.data.userId) {
+        activeEditingLocks.delete(lockKey);
+      }
+
+      socket.to(tripId).emit('editing_stop', { nodeId });
+    });
+
+    socket.on('disconnect', () => {
+      releaseLocksForSocket(socket.id);
     });
   });
 
@@ -1433,13 +1524,8 @@ async function startServer() {
     res.status(201).json({ status: 'success', data: { id: tripId, name: String(name).trim(), destination: destination ?? null } });
   });
 
-  // ── Trip: public preview (requires auth, no membership needed) ──────────────
+  // ── Trip: public preview (no auth required) ─────────────────────────────────
   app.get('/api/trips/:trip_id/preview', async (req, res) => {
-    const userId = getRequestUserId(req);
-    if (!userId) {
-      res.status(401).json({ status: 'error', message: 'unauthorized' });
-      return;
-    }
     const info = await buildTripInfo(repo, req.params.trip_id);
     if (!info) {
       res.status(404).json({ status: 'error', message: 'trip not found' });
@@ -1642,9 +1728,12 @@ async function startServer() {
         lng,
         coords: lat != null ? null : { top: `${18 + index * 20}%`, left: `${25 + (index % 2) * 35}%` },
         description: node.description ?? null,
+        ai_note: node.aiNote ?? null,
+        intensity: node.intensity ?? null,
         is_visited: node.isVisited ?? false,
         transport_to_next: node.transportToNext ?? null,
         image_url: node.imageUrl ?? null,
+        attachments: Array.isArray(node.attachments) ? node.attachments : [],
         linkedFactId: node.linkedFactId ?? null,
       };
     });
@@ -1656,7 +1745,7 @@ async function startServer() {
     const { trip_id, action, payload } = req.body as {
       trip_id?: string;
       action?: string;
-      payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; linkedFactId?: string };
+      payload?: { node_id?: string; day?: number; date?: string; time?: string; timestamp?: string; sort_order?: number; title?: string; emoji?: string; category?: string; lat?: number | null; lng?: number | null; description?: string; ai_note?: string; intensity?: string; is_visited?: boolean; transport_to_next?: string; image_url?: string; attachments?: Array<{ id?: string; name?: string; type?: string; url?: string }>; linkedFactId?: string };
     };
 
     if (!trip_id || action !== 'add_node' || !payload?.node_id || !payload.time || !payload.title) {
@@ -1687,8 +1776,11 @@ async function startServer() {
       lng: payload.lng,
       is_visited: payload.is_visited,
       description: payload.description,
+      ai_note: payload.ai_note,
+      intensity: payload.intensity,
       transport_to_next: payload.transport_to_next,
       image_url: payload.image_url,
+      attachments: Array.isArray(payload.attachments) ? payload.attachments : [],
       linkedFactId: payload.linkedFactId,
     });
 
@@ -1722,6 +1814,8 @@ async function startServer() {
         lng: payload.lng ?? null,
         is_visited: payload.is_visited ?? false,
         description: payload.description ?? '',
+        ai_note: payload.ai_note ?? null,
+        intensity: payload.intensity ?? null,
         transport_to_next: payload.transport_to_next ?? null,
         image_url: payload.image_url ?? null,
         linkedFactId: payload.linkedFactId,
