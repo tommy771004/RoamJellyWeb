@@ -95,6 +95,13 @@ export interface FavoriteSpot {
   thumbnail?: string;
 }
 
+export interface ItineraryAttachment {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+}
+
 export interface ItineraryNode {
   node_id: string;
   day: number;
@@ -106,6 +113,8 @@ export interface ItineraryNode {
   emoji: string;
   category: string;
   description?: string;
+  ai_note?: string;
+  intensity?: 'chill' | 'moderate' | 'hardcore';
   is_visited?: boolean;
   notes?: string;
   source: 'local' | 'remote';
@@ -115,6 +124,7 @@ export interface ItineraryNode {
   image_url?: string;
   linkedFactId?: string;
   linked_fact_id?: string;
+  attachments?: ItineraryAttachment[];
 }
 
 export interface ItineraryPlannerForm {
