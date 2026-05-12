@@ -36,6 +36,7 @@ export interface TripInfo {
   days: number;
   startDate?: string | null;
   endDate?: string | null;
+  coverImage?: string;
 }
 
 export interface TripSummary {
@@ -49,12 +50,16 @@ export interface WeatherData {
   temp_min: number;
   temp_max: number;
   rain_prob: number;
+  daily?: any[];
 }
+
+export type ChecklistCategory = 'documents' | 'electronics' | 'clothing' | 'toiletries' | 'other';
 
 export interface ChecklistItem {
   id: string;
   text: string;
   checked: boolean;
+  category?: ChecklistCategory;
 }
 
 export interface Settlement {
@@ -63,6 +68,14 @@ export interface Settlement {
   to: string;
   amount: number;
   currency: string;
+}
+
+export interface SettlementHistoryEntry {
+  date: string;
+  clearedAt: string;
+  count: number;
+  payers: string[];
+  currencyTotals: Record<string, number>;
 }
 
 export interface Collaborator {
@@ -77,17 +90,31 @@ export interface FavoriteSpot {
   emoji: string;
   lat: number;
   lng: number;
+  wiki_desc?: string;
+  wiki_url?: string;
+  thumbnail?: string;
+}
+
+export interface ItineraryAttachment {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
 }
 
 export interface ItineraryNode {
   node_id: string;
   day: number;
+  date?: string;
   time: string;
   timestamp?: string;
+  sort_order?: number;
   title: string;
   emoji: string;
   category: string;
   description?: string;
+  ai_note?: string;
+  intensity?: 'chill' | 'moderate' | 'hardcore';
   is_visited?: boolean;
   notes?: string;
   source: 'local' | 'remote';
@@ -96,6 +123,8 @@ export interface ItineraryNode {
   transport_to_next?: string;
   image_url?: string;
   linkedFactId?: string;
+  linked_fact_id?: string;
+  attachments?: ItineraryAttachment[];
 }
 
 export interface ItineraryPlannerForm {
