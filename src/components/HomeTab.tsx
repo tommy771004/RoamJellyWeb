@@ -25,6 +25,7 @@ import { getCountryGuide } from '../data/countryGuideData';
 import type { CountryGuide } from '../data/countryGuideData';
 import { EXPERT_HANDBOOKS } from '../data/expertHandbooks';
 import DatePickerPopup from './DatePickerPopup';
+import { triggerHapticFeedback } from '../lib/haptics';
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -450,9 +451,16 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             name: handbook.title, 
             destination: handbook.tags[0] || '指定地點'
           });
-          TRIP_ID = newTrip.id;
-          setActiveTripId(TRIP_ID);
+          const newTripId = String(newTrip.id);
+          TRIP_ID = newTripId;
+          setActiveTripId(newTripId);
         }
+
+        if (!TRIP_ID) {
+          throw new Error('trip id missing after clone bootstrap');
+        }
+
+        const ensuredTripId = TRIP_ID;
 
         if (handbook.nodes && handbook.nodes.length) {
           setNodes([]);
@@ -460,7 +468,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           for (const rawNode of handbook.nodes) {
              const normalized = { ...rawNode, source: 'local' } as any;
              addNode(normalized);
-             const payload = { trip_id: TRIP_ID, action: 'add_node', payload: normalized } as any;
+             const payload = { trip_id: ensuredTripId, action: 'add_node', payload: normalized } as any;
              try {
                await syncItinerary(payload);
                syncedNodes.push(normalized);
@@ -487,6 +495,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     if (filterType === 'all') return results;
     return results.filter(r => r.type === filterType);
   }, [results, filterType]);
+
+  const demoTemplates = useMemo(() => EXPERT_HANDBOOKS.slice(0, 3), []);
 
   const resolveCurrentTripId = () =>
     activeTripId ||
@@ -515,6 +525,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   const handleCloneTrip = async (e: React.MouseEvent, trip: any) => {
     e.stopPropagation();
+  triggerHapticFeedback([18]);
 
     if (!isLoggedIn && onRequireLogin) {
       onRequireLogin();
@@ -1099,10 +1110,58 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 }}
-                      className="flex flex-col items-center justify-center py-24 sm:py-32 px-6 mx-2 bg-gradient-to-br from-white/60 to-slate-50/50 backdrop-blur-xl rounded-[40px] border border-white/60 shadow-sm relative overflow-hidden group"
+                      className="flex flex-col items-center justify-center py-14 sm:py-18 px-6 mx-2 bg-gradient-to-br from-white/70 to-slate-50/60 dark:from-slate-900/80 dark:to-slate-950/80 backdrop-blur-xl rounded-[40px] border border-white/60 dark:border-white/10 shadow-sm relative overflow-hidden group"
                     >
                       <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-fuchsia-100 rounded-full blur-3xl opacity-50 mix-blend-multiply pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
                       <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-orange-100 rounded-full blur-3xl opacity-50 mix-blend-multiply pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
+
+                      <div className="relative z-10 w-full max-w-5xl mb-10">
+                        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                          <div>
+                            <p className="text-[10px] font-black tracking-[0.24em] uppercase text-fuchsia-500">Demo Preview</p>
+                            <h4 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">先看別人排好的旅程，立刻進入狀況</h4>
+                          </div>
+                          <p className="text-[12px] font-bold text-slate-500 dark:text-slate-300">免登入、免等待，直接預覽完整節奏與景點安排。</p>
+                        </div>
+                        <div className="grid gap-3 md:grid-cols-3">
+                          {demoTemplates.map((handbook) => (
+                            <button
+                              key={handbook.id}
+                              type="button"
+                              onClick={() => {
+                                triggerHapticFeedback([16]);
+                                setActiveHandbook(handbook);
+                              }}
+                              className="group/demo overflow-hidden rounded-[28px] border border-white/70 dark:border-white/10 bg-white/90 dark:bg-slate-900/80 text-left shadow-lg shadow-slate-200/40 dark:shadow-black/30 transition-all hover:-translate-y-1 hover:shadow-xl"
+                            >
+                              <div className="relative h-36 overflow-hidden">
+                                <img src={handbook.image} alt={handbook.title} className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-105" loading="lazy" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                                <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-slate-950/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                                  Instant Demo
+                                </div>
+                                <div className="absolute bottom-3 left-3 right-3 text-white">
+                                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/75">{handbook.days} Days</div>
+                                  <div className="mt-1 text-lg font-black leading-tight">{handbook.title}</div>
+                                </div>
+                              </div>
+                              <div className="px-4 py-4">
+                                <div className="flex flex-wrap gap-2">
+                                  {handbook.tags.slice(0, 3).map((tag) => (
+                                    <span key={tag} className="rounded-full bg-slate-100 dark:bg-white/8 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600 dark:text-slate-200">
+                                      #{tag}
+                                    </span>
+                                  ))}
+                                </div>
+                                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-800 dark:text-white">
+                                  點我預覽
+                                  <ArrowRight size={14} />
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       
                       <div className="relative mb-8">
                          <div className="w-24 h-24 bg-white shadow-xl shadow-slate-200/50 rounded-full flex items-center justify-center text-4xl relative z-10 group-hover:-translate-y-2 transition-transform duration-500 border border-slate-50">
@@ -1111,7 +1170,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                          <div className="absolute -inset-4 border-2 border-dashed border-slate-200 rounded-full animate-[spin_15s_linear_infinite] opacity-50"></div>
                       </div>
                       
-                       <h3 className="text-2xl sm:text-[32px] font-black text-slate-900 mb-4 tracking-tight text-center leading-tight">
+                       <h3 className="text-2xl sm:text-[32px] font-black text-slate-900 dark:text-white mb-4 tracking-tight text-center leading-tight">
                         輸入出發地、目的地與日期，找出最聰明的飛航選擇。
                       </h3>
                       

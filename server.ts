@@ -521,6 +521,7 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
     name: trip.name,
     destination: trip.destination ?? '',
     days: finalDays,
+    totalSpots: nodes.length,
     startDate,
     endDate,
     coverImage,

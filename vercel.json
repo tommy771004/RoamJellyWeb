@@ -16,6 +16,14 @@
       }
     },
     {
+      "src": "api/share-trip.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/og-trip.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": { "distDir": "dist" }
@@ -49,10 +57,12 @@
     }
   ],
   "routes": [
+    { "src": "/api/og/trip", "dest": "/api/og-trip.js" },
+    { "src": "/share/trip/([^/]+)", "dest": "/api/share-trip.js?tripId=$1" },
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "src": "/guide/(.*)", "dest": "/guide/$1" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?))", "dest": "/$1" },
+    { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?|webmanifest))", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 

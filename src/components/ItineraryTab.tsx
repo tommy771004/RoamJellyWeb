@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 
@@ -86,6 +86,9 @@ import {
   getDayForDate,
   sortNodesForDisplay,
 } from '../lib/itineraryUtils';
+import { triggerHapticFeedback } from '../lib/haptics';
+
+const ItineraryMapView = lazy(() => import('./ItineraryMapView'));
 
 const DESTINATION_IMAGES: Array<{ keywords: string[]; url: string }> = [
   { keywords: ['台北', 'taipei'], url: 'https://images.unsplash.com/photo-1470004914212-05527e49370b?w=800&auto=format&fit=crop' },
@@ -918,11 +921,28 @@ export default function ItineraryTab() {
       showToast('缺少行程 ID，無法分享旅程');
       return;
     }
-    const deepLink = `${window.location.origin}/trip/${activeTripId}`;
+    const shareUrl = `${window.location.origin}/share/trip/${activeTripId}`;
+    const shareTitle = tripInfo?.name || tripInfo?.destination || 'RoamJelly 行程';
+    const shareText = tripInfo?.destination
+      ? `一起看 ${tripInfo.destination} 的旅程安排`
+      : '一起打開這份 RoamJelly 旅程';
     try {
-      await navigator.clipboard.writeText(deepLink);
-      showToast('🎉 行程連結已複製！邀請朋友加入吧', 'success');
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        triggerHapticFeedback([20]);
+        showToast('已開啟分享面板，快傳給旅伴吧。', 'success');
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      triggerHapticFeedback([20]);
+      showToast('🎉 可預覽的分享連結已複製！邀請朋友加入吧', 'success');
     } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
       showToast('分享失敗，請手動複製網址', 'warning');
     }
   };
@@ -1079,6 +1099,7 @@ export default function ItineraryTab() {
     }
 
     removeNode(node_id);
+    triggerHapticFeedback([18, 40, 18]);
 
     pendingDeleteTimersRef.current[node_id] = window.setTimeout(() => {
       void (async () => {
@@ -2203,7 +2224,21 @@ export default function ItineraryTab() {
                 transition={{ duration: 0.4 }}
                 className="w-full"
               >
-                <MapView items={selectedDayNodes} allNodes={nodes} />
+                <Suspense
+                  fallback={
+                    <GlassCard className="h-[55vh] flex items-center justify-center border-4 border-white/40 !rounded-[2.5rem]">
+                      <div className="flex flex-col items-center gap-3 text-center">
+                        <div className="h-10 w-10 rounded-full border-4 border-fuchsia-200 border-t-fuchsia-500 animate-spin" />
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-fuchsia-500">Map Chunk</p>
+                          <p className="mt-1 text-sm font-bold text-slate-500">正在載入地圖體驗...</p>
+                        </div>
+                      </div>
+                    </GlassCard>
+                  }
+                >
+                  <ItineraryMapView items={selectedDayNodes} allNodes={nodes} />
+                </Suspense>
               </motion.div>
             ) : (
               <motion.div
@@ -2438,9 +2473,13 @@ function DraggableFavoriteSpot({
         if (isOffline) return;
         event.dataTransfer.effectAllowed = 'copy';
         event.dataTransfer.setData('text/plain', spot.id);
+        triggerHapticFeedback([14]);
         onDragStart?.(spot);
       }}
-      onDragEnd={() => onDragEnd?.()}
+      onDragEnd={() => {
+        triggerHapticFeedback([10, 32, 12]);
+        onDragEnd?.();
+      }}
       className="group relative flex flex-col gap-2 p-3 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[20px] shadow-sm hover:shadow-xl transition-all"
     >
       <div className="flex items-center justify-between">
@@ -2633,12 +2672,13 @@ function ItineraryListItem({
       useAppStore.getState().showToast('無法取得景點座標', 'warning');
       return;
     }
-    
+
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const label = encodeURIComponent(item.title);
-    const url = isIOS 
-      ? `maps://maps.apple.com/?q=${label}&ll=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    const destinationCoords = encodeURIComponent(`${lat},${lng}`);
+    const url = isIOS
+      ? `https://maps.apple.com/?daddr=${destinationCoords}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
+    triggerHapticFeedback([18]);
     window.open(url, '_blank');
   };
 
@@ -2970,14 +3010,14 @@ function ItineraryListItem({
                   <div className="mb-1.5">
                     <button
                       type="button"
-                      aria-label={`在地圖查看 ${item.title}`}
-                      title={`在地圖查看 ${item.title}`}
+                      aria-label={`導航至 ${item.title}`}
+                      title={`導航至 ${item.title}`}
                       onClick={handleNavigate}
                       disabled={isNavigating}
                       className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black text-emerald-700 bg-emerald-50/95 border border-emerald-200 px-2 sm:px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all disabled:opacity-50"
                     >
                       {isNavigating ? <Loader2 size={8} className="animate-spin" /> : <MapPin size={8} strokeWidth={3} />}
-                      在地圖查看
+                      開始導航
                     </button>
                   </div>
                   
@@ -3398,6 +3438,8 @@ function ItineraryList({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, x: -30 }}
                 transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
+                onDragStart={() => triggerHapticFeedback([14])}
+                onDragEnd={() => triggerHapticFeedback([10, 32, 12])}
                 className="flex flex-col w-full relative group/reorder"
               >
                 <ItineraryListItem
@@ -3960,68 +4002,6 @@ function QuickExpenseModal({
   );
 }
 
-// ─── Map View ───────────────────────────────────────────────────────────
-
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, ScaleControl } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix leafet default icon path issues in Vite
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-function MapUpdater({ selectedLat, selectedLng, items, allItems }: { selectedLat?: number, selectedLng?: number, items: ItineraryNode[], allItems?: ItineraryNode[] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (selectedLat && selectedLng) {
-      map.setView([selectedLat, selectedLng], 15, { animate: true });
-    } else {
-      let validItems = items.filter(n => n.lat && n.lng);
-      if (validItems.length === 0 && allItems && allItems.length > 0) {
-        validItems = allItems.filter(n => n.lat && n.lng);
-      }
-      if (validItems.length > 0) {
-        const bounds = L.latLngBounds(validItems.map(n => [n.lat!, n.lng!]));
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-      }
-    }
-  }, [selectedLat, selectedLng, items, allItems, map]);
-  return null;
-}
-
-function CustomMarker({ item, isSelected, onClick }: { item: ItineraryNode, isSelected: boolean, onClick: () => void }) {
-  const iconHtml = `
-    <div class="relative flex flex-col items-center">
-      <div class="bg-white rounded-2xl px-2.5 py-1.5 border-2 ${isSelected ? 'border-pink-500 scale-110 shadow-lg shadow-pink-100' : 'border-white shadow-md'} flex items-center justify-center transition-all cursor-pointer group hover:scale-110">
-        <span class="text-xl leading-none group-hover:scale-110 transition-transform">${item.emoji}</span>
-      </div>
-      <div class="w-3 h-3 -mt-2 border-r-2 border-b-2 rotate-45 ${isSelected ? 'bg-pink-500 border-pink-500' : 'bg-white border-white'}"></div>
-      <div class="mt-1 px-2.5 py-1 rounded-full ${isSelected ? 'bg-pink-600 text-white shadow-md' : 'bg-slate-800/90 text-white/90'} transition-all"><span class="text-[10px] font-bold whitespace-nowrap block max-w-[120px] truncate">${item.title}</span></div>
-    </div>
-  `;
-
-  const customIcon = L.divIcon({
-    html: iconHtml,
-    className: 'bg-transparent border-none',
-    iconSize: [120, 80],
-    iconAnchor: [60, 60],
-    popupAnchor: [0, -60],
-  });
-
-  return (
-    <Marker 
-      position={[item.lat!, item.lng!]} 
-      icon={customIcon}
-      eventHandlers={{ click: onClick }}
-      zIndexOffset={isSelected ? 1000 : 0}
-    />
-  );
-}
-
 function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripStartDate?: string }) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   
@@ -4281,103 +4261,6 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
              </GlassCard>
           </motion.div>
        )}
-    </div>
-  );
-}
-
-function MapView({ items, allNodes }: { items: ItineraryNode[], allNodes?: ItineraryNode[] }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selectedNode = items.find(n => n.node_id === selectedId) ?? null;
-  const validItems = items.filter(n => n.lat && n.lng);
-
-  // default center fallback: Tokyo
-  let defaultCenter: [number, number] = [35.6762, 139.6503];
-  if (validItems.length > 0) defaultCenter = [validItems[0].lat!, validItems[0].lng!];
-  else if (allNodes) {
-    const allValid = allNodes.filter(n => n.lat && n.lng);
-    if (allValid.length > 0) defaultCenter = [allValid[0].lat!, allValid[0].lng!];
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      <GlassCard className="h-[55vh] relative overflow-hidden !p-0 border-4 border-white/40 rounded-[2.5rem]">
-        <MapContainer 
-          center={defaultCenter} 
-          zoom={13} 
-          scrollWheelZoom={true} 
-          className="w-full h-full z-10"
-          zoomControl={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://carto.com/">Carto</a>'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          />
-          <MapUpdater 
-            selectedLat={selectedNode?.lat} 
-            selectedLng={selectedNode?.lng} 
-            items={validItems} 
-            allItems={allNodes}
-          />
-          
-          {validItems.length > 1 && (
-            <Polyline 
-              positions={validItems.map(item => [item.lat!, item.lng!])}
-              pathOptions={{ 
-                color: '#ec4899', 
-                weight: 4, 
-                dashArray: '1, 10', 
-                lineCap: 'round',
-                opacity: 0.6
-              }}
-            />
-          )}
-
-          {validItems.map((item) => (
-            <CustomMarker 
-              key={item.node_id}
-              item={item}
-              isSelected={item.node_id === selectedId}
-              onClick={() => setSelectedId(item.node_id === selectedId ? null : item.node_id)}
-            />
-          ))}
-          <ScaleControl position="bottomright" />
-        </MapContainer>
-        
-        {items.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-[1000]">
-            <span className="text-slate-400 font-semibold bg-white px-6 py-3 rounded-full shadow-sm">目前沒有行程顯示在地圖上</span>
-          </div>
-        )}
-      </GlassCard>
-
-      {/* Selected node detail card */}
-      <AnimatePresence>
-        {selectedNode && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          >
-            <GlassCard className="!p-4 flex items-center gap-4 !rounded-2xl border border-fuchsia-100 bg-white/90 shadow-lg">
-              <div className="w-12 h-12 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-2xl shrink-0 shadow-sm border border-fuchsia-100/50">
-                {selectedNode.emoji}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-black text-slate-800 text-[15px] truncate">{selectedNode.title}</p>
-                <div className="flex items-center gap-2 mt-0.5 max-w-full overflow-x-auto no-scrollbar shrink-0">
-                  {selectedNode.time && <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">{selectedNode.time}</span>}
-                  {selectedNode.category && <span className="text-[10px] font-bold text-fuchsia-500 bg-fuchsia-50/80 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 border border-fuchsia-100/50">{selectedNode.category}</span>}
-                </div>
-                {selectedNode.description && <p className="text-[12px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{selectedNode.description}</p>}
-              </div>
-              <button onClick={() => setSelectedId(null)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0 outline-none">
-                <X size={14} strokeWidth={3} />
-              </button>
-            </GlassCard>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
