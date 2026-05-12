@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchTripPreview, joinTrip } from '../lib/workflowApi';
+import { createGuestSession, fetchTripPreview, getStoredToken, joinTrip } from '../lib/workflowApi';
 
 interface TripPreview {
   trip_id: string;
@@ -20,6 +20,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
   const [fetching, setFetching] = useState(true);
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
+  const [nickname, setNickname] = useState('');
 
   useEffect(() => {
     void (async () => {
@@ -43,6 +44,13 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
     setJoining(true);
     setJoinError('');
     try {
+      if (!getStoredToken()) {
+        const trimmed = nickname.trim();
+        if (!trimmed) {
+          throw new Error('請先輸入暱稱，才能加入旅程');
+        }
+        await createGuestSession(trimmed);
+      }
       await joinTrip(tripId);
       onJoined();
     } catch (err) {
@@ -111,6 +119,21 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
                 <span className="text-rose-600 text-[13px] font-bold w-full text-center">{joinError}</span>
               </div>
             ) : null}
+
+            {!getStoredToken() && (
+              <div className="w-full mb-4">
+                <label className="block text-[12px] font-black tracking-wider text-slate-500 mb-1.5 pl-1 uppercase">
+                  請先輸入您的暱稱加入
+                </label>
+                <input
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="例如：小美"
+                  className="w-full rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-[14px] font-bold text-slate-700 outline-none focus:ring-4 focus:ring-fuchsia-100"
+                  maxLength={32}
+                />
+              </div>
+            )}
 
             <button
               onClick={() => void handleJoin()}
