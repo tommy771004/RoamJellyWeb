@@ -565,17 +565,17 @@ async function startServer() {
   }
 
   const httpServer = createServer(app);
-  const io = new SocketServer(httpServer, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
-    },
-  });
-
   const originList = (process.env.CORS_ALLOWED_ORIGINS ?? '')
     .split(',')
     .map((item: string) => item.trim())
     .filter(Boolean);
+
+  const io = new SocketServer(httpServer, {
+    cors: {
+      origin: originList.length === 0 ? true : originList,
+      methods: ['GET', 'POST'],
+    },
+  });
 
   app.use(
     cors({
@@ -583,7 +583,7 @@ async function startServer() {
       credentials: true,
     }),
   );
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' }));
 
   app.get('/health', async (_req, res) => {
     try {
@@ -1144,6 +1144,10 @@ async function startServer() {
   });
 
   app.post('/api/generate/itinerary', async (req, res) => {
+    if (!getRequestUserId(req) && AUTH_REQUIRED) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
     try {
       const nodes = await generateItinerary(req.body);
       res.json({ status: 'success', data: nodes });
@@ -1222,6 +1226,10 @@ async function startServer() {
   });
 
   app.post('/api/generate/packing-list', async (req, res) => {
+    if (!getRequestUserId(req) && AUTH_REQUIRED) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
     const { destination = 'Kyoto', days = 5, weatherContext = 'Clear skies, 20°C' } = req.body || {};
     try {
       // dynamic import so server.ts doesn't crash if omitted
@@ -1235,6 +1243,10 @@ async function startServer() {
   });
 
   app.post('/api/dev/generate-handbooks', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      res.status(404).json({ status: 'error', message: 'Not Found' });
+      return;
+    }
     try {
       const { GoogleGenAI, Type } = require('@google/genai');
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
