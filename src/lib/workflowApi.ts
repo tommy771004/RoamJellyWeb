@@ -1,4 +1,9 @@
-import type { SearchItem, TrackClickOutBody } from '../types/workflow';
+import type {
+  AiPreferenceProfile,
+  SearchItem,
+  TrackClickOutBody,
+  UserPreferencesResponse,
+} from '../types/workflow';
 
 export class SearchTimeoutError extends Error {}
 export class SearchServiceUnavailableError extends Error {}
@@ -249,6 +254,46 @@ export async function fetchUserTrips(): Promise<any> {
   const data = await res.json();
   return Array.isArray(data) ? data : (data.trips || []);
 }
+
+export async function fetchUserPreferences(): Promise<UserPreferencesResponse | null> {
+  const token = getStoredToken();
+  if (!token) return null;
+
+  const res = await fetch('/api/user/preferences', {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+  });
+
+  if (!res.ok) {
+    if (res.status === 401) return null;
+    throw await parseApiError(res, '讀取使用者偏好失敗');
+  }
+
+  const data = await res.json();
+  return {
+    saved_items: Array.isArray(data?.saved_items) ? data.saved_items : [],
+    tracked_prices: Array.isArray(data?.tracked_prices) ? data.tracked_prices : [],
+    ai_profile: data?.ai_profile && typeof data.ai_profile === 'object' ? data.ai_profile : null,
+  };
+}
+
+export async function updateUserAiProfile(profile: AiPreferenceProfile): Promise<AiPreferenceProfile> {
+  const token = getStoredToken();
+  const res = await fetch('/api/user/preferences/profile', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(profile),
+  });
+
+  if (!res.ok) {
+    throw await parseApiError(res, '儲存 AI 偏好失敗');
+  }
+
+  return await res.json();
+}
+
 export async function fetchWeather(city: string): Promise<any> { 
   if (!city || city === '您的目的地' || city === '指定地點') return null;
   const token = getStoredToken();
@@ -418,6 +463,22 @@ export async function cloneTrip(tripId: string): Promise<any> {
   if (!res.ok) throw new Error('Clone trip failed');
   return res.json();
 }
+
+export async function updateTripPublicState(tripId: string, isPublic: boolean): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${tripId}/public`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ isPublic }),
+  });
+  if (!res.ok) {
+    throw await parseApiError(res, '更新公開模板狀態失敗');
+  }
+  return res.json();
+}
 export async function trackClickOut(body: TrackClickOutBody): Promise<void> {
   try {
     const token = getStoredToken();
@@ -450,7 +511,15 @@ export async function searchOffers(form: any): Promise<SearchItem[]> {
       throw new SearchServiceUnavailableError(`Search service returned ${res.status}`);
     }
     const data = await res.json();
-    return data.data || [];
+    const items = Array.isArray(data?.data) ? data.data : [];
+    return items.map((item: any) => ({
+      ...item,
+      bookingUrl: typeof item?.bookingUrl === 'string' && item.bookingUrl.trim()
+        ? item.bookingUrl.trim()
+        : typeof item?.affiliate_url === 'string'
+          ? item.affiliate_url.trim()
+          : '',
+    }));
   } catch (error: any) {
     if (error instanceof SearchTimeoutError || error instanceof SearchServiceUnavailableError) {
       throw error;
