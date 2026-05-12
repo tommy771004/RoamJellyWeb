@@ -63,14 +63,14 @@ export function sortNodesForDisplay(nodes: ItineraryNode[]): ItineraryNode[] {
     const dateDiff = dateA.localeCompare(dateB);
     if (dateDiff !== 0) return dateDiff;
 
-    const sortA = a.sort_order ?? Number.MAX_SAFE_INTEGER;
-    const sortB = b.sort_order ?? Number.MAX_SAFE_INTEGER;
-    if (sortA !== sortB) return sortA - sortB;
-
     const timeA = a.time ?? '99:99';
     const timeB = b.time ?? '99:99';
     const timeDiff = timeA.localeCompare(timeB);
     if (timeDiff !== 0) return timeDiff;
+
+    const sortA = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+    const sortB = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+    if (sortA !== sortB) return sortA - sortB;
 
     return (a.node_id ?? '').localeCompare(b.node_id ?? '');
   });

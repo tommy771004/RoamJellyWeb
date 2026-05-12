@@ -20,6 +20,7 @@ import {
   Navigation2, 
   RefreshCw,
   MapPin,
+  Image as ImageIcon,
   ArrowDownUp,
   Check,
   ChevronDown,
@@ -983,7 +984,7 @@ export default function ItineraryTab() {
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-10 font-sans pb-32 animate-in fade-in duration-700">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight">行程手帳專案</h1>
+              <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight">您的行程手帳</h1>
               <p className="text-slate-400 font-bold">請選擇一個現有行程專案，或由 AI 啟動規劃 🌍</p>
             </div>
           </div>
@@ -1002,9 +1003,9 @@ export default function ItineraryTab() {
                   <div className="flex items-center gap-2 mb-4">
                      <span className="bg-fuchsia-100 text-fuchsia-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Powered by AI</span>
                   </div>
-                  <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-6 leading-tight tracking-tight">準備好探索下一個目的地了嗎？</h2>
+                  <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-6 leading-tight tracking-tight">準備好下一個目的地了嗎？</h2>
                   <p className="text-slate-500 font-bold text-xl mb-10 leading-relaxed max-w-2xl">
-                    輸入想去的地方與偏好，讓 RoamJelly AI 為您量身打造專屬行程手帳，並立即啟動即時共編。
+                    輸入想去的地方與偏好，讓 AI 為您量身打造專屬行程，並立即啟動即時共編。
                   </p>
                   <button className="px-10 py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest flex items-center gap-3 group-hover:bg-slate-800 transition-all shadow-xl">
                     <Sparkles size={20} />
@@ -1027,50 +1028,9 @@ export default function ItineraryTab() {
            <div className="h-px flex-1 bg-slate-100" />
            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest px-4">我的行程歷史</span>
            <div className="h-px flex-1 bg-slate-100" />
-           <button
-             onClick={() => setShowCreateTrip(true)}
-             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 text-white font-black text-[11px] uppercase tracking-widest hover:bg-slate-700 transition-all shadow-sm active:scale-95"
-           >
-             <Plus size={14} />
-             新增行程
-           </button>
         </div>
 
-        {/* Create Trip Form */}
-        {showCreateTrip && (
-          <div className="mb-8 p-6 rounded-[28px] border border-pink-100 bg-white shadow-lg flex flex-col gap-4 animate-in zoom-in-95 duration-200">
-            <h3 className="font-black text-lg text-slate-800">建立新行程</h3>
-            <input
-              autoFocus
-              value={newTripName}
-              onChange={(e) => setNewTripName(e.target.value)}
-              placeholder="行程名稱（例如：東京五日遊）"
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-200 transition-all"
-            />
-            <input
-              value={newTripDest}
-              onChange={(e) => setNewTripDest(e.target.value)}
-              placeholder="目的地（例如：東京）"
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-200 transition-all"
-              onKeyDown={(e) => { if (e.key === 'Enter') void handleCreateTrip(); }}
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => void handleCreateTrip()}
-                disabled={!newTripName || !newTripDest}
-                className="px-6 py-3 rounded-xl bg-slate-800 text-white font-black text-sm disabled:opacity-30 hover:bg-slate-700 transition-all active:scale-95"
-              >
-                建立
-              </button>
-              <button
-                onClick={() => { setShowCreateTrip(false); setNewTripName(''); setNewTripDest(''); }}
-                className="px-6 py-3 rounded-xl bg-slate-100 text-slate-500 font-black text-sm hover:bg-slate-200 transition-all active:scale-95"
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        )}
+  
 
         {isTripsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1206,10 +1166,10 @@ export default function ItineraryTab() {
   }
 
   return (
-    <main className="flex-1 w-full overflow-y-auto selection:bg-pink-100 animate-in fade-in duration-700 scroll-smooth">
-      <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-6 pb-32">
+    <main className="flex-1 w-full overflow-y-auto selection:bg-pink-100 animate-in fade-in duration-700 scroll-smooth bg-[#fafafb]">
+      <div className="max-w-[1440px] mx-auto w-full pb-32">
         {isOffline && (
-          <div className="mb-6 glass-card rounded-2xl p-4 bg-amber-50/80 border-amber-200 shadow-sm flex items-center justify-center gap-2">
+          <div className="mx-4 md:mx-8 mb-6 mt-6 glass-card rounded-2xl p-4 bg-amber-50/80 border-amber-200 shadow-sm flex items-center justify-center gap-2">
             <span className="text-amber-700 font-bold text-sm tracking-wide flex items-center gap-2">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -1221,79 +1181,112 @@ export default function ItineraryTab() {
         )}
 
       {/* Cover Image Banner */}
-      {tripInfo?.coverImage && (
-        <div className="relative w-full h-36 md:h-48 rounded-[28px] overflow-hidden mb-6 print:hidden">
-          <img src={tripInfo.coverImage} alt={tripInfo.destination} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/90" />
-        </div>
-      )}
-
-      {/* Header Section */}
-      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div className="group">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
+      <div className="relative w-full h-[40vh] md:h-64 overflow-hidden md:rounded-[40px] mb-6 print:hidden -mt-4 md:mt-0 shadow-2xl z-10 sm:max-w-[calc(100%-2rem)] sm:mx-auto">
+        {tripInfo?.coverImage ? (
+          <img src={tripInfo.coverImage} alt={tripInfo.destination} className="w-full h-full object-cover scale-105" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 animate-pulse" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#fafafb] via-[#fafafb]/20 to-black/40 md:to-black/20" />
+        
+        {/* Mobile Header Overlay Info - Adjusted for better immersion */}
+        <div className="absolute top-6 left-4 right-4 flex justify-between items-start z-50 lg:hidden">
             <button
               onClick={handleBackToTrips}
-              className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-[10px] font-black text-slate-500 transition-colors uppercase tracking-widest flex items-center gap-1"
+              className="w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
             >
-              <ArrowLeft size={12} />
-              返回專案列表
+              <ArrowLeft size={18} strokeWidth={3} />
+            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleShare}
+                className="w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
+              >
+                <Share2 size={16} strokeWidth={3} />
+              </button>
+            </div>
+        </div>
+
+        <div className="absolute bottom-6 left-5 right-5 lg:hidden flex flex-col gap-2 z-50">
+          <h1 className="text-3xl font-black text-slate-900 leading-tight drop-shadow-md truncate font-sans tracking-tight">
+            {tripInfo?.name || tripInfo?.destination}
+          </h1>
+          <div className="flex items-center gap-2 text-slate-700 font-black text-[10px] uppercase tracking-widest flex-wrap">
+            <span className="bg-white/90 backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm">{totalDays} DAYS</span>
+            <span className="bg-white/90 backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm">{collaborators.length} TRAVELERS</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Header Section (Desktop) */}
+      <div className="px-5 md:px-8 mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div className="group w-full md:w-auto">
+          <div className="hidden lg:flex items-center gap-2 mb-4 flex-wrap">
+            <button
+              onClick={handleBackToTrips}
+              className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95"
+            >
+              <ArrowLeft size={12} strokeWidth={3} />
+              
             </button>
             <button
               onClick={handleShare}
-              className="px-3 py-1 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-lg text-[10px] font-black text-pink-500 transition-colors uppercase tracking-widest flex items-center gap-1"
+              className="px-4 py-2 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-xl text-[10px] font-black text-pink-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95"
             >
-              <Share2 size={12} />
-              分享行程
+              <Share2 size={12} strokeWidth={3} />
+              
             </button>
             <button
               onClick={() => window.print()}
-              className="px-3 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-black text-slate-500 transition-colors uppercase tracking-widest flex items-center gap-1 print:hidden"
+              className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95 print:hidden"
             >
-              <span className="material-symbols-outlined text-[12px]">print</span>
-              列印行程
+              <span className="material-symbols-outlined text-[14px]">print</span>
+              
             </button>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 flex items-center gap-3 font-serif tracking-tight leading-tight">
-            <div className="flex items-center gap-3">
-              {tripInfo?.name || tripInfo?.destination || '未命名目的地'} <span className="text-3xl md:text-4xl animate-bounce group-hover:scale-125 transition-transform">✨</span>
+          
+          <div className="hidden lg:block">
+            <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 flex items-center gap-3 font-serif tracking-tight leading-tight">
+              <div className="flex items-center gap-3">
+                {tripInfo?.name || tripInfo?.destination || '未命名目的地'} <span className="text-3xl md:text-4xl animate-bounce group-hover:scale-125 transition-transform">✨</span>
+              </div>
+            </h1>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-slate-500 font-bold text-[15px]">
+               <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-pink-400">calendar_month</span>
+                  <span>{tripInfo?.startDate && tripInfo?.endDate ? `${tripInfo.startDate} - ${tripInfo.endDate} • ` : null}{totalDays} 天</span>
+               </div>
+               <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-pink-400">group</span>
+                  <span>{collaborators.length} 位旅行者</span>
+               </div>
             </div>
-          </h1>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-slate-500 font-bold text-[15px]">
-             <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[20px] text-pink-400">calendar_month</span>
-                <span>{tripInfo?.startDate && tripInfo?.endDate ? `${tripInfo.startDate} - ${tripInfo.endDate} • ` : null}{totalDays} 天</span>
-             </div>
-             <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[20px] text-pink-400">group</span>
-                <span>{collaborators.length} 位旅行者</span>
-             </div>
           </div>
         </div>
         
-        <div className="flex gap-2 p-1.5 glass-card rounded-full w-full md:w-auto overflow-x-auto no-scrollbar shadow-lg border border-white/60">
+        <div className="flex gap-2 p-1.5 md:p-1.5 rounded-[2rem] w-[calc(100%-2rem)] mx-auto md:w-auto md:mx-0 overflow-x-auto no-scrollbar shadow-lg shadow-pink-100/30 md:shadow-xl border border-white bg-white/70 backdrop-blur-xl sticky top-4 z-40 md:relative md:top-0">
           <button 
             onClick={() => setViewMode('list')}
-            className={`px-8 py-3 rounded-full font-black text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'list' ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-xl shadow-pink-200/50' : 'text-slate-400 hover:text-pink-500 hover:bg-white/40'}`}
+            className={`flex-1 md:flex-none px-5 md:px-8 py-2.5 md:py-3 rounded-full font-black text-[10px] md:text-xs tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'list' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-white border sm:border-transparent'}`}
           >
             LIST
           </button>
           <button 
             onClick={() => setViewMode('map')}
-            className={`px-8 py-3 rounded-full font-black text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-xl shadow-pink-200/50' : 'text-slate-400 hover:text-pink-500 hover:bg-white/40'}`}
+            className={`flex-1 md:flex-none px-5 md:px-8 py-2.5 md:py-3 rounded-full font-black text-[10px] md:text-xs tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-white border sm:border-transparent'}`}
           >
             EXPLORE
           </button>
           <button 
             onClick={() => setViewMode('calendar')}
-            className={`px-8 py-3 rounded-full font-black text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'calendar' ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-xl shadow-pink-200/50' : 'text-slate-400 hover:text-pink-500 hover:bg-white/40'}`}
+            className={`flex-1 md:flex-none px-5 md:px-8 py-2.5 md:py-3 rounded-full font-black text-[10px] md:text-xs tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'calendar' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-white border sm:border-transparent'}`}
           >
             CALENDAR
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left Column: Filters & Info */}
         <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit">
           <GlassCard className="!p-6 shadow-sm ring-1 ring-slate-100/50">
@@ -1433,15 +1426,8 @@ export default function ItineraryTab() {
           )}
 
           {/* Mobile Day Selector */}
-          <div className="lg:hidden flex items-center gap-2 -mx-4 px-2">
-            <button
-              onClick={() => setSelectedDay(Math.max(1, safeSelectedDay - 1))}
-              disabled={safeSelectedDay <= 1}
-              className="w-9 h-9 rounded-full flex items-center justify-center bg-white/70 border border-slate-200 text-slate-400 disabled:opacity-30 hover:bg-pink-50 hover:text-pink-500 transition-all shrink-0 shadow-sm"
-            >
-              <ArrowLeft size={16} strokeWidth={2.5} />
-            </button>
-            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar flex-1">
+          <div className="lg:hidden flex items-center gap-3 mb-6 overflow-hidden">
+            <div className="flex gap-2.5 overflow-x-auto py-3 px-1 no-scrollbar flex-1 -mx-2 snap-x">
               {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
                 const isActive = safeSelectedDay === day;
                 const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
@@ -1452,27 +1438,20 @@ export default function ItineraryTab() {
                   <motion.button
                     key={day}
                     onClick={() => setSelectedDay(day)}
-                    whileTap={{ scale: 0.93 }}
-                    className={`flex flex-col items-center px-5 py-2 rounded-2xl font-black text-xs whitespace-nowrap transition-all uppercase tracking-widest shrink-0 ${
+                    whileTap={{ scale: 0.95 }}
+                    className={`flex flex-col min-w-[70px] sm:min-w-[85px] p-3 sm:p-4 rounded-3xl font-black text-xs transition-all uppercase tracking-widest shrink-0 border-2 snap-center ${
                       isActive
-                        ? 'bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-lg shadow-pink-200/50'
-                        : 'bg-white/70 border border-slate-200 text-slate-400 hover:text-pink-400'
+                        ? 'bg-white text-pink-600 border-pink-500 shadow-xl shadow-pink-100/50 scale-105'
+                        : 'bg-white/40 border-white/60 text-slate-500 backdrop-blur-sm'
                     }`}
                   >
-                    <span>Day {day}</span>
-                    {displayDate && <span className={`text-[10px] opacity-80 mt-0.5 tracking-tighter ${isActive ? 'text-white/90' : ''}`}>{displayDate}</span>}
-                    <span className={`text-[9px] font-bold mt-0.5 ${isActive ? 'text-white/70' : 'text-slate-300'}`}>{count} spots</span>
+                    <span className="text-[9px] sm:text-[10px] mb-0.5 sm:mb-1 opacity-70">DAY</span>
+                    <span className="text-lg sm:text-xl leading-none">{day}</span>
+                    {displayDate && <span className={`text-[8px] sm:text-[9px] font-bold mt-1 sm:mt-1.5 opacity-60 tracking-tighter`}>{displayDate}</span>}
                   </motion.button>
                 );
               })}
             </div>
-            <button
-              onClick={() => setSelectedDay(Math.min(totalDays, safeSelectedDay + 1))}
-              disabled={safeSelectedDay >= totalDays}
-              className="w-9 h-9 rounded-full flex items-center justify-center bg-white/70 border border-slate-200 text-slate-400 disabled:opacity-30 hover:bg-pink-50 hover:text-pink-500 transition-all shrink-0 shadow-sm"
-            >
-              <ArrowRight size={16} strokeWidth={2.5} />
-            </button>
           </div>
 
           <AnimatePresence mode="wait">
@@ -1797,9 +1776,12 @@ export default function ItineraryTab() {
       {/* Floating Action Button (Mobile Only) */}
       <button 
         onClick={() => setIsPlanningNew(true)}
-        className="md:hidden fixed bottom-24 right-6 w-16 h-16 rounded-full bg-gradient-to-tr from-pink-500 to-fuchsia-600 text-white shadow-2xl shadow-pink-200 flex items-center justify-center z-50 active:scale-90 transition-all"
+        className="md:hidden fixed bottom-24 right-5 p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl z-50 active:scale-90 transition-all group overflow-hidden shadow-pink-200/50"
       >
-        <Sparkles size={28} />
+        <div className="bg-gradient-to-tr from-pink-500 to-fuchsia-600 w-14 h-14 rounded-full flex items-center justify-center shadow-inner relative">
+          <div className="absolute inset-0 bg-white/10 rounded-full" />
+          <Sparkles size={24} className="text-white drop-shadow-sm" />
+        </div>
       </button>
 
       {/* Favorites panel hidden below main if needed, but on desktop it's in sidebar */}
@@ -1908,42 +1890,42 @@ function DraggableFavoriteSpot({
     <motion.div
       layout
       whileHover={{ y: -2 }}
-      className="group relative flex flex-col gap-2 p-4 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[28px] shadow-sm hover:shadow-xl transition-all"
+      className="group relative flex flex-col gap-2 p-3 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[20px] shadow-sm hover:shadow-xl transition-all"
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-[20px] bg-white flex items-center justify-center text-2xl shadow-sm border border-slate-100/50 group-hover:scale-105 transition-transform overflow-hidden shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-[14px] bg-white flex items-center justify-center text-xl shadow-sm border border-slate-100/50 group-hover:scale-105 transition-transform overflow-hidden shrink-0">
             {enrichment.thumbnail
               ? <img src={enrichment.thumbnail} alt={spot.title} className="w-full h-full object-cover" />
               : spot.emoji}
           </div>
           <div>
-            <h4 className="font-black text-slate-800 text-[15px] leading-tight">{spot.title}</h4>
-            <p className="text-[10px] font-black text-slate-400 mt-0.5 uppercase tracking-[0.1em]">口袋名單</p>
+            <h4 className="font-black text-slate-800 text-[13px] leading-tight">{spot.title}</h4>
+            <p className="text-[9px] font-black text-slate-400 mt-0.5 uppercase tracking-[0.1em]">口袋名單</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => onAdd(spot, selectedDay)}
             disabled={isOffline}
-            className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all hover:bg-slate-900"
+            className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all hover:bg-slate-900"
             title="加入今天"
           >
-            <Plus size={18} strokeWidth={3} />
+            <Plus size={16} strokeWidth={3} />
           </button>
           <button
             onClick={() => onDelete(spot.id)}
-            className="w-10 h-10 rounded-full bg-white/50 text-slate-300 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
+            className="w-8 h-8 rounded-full bg-white/50 text-slate-300 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
           >
-            <Trash2 size={16} />
+            <Trash2 size={14} />
           </button>
         </div>
       </div>
       {enrichment.description && (
-        <div className="flex flex-col gap-1 pl-16">
-          <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">{enrichment.description}</p>
+        <div className="flex flex-col gap-1 pl-12">
+          <p className="text-[10px] text-slate-400 leading-relaxed line-clamp-2">{enrichment.description}</p>
           {enrichment.wiki_url && (
-            <a href={enrichment.wiki_url} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-fuchsia-500 hover:underline">維基百科 →</a>
+            <a href={enrichment.wiki_url} target="_blank" rel="noreferrer" className="text-[9px] font-bold text-fuchsia-500 hover:underline">維基百科 →</a>
           )}
         </div>
       )}
@@ -1987,7 +1969,7 @@ function ItineraryListItem({
   const [editDate, setEditDate] = useState(item.date || getDateForDay(item.day, tripStartDate) || '');
   const [editTime, setEditTime] = useState(item.time);
   const [editEmoji, setEditEmoji] = useState(item.emoji);
-  const [editNotes, setEditNotes] = useState(item.description || item.notes || '');
+  const [editDescription, setEditDescription] = useState(item.description || item.notes || '');
   const [editTransport, setEditTransport] = useState(item.transport_to_next || '');
   const [editImageUrl, setEditImageUrl] = useState(item.image_url || '');
   const [editLinkedFactId, setEditLinkedFactId] = useState(item.linkedFactId || '');
@@ -2001,7 +1983,7 @@ function ItineraryListItem({
     setEditDate(item.date || getDateForDay(item.day, tripStartDate) || '');
     setEditTime(item.time);
     setEditEmoji(item.emoji);
-    setEditNotes(item.description || item.notes || '');
+    setEditDescription(item.description || item.notes || '');
     setEditTransport(item.transport_to_next || '');
     setEditImageUrl(item.image_url || '');
     setEditLinkedFactId(item.linkedFactId || '');
@@ -2015,7 +1997,7 @@ function ItineraryListItem({
       time: normalizeClockInput(editTime),
       title: editTitle,
       emoji: editEmoji,
-      description: editNotes,
+      description: editDescription,
       transport_to_next: editTransport || undefined,
       image_url: editImageUrl,
       linkedFactId: editLinkedFactId || undefined,
@@ -2112,13 +2094,17 @@ function ItineraryListItem({
   const meta = getCategoryMeta(item.category);
 
   return (
-    <div className="relative flex items-start group w-full">
+    <div className="relative flex items-stretch group w-full px-1 pl-6 sm:px-0 sm:pl-8 lg:pl-10">
+      {/* Timeline Thread */}
+      <div className="absolute left-2.5 sm:left-3.5 lg:left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-slate-200 via-slate-200 to-slate-200/50 rounded-full group-last:bottom-auto group-last:h-12" />
+      <div className="absolute left-1 sm:left-2 lg:left-2.5 top-5 sm:top-6 w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-4.5 lg:h-4.5 rounded-full border-[3px] lg:border-4 border-white bg-slate-300 shadow-sm z-20 group-hover:bg-fuchsia-400 group-hover:scale-125 transition-all duration-500" />
+
       {/* Content Card */}
       {collaboratingUser && (
-        <div className="absolute -inset-1 rounded-[34px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-30 blur-sm z-0 animate-pulse pointer-events-none" />
+        <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
       <GlassCard
-        className={`flex-1 !p-5 sm:!p-6 !rounded-[32px] ${getCategoryStyle(item.category)} shadow-lg relative z-10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingUser ? 'ring-2 ring-fuchsia-400/60' : ''}`}
+        className={`flex-1 !p-1.5 sm:!p-2.5 md:!p-3 !rounded-[16px] sm:!rounded-[20px] ${getCategoryStyle(item.category)} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-700 border border-white/80 relative z-10 ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingUser ? 'ring-2 ring-fuchsia-400/60' : ''}`}
         onClick={(e) => {
            if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
            if (!isOffline && !isEditing) {
@@ -2127,45 +2113,48 @@ function ItineraryListItem({
            }
         }}
       >
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 w-full">
-          {/* Icon/Emoji Wrapper */}
-          <div className="relative group/emoji shrink-0">
-            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-[28px] flex items-center justify-center text-3xl sm:text-4xl shadow-sm border border-slate-100/50 transition-transform group-hover:scale-105 duration-500 ${item.category === 'flight' ? 'bg-gradient-to-br from-indigo-50 to-blue-50' : 'bg-white'}`}>
+        <div className="flex flex-col gap-2 sm:gap-2 w-full">
+          <div className="flex flex-row items-center sm:items-start gap-2 sm:gap-2.5">
+            <div className={`relative w-6 h-6 sm:w-8 sm:h-8 shrink-0 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-sm sm:text-base shadow-inner border border-slate-100/50 transition-all group-hover:scale-110 group-hover:rotate-3 duration-700 ${item.category === 'flight' ? 'bg-gradient-to-br from-indigo-50 to-blue-50' : 'bg-white'}`}>
               {isEditing ? (
-                 <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="animate-pulse active:scale-95 transition-transform">
+                 <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="animate-pulse active:scale-95 transition-transform w-full h-full flex items-center justify-center">
                     {editEmoji}
                  </button>
               ) : (
-                 <span className="filter drop-shadow-sm">{item.emoji}</span>
+                 <span className="filter drop-shadow-sm select-none transition-transform group-hover:scale-110">{item.emoji}</span>
+              )}
+              {isEditing && showEmojiPicker && (
+                 <div className="absolute top-full left-0 mt-2 p-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white z-[100] flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
+                   {EMOJI_OPTIONS.map(e => (
+                     <button key={e} type="button" onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl text-xl transition-colors">{e}</button>
+                   ))}
+                 </div>
               )}
             </div>
-            {isEditing && showEmojiPicker && (
-               <div className="absolute top-full left-0 mt-4 p-3 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white z-[100] flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
-                 {EMOJI_OPTIONS.map(e => (
-                   <button key={e} type="button" onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl text-xl transition-colors">{e}</button>
-                 ))}
-               </div>
-            )}
-          </div>
 
-          <div className="flex-1 text-center sm:text-left min-w-0">
-             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+            <div className="flex-1 min-w-0">
+               {!isEditing && (
+                 <h3 className="text-[11px] sm:text-[13px] font-black tracking-tight text-slate-800 leading-tight mb-0.5 line-clamp-2 md:line-clamp-none font-sans">
+                   {item.title}
+                 </h3>
+               )}
+               <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
                {item.date && (
-                 <span className="px-3 py-0.5 rounded-full bg-white/80 text-[11px] font-black tracking-widest text-slate-500 border border-slate-200 flex items-center gap-1">
-                   <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                 <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/80 text-[8px] sm:text-[9px] font-black tracking-widest text-slate-500 border border-slate-200 flex items-center gap-0.5">
+                   <span className="material-symbols-outlined text-[10px] sm:text-[11px]">calendar_today</span>
                    {item.date}
                  </span>
                )}
-               <span className="px-3 py-0.5 rounded-full bg-slate-800 text-[11px] font-black tracking-widest text-white border border-slate-900 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">schedule</span>
+               <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-800 text-[8px] sm:text-[9px] font-black tracking-widest text-white border border-slate-900 flex items-center gap-0.5">
+                  <span className="material-symbols-outlined text-[10px] sm:text-[11px]">schedule</span>
                   {item.time}
                </span>
-               <span className="px-3 py-0.5 rounded-full bg-pink-50 text-[10px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
+               <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
                  {meta.label}
                </span>
                {item.linkedFactId && facts.find((f: any) => f.id === item.linkedFactId) && (
-                 <span className="px-3 py-0.5 rounded-full bg-cyan-50 text-[10px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-1">
-                   <span className="material-symbols-outlined text-[12px]">link</span>
+                 <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-0.5">
+                   <span className="material-symbols-outlined text-[10px] sm:text-[11px]">link</span>
                    已綁定: {facts.find((f: any) => f.id === item.linkedFactId)?.title}
                  </span>
                )}
@@ -2173,10 +2162,10 @@ function ItineraryListItem({
                  <motion.span
                    initial={{ scale: 0.8, opacity: 0 }}
                    animate={{ scale: 1, opacity: 1 }}
-                   className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-fuchsia-100 text-[10px] font-black uppercase tracking-[0.1em] text-fuchsia-700 border border-fuchsia-200 shadow-sm shadow-fuchsia-200/50"
+                   className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-fuchsia-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-fuchsia-700 border border-fuchsia-200 shadow-sm shadow-fuchsia-200/50"
                  >
-                   <span className="w-2 h-2 rounded-full bg-fuchsia-500 animate-ping inline-block" />
-                   <span className="w-2 h-2 rounded-full bg-fuchsia-500 absolute" />
+                   <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 animate-ping inline-block" />
+                   <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 absolute" />
                    {collaboratingUser} 編輯中
                  </motion.span>
                )}
@@ -2184,27 +2173,30 @@ function ItineraryListItem({
                  <button 
                    type="button"
                    onClick={() => onUpdate({ ...item, is_visited: !item.is_visited })}
-                   className={`flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
+                   className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
                  >
-                   <span className="material-symbols-outlined text-[14px]">
+                   <span className="material-symbols-outlined text-[11px] sm:text-[13px]">
                      {item.is_visited ? 'check_circle' : 'radio_button_unchecked'}
                    </span>
                    {item.is_visited ? '已打卡' : '未打卡'}
                  </button>
                )}
                {item.category === 'flight' && (
-                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-indigo-500 flex items-center gap-1 animate-pulse">
-                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                 <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-indigo-500 flex items-center gap-1 animate-pulse">
+                   <div className="w-1 h-1 rounded-full bg-indigo-500" />
                    CONFIRMED
                  </span>
                )}
-            </div>
-            
-             {isEditing ? (
-                <div className="flex flex-col gap-3">
-                  <input 
-                    autoFocus
-                    value={editTitle}
+             </div>
+           </div>
+         </div>
+         
+         <div className="w-full">
+           {isEditing ? (
+              <div className="flex flex-col gap-3">
+                 <input 
+                   autoFocus
+                   value={editTitle}
                     onChange={e => setEditTitle(e.target.value)}
                     className="text-lg font-black text-slate-800 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
                   />
@@ -2231,12 +2223,15 @@ function ItineraryListItem({
                       className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                     />
                   </div>
-                  <textarea
-                    value={editNotes}
-                    onChange={e => setEditNotes(e.target.value)}
-                    placeholder="寫下你的旅行手帳日記，或是 AI 貼心提醒..."
-                    className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
-                  />
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">詳細說明 / 備註 (Description)</label>
+                    <textarea
+                      value={editDescription}
+                      onChange={e => setEditDescription(e.target.value)}
+                      placeholder="寫下你的旅行手帳日記，或是更詳細的行程說明..."
+                      className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
+                    />
+                  </div>
                   <input
                     value={editTransport}
                     onChange={e => setEditTransport(e.target.value)}
@@ -2270,63 +2265,78 @@ function ItineraryListItem({
                 </div>
             ) : (
                <>
-                 <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-tight tracking-tight mb-1.5 truncate group-hover:text-pink-600 transition-colors">{item.title}</h3>
-                 <button
-                   type="button"
-                   onClick={handleNavigate}
-                   disabled={isNavigating}
-                   className="inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all mb-2 disabled:opacity-50"
-                 >
-                   {isNavigating ? <Loader2 size={10} className="animate-spin" /> : <MapPin size={10} strokeWidth={3} />}
-                   在地圖查看
-                 </button>
+                  <div className="mb-1.5">
+                    <button
+                      type="button"
+                      onClick={handleNavigate}
+                      disabled={isNavigating}
+                      className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      {isNavigating ? <Loader2 size={8} className="animate-spin" /> : <MapPin size={8} strokeWidth={3} />}
+                      在地圖查看
+                    </button>
+                  </div>
+                  
                   {item.image_url && (
-                    <div className="w-full h-40 sm:h-56 mt-3 mb-4 rounded-3xl overflow-hidden shadow-inner bg-slate-50 relative group/img cursor-pointer">
-                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-3xl hover:scale-105 transition-transform duration-700" loading="lazy" referrerPolicy="no-referrer" />
+                    <div className="w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative">
+                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-[12px] sm:rounded-[16px] group-hover:scale-105 transition-transform duration-1000" loading="lazy" referrerPolicy="no-referrer" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
                   )}
+                  
                   {item.transport_to_next && (
-                    <div className="inline-flex items-center gap-1.5 mt-1 mb-2 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-black text-indigo-600 uppercase tracking-[0.12em]">
-                      <Navigation2 size={10} />
+                    <div className="inline-flex items-center gap-1 mb-2 sm:mb-2.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-800 text-[7px] sm:text-[8px] font-black text-white uppercase tracking-widest shadow-sm shadow-slate-200">
+                      <Navigation2 size={8} strokeWidth={3} className="text-indigo-400 sm:w-2 sm:h-2" />
+                      <span className="opacity-60 mr-1">MOVE TO NEXT:</span>
                       {item.transport_to_next}
                     </div>
                   )}
-                  {item.description || item.notes ? (
-                    <p className="text-xs sm:text-sm font-bold text-slate-500 whitespace-pre-line tracking-wide leading-relaxed">{item.description || item.notes}</p>
+
+                  { (item.description || item.notes) ? (
+                    <p className="text-[9px] sm:text-[10px] font-medium text-slate-600 whitespace-pre-line tracking-tight leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all duration-700 font-sans opacity-90 group-hover:opacity-100">
+                      {item.description || item.notes}
+                    </p>
                   ) : (
-                   <p className="text-xs sm:text-sm font-bold text-slate-400 italic">點擊卡片編輯新增手帳內容、細節或照片...</p>
-                 )}
+                    <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 italic opacity-50 group-hover:opacity-80 transition-opacity">
+                      點擊卡片編輯手帳內容、細節或照片...
+                    </p>
+                  )}
+                  
+                  <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-100/50 flex items-center justify-between">
+                     <div className="flex items-center gap-1.5 sm:gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onUpdate({ ...item, is_visited: !item.is_visited })}
+                          className={`sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-inner' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'}`}
+                        >
+                          <Check size={12} strokeWidth={3} className={item.is_visited ? 'scale-110' : 'scale-90 opacity-40'} />
+                          {item.is_visited ? '已打卡' : '未打卡'}
+                        </button>
+                        {item.linkedFactId && (
+                           <div className="flex items-center gap-1 px-3 py-1.5 bg-sky-50 text-sky-600 border border-sky-100 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-sm">
+                              <span className="material-symbols-outlined text-[10px] sm:text-[12px]">link</span>
+                              FACT LINKED
+                           </div>
+                        )}
+                     </div>
+                     {!isOffline && (
+                        <div className="flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
+                           <button onClick={(e) => { e.stopPropagation(); void handleRegenerate(); }} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-fuchsia-500 hover:border-fuchsia-100 hover:shadow-md transition-all active:scale-90" title="AI 換一個建議">
+                              <RefreshCw size={16} strokeWidth={3} />
+                           </button>
+                           <button onClick={(e) => { e.stopPropagation(); onDelete(item.node_id); }} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-100 hover:shadow-md transition-all active:scale-90" title="刪除此節點">
+                              <Trash2 size={18} strokeWidth={2.5} />
+                           </button>
+                        </div>
+                     )}
+                  </div>
                </>
             )}
           </div>
 
           {!isOffline && !isEditing && (
-            <div className="flex flex-row sm:flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-              <button
-                type="button"
-                onClick={handleNavigate}
-                disabled={isNavigating}
-                title="在地圖中導航"
-                className="w-11 h-11 shrink-0 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-emerald-500 hover:border-emerald-100 flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:opacity-50"
-              >
-                {isNavigating ? <Loader2 size={16} className="animate-spin" /> : <Navigation2 size={16} />}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleRegenerate()}
-                disabled={regenerating}
-                title="AI 換一個景點"
-                className="w-11 h-11 shrink-0 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-fuchsia-500 hover:border-fuchsia-100 flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:opacity-30"
-              >
-                {regenerating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete(item.node_id)}
-                className="w-11 h-11 shrink-0 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-red-500 hover:border-red-100 flex items-center justify-center shadow-sm transition-all active:scale-90"
-              >
-                <Trash2 size={18} />
-              </button>
+            <div className="hidden">
+              {/* Elements moved into the card footer */}
             </div>
           )}
         </div>
@@ -2377,34 +2387,38 @@ function ItineraryList({
   const dayWeather = getDailyWeather();
 
   return (
-    <div className="flex flex-col gap-10 mt-6 min-h-[400px]">
-      {dayWeather && (
-        <div className="-mt-14 mb-4 ml-4">
-          <div className="flex items-center gap-3 w-fit px-4 py-2 bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-100/50 rounded-2xl shadow-sm">
-            <span className="text-xl">
-              {dayWeather.rain_prob > 50 ? '🌧️' : dayWeather.rain_prob > 20 ? '⛅' : '☀️'}
-            </span>
-            <div className="flex flex-col">
-              <span className="text-xs font-black text-slate-700 tracking-wider uppercase">
-                {dayWeather.date} 天氣
-              </span>
-              <span className="text-[10px] font-bold text-slate-500">
-                {dayWeather.temp_min}°C - {dayWeather.temp_max}°C / 降雨率 {dayWeather.rain_prob}%
-              </span>
+      <div className="flex flex-col gap-6 sm:gap-10 sm:mt-6 mt-2 min-h-[400px]">
+        {dayWeather && (
+          <div className="-mt-8 sm:-mt-14 mb-4 sm:mb-6 ml-6 sm:ml-10 relative z-10 w-fit">
+            <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-2 sm:py-3 bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-[16px] shadow-sm transform hover:scale-105 transition-transform duration-300">
+              <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50 rounded-full shadow-inner border border-slate-100">
+                <span className="text-lg">
+                  {dayWeather.rain_prob > 50 ? '🌧️' : dayWeather.rain_prob > 20 ? '⛅' : '☀️'}
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] sm:text-xs font-black text-slate-700 tracking-wider uppercase">
+                  {dayWeather.date} 預報
+                </span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 flex items-center gap-1.5">
+                  <span className="text-slate-700">{dayWeather.temp_min}°C - {dayWeather.temp_max}°C</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                  降雨率 <span className={dayWeather.rain_prob > 50 ? 'text-blue-500' : 'text-slate-600'}>{dayWeather.rain_prob}%</span>
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      
-      {items.length === 0 && !aiLoading && (
-        <GlassCard className="!p-16 !rounded-[48px] border border-white/60 bg-white/30 flex flex-col items-center justify-center text-center backdrop-blur-2xl shadow-inner">
-          <div className="w-28 h-28 rounded-[40px] bg-white flex items-center justify-center text-6xl mb-8 shadow-xl border border-slate-100/50 animate-bounce">
-            🏝️
-          </div>
-          <h3 className="text-3xl font-black text-slate-800 mb-3 tracking-tight">Day {day} 還是空白的</h3>
-          <p className="text-slate-400 font-bold max-w-[320px] leading-relaxed uppercase text-[10px] tracking-[0.2em]">使用 AI 助理或從側邊欄拖入景點開始您的旅程</p>
-        </GlassCard>
-      )}
+        )}
+        
+        {items.length === 0 && !aiLoading && (
+          <GlassCard className="!p-10 sm:!p-16 !rounded-[32px] sm:!rounded-[48px] border border-white/60 bg-gradient-to-b from-white/30 to-pink-50/20 flex flex-col items-center justify-center text-center backdrop-blur-2xl shadow-sm hover:shadow-xl transition-shadow duration-700 mx-2 sm:mx-0">
+            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[28px] sm:rounded-[40px] bg-white flex items-center justify-center text-4xl sm:text-6xl mb-6 sm:mb-8 shadow-xl border border-slate-100/50 hover:rotate-3 hover:scale-105 transition-all duration-300">
+              🏝️
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2 sm:mb-3 tracking-tight">Day {day} 還是空白的</h3>
+            <p className="text-slate-400 font-bold max-w-[320px] leading-relaxed uppercase text-[9px] sm:text-[10px] tracking-[0.2em] px-4">使用 AI 助理或從側選單/下方拖入景點開始您的旅程</p>
+          </GlassCard>
+        )}
 
       {aiLoading && (
         <motion.div 
@@ -2426,7 +2440,7 @@ function ItineraryList({
         </motion.div>
       )}
 
-      <Reorder.Group axis="y" values={items} onReorder={onReorder} className="flex flex-col gap-8">
+      <Reorder.Group axis="y" values={items} onReorder={onReorder} className="flex flex-col gap-3 sm:gap-4">
         <AnimatePresence initial={false} mode="popLayout">
           {items.map((item: ItineraryNode, idx: number) => {
             const nextItem = items[idx + 1];
@@ -2472,8 +2486,8 @@ function ItineraryList({
                 />
                 
                 {/* Drag handle for mobile/explicit drag */}
-                <div className="absolute left-[-40px] top-1/2 -translate-y-1/2 opacity-0 group-hover/reorder:opacity-100 transition-opacity p-2 cursor-grab active:cursor-grabbing text-slate-300">
-                   <GripVertical size={20} />
+                <div className="absolute left-[-20px] sm:left-[-35px] top-1/2 -translate-y-1/2 opacity-40 sm:opacity-0 group-hover/reorder:opacity-100 transition-opacity p-1.5 sm:p-2 cursor-grab active:cursor-grabbing text-slate-400/80 hover:text-slate-600 z-20">
+                   <GripVertical size={18} className="sm:w-[20px] sm:h-[20px]" />
                 </div>
 
                 {(() => {
@@ -2483,18 +2497,18 @@ function ItineraryList({
                     : null;
                   const showBadge = nextItem && (timeGapStr || item.transport_to_next || autoTransport);
                   return showBadge ? (
-                    <div className="flex justify-start sm:pl-[64px] pl-[52px] my-1 relative z-0">
-                      <div className="w-0.5 min-h-[3rem] bg-gradient-to-b from-slate-200 to-slate-200" />
-                      <div className="flex flex-col justify-center ml-4">
-                        <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex justify-start sm:pl-[60px] pl-[40px] my-1 relative z-0">
+                      <div className="w-0.5 min-h-[1.5rem] sm:min-h-[2rem] bg-gradient-to-b from-slate-200 to-slate-200" />
+                      <div className="flex flex-col justify-center ml-3 sm:ml-4">
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                           {timeGapStr && (
-                            <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-[12px]">schedule</span>
+                            <span className="px-2.5 sm:px-3 py-1 bg-slate-50/80 rounded-full text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1 sm:gap-1.5">
+                              <span className="material-symbols-outlined text-[10px] sm:text-[12px]">schedule</span>
                               約 {timeGapStr}
                             </span>
                           )}
                           {(item.transport_to_next || autoTransport) && (
-                            <span className="px-3 py-1 bg-indigo-50/80 rounded-full text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1.5">
+                            <span className="px-2.5 sm:px-3 py-1 bg-indigo-50/80 rounded-full text-[9px] sm:text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100 shadow-sm flex items-center gap-1 sm:gap-1.5">
                               <span>{autoTransport?.emoji ?? '🚇'}</span>
                               {item.transport_to_next ?? autoTransport?.label}
                             </span>
@@ -2503,8 +2517,8 @@ function ItineraryList({
                       </div>
                     </div>
                   ) : nextItem ? (
-                    <div className="flex justify-start sm:pl-[64px] pl-[52px] my-1 relative z-0">
-                      <div className="w-0.5 h-8 bg-gradient-to-b from-slate-200 to-slate-200" />
+                    <div className="flex justify-start sm:pl-[60px] pl-[40px] my-1 relative z-0">
+                      <div className="w-0.5 h-6 sm:h-8 bg-gradient-to-b from-slate-200 to-slate-200" />
                     </div>
                   ) : null;
                 })()}
@@ -2538,7 +2552,7 @@ function ManualAddNode({
   const [time, setTime] = useState('10:00');
   const [emoji, setEmoji] = useState('📍');
   const [category, setCategory] = useState('landmark');
-  const [notes, setNotes] = useState('');
+  const [description, setDescription] = useState('');
   const [transportToNext, setTransportToNext] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isVisited, setIsVisited] = useState(false);
@@ -2562,7 +2576,7 @@ function ManualAddNode({
       time, 
       emoji, 
       category,
-      description: [locationName ? `地點：${locationName}` : '', notes].filter(Boolean).join('\n'),
+      description: [locationName ? `地點：${locationName}` : '', description].filter(Boolean).join('\n'),
       transport_to_next: transportToNext || undefined,
       image_url: imageUrl || undefined,
       is_visited: isVisited,
@@ -2570,7 +2584,7 @@ function ManualAddNode({
     });
     setTitle('');
     setLocationName('');
-    setNotes('');
+    setDescription('');
     setTransportToNext('');
     setImageUrl('');
     setDate(getDateForDay(day, tripStartDate) || '');
@@ -2691,11 +2705,11 @@ function ManualAddNode({
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">備註 / 手帳</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2">詳細說明 / 備註 (Description)</label>
                 <textarea
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  placeholder="補充用餐提醒、預約資訊、旅伴備忘..."
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder="補充更詳細的行程說明、用餐提醒、預約資訊..."
                   className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm min-h-[92px] resize-y"
                 />
               </div>
@@ -2811,7 +2825,7 @@ function ManualAddNode({
 
 // ─── Map View ───────────────────────────────────────────────────────────
 
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, ScaleControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -2845,11 +2859,11 @@ function MapUpdater({ selectedLat, selectedLng, items, allItems }: { selectedLat
 function CustomMarker({ item, isSelected, onClick }: { item: ItineraryNode, isSelected: boolean, onClick: () => void }) {
   const iconHtml = `
     <div class="relative flex flex-col items-center">
-      <div class="bg-white/95 rounded-2xl px-2.5 py-2 border-2 ${isSelected ? 'border-fuchsia-400 scale-110 shadow-pink-200/50' : 'border-white'} flex items-center justify-center shadow-lg transition-transform ${isSelected ? 'z-50' : ''} cursor-pointer group hover:scale-110">
+      <div class="bg-white rounded-2xl px-2.5 py-1.5 border-2 ${isSelected ? 'border-pink-500 scale-110 shadow-lg shadow-pink-100' : 'border-white shadow-md'} flex items-center justify-center transition-all cursor-pointer group hover:scale-110">
         <span class="text-xl leading-none group-hover:scale-110 transition-transform">${item.emoji}</span>
       </div>
-      <div class="w-3 h-3 -mt-2 border-r-2 border-b-2 rotate-45 ${isSelected ? 'bg-fuchsia-400 border-fuchsia-400' : 'bg-white border-white'}"></div>
-      <div class="mt-1 px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-fuchsia-600/90 text-white shadow-md' : 'bg-slate-800/80 text-white/90'} transition-all"><span class="text-[10px] font-bold whitespace-nowrap block max-w-[100px] truncate">${item.title}</span></div>
+      <div class="w-3 h-3 -mt-2 border-r-2 border-b-2 rotate-45 ${isSelected ? 'bg-pink-500 border-pink-500' : 'bg-white border-white'}"></div>
+      <div class="mt-1 px-2.5 py-1 rounded-full ${isSelected ? 'bg-pink-600 text-white shadow-md' : 'bg-slate-800/90 text-white/90'} transition-all"><span class="text-[10px] font-bold whitespace-nowrap block max-w-[120px] truncate">${item.title}</span></div>
     </div>
   `;
 
@@ -2950,8 +2964,7 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
              {days.map((d, i) => {
                 if (!d) return <div key={`empty-${i}`} className="bg-white/40 min-h-[120px]" />;
                 const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                const dayNodes = nodesByDate[dateStr] || [];
-                dayNodes.sort((a,b) => (a.time || '').localeCompare(b.time || ''));
+                const dayNodes = sortNodesForDisplay(nodesByDate[dateStr] || []);
                 
                 const isToday = new Date().toDateString() === d.toDateString();
                 
@@ -3039,15 +3052,81 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                 )}
                 
                 {selectedNode.linkedFactId && facts.find((f: any) => f.id === selectedNode.linkedFactId) && (
-                  <div className="mt-2 p-4 rounded-[2rem] bg-gradient-to-r from-emerald-50 to-teal-50 border border-white shadow-sm flex items-center gap-3 relative overflow-hidden">
-                     <div className="absolute top-0 right-0 p-3 opacity-20 text-4xl pointer-events-none">✨</div>
-                     <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-emerald-500 shadow-sm shrink-0 relative z-10">
-                        <span className="material-symbols-outlined text-[16px]">link</span>
+                  <div className="mt-4 p-4 rounded-[1.5rem] bg-gradient-to-br from-cyan-50 to-blue-50/50 border border-white shadow-sm flex flex-col gap-2 relative overflow-hidden">
+                     <div className="absolute -top-6 -right-6 p-4 opacity-10 text-6xl pointer-events-none">✨</div>
+                     
+                     <div className="flex items-center gap-2 mb-1">
+                       <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-cyan-500 shadow-sm shrink-0 relative z-10">
+                          <span className="material-symbols-outlined text-[14px]">link</span>
+                       </div>
+                       <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">關聯的 Travel Fact</span>
                      </div>
-                     <div className="flex flex-col relative z-10 min-w-0 flex-1">
-                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">已綁定 Travel Fact</span>
-                        <span className="text-xs font-bold text-slate-700 truncate">{facts.find((f: any) => f.id === selectedNode.linkedFactId)?.title}</span>
-                     </div>
+                     
+                     {(() => {
+                       const fact = facts.find((f: any) => f.id === selectedNode.linkedFactId);
+                       if (!fact) return null;
+                       return (
+                         <div className="flex flex-col gap-2 relative z-10 pl-1">
+                           <span className="text-sm font-bold text-slate-800">{fact.title}</span>
+                           
+                           {(fact.startAt || fact.endAt) && (
+                             <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                               <span className="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
+                               <span>{fact.startAt || '--'} {fact.endAt ? `至 ${fact.endAt}` : ''}</span>
+                             </div>
+                           )}
+                           
+                           {fact.locationName && (
+                             <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                               <span className="material-symbols-outlined text-[14px] text-slate-400">location_on</span>
+                               <span>{fact.locationName}</span>
+                             </div>
+                           )}
+                           
+                           {fact.referenceCode && (
+                             <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-1">
+                               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded bg-white">訂單編號</span>
+                               <span className="font-mono">{fact.referenceCode}</span>
+                             </div>
+                           )}
+                           
+                           {fact.metadata && Object.keys(fact.metadata).length > 0 && (
+                             <div className="mt-1 pt-2 border-t border-cyan-100/50 grid grid-cols-2 gap-2">
+                               {fact.metadata.airline && (
+                                 <div className="flex flex-col">
+                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">航空公司</span>
+                                   <span className="text-xs text-slate-700 font-bold">{fact.metadata.airline}</span>
+                                 </div>
+                               )}
+                               {fact.metadata.flightNumber && (
+                                 <div className="flex flex-col">
+                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">航班編號</span>
+                                   <span className="text-xs text-slate-700 font-bold font-mono">{fact.metadata.flightNumber}</span>
+                                 </div>
+                               )}
+                               {fact.metadata.checkInTime && (
+                                 <div className="flex flex-col">
+                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">入住時間</span>
+                                   <span className="text-xs text-slate-700 font-bold">{fact.metadata.checkInTime}</span>
+                                 </div>
+                               )}
+                               {fact.metadata.checkOutTime && (
+                                 <div className="flex flex-col">
+                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">退房時間</span>
+                                   <span className="text-xs text-slate-700 font-bold">{fact.metadata.checkOutTime}</span>
+                                 </div>
+                               )}
+                               {fact.metadata.address && (
+                                 <div className="flex flex-col col-span-2">
+                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">地址</span>
+                                   <span className="text-xs text-slate-700 font-bold">{fact.metadata.address}</span>
+                                 </div>
+                               )}
+                             </div>
+                           )}
+                         </div>
+                       );
+                     })()}
                   </div>
                 )}
              </GlassCard>
@@ -3082,7 +3161,7 @@ function MapView({ items, allNodes }: { items: ItineraryNode[], allNodes?: Itine
         >
           <TileLayer
             attribution='&copy; <a href="https://carto.com/">Carto</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
           <MapUpdater 
             selectedLat={selectedNode?.lat} 
@@ -3094,7 +3173,13 @@ function MapView({ items, allNodes }: { items: ItineraryNode[], allNodes?: Itine
           {validItems.length > 1 && (
             <Polyline 
               positions={validItems.map(item => [item.lat!, item.lng!])}
-              pathOptions={{ color: 'rgba(236,72,153,0.6)', weight: 3, dashArray: '5, 8' }}
+              pathOptions={{ 
+                color: '#ec4899', 
+                weight: 4, 
+                dashArray: '1, 10', 
+                lineCap: 'round',
+                opacity: 0.6
+              }}
             />
           )}
 
@@ -3106,6 +3191,7 @@ function MapView({ items, allNodes }: { items: ItineraryNode[], allNodes?: Itine
               onClick={() => setSelectedId(item.node_id === selectedId ? null : item.node_id)}
             />
           ))}
+          <ScaleControl position="bottomright" />
         </MapContainer>
         
         {items.length === 0 && (

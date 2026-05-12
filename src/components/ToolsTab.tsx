@@ -364,34 +364,43 @@ function WeatherCard() {
   const outfit = getOutfitSuggestion(weather?.temp_current, weather?.rain_prob);
 
   return (
-    <GlassCard className="!p-6 sm:!p-8 mb-8 flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-xl group">
-      <div className="absolute top-0 right-0 w-48 h-48 bg-fuchsia-100 rounded-full translate-x-1/3 -translate-y-1/3 opacity-30 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+    <GlassCard className="!p-5 sm:!p-8 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-500 hover:shadow-xl group border-white/80">
+      <div className="absolute -top-10 -right-10 w-48 h-48 sm:w-64 sm:h-64 bg-gradient-to-br from-fuchsia-300/40 to-orange-300/20 rounded-full blur-[40px] pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+      <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-sky-300/20 rounded-full blur-[30px] pointer-events-none group-hover:scale-125 transition-transform duration-700 delay-75" />
+      
       <div className="relative z-10">
-        <h2 className="font-serif text-3xl text-[#2C302E] mb-1">明天在 {destination || '您的目的地'}</h2>
-        <div className="flex flex-col gap-1 mb-6">
-          <p className="text-[11px] uppercase tracking-widest text-fuchsia-600/70 font-bold">Local Weather & Outfit</p>
+        <h2 className="font-serif text-[26px] sm:text-3xl text-[#2C302E] mb-1 leading-tight">明天在 {destination || '您的目的地'}</h2>
+        <div className="flex flex-col gap-1 mb-5 sm:mb-6">
+          <p className="text-[10px] sm:text-[11px] uppercase tracking-widest text-fuchsia-600/70 font-black">Local Weather & Outfit</p>
           {isOffline && (
-            <span className="text-[10px] text-amber-500 font-bold bg-amber-50 w-fit px-2 py-0.5 rounded-full border border-amber-200">最後更新於 2 小時前</span>
+            <span className="text-[9px] sm:text-[10px] text-amber-600 font-bold bg-amber-50 w-fit px-2.5 py-0.5 rounded-full border border-amber-200 shadow-sm mt-1">最後更新於 2 小時前</span>
           )}
         </div>
         
-        <div className="flex items-end justify-between mb-6">
-          <div className="flex bg-fuchsia-50 rounded-full px-4 py-2 items-center gap-2 border border-fuchsia-100/50">
-            <Icon size={18} className="text-fuchsia-500" />
-            <span className="text-fuchsia-700 font-medium text-sm">{weather && weather.rain_prob >= 50 ? '可能有雨' : '晴朗好天氣'}</span>
+        <div className="flex items-center sm:items-end justify-between mb-5 sm:mb-6 bg-white/40 p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-white/50 shadow-sm">
+          <div className="flex flex-col gap-3">
+             <div className="flex bg-white/80 backdrop-blur-md rounded-full px-3.5 py-1.5 sm:px-4 sm:py-2 items-center gap-2 border border-slate-100 shadow-sm w-fit">
+               <Icon size={16} className="text-fuchsia-500 sm:w-[18px] sm:h-[18px]" strokeWidth={2.5} />
+               <span className="text-slate-700 font-black text-xs sm:text-sm">{weather && weather.rain_prob >= 50 ? '可能有雨' : '晴朗好天氣'}</span>
+             </div>
+             {weather && (
+               <span className="text-slate-500 font-bold text-[10px] sm:text-xs tracking-wider pl-1">
+                 最高 {weather.daily?.[0]?.temp_max ?? '--'}° / 降雨 {weather.rain_prob}%
+               </span>
+             )}
           </div>
-          <div className="text-[56px] leading-none font-light tracking-tight text-[#2C302E]">
+          <div className="text-[48px] sm:text-[56px] leading-none font-black tracking-tighter text-slate-800 drop-shadow-sm">
             {weather ? weather.temp_current : '--'}°
           </div>
         </div>
 
-        <div className="bg-fuchsia-50/50 rounded-[24px] p-4 flex items-center gap-4 border border-fuchsia-100/30 mb-6">
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl shadow-sm shrink-0">
+        <div className="bg-white/60 backdrop-blur-md rounded-[20px] sm:rounded-[24px] p-4 flex items-center gap-4 border border-white/60 shadow-sm mb-5 sm:mb-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-gradient-to-br from-fuchsia-100 to-pink-50 flex items-center justify-center text-lg sm:text-xl shadow-inner border border-white shrink-0 group-hover:rotate-6 transition-transform">
               👗
           </div>
           <div className="flex flex-col">
-            <span className="text-[#2C302E] font-bold">{outfit.title}</span>
-            <span className="text-slate-500 text-sm font-medium leading-relaxed mt-0.5">{outfit.desc}</span>
+            <span className="text-slate-800 font-black text-sm">{outfit.title}</span>
+            <span className="text-slate-500 text-[11px] sm:text-sm font-bold leading-snug mt-0.5">{outfit.desc}</span>
           </div>
         </div>
 
@@ -430,14 +439,14 @@ function ChecklistSection() {
   
   return (
     <section className="mb-8 font-sans">
-      <div className="flex justify-between items-end mb-4 px-2">
-        <h2 className="font-serif text-[28px] text-[#2C302E]">My Suitcase</h2>
-        <span className="text-[11px] uppercase tracking-wider font-bold text-fuchsia-600 bg-fuchsia-100/80 px-4 py-1.5 rounded-full border border-fuchsia-200">
+      <div className="flex justify-between items-end mb-4 sm:mb-6 px-1 sm:px-2">
+        <h2 className="font-serif text-[26px] sm:text-[28px] text-[#2C302E]">My Suitcase</h2>
+        <span className="text-[10px] sm:text-[11px] uppercase tracking-widest font-black text-fuchsia-600 bg-fuchsia-100/80 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-fuchsia-200">
           {packedCount}/{checklist.length} Packed
         </span>
       </div>
       
-      <GlassCard className="!p-6 mb-4">
+      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6">
         {checklist.length === 0 && <span className="text-sm text-slate-400 italic">目前沒有行李項目</span>}
         {(() => {
           const CAT_META: Record<string, { label: string; emoji: string }> = {
@@ -686,10 +695,10 @@ function SettlementsSection() {
   const { isOffline } = useAppStore();
   const currencyEntries = Object.entries(expenseByCurrency);
   return (
-    <section className="flex flex-col mb-32">
-      <div className="flex items-center justify-between px-4 mb-6">
-        <h3 className="font-serif text-[26px] text-[#2C302E]">結算清單 (誰應付誰)</h3>
-        <div className="flex flex-row flex-wrap justify-end gap-2">
+    <section className="flex flex-col mb-16 sm:mb-32">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 sm:px-4 mb-4 sm:mb-6 gap-3">
+        <h3 className="font-serif text-[24px] sm:text-[26px] text-[#2C302E]">結算清單 (誰應付誰)</h3>
+        <div className="flex flex-row flex-wrap sm:justify-end gap-2 overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
           {currencyEntries.length === 0 ? (
             <span className="text-[12px] font-bold text-slate-400 shrink-0">尚無款項</span>
           ) : (

@@ -53,11 +53,11 @@ test('assignDaysBasedOnTimeAndOrder fills date, timestamp, and sort order while 
   assert.match(nodes[2].timestamp ?? '', /^2026-05-11T08:30:00/);
 });
 
-test('sortNodesForDisplay prefers explicit sort order before time', () => {
+test('sortNodesForDisplay prefers explicit time before sort order', () => {
   const sorted = sortNodesForDisplay([
     { node_id: 'b', day: 1, time: '09:00', sort_order: 2, title: 'B', emoji: '📍', category: 'other', source: 'local' },
     { node_id: 'a', day: 1, time: '12:00', sort_order: 1, title: 'A', emoji: '📍', category: 'other', source: 'local' },
   ]);
 
-  assert.deepEqual(sorted.map((node) => node.node_id), ['a', 'b']);
+  assert.deepEqual(sorted.map((node) => node.node_id), ['b', 'a']);
 });

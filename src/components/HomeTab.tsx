@@ -410,6 +410,15 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const handleCopyExpertItinerary = (e: React.MouseEvent | undefined, handbook: typeof EXPERT_HANDBOOKS[0]) => {
     e?.stopPropagation?.();
     
+    if (!isLoggedIn) {
+      if (onRequireLogin) {
+        onRequireLogin();
+      } else {
+        showToast('請先登入後再進行此操作', 'error');
+      }
+      return;
+    }
+
     // Get card position for animation start
     const cardElement = e?.currentTarget ? (e.currentTarget as HTMLElement).closest('.group\\/handbook') : null;
     const rect = cardElement ? cardElement.getBoundingClientRect() : e?.currentTarget ? (e.currentTarget as HTMLElement).getBoundingClientRect() : { left: window.innerWidth / 2 - 140, top: window.innerHeight / 2 - 80, width: 280, height: 160 };
@@ -661,30 +670,30 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         <div className="w-full flex-shrink-0 flex flex-col gap-6 md:gap-8">
           
           {/* Immersive AI Banner */}
-          <div className="w-full group cursor-pointer" onClick={() => setActiveTab('ai_form')}>
-            <div className="bg-slate-900 rounded-[24px] md:rounded-[32px] p-6 sm:p-8 md:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow-2xl shadow-slate-900/20 relative overflow-hidden transition-all duration-500 hover:shadow-fuchsia-500/20 hover:-translate-y-1 border border-white/10">
+          <div className="w-full group cursor-pointer lg:px-4" onClick={() => setActiveTab('ai_form')}>
+            <div className="bg-slate-900 rounded-[28px] md:rounded-[36px] p-5 sm:p-8 md:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow-2xl shadow-slate-900/40 relative overflow-hidden transition-all duration-700 hover:shadow-fuchsia-500/30 hover:-translate-y-1.5 border border-white/10 sm:max-w-none max-w-[calc(100vw-2rem)] mx-auto">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/30 via-transparent to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-2xl"></div>
-              <div className="absolute -right-20 -top-20 w-64 h-64 bg-fuchsia-500/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000 ease-out pointer-events-none"></div>
-              <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-sky-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000 ease-out pointer-events-none delay-75"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/40 via-purple-600/20 to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-2xl"></div>
+              <div className="absolute -right-10 -top-10 sm:-right-20 sm:-top-20 w-48 h-48 sm:w-64 sm:h-64 bg-fuchsia-500/30 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000 ease-out pointer-events-none"></div>
+              <div className="absolute -left-5 -bottom-5 w-32 h-32 sm:w-40 sm:h-40 bg-sky-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000 ease-out pointer-events-none delay-75"></div>
               
-              <div className="relative z-10 flex items-center gap-5 sm:gap-6">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-pink-400 to-fuchsia-500 flex items-center justify-center p-[2px] shadow-xl shadow-fuchsia-500/30 group-hover:rotate-6 transition-transform duration-500 shrink-0">
-                   <div className="w-full h-full bg-slate-900/60 rounded-[14px] flex items-center justify-center backdrop-blur-md">
-                     <Sparkles size={28} strokeWidth={2.5} className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]" />
+              <div className="relative z-10 flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-[14px] sm:rounded-2xl bg-gradient-to-br from-pink-400 to-fuchsia-500 flex items-center justify-center p-[2px] shadow-xl shadow-fuchsia-500/30 group-hover:rotate-6 transition-transform duration-500 shrink-0">
+                   <div className="w-full h-full bg-slate-900/60 rounded-[12px] sm:rounded-[14px] flex items-center justify-center backdrop-blur-md">
+                     <Sparkles size={24} strokeWidth={2.5} className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.6)] sm:w-7 sm:h-7" />
                    </div>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                <div className="flex flex-col gap-0.5 sm:gap-1 flex-1">
+                  <h3 className="text-[22px] sm:text-3xl font-black text-white tracking-tight flex items-center gap-2 sm:gap-3">
                     AI 智慧行程規劃
-                    <span className="px-2.5 py-1 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-bold uppercase tracking-widest border border-fuchsia-500/30 backdrop-blur-sm">Beta</span>
+                    <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest border border-fuchsia-500/30 backdrop-blur-sm self-start mt-1 sm:mt-0">Beta</span>
                   </h3>
-                  <p className="text-slate-400 text-sm sm:text-base font-medium tracking-wide">
+                  <p className="text-slate-400 text-[12px] sm:text-base font-medium tracking-wide">
                     輸入目的地，秒速生成專屬客製化旅航計畫
                   </p>
                 </div>
               </div>
-              <div className="relative z-10 mt-6 sm:mt-0 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-white group-hover:text-slate-900 text-white transition-all shadow-sm group-active:scale-95 shrink-0 self-end sm:self-auto">
+              <div className="relative z-10 hidden sm:flex w-12 h-12 rounded-full bg-white/10 items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-white group-hover:text-slate-900 text-white transition-all shadow-sm group-active:scale-95 shrink-0 self-end sm:self-auto">
                 <ArrowRight size={20} strokeWidth={2.5} className="-rotate-45 group-hover:rotate-0 transition-transform duration-500" />
               </div>
             </div>
@@ -696,19 +705,19 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
           >
-            <GlassCard className={`!p-2 md:!p-3 shadow-xl shadow-slate-200/50 bg-white/90 backdrop-blur-3xl rounded-[32px] md:rounded-[2.5rem] border border-white/80 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none grayscale-[0.2]' : ''}`}>
-              <div className="flex flex-col md:flex-row gap-2 md:gap-3">
-                <div className="flex flex-col sm:flex-row gap-2 md:gap-3 flex-1">
+            <GlassCard className={`!p-1.5 md:!p-3 shadow-xl shadow-slate-200/50 bg-white/90 backdrop-blur-3xl rounded-[28px] md:rounded-[2.5rem] border border-white/80 transition-opacity duration-300 lg:mx-4 ${loading ? 'opacity-60 pointer-events-none grayscale-[0.2]' : ''}`}>
+              <div className="flex flex-col md:flex-row gap-1.5 md:gap-3">
+                <div className="flex flex-col sm:flex-row gap-1.5 md:gap-3 flex-1">
                   {/* 出發地 */}
-                  <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[20px] md:rounded-[2rem] px-5 sm:px-6 py-3.5 md:py-4 border border-slate-200/60 flex items-center group/input">
-                    <div className="absolute left-6 text-slate-400 group-hover/input:text-orange-500 group-focus-within/input:text-orange-500 transition-colors">
-                      <PlaneTakeoff size={20} />
+                  <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[22px] md:rounded-[2rem] px-4 md:px-6 py-2.5 md:py-4 border border-slate-200/60 flex items-center group/input">
+                    <div className="absolute left-4 md:left-6 text-slate-400 group-hover/input:text-orange-500 group-focus-within/input:text-orange-500 transition-colors">
+                      <PlaneTakeoff size={18} className="md:w-[20px] md:h-[20px]" />
                     </div>
-                    <div className="flex flex-col pl-10 w-full text-left">
-                      <Label htmlFor="search-from" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">出發從哪裡</Label>
+                    <div className="flex flex-col pl-8 md:pl-10 w-full text-left">
+                      <Label htmlFor="search-from" className="text-[9px] md:text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0 md:mb-1 cursor-text">出發從哪裡</Label>
                       <input
                         id="search-from"
-                        className="bg-transparent border-none p-0 focus:ring-0 text-base md:text-lg font-black text-slate-900 placeholder:text-slate-300 placeholder:font-bold w-full outline-none leading-none h-6"
+                        className="bg-transparent border-none p-0 focus:ring-0 text-[15px] md:text-lg font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none h-5 md:h-6"
                         value={searchForm.from}
                         onFocus={() => {
                           setShowDeparturePicker(true);
@@ -725,15 +734,15 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   </div>
 
                   {/* 目的地 */}
-                  <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[20px] md:rounded-[2rem] px-5 sm:px-6 py-3.5 md:py-4 border border-slate-200/60 flex items-center group/input">
-                    <div className="absolute left-6 text-slate-400 group-hover/input:text-fuchsia-500 group-focus-within/input:text-fuchsia-500 transition-colors">
-                      <Globe size={20} />
+                  <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[22px] md:rounded-[2rem] px-4 md:px-6 py-2.5 md:py-4 border border-slate-200/60 flex items-center group/input">
+                    <div className="absolute left-4 md:left-6 text-slate-400 group-hover/input:text-fuchsia-500 group-focus-within/input:text-fuchsia-500 transition-colors">
+                      <Globe size={18} className="md:w-[20px] md:h-[20px]" />
                     </div>
-                    <div className="flex flex-col pl-10 w-full text-left">
-                      <Label htmlFor="search-to" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">飛往目的地</Label>
+                    <div className="flex flex-col pl-8 md:pl-10 w-full text-left">
+                      <Label htmlFor="search-to" className="text-[9px] md:text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0 md:mb-1 cursor-text">飛往目的地</Label>
                       <input
                         id="search-to"
-                        className="bg-transparent border-none p-0 focus:ring-0 text-base md:text-lg font-black text-slate-900 placeholder:text-slate-300 placeholder:font-bold w-full outline-none leading-none h-6"
+                        className="bg-transparent border-none p-0 focus:ring-0 text-[15px] md:text-lg font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none h-5 md:h-6"
                         value={searchForm.to}
                         onFocus={() => {
                           setShowDestinationPicker(true);
@@ -750,7 +759,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   </div>
                 </div>
 
-              <div className="flex gap-2 md:gap-3 flex-none md:w-auto">
+              <div className="flex gap-1.5 md:gap-3 flex-none md:w-auto">
                 {/* 日期 */}
                 <div 
                   onClick={() => {
@@ -758,14 +767,14 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     setShowDeparturePicker(false);
                     setShowDestinationPicker(false);
                   }}
-                  className={`relative flex-1 md:w-56 transition-all duration-300 rounded-[20px] md:rounded-[2rem] px-5 sm:px-6 py-3.5 md:py-4 border flex items-center cursor-pointer group/date ${showDatePicker ? 'border-orange-300 bg-orange-50 shadow-[0_4px_20px_rgba(249,115,22,0.08)]' : 'bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/60'}`}
+                  className={`relative flex-1 md:w-56 transition-all duration-300 rounded-[22px] md:rounded-[2rem] px-4 md:px-6 py-2.5 md:py-4 border flex items-center cursor-pointer group/date ${showDatePicker ? 'border-orange-300 bg-orange-50 shadow-[0_4px_20px_rgba(249,115,22,0.08)]' : 'bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/60'}`}
                 >
-                  <div className={`absolute left-6 transition-colors ${showDatePicker ? 'text-orange-500' : 'text-slate-400 group-hover/date:text-slate-600'}`}>
-                    <Calendar size={20} />
+                  <div className={`absolute left-4 md:left-6 transition-colors ${showDatePicker ? 'text-orange-500' : 'text-slate-400 group-hover/date:text-slate-600'}`}>
+                    <Calendar size={18} className="md:w-[20px] md:h-[20px]" />
                   </div>
-                  <div className="flex flex-col pl-10 w-full text-left">
-                    <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1">去程日期</span>
-                    <span className={`text-base md:text-lg font-black truncate leading-none h-6 flex items-center ${!searchForm.date ? 'text-slate-300' : 'text-slate-900'}`}>
+                  <div className="flex flex-col pl-8 md:pl-10 w-full text-left">
+                    <span className="text-[9px] md:text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0 md:mb-1">去程日期</span>
+                    <span className={`text-[15px] md:text-lg font-black truncate leading-none h-5 md:h-6 flex items-center ${!searchForm.date ? 'text-slate-300' : 'text-slate-900'}`}>
                       {searchForm.date || '選擇日期'}
                     </span>
                   </div>
@@ -776,7 +785,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   onClick={() => void handleSearch()}
                   disabled={isSearchDisabled || loading || isOffline}
                   title={isOffline ? '請連線網路以進行機票比價' : ''}
-                  className={`w-16 md:w-20 rounded-[20px] md:rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-95 flex-shrink-0 ${
+                  className={`w-[60px] md:w-20 rounded-[22px] md:rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-95 flex-shrink-0 ${
                     isSearchDisabled || loading || isOffline
                       ? 'bg-slate-100 border border-slate-200 grayscale cursor-not-allowed text-slate-300 shadow-inner' 
                       : 'bg-slate-900 hover:bg-slate-800 text-white shadow-[0_8px_20px_rgba(15,23,42,0.15)] hover:shadow-[0_12px_25px_rgba(15,23,42,0.25)] hover:-translate-y-0.5 border border-transparent'
@@ -785,7 +794,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <SearchIcon size={22} strokeWidth={2.5} />
+                    <SearchIcon size={20} strokeWidth={3} className="md:w-[22px] md:h-[22px]" />
                   )}
                 </button>
               </div>
@@ -796,56 +805,62 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         </div>
 
         {/* Quick External Links */}
-        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 lg:gap-8 mb-4 md:mb-8 px-2 lg:px-4">
-          <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-slate-600 hover:text-slate-900 transition-colors group">
+        <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-3 lg:gap-6 mb-6 md:mb-10 px-2 lg:px-4 pb-2 snap-x">
+          <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-700 hover:text-slate-900 transition-all group bg-white/60 hover:bg-white backdrop-blur-md px-4 md:px-5 py-2.5 md:py-3 rounded-full shadow-sm border border-slate-200/60 shrink-0 snap-start">
             <div className="text-[#B92A8E] group-hover:scale-110 transition-transform">
-              <Bed size={26} strokeWidth={2.5} />
+              <Bed size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
             </div>
-            <span className="font-bold text-[15px] tracking-wide">找住宿</span>
+            <span className="font-bold text-[13px] md:text-[15px] tracking-wide">找住宿</span>
           </a>
           
-          <div className="w-px h-5 bg-slate-200 hidden sm:block" />
-          
-          <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-slate-600 hover:text-slate-900 transition-colors group">
+          <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-700 hover:text-slate-900 transition-all group bg-white/60 hover:bg-white backdrop-blur-md px-4 md:px-5 py-2.5 md:py-3 rounded-full shadow-sm border border-slate-200/60 shrink-0 snap-start">
             <div className="text-[#F18400] group-hover:scale-110 transition-transform">
-              <Ticket size={24} strokeWidth={2.5} />
+              <Ticket size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
             </div>
-            <span className="font-bold text-[15px] tracking-wide">門票 & 觀光行程</span>
+            <span className="font-bold text-[13px] md:text-[15px] tracking-wide">門票 & 觀光行程</span>
           </a>
 
-          <div className="w-px h-5 bg-slate-200 hidden sm:block" />
-          
-          <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-slate-600 hover:text-slate-900 transition-colors group">
+          <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-700 hover:text-slate-900 transition-all group bg-white/60 hover:bg-white backdrop-blur-md px-4 md:px-5 py-2.5 md:py-3 rounded-full shadow-sm border border-slate-200/60 shrink-0 snap-start">
             <div className="text-[#EC4899] group-hover:scale-110 transition-transform relative">
-              <CarFront size={26} strokeWidth={2.5} />
-              <PlaneTakeoff size={12} strokeWidth={3} className="absolute -top-1.5 -left-1.5" />
+              <CarFront size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
+              <PlaneTakeoff size={10} strokeWidth={3} className="absolute -top-1 -left-1 md:-top-1.5 md:-left-1.5 md:w-3 md:h-3" />
             </div>
-            <span className="font-bold text-[15px] tracking-wide">機場接送</span>
+            <span className="font-bold text-[13px] md:text-[15px] tracking-wide">機場接送</span>
           </a>
         </div>
 
         {/* Right Side / Bottom: Results */}
         <div className="pb-16 md:pb-32 flex flex-col flex-1 min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8 px-1">
-            <div className="flex flex-col items-start gap-1">
-              <div className="flex items-center gap-3">
-                 <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter leading-none">探索航班與活動</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8 px-2 lg:px-4">
+            <div className="flex flex-col items-start gap-1.5 md:gap-1">
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tighter leading-none flex items-baseline gap-2 sm:gap-3">
+                   探索航班與活動
+                   {searchForm.date && (
+                     <span className="text-lg sm:text-xl md:text-2xl text-slate-400 font-bold tracking-tight">
+                       {searchForm.date.replace(/-/g, '/')}
+                     </span>
+                   )}
+                 </h2>
                  {filteredResults.length > 0 && (
-                   <span className="px-2.5 py-1 bg-slate-900 text-white rounded-[8px] text-[10px] font-black tracking-widest uppercase shadow-sm">
+                   <span className="px-2 md:px-2.5 py-0.5 md:py-1 bg-slate-900 text-white rounded-[6px] md:rounded-[8px] text-[9px] md:text-[10px] font-black tracking-widest uppercase shadow-sm">
                      {filteredResults.length} 個結果
                    </span>
                  )}
               </div>
-              <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">Explore Travels</p>
+              <p className="text-[10px] md:text-xs font-bold text-slate-400 tracking-[0.2em] uppercase">
+                Explore Travels
+                {searchForm.date && <span className="ml-2 font-mono">| {searchForm.date}</span>}
+              </p>
             </div>
             {results.length > 0 && (
               <div className="flex flex-row flex-wrap items-center gap-2 justify-end">
-                <div className="flex items-center bg-white/70 backdrop-blur-md p-1.5 rounded-[12px] shadow-sm border border-slate-200/60 relative">
+                <div className="flex items-center bg-white/70 backdrop-blur-md p-1 md:p-1.5 rounded-[10px] md:rounded-[12px] shadow-sm border border-slate-200/60 relative overflow-x-auto hide-scrollbar max-w-full">
                   {(['all', 'flight', 'ticket', 'other'] as const).map((type) => (
                     <button 
                       key={type}
                       onClick={() => setFilterType(type)}
-                      className={`relative px-3 py-1.5 rounded-[8px] text-[11px] font-black tracking-widest uppercase transition-colors duration-300 z-10 ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                      className={`relative px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-[8px] text-[10px] md:text-[11px] font-black tracking-[0.1em] md:tracking-widest uppercase transition-colors duration-300 z-10 whitespace-nowrap ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
                     >
                       {filterType === type && (
                         <motion.div
@@ -858,32 +873,32 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center bg-white/70 backdrop-blur-md p-1.5 rounded-[12px] shadow-sm border border-slate-200/60 relative">
+                <div className="flex items-center bg-white/70 backdrop-blur-md p-1 md:p-1.5 rounded-[10px] md:rounded-[12px] shadow-sm border border-slate-200/60 relative shrink-0">
                   <button 
                     onClick={() => setViewType('grid')}
-                    className={`relative p-2 rounded-[10px] transition-colors duration-300 z-10 ${viewType === 'grid' ? 'text-white' : 'text-slate-400 hover:text-slate-800'}`}
+                    className={`relative p-1.5 md:p-2 rounded-[8px] md:rounded-[10px] transition-colors duration-300 z-10 ${viewType === 'grid' ? 'text-white' : 'text-slate-400 hover:text-slate-800'}`}
                   >
                     {viewType === 'grid' && (
                       <motion.div
                         layoutId="viewTypeIndicator"
-                        className="absolute inset-0 bg-slate-900 rounded-[10px] -z-10 shadow-md"
+                        className="absolute inset-0 bg-slate-900 rounded-[8px] md:rounded-[10px] -z-10 shadow-md"
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                       />
                     )}
-                    <LayoutGrid size={18} strokeWidth={2.5} />
+                    <LayoutGrid size={16} strokeWidth={2.5} className="md:w-[18px] md:h-[18px]" />
                   </button>
                   <button 
                     onClick={() => setViewType('table')}
-                    className={`relative p-2 rounded-[10px] transition-colors duration-300 z-10 ${viewType === 'table' ? 'text-white' : 'text-slate-400 hover:text-slate-800'}`}
+                    className={`relative p-1.5 md:p-2 rounded-[8px] md:rounded-[10px] transition-colors duration-300 z-10 ${viewType === 'table' ? 'text-white' : 'text-slate-400 hover:text-slate-800'}`}
                   >
                     {viewType === 'table' && (
                       <motion.div
                         layoutId="viewTypeIndicator"
-                        className="absolute inset-0 bg-slate-900 rounded-[10px] -z-10 shadow-md"
+                        className="absolute inset-0 bg-slate-900 rounded-[8px] md:rounded-[10px] -z-10 shadow-md"
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                       />
                     )}
-                    <List size={18} strokeWidth={2.5} />
+                    <List size={16} strokeWidth={2.5} className="md:w-[18px] md:h-[18px]" />
                   </button>
                 </div>
               </div>
