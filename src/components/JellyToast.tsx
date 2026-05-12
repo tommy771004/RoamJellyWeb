@@ -8,6 +8,8 @@ export interface ToastProps {
   id: string;
   type: ToastType;
   message: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], removeToast: (id: string) => void }) {
@@ -32,6 +34,17 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
             {toast.type === 'warning' && <AlertCircle size={20} className="shrink-0 text-amber-100" />}
             {toast.type === 'info' && <Info size={20} className="shrink-0 text-slate-300" />}
             <span className="font-bold text-[14px] tracking-wide flex-1">{toast.message}</span>
+            {toast.actionLabel && toast.onAction && (
+              <button
+                onClick={() => {
+                  toast.onAction?.();
+                  removeToast(toast.id);
+                }}
+                className="px-3 py-1 rounded-full border border-white/20 bg-black/10 text-[12px] font-black tracking-widest uppercase hover:bg-black/20 transition-colors shrink-0"
+              >
+                {toast.actionLabel}
+              </button>
+            )}
             <button 
               onClick={() => removeToast(toast.id)}
               className="p-1 hover:bg-black/10 rounded-full transition-colors opacity-70 hover:opacity-100 shrink-0"

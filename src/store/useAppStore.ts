@@ -29,7 +29,7 @@ interface AppStore {
   setAuthenticated: (userId: string | null) => void;
 
   toasts: ToastProps[];
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType, options?: { actionLabel?: string; onAction?: () => void }) => void;
   removeToast: (id: string) => void;
 
   toastMessage: string | null;
@@ -82,9 +82,9 @@ export const useAppStore = create<AppStore>()(
       toasts: [],
       activeTripId: undefined,
       setActiveTripId: (id) => set({ activeTripId: id }),
-      showToast: (message, type = 'info') => {
+      showToast: (message, type = 'info', options) => {
         const id = Math.random().toString(36).substring(2, 9);
-        set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
+        set((state) => ({ toasts: [...state.toasts, { id, message, type, ...options }] }));
         setTimeout(() => {
           set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }));
         }, 4000);

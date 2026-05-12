@@ -19,7 +19,7 @@ import {
   fetchSettlementHistory,
 } from '../lib/workflowApi';
 import type { TripInfo, WeatherData, TripSummary, ChecklistItem, Settlement, SettlementHistoryEntry } from '../types/workflow';
-import { suggestPackingList } from '../lib/openrouterApi';
+import { AiRateLimitedError, suggestPackingList } from '../lib/openrouterApi';
 import { useToolsStore, Expense } from '../store/useToolsStore';
 import { useAppStore } from '../store/useAppStore';
 
@@ -208,8 +208,12 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
         }));
         setChecklist([...checklist, ...newItems]);
         showToast(`✨ AI 新增了 ${newItems.length} 項行李建議！`, 'success');
-      } catch {
-        showToast('AI 功能失敗，請確認 OpenRouter API Key 是否設定。', 'warning');
+      } catch (err) {
+        if (err instanceof AiRateLimitedError) {
+          showToast(err.message, 'warning');
+        } else {
+          showToast('AI 功能失敗，請確認 OpenRouter API Key 是否設定。', 'warning');
+        }
       } finally {
         setAiLoading(false);
       }

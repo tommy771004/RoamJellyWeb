@@ -38,6 +38,8 @@ const AUTH_REQUIRED = process.env.AUTH_REQUIRED === 'true' || process.env.NODE_E
 const OTA_PROVIDER_URL = process.env.OTA_PROVIDER_URL?.replace(/\/+$/, '');
 const OTA_PARTNER_BASE = process.env.OTA_PARTNER_BASE?.replace(/\/+$/, '') ?? '';
 export const app = express();
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
 const PORT = 3000;
 
 type TripRole = 'owner' | 'editor' | 'viewer';
@@ -81,9 +83,23 @@ type PlanningRecord = {
 
 type AuthedRequest = Request & { authUser?: AuthUser };
 
+type RateLimitBucket = {
+  count: number;
+  resetAt: number;
+};
+
+type RateLimitState = {
+  limit: number;
+  remaining: number;
+  resetAt: number;
+  retryAfterSeconds: number;
+  allowed: boolean;
+};
+
 const searchCache = new Map<string, SearchCacheEntry>();
 const searchHistoryFallback: SearchHistoryRecord[] = [];
 const planningFallbackByTrip = new Map<string, PlanningRecord[]>();
+const rateLimitFallback = new Map<string, RateLimitBucket>();
 
 const SEARCH_CACHE_TTL_MS = 10 * 60 * 1000;
 const SEARCH_CACHE_TTL_SECONDS = 10 * 60;
@@ -91,6 +107,13 @@ const SEARCH_HISTORY_KEY = 'history:search:global';
 const SEARCH_HISTORY_MAX = 200;
 const PLANNING_LOG_MAX = 500;
 const PLANNING_SNAPSHOT_TTL_SECONDS = 6 * 60 * 60;
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_GUEST_LIMIT = 8;
+const AUTH_LOGIN_LIMIT = 10;
+const AUTH_REGISTER_LIMIT = 5;
+const AI_WINDOW_MS = 15 * 60 * 1000;
+const AI_USER_LIMIT = 12;
+const AI_GUEST_LIMIT = 4;
 
 
 let redisClient: any | null = null;
@@ -126,6 +149,142 @@ function getTokenFromRequest(req: Request): string | null {
 function getRequestUserId(req: Request): string | null {
   return (req as AuthedRequest).authUser?.userId ?? null;
 }
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.trim()) {
+    return forwarded.split(',')[0]?.trim() || req.ip || 'unknown';
+  }
+  if (Array.isArray(forwarded) && forwarded.length > 0) {
+    return String(forwarded[0] ?? '').trim() || req.ip || 'unknown';
+  }
+  return req.ip || 'unknown';
+}
+
+function isGuestUserId(userId: string | null): boolean {
+  return typeof userId === 'string' && userId.startsWith('guest_');
+}
+
+function setRateLimitHeaders(res: Response, state: RateLimitState) {
+  res.setHeader('X-RateLimit-Limit', String(state.limit));
+  res.setHeader('X-RateLimit-Remaining', String(Math.max(0, state.remaining)));
+  res.setHeader('X-RateLimit-Reset', String(Math.ceil(state.resetAt / 1000)));
+}
+
+async function consumeRateLimit(bucketKey: string, limit: number, windowMs: number): Promise<RateLimitState> {
+  const now = Date.now();
+  const defaultResetAt = now + windowMs;
+
+  if (redisClient?.isOpen) {
+    const current = Number(await redisClient.incr(bucketKey));
+    if (current === 1) {
+      await redisClient.pExpire(bucketKey, windowMs);
+    }
+    const ttlMsRaw = Number(await redisClient.pTTL(bucketKey));
+    const ttlMs = ttlMsRaw > 0 ? ttlMsRaw : windowMs;
+    return {
+      limit,
+      remaining: Math.max(0, limit - current),
+      resetAt: now + ttlMs,
+      retryAfterSeconds: Math.max(1, Math.ceil(ttlMs / 1000)),
+      allowed: current <= limit,
+    };
+  }
+
+  const existing = rateLimitFallback.get(bucketKey);
+  if (!existing || existing.resetAt <= now) {
+    rateLimitFallback.set(bucketKey, { count: 1, resetAt: defaultResetAt });
+    return {
+      limit,
+      remaining: Math.max(0, limit - 1),
+      resetAt: defaultResetAt,
+      retryAfterSeconds: Math.max(1, Math.ceil(windowMs / 1000)),
+      allowed: true,
+    };
+  }
+
+  existing.count += 1;
+  rateLimitFallback.set(bucketKey, existing);
+  return {
+    limit,
+    remaining: Math.max(0, limit - existing.count),
+    resetAt: existing.resetAt,
+    retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
+    allowed: existing.count <= limit,
+  };
+}
+
+function createRateLimit(options: {
+  bucketPrefix: string;
+  limit: number;
+  windowMs: number;
+  message: string;
+  keyGenerator: (req: Request) => string | null;
+}) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const keyPart = options.keyGenerator(req);
+    if (!keyPart) {
+      next();
+      return;
+    }
+
+    const state = await consumeRateLimit(`${options.bucketPrefix}:${keyPart}`, options.limit, options.windowMs);
+    setRateLimitHeaders(res, state);
+    if (!state.allowed) {
+      res.setHeader('Retry-After', String(state.retryAfterSeconds));
+      res.status(429).json({ status: 'error', code: 'RATE_LIMITED', message: options.message });
+      return;
+    }
+
+    next();
+  };
+}
+
+const guestAuthLimiter = createRateLimit({
+  bucketPrefix: 'rl:auth:guest',
+  limit: AUTH_GUEST_LIMIT,
+  windowMs: AUTH_WINDOW_MS,
+  message: '訪客登入次數過多，請稍後再試。',
+  keyGenerator: (req) => getClientIp(req),
+});
+
+const loginLimiter = createRateLimit({
+  bucketPrefix: 'rl:auth:login',
+  limit: AUTH_LOGIN_LIMIT,
+  windowMs: AUTH_WINDOW_MS,
+  message: '登入嘗試次數過多，請稍後再試。',
+  keyGenerator: (req) => getClientIp(req),
+});
+
+const registerLimiter = createRateLimit({
+  bucketPrefix: 'rl:auth:register',
+  limit: AUTH_REGISTER_LIMIT,
+  windowMs: AUTH_WINDOW_MS,
+  message: '註冊請求過於頻繁，請稍後再試。',
+  keyGenerator: (req) => getClientIp(req),
+});
+
+const aiLimiter = createRateLimit({
+  bucketPrefix: 'rl:ai:user',
+  limit: AI_USER_LIMIT,
+  windowMs: AI_WINDOW_MS,
+  message: 'AI 服務暫時繁忙，請稍後 10 分鐘再試。',
+  keyGenerator: (req) => {
+    const userId = getRequestUserId(req);
+    return userId && !isGuestUserId(userId) ? userId : null;
+  },
+});
+
+const guestAiLimiter = createRateLimit({
+  bucketPrefix: 'rl:ai:guest',
+  limit: AI_GUEST_LIMIT,
+  windowMs: AI_WINDOW_MS,
+  message: '訪客 AI 額度已達上限，請稍後再試或登入帳號。',
+  keyGenerator: (req) => {
+    const userId = getRequestUserId(req);
+    return isGuestUserId(userId) ? getClientIp(req) : null;
+  },
+});
 
 function formatDateOnly(value?: Date | string | null): string | null {
   if (!value) return null;
@@ -583,6 +742,13 @@ async function startServer() {
       credentials: true,
     }),
   );
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+  });
   app.use(express.json({ limit: '1mb' }));
 
   app.get('/health', async (_req, res) => {
@@ -704,7 +870,7 @@ async function startServer() {
   }
 
   if (GUEST_AUTH_ENABLED) {
-    app.post('/api/auth/guest', async (req, res) => {
+    app.post('/api/auth/guest', guestAuthLimiter, async (req, res) => {
       const rawDisplayName = String(req.body?.display_name ?? '').trim();
       const displayName = (rawDisplayName || '訪客旅人').slice(0, 32);
       const suffix = Math.random().toString(36).slice(2, 8);
@@ -725,7 +891,7 @@ async function startServer() {
   }
 
   // ── Auth: Register ──────────────────────────────────────────────────────────
-  app.post('/api/auth/register', async (req, res) => {
+  app.post('/api/auth/register', registerLimiter, async (req, res) => {
     const username = String(req.body?.username ?? '').trim();
     const password = String(req.body?.password ?? '');
     const displayName = String(req.body?.display_name ?? username).trim() || username;
@@ -757,7 +923,7 @@ async function startServer() {
   });
 
   // ── Auth: Login ─────────────────────────────────────────────────────────────
-  app.post('/api/auth/login', async (req, res) => {
+  app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const username = String(req.body?.username ?? '').trim();
     const password = String(req.body?.password ?? '');
 
@@ -1143,7 +1309,7 @@ async function startServer() {
     res.json([]);
   });
 
-  app.post('/api/generate/itinerary', async (req, res) => {
+  app.post('/api/generate/itinerary', guestAiLimiter, aiLimiter, async (req, res) => {
     if (!getRequestUserId(req) && AUTH_REQUIRED) {
       res.status(401).json({ status: 'error', message: 'unauthorized' });
       return;
@@ -1161,7 +1327,7 @@ async function startServer() {
   });
 
   // ── Spot-level regenerate ─────────────────────────────────────────────────
-  app.post('/api/itinerary/regenerate-spot', async (req, res) => {
+  app.post('/api/itinerary/regenerate-spot', guestAiLimiter, aiLimiter, async (req, res) => {
     const { trip_id, node_id, destination, day, current_date, current_time, current_title, current_category, notes, preserve_time_window } = req.body ?? {};
 
     if (!trip_id || !node_id) {
@@ -1225,7 +1391,7 @@ async function startServer() {
     res.json({ status: 'success', data: spot });
   });
 
-  app.post('/api/generate/packing-list', async (req, res) => {
+  app.post('/api/generate/packing-list', guestAiLimiter, aiLimiter, async (req, res) => {
     if (!getRequestUserId(req) && AUTH_REQUIRED) {
       res.status(401).json({ status: 'error', message: 'unauthorized' });
       return;

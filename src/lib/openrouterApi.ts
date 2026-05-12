@@ -113,17 +113,28 @@ export async function suggestItineraryWithForm(input: SuggestItineraryInput): Pr
 
 export async function suggestPackingList(destination: string, season: string): Promise<string[]> {
   try {
+    const token = getStoredToken();
     const res = await fetch('/api/generate/packing-list', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ destination, days: 5, weatherContext: season })
     });
+    if (res.status === 429) {
+      const data = await res.json().catch(() => ({}));
+      throw new AiRateLimitedError(data.message || 'AI 行李建議已達本時段上限，請稍後再試。');
+    }
     if (!res.ok) throw new Error('API failed');
     const data = await res.json();
     if (data.status === 'success' && Array.isArray(data.data)) {
       return data.data.map((item: any) => item.text || item);
     }
   } catch (err) {
+    if (err instanceof AiRateLimitedError) {
+      throw err;
+    }
     console.error('Failed to suggestion packing list via API', err);
   }
   // Fallback if network or backend fails
