@@ -16,8 +16,9 @@ import {
   shareText,
   submitLedgerExpense,
   updateChecklist,
+  fetchSettlementHistory,
 } from '../lib/workflowApi';
-import type { TripInfo, WeatherData, TripSummary, ChecklistItem, Settlement } from '../types/workflow';
+import type { TripInfo, WeatherData, TripSummary, ChecklistItem, Settlement, SettlementHistoryEntry } from '../types/workflow';
 import { suggestPackingList } from '../lib/openrouterApi';
 import { useToolsStore, Expense } from '../store/useToolsStore';
 import { useAppStore } from '../store/useAppStore';
@@ -65,6 +66,7 @@ interface ToolsTabState {
   destination: string;
   checklist: ChecklistItem[];
   settlements: Settlement[];
+  settlementHistory: SettlementHistoryEntry[];
   expenses: Expense[];
   members: string[];
   expenseByCurrency: Record<string, number>;
@@ -102,7 +104,7 @@ function useToolsTabContext() {
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 function ToolsTabProvider({ children }: { children: React.ReactNode }) {
-  const { checklist, setChecklist, revertCheckItem, settlements, setSettlements, members, setMembers, expenses, addExpense, clearSettlementRecord } =
+  const { checklist, setChecklist, revertCheckItem, settlements, setSettlements, members, setMembers, expenses, addExpense, removeExpense } =
     useToolsStore();
   const { showToast, activeTripId: tripId } = useAppStore();
 
@@ -114,6 +116,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [tripInfo, setTripInfo] = useState<TripInfo | null>(null);
+  const [settlementHistory, setSettlementHistory] = useState<SettlementHistoryEntry[]>([]);
   const [form, setForm] = useState<ExpenseForm>({
     title: '',
     amount: '',
@@ -140,7 +143,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           initialCurrency = getCurrencyFromDestination(tripInfoData.destination);
         }
 
-        const memberNames = collaboratorsData.map((m: any) => m.name);
+        const memberNames = collaboratorsData.map((m: any) => m.name).filter(Boolean);
         setChecklist(checklistData);
         if (memberNames.length > 0) {
           setMembers(memberNames);
@@ -234,6 +237,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       setErrors({});
+      let optimisticExpenseId: string | null = null;
       try {
         setSubmitting(true);
         const expense = {
@@ -245,15 +249,22 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           splitWith: form.splitWith,
           date: new Date().toISOString()
         };
+        optimisticExpenseId = expense.id;
         addExpense(expense);
         
         if (tripId) {
-          await submitLedgerExpense(tripId, expense);
+          const result = await submitLedgerExpense(tripId, expense);
+          if (Array.isArray(result?.settlements)) {
+            setSettlements(result.settlements);
+          }
         }
 
         showToast('分帳已更新，已算出最新應付關係。', 'success');
         setForm((prev) => ({ ...prev, title: '', amount: '', splitWith: members }));
       } catch {
+        if (optimisticExpenseId) {
+          removeExpense(optimisticExpenseId);
+        }
         showToast('分帳送出失敗，請稍後再試。', 'warning');
       } finally {
         setSubmitting(false);
@@ -273,9 +284,14 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     async handleClearSettlement(settlement) {
       setClearingId(settlement.id);
       try {
-        clearSettlementRecord(settlement.from, settlement.to, settlement.currency);
         if (tripId) {
-           await clearSettlement(tripId);
+           await clearSettlement(tripId, settlement.from, settlement.to, settlement.currency);
+           const [history, fresh] = await Promise.all([
+             fetchSettlementHistory(tripId),
+             fetchSettlements(tripId),
+           ]);
+           setSettlementHistory(history);
+           if (Array.isArray(fresh)) setSettlements(fresh);
         }
         showToast(`${settlement.from} → ${settlement.to} 已標記結清。`, 'success');
       } catch {
@@ -286,6 +302,11 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     },
   };
 
+  useEffect(() => {
+    if (!tripId) return;
+    void fetchSettlementHistory(tripId).then(setSettlementHistory).catch(() => {});
+  }, [tripId]);
+
   const state: ToolsTabState = {
     loading,
     tip,
@@ -293,6 +314,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     destination: tripInfo?.destination ?? '',
     checklist,
     settlements,
+    settlementHistory,
     expenses,
     members,
     expenseByCurrency,
@@ -313,9 +335,23 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function WeatherCard() {
-  const { state: { weather, destination } } = useToolsTabContext();
+  const { state: { weather, destination, loading } } = useToolsTabContext();
   const { isOffline } = useAppStore();
   const Icon = weather && weather.rain_prob >= 50 ? CloudRain : Sun;
+
+  if (!weather && loading) {
+    return (
+      <GlassCard className="!p-6 sm:!p-8 mb-8 flex flex-col gap-4 animate-pulse">
+        <div className="h-5 w-32 bg-slate-200 rounded-full" />
+        <div className="h-3 w-24 bg-slate-100 rounded-full" />
+        <div className="flex items-end justify-between mt-2">
+          <div className="h-8 w-24 bg-fuchsia-100 rounded-full" />
+          <div className="h-14 w-16 bg-slate-100 rounded-xl" />
+        </div>
+        <div className="h-12 w-full bg-slate-100 rounded-xl" />
+      </GlassCard>
+    );
+  }
   
   const getOutfitSuggestion = (temp?: number, rainProb?: number) => {
     if (!temp) return { title: '輕便舒適穿搭', desc: '建議搭飛機時洋蔥式穿搭，並預備舒適好走的鞋子。' };
@@ -335,36 +371,69 @@ function WeatherCard() {
   const outfit = getOutfitSuggestion(weather?.temp_current, weather?.rain_prob);
 
   return (
-    <GlassCard className="!p-6 sm:!p-8 mb-8 flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-xl group">
-      <div className="absolute top-0 right-0 w-48 h-48 bg-fuchsia-100 rounded-full translate-x-1/3 -translate-y-1/3 opacity-30 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+    <GlassCard className="!p-5 sm:!p-8 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-500 hover:shadow-xl group border-white/80">
+      <div className="absolute -top-10 -right-10 w-48 h-48 sm:w-64 sm:h-64 bg-gradient-to-br from-fuchsia-300/40 to-orange-300/20 rounded-full blur-[40px] pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+      <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-sky-300/20 rounded-full blur-[30px] pointer-events-none group-hover:scale-125 transition-transform duration-700 delay-75" />
+      
       <div className="relative z-10">
-        <h2 className="font-serif text-3xl text-[#2C302E] mb-1">明天在 {destination || '您的目的地'}</h2>
-        <div className="flex flex-col gap-1 mb-6">
-          <p className="text-[11px] uppercase tracking-widest text-fuchsia-600/70 font-bold">Local Weather & Outfit</p>
+        <h2 className="font-serif text-[26px] sm:text-3xl text-[#2C302E] mb-1 leading-tight">明天在 {destination || '您的目的地'}</h2>
+        <div className="flex flex-col gap-1 mb-5 sm:mb-6">
+          <p className="text-[10px] sm:text-[11px] uppercase tracking-widest text-fuchsia-600/70 font-black">Local Weather & Outfit</p>
           {isOffline && (
-            <span className="text-[10px] text-amber-500 font-bold bg-amber-50 w-fit px-2 py-0.5 rounded-full border border-amber-200">最後更新於 2 小時前</span>
+            <span className="text-[9px] sm:text-[10px] text-amber-600 font-bold bg-amber-50 w-fit px-2.5 py-0.5 rounded-full border border-amber-200 shadow-sm mt-1">最後更新於 2 小時前</span>
           )}
         </div>
         
-        <div className="flex items-end justify-between mb-6">
-          <div className="flex bg-fuchsia-50 rounded-full px-4 py-2 items-center gap-2 border border-fuchsia-100/50">
-            <Icon size={18} className="text-fuchsia-500" />
-            <span className="text-fuchsia-700 font-medium text-sm">{weather && weather.rain_prob >= 50 ? '可能有雨' : '晴朗好天氣'}</span>
+        <div className="flex items-center sm:items-end justify-between mb-5 sm:mb-6 bg-white/40 p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-white/50 shadow-sm">
+          <div className="flex flex-col gap-3">
+             <div className="flex bg-white/80 backdrop-blur-md rounded-full px-3.5 py-1.5 sm:px-4 sm:py-2 items-center gap-2 border border-slate-100 shadow-sm w-fit">
+               <Icon size={16} className="text-fuchsia-500 sm:w-[18px] sm:h-[18px]" strokeWidth={2.5} />
+               <span className="text-slate-700 font-black text-xs sm:text-sm">{weather && weather.rain_prob >= 50 ? '可能有雨' : '晴朗好天氣'}</span>
+             </div>
+             {weather && (
+               <span className="text-slate-500 font-bold text-[10px] sm:text-xs tracking-wider pl-1">
+                 最高 {weather.daily?.[0]?.temp_max ?? '--'}° / 降雨 {weather.rain_prob}%
+               </span>
+             )}
           </div>
-          <div className="text-[56px] leading-none font-light tracking-tight text-[#2C302E]">
+          <div className="text-[48px] sm:text-[56px] leading-none font-black tracking-tighter text-slate-800 drop-shadow-sm">
             {weather ? weather.temp_current : '--'}°
           </div>
         </div>
 
-        <div className="bg-fuchsia-50/50 rounded-[24px] p-4 flex items-center gap-4 border border-fuchsia-100/30">
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl shadow-sm shrink-0">
+        <div className="bg-white/60 backdrop-blur-md rounded-[20px] sm:rounded-[24px] p-4 flex items-center gap-4 border border-white/60 shadow-sm mb-5 sm:mb-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-gradient-to-br from-fuchsia-100 to-pink-50 flex items-center justify-center text-lg sm:text-xl shadow-inner border border-white shrink-0 group-hover:rotate-6 transition-transform">
               👗
           </div>
           <div className="flex flex-col">
-            <span className="text-[#2C302E] font-bold">{outfit.title}</span>
-            <span className="text-slate-500 text-sm font-medium leading-relaxed mt-0.5">{outfit.desc}</span>
+            <span className="text-slate-800 font-black text-sm">{outfit.title}</span>
+            <span className="text-slate-500 text-[11px] sm:text-sm font-bold leading-snug mt-0.5">{outfit.desc}</span>
           </div>
         </div>
+
+        {weather && weather.daily && weather.daily.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-fuchsia-100/50 pt-4">
+            <span className="text-[10px] uppercase tracking-widest text-fuchsia-600/70 font-bold mb-1">14-Day Forecast</span>
+            <div className="flex overflow-x-auto pb-4 -mx-2 px-2 gap-3 snap-x hide-scrollbar">
+              {weather.daily.map((day: any, idx: number) => {
+                const date = new Date(day.date);
+                const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(date);
+                const isRainy = day.rain_prob >= 50;
+                const DayIcon = isRainy ? CloudRain : Sun;
+                return (
+                  <div key={idx} className="flex flex-col items-center flex-shrink-0 bg-white/60 border border-fuchsia-50 shadow-sm rounded-2xl w-[68px] py-3 snap-center">
+                    <span className="text-xs font-bold text-slate-500 mb-2">{idx === 0 ? 'Today' : dayName}</span>
+                    <DayIcon size={20} className={isRainy ? 'text-blue-400' : 'text-amber-400'} />
+                    <div className="mt-3 flex gap-1 items-baseline font-bold">
+                      <span className="text-sm text-slate-700">{day.temp_max}°</span>
+                      <span className="text-[10px] text-slate-400">{day.temp_min}°</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </GlassCard>
   );
@@ -372,38 +441,77 @@ function WeatherCard() {
 
 function ChecklistSection() {
   const { state: { checklist, aiLoading }, actions } = useToolsTabContext();
+  const { isOffline } = useAppStore();
   const packedCount = checklist.filter((i) => i.checked).length;
   
   return (
     <section className="mb-8 font-sans">
-      <div className="flex justify-between items-end mb-4 px-2">
-        <h2 className="font-serif text-[28px] text-[#2C302E]">My Suitcase</h2>
-        <span className="text-[11px] uppercase tracking-wider font-bold text-fuchsia-600 bg-fuchsia-100/80 px-4 py-1.5 rounded-full border border-fuchsia-200">
+      <div className="flex justify-between items-end mb-4 sm:mb-6 px-1 sm:px-2">
+        <h2 className="font-serif text-[26px] sm:text-[28px] text-[#2C302E]">My Suitcase</h2>
+        <span className="text-[10px] sm:text-[11px] uppercase tracking-widest font-black text-fuchsia-600 bg-fuchsia-100/80 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-fuchsia-200">
           {packedCount}/{checklist.length} Packed
         </span>
       </div>
       
-      <GlassCard className="!p-6 mb-4">
-        <div className="flex flex-col gap-3">
-          {checklist.length === 0 && <span className="text-sm text-slate-400 italic">目前沒有行李項目</span>}
-          {checklist.map((item) => (
-            <label key={item.id} className="flex items-center gap-4 group cursor-pointer p-2 rounded-2xl hover:bg-fuchsia-50/50 transition-colors" onClick={(e) => { e.preventDefault(); actions.toggleCheck(item); }}>
-              <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
-                <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
-                <div className={`w-full h-full rounded-full border transition-all shadow-sm ${item.checked ? 'bg-fuchsia-500 border-fuchsia-500' : 'border-slate-200 bg-slate-50'}`}></div>
-                <Check size={16} className={`text-white absolute transition-opacity ${item.checked ? 'opacity-100' : 'opacity-0'}`} strokeWidth={3} />
+      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6">
+        {checklist.length === 0 && <span className="text-sm text-slate-400 italic">目前沒有行李項目</span>}
+        {(() => {
+          const CAT_META: Record<string, { label: string; emoji: string }> = {
+            documents:   { label: '證件', emoji: '🪪' },
+            electronics: { label: '電子', emoji: '🔌' },
+            clothing:    { label: '服裝', emoji: '👕' },
+            toiletries:  { label: '盥洗', emoji: '🧴' },
+            other:       { label: '其他', emoji: '🎒' },
+          };
+          const ORDER = ['documents', 'electronics', 'clothing', 'toiletries', 'other'];
+          const grouped = ORDER.map(cat => ({
+            cat,
+            meta: CAT_META[cat],
+            items: checklist.filter((i: any) => (i.category ?? 'other') === cat),
+          })).filter(g => g.items.length > 0);
+          return grouped.map(({ cat, meta, items: catItems }) => (
+            <div key={cat} className="mb-4 last:mb-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base leading-none">{meta.emoji}</span>
+                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{meta.label}</span>
               </div>
-              <span className={`text-[15px] font-medium transition-all ${item.checked ? 'line-through opacity-40 text-slate-500' : 'text-[#2C302E]'}`}>
-                {item.text}
-              </span>
-            </label>
-          ))}
-        </div>
+              <div className="flex flex-col gap-2">
+                {catItems.map((item: any) => (
+                  <label key={item.id} className={`flex items-center gap-4 group p-2 rounded-2xl transition-colors ${isOffline ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-fuchsia-50/50'}`} onClick={(e) => { e.preventDefault(); if (!isOffline) actions.toggleCheck(item); }}>
+                    <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
+                      <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
+                      <motion.div
+                        animate={item.checked ? { scale: [1, 1.2, 1], backgroundColor: '#a855f7' } : { scale: 1, backgroundColor: '#f8fafc' }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 28, duration: 0.3 }}
+                        className={`w-full h-full rounded-full border shadow-sm ${item.checked ? 'border-fuchsia-500' : 'border-slate-200'}`}
+                      />
+                      <motion.div
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        initial={false}
+                        animate={item.checked ? { scale: 1, opacity: 1 } : { scale: 0.5, opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 600, damping: 30 }}
+                      >
+                        <Check size={14} className="text-white" strokeWidth={3} />
+                      </motion.div>
+                    </div>
+                    <motion.span
+                      animate={item.checked ? { opacity: 0.4, x: 0 } : { opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={`text-[15px] font-medium ${item.checked ? 'line-through text-slate-500' : 'text-[#2C302E]'}`}
+                    >
+                      {item.text}
+                    </motion.span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ));
+        })()}
       </GlassCard>
       
       <Button
         onClick={() => void actions.handleAiPackingList()}
-        disabled={aiLoading}
+        disabled={aiLoading || isOffline}
         size="lg"
         className="w-full mt-2 rounded-full h-14 font-bold text-[15px]"
       >
@@ -416,6 +524,7 @@ function ChecklistSection() {
 
 function LedgerSection() {
   const { state: { form, errors, members, submitting, expenses }, actions } = useToolsTabContext();
+  const { isOffline } = useAppStore();
   return (
     <GlassCard className="!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300">
       <div className="absolute -top-10 -left-10 w-32 h-32 bg-purple-100/40 rounded-full blur-[20px] pointer-events-none" />
@@ -534,7 +643,7 @@ function LedgerSection() {
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${form.payer === member ? 'bg-white text-primary shadow-sm' : 'bg-slate-200 text-slate-500'}`}>
-                   {member.charAt(0).toUpperCase()}
+                   {member?.charAt(0).toUpperCase() || '?'}
                 </div>
                 <span className="truncate max-w-[150px]">{member}</span>
               </Button>
@@ -565,7 +674,7 @@ function LedgerSection() {
                     <Check size={10} className={`text-white transition-opacity ${selected ? 'opacity-100' : 'opacity-0'}`} strokeWidth={4} />
                   </div>
                   <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 shadow-sm ${selected ? 'bg-primary/20 text-primary-700' : 'bg-slate-200 text-slate-500'}`}>
-                     {member.charAt(0).toUpperCase()}
+                     {member?.charAt(0).toUpperCase() || '?'}
                   </div>
                   <span className="truncate max-w-[150px]">{member}</span>
                 </Button>
@@ -577,7 +686,7 @@ function LedgerSection() {
 
         <Button
           onClick={() => void actions.submitExpense()}
-          disabled={submitting}
+          disabled={submitting || isOffline}
           size="lg"
           className="w-full mt-4 py-6 rounded-2xl"
         >
@@ -590,12 +699,13 @@ function LedgerSection() {
 
 function SettlementsSection() {
   const { state: { settlements, expenseByCurrency, clearingId }, actions } = useToolsTabContext();
+  const { isOffline } = useAppStore();
   const currencyEntries = Object.entries(expenseByCurrency);
   return (
-    <section className="flex flex-col mb-32">
-      <div className="flex items-center justify-between px-4 mb-6">
-        <h3 className="font-serif text-[26px] text-[#2C302E]">結算清單 (誰應付誰)</h3>
-        <div className="flex flex-row flex-wrap justify-end gap-2">
+    <section className="flex flex-col mb-16 sm:mb-32">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 sm:px-4 mb-4 sm:mb-6 gap-3">
+        <h3 className="font-serif text-[24px] sm:text-[26px] text-[#2C302E]">結算清單 (誰應付誰)</h3>
+        <div className="flex flex-row flex-wrap sm:justify-end gap-2 overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
           {currencyEntries.length === 0 ? (
             <span className="text-[12px] font-bold text-slate-400 shrink-0">尚無款項</span>
           ) : (
@@ -632,7 +742,7 @@ function SettlementsSection() {
                     <td data-label="付款人">
                       <div className="flex justify-end md:justify-start items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 font-black text-sm">
-                          {settlement.from.charAt(0)}
+                          {settlement.from?.charAt(0) || '?'}
                         </div>
                         <span className="text-[15px] font-bold text-[#2C302E]">{settlement.from}</span>
                       </div>
@@ -664,7 +774,7 @@ function SettlementsSection() {
                           variant="default"
                           size="sm"
                           onClick={() => void actions.handleClearSettlement(settlement)}
-                          disabled={clearingId === settlement.id}
+                          disabled={clearingId === settlement.id || isOffline}
                         >
                           <CheckCircle2 size={14} className="opacity-90 mr-1.5" />
                           <span className="text-[11px] font-bold tracking-wide uppercase">{clearingId === settlement.id ? '處理中' : '結清'}</span>
@@ -677,6 +787,43 @@ function SettlementsSection() {
             </table>
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+function SettlementHistorySection() {
+  const { state: { settlementHistory } } = useToolsTabContext();
+  if (settlementHistory.length === 0) return null;
+  return (
+    <section className="flex flex-col mb-12">
+      <div className="flex items-center justify-between px-4 mb-4">
+        <h3 className="font-serif text-[20px] text-[#2C302E]">結清紀錄</h3>
+        <span className="text-[11px] text-slate-400 font-medium">{settlementHistory.length} 筆</span>
+      </div>
+      <div className="flex flex-col gap-3 w-full">
+        {settlementHistory.map((entry) => (
+          <GlassCard key={entry.clearedAt} className="!p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-green-50 border border-green-100 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={18} className="text-green-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-slate-700">
+                {new Date(entry.clearedAt).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })} 結清
+              </p>
+              <p className="text-[12px] text-slate-400 mt-0.5">
+                {entry.count} 筆費用 ・ 涉及 {entry.payers.length} 位成員
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-0.5 shrink-0">
+              {Object.entries(entry.currencyTotals ?? {}).map(([cur, amt]) => (
+                <span key={cur} className="text-[13px] font-black text-green-600">
+                  {cur} {Math.round(amt).toLocaleString()}
+                </span>
+              ))}
+            </div>
+          </GlassCard>
+        ))}
       </div>
     </section>
   );
@@ -805,6 +952,7 @@ function ToolsTabContent() {
           <div className="flex flex-col gap-y-8">
             <LedgerSection />
             <SettlementsSection />
+            <SettlementHistorySection />
           </div>
         </div>
 
