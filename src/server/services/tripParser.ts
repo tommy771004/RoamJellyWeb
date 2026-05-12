@@ -256,44 +256,14 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
     
   } catch (error: any) {
     if (error.message && error.message.includes('觸發防爬蟲機制')) {
-      console.warn('Trip.com Scraper blocked or timed out, returning synthetic fallback data.');
+      console.warn('Trip.com Scraper blocked or timed out, returning no Trip.com data so the API can fall back to other providers.');
     } else {
       console.error('Trip.com Scraper Error:', error);
     }
     
     if (browser) await browser.close();
-    
-    // Serverless fallback: dynamically generate plausible "Trip.com" data since headless browser scraping is generally blocked on AWS/Vercel
-    const generatedFlights: FlightData[] = [];
-    const airlines = ['長榮航空', '中華航空', '星宇航空', '台灣虎航', '樂桃航空', '香港航空'];
-    const baseHour = 8;
-    
-    for (let i = 0; i < 5; i++) {
-       const airline = airlines[i % airlines.length];
-       const depHour = baseHour + i * 2;
-       const stops = (airline.includes('虎航') || airline.includes('樂桃') || airline.includes('香港航空')) ? 0 : 1;
-       const price = 6000 + Math.floor(Math.random() * 4000) + (stops === 0 ? 2000 : 0);
-       
-       generatedFlights.push({
-         id: `tripcom_sim_${date}_${i}_${Date.now()}`,
-         type: 'flight' as const,
-         provider: 'Trip.com',
-         title: `${origin} → ${destination} · ${stops === 0 ? '直飛' : stops + ' 轉'}`,
-         price,
-         currency: 'TWD',
-         emoji: '✈️',
-         affiliate_url: url,
-         details: {
-           airline,
-           departure: `${String(depHour).padStart(2, '0')}:00`,
-           arrival: `${String(depHour + 2).padStart(2, '0')}:30`,
-           stops,
-           duration: stops === 0 ? '2h 30m' : '5h 15m'
-         }
-       });
-    }
-    
-    return generatedFlights;
+
+    return [];
   }
 }
 
