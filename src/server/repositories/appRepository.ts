@@ -1,6 +1,20 @@
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, asc, isNull, isNotNull } from 'drizzle-orm';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
+
+function coerceNodeTimestamp(node: any) {
+  if (node.timestamp) {
+    const parsed = new Date(node.timestamp);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  if (node.date && node.time) {
+    const parsed = new Date(`${node.date}T${node.time}:00`);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  return null;
+}
 
 export class AppRepository {
 
@@ -37,12 +51,12 @@ export class AppRepository {
     }).onConflictDoNothing();
   }
 
-  async ensureUser(userId: string, username: string) {
+  async ensureUser(userId: string, username: string, displayName?: string) {
     if (!this.db) return;
     await this.db.insert(schema.users).values({
       userId,
       username,
-      displayName: username,
+      displayName: displayName || username,
     }).onConflictDoNothing();
   }
 
@@ -64,46 +78,91 @@ export class AppRepository {
 
   async getItineraryNodes(tripId: string) {
     if (!this.db) return [];
-    return await this.db.select().from(schema.itineraryNodes).where(eq(schema.itineraryNodes.tripId, tripId));
+    return await this.db
+      .select()
+      .from(schema.itineraryNodes)
+      .where(eq(schema.itineraryNodes.tripId, tripId))
+      .orderBy(
+        asc(schema.itineraryNodes.date),
+        asc(schema.itineraryNodes.day),
+        asc(schema.itineraryNodes.sortOrder),
+        asc(schema.itineraryNodes.time),
+        asc(schema.itineraryNodes.createdAt),
+      );
   }
 
   async upsertItineraryNode(tripId: string, node: any) {
     if (!this.db) return;
-    const ts = node.timestamp ? new Date(node.timestamp) : null;
+    const ts = coerceNodeTimestamp(node);
+    const sortOrder = Number.isFinite(Number(node.sort_order ?? node.sortOrder))
+      ? Number(node.sort_order ?? node.sortOrder)
+      : 0;
     await this.db.insert(schema.itineraryNodes).values({
       nodeId: node.node_id,
       tripId,
       day: node.day,
+      date: node.date ?? (ts ? ts.toISOString().slice(0, 10) : null),
       time: node.time,
       timestamp: ts,
+      sortOrder,
       title: node.title,
       emoji: node.emoji,
       category: node.category,
       lat: node.lat,
       lng: node.lng,
       description: node.description,
+      aiNote: node.ai_note ?? node.aiNote,
+      intensity: node.intensity,
       isVisited: node.is_visited ?? false,
       transportToNext: node.transport_to_next,
       imageUrl: node.image_url,
+      attachments: Array.isArray(node.attachments) ? node.attachments : [],
       linkedFactId: node.linkedFactId || node.linked_fact_id,
     }).onConflictDoUpdate({
       target: schema.itineraryNodes.nodeId,
       set: {
         day: node.day,
+        date: node.date ?? (ts ? ts.toISOString().slice(0, 10) : null),
         time: node.time,
         timestamp: ts,
+        sortOrder,
         title: node.title,
         emoji: node.emoji,
         category: node.category,
         lat: node.lat,
         lng: node.lng,
         description: node.description,
+        aiNote: node.ai_note ?? node.aiNote,
+        intensity: node.intensity,
         isVisited: node.is_visited ?? false,
         transportToNext: node.transport_to_next,
         imageUrl: node.image_url,
+        attachments: Array.isArray(node.attachments) ? node.attachments : [],
         linkedFactId: node.linkedFactId || node.linked_fact_id,
       }
     });
+  }
+
+  async reorderItineraryNodes(tripId: string, nodes: Array<{ node_id: string; day?: number; date?: string | null; time?: string | null; timestamp?: string | null; sort_order?: number | null }>) {
+    if (!this.db) return;
+
+    for (const node of nodes) {
+      const ts = coerceNodeTimestamp(node);
+      const sortOrder = Number.isFinite(Number(node.sort_order))
+        ? Number(node.sort_order)
+        : 0;
+
+      await this.db
+        .update(schema.itineraryNodes)
+        .set({
+          day: node.day,
+          date: node.date ?? (ts ? ts.toISOString().slice(0, 10) : null),
+          time: node.time ?? undefined,
+          timestamp: ts,
+          sortOrder,
+        })
+        .where(and(eq(schema.itineraryNodes.tripId, tripId), eq(schema.itineraryNodes.nodeId, node.node_id)));
+    }
   }
 
   async getPublicTrips(limit: number) {
@@ -123,13 +182,27 @@ export class AppRepository {
       .where(eq(schema.tripMembers.role, 'owner'))
       .limit(limit);
       
-    // Transform to handbook format
+    const idHash = (s: string) => [...s].reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const DEST_COVERS: [string, string][] = [
+      ['tokyo', 'photo-1542051841857-5f90071e7989'],
+      ['osaka', 'photo-1590484512398-33fb39eff960'],
+      ['kyoto', 'photo-1493976040374-85c8e12f0c0e'],
+      ['seoul', 'photo-1538669715315-155098f0fb1d'],
+      ['paris', 'photo-1502602898657-3e91760cbb34'],
+      ['bali',  'photo-1537996194471-e657df975ab4'],
+    ];
+    const getCover = (dest: string) => {
+      const lower = (dest ?? '').toLowerCase();
+      const match = DEST_COVERS.find(([k]) => lower.includes(k));
+      const photoId = match ? match[1] : DEST_COVERS[0][1];
+      return `https://images.unsplash.com/${photoId}?w=800&auto=format&fit=crop`;
+    };
     return rows.map((r: any) => ({
        id: r.id,
        title: r.title,
        author: r.author || 'Anonymous',
-       likes: Math.floor(Math.random() * 1000), // Random likes for demo as we don't have likes count
-       cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800'
+       likes: 100 + (idHash(String(r.id)) % 900),
+       cover: getCover(r.destination ?? ''),
     }));
   }
 
@@ -218,7 +291,40 @@ export class AppRepository {
 
   async getChecklist(tripId: string) {
     if (!this.db) return [];
-    return await this.db.select().from(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId));
+    let rows = await this.db.select().from(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId));
+    
+    if (rows.length === 0) {
+      try {
+        // Only insert defaults if the trip actually exists
+        const tripExists = await this.db.select({ id: schema.trips.id }).from(schema.trips).where(eq(schema.trips.id, tripId));
+        if (tripExists.length === 0) {
+          console.warn(`Trip ${tripId} not found when generating default checklist, skipping insert`);
+          return [];
+        }
+
+        const defaults = [
+          { tripId, content: '護照 / 簽證', completed: false, category: 'documents' },
+          { tripId, content: '當地貨幣 / 信用卡', completed: false, category: 'documents' },
+          { tripId, content: '手機 / 充電線', completed: false, category: 'electronics' },
+          { tripId, content: '轉換插頭', completed: false, category: 'electronics' },
+          { tripId, content: '行動電源', completed: false, category: 'electronics' },
+          { tripId, content: '換洗衣物', completed: false, category: 'clothing' },
+          { tripId, content: '舒適步行鞋', completed: false, category: 'clothing' },
+          { tripId, content: '盥洗用品', completed: false, category: 'toiletries' },
+          { tripId, content: '防曬乳', completed: false, category: 'toiletries' },
+          { tripId, content: '常備藥品', completed: false, category: 'other' },
+        ];
+        await this.db.insert(schema.checklistItems).values(defaults);
+        rows = await this.db.select().from(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId));
+      } catch (e) {
+        console.error('Failed to insert default checklist item:', e);
+        return [
+          { id: 'default-1', tripId, content: '護照 / 簽證', completed: false },
+          { id: 'default-2', tripId, content: '手機 / 充電線', completed: false }
+        ];
+      }
+    }
+    return rows;
   }
 
   async updateChecklist(tripId: string, items: any[]) {
@@ -227,8 +333,9 @@ export class AppRepository {
     if (items.length > 0) {
       await this.db.insert(schema.checklistItems).values(items.map(it => ({
         tripId,
-        content: it.content,
-        completed: it.completed ?? false
+        content: it.content || it.text || '',
+        completed: it.completed ?? it.checked ?? false,
+        category: it.category ?? 'other',
       })));
     }
     return true;
@@ -247,7 +354,9 @@ export class AppRepository {
 
   async getAggregatedSettlements(tripId: string) {
     if (!this.db) return [];
-    const rows = await this.db.select().from(schema.expenses).where(eq(schema.expenses.tripId, tripId));
+    const rows = await this.db.select().from(schema.expenses).where(
+      and(eq(schema.expenses.tripId, tripId), isNull(schema.expenses.clearedAt))
+    );
     const members = await this.db.select().from(schema.tripMembers).where(eq(schema.tripMembers.tripId, tripId));
     
     if (members.length === 0 || rows.length === 0) return [];
@@ -303,8 +412,32 @@ export class AppRepository {
 
   async clearSettlements(tripId: string) {
     if (!this.db) return false;
-    await this.db.delete(schema.expenses).where(eq(schema.expenses.tripId, tripId));
+    await this.db
+      .update(schema.expenses)
+      .set({ clearedAt: new Date() })
+      .where(and(eq(schema.expenses.tripId, tripId), isNull(schema.expenses.clearedAt)));
     return true;
+  }
+
+  async getSettlementHistory(tripId: string) {
+    if (!this.db) return [];
+    const rows = await this.db
+      .select()
+      .from(schema.expenses)
+      .where(and(eq(schema.expenses.tripId, tripId), isNotNull(schema.expenses.clearedAt)))
+      .orderBy(asc(schema.expenses.clearedAt));
+
+    const grouped: Record<string, { clearedAt: string; count: number; payers: string[]; currencyTotals: Record<string, number> }> = {};
+    for (const r of rows) {
+      const utc8 = new Date(r.clearedAt!.getTime() + 8 * 60 * 60 * 1000);
+      const key = utc8.toISOString().slice(0, 10);
+      if (!grouped[key]) grouped[key] = { clearedAt: r.clearedAt!.toISOString(), count: 0, payers: [], currencyTotals: {} };
+      grouped[key].count += 1;
+      if (!grouped[key].payers.includes(r.payerId)) grouped[key].payers.push(r.payerId);
+      const cur = r.currency ?? 'TWD';
+      grouped[key].currencyTotals[cur] = (grouped[key].currencyTotals[cur] ?? 0) + r.amount;
+    }
+    return Object.entries(grouped).map(([date, g]) => ({ date, ...g })).reverse();
   }
 
   async getFavoritesByTrip(tripId: string) {
