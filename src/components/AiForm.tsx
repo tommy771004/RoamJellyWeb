@@ -132,6 +132,14 @@ export default function AiForm({
     onSubmit(formData);
   };
 
+  const stepOneHint = !formData.departure
+    ? '先選擇出發地。'
+    : !formData.destination
+      ? '再選擇目的地。'
+      : !formData.companions
+        ? '最後選擇同行者。'
+        : '已完成基本資料，下一步可微調節奏、飲食與預算。';
+
   return (
     <div className="relative flex flex-col h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* Immersive Background for AI Form */}
@@ -257,6 +265,9 @@ export default function AiForm({
               下一步，微調細節
               <ArrowLeft className="rotate-180" size={20} />
             </button>
+            <p className="mt-3 px-2 text-[12px] font-bold text-slate-500 tracking-wide">
+              {stepOneHint}
+            </p>
           </div>
         </motion.div>
       )}

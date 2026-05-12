@@ -1,16 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createGuestSession, loginUser, registerUser, setClientAccessToken } from '../lib/workflowApi';
 
 interface Props {
   onLogin: (userId: string) => void;
   onCancel?: () => void;
+  guestFirst?: boolean;
+  contextLabel?: string;
+  title?: string;
+  description?: string;
+  guestCtaLabel?: string;
 }
 
 type Mode = 'login' | 'register';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
 
-export default function LoginScreen({ onLogin, onCancel }: Props) {
+export default function LoginScreen({ onLogin, onCancel, guestFirst = false, contextLabel, title, description, guestCtaLabel }: Props) {
+  const shouldShowGuestHero = guestFirst || Boolean(title) || Boolean(description);
   const [mode, setMode] = useState<Mode>('login');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -18,14 +24,21 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isAuthCardExpanded, setIsAuthCardExpanded] = useState(!shouldShowGuestHero);
+
+  useEffect(() => {
+    setIsAuthCardExpanded(!shouldShowGuestHero);
+  }, [shouldShowGuestHero]);
 
   const switchMode = (next: Mode) => {
     setMode(next);
     setError('');
+    setIsAuthCardExpanded(true);
   };
 
   const handleSubmit = async () => {
     setError('');
+    setIsAuthCardExpanded(true);
     const trimmedUser = username.trim();
 
     if (!trimmedUser || !password) {
@@ -72,11 +85,14 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
       const guest = await createGuestSession(displayName.trim() || username.trim() || undefined);
       onLogin(guest.user_id);
     } catch (err) {
+      setIsAuthCardExpanded(true);
       setError(err instanceof Error ? err.message : '訪客登入失敗，請再試一次');
     } finally {
       setLoading(false);
     }
   };
+
+  const resolvedGuestCtaLabel = guestCtaLabel || '先用訪客身分體驗';
 
   return (
     <div
@@ -94,205 +110,272 @@ export default function LoginScreen({ onLogin, onCancel }: Props) {
           <span className="text-sm text-purple-400 mt-1">RoamJelly</span>
         </div>
 
+        {shouldShowGuestHero && (
+          <div className="mb-5 rounded-[28px] bg-slate-900/90 px-6 py-5 text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] border border-white/10 backdrop-blur-xl">
+            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fuchsia-300">
+              {contextLabel || '快速體驗'}
+            </div>
+            <h1 className="mt-2 text-[26px] leading-tight font-black tracking-tight">
+              {title || '先用訪客身分開始，喜歡再註冊也不遲'}
+            </h1>
+            <p className="mt-3 text-[13px] leading-relaxed text-slate-300 font-semibold">
+              {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
+            </p>
+            {guestFirst && (
+              <>
+                <button
+                  onClick={() => void handleGuestLogin()}
+                  disabled={loading}
+                  className="mt-4 flex w-full justify-center border-none appearance-none cursor-pointer outline-none transition-all active:scale-95 bg-white text-slate-900 hover:bg-fuchsia-50 disabled:opacity-70"
+                  style={{ paddingTop: 15, paddingBottom: 15, borderRadius: 24, alignItems: 'center' }}
+                >
+                  <span style={{ color: '#0f172a', fontWeight: '900', fontSize: 14, letterSpacing: '0.04em' }}>
+                    {resolvedGuestCtaLabel}
+                  </span>
+                </button>
+                <p className="mt-3 text-[11px] font-bold tracking-wide text-slate-400">
+                  不用密碼，先進站體驗；之後再補註冊也可以。
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Card */}
         <div
           className="rounded-[32px] p-6 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 flex flex-col relative overflow-hidden"
           style={{ backgroundColor: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.6)' }}
         >
-          {/* Mode tabs */}
-          <div
-            className="flex flex-row mb-8 rounded-full p-1.5 shadow-inner"
-            style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
-          >
-            {(['login', 'register'] as Mode[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => switchMode(m)}
-                style={{
-                  flex: 1,
-                  paddingTop: 10, paddingBottom: 10,
-                  borderRadius: 9999,
-                  backgroundColor: mode === m ? '#ffffff' : 'transparent',
-                  boxShadow: mode === m ? '0 4px 12px rgba(0, 0, 0, 0.05), border 1px solid rgba(255,255,255,0.8)' : 'none',
-                  alignItems: 'center',
-                  outline: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s'
-                }}
-                className="flex justify-center appearance-none"
-              >
-                <span
-                  style={{
-                    fontWeight: mode === m ? '800' : '600',
-                    color: mode === m ? '#d946ef' : '#94a3b8',
-                    fontSize: 14,
-                    letterSpacing: '0.05em'
-                  }}
-                >
-                  {m === 'login' ? '登入' : '註冊'}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Username */}
-          <div className="mb-4 flex flex-col">
-            <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">使用者名稱</span>
-            <input
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.8)',
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.9)',
-                borderRadius: 20,
-                paddingInline: 20,
-                paddingBlock: 14,
-                color: '#1e293b',
-                fontSize: 15,
-                fontWeight: '700'
-              }}
-              className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
-              placeholder="3–30 個英數字或底線"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoCapitalize="none"
-              autoCorrect="off"
-            />
-          </div>
-
-          {/* Display name – register only */}
-          {mode === 'register' && (
-            <div className="mb-4 flex flex-col">
-              <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">暱稱（選填）</span>
-              <input
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.8)',
-                  borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.9)',
-                  borderRadius: 20,
-                  paddingInline: 20,
-                  paddingBlock: 14,
-                  color: '#1e293b',
-                  fontSize: 15,
-                  fontWeight: '700'
-                }}
-                className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
-                placeholder="顯示給其他成員的名稱"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* Password */}
-          <div className="mb-4 flex flex-col">
-            <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">密碼</span>
-            <input
-              type="password"
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.8)',
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.9)',
-                borderRadius: 20,
-                paddingInline: 20,
-                paddingBlock: 14,
-                color: '#1e293b',
-                fontSize: 15,
-                fontWeight: '700'
-              }}
-              className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
-              placeholder="至少 8 個字元"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          {/* Confirm password – register only */}
-          {mode === 'register' && (
-            <div className="mb-4 flex flex-col">
-              <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">確認密碼</span>
-              <input
-                type="password"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.8)',
-                  borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.9)',
-                  borderRadius: 20,
-                  paddingInline: 20,
-                  paddingBlock: 14,
-                  color: '#1e293b',
-                  fontSize: 15,
-                  fontWeight: '700'
-                }}
-                className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
-                placeholder="再次輸入密碼"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* Error message */}
-          {error ? (
-            <div
-              className="mb-4 px-4 py-3 rounded-xl flex items-center bg-rose-50/80 border border-rose-200"
+          {shouldShowGuestHero ? (
+            <button
+              type="button"
+              onClick={() => setIsAuthCardExpanded((current) => !current)}
+              className="mb-1 flex items-center justify-between rounded-[24px] border border-white/70 bg-white/75 px-4 py-4 text-left transition-colors hover:bg-white/90"
             >
-              <span className="text-rose-600 text-[13px] font-bold">{error}</span>
-            </div>
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                  已有帳號或想同步進度
+                </div>
+                <div className="mt-1 text-[15px] font-black tracking-tight text-slate-800">
+                  {isAuthCardExpanded ? '收起登入 / 註冊' : '展開登入 / 註冊'}
+                </div>
+                <div className="mt-1 text-[12px] font-semibold text-slate-500">
+                  先逛流程也可以，需要保存再展開登入。
+                </div>
+              </div>
+              <span
+                className="ml-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-black text-white transition-transform"
+                style={{ transform: isAuthCardExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              >
+                v
+              </span>
+            </button>
           ) : null}
 
-          {/* Submit */}
-          <button
-            onClick={() => void handleSubmit()}
-            disabled={loading}
-            className={`flex justify-center border-none appearance-none cursor-pointer outline-none transition-all active:scale-95 shadow-[0_8px_16px_rgb(217,70,239,0.25)] ${loading ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:opacity-90'}`}
-            style={{
-              paddingTop: 16, paddingBottom: 16,
-              borderRadius: 24,
-              alignItems: 'center',
-              marginTop: 8
-            }}
-          >
-            {loading ? (
-              <span style={{ color: 'white', fontWeight: '800' }}>處理中...</span>
-            ) : (
-              <span style={{ color: 'white', fontWeight: '900', fontSize: 16, letterSpacing: '0.05em' }}>
-                {mode === 'login' ? '登入' : '建立帳號'}
-              </span>
-            )}
-          </button>
+          {(!shouldShowGuestHero || isAuthCardExpanded) && (
+            <>
+              {shouldShowGuestHero && (
+                <div className="mb-5 mt-4 h-px w-full bg-white/70" />
+              )}
 
-          <button
-            onClick={() => void handleGuestLogin()}
-            disabled={loading}
-            className="flex justify-center border appearance-none cursor-pointer outline-none transition-all active:scale-95 w-full bg-white/70 border-slate-200 hover:bg-white mt-3"
-            style={{
-              paddingTop: 14,
-              paddingBottom: 14,
-              borderRadius: 24,
-              alignItems: 'center',
-            }}
-          >
-            <span style={{ color: '#475569', fontWeight: '900', fontSize: 14, letterSpacing: '0.04em' }}>
-              先用訪客身分體驗
-            </span>
-          </button>
+              {/* Mode tabs */}
+              <div
+                className="flex flex-row mb-8 rounded-full p-1.5 shadow-inner"
+                style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
+              >
+                {(['login', 'register'] as Mode[]).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => switchMode(m)}
+                    style={{
+                      flex: 1,
+                      paddingTop: 10, paddingBottom: 10,
+                      borderRadius: 9999,
+                      backgroundColor: mode === m ? '#ffffff' : 'transparent',
+                      boxShadow: mode === m ? '0 4px 12px rgba(0, 0, 0, 0.05), border 1px solid rgba(255,255,255,0.8)' : 'none',
+                      alignItems: 'center',
+                      outline: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s'
+                    }}
+                    className="flex justify-center appearance-none"
+                  >
+                    <span
+                      style={{
+                        fontWeight: mode === m ? '800' : '600',
+                        color: mode === m ? '#d946ef' : '#94a3b8',
+                        fontSize: 14,
+                        letterSpacing: '0.05em'
+                      }}
+                    >
+                      {m === 'login' ? '登入' : '註冊'}
+                    </span>
+                  </button>
+                ))}
+              </div>
 
-          {onCancel && (
-            <button
-              onClick={onCancel}
-              disabled={loading}
-              style={{
-                marginTop: 12,
-                paddingTop: 14, paddingBottom: 14,
-                borderRadius: 24,
-                alignItems: 'center',
-                backgroundColor: 'transparent',
-              }}
-              className="flex justify-center border-none appearance-none cursor-pointer outline-none hover:bg-black/5 transition-all active:scale-95"
-            >
-              <span style={{ color: '#64748b', fontWeight: '800', fontSize: 14, letterSpacing: '0.05em' }}>取消</span>
-            </button>
+              {/* Username */}
+              <div className="mb-4 flex flex-col">
+                <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">使用者名稱</span>
+                <input
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.9)',
+                    borderRadius: 20,
+                    paddingInline: 20,
+                    paddingBlock: 14,
+                    color: '#1e293b',
+                    fontSize: 15,
+                    fontWeight: '700'
+                  }}
+                  className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
+                  placeholder="3–30 個英數字或底線"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                />
+              </div>
+
+              {/* Display name – register only */}
+              {mode === 'register' && (
+                <div className="mb-4 flex flex-col">
+                  <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">暱稱（選填）</span>
+                  <input
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.9)',
+                      borderRadius: 20,
+                      paddingInline: 20,
+                      paddingBlock: 14,
+                      color: '#1e293b',
+                      fontSize: 15,
+                      fontWeight: '700'
+                    }}
+                    className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
+                    placeholder="顯示給其他成員的名稱"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {/* Password */}
+              <div className="mb-4 flex flex-col">
+                <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">密碼</span>
+                <input
+                  type="password"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.9)',
+                    borderRadius: 20,
+                    paddingInline: 20,
+                    paddingBlock: 14,
+                    color: '#1e293b',
+                    fontSize: 15,
+                    fontWeight: '700'
+                  }}
+                  className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
+                  placeholder="至少 8 個字元"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              {/* Confirm password – register only */}
+              {mode === 'register' && (
+                <div className="mb-4 flex flex-col">
+                  <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">確認密碼</span>
+                  <input
+                    type="password"
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.9)',
+                      borderRadius: 20,
+                      paddingInline: 20,
+                      paddingBlock: 14,
+                      color: '#1e293b',
+                      fontSize: 15,
+                      fontWeight: '700'
+                    }}
+                    className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
+                    placeholder="再次輸入密碼"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {/* Error message */}
+              {error ? (
+                <div
+                  className="mb-4 px-4 py-3 rounded-xl flex items-center bg-rose-50/80 border border-rose-200"
+                >
+                  <span className="text-rose-600 text-[13px] font-bold">{error}</span>
+                </div>
+              ) : null}
+
+              {/* Submit */}
+              <button
+                onClick={() => void handleSubmit()}
+                disabled={loading}
+                className={`flex justify-center border-none appearance-none cursor-pointer outline-none transition-all active:scale-95 shadow-[0_8px_16px_rgb(217,70,239,0.25)] ${loading ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:opacity-90'}`}
+                style={{
+                  paddingTop: 16, paddingBottom: 16,
+                  borderRadius: 24,
+                  alignItems: 'center',
+                  marginTop: 8
+                }}
+              >
+                {loading ? (
+                  <span style={{ color: 'white', fontWeight: '800' }}>處理中...</span>
+                ) : (
+                  <span style={{ color: 'white', fontWeight: '900', fontSize: 16, letterSpacing: '0.05em' }}>
+                    {mode === 'login' ? '登入' : '建立帳號'}
+                  </span>
+                )}
+              </button>
+
+              {!guestFirst && (
+                <button
+                  onClick={() => void handleGuestLogin()}
+                  disabled={loading}
+                  className="flex justify-center border appearance-none cursor-pointer outline-none transition-all active:scale-95 w-full bg-white/70 border-slate-200 hover:bg-white mt-3"
+                  style={{
+                    paddingTop: 14,
+                    paddingBottom: 14,
+                    borderRadius: 24,
+                    alignItems: 'center',
+                  }}
+                >
+                  <span style={{ color: '#475569', fontWeight: '900', fontSize: 14, letterSpacing: '0.04em' }}>
+                    {resolvedGuestCtaLabel}
+                  </span>
+                </button>
+              )}
+
+              {onCancel && (
+                <button
+                  onClick={onCancel}
+                  disabled={loading}
+                  style={{
+                    marginTop: 12,
+                    paddingTop: 14, paddingBottom: 14,
+                    borderRadius: 24,
+                    alignItems: 'center',
+                    backgroundColor: 'transparent',
+                  }}
+                  className="flex justify-center border-none appearance-none cursor-pointer outline-none hover:bg-black/5 transition-all active:scale-95"
+                >
+                  <span style={{ color: '#64748b', fontWeight: '800', fontSize: 14, letterSpacing: '0.05em' }}>取消</span>
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

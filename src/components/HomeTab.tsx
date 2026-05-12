@@ -585,6 +585,14 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     [searchForm],
   );
 
+  const searchBlockReason = useMemo(() => {
+    if (isOffline) return '目前離線中，恢復連線後才能查詢即時票價。';
+    if (!searchForm.from.trim()) return '先填寫出發地。';
+    if (!searchForm.to.trim()) return '再補上目的地。';
+    if (!searchForm.date.trim()) return '最後選擇去程日期。';
+    return null;
+  }, [isOffline, searchForm.date, searchForm.from, searchForm.to]);
+
   const handleSearch = async () => {
     if (!DATE_REGEX.test(searchForm.date.trim())) {
       setDateError('日期格式需為 YYYY-MM-DD，例如 2025-08-01');
@@ -831,32 +839,39 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               </div>
             </div>
             {dateError && <div className="text-[11px] text-rose-500 font-bold px-6 py-2 pb-1">{dateError}</div>}
+            {!dateError && searchBlockReason && (
+              <div className="text-[11px] text-slate-500 font-bold px-6 py-2 pb-1">{searchBlockReason}</div>
+            )}
           </GlassCard>
           </motion.div>
         </div>
 
         {/* Quick External Links */}
-        <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-3 lg:gap-6 mb-6 md:mb-10 px-2 lg:px-4 pb-2 snap-x">
-          <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-700 hover:text-slate-900 transition-all group bg-white/60 hover:bg-white backdrop-blur-md px-4 md:px-5 py-2.5 md:py-3 rounded-full shadow-sm border border-slate-200/60 shrink-0 snap-start">
+        <div className="px-2 lg:px-4 -mb-2 mt-1 flex items-center justify-between gap-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">旅途中也常用</p>
+          <p className="text-[11px] font-bold text-slate-400 hidden md:block">等你先決定行程方向，再打開這些捷徑就好。</p>
+        </div>
+        <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 lg:gap-4 mb-6 md:mb-10 px-2 lg:px-4 pb-2 snap-x opacity-95">
+          <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-600 hover:text-slate-900 transition-all group bg-white/45 hover:bg-white/75 backdrop-blur-md px-3.5 md:px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
             <div className="text-[#B92A8E] group-hover:scale-110 transition-transform">
-              <Bed size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
+              <Bed size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
             </div>
-            <span className="font-bold text-[13px] md:text-[15px] tracking-wide">找住宿</span>
+            <span className="font-bold text-[12px] md:text-[14px] tracking-wide">找住宿</span>
           </a>
           
-          <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-700 hover:text-slate-900 transition-all group bg-white/60 hover:bg-white backdrop-blur-md px-4 md:px-5 py-2.5 md:py-3 rounded-full shadow-sm border border-slate-200/60 shrink-0 snap-start">
+          <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-600 hover:text-slate-900 transition-all group bg-white/45 hover:bg-white/75 backdrop-blur-md px-3.5 md:px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
             <div className="text-[#F18400] group-hover:scale-110 transition-transform">
-              <Ticket size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
+              <Ticket size={16} className="md:w-[18px] md:h-[18px]" strokeWidth={2.5} />
             </div>
-            <span className="font-bold text-[13px] md:text-[15px] tracking-wide">門票 & 觀光行程</span>
+            <span className="font-bold text-[12px] md:text-[14px] tracking-wide">門票 & 觀光行程</span>
           </a>
 
-          <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-700 hover:text-slate-900 transition-all group bg-white/60 hover:bg-white backdrop-blur-md px-4 md:px-5 py-2.5 md:py-3 rounded-full shadow-sm border border-slate-200/60 shrink-0 snap-start">
+          <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-600 hover:text-slate-900 transition-all group bg-white/45 hover:bg-white/75 backdrop-blur-md px-3.5 md:px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
             <div className="text-[#EC4899] group-hover:scale-110 transition-transform relative">
-              <CarFront size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
+              <CarFront size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
               <PlaneTakeoff size={10} strokeWidth={3} className="absolute -top-1 -left-1 md:-top-1.5 md:-left-1.5 md:w-3 md:h-3" />
             </div>
-            <span className="font-bold text-[13px] md:text-[15px] tracking-wide">機場接送</span>
+            <span className="font-bold text-[12px] md:text-[14px] tracking-wide">機場接送</span>
           </a>
         </div>
 
