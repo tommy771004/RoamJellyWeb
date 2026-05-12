@@ -1,4 +1,5 @@
 import type { ItineraryNode, ItineraryPlannerForm } from '../types/workflow';
+import { getStoredToken } from './workflowApi';
 
 const CATEGORY_ICON_MAP: Record<string, string> = {
   flight: '✈️',
@@ -65,6 +66,8 @@ export async function suggestItinerary(destination: string, days: number): Promi
             emoji: pickIcon(spot.emoji, spot.category || 'other'),
             category: normalizeCategory(spot.category || 'other'),
             description: spot.ai_note || '',
+            ai_note: spot.ai_note || '',
+            intensity: spot.intensity,
             lat: spot.lat,
             lng: spot.lng,
             source: 'local' as const,
@@ -76,35 +79,36 @@ export async function suggestItinerary(destination: string, days: number): Promi
   return nodes;
 }
 
+export class AiRateLimitedError extends Error {
+  constructor(message = 'AI 服務暫時繁忙，請稍後 1~2 分鐘再試。') {
+    super(message);
+    this.name = 'AiRateLimitedError';
+  }
+}
+
 export async function suggestItineraryWithForm(input: SuggestItineraryInput): Promise<any> {
-  try {
-    const res = await fetch('/api/generate/itinerary', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input)
-    });
-    if (!res.ok) throw new Error('API failed');
-    const data = await res.json();
-    if (data.status === 'success' && data.data) {
-      return data.data; // Return full AiResponse
-    }
-  } catch (err) {
-    console.error('Failed to generate itinerary via API', err);
+  const token = getStoredToken();
+  const res = await fetch('/api/generate/itinerary', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input)
+  });
+
+  if (res.status === 429) {
+    const data = await res.json().catch(() => ({}));
+    throw new AiRateLimitedError(data.message);
   }
 
-  // Fallback
-  return {
-    ui_config: { bg_gradient: 'from-blue-100 to-white', font_scale: 'normal' },
-    summary: { title: '系統繁忙預設行程', smart_tags: [] },
-    itinerary: [
-      {
-        day: 1,
-        spots: [
-          { time: '10:00', name: '系統繁忙，這是預設行程', category: 'flight', emoji: '✈️' }
-        ]
-      }
-    ]
-  };
+  if (!res.ok) throw new Error(`AI API error ${res.status}`);
+
+  const data = await res.json();
+  if (data.status === 'success' && data.data) {
+    return data.data;
+  }
+  throw new Error('AI response missing data');
 }
 
 export async function suggestPackingList(destination: string, season: string): Promise<string[]> {
