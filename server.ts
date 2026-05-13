@@ -38,6 +38,8 @@ const AUTH_REQUIRED = process.env.AUTH_REQUIRED === 'true' || process.env.NODE_E
 const OTA_PROVIDER_URL = process.env.OTA_PROVIDER_URL?.replace(/\/+$/, '');
 const OTA_PARTNER_BASE = process.env.OTA_PARTNER_BASE?.replace(/\/+$/, '') ?? '';
 export const app = express();
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
 const PORT = 3000;
 
 type TripRole = 'owner' | 'editor' | 'viewer';
@@ -81,9 +83,23 @@ type PlanningRecord = {
 
 type AuthedRequest = Request & { authUser?: AuthUser };
 
+type RateLimitBucket = {
+  count: number;
+  resetAt: number;
+};
+
+type RateLimitState = {
+  limit: number;
+  remaining: number;
+  resetAt: number;
+  retryAfterSeconds: number;
+  allowed: boolean;
+};
+
 const searchCache = new Map<string, SearchCacheEntry>();
 const searchHistoryFallback: SearchHistoryRecord[] = [];
 const planningFallbackByTrip = new Map<string, PlanningRecord[]>();
+const rateLimitFallback = new Map<string, RateLimitBucket>();
 
 const SEARCH_CACHE_TTL_MS = 10 * 60 * 1000;
 const SEARCH_CACHE_TTL_SECONDS = 10 * 60;
@@ -91,6 +107,13 @@ const SEARCH_HISTORY_KEY = 'history:search:global';
 const SEARCH_HISTORY_MAX = 200;
 const PLANNING_LOG_MAX = 500;
 const PLANNING_SNAPSHOT_TTL_SECONDS = 6 * 60 * 60;
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_GUEST_LIMIT = 8;
+const AUTH_LOGIN_LIMIT = 10;
+const AUTH_REGISTER_LIMIT = 5;
+const AI_WINDOW_MS = 15 * 60 * 1000;
+const AI_USER_LIMIT = 12;
+const AI_GUEST_LIMIT = 4;
 
 
 let redisClient: any | null = null;
@@ -126,6 +149,142 @@ function getTokenFromRequest(req: Request): string | null {
 function getRequestUserId(req: Request): string | null {
   return (req as AuthedRequest).authUser?.userId ?? null;
 }
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.trim()) {
+    return forwarded.split(',')[0]?.trim() || req.ip || 'unknown';
+  }
+  if (Array.isArray(forwarded) && forwarded.length > 0) {
+    return String(forwarded[0] ?? '').trim() || req.ip || 'unknown';
+  }
+  return req.ip || 'unknown';
+}
+
+function isGuestUserId(userId: string | null): boolean {
+  return typeof userId === 'string' && userId.startsWith('guest_');
+}
+
+function setRateLimitHeaders(res: Response, state: RateLimitState) {
+  res.setHeader('X-RateLimit-Limit', String(state.limit));
+  res.setHeader('X-RateLimit-Remaining', String(Math.max(0, state.remaining)));
+  res.setHeader('X-RateLimit-Reset', String(Math.ceil(state.resetAt / 1000)));
+}
+
+async function consumeRateLimit(bucketKey: string, limit: number, windowMs: number): Promise<RateLimitState> {
+  const now = Date.now();
+  const defaultResetAt = now + windowMs;
+
+  if (redisClient?.isOpen) {
+    const current = Number(await redisClient.incr(bucketKey));
+    if (current === 1) {
+      await redisClient.pExpire(bucketKey, windowMs);
+    }
+    const ttlMsRaw = Number(await redisClient.pTTL(bucketKey));
+    const ttlMs = ttlMsRaw > 0 ? ttlMsRaw : windowMs;
+    return {
+      limit,
+      remaining: Math.max(0, limit - current),
+      resetAt: now + ttlMs,
+      retryAfterSeconds: Math.max(1, Math.ceil(ttlMs / 1000)),
+      allowed: current <= limit,
+    };
+  }
+
+  const existing = rateLimitFallback.get(bucketKey);
+  if (!existing || existing.resetAt <= now) {
+    rateLimitFallback.set(bucketKey, { count: 1, resetAt: defaultResetAt });
+    return {
+      limit,
+      remaining: Math.max(0, limit - 1),
+      resetAt: defaultResetAt,
+      retryAfterSeconds: Math.max(1, Math.ceil(windowMs / 1000)),
+      allowed: true,
+    };
+  }
+
+  existing.count += 1;
+  rateLimitFallback.set(bucketKey, existing);
+  return {
+    limit,
+    remaining: Math.max(0, limit - existing.count),
+    resetAt: existing.resetAt,
+    retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
+    allowed: existing.count <= limit,
+  };
+}
+
+function createRateLimit(options: {
+  bucketPrefix: string;
+  limit: number;
+  windowMs: number;
+  message: string;
+  keyGenerator: (req: Request) => string | null;
+}) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const keyPart = options.keyGenerator(req);
+    if (!keyPart) {
+      next();
+      return;
+    }
+
+    const state = await consumeRateLimit(`${options.bucketPrefix}:${keyPart}`, options.limit, options.windowMs);
+    setRateLimitHeaders(res, state);
+    if (!state.allowed) {
+      res.setHeader('Retry-After', String(state.retryAfterSeconds));
+      res.status(429).json({ status: 'error', code: 'RATE_LIMITED', message: options.message });
+      return;
+    }
+
+    next();
+  };
+}
+
+const guestAuthLimiter = createRateLimit({
+  bucketPrefix: 'rl:auth:guest',
+  limit: AUTH_GUEST_LIMIT,
+  windowMs: AUTH_WINDOW_MS,
+  message: '訪客登入次數過多，請稍後再試。',
+  keyGenerator: (req) => getClientIp(req),
+});
+
+const loginLimiter = createRateLimit({
+  bucketPrefix: 'rl:auth:login',
+  limit: AUTH_LOGIN_LIMIT,
+  windowMs: AUTH_WINDOW_MS,
+  message: '登入嘗試次數過多，請稍後再試。',
+  keyGenerator: (req) => getClientIp(req),
+});
+
+const registerLimiter = createRateLimit({
+  bucketPrefix: 'rl:auth:register',
+  limit: AUTH_REGISTER_LIMIT,
+  windowMs: AUTH_WINDOW_MS,
+  message: '註冊請求過於頻繁，請稍後再試。',
+  keyGenerator: (req) => getClientIp(req),
+});
+
+const aiLimiter = createRateLimit({
+  bucketPrefix: 'rl:ai:user',
+  limit: AI_USER_LIMIT,
+  windowMs: AI_WINDOW_MS,
+  message: 'AI 服務暫時繁忙，請稍後 10 分鐘再試。',
+  keyGenerator: (req) => {
+    const userId = getRequestUserId(req);
+    return userId && !isGuestUserId(userId) ? userId : null;
+  },
+});
+
+const guestAiLimiter = createRateLimit({
+  bucketPrefix: 'rl:ai:guest',
+  limit: AI_GUEST_LIMIT,
+  windowMs: AI_WINDOW_MS,
+  message: '訪客 AI 額度已達上限，請稍後再試或登入帳號。',
+  keyGenerator: (req) => {
+    const userId = getRequestUserId(req);
+    return isGuestUserId(userId) ? getClientIp(req) : null;
+  },
+});
 
 function formatDateOnly(value?: Date | string | null): string | null {
   if (!value) return null;
@@ -362,6 +521,7 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
     name: trip.name,
     destination: trip.destination ?? '',
     days: finalDays,
+    totalSpots: nodes.length,
     startDate,
     endDate,
     coverImage,
@@ -565,17 +725,17 @@ async function startServer() {
   }
 
   const httpServer = createServer(app);
-  const io = new SocketServer(httpServer, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
-    },
-  });
-
   const originList = (process.env.CORS_ALLOWED_ORIGINS ?? '')
     .split(',')
     .map((item: string) => item.trim())
     .filter(Boolean);
+
+  const io = new SocketServer(httpServer, {
+    cors: {
+      origin: originList.length === 0 ? true : originList,
+      methods: ['GET', 'POST'],
+    },
+  });
 
   app.use(
     cors({
@@ -583,7 +743,14 @@ async function startServer() {
       credentials: true,
     }),
   );
-  app.use(express.json());
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+  });
+  app.use(express.json({ limit: '1mb' }));
 
   app.get('/health', async (_req, res) => {
     try {
@@ -704,7 +871,7 @@ async function startServer() {
   }
 
   if (GUEST_AUTH_ENABLED) {
-    app.post('/api/auth/guest', async (req, res) => {
+    app.post('/api/auth/guest', guestAuthLimiter, async (req, res) => {
       const rawDisplayName = String(req.body?.display_name ?? '').trim();
       const displayName = (rawDisplayName || '訪客旅人').slice(0, 32);
       const suffix = Math.random().toString(36).slice(2, 8);
@@ -725,7 +892,7 @@ async function startServer() {
   }
 
   // ── Auth: Register ──────────────────────────────────────────────────────────
-  app.post('/api/auth/register', async (req, res) => {
+  app.post('/api/auth/register', registerLimiter, async (req, res) => {
     const username = String(req.body?.username ?? '').trim();
     const password = String(req.body?.password ?? '');
     const displayName = String(req.body?.display_name ?? username).trim() || username;
@@ -757,7 +924,7 @@ async function startServer() {
   });
 
   // ── Auth: Login ─────────────────────────────────────────────────────────────
-  app.post('/api/auth/login', async (req, res) => {
+  app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const username = String(req.body?.username ?? '').trim();
     const password = String(req.body?.password ?? '');
 
@@ -1143,7 +1310,11 @@ async function startServer() {
     res.json([]);
   });
 
-  app.post('/api/generate/itinerary', async (req, res) => {
+  app.post('/api/generate/itinerary', guestAiLimiter, aiLimiter, async (req, res) => {
+    if (!getRequestUserId(req) && AUTH_REQUIRED) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
     try {
       const nodes = await generateItinerary(req.body);
       res.json({ status: 'success', data: nodes });
@@ -1157,7 +1328,7 @@ async function startServer() {
   });
 
   // ── Spot-level regenerate ─────────────────────────────────────────────────
-  app.post('/api/itinerary/regenerate-spot', async (req, res) => {
+  app.post('/api/itinerary/regenerate-spot', guestAiLimiter, aiLimiter, async (req, res) => {
     const { trip_id, node_id, destination, day, current_date, current_time, current_title, current_category, notes, preserve_time_window } = req.body ?? {};
 
     if (!trip_id || !node_id) {
@@ -1221,7 +1392,11 @@ async function startServer() {
     res.json({ status: 'success', data: spot });
   });
 
-  app.post('/api/generate/packing-list', async (req, res) => {
+  app.post('/api/generate/packing-list', guestAiLimiter, aiLimiter, async (req, res) => {
+    if (!getRequestUserId(req) && AUTH_REQUIRED) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
     const { destination = 'Kyoto', days = 5, weatherContext = 'Clear skies, 20°C' } = req.body || {};
     try {
       // dynamic import so server.ts doesn't crash if omitted
@@ -1235,6 +1410,10 @@ async function startServer() {
   });
 
   app.post('/api/dev/generate-handbooks', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      res.status(404).json({ status: 'error', message: 'Not Found' });
+      return;
+    }
     try {
       const { GoogleGenAI, Type } = require('@google/genai');
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -1375,24 +1554,17 @@ async function startServer() {
 
     // If no params, return "Popular Recommendations" (latest flights)
     if (!from || !to || !date) {
-      let topFlights = await repo.getTopFlights(5).catch(() => []);
-      if (!topFlights || topFlights.length === 0) {
-        topFlights = [
-          { id: 'f1', provider: 'EVA Air', time: '08:00 - 12:15', price: 12500 },
-          { id: 'f2', provider: 'Starlux Airlines', time: '10:30 - 14:45', price: 14200 },
-          { id: 'f3', provider: 'China Airlines', time: '12:00 - 16:15', price: 11800 }
-        ];
-      }
+      const topFlights = await repo.getTopFlights(5).catch(() => []);
       const results = topFlights.map((f: any, idx: number) => ({
         id: f.id || `flight_trend_${idx}`,
         type: 'flight',
         provider: f.provider,
-        title: `台北 (TPE) -> 目的地 · 直飛`, // Simple fallback for title if not in db
+        title: `${f.origin_code || 'TPE'} -> ${f.destination_code || '目的地'}`,
         price: f.price,
         currency: 'TWD',
         emoji: '✈️',
-        affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flight/${encodeURIComponent(f.id)}` : `https://example.com/flight/${f.id}`,
-        details: { stops: 0, airline: f.provider, departure: f.time?.split(' - ')[0] || '10:00', arrival: f.time?.split(' - ')[1] || '14:00' }
+        affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flight/${encodeURIComponent(f.id)}` : `https://www.trip.com/flights/${f.origin_code}-to-${f.destination_code}/tickets-${f.origin_code}-${f.destination_code}/?flighttype=ow&dcity=${f.origin_code || 'tpe'}&acity=${f.destination_code || 'nrt'}`,
+        details: { stops: f.stops || 0, airline: f.provider, departure: f.time?.split(' - ')[0] || '10:00', arrival: f.time?.split(' - ')[1] || '14:00' }
       }));
       res.json({ status: 'success', data: results });
       return;
@@ -1413,45 +1585,9 @@ async function startServer() {
       return;
     }
 
-    // Try OTA provider first; fall back to local flights table
-    let data: SearchItem[];
+    // Try OTA provider first; if no data, return empty array to keep it real
     const otaData = await fetchFromOtaProvider(from, to, date);
-    if (otaData && otaData.length > 0) {
-      data = otaData;
-    } else {
-      let flightRows = await repo.getTopFlights(4).catch(() => []);
-      if (!flightRows || flightRows.length === 0) {
-        flightRows = [
-          { id: 'f4', provider: 'Tigerair Taiwan', time: '14:20 - 17:05', price: 8500 },
-          { id: 'f5', provider: 'Peach Aviation', time: '16:55 - 20:40', price: 7900 }
-        ];
-      }
-      if (flightRows.length === 0) {
-        res.status(503).json({ status: 'error', message: 'no flight provider data available' });
-        return;
-      }
-          data = flightRows.map((flight, idx) => {
-        const providers = ['EVA Air', 'China Airlines', 'Starlux Airlines', 'Tigerair Taiwan', 'Peach Aviation', 'Skyscanner', 'Expedia'];
-        const provider = providers[idx % providers.length];
-        return {
-          id: `flight_${flight.id}`,
-          type: 'flight' as const,
-          provider: provider,
-          title: `${from} -> ${to} · ${idx % 2 === 0 ? '直飛' : '1 轉'}`,
-          price: flight.price + (idx * 300),
-          currency: 'TWD',
-          emoji: '✈️',
-          affiliate_url: OTA_PARTNER_BASE ? `${OTA_PARTNER_BASE}/flights/${encodeURIComponent(flight.id)}` : `https://partner.example.com/flights/${encodeURIComponent(flight.id)}`,
-          details: {
-            airline: provider,
-            departure: flight.time.split(' - ')[0] || '10:00',
-            arrival: flight.time.split(' - ')[1] || '14:30',
-            stops: idx % 2 === 0 ? 0 : 1,
-            duration: idx === 0 ? '3h 15m' : (idx === 1 ? '2h 45m' : '4h 10m')
-          }
-        };
-      });
-    }
+    const data: SearchItem[] = otaData || [];
 
     await setSearchCacheData(cacheKey, data);
     await appendSearchHistory({
@@ -1475,11 +1611,7 @@ async function startServer() {
   app.get('/api/handbooks', async (req, res) => {
     const limit = Number(req.query.limit ?? 10);
     const trips = await repo.getPublicTrips(limit).catch(() => []);
-    res.json(trips.length > 0 ? trips : [
-      { id: 'h1', title: '東京散策：巷弄裡的小秘密', author: 'Miyuki Tanaka', likes: 124, cover: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=800&auto=format&fit=crop', _fallback: true },
-      { id: 'h2', title: '大阪美食地圖 2024', author: 'Chen Wei-Ming', likes: 89, cover: 'https://images.unsplash.com/photo-1590484512398-33fb39eff960?w=800&auto=format&fit=crop', _fallback: true },
-      { id: 'h3', title: '京都紅葉季完全攻略', author: 'Yuki Sato', likes: 213, cover: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop', _fallback: true },
-    ]);
+    res.json(trips);
   });
 
   app.get('/api/geocode', async (req, res) => {

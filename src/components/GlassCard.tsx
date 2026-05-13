@@ -4,8 +4,8 @@ import { isLowPerformanceDevice } from '../lib/performance';
 function useGlassClass() {
   const lowPerf = isLowPerformanceDevice();
   return lowPerf
-    ? 'bg-white border border-slate-100 shadow-sm rounded-[32px] p-5 relative overflow-hidden transition-colors duration-500'
-    : 'bg-white/60 backdrop-blur-3xl border border-white/60 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 rounded-[32px] p-5 relative overflow-hidden transition-colors duration-500';
+    ? 'bg-white border border-slate-100 shadow-sm rounded-[32px] p-5 relative overflow-hidden transition-colors duration-500 dark:bg-slate-900/88 dark:border-white/10 dark:text-slate-100 dark:shadow-[0_18px_45px_rgba(0,0,0,0.35)]'
+    : 'bg-white/60 backdrop-blur-3xl border border-white/60 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 rounded-[32px] p-5 relative overflow-hidden transition-colors duration-500 dark:bg-slate-900/60 dark:border-white/10 dark:ring-white/10 dark:text-slate-100 dark:shadow-[0_18px_60px_rgba(0,0,0,0.42)]';
 }
 
 import React from 'react';

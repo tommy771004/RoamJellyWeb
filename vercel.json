@@ -16,16 +16,53 @@
       }
     },
     {
+      "src": "api/share-trip.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/og-trip.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": { "distDir": "dist" }
     }
   ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: ws: wss:; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    }
+  ],
   "routes": [
+    { "src": "/api/og/trip", "dest": "/api/og-trip.js" },
+    { "src": "/share/trip/([^/]+)", "dest": "/api/share-trip.js?tripId=$1" },
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "src": "/guide/(.*)", "dest": "/guide/$1" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?))", "dest": "/$1" },
+    { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?|webmanifest))", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 

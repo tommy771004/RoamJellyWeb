@@ -22,72 +22,856 @@ export interface FlightData {
   };
 }
 
+/** Random sleep between min~max ms */
+function sleep(min: number, max: number): Promise<void> {
+  const ms = Math.floor(Math.random() * (max - min + 1)) + min;
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Simulate a human-like mouse path from (x1,y1) to (x2,y2)
+ * using small random jitter steps.
+ */
+async function humanMouseMove(
+  page: playwrightCore.Page,
+  x1: number, y1: number,
+  x2: number, y2: number,
+) {
+  const steps = 8 + Math.floor(Math.random() * 12);
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const jx = (Math.random() - 0.5) * 6;
+    const jy = (Math.random() - 0.5) * 6;
+    await page.mouse.move(x1 + (x2 - x1) * t + jx, y1 + (y2 - y1) * t + jy);
+    await sleep(8, 25);
+  }
+}
+
+/**
+ * Comprehensive anti-detection init script injected before every page load.
+ * Covers: webdriver flag, plugins, languages, canvas fingerprint,
+ * permission API, and Chrome automation indicator symbols.
+ */
+const STEALTH_SCRIPT = `
+(function () {
+  // 1. Remove webdriver flag
+  Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+
+  // 2. Spoof realistic Chrome plugins
+  const fakePlugins = [
+    { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
+    { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: '' },
+    { name: 'Native Client', filename: 'internal-nacl-plugin', description: '' },
+  ];
+  Object.defineProperty(navigator, 'plugins', {
+    get: () => Object.assign(fakePlugins, { item: (i) => fakePlugins[i], namedItem: (n) => fakePlugins.find(p => p.name === n) || null, length: fakePlugins.length }),
+  });
+
+  // 3. Languages
+  Object.defineProperty(navigator, 'languages', { get: () => ['zh-TW', 'zh', 'en-US', 'en'] });
+
+  // 4. Subtle canvas noise to randomise fingerprint
+  const _getContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+    const ctx = _getContext.call(this, type, ...args);
+    if (type === '2d' && ctx) {
+      const _fill = ctx.fillText.bind(ctx);
+      ctx.fillText = function (...a) { ctx.shadowBlur = Math.random() * 0.005; return _fill(...a); };
+    }
+    return ctx;
+  };
+
+  // 5. Patch permissions API (avoid 'denied' leaks)
+  const _query = window.navigator.permissions && window.navigator.permissions.query.bind(window.navigator.permissions);
+  if (_query) {
+    window.navigator.permissions.query = (p) =>
+      p.name === 'notifications'
+        ? Promise.resolve({ state: Notification.permission, onchange: null })
+        : _query(p);
+  }
+
+  // 6. Remove cdc_ automation markers injected by some drivers
+  const toDel = Object.keys(window).filter(k => k.startsWith('cdc_'));
+  toDel.forEach(k => { try { delete (window as any)[k]; } catch {} });
+
+  // 7. Spoof screen/hardware concurrency
+  Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+  Object.defineProperty(screen, 'colorDepth', { get: () => 24 });
+
+  // 8. Spoof chrome runtime (expected by Trip.com JS checks)
+  if (!window.chrome) {
+    (window as any).chrome = { runtime: {}, loadTimes: function() {}, csi: function() {} };
+  }
+
+  // 9. Hide headless indicators in navigator
+  Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
+  Object.defineProperty(navigator, 'vendor', { get: () => 'Google Inc.' });
+  Object.defineProperty(navigator, 'platform', { get: () => 'MacIntel' });
+
+  // 10. Remove HeadlessChrome from UA reported via JS (if overridden at network layer)
+  const originalUAData = (navigator as any).userAgentData;
+  if (originalUAData) {
+    try {
+      Object.defineProperty(navigator, 'userAgentData', {
+        get: () => ({
+          ...originalUAData,
+          brands: [
+            { brand: 'Chromium', version: '124' },
+            { brand: 'Google Chrome', version: '124' },
+          ],
+          mobile: false,
+          platform: 'macOS',
+        }),
+      });
+    } catch {}
+  }
+})();
+`;
+
 const IATA_MAP: Record<string, string> = {
+  // ── 台灣 Taiwan ──────────────────────────────────────────────────────────
   '台北': 'tpe',
   '桃園': 'tpe',
   '台北/桃園': 'tpe',
+  '桃園國際': 'tpe',
+  'taipei': 'tpe',
+  'taoyuan': 'tpe',
   '松山': 'tsa',
   '台北/松山': 'tsa',
+  '台北松山': 'tsa',
+  'songshan': 'tsa',
   '高雄': 'khh',
+  '高雄國際': 'khh',
+  'kaohsiung': 'khh',
   '台中': 'rmq',
+  '台中清泉崗': 'rmq',
+  'taichung': 'rmq',
+  '台南': 'tnn',
+  'tainan': 'tnn',
+  '花蓮': 'hun',
+  'hualien': 'hun',
+  '台東': 'ttt',
+  'taitung': 'ttt',
+  '澎湖': 'mzg',
+  '馬公': 'mzg',
+  'penghu': 'mzg',
+  '金門': 'kmq',
+  'kinmen': 'kmq',
+  '馬祖': 'lzn',
+  '南竿': 'lzn',
+  'matsu': 'lzn',
+
+  // ── 日本 Japan ───────────────────────────────────────────────────────────
   '東京': 'tyo',
   '成田': 'nrt',
   '羽田': 'hnd',
   '東京/成田': 'nrt',
   '東京/羽田': 'hnd',
+  'tokyo': 'tyo',
+  'narita': 'nrt',
+  'haneda': 'hnd',
   '大阪': 'osa',
   '關西': 'kix',
   '大阪/關西': 'kix',
+  '大阪/伊丹': 'itm',
+  '伊丹': 'itm',
+  'osaka': 'osa',
+  'kansai': 'kix',
+  'itami': 'itm',
   '沖繩': 'oka',
   '那霸': 'oka',
   '沖繩/那霸': 'oka',
+  'okinawa': 'oka',
+  'naha': 'oka',
+  '石垣島': 'ishigaki',
+  '石垣': 'ishigaki',
+  '宮古島': 'mmx',
+  '宮古': 'mmx',
   '福岡': 'fuk',
+  'fukuoka': 'fuk',
   '札幌': 'cts',
   '新千歲': 'cts',
   '北海道': 'cts',
+  'sapporo': 'cts',
+  'chitose': 'cts',
   '名古屋': 'ngo',
+  '中部': 'ngo',
+  'nagoya': 'ngo',
   '仙台': 'sdj',
+  'sendai': 'sdj',
   '廣島': 'hij',
+  'hiroshima': 'hij',
   '小松': 'kmq',
+  'komatsu': 'kmq',
   '熊本': 'kmj',
+  'kumamoto': 'kmj',
   '函館': 'hkd',
-  '高松': 'tak',
+  'hakodate': 'hkd',
+  '高松(日本)': 'tak',
+  'takamatsu': 'tak',
+  '長崎': 'ngs',
+  'nagasaki': 'ngs',
+  '鹿兒島': 'koj',
+  'kagoshima': 'koj',
+  '宮崎': 'kmi',
+  'miyazaki': 'kmi',
+  '大分': 'oita',
+  'oita': 'oita',
+  '松山(日本)': 'myt',
+  '富山': 'toyama',
+  '旭川': 'akj',
+  'asahikawa': 'akj',
+  '釧路': 'kushiro',
+  '帶廣': 'obihiro',
+  '高知': 'kochi',
+  '鳥取': 'tottori',
+  '山形': 'gaj',
+  '秋田': 'akita',
+  '青森': 'aomori',
+  '岡山': 'oka2',
+  '米子': 'yonago',
+  '山口宇部': 'ube',
+  '奄美大島': 'amm',
+  '屋久島': 'yakushima',
+
+  // ── 韓國 Korea ───────────────────────────────────────────────────────────
   '首爾': 'sel',
   '仁川': 'icn',
   '首爾/仁川': 'icn',
   '金浦': 'gmp',
+  '首爾/金浦': 'gmp',
+  'seoul': 'sel',
+  'incheon': 'icn',
+  'gimpo': 'gmp',
   '釜山': 'pus',
+  '金海': 'pus',
+  'busan': 'pus',
   '濟州': 'cju',
+  'jeju': 'cju',
+  '大邱': 'tae',
+  'daegu': 'tae',
+  '清州': 'cjj',
+  'cheongju': 'cjj',
+  '光州': 'kwj',
+  'gwangju': 'kwj',
+  '務安': 'mwx',
+  'muan': 'mwx',
+
+  // ── 中國大陸 Mainland China ──────────────────────────────────────────────
+  '北京': 'bjs',
+  '首都': 'pek',
+  '北京首都': 'pek',
+  '大興': 'pkx',
+  '北京大興': 'pkx',
+  'beijing': 'bjs',
+  '上海': 'sha',
+  '浦東': 'pvg',
+  '上海浦東': 'pvg',
+  '虹橋': 'sha',
+  '上海虹橋': 'sha',
+  'shanghai': 'sha',
+  'pudong': 'pvg',
+  '廣州': 'can',
+  '白雲': 'can',
+  'guangzhou': 'can',
+  '深圳': 'szx',
+  'shenzhen': 'szx',
+  '成都': 'ctu',
+  '天府': 'tfu',
+  '成都天府': 'tfu',
+  '雙流': 'ctu',
+  'chengdu': 'ctu',
+  '昆明': 'kmg',
+  'kunming': 'kmg',
+  '廈門': 'xmn',
+  'xiamen': 'xmn',
+  '杭州': 'hgh',
+  'hangzhou': 'hgh',
+  '南京': 'nkg',
+  'nanjing': 'nkg',
+  '武漢': 'wuh',
+  'wuhan': 'wuh',
+  '西安': 'sia',
+  'xian': 'sia',
+  '重慶': 'ckg',
+  'chongqing': 'ckg',
+  '鄭州': 'cgn',
+  'zhengzhou': 'cgn',
+  '青島': 'tao',
+  'qingdao': 'tao',
+  '長沙': 'csx',
+  'changsha': 'csx',
+  '大連': 'dlc',
+  'dalian': 'dlc',
+  '瀋陽': 'she',
+  'shenyang': 'she',
+  '哈爾濱': 'hrb',
+  'harbin': 'hrb',
+  '天津': 'tsn',
+  'tianjin': 'tsn',
+  '南寧': 'nng',
+  'nanning': 'nng',
+  '貴陽': 'kwe',
+  'guiyang': 'kwe',
+  '桂林': 'kwl',
+  'guilin': 'kwl',
+  '海口': 'hak',
+  'haikou': 'hak',
+  '三亞': 'syx',
+  'sanya': 'syx',
+  '福州': 'foc',
+  'fuzhou': 'foc',
+  '烏魯木齊': 'urc',
+  'urumqi': 'urc',
+  '拉薩': 'lxa',
+  'lhasa': 'lxa',
+  '麗江': 'ljg',
+  'lijiang': 'ljg',
+  '西雙版納': 'jmj',
+  '景洪': 'jmj',
+  '張家界': 'dys',
+  '合肥': 'hfe',
+  '南昌': 'khn',
+  '石家莊': 'sjw',
+  '太原': 'tyn',
+  '呼和浩特': 'hot',
+  '長春': 'cgq',
+  '銀川': 'inc',
+  '蘭州': 'lhw',
+  '西寧': 'xnn',
+  '溫州': 'wnh',
+  '寧波': 'ngb',
+  '揚州': 'ytz',
+  '蘇州': 'szv',
+  '舟山': 'zos',
+  '汕頭': 'swu',
+  '珠海': 'zuh',
+  '南通': 'ntg',
+
+  // ── 東南亞 Southeast Asia ────────────────────────────────────────────────
   '曼谷': 'bkk',
+  '素萬那普': 'bkk',
   '蘇凡納布': 'bkk',
   '廊曼': 'dmk',
+  'bangkok': 'bkk',
+  'suvarnabhumi': 'bkk',
+  'don mueang': 'dmk',
   '清邁': 'cnx',
+  'chiang mai': 'cnx',
+  '清萊': 'cei',
+  'chiang rai': 'cei',
   '普吉島': 'hkt',
+  '普吉': 'hkt',
+  'phuket': 'hkt',
+  '蘇梅島': 'usp',
+  '蘇梅': 'usp',
+  'koh samui': 'usp',
+  '喀比': 'kbv',
+  'krabi': 'kbv',
+  '烏汶': 'ubn',
+  '合艾': 'hdy',
+  'hat yai': 'hdy',
   '新加坡': 'sin',
+  'singapore': 'sin',
   '香港': 'hkg',
+  'hong kong': 'hkg',
   '澳門': 'mfm',
+  'macau': 'mfm',
+  'macao': 'mfm',
   '吉隆坡': 'kul',
+  '吉隆坡國際': 'kul',
+  'kuala lumpur': 'kul',
+  '亞庇': 'bki',
+  '哥打京那巴盧': 'bki',
+  'kota kinabalu': 'bki',
+  '古晉': 'kch',
+  'kuching': 'kch',
+  '蘭卡威': 'lgk',
+  'langkawi': 'lgk',
+  '檳城': 'pen',
+  'penang': 'pen',
   '胡志明': 'sgn',
   '胡志明市': 'sgn',
+  'ho chi minh': 'sgn',
+  'saigon': 'sgn',
   '河內': 'han',
+  'hanoi': 'han',
   '峴港': 'dad',
+  'da nang': 'dad',
+  '芽莊': 'cam',
+  'nha trang': 'cam',
+  '富國島': 'phu',
+  'phu quoc': 'phu',
+  '會安': 'dad',
   '峇里島': 'dps',
+  '巴里島': 'dps',
+  'bali': 'dps',
+  'denpasar': 'dps',
   '雅加達': 'cgk',
+  'jakarta': 'cgk',
+  '泗水': 'sub',
+  'surabaya': 'sub',
+  '日惹': 'jog',
+  'yogyakarta': 'jog',
+  '美達': 'kno',
+  '棉蘭': 'kno',
+  'medan': 'kno',
+  '龍目島': 'lop',
+  'lombok': 'lop',
+  '望加錫': 'upg',
+  'makassar': 'upg',
   '宿霧': 'ceb',
+  'cebu': 'ceb',
   '馬尼拉': 'mnl',
+  'manila': 'mnl',
   '長灘島': 'mph',
-  '雪梨': 'syd',
-  '墨爾本': 'mel',
-  '布里斯本': 'bne',
-  '紐約': 'nyc',
-  '洛杉磯': 'lax',
-  '舊金山': 'sfo',
-  '西雅圖': 'sea',
-  '溫哥華': 'yvr',
-  '多倫多': 'yto',
+  'boracay': 'mph',
+  '達沃': 'dvo',
+  'davao': 'dvo',
+  '科塔巴托': 'kta',
+  '仰光': 'rgn',
+  'yangon': 'rgn',
+  '曼德勒': 'mdl',
+  'mandalay': 'mdl',
+  '金邊': 'pnh',
+  'phnom penh': 'pnh',
+  '暹粒': 'rep',
+  '吳哥': 'rep',
+  'siem reap': 'rep',
+  '永珍': 'vte',
+  '萬象': 'vte',
+  'vientiane': 'vte',
+  '琅勃拉邦': 'lpq',
+  'luang prabang': 'lpq',
+  '汶萊': 'bwn',
+  'bandar seri begawan': 'bwn',
+  'brunei': 'bwn',
+  '東帝汶': 'dil',
+  'dili': 'dil',
+
+  // ── 南亞 South Asia ──────────────────────────────────────────────────────
+  '孟買': 'bom',
+  'mumbai': 'bom',
+  '新德里': 'del',
+  '德里': 'del',
+  'delhi': 'del',
+  'new delhi': 'del',
+  '班加羅爾': 'blr',
+  '邦加羅爾': 'blr',
+  'bangalore': 'blr',
+  'bengaluru': 'blr',
+  '清奈': 'maa',
+  '金奈': 'maa',
+  'chennai': 'maa',
+  '加爾各答': 'ccu',
+  'kolkata': 'ccu',
+  'calcutta': 'ccu',
+  '海德拉巴': 'hyd',
+  'hyderabad': 'hyd',
+  '可倫坡': 'cmb',
+  '科倫坡': 'cmb',
+  'colombo': 'cmb',
+  '達卡': 'dac',
+  'dhaka': 'dac',
+  '加德滿都': 'ktm',
+  'kathmandu': 'ktm',
+  '馬爾地夫': 'mle',
+  '馬累': 'mle',
+  'maldives': 'mle',
+  'male': 'mle',
+  '伊斯蘭堡': 'isb',
+  'islamabad': 'isb',
+  '卡拉奇': 'khi',
+  'karachi': 'khi',
+  '拉合爾': 'lhe',
+  'lahore': 'lhe',
+  '喀布爾': 'kbl',
+  'kabul': 'kbl',
+
+  // ── 中亞 Central Asia ────────────────────────────────────────────────────
+  '阿拉木圖': 'ala',
+  'almaty': 'ala',
+  '努爾蘇丹': 'nqz',
+  '阿斯塔納': 'nqz',
+  'astana': 'nqz',
+  '塔什干': 'tas',
+  'tashkent': 'tas',
+
+  // ── 中東 Middle East ─────────────────────────────────────────────────────
+  '杜拜': 'dxb',
+  '迪拜': 'dxb',
+  'dubai': 'dxb',
+  '阿布達比': 'auh',
+  '阿布扎比': 'auh',
+  'abu dhabi': 'auh',
+  '多哈': 'doh',
+  'doha': 'doh',
+  '科威特': 'kwi',
+  'kuwait': 'kwi',
+  '利雅德': 'ruh',
+  'riyadh': 'ruh',
+  '吉達': 'jed',
+  'jeddah': 'jed',
+  '麥地那': 'med',
+  'medina': 'med',
+  '安曼': 'amm',
+  'amman': 'amm',
+  '貝魯特': 'bey',
+  'beirut': 'bey',
+  '特拉維夫': 'tlv',
+  'tel aviv': 'tlv',
+  '開羅': 'cai',
+  'cairo': 'cai',
+  '阿曼': 'mct',
+  '馬斯喀特': 'mct',
+  'muscat': 'mct',
+  '巴林': 'bah',
+  'bahrain': 'bah',
+  '德黑蘭': 'thr',
+  'tehran': 'thr',
+  '伊斯坦堡': 'ist',
+  '伊斯坦布爾': 'ist',
+  'istanbul': 'ist',
+  '安卡拉': 'ank',
+  'ankara': 'ank',
+
+  // ── 歐洲 Europe ──────────────────────────────────────────────────────────
   '倫敦': 'lon',
+  '希斯洛': 'lhr',
+  '倫敦/希斯洛': 'lhr',
+  '蓋威克': 'lgw',
+  '倫敦/蓋威克': 'lgw',
+  'london': 'lon',
+  'heathrow': 'lhr',
+  'gatwick': 'lgw',
   '巴黎': 'par',
+  '戴高樂': 'cdg',
+  '巴黎/戴高樂': 'cdg',
+  '奧利': 'ory',
+  '巴黎/奧利': 'ory',
+  'paris': 'par',
+  'charles de gaulle': 'cdg',
   '法蘭克福': 'fra',
+  'frankfurt': 'fra',
+  '慕尼黑': 'muc',
+  'munich': 'muc',
+  '柏林': 'ber',
+  'berlin': 'ber',
+  '漢堡': 'ham',
+  'hamburg': 'ham',
+  '杜塞道夫': 'dus',
+  'dusseldorf': 'dus',
+  '阿姆斯特丹': 'ams',
+  'amsterdam': 'ams',
+  '布魯塞爾': 'bru',
+  'brussels': 'bru',
+  '馬德里': 'mad',
+  'madrid': 'mad',
+  '巴塞隆納': 'bcn',
+  'barcelona': 'bcn',
+  '羅馬': 'rom',
+  '菲烏米奇諾': 'fco',
+  '羅馬/菲烏米奇諾': 'fco',
+  'rome': 'rom',
+  'fiumicino': 'fco',
+  '米蘭': 'mxp',
+  '馬爾彭薩': 'mxp',
+  '林納特': 'lin',
+  'milan': 'mxp',
+  '威尼斯': 'vce',
+  'venice': 'vce',
+  '佛羅倫斯': 'flr',
+  'florence': 'flr',
+  '那不勒斯': 'nap',
+  'naples': 'nap',
+  '蘇黎世': 'zrh',
+  'zurich': 'zrh',
+  '日內瓦': 'gva',
+  'geneva': 'gva',
+  '維也納': 'vie',
+  'vienna': 'vie',
+  '哥本哈根': 'cph',
+  'copenhagen': 'cph',
+  '斯德哥爾摩': 'arn',
+  'stockholm': 'arn',
+  '奧斯陸': 'osl',
+  'oslo': 'osl',
+  '赫爾辛基': 'hel',
+  'helsinki': 'hel',
+  '雷克雅維克': 'kef',
+  'reykjavik': 'kef',
+  '里斯本': 'lis',
+  'lisbon': 'lis',
+  '都柏林': 'dub',
+  'dublin': 'dub',
+  '愛丁堡': 'edi',
+  'edinburgh': 'edi',
+  '曼徹斯特': 'man',
+  'manchester': 'man',
+  '布達佩斯': 'bud',
+  'budapest': 'bud',
+  '布拉格': 'prg',
+  'prague': 'prg',
+  '華沙': 'waw',
+  'warsaw': 'waw',
+  '雅典': 'ath',
+  'athens': 'ath',
+  '伊斯坦堡/新': 'ist',
+  '薩格勒布': 'zag',
+  'zagreb': 'zag',
+  '貝爾格勒': 'beg',
+  'belgrade': 'beg',
+  '莫斯科': 'mos',
+  '謝列梅捷沃': 'svo',
+  '多莫傑多沃': 'dme',
+  'moscow': 'mos',
+  '聖彼得堡': 'led',
+  'st. petersburg': 'led',
+  '基輔': 'iev',
+  'kyiv': 'iev',
+  '里加': 'rix',
+  'riga': 'rix',
+  '塔林': 'tll',
+  'tallinn': 'tll',
+  '維爾紐斯': 'vno',
+  'vilnius': 'vno',
+  '盧森堡': 'lux',
+  'luxembourg': 'lux',
+  '奧克蘭': 'akl',
+  '尼斯': 'nce',
+  'nice': 'nce',
+  '里昂': 'lys',
+  'lyon': 'lys',
+  '馬賽': 'mrs',
+  'marseille': 'mrs',
+  '斯圖加特': 'str',
+  'stuttgart': 'str',
+  '紐倫堡': 'nue',
+  'nuremberg': 'nue',
+  '杜布羅夫尼克': 'dbv',
+  'dubrovnik': 'dbv',
+  '薩拉熱窩': 'sjj',
+  'sarajevo': 'sjj',
+  '索菲亞': 'sof',
+  'sofia': 'sof',
+  '布加勒斯特': 'otp',
+  'bucharest': 'otp',
+  '奧克蘭(紐西蘭)': 'akl',
+
+  // ── 非洲 Africa ──────────────────────────────────────────────────────────
+  '奈洛比': 'nbo',
+  'nairobi': 'nbo',
+  '約翰尼斯堡': 'jnb',
+  'johannesburg': 'jnb',
+  '開普敦': 'cpt',
+  'cape town': 'cpt',
+  '卡薩布蘭加': 'cmn',
+  '卡薩布蘭卡': 'cmn',
+  'casablanca': 'cmn',
+  '拉各斯': 'los',
+  'lagos': 'los',
+  '達累斯薩拉姆': 'dar',
+  'dar es salaam': 'dar',
+  '阿克拉': 'acc',
+  'accra': 'acc',
+  '亞的斯亞貝巴': 'add',
+  'addis ababa': 'add',
+  '突尼斯': 'tun',
+  'tunis': 'tun',
+  '阿爾及爾': 'alg',
+  'algiers': 'alg',
+  '路易港': 'mru',
+  '模里西斯': 'mru',
+  'mauritius': 'mru',
+  '留尼旺': 'run',
+  'reunion': 'run',
+  '塞席爾': 'sez',
+  'seychelles': 'sez',
+
+  // ── 大洋洲 Oceania ───────────────────────────────────────────────────────
+  '雪梨': 'syd',
+  'sydney': 'syd',
+  '墨爾本': 'mel',
+  'melbourne': 'mel',
+  '布里斯本': 'bne',
+  'brisbane': 'bne',
+  '珀斯': 'per',
+  '伯斯': 'per',
+  'perth': 'per',
+  '阿德萊德': 'adl',
+  'adelaide': 'adl',
+  '黃金海岸': 'ool',
+  'gold coast': 'ool',
+  '凱恩斯': 'cns',
+  'cairns': 'cns',
+  '達爾文': 'drw',
+  'darwin': 'drw',
+  '堪培拉': 'cbr',
+  'canberra': 'cbr',
+  'auckland': 'akl',
+  '基督城': 'chc',
+  'christchurch': 'chc',
+  '惠靈頓': 'wlg',
+  'wellington': 'wlg',
+  '皇后鎮': 'zqn',
+  'queenstown': 'zqn',
+  '努美阿': 'nou',
+  'noumea': 'nou',
+  '大溪地': 'ppt',
+  '帕皮提': 'ppt',
+  'tahiti': 'ppt',
+  '斐濟': 'suv',
+  '蘇瓦': 'suv',
+  'fiji': 'nadi',
+  'nadi': 'nadi',
+  '關島': 'gum',
+  'guam': 'gum',
+  '塞班': 'spn',
+  'saipan': 'spn',
+
+  // ── 北美 North America ───────────────────────────────────────────────────
+  '紐約': 'nyc',
+  '甘迺迪': 'jfk',
+  '紐約/甘迺迪': 'jfk',
+  '拉瓜地亞': 'lga',
+  '紐瓦克': 'ewr',
+  'new york': 'nyc',
+  'jfk': 'jfk',
+  'newark': 'ewr',
+  '洛杉磯': 'lax',
+  'los angeles': 'lax',
+  '舊金山': 'sfo',
+  'san francisco': 'sfo',
+  '西雅圖': 'sea',
+  'seattle': 'sea',
+  '拉斯維加斯': 'las',
+  'las vegas': 'las',
+  '丹佛': 'den',
+  'denver': 'den',
+  '鳳凰城': 'phx',
+  'phoenix': 'phx',
+  '波特蘭': 'pdx',
+  'portland': 'pdx',
+  '聖地牙哥(美國)': 'san',
+  'san diego': 'san',
+  '薩克拉門托': 'smf',
+  'sacramento': 'smf',
+  '鹽湖城': 'slc',
+  'salt lake city': 'slc',
+  '阿拉斯加': 'anc',
+  '安克拉治': 'anc',
+  'anchorage': 'anc',
+  '火奴魯魯': 'hnl',
+  '夏威夷': 'hnl',
+  'honolulu': 'hnl',
+  'hawaii': 'hnl',
+  '芝加哥': 'chi',
+  '歐海爾': 'ord',
+  '芝加哥/歐海爾': 'ord',
+  '中途島': 'mdw',
+  'chicago': 'chi',
+  "o'hare": 'ord',
+  '休士頓': 'hou',
+  '喬治布希': 'iah',
+  '休士頓/喬治布希': 'iah',
+  'houston': 'hou',
+  '達拉斯': 'dfw',
+  'dallas': 'dfw',
+  '邁阿密': 'mia',
+  'miami': 'mia',
+  '奧蘭多': 'mco',
+  'orlando': 'mco',
+  '亞特蘭大': 'atl',
+  'atlanta': 'atl',
+  '波士頓': 'bos',
+  'boston': 'bos',
+  '華盛頓': 'was',
+  '杜勒斯': 'iad',
+  '雷根': 'dca',
+  '華盛頓/杜勒斯': 'iad',
+  'washington': 'was',
+  'dulles': 'iad',
+  '費城': 'phl',
+  'philadelphia': 'phl',
+  '底特律': 'dtw',
+  'detroit': 'dtw',
+  '明尼阿波利斯': 'msp',
+  'minneapolis': 'msp',
+  '聖路易': 'stl',
+  'st. louis': 'stl',
+  '納許維爾': 'bna',
+  'nashville': 'bna',
+  '夏洛特': 'clt',
+  'charlotte': 'clt',
+  '坦帕': 'tpa',
+  'tampa': 'tpa',
+  '巴爾的摩': 'bwi',
+  'baltimore': 'bwi',
+  '辛辛那提': 'cvg',
+  'cincinnati': 'cvg',
+  '溫哥華': 'yvr',
+  'vancouver': 'yvr',
+  '多倫多': 'yto',
+  '皮爾遜': 'yyz',
+  '多倫多/皮爾遜': 'yyz',
+  'toronto': 'yto',
+  '蒙特婁': 'yul',
+  'montreal': 'yul',
+  '卡加利': 'yyc',
+  'calgary': 'yyc',
+  '渥太華': 'yow',
+  'ottawa': 'yow',
+  '愛德蒙頓': 'yeg',
+  'edmonton': 'yeg',
+  '哈利法克斯': 'yhz',
+  'halifax': 'yhz',
+  '墨西哥城': 'mex',
+  'mexico city': 'mex',
+  '坎昆': 'cun',
+  'cancun': 'cun',
+  '瓜達拉哈拉': 'gdl',
+  'guadalajara': 'gdl',
+  '蒙特瑞': 'mty',
+  'monterrey': 'mty',
+
+  // ── 中美洲 & 加勒比海 Central America & Caribbean ────────────────────────
+  '哈瓦那': 'hav',
+  'havana': 'hav',
+  '聖多明哥': 'sdq',
+  'santo domingo': 'sdq',
+  '聖胡安': 'sju',
+  'san juan': 'sju',
+  '金斯頓': 'kin',
+  'kingston': 'kin',
+  '巴拿馬城': 'pty',
+  'panama city': 'pty',
+  '聖荷西': 'sjo',
+  'san jose': 'sjo',
+
+  // ── 南美洲 South America ─────────────────────────────────────────────────
+  '聖保羅': 'gru',
+  '瓜魯柳斯': 'gru',
+  'sao paulo': 'gru',
+  '里約熱內盧': 'gig',
+  'rio de janeiro': 'gig',
+  '布宜諾斯艾利斯': 'eze',
+  'buenos aires': 'eze',
+  '波哥大': 'bog',
+  'bogota': 'bog',
+  '利馬': 'lim',
+  'lima': 'lim',
+  '聖地牙哥(智利)': 'scl',
+  'santiago': 'scl',
+  '加拉卡斯': 'ccs',
+  'caracas': 'ccs',
+  '基多': 'uio',
+  'quito': 'uio',
+  '蒙特維多': 'mvd',
+  'montevideo': 'mvd',
+  '亞松森': 'asu',
+  'asuncion': 'asu',
+  '拉巴斯': 'lpb',
+  'la paz': 'lpb',
 };
 
 const IATA_LOOKUP: Record<string, string> = Object.fromEntries(
@@ -105,140 +889,534 @@ function getIata(city: string): string {
   return normalizedCity;
 }
 
+// ---------------------------------------------------------------------------
+// API response parser — attempt to extract flights from Trip.com's internal
+// JSON endpoints captured via network interception.
+// ---------------------------------------------------------------------------
+function parseApiResponses(
+  captured: Array<{ url: string; data: any }>,
+  affiliateUrl: string,
+  origin: string,
+  destination: string,
+  date: string,
+): FlightData[] {
+  const results: FlightData[] = [];
+
+  for (const { url: capturedUrl, data } of captured) {
+    // ── FlightMiddleSearch (soa2/27015) ──────────────────────────────────
+    // Structure: { head: { retCode }, flightItineraryList: [{ flightSegments:[{ flightList:[...] }] }] }
+    // or: { routeList: [{ itemList: [...] }] }
+    if (capturedUrl.includes('FlightMiddleSearch') || capturedUrl.includes('soa2/27015')) {
+      const itineraryList: any[] =
+        data?.flightItineraryList ??
+        data?.data?.flightItineraryList ??
+        data?.routeList ??
+        data?.data?.routeList ??
+        [];
+      for (const itinerary of itineraryList) {
+        try {
+          const segGroups: any[] = itinerary?.flightSegments ?? itinerary?.itemList ?? [itinerary];
+          for (const segGroup of segGroups) {
+            const segs: any[] = segGroup?.flightList ?? segGroup?.segments ?? [segGroup];
+            const seg = segs[0] ?? {};
+            const priceInfo = itinerary?.priceList?.[0] ?? itinerary?.cabinInfoList?.[0] ?? {};
+            const price = Number(
+              priceInfo?.adultPrice ?? priceInfo?.price ?? priceInfo?.salePrice ?? 0
+            );
+            if (!price) continue;
+            const depTime = (seg?.departureDateTime ?? seg?.depDateTime ?? '').match(/(\d{2}:\d{2})/)?.[1] ?? '';
+            const arrTime = (seg?.arrivalDateTime ?? seg?.arrDateTime ?? '').match(/(\d{2}:\d{2})/)?.[1] ?? '';
+            const airline = seg?.marketingAirlineName ?? seg?.airlineName ?? seg?.carrierName ?? 'Unknown';
+            const durationMin = Number(seg?.duration ?? seg?.flightTime ?? 0);
+            const stops = Number(itinerary?.transferCount ?? itinerary?.stopNum ?? 0);
+            if (!depTime && !arrTime) continue;
+            results.push({
+              id: `tripcom_api_${date}_${results.length}_${Date.now()}`,
+              type: 'flight',
+              provider: 'Trip.com',
+              title: `${origin} → ${destination} · ${stops === 0 ? '直飛' : stops + ' 轉'}`,
+              price,
+              currency: 'TWD',
+              emoji: '✈️',
+              affiliate_url: affiliateUrl,
+              details: {
+                airline,
+                departure: depTime,
+                arrival: arrTime,
+                stops,
+                duration: durationMin ? `${Math.floor(durationMin / 60)}h ${durationMin % 60}m` : '--',
+              },
+            });
+          }
+        } catch { /* skip */ }
+        if (results.length >= 10) break;
+      }
+      if (results.length >= 10) break;
+      continue; // move to next captured response
+    }
+
+    // Trip.com / Ctrip API envelopes vary; try common paths
+    const root =
+      data?.Response ??
+      data?.data ??
+      data?.result ??
+      data?.flightData ??
+      data;
+
+    const flightList: any[] =
+      root?.FlightRouteItems ??
+      root?.flightRouteList ??
+      root?.flightList ??
+      root?.items ??
+      (Array.isArray(root) ? root : []);
+
+    for (const item of flightList) {
+      try {
+        const segs: any[] =
+          item?.FlightSegmentList ??
+          item?.segments ??
+          item?.legs ??
+          [];
+
+        const seg = segs[0] ?? {};
+        const priceNode =
+          item?.Prices ??
+          item?.price ??
+          item?.fare ??
+          {};
+
+        const price = Number(
+          priceNode?.AdultPrice ??
+          priceNode?.adultPrice ??
+          priceNode?.totalPrice ??
+          priceNode?.amount ??
+          item?.minPrice ??
+          item?.price ??
+          0,
+        );
+
+        if (!price) continue;
+
+        const depRaw: string =
+          seg?.DepartureDateTime ??
+          seg?.departureDateTime ??
+          seg?.departureTime ??
+          '';
+        const arrRaw: string =
+          seg?.ArrivalDateTime ??
+          seg?.arrivalDateTime ??
+          seg?.arrivalTime ??
+          '';
+
+        const depTime = depRaw.match(/\d{2}:\d{2}/)?.[0] ?? depRaw.slice(-5);
+        const arrTime = arrRaw.match(/\d{2}:\d{2}/)?.[0] ?? arrRaw.slice(-5);
+
+        const airline: string =
+          seg?.MarketingAirlineName ??
+          seg?.airlineName ??
+          seg?.carrier ??
+          item?.airlineName ??
+          'Unknown';
+
+        const durationMin: number =
+          seg?.Duration ?? seg?.duration ?? item?.duration ?? 0;
+        const durationStr = durationMin
+          ? `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`
+          : '--';
+
+        const stops: number =
+          (item?.StopNum ?? item?.stopNum ?? item?.stops ?? segs.length - 1) || 0;
+
+        results.push({
+          id: `tripcom_api_${date}_${results.length}_${Date.now()}`,
+          type: 'flight',
+          provider: 'Trip.com',
+          title: `${origin} → ${destination} · ${stops === 0 ? '直飛' : stops + ' 轉'}`,
+          price,
+          currency: 'TWD',
+          emoji: '✈️',
+          affiliate_url: affiliateUrl,
+          details: { airline, departure: depTime, arrival: arrTime, stops, duration: durationStr },
+        });
+      } catch {
+        // skip malformed item
+      }
+    }
+
+    if (results.length >= 10) break;
+  }
+
+  return results.slice(0, 10);
+}
+
+// ---------------------------------------------------------------------------
+// DOM parser — executed inside page.evaluate(), must be self-contained JS.
+// Trip.com renders each flight field on its own line inside .m-flight-list.
+// Pattern per flight:
+//   [Airline name]
+//   [HH:MM]   <- departure
+//   [TPET1]   <- origin airport+terminal
+//   [X 小時 Y 分]
+//   [直飛 | N 轉]
+//   [HH:MM]   <- arrival
+//   [OKA / OKAI]
+//   [TWD N,NNN]
+// ---------------------------------------------------------------------------
+function buildDomParserScript(_originIATA: string, _destIATA: string): string {
+  return `
+(function () {
+  var CARD_SELECTORS = [
+    '.flight-item',
+    '[class*="flight-item"]',
+    '[class*="FlightItem"]',
+    '[class*="flightItem"]',
+    '.m-list-item',
+    '.flight-card',
+    '[class*="flight-card"]',
+    '[class*="FlightCard"]',
+    '.o-flight-card',
+    '[data-testid="flight-card"]',
+  ];
+
+  var nodes = [];
+  for (var si = 0; si < CARD_SELECTORS.length; si++) {
+    var found = Array.from(document.querySelectorAll(CARD_SELECTORS[si]));
+    if (found.length >= 2) { nodes = found; break; }
+  }
+
+  // Strategy A: structured node extraction
+  if (nodes.length > 0) {
+    var stratA = nodes.slice(0, 15).map(function(node, index) {
+      var text = node.textContent || '';
+      var times = text.match(/(\\d{2}:\\d{2})/g) || [];
+      var dep = times[0] || '';
+      var arr = times[1] || '';
+      var pm = text.match(/TWD[\\s,]*([\\d,]+)/) || text.match(/([\\d,]{4,})\\s*TWD/);
+      var price = pm ? parseInt(pm[1].replace(/,/g, ''), 10) : 0;
+      var airlineEl = node.querySelector('[class*="airline"],[class*="carrier"],[class*="Airline"]');
+      var airline = airlineEl ? (airlineEl.textContent || '').trim() : '';
+      if (!airline) {
+        var airlineM = text.match(/([\\u4e00-\\u9fff]+(?:航空|航班))/);
+        airline = airlineM ? airlineM[1] : '';
+      }
+      var durEl = node.querySelector('[class*="duration"],[class*="Duration"]');
+      var duration = durEl ? (durEl.textContent || '').trim() : '';
+      if (!duration) {
+        var durM = text.match(/(\\d+)\\s*小時\\s*(\\d+)\\s*分/);
+        duration = durM ? (durM[1] + 'h ' + durM[2] + 'm') : '';
+      }
+      var stops = text.includes('直飛') ? 0 : (text.match(/(\\d+)\\s*[轉停]/) ? parseInt(text.match(/(\\d+)\\s*[轉停]/)[1]) : 1);
+      if (!dep || !arr || price < 1000) return null;
+      return { index: index, airline: airline, departure: dep, arrival: arr, price: price, duration: duration, stops: stops };
+    }).filter(function(x) { return x !== null; });
+    if (stratA.length >= 2) return stratA;
+  }
+
+  // Strategy B: sentinel-split — Trip.com ends each card with "選取" (Select)
+  // or "查看詳情" (View Details) depending on A/B variant. Use body.innerText.
+  var fullText = document.body.innerText || '';
+  if (fullText.length < 300) {
+    var container = document.querySelector('.m-flight-list, .page-box-list');
+    if (container && container.innerText && container.innerText.length > fullText.length) {
+      fullText = container.innerText;
+    }
+  }
+
+  // Truncate at footer noise (recommended dates section or SEO footer)
+  var cutMarkers = ['推薦日期', '資料擷取時間', '在 Trip.com 預訂', '常見問題'];
+  var flightZone = fullText;
+  for (var ci = 0; ci < cutMarkers.length; ci++) {
+    var ci2 = flightZone.indexOf(cutMarkers[ci]);
+    if (ci2 > 200) { flightZone = flightZone.slice(0, ci2); break; }
+  }
+
+  // Split on both sentinel variants
+  var sentinelRe = /選取|查看詳情/g;
+  var lastIdx = 0;
+  var blocksList = [];
+  var smatch;
+  while ((smatch = sentinelRe.exec(flightZone)) !== null) {
+    blocksList.push(flightZone.slice(lastIdx, smatch.index));
+    lastIdx = smatch.index + smatch[0].length;
+  }
+  // Drop the trailing segment (footer content after last sentinel)
+  var blocks = blocksList;
+  var results = [];
+
+  for (var bi = 0; bi < blocks.length - 1 && results.length < 10; bi++) {
+    var block = blocks[bi];
+    // Keep last 600 chars of the block (flight data is always near the end)
+    block = block.slice(Math.max(0, block.length - 600));
+
+    // Times — need at least departure + arrival
+    var times = block.match(/(\\d{2}:\\d{2})/g) || [];
+    if (times.length < 2) continue;
+    var arrTime = times[times.length - 1];
+    var depTime = times[times.length - 2];
+
+    // Price
+    var priceMatch = block.match(/TWD[\\s,]*([\\d,]+)/);
+    if (!priceMatch) continue;
+    var price = parseInt(priceMatch[1].replace(/,/g, ''), 10);
+    if (price < 1000 || price > 500000) continue;
+
+    // Duration (X 小時 Y 分)
+    var durMatch = block.match(/(\\d+)\\s*小時\\s*(\\d+)\\s*分/);
+    var duration = durMatch ? (durMatch[1] + 'h ' + durMatch[2] + 'm') : '';
+
+    // Stops
+    var stops = block.includes('直飛') ? 0
+      : (block.match(/(\\d+)\\s*[轉停]/) ? parseInt(block.match(/(\\d+)\\s*[轉停]/)[1]) : 1);
+
+    // Airline name — Chinese characters ending in 航空 or 航班
+    var airlineMatch = block.match(/([\\u4e00-\\u9fff]+(?:航空|航班))/);
+    var airline = airlineMatch ? airlineMatch[1] : '';
+
+    results.push({
+      index: results.length,
+      airline: airline,
+      departure: depTime,
+      arrival: arrTime,
+      price: price,
+      duration: duration,
+      stops: stops,
+    });
+  }
+
+  return results;
+})()
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// Main exported function
+// ---------------------------------------------------------------------------
+
 /**
- * Trip.com Flight Parser (POC)
- * Scrapes flight data using headles chromium and stealth plugin.
+ * Scrape Trip.com flight search results using Playwright with:
+ *  1. Network response interception (parse internal API JSON — most reliable)
+ *  2. DOM extraction with multi-strategy fallback
+ *  3. Human-behaviour simulation (random mouse path, gradual scrolling)
+ *  4. Comprehensive anti-detection init script
  */
-export async function scrapeTripFlights(origin: string, destination: string, date: string): Promise<FlightData[]> {
+export async function scrapeTripFlights(
+  origin: string,
+  destination: string,
+  date: string,
+): Promise<FlightData[]> {
   const originIATA = getIata(origin);
   const destIATA = getIata(destination);
-  // Construct dynamic URL based on Trip.com's structure
   const url = `https://tw.trip.com/flights/${originIATA}-to-${destIATA}/tickets-${originIATA}-${destIATA}/?flighttype=ow&dcity=${originIATA}&acity=${destIATA}&ddate=${date}`;
   const isVercel = !!process.env.VERCEL;
-  const shouldBypassOnVercel = process.env.TRIP_SCRAPER_BYPASS_ON_VERCEL === 'true';
 
-  // Allow Vercel scraping by default. Only bypass when explicitly configured.
-  if (isVercel && shouldBypassOnVercel) {
-    console.warn('Trip.com scraper bypassed on Vercel by TRIP_SCRAPER_BYPASS_ON_VERCEL=true.');
-    return [];
-  }
-  
-  console.log(`Starting Playwright tripParser for: ${url}`);
-  
-  let browser;
+  console.log(`[tripParser] Starting → ${url}`);
+
+  const capturedApiData: Array<{ url: string; data: any }> = [];
+  let browser: playwrightCore.Browser | undefined;
+
   try {
-    // Launch browser (uses sparticuz/chromium on Vercel)
-    browser = await playwrightCore.chromium.launch({ 
+    // ── Browser launch ────────────────────────────────────────────────────
+    const executablePath = isVercel
+      ? await (chromiumSparticuz as any).executablePath()
+      : undefined;
+
+    browser = await playwrightCore.chromium.launch({
       headless: true,
-      executablePath: isVercel ? await (chromiumSparticuz as any).executablePath() : undefined,
-      args: isVercel 
-        ? (chromiumSparticuz as any).args 
-        : ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+      executablePath: executablePath || undefined,
+      args: [
+        ...((isVercel && (chromiumSparticuz as any).args) ? (chromiumSparticuz as any).args : []),
+        '--disable-blink-features=AutomationControlled',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--window-size=1440,900',
+        '--lang=zh-TW',
+        // Additional stealth: suppress headless indicators
+        '--disable-infobars',
+        '--ignore-certificate-errors',
+        '--allow-running-insecure-content',
+        '--disable-web-security',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--force-device-scale-factor=1',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--metrics-recording-only',
+        '--safebrowsing-disable-auto-update',
+        '--password-store=basic',
+      ],
     });
-    
-    // Set realistic User-Agent and viewport
+
+    // ── Context setup ─────────────────────────────────────────────────────
     const context = await browser.newContext({
-      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      userAgent:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       viewport: { width: 1440, height: 900 },
       locale: 'zh-TW',
       timezoneId: 'Asia/Taipei',
+      extraHTTPHeaders: {
+        'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0',
+      },
     });
-    
-    const page = await context.newPage();
-    
-    console.log('Navigating to page...');
-    // Reduce timeout drastically for Vercel (Free tier limit is 10s total, so max 3s here)
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: isVercel ? 3000 : 12000 });
-    
-    // Simulate human interaction while loading (faster)
-    console.log('Simulating human mouse/scroll behavior...');
-    await page.waitForTimeout(200);
-    await page.mouse.wheel(0, 400);
-    
-    // Wait for either the main flight list OR the filter list (which loads even when flights are blocked by bot detection)
-    try {
-      await page.waitForSelector('.flight-list, .Baggage-Card, .flight-item, .filter-item-wrapper', { timeout: isVercel ? 2000 : 5000 });
-      console.log('Flight container or filter detected, starting DOM parsing.');
-    } catch (e) {
-      console.log('Timeout waiting for flight container. Page structure might have changed or captcha triggered.');
-      throw new Error('觸發防爬蟲機制或加載過慢');
-    }
-    
-    // Parse the DOM to extract flight items (fallback to filters if main list is hidden by bot protection)
-    const rawFlights = await page.evaluate(() => {
-       // Method A: Try parsing the actual flight items if they rendered
-       const flightNodes = Array.from(document.querySelectorAll('.flight-item, .flight-card-container, div[data-testid="flight-card"], .o-flight-card'));
-       
-       if (flightNodes.length > 0) {
-           return flightNodes.map((node, index) => {
-             try {
-               const airline = node.querySelector('.airline-name, .airline-text, .flight-name')?.textContent || 'Unknown Airline';
-               const timeEls = node.querySelectorAll('.flight-time, .time-text, .m-time');
-               const depTime = timeEls[0]?.textContent || '00:00';
-               const arrTime = timeEls[1]?.textContent || (timeEls[0]?.textContent ? '00:00' : '08:00'); 
-               let timeContext = node.textContent || '';
-               let finalDep = depTime;
-               let finalArr = arrTime;
-               if (depTime.includes('-')) {
-                 const parts = depTime.split('-');
-                 finalDep = parts[0]?.trim() || '08:00';
-                 finalArr = parts[1]?.trim() || '12:00';
-               }
-               const priceText = node.querySelector('.price, .flight-price, .m-price')?.textContent || '0';
-               const durationText = node.querySelector('.duration, .flight-duration, .m-duration')?.textContent || '2h 0m';
-               let stops = 0;
-               if (timeContext.includes('1 Stop') || timeContext.includes('1轉') || timeContext.includes('1 轉') || timeContext.includes('中轉')) {
-                 stops = 1;
-               } else if (timeContext.includes('2 Stops') || timeContext.includes('2轉') || timeContext.includes('2 轉')) {
-                 stops = 2;
-               }
-               const priceStr = priceText.replace(/[^0-9]/g, '');
-               const price = priceStr ? parseInt(priceStr, 10) : 0;
-               return { index, airline: airline.trim(), departure: finalDep.trim(), arrival: finalArr.trim(), price, duration: durationText.trim(), stops };
-             } catch (err) {
-               return null;
-             }
-           });
-       }
 
-       // Method B: Anti-bot bypass -> extract real prices and airlines from the filter sidebar
-       const filterNodes = Array.from(document.querySelectorAll('.filter-item-wrapper'));
-       const syntheticFlights: any[] = [];
-       const rx = /^(.*?)\s*（\d+）\s*TWD([0-9,]+)$/;
-       let index = 0;
-       filterNodes.forEach(node => {
-          const txt = node.textContent || '';
-          const match = txt.match(rx);
-          if (match) {
-             const airline = match[1].trim();
-             const price = parseInt(match[2].replace(/,/g, ''), 10);
-             // Generate synthetic plausible times for these real airlines
-             const depHour = 8 + (index * 2) % 12;
-             const finalDep = `${String(depHour).padStart(2, '0')}:00`;
-             const finalArr = `${String(depHour + 2).padStart(2, '0')}:30`;
-             const stops = (airline.includes('虎航') || airline.includes('樂桃') || airline.includes('香港航空')) ? 0 : 1;
-             syntheticFlights.push({
-                index: index++,
-                airline,
-                departure: finalDep,
-                arrival: finalArr,
-                price,
-                duration: stops === 0 ? '2h 30m' : '5h 15m',
-                stops
-             });
+    // Inject stealth script before every page/frame load
+    await context.addInitScript(STEALTH_SCRIPT);
+
+    const page = await context.newPage();
+
+    // ── Network interception ──────────────────────────────────────────────
+    // Capture Trip.com's internal flight-search API responses
+    page.on('response', async (response: playwrightCore.Response) => {
+      const resUrl = response.url();
+      const ct = response.headers()['content-type'] ?? '';
+      const isJson = ct.includes('json');
+      const looksLikeFlight =
+        resUrl.includes('flightList') ||
+        resUrl.includes('FlightList') ||
+        resUrl.includes('flightSearch') ||
+        resUrl.includes('searchFlight') ||
+        resUrl.includes('FlightMiddleSearch') ||  // Trip.com streaming search
+        resUrl.includes('soa2/27015') ||          // Trip.com flight search service
+        resUrl.includes('soa2/11296') ||
+        resUrl.includes('soa2/24049') ||
+        resUrl.includes('intl/flight');
+
+      if (isJson && looksLikeFlight) {
+        try {
+          const json = await response.json();
+          // Only keep if it looks like it has flight data
+          const hasData =
+            json?.Response?.FlightRouteItems?.length ||
+            json?.data?.flightList?.length ||
+            json?.flightList?.length ||
+            json?.result?.length ||
+            json?.head?.retCode === 'SUCCESS';  // FlightMiddleSearch success indicator
+          if (hasData) {
+            console.log(`[tripParser] Captured API response: ${resUrl}`);
+            capturedApiData.push({ url: resUrl, data: json });
           }
-       });
-       return syntheticFlights;
+        } catch {
+          // Non-JSON or parse error — skip silently
+        }
+      }
     });
-    
+
+    // ── Navigation ────────────────────────────────────────────────────────
+    // Start mouse at a plausible initial position
+    await page.mouse.move(400 + Math.random() * 300, 100 + Math.random() * 100);
+
+    console.log('[tripParser] Navigating...');
+    await page.goto(url, {
+      waitUntil: 'domcontentloaded',
+      timeout: isVercel ? 20000 : 60000,
+    });
+
+    // Wait for initial JS hydration — networkidle gives the SPA time to bootstrap
+    try {
+      await page.waitForLoadState('networkidle', { timeout: isVercel ? 8000 : 15000 });
+    } catch {
+      // networkidle may not reach if long-polling keeps firing; proceed anyway
+    }
+
+    // ── Human-behaviour simulation ────────────────────────────────────────
+    console.log('[tripParser] Simulating human behaviour...');
+
+    // Brief pause after page load (as if reading the hero/banner)
+    await sleep(1200, 2500);
+
+    // Slow scroll to reveal flight list content
+    let scrolled = 0;
+    while (scrolled < 500) {
+      const delta = 40 + Math.floor(Math.random() * 50);
+      await page.mouse.wheel(0, delta);
+      scrolled += delta;
+      await sleep(60, 150);
+    }
+
+    await sleep(600, 1200);
+
+    // Realistic mouse drift across the page (simulating reading)
+    await humanMouseMove(page, 350, 400, 900, 500);
+    await sleep(200, 500);
+    await humanMouseMove(page, 900, 500, 600, 650);
+    await sleep(300, 700);
+
+    // Continue scrolling down (flight cards are below the fold)
+    while (scrolled < 1200) {
+      const delta = 50 + Math.floor(Math.random() * 60);
+      await page.mouse.wheel(0, delta);
+      scrolled += delta;
+      await sleep(80, 180);
+    }
+
+    await sleep(800, 1500);
+
+    // ── Wait for actual flight data (not just container) ─────────────────
+    // Poll body.innerText until a recognisable flight-card sentinel appears.
+    // Trip.com uses "選取" (Select) or "查看詳情" (View Details) per card.
+    console.log('[tripParser] Waiting for flight data to render...');
+    try {
+      await page.waitForFunction(
+        () => {
+          const t = document.body.innerText || '';
+          return (
+            (t.includes('選取') && t.includes('TWD')) ||
+            (t.includes('查看詳情') && t.includes('TWD')) ||
+            t.includes('找不到航班') ||
+            t.includes('0 個航班')
+          );
+        },
+        { timeout: isVercel ? 25000 : 45000, polling: 1000 },
+      );
+      console.log('[tripParser] Flight data detected in page.');
+    } catch {
+      console.warn('[tripParser] Timed out waiting for flight data; proceeding with available content.');
+    }
+
+    // Brief extra settle time
+    await sleep(800, 1500);
+
+    // Slight scroll back up (natural reading behaviour)
+    await page.mouse.wheel(0, -(100 + Math.floor(Math.random() * 100)));
+    await sleep(300, 600);
+
+    // ── Strategy 1: use intercepted API data ──────────────────────────────
+    if (capturedApiData.length > 0) {
+      console.log(`[tripParser] Parsing ${capturedApiData.length} captured API responses...`);
+      const apiFlights = parseApiResponses(capturedApiData, url, origin, destination, date);
+      if (apiFlights.length > 0) {
+        console.log(`[tripParser] ✓ ${apiFlights.length} flights from API interception.`);
+        await browser.close();
+        return apiFlights;
+      }
+    }
+
+    // ── Strategy 2: DOM extraction ────────────────────────────────────────
+    console.log('[tripParser] Falling back to DOM extraction...');
+    const domScript = buildDomParserScript(originIATA, destIATA);
+    const rawFlights: Array<{
+      index: number; airline: string; departure: string;
+      arrival: string; price: number; duration: string; stops: number;
+    }> = await page.evaluate(domScript) as any;
+
     await browser.close();
-    
-    // Filter and transform to our standard format
-    const validFlights = rawFlights.filter((f): f is NonNullable<typeof f> => f !== null && f.price > 0).slice(0, 10);
-    
-    console.log(`Parsed ${validFlights.length} flights successfully from DOM or filters.`);
-    
-    return validFlights.map((f) => ({
+
+    const valid = (rawFlights ?? []).filter(f => f?.price > 0).slice(0, 10);
+    console.log(`[tripParser] DOM extraction found ${valid.length} flights.`);
+
+    if (valid.length === 0) return [];
+
+    return valid.map(f => ({
       id: `tripcom_${date}_${f.index}_${Date.now()}`,
       type: 'flight' as const,
       provider: 'Trip.com',
@@ -248,31 +1426,17 @@ export async function scrapeTripFlights(origin: string, destination: string, dat
       emoji: '✈️',
       affiliate_url: url,
       details: {
-        airline: f.airline || 'Trip Airline',
+        airline: f.airline || 'Unknown',
         departure: f.departure,
         arrival: f.arrival,
         stops: f.stops,
-        duration: f.duration
-      }
+        duration: f.duration || '--',
+      },
     }));
-    
+
   } catch (error: any) {
-    const errorMessage = typeof error?.message === 'string' ? error.message : String(error ?? '');
-    const isExpectedFallback =
-      errorMessage.includes('觸發防爬蟲機制') ||
-      (isVercel && /(timeout|target closed|browser has been closed|failed to launch|executable|navigation)/i.test(errorMessage));
-
-    if (isExpectedFallback) {
-      console.warn('Trip.com Scraper blocked or timed out, returning no Trip.com data so the API can fall back to other providers.');
-    } else {
-      console.error('Trip.com Scraper Error:', error);
-    }
-    
     if (browser) await browser.close();
-
+    console.warn('[tripParser] Scraper failed:', error?.message ?? error);
     return [];
   }
 }
-
-// 執行範例: 
-// scrapeTripFlights('TPE', 'NRT', '2024-12-25').then(res => console.log('Parsed:', res));

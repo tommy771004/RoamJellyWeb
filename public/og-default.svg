@@ -1,0 +1,15 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0F172A"/>
+  <circle cx="220" cy="140" r="180" fill="#F472B6" fill-opacity="0.28"/>
+  <circle cx="968" cy="492" r="220" fill="#38BDF8" fill-opacity="0.18"/>
+  <circle cx="712" cy="160" r="130" fill="#C084FC" fill-opacity="0.2"/>
+  <rect x="76" y="72" width="1048" height="486" rx="44" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+  <text x="96" y="178" fill="#F9A8D4" font-size="30" font-family="Plus Jakarta Sans, Arial, sans-serif" font-weight="800">RoamJelly 果凍漫遊</text>
+  <text x="96" y="286" fill="white" font-size="74" font-family="Plus Jakarta Sans, Arial, sans-serif" font-weight="800">AI 行程規劃，旅伴即時共編</text>
+  <text x="96" y="360" fill="#CBD5E1" font-size="36" font-family="Be Vietnam Pro, Arial, sans-serif" font-weight="600">搜尋機票、整理行程、分帳與提醒，一個連結就能一起出發。</text>
+  <rect x="96" y="422" width="230" height="64" rx="32" fill="#111827" stroke="rgba(255,255,255,0.18)"/>
+  <text x="144" y="464" fill="white" font-size="28" font-family="Plus Jakarta Sans, Arial, sans-serif" font-weight="800">roam-jelly-web</text>
+  <path d="M886 232C886 165.726 939.726 112 1006 112C1072.27 112 1126 165.726 1126 232C1126 298.274 1072.27 352 1006 352H928" stroke="white" stroke-width="28" stroke-linecap="round"/>
+  <path d="M982 190L1074 232L982 274" stroke="#FFF7ED" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M856 344H1020" stroke="#FFF7ED" stroke-width="24" stroke-linecap="round"/>
+</svg>

@@ -25,6 +25,7 @@ import { getCountryGuide } from '../data/countryGuideData';
 import type { CountryGuide } from '../data/countryGuideData';
 import { EXPERT_HANDBOOKS } from '../data/expertHandbooks';
 import DatePickerPopup from './DatePickerPopup';
+import { triggerHapticFeedback } from '../lib/haptics';
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -450,9 +451,16 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             name: handbook.title, 
             destination: handbook.tags[0] || '指定地點'
           });
-          TRIP_ID = newTrip.id;
-          setActiveTripId(TRIP_ID);
+          const newTripId = String(newTrip.id);
+          TRIP_ID = newTripId;
+          setActiveTripId(newTripId);
         }
+
+        if (!TRIP_ID) {
+          throw new Error('trip id missing after clone bootstrap');
+        }
+
+        const ensuredTripId = TRIP_ID;
 
         if (handbook.nodes && handbook.nodes.length) {
           setNodes([]);
@@ -460,7 +468,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           for (const rawNode of handbook.nodes) {
              const normalized = { ...rawNode, source: 'local' } as any;
              addNode(normalized);
-             const payload = { trip_id: TRIP_ID, action: 'add_node', payload: normalized } as any;
+             const payload = { trip_id: ensuredTripId, action: 'add_node', payload: normalized } as any;
              try {
                await syncItinerary(payload);
                syncedNodes.push(normalized);
@@ -487,6 +495,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     if (filterType === 'all') return results;
     return results.filter(r => r.type === filterType);
   }, [results, filterType]);
+
+  const demoTemplates = useMemo(() => EXPERT_HANDBOOKS.slice(0, 3), []);
 
   const resolveCurrentTripId = () =>
     activeTripId ||
@@ -515,6 +525,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   const handleCloneTrip = async (e: React.MouseEvent, trip: any) => {
     e.stopPropagation();
+  triggerHapticFeedback([18]);
 
     if (!isLoggedIn && onRequireLogin) {
       onRequireLogin();
@@ -573,6 +584,14 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     () => !searchForm.from.trim() || !searchForm.to.trim() || !searchForm.date.trim(),
     [searchForm],
   );
+
+  const searchBlockReason = useMemo(() => {
+    if (isOffline) return '目前離線中，恢復連線後才能查詢即時票價。';
+    if (!searchForm.from.trim()) return '先填寫出發地。';
+    if (!searchForm.to.trim()) return '再補上目的地。';
+    if (!searchForm.date.trim()) return '最後選擇去程日期。';
+    return null;
+  }, [isOffline, searchForm.date, searchForm.from, searchForm.to]);
 
   const handleSearch = async () => {
     if (!DATE_REGEX.test(searchForm.date.trim())) {
@@ -820,32 +839,39 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               </div>
             </div>
             {dateError && <div className="text-[11px] text-rose-500 font-bold px-6 py-2 pb-1">{dateError}</div>}
+            {!dateError && searchBlockReason && (
+              <div className="text-[11px] text-slate-500 font-bold px-6 py-2 pb-1">{searchBlockReason}</div>
+            )}
           </GlassCard>
           </motion.div>
         </div>
 
         {/* Quick External Links */}
-        <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-3 lg:gap-6 mb-6 md:mb-10 px-2 lg:px-4 pb-2 snap-x">
-          <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-700 hover:text-slate-900 transition-all group bg-white/60 hover:bg-white backdrop-blur-md px-4 md:px-5 py-2.5 md:py-3 rounded-full shadow-sm border border-slate-200/60 shrink-0 snap-start">
+        <div className="px-2 lg:px-4 -mb-2 mt-1 flex items-center justify-between gap-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">旅途中也常用</p>
+          <p className="text-[11px] font-bold text-slate-400 hidden md:block">等你先決定行程方向，再打開這些捷徑就好。</p>
+        </div>
+        <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 lg:gap-4 mb-6 md:mb-10 px-2 lg:px-4 pb-2 snap-x opacity-95">
+          <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-600 hover:text-slate-900 transition-all group bg-white/45 hover:bg-white/75 backdrop-blur-md px-3.5 md:px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
             <div className="text-[#B92A8E] group-hover:scale-110 transition-transform">
-              <Bed size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
+              <Bed size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
             </div>
-            <span className="font-bold text-[13px] md:text-[15px] tracking-wide">找住宿</span>
+            <span className="font-bold text-[12px] md:text-[14px] tracking-wide">找住宿</span>
           </a>
           
-          <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-700 hover:text-slate-900 transition-all group bg-white/60 hover:bg-white backdrop-blur-md px-4 md:px-5 py-2.5 md:py-3 rounded-full shadow-sm border border-slate-200/60 shrink-0 snap-start">
+          <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-600 hover:text-slate-900 transition-all group bg-white/45 hover:bg-white/75 backdrop-blur-md px-3.5 md:px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
             <div className="text-[#F18400] group-hover:scale-110 transition-transform">
-              <Ticket size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
+              <Ticket size={16} className="md:w-[18px] md:h-[18px]" strokeWidth={2.5} />
             </div>
-            <span className="font-bold text-[13px] md:text-[15px] tracking-wide">門票 & 觀光行程</span>
+            <span className="font-bold text-[12px] md:text-[14px] tracking-wide">門票 & 觀光行程</span>
           </a>
 
-          <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-700 hover:text-slate-900 transition-all group bg-white/60 hover:bg-white backdrop-blur-md px-4 md:px-5 py-2.5 md:py-3 rounded-full shadow-sm border border-slate-200/60 shrink-0 snap-start">
+          <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-600 hover:text-slate-900 transition-all group bg-white/45 hover:bg-white/75 backdrop-blur-md px-3.5 md:px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
             <div className="text-[#EC4899] group-hover:scale-110 transition-transform relative">
-              <CarFront size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
+              <CarFront size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
               <PlaneTakeoff size={10} strokeWidth={3} className="absolute -top-1 -left-1 md:-top-1.5 md:-left-1.5 md:w-3 md:h-3" />
             </div>
-            <span className="font-bold text-[13px] md:text-[15px] tracking-wide">機場接送</span>
+            <span className="font-bold text-[12px] md:text-[14px] tracking-wide">機場接送</span>
           </a>
         </div>
 
@@ -925,45 +951,120 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             )}
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[0, 1, 2, 3, 4, 5].map((i) => <FlightSkeletonCard key={i} />)}
-            </div>
-          ) : null}
+          <div className="relative min-h-[300px]">
+            {/* Loading Overlay */}
+            <AnimatePresence>
+              {loading && (
+                <motion.div 
+                  initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                  animate={{ opacity: 1, backdropFilter: "blur(2px)" }}
+                  exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                  className="absolute inset-0 z-50 flex flex-col items-center pt-24 bg-white/40 rounded-[24px]"
+                >
+                  <div className="flex flex-col items-center space-y-4 p-8 bg-white/95 shadow-2xl rounded-3xl border border-slate-200/80">
+                    <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin shadow-sm" />
+                    <div className="text-center">
+                      <p className="text-slate-800 font-black text-sm tracking-widest uppercase mb-1">正在即時爬取航班資訊...</p>
+                      <p className="text-slate-500 font-medium text-xs tracking-wider">這可能會需要一些時間，請稍候</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          {!loading && searchError ? (
-            <GlassCard className="bg-[#fff1f2] border-[#fecdd3] flex flex-col">
-            <span className="text-[#be123c] font-bold text-base">果凍精靈迷路了 🥺，請稍後再試試看！</span>
-            <span className="text-[#be123c] mt-2 text-sm">
-              {searchError === 'timeout' ? '目前查詢逾時，已先收起錯誤細節。' : '供應商稍忙，請再試一次。'}
-            </span>
-          </GlassCard>
-        ) : null}
-
-          {!loading && !searchError ? (
-            <AnimatePresence mode="wait">
-              {filteredResults.length > 0 ? (
-                viewType === 'grid' ? (
-                  <motion.div 
-                    key="grid-view"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
-                  >
-                    {filteredResults.map((flight, index) => (
-                      <motion.div
-                        key={flight.id}
-                        initial={{ opacity: 0, y: 24, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ delay: index * 0.05, type: 'spring', bounce: 0.35 }}
-                        className="h-full"
+            {/* List & Content Container */}
+            <div className={`transition-opacity duration-300 ${loading ? 'opacity-30 pointer-events-none' : ''}`}>
+              {searchError && !loading ? (
+                <GlassCard className="bg-[#fff1f2] border-[#fecdd3] flex flex-col">
+                  <span className="text-[#be123c] font-bold text-base">果凍精靈迷路了 🥺，請稍後再試試看！</span>
+                  <span className="text-[#be123c] mt-2 text-sm">
+                    {searchError === 'timeout' ? '目前查詢逾時，已先收起錯誤細節。' : '供應商稍忙，請再試一次。'}
+                  </span>
+                </GlassCard>
+              ) : (
+                <AnimatePresence mode="wait">
+                  {filteredResults.length > 0 ? (
+                    viewType === 'grid' ? (
+                      <motion.div 
+                        key="grid-view"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
                       >
-                        <FlightCard
-                          flight={flight}
-                          isSaved={savedItems.includes(flight.id)}
-                          isTracked={trackedPrices.includes(flight.id)}
-                          onPress={() =>
+                        {filteredResults.map((flight, index) => (
+                          <motion.div
+                            key={flight.id}
+                            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ delay: index * 0.05, type: 'spring', bounce: 0.35 }}
+                            className="h-full"
+                          >
+                            <FlightCard
+                              flight={flight}
+                              isSaved={savedItems.includes(flight.id)}
+                              isTracked={trackedPrices.includes(flight.id)}
+                              onPress={() =>
+                                openRedirectModal({
+                                  provider: flight.provider,
+                                  affiliateUrl: flight.affiliate_url,
+                                  itemId: flight.id,
+                                  airline: flight.details?.airline,
+                                  departure: flight.details?.departure,
+                                  arrival: flight.details?.arrival,
+                                  duration: flight.details?.duration,
+                                  stops: flight.details?.stops,
+                                  price: flight.price,
+                                  currency: flight.currency,
+                                  emoji: flight.emoji,
+                                })
+                              }
+                              onImportToTrip={(e) => {
+                                e.stopPropagation();
+                                void handleImportFlight(flight);
+                              }}
+                              onToggleSave={(e) => {
+                                e.stopPropagation();
+                                if (!isLoggedIn && onRequireLogin) {
+                                  onRequireLogin();
+                                  return;
+                                }
+                                toggleSave(flight.id);
+                              }}
+                              onToggleTrack={(e) => {
+                                e.stopPropagation();
+                                if (!isLoggedIn && onRequireLogin) {
+                                  onRequireLogin();
+                                  return;
+                                }
+                                const isCurrentlyTracked = trackedPrices.includes(flight.id);
+                                toggleTrack(flight.id);
+                                showToast(
+                                  !isCurrentlyTracked
+                                    ? `✨ 已開啟 ${flight.provider} 的降價提醒！`
+                                    : `🔕 已關閉降價提醒`
+                                );
+                              }}
+                            />
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="table-view"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                      >
+                        <FlightTable 
+                          results={filteredResults}
+                          savedItems={savedItems}
+                          trackedPrices={trackedPrices}
+                          onImportToTrip={(e, flight) => {
+                            e.stopPropagation();
+                            void handleImportFlight(flight);
+                          }}
+                          onPress={(flight) => 
                             openRedirectModal({
                               provider: flight.provider,
                               affiliateUrl: flight.affiliate_url,
@@ -978,19 +1079,15 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                               emoji: flight.emoji,
                             })
                           }
-                          onImportToTrip={(e) => {
-                            e.stopPropagation();
-                            void handleImportFlight(flight);
-                          }}
-                          onToggleSave={(e) => {
+                          onToggleSave={(e, id) => {
                             e.stopPropagation();
                             if (!isLoggedIn && onRequireLogin) {
                               onRequireLogin();
                               return;
                             }
-                            toggleSave(flight.id);
+                            toggleSave(id);
                           }}
-                          onToggleTrack={(e) => {
+                          onToggleTrack={(e, flight) => {
                             e.stopPropagation();
                             if (!isLoggedIn && onRequireLogin) {
                               onRequireLogin();
@@ -1006,116 +1103,116 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                           }}
                         />
                       </motion.div>
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="table-view"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                  >
-                    <FlightTable 
-                      results={filteredResults}
-                      savedItems={savedItems}
-                      trackedPrices={trackedPrices}
-                      onImportToTrip={(e, flight) => {
-                        e.stopPropagation();
-                        void handleImportFlight(flight);
-                      }}
-                      onPress={(flight) => 
-                        openRedirectModal({
-                          provider: flight.provider,
-                          affiliateUrl: flight.affiliate_url,
-                          itemId: flight.id,
-                          airline: flight.details?.airline,
-                          departure: flight.details?.departure,
-                          arrival: flight.details?.arrival,
-                          duration: flight.details?.duration,
-                          stops: flight.details?.stops,
-                          price: flight.price,
-                          currency: flight.currency,
-                          emoji: flight.emoji,
-                        })
-                      }
-                      onToggleSave={(e, id) => {
-                        e.stopPropagation();
-                        if (!isLoggedIn && onRequireLogin) {
-                          onRequireLogin();
-                          return;
-                        }
-                        toggleSave(id);
-                      }}
-                      onToggleTrack={(e, flight) => {
-                        e.stopPropagation();
-                        if (!isLoggedIn && onRequireLogin) {
-                          onRequireLogin();
-                          return;
-                        }
-                        const isCurrentlyTracked = trackedPrices.includes(flight.id);
-                        toggleTrack(flight.id);
-                        showToast(
-                          !isCurrentlyTracked
-                            ? `✨ 已開啟 ${flight.provider} 的降價提醒！`
-                            : `🔕 已關閉降價提醒`
-                        );
-                      }}
-                    />
-                  </motion.div>
-                )
-              ) : hasSearched ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center justify-center py-20 bg-white/40 backdrop-blur-xl rounded-3xl border border-white mx-2 shadow-sm"
-                >
-                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-5xl mb-6 grayscale opacity-60">
-                    🔍
-                  </div>
-                  <h3 className="text-xl font-black text-slate-800 mb-2">找不到符合條件的航班</h3>
-                  <p className="text-slate-500 font-bold max-w-xs text-center leading-relaxed">
-                    請嘗試更換日期或是搜尋其他城市，果凍精靈會繼續為您守候。
-                  </p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="flex flex-col items-center justify-center py-24 sm:py-32 px-6 mx-2 bg-gradient-to-br from-white/60 to-slate-50/50 backdrop-blur-xl rounded-[40px] border border-white/60 shadow-sm relative overflow-hidden group"
-                >
-                  <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-fuchsia-100 rounded-full blur-3xl opacity-50 mix-blend-multiply pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
-                  <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-orange-100 rounded-full blur-3xl opacity-50 mix-blend-multiply pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
-                  
-                  <div className="relative mb-8">
-                     <div className="w-24 h-24 bg-white shadow-xl shadow-slate-200/50 rounded-full flex items-center justify-center text-4xl relative z-10 group-hover:-translate-y-2 transition-transform duration-500 border border-slate-50">
-                       <PlaneTakeoff className="text-slate-900" size={32} strokeWidth={2.5} />
-                     </div>
-                     <div className="absolute -inset-4 border-2 border-dashed border-slate-200 rounded-full animate-[spin_15s_linear_infinite] opacity-50"></div>
-                  </div>
-                  
-                   <h3 className="text-2xl sm:text-[32px] font-black text-slate-900 mb-4 tracking-tight text-center leading-tight">
-                    輸入出發地、目的地與日期，找出最聰明的飛航選擇。
-                  </h3>
-                  
-                  <div className="flex flex-wrap gap-2 justify-center mb-4">
-                     {['東京 NRT', '大阪 KIX', '倫敦 LHR', '紐約 JFK'].map((city, idx) => (
-                       <button 
-                         key={city}
-                         onClick={() => {
-                           updateField('to', city);
-                           setShowDestinationPicker(false);
-                         }}
-                         className="px-4 py-2 bg-white hover:bg-slate-900 hover:text-white text-slate-600 rounded-full text-xs font-black tracking-widest border border-slate-200 hover:border-slate-900 transition-all shadow-sm duration-300"
-                       >
-                         {city}
-                       </button>
-                     ))}
-                  </div>
-                </motion.div>
+                    )
+                  ) : hasSearched && !loading ? (
+                    <motion.div
+                      key="no-results"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex flex-col items-center justify-center py-20 bg-white/40 backdrop-blur-xl rounded-3xl border border-white mx-2 shadow-sm"
+                    >
+                      <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-5xl mb-6 grayscale opacity-60">
+                        🔍
+                      </div>
+                      <h3 className="text-xl font-black text-slate-800 mb-2">找不到符合條件的航班</h3>
+                      <p className="text-slate-500 font-bold max-w-xs text-center leading-relaxed">
+                        請嘗試更換日期或是搜尋其他城市，果凍精靈會繼續為您守候。
+                      </p>
+                    </motion.div>
+                  ) : !hasSearched && !loading ? (
+                    <motion.div
+                      key="initial-state"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="flex flex-col items-center justify-center py-14 sm:py-18 px-6 mx-2 bg-gradient-to-br from-white/70 to-slate-50/60 dark:from-slate-900/80 dark:to-slate-950/80 backdrop-blur-xl rounded-[40px] border border-white/60 dark:border-white/10 shadow-sm relative overflow-hidden group"
+                    >
+                      <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-fuchsia-100 rounded-full blur-3xl opacity-50 mix-blend-multiply pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
+                      <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-orange-100 rounded-full blur-3xl opacity-50 mix-blend-multiply pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
+
+                      <div className="relative z-10 w-full max-w-5xl mb-10">
+                        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                          <div>
+                            <p className="text-[10px] font-black tracking-[0.24em] uppercase text-fuchsia-500">Demo Preview</p>
+                            <h4 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">先看別人排好的旅程，立刻進入狀況</h4>
+                          </div>
+                          <p className="text-[12px] font-bold text-slate-500 dark:text-slate-300">免登入、免等待，直接預覽完整節奏與景點安排。</p>
+                        </div>
+                        <div className="grid gap-3 md:grid-cols-3">
+                          {demoTemplates.map((handbook) => (
+                            <button
+                              key={handbook.id}
+                              type="button"
+                              onClick={() => {
+                                triggerHapticFeedback([16]);
+                                setActiveHandbook(handbook);
+                              }}
+                              className="group/demo overflow-hidden rounded-[28px] border border-white/70 dark:border-white/10 bg-white/90 dark:bg-slate-900/80 text-left shadow-lg shadow-slate-200/40 dark:shadow-black/30 transition-all hover:-translate-y-1 hover:shadow-xl"
+                            >
+                              <div className="relative h-36 overflow-hidden">
+                                <img src={handbook.image} alt={handbook.title} className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-105" loading="lazy" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                                <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-slate-950/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                                  Instant Demo
+                                </div>
+                                <div className="absolute bottom-3 left-3 right-3 text-white">
+                                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/75">{handbook.days} Days</div>
+                                  <div className="mt-1 text-lg font-black leading-tight">{handbook.title}</div>
+                                </div>
+                              </div>
+                              <div className="px-4 py-4">
+                                <div className="flex flex-wrap gap-2">
+                                  {handbook.tags.slice(0, 3).map((tag) => (
+                                    <span key={tag} className="rounded-full bg-slate-100 dark:bg-white/8 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600 dark:text-slate-200">
+                                      #{tag}
+                                    </span>
+                                  ))}
+                                </div>
+                                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-800 dark:text-white">
+                                  點我預覽
+                                  <ArrowRight size={14} />
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="relative mb-8">
+                         <div className="w-24 h-24 bg-white shadow-xl shadow-slate-200/50 rounded-full flex items-center justify-center text-4xl relative z-10 group-hover:-translate-y-2 transition-transform duration-500 border border-slate-50">
+                           <PlaneTakeoff className="text-slate-900" size={32} strokeWidth={2.5} />
+                         </div>
+                         <div className="absolute -inset-4 border-2 border-dashed border-slate-200 rounded-full animate-[spin_15s_linear_infinite] opacity-50"></div>
+                      </div>
+                      
+                       <h3 className="text-2xl sm:text-[32px] font-black text-slate-900 dark:text-white mb-4 tracking-tight text-center leading-tight">
+                        輸入出發地、目的地與日期，找出最聰明的飛航選擇。
+                      </h3>
+                      
+                      <div className="flex flex-wrap gap-2 justify-center mb-4">
+                         {['東京 NRT', '大阪 KIX', '倫敦 LHR', '紐約 JFK'].map((city, idx) => (
+                           <button 
+                             key={city}
+                             onClick={() => {
+                               updateField('to', city);
+                               setShowDestinationPicker(false);
+                             }}
+                             className="px-4 py-2 bg-white hover:bg-slate-900 hover:text-white text-slate-600 rounded-full text-xs font-black tracking-widest border border-slate-200 hover:border-slate-900 transition-all shadow-sm duration-300"
+                           >
+                             {city}
+                           </button>
+                         ))}
+                      </div>
+                    </motion.div>
+                  ) : loading ? (
+                    <motion.div key="skeleton" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {[0, 1, 2, 3, 4, 5].map((i) => <FlightSkeletonCard key={i} />)}
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
               )}
-            </AnimatePresence>
-          ) : null}
+            </div>
+          </div>
 
           {communityTrips.length > 0 && (
             <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
