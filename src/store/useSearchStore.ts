@@ -6,6 +6,8 @@ export interface SearchFormState {
   from: string;
   to: string;
   date: string;
+  tripType: 'oneway' | 'roundtrip';
+  returnDate: string;
   // added region and destination for the advanced search
   region?: string;
   destination?: string;
@@ -38,7 +40,7 @@ interface SearchStore {
 }
 
 export const useSearchStore = create<SearchStore>((set, get) => ({
-  searchForm: { from: '', to: '', date: '' },
+  searchForm: { from: '', to: '', date: '', tripType: 'oneway', returnDate: '' },
   updateField: (field, value) => 
     set((state) => ({ searchForm: { ...state.searchForm, [field]: value } })),
 
