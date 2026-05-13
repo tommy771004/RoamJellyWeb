@@ -1,6 +1,6 @@
 import React, { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, Reorder } from 'motion/react';
+import { motion, AnimatePresence, Reorder, useReducedMotion } from 'motion/react';
 
 
 import { 
@@ -88,6 +88,7 @@ import {
   sortNodesForDisplay,
 } from '../lib/itineraryUtils';
 import { triggerHapticFeedback } from '../lib/haptics';
+import { getModalMotion, getOverlayTransition, getSheetMotion } from '../lib/motionTokens';
 
 const ItineraryMapView = lazy(() => import('./ItineraryMapView'));
 
@@ -295,6 +296,7 @@ function buildNodePatchChanges(previousNode: ItineraryNode, nextNode: ItineraryN
 }
 
 export default function ItineraryTab() {
+  const prefersReducedMotion = useReducedMotion();
   const [viewMode, setViewMode] = useState<'list' | 'map' | 'calendar'>('list');
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
@@ -330,6 +332,8 @@ export default function ItineraryTab() {
   const [isUpdatingPublicState, setIsUpdatingPublicState] = useState(false);
   const [loadedDays, setLoadedDays] = useState<number[]>([]);
   const [loadingDay, setLoadingDay] = useState<number | null>(null);
+  const overlayTransition = getOverlayTransition(prefersReducedMotion);
+  const sheetMotion = getSheetMotion(prefersReducedMotion);
 
   const socketRef = useRef<Socket | null>(null);
   const reorderCommitTimerRef = useRef<number | null>(null);
@@ -2303,14 +2307,15 @@ export default function ItineraryTab() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={overlayTransition}
               onClick={() => setShowMobileFavorites(false)}
               className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] lg:hidden"
             />
             <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              initial={sheetMotion.initial}
+              animate={sheetMotion.animate}
+              exit={sheetMotion.exit}
+              transition={sheetMotion.transition}
               className="fixed bottom-0 left-0 right-0 max-h-[85vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-[210] flex flex-col lg:hidden"
             >
               <div className="shrink-0 p-6 pb-2 border-b border-slate-100 flex items-center justify-between bg-white/90 backdrop-blur-xl rounded-t-3xl sticky top-0 z-10">
@@ -3843,6 +3848,9 @@ function QuickExpenseModal({
   members: string[];
   onClose: () => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const overlayTransition = getOverlayTransition(prefersReducedMotion);
+  const modalMotion = getModalMotion(prefersReducedMotion);
   const fallbackMember = members[0] || localStorage.getItem('user_id') || '我';
   const participantList = members.length > 0 ? members : [fallbackMember];
   const [title, setTitle] = useState(`${node.title}${node.date ? ` (${node.date})` : ''}`);
@@ -3910,13 +3918,15 @@ function QuickExpenseModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={overlayTransition}
           className="fixed inset-0 bg-slate-900/45 backdrop-blur-sm"
           onClick={onClose}
         />
         <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 24, scale: 0.96 }}
+          initial={modalMotion.initial}
+          animate={modalMotion.animate}
+          exit={modalMotion.exit}
+          transition={modalMotion.transition}
           className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-[230] overflow-hidden"
         >
           <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400" />
