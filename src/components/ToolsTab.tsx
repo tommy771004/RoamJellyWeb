@@ -2,6 +2,7 @@ import React, { createContext, use, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CloudRain, Check, Sparkles, Sun, Send, CheckCircle2, Plane, Star, ExternalLink, SlidersHorizontal, ArrowDownUp } from 'lucide-react';
 import GlassCard from './GlassCard';
+import IconImg from './ui/IconImg';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
@@ -19,7 +20,7 @@ import {
   fetchSettlementHistory,
 } from '../lib/workflowApi';
 import type { TripInfo, WeatherData, TripSummary, ChecklistItem, Settlement, SettlementHistoryEntry } from '../types/workflow';
-import { suggestPackingList } from '../lib/openrouterApi';
+import { AiRateLimitedError, suggestPackingList } from '../lib/openrouterApi';
 import { useToolsStore, Expense } from '../store/useToolsStore';
 import { useAppStore } from '../store/useAppStore';
 
@@ -208,8 +209,12 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
         }));
         setChecklist([...checklist, ...newItems]);
         showToast(`✨ AI 新增了 ${newItems.length} 項行李建議！`, 'success');
-      } catch {
-        showToast('AI 功能失敗，請確認 OpenRouter API Key 是否設定。', 'warning');
+      } catch (err) {
+        if (err instanceof AiRateLimitedError) {
+          showToast(err.message, 'warning');
+        } else {
+          showToast('AI 功能失敗，請確認 OpenRouter API Key 是否設定。', 'warning');
+        }
       } finally {
         setAiLoading(false);
       }
@@ -457,11 +462,11 @@ function ChecklistSection() {
         {checklist.length === 0 && <span className="text-sm text-slate-400 italic">目前沒有行李項目</span>}
         {(() => {
           const CAT_META: Record<string, { label: string; emoji: string }> = {
-            documents:   { label: '證件', emoji: '🪪' },
+            documents:   { label: '證件', emoji: 'passport' },
             electronics: { label: '電子', emoji: '🔌' },
             clothing:    { label: '服裝', emoji: '👕' },
-            toiletries:  { label: '盥洗', emoji: '🧴' },
-            other:       { label: '其他', emoji: '🎒' },
+            toiletries:  { label: '盥洗', emoji: 'towel' },
+            other:       { label: '其他', emoji: 'backpack' },
           };
           const ORDER = ['documents', 'electronics', 'clothing', 'toiletries', 'other'];
           const grouped = ORDER.map(cat => ({
@@ -472,7 +477,7 @@ function ChecklistSection() {
           return grouped.map(({ cat, meta, items: catItems }) => (
             <div key={cat} className="mb-4 last:mb-0">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-base leading-none">{meta.emoji}</span>
+                <IconImg value={meta.emoji} size={18} />
                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{meta.label}</span>
               </div>
               <div className="flex flex-col gap-2">
@@ -922,17 +927,35 @@ function ToolsTabContent() {
             🧳
           </div>
           <div className="flex-1 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 rounded-full bg-fuchsia-50 border border-fuchsia-100 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-fuchsia-600 mb-4">
+              解鎖工具包
+            </div>
             <h2 className="text-[32px] md:text-4xl font-black text-slate-800 mb-4 tracking-tight leading-tight">尚未選擇行程專案</h2>
             <p className="text-slate-500 font-bold text-lg mb-10 leading-relaxed">
               旅途工具包（天氣、清單、分帳）需要與特定行程連結，請先選擇或建立一個行程專案。
             </p>
-            <button 
-              onClick={() => setActiveTab('itinerary')}
-              className="w-full md:w-auto px-12 py-5 rounded-[24px] bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3"
-            >
-              <Sparkles size={20} />
-              前往規劃我的行程
-            </button>
+            <div className="flex flex-wrap justify-center md:justify-start gap-2.5 mb-8">
+              {['天氣提醒', '行李清單', '旅伴分帳'].map((label) => (
+                <span key={label} className="rounded-full bg-slate-100/90 border border-slate-200 px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-600">
+                  {label}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button 
+                onClick={() => setActiveTab('ai_form')}
+                className="w-full md:w-auto px-8 py-5 rounded-[24px] bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3"
+              >
+                <Sparkles size={20} />
+                直接交給 AI 開始規劃
+              </button>
+              <button 
+                onClick={() => setActiveTab('home')}
+                className="w-full md:w-auto px-8 py-5 rounded-[24px] bg-white text-slate-700 font-black text-sm uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-3"
+              >
+                先回首頁看 Demo
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
