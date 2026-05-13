@@ -821,15 +821,15 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
     >
       {/* === HERO SECTION with gradient background === */}
-      <div className="relative w-full pt-16 sm:pt-20 pb-10 sm:pb-14 px-4 sm:px-6 overflow-hidden">
+      <div className="relative z-10 w-full pt-14 sm:pt-[72px] pb-12 sm:pb-14 px-4 sm:px-6 overflow-visible">
         <div className="absolute inset-0 bg-gradient-to-br from-rose-200/90 via-pink-100 to-sky-200/80 pointer-events-none" />
         <div className="absolute -top-10 right-10 w-72 h-72 bg-rose-300/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 left-0 w-72 h-72 bg-sky-300/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-[980px] mx-auto w-full">
+        <div className="relative z-20 max-w-[980px] mx-auto w-full">
           {/* Hero title */}
-          <div className="text-center mb-6 sm:mb-8">
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+          <div className="text-center mb-5 sm:mb-6">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-2.5">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight">AI 智慧行程規劃</h1>
               <span className="px-2.5 py-1 rounded-full bg-white/60 border border-pink-200 text-pink-600 text-[10px] sm:text-[11px] font-black uppercase tracking-wider backdrop-blur-sm">BETA</span>
             </div>
@@ -837,95 +837,100 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           </div>
 
           {/* === SEARCH FORM === */}
-          <div className={`transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
+          <div className={`relative z-20 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
             {/* Mobile layout: vertical stacked fields */}
-            <div className="md:hidden bg-white rounded-[28px] shadow-2xl shadow-pink-900/10 border border-white/80 overflow-hidden">
-              <div
-                className="flex items-center gap-3 px-5 py-4 cursor-text border-b border-slate-100"
-                onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
-              >
-                <div className="w-9 h-9 rounded-[12px] bg-orange-50 flex items-center justify-center shrink-0">
-                  <PlaneTakeoff size={17} className="text-orange-400" />
+            <div className="relative z-20 md:hidden rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(255,255,255,0.32))] p-5 shadow-[0_18px_44px_rgba(156,63,89,0.10)] backdrop-blur-[24px]">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="search-from-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">出發從哪裡</Label>
+                  <div
+                    className="flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px]"
+                    onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
+                      <PlaneTakeoff size={17} className="text-[#b35f76]" />
+                    </div>
+                    <input
+                      id="search-from-m"
+                      className="bg-transparent border-none p-0 text-[18px] font-black text-slate-900 placeholder:text-slate-500/60 w-full outline-none leading-none"
+                      value={searchForm.from}
+                      onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
+                      onChange={(e) => updateField('from', e.target.value)}
+                      placeholder="台北 TPE"
+                      autoComplete="off"
+                    />
+                  </div>
                 </div>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <Label htmlFor="search-from-m" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5 cursor-text">出發從哪裡</Label>
-                  <input
-                    id="search-from-m"
-                    className="bg-transparent border-none p-0 text-[15px] font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none"
-                    value={searchForm.from}
-                    onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
-                    onChange={(e) => updateField('from', e.target.value)}
-                    placeholder="台北 TPE"
-                    autoComplete="off"
-                  />
+
+                <div className="space-y-2">
+                  <Label htmlFor="search-to-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">飛往目的地</Label>
+                  <div
+                    className="flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px]"
+                    onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
+                      <Globe size={17} className="text-[#2c6956]" />
+                    </div>
+                    <input
+                      id="search-to-m"
+                      className="bg-transparent border-none p-0 text-[18px] font-black text-slate-900 placeholder:text-slate-500/60 w-full outline-none leading-none"
+                      value={searchForm.to}
+                      onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
+                      onChange={(e) => updateField('to', e.target.value)}
+                      placeholder="東京 NRT"
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">去程日期</span>
+                  <div
+                    className="flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px]"
+                    onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
+                      <Calendar size={17} className={showDatePicker ? 'text-[#2c6956]' : 'text-[#3a637c]'} />
+                    </div>
+                    <span className={`text-[18px] font-black leading-none ${!searchForm.date ? 'text-slate-500/60' : 'text-slate-900'}`}>
+                      {searchForm.date || '選擇日期'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div
-                className="flex items-center gap-3 px-5 py-4 cursor-text border-b border-slate-100"
-                onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
-              >
-                <div className="w-9 h-9 rounded-[12px] bg-purple-50 flex items-center justify-center shrink-0">
-                  <Globe size={17} className="text-purple-400" />
-                </div>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <Label htmlFor="search-to-m" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5 cursor-text">飛往目的地</Label>
-                  <input
-                    id="search-to-m"
-                    className="bg-transparent border-none p-0 text-[15px] font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none"
-                    value={searchForm.to}
-                    onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
-                    onChange={(e) => updateField('to', e.target.value)}
-                    placeholder="東京 NRT"
-                    autoComplete="off"
-                  />
-                </div>
-              </div>
-              <div
-                className="flex items-center gap-3 px-5 py-4 cursor-pointer border-b border-slate-100"
-                onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
-              >
-                <div className="w-9 h-9 rounded-[12px] bg-emerald-50 flex items-center justify-center shrink-0">
-                  <Calendar size={17} className={showDatePicker ? 'text-emerald-500' : 'text-emerald-400'} />
-                </div>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5">去程日期</span>
-                  <span className={`text-[15px] font-black ${!searchForm.date ? 'text-slate-300' : 'text-slate-900'}`}>
-                    {searchForm.date || '選擇日期'}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-[11px] text-slate-400 font-bold flex-1 mr-3">
+
+              <div className="mt-5 flex items-end justify-between gap-4">
+                <span className="flex-1 text-[12px] font-bold text-slate-500/85 leading-relaxed">
                   {dateError || searchBlockReason || ''}
                 </span>
                 <button
                   onClick={() => void handleSearch()}
                   disabled={isSearchDisabled || loading || isOffline}
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0 ${
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border transition-all active:scale-95 ${
                     isSearchDisabled || loading || isOffline
-                      ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                      : 'bg-slate-900 text-white shadow-lg hover:bg-slate-800'
+                      ? 'border-white/70 bg-white/55 text-slate-300 cursor-not-allowed'
+                      : 'border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,240,244,0.72))] text-slate-900 shadow-[0_12px_24px_rgba(156,63,89,0.14)] hover:-translate-y-0.5'
                   }`}
                 >
-                  {loading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={18} strokeWidth={3} />}
+                  {loading ? <div className="w-4 h-4 border-2 border-slate-300/40 border-t-slate-800 rounded-full animate-spin" /> : <SearchIcon size={18} strokeWidth={3} />}
                 </button>
               </div>
             </div>
 
             {/* Desktop layout: horizontal pill */}
-            <div className="hidden md:flex items-center justify-center gap-4 pt-1">
-              <div className="flex-1 max-w-[760px] rounded-full border border-white/85 bg-[rgba(255,255,255,0.42)] px-2 py-2 shadow-[0_16px_44px_rgba(255,255,255,0.22),0_18px_36px_rgba(156,63,89,0.08)] backdrop-blur-[20px]">
+            <div className="relative z-20 hidden md:flex items-center justify-center gap-[14px] pt-2">
+              <div className="flex-1 max-w-[648px] rounded-full border border-white/85 bg-[rgba(255,255,255,0.42)] px-[9px] py-[9px] shadow-[0_16px_44px_rgba(255,255,255,0.22),0_18px_36px_rgba(156,63,89,0.08)] backdrop-blur-[20px]">
                 <div className="flex items-stretch rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.28),rgba(255,255,255,0.08))]">
                   <div
-                    className="relative flex-1 flex items-center gap-3 px-6 py-3.5 rounded-full transition-colors cursor-text hover:bg-white/28"
+                    className="relative flex-1 flex items-center gap-2.5 px-5 py-[13px] rounded-full transition-colors cursor-text hover:bg-white/28"
                     onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                   >
-                    <PlaneTakeoff size={18} className="text-[#b35f76] shrink-0" />
+                    <PlaneTakeoff size={17} className="text-[#b35f76] shrink-0" />
                     <div className="flex flex-col min-w-0">
-                      <Label htmlFor="search-from-d" className="text-[9px] font-black tracking-[0.2em] text-slate-500/80 uppercase mb-0.5 cursor-text">出發從哪裡</Label>
+                      <Label htmlFor="search-from-d" className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5 cursor-text">出發從哪裡</Label>
                       <input
                         id="search-from-d"
-                        className="bg-transparent border-none p-0 text-[15px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[14px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none"
                         value={searchForm.from}
                         onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('from', e.target.value)}
@@ -936,15 +941,15 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   </div>
                   <div className="w-px bg-white/55 self-stretch my-3" />
                   <div
-                    className="relative flex-1 flex items-center gap-3 px-6 py-3.5 transition-colors cursor-text hover:bg-white/28"
+                    className="relative flex-1 flex items-center gap-2.5 px-5 py-[13px] transition-colors cursor-text hover:bg-white/28"
                     onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                   >
-                    <Globe size={18} className="text-[#2c6956] shrink-0" />
+                    <Globe size={17} className="text-[#2c6956] shrink-0" />
                     <div className="flex flex-col min-w-0">
-                      <Label htmlFor="search-to-d" className="text-[9px] font-black tracking-[0.2em] text-slate-500/80 uppercase mb-0.5 cursor-text">飛往目的地</Label>
+                      <Label htmlFor="search-to-d" className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5 cursor-text">飛往目的地</Label>
                       <input
                         id="search-to-d"
-                        className="bg-transparent border-none p-0 text-[15px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[14px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none"
                         value={searchForm.to}
                         onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('to', e.target.value)}
@@ -955,13 +960,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   </div>
                   <div className="w-px bg-white/55 self-stretch my-3" />
                   <div
-                    className={`flex items-center gap-3 px-6 py-3.5 cursor-pointer transition-colors rounded-full ${showDatePicker ? 'bg-white/36' : 'hover:bg-white/28'}`}
+                    className={`flex items-center gap-2.5 px-5 py-[13px] cursor-pointer transition-colors rounded-full ${showDatePicker ? 'bg-white/36' : 'hover:bg-white/28'}`}
                     onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
                   >
-                    <Calendar size={18} className={showDatePicker ? 'text-[#2c6956]' : 'text-[#3a637c]'} />
-                    <div className="flex flex-col min-w-0 w-[156px]">
-                      <span className="text-[9px] font-black tracking-[0.2em] text-slate-500/80 uppercase mb-0.5">去程日期</span>
-                      <span className={`text-[15px] font-black truncate leading-none ${!searchForm.date ? 'text-slate-500/65' : 'text-slate-900'}`}>
+                    <Calendar size={17} className={showDatePicker ? 'text-[#2c6956]' : 'text-[#3a637c]'} />
+                    <div className="flex flex-col min-w-0 w-[144px]">
+                      <span className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5">去程日期</span>
+                      <span className={`text-[14px] font-black truncate leading-none ${!searchForm.date ? 'text-slate-500/65' : 'text-slate-900'}`}>
                         {searchForm.date || '選擇日期'}
                       </span>
                     </div>
@@ -975,13 +980,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 onClick={() => void handleSearch()}
                 disabled={isSearchDisabled || loading || isOffline}
                 title={isOffline ? '請連線網路以進行機票比價' : ''}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0 ${
+                className={`w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0 ${
                   isSearchDisabled || loading || isOffline
                     ? 'bg-white/55 text-slate-300 cursor-not-allowed border border-white/70'
                     : 'bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-[0_16px_30px_rgba(236,72,153,0.28)] hover:shadow-[0_18px_34px_rgba(249,115,22,0.30)] hover:-translate-y-0.5'
                 }`}
               >
-                {loading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={22} strokeWidth={3} />}
+                {loading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={20} strokeWidth={3} />}
               </button>
             </div>
           </div>
@@ -989,10 +994,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       </div>
 
       {/* === CONTENT BELOW HERO === */}
-      <div className="flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60">
+      <div className="relative z-0 flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60">
         {/* Quick External Links */}
-        <div className="max-w-3xl mx-auto w-full pt-6 pb-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 mb-3">旅途中也常用</p>
+        <div className="max-w-3xl mx-auto w-full pt-3 sm:pt-4 pb-1 sm:pb-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 mb-3 sm:mb-3.5">旅途中也常用</p>
           <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-1">
             <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
               <Bed size={17} className="text-[#B92A8E] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
@@ -1012,8 +1017,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           </div>
         </div>
 
-        <div className="pb-16 md:pb-32 flex flex-col flex-1 min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8">
+        <div className="pt-5 sm:pt-7 pb-16 md:pb-32 flex flex-col flex-1 min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5 sm:mb-6 md:mb-7">
             <div className="flex flex-col items-start gap-1.5 md:gap-1">
               <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter leading-none flex items-baseline gap-2 sm:gap-3">
