@@ -1,6 +1,9 @@
-import React from 'react';
-import { ArrowLeft, Clock, MapPin, Leaf, Flame } from 'lucide-react';
+import React, { lazy, Suspense, useMemo } from 'react';
+import { ArrowLeft, Clock, MapPin, Leaf, Flame, Navigation2 } from 'lucide-react';
 import GlassCard from './GlassCard';
+import type { ItineraryNode } from '../types/workflow';
+
+const ItineraryMapView = lazy(() => import('./ItineraryMapView'));
 
 export default function DynamicItineraryView({ 
   result, 
@@ -22,7 +25,24 @@ export default function DynamicItineraryView({
   
   const summary = aiResponse?.summary || {};
   const itinerary = Array.isArray(aiResponse) ? [{ day: 1, spots: aiResponse }] : (aiResponse?.itinerary || []);
-  
+
+  // Group rawSuggestions (geocoded + enriched nodes) by day for image/map lookup
+  const rawByDay = useMemo(() => {
+    const map: Record<number, ItineraryNode[]> = {};
+    (result?.rawSuggestions || []).forEach((node: ItineraryNode) => {
+      const d = node.day || 1;
+      if (!map[d]) map[d] = [];
+      map[d].push(node);
+    });
+    return map;
+  }, [result?.rawSuggestions]);
+
+  // All nodes with valid coordinates for a top-level overview map
+  const allGeoNodes: ItineraryNode[] = useMemo(
+    () => (result?.rawSuggestions || []).filter((n: ItineraryNode) => n.lat && n.lng),
+    [result?.rawSuggestions],
+  );
+
   return (
     <div className={`flex-1 w-full h-full flex flex-col relative overflow-y-auto bg-gradient-to-br ${gradient} transition-colors duration-1000`}>
       {/* Background patterns */}
@@ -54,54 +74,120 @@ export default function DynamicItineraryView({
           </div>
         )}
 
-        <div className="flex flex-col gap-6 mt-4">
-          {itinerary.map((dayData: any, i: number) => (
-            <div key={i} className="bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl p-6 group hover:-translate-y-1 transition-transform cursor-pointer">
-              <h3 className="text-xl font-bold text-slate-800 mb-6 bg-white/60 w-fit px-5 py-2 rounded-full shadow-sm text-center">
-                第 {dayData.day} 天
-              </h3>
-              
-              <div className="pl-4 border-l-2 border-slate-300 dark:border-slate-700 flex flex-col gap-6">
-                {(dayData.spots || []).map((spot: any, j: number) => (
-                  <div key={j} className="relative pl-6 pb-2">
-                    {/* Timeline Node */}
-                    <div className="absolute left-[-21px] top-1.5 w-10 h-10 -ml-5 bg-white shadow-sm border border-slate-200 rounded-full flex items-center justify-center text-lg z-10">
-                      {spot.emoji || '📍'}
-                    </div>
-                    
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className={`font-bold text-slate-800 text-xl tracking-tight leading-snug`}>{spot.name}</h4>
-                        <p className={`text-slate-600 font-medium mt-1 ${textScaleClass}`}>{spot.time}</p>
-                      </div>
-                      
-                      {/* Intensity Indicator */}
-                      {spot.intensity && (
-                        <div className="flex-shrink-0">
-                          {spot.intensity === 'chill' && <span title="輕鬆" className="text-emerald-500 bg-emerald-50 w-8 h-8 rounded-full flex items-center justify-center"><Leaf size={16}/></span>}
-                          {spot.intensity === 'hardcore' && <span title="耗費體力" className="text-rose-500 bg-rose-50 w-8 h-8 rounded-full flex items-center justify-center"><Flame size={16}/></span>}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* AI Note */}
-                    {spot.ai_note && (
-                      <div className="bg-white/50 backdrop-blur-sm text-sm text-slate-700 p-3 rounded-2xl border border-white/40 mt-3 shadow-inner">
-                        <span className="font-semibold opacity-60 mr-1">TIPS /</span> {spot.ai_note}
-                      </div>
-                    )}
+        {/* Overview route map — shows all geocoded nodes */}
+        {allGeoNodes.length >= 2 && (
+          <div className="mb-6 rounded-3xl overflow-hidden shadow-lg border-2 border-white/60" style={{ height: '240px' }}>
+            <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-sm">載入地圖中...</div>}>
+              <ItineraryMapView items={allGeoNodes} compact />
+            </Suspense>
+          </div>
+        )}
 
-                    {/* Transport to next */}
-                    {spot.transport_to_next && j !== (dayData.spots?.length || 0) - 1 && (
-                      <div className="mt-4 mb-2 flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 w-fit px-3 py-1.5 rounded-lg border border-slate-100">
-                        <span className="text-[14px]">🚶🏻‍♂️</span> {spot.transport_to_next}
-                      </div>
-                    )}
+        <div className="flex flex-col gap-6 mt-4">
+          {itinerary.map((dayData: any, i: number) => {
+            const dayNum: number = dayData.day || i + 1;
+            const dayRawNodes: ItineraryNode[] = rawByDay[dayNum] || [];
+            const dayGeoNodes = dayRawNodes.filter(n => n.lat && n.lng);
+
+            return (
+              <div key={i} className="bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl p-6">
+                <h3 className="text-xl font-bold text-slate-800 mb-4 bg-white/60 w-fit px-5 py-2 rounded-full shadow-sm text-center">
+                  第 {dayData.day} 天
+                </h3>
+
+                {/* Per-day mini route map */}
+                {dayGeoNodes.length >= 2 && (
+                  <div className="mb-5 rounded-2xl overflow-hidden border border-white/60 shadow-sm" style={{ height: '180px' }}>
+                    <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-xs">載入地圖中...</div>}>
+                      <ItineraryMapView items={dayGeoNodes} compact />
+                    </Suspense>
                   </div>
-                ))}
+                )}
+              
+                <div className="pl-4 border-l-2 border-slate-300 dark:border-slate-700 flex flex-col gap-6">
+                  {(dayData.spots || []).map((spot: any, j: number) => {
+                    const rawNode: ItineraryNode | undefined = dayRawNodes[j];
+                    const imageUrl: string | undefined = rawNode?.image_url;
+                    const hasCoords = rawNode?.lat && rawNode?.lng;
+                    const mapsUrl = hasCoords
+                      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.name)}`
+                      : undefined;
+
+                    return (
+                      <div key={j} className="relative pl-6 pb-2">
+                        {/* Timeline Node */}
+                        <div className="absolute left-[-21px] top-1.5 w-10 h-10 -ml-5 bg-white shadow-sm border border-slate-200 rounded-full flex items-center justify-center text-lg z-10">
+                          {spot.emoji || '📍'}
+                        </div>
+                        
+                        {/* Spot image */}
+                        {imageUrl && (
+                          <div className="mb-3 rounded-2xl overflow-hidden h-32 w-full">
+                            <img
+                              src={imageUrl}
+                              alt={spot.name}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className={`font-bold text-slate-800 text-xl tracking-tight leading-snug`}>{spot.name}</h4>
+                              {mapsUrl && (
+                                <a
+                                  href={mapsUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-[11px] font-bold text-fuchsia-600 bg-fuchsia-50 border border-fuchsia-100 px-2 py-0.5 rounded-full hover:bg-fuchsia-100 transition-colors shrink-0"
+                                  title="在 Google Maps 查看"
+                                >
+                                  <MapPin size={10} />
+                                  地圖
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {spot.time && (
+                                <p className={`text-slate-600 font-medium ${textScaleClass} flex items-center gap-1`}>
+                                  <Clock size={12} className="text-slate-400" />{spot.time}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Intensity Indicator */}
+                          {spot.intensity && (
+                            <div className="flex-shrink-0 ml-2">
+                              {spot.intensity === 'chill' && <span title="輕鬆" className="text-emerald-500 bg-emerald-50 w-8 h-8 rounded-full flex items-center justify-center"><Leaf size={16}/></span>}
+                              {spot.intensity === 'hardcore' && <span title="耗費體力" className="text-rose-500 bg-rose-50 w-8 h-8 rounded-full flex items-center justify-center"><Flame size={16}/></span>}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* AI Note */}
+                        {spot.ai_note && (
+                          <div className="bg-white/50 backdrop-blur-sm text-sm text-slate-700 p-3 rounded-2xl border border-white/40 mt-3 shadow-inner">
+                            <span className="font-semibold opacity-60 mr-1">TIPS /</span> {spot.ai_note}
+                          </div>
+                        )}
+
+                        {/* Transport to next */}
+                        {spot.transport_to_next && j !== (dayData.spots?.length || 0) - 1 && (
+                          <div className="mt-4 mb-2 flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 w-fit px-3 py-1.5 rounded-lg border border-slate-100">
+                            <Navigation2 size={12} className="text-slate-400" /> {spot.transport_to_next}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         
         {onSave && (
