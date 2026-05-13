@@ -507,6 +507,10 @@ export async function searchOffers(form: any): Promise<SearchItem[]> {
   if (form.from) params.append('from', String(form.from).trim());
   if (form.to) params.append('to', String(form.to).trim());
   if (form.date) params.append('date', String(form.date).trim());
+  if (form.tripType === 'roundtrip' && form.returnDate) {
+    params.append('tripType', 'roundtrip');
+    params.append('returnDate', String(form.returnDate).trim());
+  }
 
   const queryString = params.toString();
   const url = queryString ? `/api/search?${queryString}` : '/api/search';
