@@ -350,6 +350,88 @@ function FlightTable({
   );
 }
 
+// Destination metadata lookup by IATA code
+const DEST_META: Record<string, { name: string; country: string; flag: string; tagline: string; image: string }> = {
+  NRT: { name: 'Tokyo', country: 'Japan', flag: '🇯🇵', tagline: 'Where tradition meets the future', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop' },
+  TYO: { name: 'Tokyo', country: 'Japan', flag: '🇯🇵', tagline: 'Where tradition meets the future', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop' },
+  HND: { name: 'Tokyo', country: 'Japan', flag: '🇯🇵', tagline: 'Where tradition meets the future', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop' },
+  KIX: { name: 'Osaka', country: 'Japan', flag: '🇯🇵', tagline: 'Street food capital of Japan', image: 'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=600&auto=format&fit=crop' },
+  OSA: { name: 'Osaka', country: 'Japan', flag: '🇯🇵', tagline: 'Street food capital of Japan', image: 'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=600&auto=format&fit=crop' },
+  ITM: { name: 'Osaka', country: 'Japan', flag: '🇯🇵', tagline: 'Street food capital of Japan', image: 'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=600&auto=format&fit=crop' },
+  FUK: { name: 'Fukuoka', country: 'Japan', flag: '🇯🇵', tagline: 'Ramen city by the sea', image: 'https://images.unsplash.com/photo-1480796927426-f609979314bd?w=600&auto=format&fit=crop' },
+  OKA: { name: 'Okinawa', country: 'Japan', flag: '🇯🇵', tagline: 'Tropical paradise of East Asia', image: 'https://images.unsplash.com/photo-1590247813693-5541d1c609fd?w=600&auto=format&fit=crop' },
+  CTS: { name: 'Hokkaido', country: 'Japan', flag: '🇯🇵', tagline: 'Fresh seafood and winter wonderland', image: 'https://images.unsplash.com/photo-1553031977-03959cc47ac4?w=600&auto=format&fit=crop' },
+  CDG: { name: 'Paris', country: 'France', flag: '🇫🇷', tagline: 'City of Love and Light', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&auto=format&fit=crop' },
+  LHR: { name: 'London', country: 'UK', flag: '🇬🇧', tagline: 'Royal history meets modern culture', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&auto=format&fit=crop' },
+  JFK: { name: 'New York', country: 'USA', flag: '🇺🇸', tagline: 'The city that never sleeps', image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&auto=format&fit=crop' },
+  SIN: { name: 'Singapore', country: 'Singapore', flag: '🇸🇬', tagline: 'Garden city of Asia', image: 'https://images.unsplash.com/photo-1540202404-a2f29016b523?w=600&auto=format&fit=crop' },
+  BKK: { name: 'Bangkok', country: 'Thailand', flag: '🇹🇭', tagline: 'City of temples and street food', image: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=600&auto=format&fit=crop' },
+  HKG: { name: 'Hong Kong', country: 'HK', flag: '🇭🇰', tagline: 'East meets West harbour city', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop' },
+  ICN: { name: 'Seoul', country: 'Korea', flag: '🇰🇷', tagline: 'K-culture and street food paradise', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=600&auto=format&fit=crop' },
+  SEL: { name: 'Seoul', country: 'Korea', flag: '🇰🇷', tagline: 'K-culture and street food paradise', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=600&auto=format&fit=crop' },
+  TPE: { name: 'Taipei', country: 'Taiwan', flag: '🇹🇼', tagline: 'Night markets and mountain getaways', image: 'https://images.unsplash.com/photo-1541243440-2e0abf7e0de4?w=600&auto=format&fit=crop' },
+  DPS: { name: 'Bali', country: 'Indonesia', flag: '🇮🇩', tagline: 'Island of Gods and surf', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop' },
+  SYD: { name: 'Sydney', country: 'Australia', flag: '🇦🇺', tagline: 'Harbour city and beach life', image: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&auto=format&fit=crop' },
+  AMS: { name: 'Amsterdam', country: 'Netherlands', flag: '🇳🇱', tagline: 'Canals, tulips and freedom', image: 'https://images.unsplash.com/photo-1534351590666-13e3e96b5702?w=600&auto=format&fit=crop' },
+  BCN: { name: 'Barcelona', country: 'Spain', flag: '🇪🇸', tagline: 'Gaudí\'s city by the sea', image: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=600&auto=format&fit=crop' },
+};
+
+const DEST_META_FALLBACK = { name: 'Unknown', country: '', flag: '✈️', tagline: 'A world waiting to be explored', image: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&auto=format&fit=crop' };
+
+interface DestinationCardProps {
+  flight: SearchItem;
+  isSaved: boolean;
+  onPress: () => void;
+  onImportToTrip: (e: React.MouseEvent) => void;
+  onToggleSave: (e: React.MouseEvent) => void;
+}
+
+function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSave }: DestinationCardProps) {
+  const rawArr = (flight.details?.arrCode || '').toUpperCase().substring(0, 3);
+  const meta = DEST_META[rawArr] ?? DEST_META_FALLBACK;
+  const displayName = meta.name !== 'Unknown' ? `${meta.name}, ${meta.country}` : (flight.title || rawArr || 'Destination');
+
+  return (
+    <div className="group/dest rounded-[24px] overflow-hidden bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-1.5 border border-slate-100/80 flex flex-col h-full">
+      {/* Image */}
+      <div className="relative h-52 overflow-hidden cursor-pointer flex-shrink-0" onClick={onPress}>
+        <img
+          src={meta.image}
+          alt={displayName}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover/dest:scale-105"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleSave(e); }}
+          className={`absolute top-3 right-3 w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all active:scale-90 shadow-sm ${isSaved ? 'bg-pink-500 text-white' : 'bg-white/80 text-slate-500 hover:bg-white hover:text-pink-500'}`}
+        >
+          <Heart size={15} fill={isSaved ? 'currentColor' : 'transparent'} strokeWidth={2} />
+        </button>
+      </div>
+      {/* Info */}
+      <div className="p-4 flex flex-col flex-1 cursor-pointer" onClick={onPress}>
+        <h3 className="text-[17px] font-black text-slate-900 mb-0.5 leading-tight">
+          {displayName} {meta.flag}
+        </h3>
+        <p className="text-[12px] text-slate-500 font-medium mb-3 line-clamp-2 leading-relaxed flex-1">{meta.tagline}</p>
+        <div className="flex items-center justify-between mt-auto">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">From</span>
+            <span className="text-[18px] font-black text-rose-500 leading-tight">{flight.currency} {flight.price.toLocaleString()}</span>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onPress(); }}
+            className="px-5 py-2.5 bg-rose-500 hover:bg-rose-400 text-white rounded-[14px] text-[12px] font-black tracking-wide transition-all active:scale-95 shadow-sm shadow-rose-500/20"
+          >
+            Explore
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const FEATURED_DESTINATIONS = [
   {
     id: 'jp',
@@ -694,219 +776,233 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   return (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.98, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
-      className="relative p-4 sm:p-6 md:p-8 lg:p-10 md:pt-12 max-w-full lg:max-w-[90rem] mx-auto flex flex-col flex-1 h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
     >
-      {/* Top subtle inner shadow / glass blur to conceal items scrolling behind header */}
-      <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-white/60 to-transparent pointer-events-none z-20" />
-      
+      {/* === HERO SECTION with gradient background === */}
+      <div className="relative w-full pt-16 sm:pt-20 pb-10 sm:pb-14 px-4 sm:px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-rose-200/90 via-pink-100 to-sky-200/80 pointer-events-none" />
+        <div className="absolute -top-10 right-10 w-72 h-72 bg-rose-300/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 left-0 w-72 h-72 bg-sky-300/20 rounded-full blur-3xl pointer-events-none" />
 
-
-      <div className="flex flex-col gap-6 md:gap-8 w-full max-w-7xl mx-auto">
-        {/* Left Side: Search Form & AI Banner */}
-        <div className="w-full flex-shrink-0 flex flex-col gap-6 md:gap-8">
-          
-          {/* Immersive AI Banner */}
-          <div className="w-full group cursor-pointer lg:px-4" onClick={() => setActiveTab('ai_form')}>
-            <div className="bg-slate-900 rounded-[28px] md:rounded-[36px] p-5 sm:p-8 md:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow-2xl shadow-slate-900/40 relative overflow-hidden transition-all duration-700 hover:shadow-fuchsia-500/30 hover:-translate-y-1.5 border border-white/10 sm:max-w-none max-w-[calc(100vw-2rem)] mx-auto">
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-600/40 via-purple-600/20 to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-2xl"></div>
-              <div className="absolute -right-10 -top-10 sm:-right-20 sm:-top-20 w-48 h-48 sm:w-64 sm:h-64 bg-fuchsia-500/30 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000 ease-out pointer-events-none"></div>
-              <div className="absolute -left-5 -bottom-5 w-32 h-32 sm:w-40 sm:h-40 bg-sky-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000 ease-out pointer-events-none delay-75"></div>
-              
-              <div className="relative z-10 flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-[14px] sm:rounded-2xl bg-gradient-to-br from-pink-400 to-fuchsia-500 flex items-center justify-center p-[2px] shadow-xl shadow-fuchsia-500/30 group-hover:rotate-6 transition-transform duration-500 shrink-0">
-                   <div className="w-full h-full bg-slate-900/60 rounded-[12px] sm:rounded-[14px] flex items-center justify-center backdrop-blur-md">
-                     <Sparkles size={24} strokeWidth={2.5} className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.6)] sm:w-7 sm:h-7" />
-                   </div>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:gap-1 flex-1">
-                  <h3 className="text-[22px] sm:text-3xl font-black text-white tracking-tight flex items-center gap-2 sm:gap-3">
-                    AI 智慧行程規劃
-                    <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-bold uppercase tracking-widest border border-fuchsia-500/30 backdrop-blur-sm self-start mt-1 sm:mt-0">Beta</span>
-                  </h3>
-                  <p className="text-slate-400 text-[12px] sm:text-base font-medium tracking-wide">
-                    輸入目的地，秒速生成專屬客製化旅航計畫
-                  </p>
-                </div>
-              </div>
-              <div className="relative z-10 hidden sm:flex w-12 h-12 rounded-full bg-white/10 items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-white group-hover:text-slate-900 text-white transition-all shadow-sm group-active:scale-95 shrink-0 self-end sm:self-auto">
-                <ArrowRight size={20} strokeWidth={2.5} className="-rotate-45 group-hover:rotate-0 transition-transform duration-500" />
-              </div>
+        <div className="relative z-10 max-w-3xl mx-auto">
+          {/* Hero title */}
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight">AI 智慧行程規劃</h1>
+              <span className="px-2.5 py-1 rounded-full bg-white/60 border border-pink-200 text-pink-600 text-[10px] sm:text-[11px] font-black uppercase tracking-wider backdrop-blur-sm">BETA</span>
             </div>
+            <p className="text-slate-600/90 text-sm sm:text-base">輸入目的地，秒速生成專屬客製化旅航計畫</p>
           </div>
 
-          {/* Horizontal Search Form */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-          >
-            <GlassCard className={`!p-1.5 md:!p-3 shadow-xl shadow-slate-200/50 bg-white/90 backdrop-blur-3xl rounded-[28px] md:rounded-[2.5rem] border border-white/80 transition-opacity duration-300 lg:mx-4 ${loading ? 'opacity-60 pointer-events-none grayscale-[0.2]' : ''}`}>
-              <div className="flex flex-col md:flex-row gap-1.5 md:gap-3">
-                <div className="flex flex-col sm:flex-row gap-1.5 md:gap-3 flex-1">
-                  {/* 出發地 */}
-                  <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[22px] md:rounded-[2rem] px-4 md:px-6 py-2.5 md:py-4 border border-slate-200/60 flex items-center group/input">
-                    <div className="absolute left-4 md:left-6 text-slate-400 group-hover/input:text-orange-500 group-focus-within/input:text-orange-500 transition-colors">
-                      <PlaneTakeoff size={18} className="md:w-[20px] md:h-[20px]" />
-                    </div>
-                    <div className="flex flex-col pl-8 md:pl-10 w-full text-left">
-                      <Label htmlFor="search-from" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">出發從哪裡</Label>
+          {/* === SEARCH FORM === */}
+          <div className={`transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
+            {/* Mobile layout: vertical stacked fields */}
+            <div className="md:hidden bg-white rounded-[28px] shadow-2xl shadow-pink-900/10 border border-white/80 overflow-hidden">
+              <div
+                className="flex items-center gap-3 px-5 py-4 cursor-text border-b border-slate-100"
+                onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
+              >
+                <div className="w-9 h-9 rounded-[12px] bg-orange-50 flex items-center justify-center shrink-0">
+                  <PlaneTakeoff size={17} className="text-orange-400" />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <Label htmlFor="search-from-m" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5 cursor-text">出發從哪裡</Label>
+                  <input
+                    id="search-from-m"
+                    className="bg-transparent border-none p-0 text-[15px] font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none"
+                    value={searchForm.from}
+                    onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
+                    onChange={(e) => updateField('from', e.target.value)}
+                    placeholder="台北 TPE"
+                    autoComplete="off"
+                  />
+                </div>
+              </div>
+              <div
+                className="flex items-center gap-3 px-5 py-4 cursor-text border-b border-slate-100"
+                onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
+              >
+                <div className="w-9 h-9 rounded-[12px] bg-purple-50 flex items-center justify-center shrink-0">
+                  <Globe size={17} className="text-purple-400" />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <Label htmlFor="search-to-m" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5 cursor-text">飛往目的地</Label>
+                  <input
+                    id="search-to-m"
+                    className="bg-transparent border-none p-0 text-[15px] font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none"
+                    value={searchForm.to}
+                    onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
+                    onChange={(e) => updateField('to', e.target.value)}
+                    placeholder="東京 NRT"
+                    autoComplete="off"
+                  />
+                </div>
+              </div>
+              <div
+                className="flex items-center gap-3 px-5 py-4 cursor-pointer border-b border-slate-100"
+                onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
+              >
+                <div className="w-9 h-9 rounded-[12px] bg-emerald-50 flex items-center justify-center shrink-0">
+                  <Calendar size={17} className={showDatePicker ? 'text-emerald-500' : 'text-emerald-400'} />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5">去程日期</span>
+                  <span className={`text-[15px] font-black ${!searchForm.date ? 'text-slate-300' : 'text-slate-900'}`}>
+                    {searchForm.date || '選擇日期'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <span className="text-[11px] text-slate-400 font-bold flex-1 mr-3">
+                  {dateError || searchBlockReason || ''}
+                </span>
+                <button
+                  onClick={() => void handleSearch()}
+                  disabled={isSearchDisabled || loading || isOffline}
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all active:scale-95 flex-shrink-0 ${
+                    isSearchDisabled || loading || isOffline
+                      ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                      : 'bg-slate-900 text-white shadow-lg hover:bg-slate-800'
+                  }`}
+                >
+                  {loading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={18} strokeWidth={3} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop layout: horizontal pill */}
+            <div className="hidden md:block">
+              <GlassCard className="!p-2 shadow-2xl shadow-pink-900/10 bg-white/95 backdrop-blur-xl rounded-[2.5rem] border border-white">
+                <div className="flex items-stretch">
+                  <div
+                    className="relative flex-1 flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50/60 rounded-[2rem] transition-colors cursor-text"
+                    onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
+                  >
+                    <PlaneTakeoff size={18} className="text-orange-400 shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <Label htmlFor="search-from-d" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5 cursor-text">出發從哪裡</Label>
                       <input
-                        id="search-from"
-                        className="bg-transparent border-none p-0 focus:ring-0 text-[15px] md:text-lg font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none h-5 md:h-6"
+                        id="search-from-d"
+                        className="bg-transparent border-none p-0 text-base font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none"
                         value={searchForm.from}
-                        onFocus={() => {
-                          setShowDeparturePicker(true);
-                          setShowDestinationPicker(false);
-                          setShowDatePicker(false);
-                        }}
-                        onChange={(e) => {
-                          updateField('from', e.target.value);
-                        }}
+                        onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
+                        onChange={(e) => updateField('from', e.target.value)}
                         placeholder="台北 TPE"
                         autoComplete="off"
                       />
                     </div>
                   </div>
-
-                  {/* 目的地 */}
-                  <div className="relative flex-1 bg-slate-50/50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 rounded-[22px] md:rounded-[2rem] px-4 md:px-6 py-2.5 md:py-4 border border-slate-200/60 flex items-center group/input">
-                    <div className="absolute left-4 md:left-6 text-slate-400 group-hover/input:text-fuchsia-500 group-focus-within/input:text-fuchsia-500 transition-colors">
-                      <Globe size={18} className="md:w-[20px] md:h-[20px]" />
-                    </div>
-                    <div className="flex flex-col pl-8 md:pl-10 w-full text-left">
-                      <Label htmlFor="search-to" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1 cursor-text">飛往目的地</Label>
+                  <div className="w-px bg-slate-200/70 self-stretch my-3" />
+                  <div
+                    className="relative flex-1 flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50/60 transition-colors cursor-text"
+                    onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
+                  >
+                    <Globe size={18} className="text-purple-400 shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <Label htmlFor="search-to-d" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5 cursor-text">飛往目的地</Label>
                       <input
-                        id="search-to"
-                        className="bg-transparent border-none p-0 focus:ring-0 text-[15px] md:text-lg font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none h-5 md:h-6"
+                        id="search-to-d"
+                        className="bg-transparent border-none p-0 text-base font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none"
                         value={searchForm.to}
-                        onFocus={() => {
-                          setShowDestinationPicker(true);
-                          setShowDeparturePicker(false);
-                          setShowDatePicker(false);
-                        }}
-                        onChange={(e) => {
-                          updateField('to', e.target.value);
-                        }}
+                        onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
+                        onChange={(e) => updateField('to', e.target.value)}
                         placeholder="東京 NRT"
                         autoComplete="off"
                       />
                     </div>
                   </div>
-                </div>
-
-              <div className="flex gap-1.5 md:gap-3 flex-none md:w-auto">
-                {/* 日期 */}
-                <div 
-                  onClick={() => {
-                    setShowDatePicker(!showDatePicker);
-                    setShowDeparturePicker(false);
-                    setShowDestinationPicker(false);
-                  }}
-                  className={`relative flex-1 md:w-56 transition-all duration-300 rounded-[22px] md:rounded-[2rem] px-4 md:px-6 py-2.5 md:py-4 border flex items-center cursor-pointer group/date ${showDatePicker ? 'border-orange-300 bg-orange-50 shadow-[0_4px_20px_rgba(249,115,22,0.08)]' : 'bg-slate-50/50 hover:bg-slate-100/60 border-slate-200/60'}`}
-                >
-                  <div className={`absolute left-4 md:left-6 transition-colors ${showDatePicker ? 'text-orange-500' : 'text-slate-400 group-hover/date:text-slate-600'}`}>
-                    <Calendar size={18} className="md:w-[20px] md:h-[20px]" />
+                  <div className="w-px bg-slate-200/70 self-stretch my-3" />
+                  <div
+                    className={`flex items-center gap-3 px-6 py-3.5 cursor-pointer transition-colors rounded-r-[2rem] ${showDatePicker ? 'bg-emerald-50' : 'hover:bg-slate-50/60'}`}
+                    onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
+                  >
+                    <Calendar size={18} className={showDatePicker ? 'text-emerald-500' : 'text-emerald-400'} />
+                    <div className="flex flex-col min-w-0 w-36">
+                      <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5">去程日期</span>
+                      <span className={`text-base font-black truncate leading-none ${!searchForm.date ? 'text-slate-300' : 'text-slate-900'}`}>
+                        {searchForm.date || '選擇日期'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col pl-8 md:pl-10 w-full text-left">
-                    <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-1">去程日期</span>
-                    <span className={`text-[15px] md:text-lg font-black truncate leading-none h-5 md:h-6 flex items-center ${!searchForm.date ? 'text-slate-300' : 'text-slate-900'}`}>
-                      {searchForm.date || '選擇日期'}
-                    </span>
+                  <div className="flex items-center pl-2 pr-1">
+                    <button
+                      onClick={() => void handleSearch()}
+                      disabled={isSearchDisabled || loading || isOffline}
+                      title={isOffline ? '請連線網路以進行機票比價' : ''}
+                      className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+                        isSearchDisabled || loading || isOffline
+                          ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                          : 'bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 hover:-translate-y-0.5'
+                      }`}
+                    >
+                      {loading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={22} strokeWidth={3} />}
+                    </button>
                   </div>
                 </div>
-
-                {/* 搜尋按鈕 */}
-                <button
-                  onClick={() => void handleSearch()}
-                  disabled={isSearchDisabled || loading || isOffline}
-                  title={isOffline ? '請連線網路以進行機票比價' : ''}
-                  className={`w-[60px] md:w-20 rounded-[22px] md:rounded-[2rem] flex items-center justify-center transition-all duration-300 active:scale-95 flex-shrink-0 ${
-                    isSearchDisabled || loading || isOffline
-                      ? 'bg-slate-100 border border-slate-200 grayscale cursor-not-allowed text-slate-300 shadow-inner' 
-                      : 'bg-slate-900 hover:bg-slate-800 text-white shadow-[0_8px_20px_rgba(15,23,42,0.15)] hover:shadow-[0_12px_25px_rgba(15,23,42,0.25)] hover:-translate-y-0.5 border border-transparent'
-                  }`}
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <SearchIcon size={20} strokeWidth={3} className="md:w-[22px] md:h-[22px]" />
-                  )}
-                </button>
-              </div>
+                {(dateError || (!dateError && searchBlockReason)) && (
+                  <div className="text-[11px] text-slate-500 font-bold px-6 pt-2 pb-1.5">{dateError || searchBlockReason}</div>
+                )}
+              </GlassCard>
             </div>
-            {dateError && <div className="text-[11px] text-rose-500 font-bold px-6 py-2 pb-1">{dateError}</div>}
-            {!dateError && searchBlockReason && (
-              <div className="text-[11px] text-slate-500 font-bold px-6 py-2 pb-1">{searchBlockReason}</div>
-            )}
-          </GlassCard>
-          </motion.div>
+          </div>
         </div>
+      </div>
 
+      {/* === CONTENT BELOW HERO === */}
+      <div className="flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60">
         {/* Quick External Links */}
-        <div className="px-2 lg:px-4 -mb-2 mt-1 flex items-center justify-between gap-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">旅途中也常用</p>
-          <p className="text-[11px] font-bold text-slate-400 hidden md:block">等你先決定行程方向，再打開這些捷徑就好。</p>
-        </div>
-        <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 lg:gap-4 mb-6 md:mb-10 px-2 lg:px-4 pb-2 snap-x opacity-95">
-          <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-600 hover:text-slate-900 transition-all group bg-white/45 hover:bg-white/75 backdrop-blur-md px-3.5 md:px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
-            <div className="text-[#B92A8E] group-hover:scale-110 transition-transform">
-              <Bed size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
-            </div>
-            <span className="font-bold text-[12px] md:text-[14px] tracking-wide">找住宿</span>
-          </a>
-          
-          <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-600 hover:text-slate-900 transition-all group bg-white/45 hover:bg-white/75 backdrop-blur-md px-3.5 md:px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
-            <div className="text-[#F18400] group-hover:scale-110 transition-transform">
-              <Ticket size={16} className="md:w-[18px] md:h-[18px]" strokeWidth={2.5} />
-            </div>
-            <span className="font-bold text-[12px] md:text-[14px] tracking-wide">門票 & 觀光行程</span>
-          </a>
-
-          <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 md:gap-2.5 text-slate-600 hover:text-slate-900 transition-all group bg-white/45 hover:bg-white/75 backdrop-blur-md px-3.5 md:px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
-            <div className="text-[#EC4899] group-hover:scale-110 transition-transform relative">
-              <CarFront size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
-              <PlaneTakeoff size={10} strokeWidth={3} className="absolute -top-1 -left-1 md:-top-1.5 md:-left-1.5 md:w-3 md:h-3" />
-            </div>
-            <span className="font-bold text-[12px] md:text-[14px] tracking-wide">機場接送</span>
-          </a>
+        <div className="max-w-3xl mx-auto w-full pt-6 pb-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 mb-3">旅途中也常用</p>
+          <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-1">
+            <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
+              <Bed size={17} className="text-[#B92A8E] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+              <span className="font-bold text-[13px] tracking-wide">找住宿</span>
+            </a>
+            <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
+              <Ticket size={15} className="text-[#F18400] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+              <span className="font-bold text-[13px] tracking-wide">門票 & 觀光行程</span>
+            </a>
+            <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
+              <div className="relative text-[#EC4899] group-hover:scale-110 transition-transform">
+                <CarFront size={17} strokeWidth={2.5} />
+                <PlaneTakeoff size={9} strokeWidth={3} className="absolute -top-1 -left-1" />
+              </div>
+              <span className="font-bold text-[13px] tracking-wide">機場接送</span>
+            </a>
+          </div>
         </div>
 
-        {/* Right Side / Bottom: Results */}
         <div className="pb-16 md:pb-32 flex flex-col flex-1 min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8 px-2 lg:px-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8">
             <div className="flex flex-col items-start gap-1.5 md:gap-1">
               <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tighter leading-none flex items-baseline gap-2 sm:gap-3">
+                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter leading-none flex items-baseline gap-2 sm:gap-3">
                    探索航班與活動
                    {searchForm.date && (
-                     <span className="text-lg sm:text-xl md:text-2xl text-slate-400 font-bold tracking-tight">
+                     <span className="text-lg sm:text-xl text-slate-400 font-bold tracking-tight">
                        {searchForm.date.replace(/-/g, '/')}
                      </span>
                    )}
                  </h2>
                  {filteredResults.length > 0 && (
-                   <span className="px-2 md:px-2.5 py-0.5 md:py-1 bg-slate-900 text-white rounded-[6px] md:rounded-[8px] text-[10px] font-black tracking-widest uppercase shadow-sm">
+                   <span className="px-2 py-0.5 bg-slate-900 text-white rounded-[6px] text-[10px] font-black tracking-widest uppercase shadow-sm">
                      {filteredResults.length} 個結果
                    </span>
                  )}
               </div>
-              <p className="text-[10px] md:text-xs font-bold text-slate-400 tracking-[0.2em] uppercase">
-                Explore Travels
-                {searchForm.date && <span className="ml-2 font-mono">| {searchForm.date}</span>}
-              </p>
+              <p className="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">Explore Travels</p>
             </div>
             {results.length > 0 && (
               <div className="flex flex-row flex-wrap items-center gap-2 justify-end">
-                <div className="flex items-center bg-white/70 backdrop-blur-md p-1 md:p-1.5 rounded-[10px] md:rounded-[12px] shadow-sm border border-slate-200/60 relative overflow-x-auto hide-scrollbar max-w-full">
+                <div className="flex items-center bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 relative overflow-x-auto hide-scrollbar max-w-full">
                   {(['all', 'flight', 'ticket', 'other'] as const).map((type) => (
                     <button 
                       key={type}
                       onClick={() => setFilterType(type)}
-                      className={`relative px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-[8px] text-[10px] md:text-[11px] font-black tracking-[0.1em] md:tracking-widest uppercase transition-colors duration-300 z-10 whitespace-nowrap ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                      className={`relative px-2.5 py-1.5 rounded-[8px] text-[10px] font-black tracking-widest uppercase transition-colors duration-300 z-10 whitespace-nowrap ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
                     >
                       {filterType === type && (
                         <motion.div
@@ -919,34 +1015,6 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center bg-white/70 backdrop-blur-md p-1 md:p-1.5 rounded-[10px] md:rounded-[12px] shadow-sm border border-slate-200/60 relative shrink-0">
-                  <button 
-                    onClick={() => setViewType('grid')}
-                    className={`relative p-1.5 md:p-2 rounded-[8px] md:rounded-[10px] transition-colors duration-300 z-10 ${viewType === 'grid' ? 'text-white' : 'text-slate-400 hover:text-slate-800'}`}
-                  >
-                    {viewType === 'grid' && (
-                      <motion.div
-                        layoutId="viewTypeIndicator"
-                        className="absolute inset-0 bg-slate-900 rounded-[8px] md:rounded-[10px] -z-10 shadow-md"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <LayoutGrid size={16} strokeWidth={2.5} className="md:w-[18px] md:h-[18px]" />
-                  </button>
-                  <button 
-                    onClick={() => setViewType('table')}
-                    className={`relative p-1.5 md:p-2 rounded-[8px] md:rounded-[10px] transition-colors duration-300 z-10 ${viewType === 'table' ? 'text-white' : 'text-slate-400 hover:text-slate-800'}`}
-                  >
-                    {viewType === 'table' && (
-                      <motion.div
-                        layoutId="viewTypeIndicator"
-                        className="absolute inset-0 bg-slate-900 rounded-[8px] md:rounded-[10px] -z-10 shadow-md"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <List size={16} strokeWidth={2.5} className="md:w-[18px] md:h-[18px]" />
-                  </button>
-                </div>
               </div>
             )}
           </div>
@@ -956,9 +1024,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             <AnimatePresence>
               {loading && (
                 <motion.div 
-                  initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-                  animate={{ opacity: 1, backdropFilter: "blur(2px)" }}
-                  exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   className="absolute inset-0 z-50 flex flex-col items-center pt-24 bg-white/40 rounded-[24px]"
                 >
                   <div className="flex flex-col items-center space-y-4 p-8 bg-white/95 shadow-2xl rounded-3xl border border-slate-200/80">
@@ -1000,10 +1068,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                             transition={{ delay: index * 0.05, type: 'spring', bounce: 0.35 }}
                             className="h-full"
                           >
-                            <FlightCard
+                            <DestinationCard
                               flight={flight}
                               isSaved={savedItems.includes(flight.id)}
-                              isTracked={trackedPrices.includes(flight.id)}
                               onPress={() =>
                                 openRedirectModal({
                                   provider: flight.provider,
@@ -1030,20 +1097,6 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                                   return;
                                 }
                                 toggleSave(flight.id);
-                              }}
-                              onToggleTrack={(e) => {
-                                e.stopPropagation();
-                                if (!isLoggedIn && onRequireLogin) {
-                                  onRequireLogin();
-                                  return;
-                                }
-                                const isCurrentlyTracked = trackedPrices.includes(flight.id);
-                                toggleTrack(flight.id);
-                                showToast(
-                                  !isCurrentlyTracked
-                                    ? `✨ 已開啟 ${flight.provider} 的降價提醒！`
-                                    : `🔕 已關閉降價提醒`
-                                );
                               }}
                             />
                           </motion.div>
