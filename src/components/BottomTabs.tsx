@@ -1,14 +1,13 @@
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { Home, Sparkles, Calendar, Luggage } from 'lucide-react';
 import type { TabName } from '../types/workflow';
 
 export const TABS = [
-  { id: 'home', label: '探索首頁', Icon: Home },
-  { id: 'ai_form', label: 'AI 行程', Icon: Sparkles },
-  { id: 'itinerary', label: '行程手帳', Icon: Calendar },
-  { id: 'tools', label: '行前準備', Icon: Luggage },
+  { id: 'home', label: '探索首頁', iconName: 'compass' },
+  { id: 'ai_form', label: 'AI 行程', iconName: 'hot-air-balloon' },
+  { id: 'itinerary', label: '行程手帳', iconName: 'calendar' },
+  { id: 'tools', label: '行前準備', iconName: 'backpack' },
 ];
 
 export default function BottomTabs() {
@@ -47,7 +46,6 @@ export default function BottomTabs() {
       <div className="bg-white/80 backdrop-blur-[30px] backdrop-saturate-[180%] rounded-[36px] shadow-[0_16px_40px_-5px_rgba(255,183,206,0.5),inset_0_1px_2px_rgba(255,255,255,0.7)] border border-pink-100/50 flex justify-between items-center p-1.5 pointer-events-auto w-full max-w-[380px] mx-auto overflow-hidden">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id || (activeTab === 'ai_result' && tab.id === 'ai_form');
-          const Icon = tab.Icon;
           return (
             <button
               key={tab.id}
@@ -65,10 +63,13 @@ export default function BottomTabs() {
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
                 />
               )}
-              <Icon 
-                size={isActive ? 22 : 20}
-                className={`mb-1 transition-all ${isActive ? 'text-pink-600' : 'text-pink-500'}`}
-                strokeWidth={isActive ? 2.5 : 2}
+              <img
+                src={`/icons/${tab.iconName}.png`}
+                alt={tab.label}
+                width={isActive ? 22 : 20}
+                height={isActive ? 22 : 20}
+                className={`mb-1 object-contain transition-opacity ${isActive ? 'opacity-100' : 'opacity-50'}`}
+                draggable={false}
               />
               <span className={`text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-1 z-10 transition-colors ${isActive ? 'text-pink-600' : 'text-pink-500'}`}>
                 {tab.label}
