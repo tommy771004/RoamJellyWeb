@@ -170,6 +170,36 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
             </div>
             <span className="text-[10px] font-bold uppercase tracking-tight">{flight.details?.duration || '3h 15m'}</span>
           </div>
+
+          {/* Return leg row — shown for roundtrip bundles */}
+          {flight.tripType === 'roundtrip' && flight.returnLeg && (
+            <div className="mt-2 pt-2 border-t border-dashed border-slate-200">
+              <div className="flex items-center gap-1 mb-1">
+                <span className="text-[9px] font-black tracking-[0.2em] uppercase text-sky-500 bg-sky-50 px-1.5 py-[2px] rounded-sm">回程</span>
+              </div>
+              <div className="flex items-center justify-between px-0.5">
+                <div className="flex flex-col items-start">
+                  <span className="text-base font-black text-slate-900 tracking-tighter leading-none">{flight.returnLeg.departure}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Depart</span>
+                </div>
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full border-t border-dashed border-slate-300" />
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-base font-black text-slate-900 tracking-tighter leading-none">{flight.returnLeg.arrival}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Arrive</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-1 px-1">
+                <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm ${flight.returnLeg.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
+                  {flight.returnLeg.stops === 0 ? '直飛 DIRECT' : `${flight.returnLeg.stops} 轉 STOP`}
+                </span>
+                {flight.returnLeg.duration && (
+                  <span className="text-[10px] font-bold uppercase tracking-tight text-slate-500">{flight.returnLeg.duration}</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <AnimatePresence>
@@ -524,6 +554,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [showDeparturePicker, setShowDeparturePicker] = useState<boolean>(false);
   const [showDestinationPicker, setShowDestinationPicker] = useState<boolean>(false);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [showReturnDatePicker, setShowReturnDatePicker] = useState<boolean>(false);
 
   const [flyingCard, setFlyingCard] = useState<{ id: number; startX: number; startY: number; width: number; height: number; handbook?: any } | null>(null);
   const [activeGuide, setActiveGuide] = useState<CountryGuide | null>(null);
@@ -705,10 +736,24 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     updateField('date', dateStr);
     setShowDatePicker(false);
     if (dateError) setDateError(null);
+    // Auto-clear return date if it's before the new departure date
+    if (searchForm.returnDate && dateStr > searchForm.returnDate) {
+      updateField('returnDate', '');
+    }
+  };
+
+  const selectReturnDate = (dateStr: string) => {
+    updateField('returnDate', dateStr);
+    setShowReturnDatePicker(false);
+    if (dateError) setDateError(null);
   };
 
   const isSearchDisabled = useMemo(
-    () => !searchForm.from.trim() || !searchForm.to.trim() || !searchForm.date.trim(),
+    () => {
+      if (!searchForm.from.trim() || !searchForm.to.trim() || !searchForm.date.trim()) return true;
+      if (searchForm.tripType === 'roundtrip' && !searchForm.returnDate.trim()) return true;
+      return false;
+    },
     [searchForm],
   );
 
@@ -717,12 +762,17 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     if (!searchForm.from.trim()) return '先填寫出發地。';
     if (!searchForm.to.trim()) return '再補上目的地。';
     if (!searchForm.date.trim()) return '最後選擇去程日期。';
+    if (searchForm.tripType === 'roundtrip' && !searchForm.returnDate.trim()) return '請選擇回程日期。';
     return null;
-  }, [isOffline, searchForm.date, searchForm.from, searchForm.to]);
+  }, [isOffline, searchForm]);
 
   const handleSearch = async () => {
     if (!DATE_REGEX.test(searchForm.date.trim())) {
       setDateError('日期格式需為 YYYY-MM-DD，例如 2025-08-01');
+      return;
+    }
+    if (searchForm.tripType === 'roundtrip' && !DATE_REGEX.test(searchForm.returnDate.trim())) {
+      setDateError('回程日期格式需為 YYYY-MM-DD，例如 2025-08-08');
       return;
     }
     setDateError(null);
@@ -810,6 +860,52 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         throw new Error('flight import sync failed');
       }
 
+      // If roundtrip and return leg exists, create a second trip fact + node
+      if (flight.tripType === 'roundtrip' && flight.returnLeg) {
+        const retDate = searchForm.returnDate?.trim() || factDate;
+        const retFact = await createTripFact(tripId, {
+          factType: 'flight_return',
+          source: 'imported_search',
+          title: `${flight.returnLeg.airline || flight.provider} ${arrCode} → ${depCode}`,
+          startAt: `${retDate}T${toHHMM(flight.returnLeg.departure)}:00.000Z`,
+          endAt: `${retDate}T${toHHMM(flight.returnLeg.arrival) || '13:00'}:00.000Z`,
+          locationName: depCode,
+          referenceCode: null,
+          metadata: {
+            airline: flight.returnLeg.airline || flight.provider,
+            depCode: arrCode,
+            arrCode: depCode,
+            provider: flight.provider,
+            bookingUrl: flight.bookingUrl || flight.affiliate_url,
+            price: flight.price,
+            currency: flight.currency,
+          },
+        });
+
+        const retPayload: SyncItineraryPayload = {
+          trip_id: tripId,
+          action: 'add_node',
+          payload: {
+            node_id: `node_flight_return_${Date.now()}`,
+            day: 2,
+            date: retDate,
+            time: toHHMM(flight.returnLeg.departure),
+            title: `${flight.returnLeg.airline || flight.provider} 回程航班`,
+            emoji: '🔄',
+            category: 'flight',
+            description: `回程航班\n預定金額: ${flight.currency} ${flight.price}（來回合計）\n來源: ${flight.provider}`,
+            linkedFactId: retFact?.id,
+            source: 'remote',
+          },
+        };
+        useItineraryStore.getState().addNode(retPayload.payload);
+        try {
+          await syncItinerary(retPayload);
+        } catch {
+          useItineraryStore.getState().removeNode(retPayload.payload.node_id);
+        }
+      }
+
       showToast(`已把 ${flight.provider} 航班帶入旅程錨點。`, 'success');
       setTimeout(() => {
         useAppStore.getState().setActiveTab('itinerary');
@@ -846,6 +942,17 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           <div className={`relative z-20 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
             {/* Mobile layout: vertical stacked fields */}
             <div className="relative z-20 md:hidden rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(255,255,255,0.32))] p-5 shadow-[0_18px_44px_rgba(156,63,89,0.10)] backdrop-blur-[24px]">
+              {/* Trip type toggle */}
+              <div className="flex items-center gap-1 mb-4 p-1 rounded-full bg-white/50 border border-white/70 w-fit">
+                <button
+                  onClick={() => updateField('tripType', 'oneway')}
+                  className={`px-4 py-1.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType !== 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >單程</button>
+                <button
+                  onClick={() => updateField('tripType', 'roundtrip')}
+                  className={`px-4 py-1.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType === 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >來回</button>
+              </div>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="search-from-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">出發從哪裡</Label>
@@ -893,7 +1000,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">去程日期</span>
                   <div
                     className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
-                    onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
+                    onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); setShowReturnDatePicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
                       <Calendar size={17} className={showDatePicker ? 'text-[#2c6956]' : 'text-[#3a637c]'} />
@@ -903,6 +1010,23 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     </span>
                   </div>
                 </div>
+
+                {searchForm.tripType === 'roundtrip' && (
+                  <div className="space-y-2">
+                    <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">回程日期</span>
+                    <div
+                      className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
+                      onClick={() => { setShowReturnDatePicker(!showReturnDatePicker); setShowDatePicker(false); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
+                        <Calendar size={17} className={showReturnDatePicker ? 'text-sky-500' : 'text-[#3a637c]'} />
+                      </div>
+                      <span className={`text-[18px] font-black leading-none ${!searchForm.returnDate ? 'text-slate-500/60' : 'text-slate-900'}`}>
+                        {searchForm.returnDate || '選擇回程日期'}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="mt-5 flex items-end justify-between gap-4">
@@ -924,7 +1048,19 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             </div>
 
             {/* Desktop layout: horizontal pill */}
-            <div className="relative z-20 hidden md:flex items-center justify-center gap-[14px] pt-2">
+            <div className="relative z-20 hidden md:flex flex-col items-center gap-3 pt-2">
+              {/* Trip type toggle — desktop */}
+              <div className="flex items-center gap-1 p-1 rounded-full bg-white/50 border border-white/70 self-start ml-1">
+                <button
+                  onClick={() => updateField('tripType', 'oneway')}
+                  className={`px-4 py-1.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType !== 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >單程</button>
+                <button
+                  onClick={() => updateField('tripType', 'roundtrip')}
+                  className={`px-4 py-1.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType === 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >來回</button>
+              </div>
+              <div className="flex items-center justify-center gap-[14px] w-full">
               <div className="flex-1 max-w-[648px] rounded-full border border-white/85 bg-[rgba(255,255,255,0.42)] px-[9px] py-[9px] shadow-[0_16px_44px_rgba(255,255,255,0.22),0_18px_36px_rgba(156,63,89,0.08)] backdrop-blur-[20px]">
                 <div className="flex items-stretch rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.28),rgba(255,255,255,0.08))]">
                   <div
@@ -967,7 +1103,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   <div className="w-px bg-white/55 self-stretch my-3" />
                   <div
                     className={`flex items-center gap-2.5 px-5 py-[13px] cursor-pointer rounded-full ${showDatePicker ? 'bg-white/36' : 'hover:bg-white/28'} ${searchFieldSurfaceClass}`}
-                    onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
+                    onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); setShowReturnDatePicker(false); }}
                   >
                     <Calendar size={17} className={showDatePicker ? 'text-[#2c6956]' : 'text-[#3a637c]'} />
                     <div className="flex flex-col min-w-0 w-[144px]">
@@ -977,6 +1113,23 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       </span>
                     </div>
                   </div>
+                  {searchForm.tripType === 'roundtrip' && (
+                    <>
+                      <div className="w-px bg-white/55 self-stretch my-3" />
+                      <div
+                        className={`flex items-center gap-2.5 px-5 py-[13px] cursor-pointer rounded-full ${showReturnDatePicker ? 'bg-white/36' : 'hover:bg-white/28'} ${searchFieldSurfaceClass}`}
+                        onClick={() => { setShowReturnDatePicker(!showReturnDatePicker); setShowDatePicker(false); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
+                      >
+                        <Calendar size={17} className={showReturnDatePicker ? 'text-sky-500' : 'text-[#3a637c]'} />
+                        <div className="flex flex-col min-w-0 w-[144px]">
+                          <span className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5">回程日期</span>
+                          <span className={`text-[14px] font-black truncate leading-none ${!searchForm.returnDate ? 'text-slate-500/65' : 'text-slate-900'}`}>
+                            {searchForm.returnDate || '選擇回程日期'}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
                 {(dateError || (!dateError && searchBlockReason)) && (
                   <div className="text-[11px] text-slate-500 font-bold px-6 pt-2 pb-1.5">{dateError || searchBlockReason}</div>
@@ -994,7 +1147,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               >
                 {loading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={20} strokeWidth={3} />}
               </button>
-            </div>
+            </div>{/* end flex items-center gap-[14px] */}
+            </div>{/* end flex-col desktop wrapper */}
           </div>
         </div>
       </div>
@@ -1552,6 +1706,15 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           selectedDate={searchForm.date}
           onSelect={selectDate}
           onClose={() => setShowDatePicker(false)}
+        />
+      )}
+
+      {showReturnDatePicker && (
+        <DatePickerPopup
+          selectedDate={searchForm.returnDate}
+          onSelect={selectReturnDate}
+          onClose={() => setShowReturnDatePicker(false)}
+          minDate={searchForm.date || undefined}
         />
       )}
 

@@ -8,6 +8,7 @@ export interface SearchItem {
   affiliate_url: string;
   bookingUrl?: string;
   type?: 'flight' | 'ticket' | 'other';
+  tripType?: 'oneway' | 'roundtrip';
   details?: {
     airline?: string;
     departure?: string;
@@ -17,6 +18,14 @@ export interface SearchItem {
     depCode?: string;
     arrCode?: string;
     flightNumber?: string;
+  };
+  /** Populated only when tripType === 'roundtrip' */
+  returnLeg?: {
+    airline?: string;
+    departure?: string;
+    arrival?: string;
+    stops?: number;
+    duration?: string;
   };
 }
 

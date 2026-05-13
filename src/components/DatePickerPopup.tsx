@@ -9,9 +9,11 @@ interface DatePickerPopupProps {
   onSelect: (date: string) => void;
   onClose: () => void;
   allowPast?: boolean;
+  /** Earliest selectable date as YYYY-MM-DD string */
+  minDate?: string;
 }
 
-export default function DatePickerPopup({ selectedDate, onSelect, onClose, allowPast = false }: DatePickerPopupProps) {
+export default function DatePickerPopup({ selectedDate, onSelect, onClose, allowPast = false, minDate }: DatePickerPopupProps) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(selectedDate ? new Date(selectedDate) : new Date());
   const prefersReducedMotion = useReducedMotion();
@@ -93,7 +95,8 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
               const isSelected = dateStr === selectedDate;
               const isToday = dateStr === todayStr;
               const isPast = !allowPast && date < new Date(new Date().setHours(0, 0, 0, 0));
-              const disabled = isPast && !isToday;
+              const isBelowMin = !!minDate && dateStr < minDate;
+              const disabled = (isPast && !isToday) || isBelowMin;
               return (
                 <button
                   key={i}

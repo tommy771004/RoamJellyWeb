@@ -13,7 +13,17 @@ export interface FlightData {
   currency: string;
   emoji: string;
   affiliate_url: string;
+  /** 'oneway' (default) or 'roundtrip' */
+  tripType?: 'oneway' | 'roundtrip';
   details: {
+    airline: string;
+    departure: string;
+    arrival: string;
+    stops: number;
+    duration: string;
+  };
+  /** Populated only when tripType === 'roundtrip' */
+  returnLeg?: {
     airline: string;
     departure: string;
     arrival: string;
@@ -1437,6 +1447,606 @@ export async function scrapeTripFlights(
   } catch (error: any) {
     if (browser) await browser.close();
     console.warn('[tripParser] Scraper failed:', error?.message ?? error);
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Roundtrip support
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse Trip.com internal API JSON (captured via network interception) for
+ * ROUNDTRIP results.  Each itinerary must have two flightSegments groups:
+ * index 0 = outbound leg, index 1 = return leg.
+ */
+function parseApiResponsesRoundTrip(
+  captured: Array<{ url: string; data: any }>,
+  affiliateUrl: string,
+  origin: string,
+  destination: string,
+  departureDate: string,
+  returnDate: string,
+): FlightData[] {
+  const results: FlightData[] = [];
+
+  for (const { url: capturedUrl, data } of captured) {
+    // ── FlightMiddleSearch / soa2/27015 ─────────────────────────────────
+    if (capturedUrl.includes('FlightMiddleSearch') || capturedUrl.includes('soa2/27015')) {
+      const itineraryList: any[] =
+        data?.flightItineraryList ??
+        data?.data?.flightItineraryList ??
+        data?.routeList ??
+        data?.data?.routeList ??
+        [];
+
+      for (const itinerary of itineraryList) {
+        try {
+          const segGroups: any[] = itinerary?.flightSegments ?? itinerary?.itemList ?? [];
+          // Roundtrip must have two segment groups
+          if (segGroups.length < 2) continue;
+
+          // Outbound (leg 0)
+          const outSegs: any[] = segGroups[0]?.flightList ?? segGroups[0]?.segments ?? [];
+          const outSeg = outSegs[0] ?? {};
+
+          // Return (leg 1)
+          const retSegs: any[] = segGroups[1]?.flightList ?? segGroups[1]?.segments ?? [];
+          const retSeg = retSegs[0] ?? {};
+
+          // Price (roundtrip total)
+          const priceInfo = itinerary?.priceList?.[0] ?? itinerary?.cabinInfoList?.[0] ?? {};
+          const price = Number(priceInfo?.adultPrice ?? priceInfo?.price ?? priceInfo?.salePrice ?? 0);
+          if (!price) continue;
+
+          // Times
+          const outDepTime = (outSeg?.departureDateTime ?? outSeg?.depDateTime ?? '').match(/(\d{2}:\d{2})/)?.[1] ?? '';
+          const outArrTime = (outSeg?.arrivalDateTime ?? outSeg?.arrDateTime ?? '').match(/(\d{2}:\d{2})/)?.[1] ?? '';
+          const retDepTime = (retSeg?.departureDateTime ?? retSeg?.depDateTime ?? '').match(/(\d{2}:\d{2})/)?.[1] ?? '';
+          const retArrTime = (retSeg?.arrivalDateTime ?? retSeg?.arrDateTime ?? '').match(/(\d{2}:\d{2})/)?.[1] ?? '';
+          if (!outDepTime && !outArrTime) continue;
+
+          // Airlines
+          const outAirline: string = outSeg?.marketingAirlineName ?? outSeg?.airlineName ?? outSeg?.carrierName ?? 'Unknown';
+          const retAirline: string = retSeg?.marketingAirlineName ?? retSeg?.airlineName ?? retSeg?.carrierName ?? outAirline;
+
+          // Duration (in minutes in the API)
+          const outDurMin = Number(outSeg?.duration ?? outSeg?.flightTime ?? 0);
+          const retDurMin = Number(retSeg?.duration ?? retSeg?.flightTime ?? 0);
+
+          // Stops
+          const outStops = Number(segGroups[0]?.transferCount ?? Math.max(0, outSegs.length - 1));
+          const retStops = Number(segGroups[1]?.transferCount ?? Math.max(0, retSegs.length - 1));
+
+          results.push({
+            id: `tripcom_rt_${departureDate}_${returnDate}_${results.length}_${Date.now()}`,
+            type: 'flight',
+            tripType: 'roundtrip',
+            provider: 'Trip.com',
+            title: `${origin} ⇄ ${destination} · 來回`,
+            price,
+            currency: 'TWD',
+            emoji: '✈️',
+            affiliate_url: affiliateUrl,
+            details: {
+              airline: outAirline,
+              departure: outDepTime,
+              arrival: outArrTime,
+              stops: outStops,
+              duration: outDurMin ? `${Math.floor(outDurMin / 60)}h ${outDurMin % 60}m` : '--',
+            },
+            returnLeg: {
+              airline: retAirline,
+              departure: retDepTime,
+              arrival: retArrTime,
+              stops: retStops,
+              duration: retDurMin ? `${Math.floor(retDurMin / 60)}h ${retDurMin % 60}m` : '--',
+            },
+          });
+        } catch { /* skip malformed entry */ }
+        if (results.length >= 10) break;
+      }
+      if (results.length >= 10) break;
+      continue;
+    }
+
+    // ── Generic API format (FlightRouteItems / flightRouteList) ─────────
+    const root = data?.Response ?? data?.data ?? data?.result ?? data?.flightData ?? data;
+    const flightList: any[] =
+      root?.FlightRouteItems ??
+      root?.flightRouteList ??
+      root?.flightList ??
+      root?.items ??
+      (Array.isArray(root) ? root : []);
+
+    for (const item of flightList) {
+      try {
+        const segs: any[] = item?.FlightSegmentList ?? item?.segments ?? item?.legs ?? [];
+        if (segs.length < 2) continue; // need both legs
+
+        const outSeg = segs[0] ?? {};
+        const retSeg = segs[1] ?? {};
+
+        const priceNode = item?.Prices ?? item?.price ?? item?.fare ?? {};
+        const price = Number(
+          priceNode?.AdultPrice ?? priceNode?.adultPrice ?? priceNode?.totalPrice ??
+          priceNode?.amount ?? item?.minPrice ?? item?.price ?? 0,
+        );
+        if (!price) continue;
+
+        const outDepTime = (outSeg?.DepartureDateTime ?? outSeg?.departureDateTime ?? '').match(/\d{2}:\d{2}/)?.[0] ?? '';
+        const outArrTime = (outSeg?.ArrivalDateTime ?? outSeg?.arrivalDateTime ?? '').match(/\d{2}:\d{2}/)?.[0] ?? '';
+        const retDepTime = (retSeg?.DepartureDateTime ?? retSeg?.departureDateTime ?? '').match(/\d{2}:\d{2}/)?.[0] ?? '';
+        const retArrTime = (retSeg?.ArrivalDateTime ?? retSeg?.arrivalDateTime ?? '').match(/\d{2}:\d{2}/)?.[0] ?? '';
+        if (!outDepTime && !outArrTime) continue;
+
+        const outAirline: string = outSeg?.MarketingAirlineName ?? outSeg?.airlineName ?? outSeg?.carrier ?? item?.airlineName ?? 'Unknown';
+        const retAirline: string = retSeg?.MarketingAirlineName ?? retSeg?.airlineName ?? retSeg?.carrier ?? outAirline;
+
+        const outDurMin = Number(outSeg?.Duration ?? outSeg?.duration ?? 0);
+        const retDurMin = Number(retSeg?.Duration ?? retSeg?.duration ?? 0);
+
+        results.push({
+          id: `tripcom_rt_${departureDate}_${returnDate}_${results.length}_${Date.now()}`,
+          type: 'flight',
+          tripType: 'roundtrip',
+          provider: 'Trip.com',
+          title: `${origin} ⇄ ${destination} · 來回`,
+          price,
+          currency: 'TWD',
+          emoji: '✈️',
+          affiliate_url: affiliateUrl,
+          details: {
+            airline: outAirline,
+            departure: outDepTime,
+            arrival: outArrTime,
+            stops: Number(item?.StopNum ?? item?.stopNum ?? item?.stops ?? 0),
+            duration: outDurMin ? `${Math.floor(outDurMin / 60)}h ${outDurMin % 60}m` : '--',
+          },
+          returnLeg: {
+            airline: retAirline,
+            departure: retDepTime,
+            arrival: retArrTime,
+            stops: 0,
+            duration: retDurMin ? `${Math.floor(retDurMin / 60)}h ${retDurMin % 60}m` : '--',
+          },
+        });
+      } catch { /* skip */ }
+    }
+    if (results.length >= 10) break;
+  }
+
+  return results.slice(0, 10);
+}
+
+/**
+ * Returns a JS string (for page.evaluate) that extracts roundtrip flight
+ * bundles from Trip.com DOM.  Each result has outDep/outArr (outbound) and
+ * retDep/retArr (return), plus price and airline.
+ *
+ * Strategy A: CSS node extraction (4+ time values per card)
+ * Strategy B: sentinel-split of body.innerText, 4 times per block
+ */
+function buildDomParserScriptRoundTrip(_originIATA: string, _destIATA: string): string {
+  return `
+(function () {
+  var CARD_SELECTORS = [
+    '.flight-item', '[class*="flight-item"]', '[class*="FlightItem"]',
+    '[class*="flightItem"]', '.m-list-item', '.flight-card',
+    '[class*="flight-card"]', '[class*="FlightCard"]', '.o-flight-card',
+    '[data-testid="flight-card"]',
+  ];
+
+  // --- Strategy A: structured node extraction ---
+  var nodes = [];
+  for (var si = 0; si < CARD_SELECTORS.length; si++) {
+    var found = Array.from(document.querySelectorAll(CARD_SELECTORS[si]));
+    if (found.length >= 2) { nodes = found; break; }
+  }
+
+  if (nodes.length > 0) {
+    var stratA = nodes.slice(0, 15).map(function(node, index) {
+      var text = node.textContent || '';
+      var times = text.match(/(\\d{2}:\\d{2})/g) || [];
+      if (times.length < 4) return null; // roundtrip requires at least 4 times
+      var outDep = times[0], outArr = times[1];
+      var retDep = times[2], retArr = times[3];
+
+      var pm = text.match(/TWD[\\s,]*([\\d,]+)/) || text.match(/([\\d,]{4,})\\s*TWD/);
+      var price = pm ? parseInt(pm[1].replace(/,/g, ''), 10) : 0;
+      if (price < 2000) return null;
+
+      var airlineEls = Array.from(node.querySelectorAll('[class*="airline"],[class*="carrier"],[class*="Airline"]'));
+      var outAirline = airlineEls[0] ? (airlineEls[0].textContent || '').trim() : '';
+      var retAirline = airlineEls[1] ? (airlineEls[1].textContent || '').trim() : outAirline;
+      if (!outAirline) {
+        var ams = text.match(/([\\u4e00-\\u9fff]+(?:航空|航班))/g) || [];
+        outAirline = ams[0] || '';
+        retAirline = ams[1] || outAirline;
+      }
+
+      var durEls = Array.from(node.querySelectorAll('[class*="duration"],[class*="Duration"]'));
+      var outDur = durEls[0] ? (durEls[0].textContent || '').trim() : '';
+      var retDur = durEls[1] ? (durEls[1].textContent || '').trim() : '';
+      if (!outDur) {
+        var dms = [];
+        var dre = /(\\d+)\\s*小時\\s*(\\d+)\\s*分/g, dm;
+        while ((dm = dre.exec(text)) !== null) dms.push(dm[1] + 'h ' + dm[2] + 'm');
+        outDur = dms[0] || '';
+        retDur = dms[1] || '';
+      }
+
+      var outStops = text.includes('直飛') ? 0
+        : (text.match(/(\\d+)\\s*[轉停]/) ? parseInt(text.match(/(\\d+)\\s*[轉停]/)[1]) : 1);
+
+      return { index: index, outAirline: outAirline, outDep: outDep, outArr: outArr,
+               retAirline: retAirline, retDep: retDep, retArr: retArr,
+               price: price, outDur: outDur, retDur: retDur,
+               outStops: outStops, retStops: 0 };
+    }).filter(Boolean);
+    if (stratA.length >= 2) return stratA;
+  }
+
+  // --- Strategy B: sentinel split ---
+  var fullText = document.body.innerText || '';
+  var container = document.querySelector('.m-flight-list, .page-box-list');
+  if (container && container.innerText && container.innerText.length > fullText.length) {
+    fullText = container.innerText;
+  }
+  var cutMarkers = ['推薦日期', '資料擷取時間', '在 Trip.com 預訂', '常見問題'];
+  var flightZone = fullText;
+  for (var ci = 0; ci < cutMarkers.length; ci++) {
+    var ci2 = flightZone.indexOf(cutMarkers[ci]);
+    if (ci2 > 200) { flightZone = flightZone.slice(0, ci2); break; }
+  }
+
+  var sentinelRe = /選取|查看詳情/g;
+  var lastIdx = 0, blocksList = [], smatch;
+  while ((smatch = sentinelRe.exec(flightZone)) !== null) {
+    blocksList.push(flightZone.slice(lastIdx, smatch.index));
+    lastIdx = smatch.index + smatch[0].length;
+  }
+
+  var results = [];
+  for (var bi = 0; bi < blocksList.length - 1 && results.length < 10; bi++) {
+    var block = blocksList[bi].slice(Math.max(0, blocksList[bi].length - 900));
+    var times = block.match(/(\\d{2}:\\d{2})/g) || [];
+    if (times.length < 4) continue;
+
+    // Use first 2 as outbound, last 2 as return (handles direct + 1-stop cases)
+    var outDep = times[0], outArr = times[1];
+    var retDep = times[times.length - 2], retArr = times[times.length - 1];
+
+    var priceMatch = block.match(/TWD[\\s,]*([\\d,]+)/);
+    if (!priceMatch) continue;
+    var price = parseInt(priceMatch[1].replace(/,/g, ''), 10);
+    if (price < 2000 || price > 2000000) continue;
+
+    var dms = [], dre2 = /(\\d+)\\s*小時\\s*(\\d+)\\s*分/g, dm2;
+    while ((dm2 = dre2.exec(block)) !== null) dms.push(dm2[1] + 'h ' + dm2[2] + 'm');
+
+    var ams2 = block.match(/([\\u4e00-\\u9fff]+(?:航空|航班))/g) || [];
+    var outAirline = ams2[0] || '', retAirline = ams2[1] || outAirline;
+
+    results.push({
+      index: results.length,
+      outAirline: outAirline, outDep: outDep, outArr: outArr,
+      retAirline: retAirline, retDep: retDep, retArr: retArr,
+      price: price,
+      outDur: dms[0] || '', retDur: dms[1] || '',
+      outStops: 0, retStops: 0,
+    });
+  }
+
+  return results;
+})()
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// Validation helper
+// ---------------------------------------------------------------------------
+
+export interface RoundTripValidation {
+  valid: FlightData[];
+  issues: string[];
+  summary: string;
+}
+
+/**
+ * Structurally validates roundtrip FlightData[] returned by the scraper.
+ * Call after scrapeTripRoundTrip() to confirm both legs were extracted before
+ * passing data to the API layer.
+ */
+export function validateRoundTripResult(flights: FlightData[]): RoundTripValidation {
+  const issues: string[] = [];
+
+  if (flights.length === 0) {
+    return { valid: [], issues: ['scraper returned 0 flights'], summary: '❌ 0 valid roundtrip flights' };
+  }
+
+  const valid = flights.filter((f, i) => {
+    const tag = `[${i}]`;
+    if (f.tripType !== 'roundtrip') {
+      issues.push(`${tag} tripType="${f.tripType}" expected "roundtrip"`);
+      return false;
+    }
+    if (!f.returnLeg) {
+      issues.push(`${tag} missing returnLeg`);
+      return false;
+    }
+    if (!f.details.departure || !f.details.arrival) {
+      issues.push(`${tag} outbound leg missing departure/arrival times`);
+      return false;
+    }
+    if (!f.returnLeg.departure || !f.returnLeg.arrival) {
+      issues.push(`${tag} return leg missing departure/arrival times`);
+      return false;
+    }
+    if (f.price < 2000) {
+      issues.push(`${tag} price TWD ${f.price} unusually low for roundtrip`);
+      return false;
+    }
+    if (f.price > 500000) {
+      issues.push(`${tag} price TWD ${f.price} unusually high`);
+      return false;
+    }
+    return true;
+  });
+
+  const summary = valid.length > 0
+    ? `✓ ${valid.length}/${flights.length} valid roundtrip flights`
+    : `❌ all ${flights.length} flights failed validation`;
+
+  return { valid, issues, summary };
+}
+
+// ---------------------------------------------------------------------------
+// Roundtrip main exported function
+// ---------------------------------------------------------------------------
+
+/**
+ * Scrape Trip.com roundtrip flight search results.
+ *
+ * Uses the same Playwright browser infrastructure as scrapeTripFlights but:
+ *  - URL: flighttype=rt&ddate={departureDate}&rdate={returnDate}
+ *  - API parser: reads both flightSegments[0] (outbound) and [1] (return)
+ *  - DOM fallback: extracts 4-time blocks per card
+ *  - Returns FlightData[] with both `details` (outbound) and `returnLeg` set
+ *  - Validates structural integrity before returning (no fake data fallback)
+ */
+export async function scrapeTripRoundTrip(
+  origin: string,
+  destination: string,
+  departureDate: string,
+  returnDate: string,
+): Promise<FlightData[]> {
+  const originIATA = getIata(origin);
+  const destIATA = getIata(destination);
+  const url =
+    `https://tw.trip.com/flights/${originIATA}-to-${destIATA}/tickets-${originIATA}-${destIATA}/?flighttype=rt` +
+    `&dcity=${originIATA}&acity=${destIATA}&ddate=${departureDate}&rdate=${returnDate}`;
+  const isVercel = !!process.env.VERCEL;
+
+  console.log(`[tripParser/RT] Starting → ${url}`);
+
+  const capturedApiData: Array<{ url: string; data: any }> = [];
+  let browser: playwrightCore.Browser | undefined;
+
+  try {
+    // ── Browser launch ─────────────────────────────────────────────────────
+    const executablePath = isVercel
+      ? await (chromiumSparticuz as any).executablePath()
+      : undefined;
+
+    browser = await playwrightCore.chromium.launch({
+      headless: true,
+      executablePath: executablePath || undefined,
+      args: [
+        ...((isVercel && (chromiumSparticuz as any).args) ? (chromiumSparticuz as any).args : []),
+        '--disable-blink-features=AutomationControlled',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--window-size=1440,900',
+        '--lang=zh-TW',
+        '--disable-infobars',
+        '--ignore-certificate-errors',
+        '--allow-running-insecure-content',
+        '--disable-web-security',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--force-device-scale-factor=1',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--metrics-recording-only',
+        '--safebrowsing-disable-auto-update',
+        '--password-store=basic',
+      ],
+    });
+
+    // ── Context setup ──────────────────────────────────────────────────────
+    const context = await browser.newContext({
+      userAgent:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      viewport: { width: 1440, height: 900 },
+      locale: 'zh-TW',
+      timezoneId: 'Asia/Taipei',
+      extraHTTPHeaders: {
+        'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0',
+      },
+    });
+
+    await context.addInitScript(STEALTH_SCRIPT);
+    const page = await context.newPage();
+
+    // ── Network interception ───────────────────────────────────────────────
+    page.on('response', async (response: playwrightCore.Response) => {
+      const resUrl = response.url();
+      const ct = response.headers()['content-type'] ?? '';
+      const isJson = ct.includes('json');
+      const looksLikeFlight =
+        resUrl.includes('flightList') || resUrl.includes('FlightList') ||
+        resUrl.includes('flightSearch') || resUrl.includes('searchFlight') ||
+        resUrl.includes('FlightMiddleSearch') || resUrl.includes('soa2/27015') ||
+        resUrl.includes('soa2/11296') || resUrl.includes('soa2/24049') ||
+        resUrl.includes('intl/flight');
+
+      if (isJson && looksLikeFlight) {
+        try {
+          const json = await response.json();
+          const hasData =
+            json?.Response?.FlightRouteItems?.length ||
+            json?.data?.flightList?.length ||
+            json?.flightList?.length ||
+            json?.result?.length ||
+            json?.head?.retCode === 'SUCCESS';
+          if (hasData) {
+            console.log(`[tripParser/RT] Captured API response: ${resUrl}`);
+            capturedApiData.push({ url: resUrl, data: json });
+          }
+        } catch { /* skip */ }
+      }
+    });
+
+    // ── Navigation ─────────────────────────────────────────────────────────
+    await page.mouse.move(400 + Math.random() * 300, 100 + Math.random() * 100);
+    console.log('[tripParser/RT] Navigating...');
+    await page.goto(url, {
+      waitUntil: 'domcontentloaded',
+      timeout: isVercel ? 20000 : 60000,
+    });
+
+    try {
+      await page.waitForLoadState('networkidle', { timeout: isVercel ? 8000 : 15000 });
+    } catch { /* proceed */ }
+
+    // ── Human-behaviour simulation ─────────────────────────────────────────
+    console.log('[tripParser/RT] Simulating human behaviour...');
+    await sleep(1200, 2500);
+
+    let scrolled = 0;
+    while (scrolled < 500) {
+      const delta = 40 + Math.floor(Math.random() * 50);
+      await page.mouse.wheel(0, delta);
+      scrolled += delta;
+      await sleep(60, 150);
+    }
+    await sleep(600, 1200);
+
+    await humanMouseMove(page, 350, 400, 900, 500);
+    await sleep(200, 500);
+    await humanMouseMove(page, 900, 500, 600, 650);
+    await sleep(300, 700);
+
+    while (scrolled < 1200) {
+      const delta = 50 + Math.floor(Math.random() * 60);
+      await page.mouse.wheel(0, delta);
+      scrolled += delta;
+      await sleep(80, 180);
+    }
+    await sleep(800, 1500);
+
+    // ── Wait for flight data ───────────────────────────────────────────────
+    console.log('[tripParser/RT] Waiting for flight data to render...');
+    try {
+      await page.waitForFunction(
+        () => {
+          const t = document.body.innerText || '';
+          return (
+            (t.includes('選取') && t.includes('TWD')) ||
+            (t.includes('查看詳情') && t.includes('TWD')) ||
+            t.includes('找不到航班') ||
+            t.includes('0 個航班')
+          );
+        },
+        { timeout: isVercel ? 25000 : 45000, polling: 1000 },
+      );
+      console.log('[tripParser/RT] Flight data detected in page.');
+    } catch {
+      console.warn('[tripParser/RT] Timed out waiting for flight data; proceeding with available content.');
+    }
+
+    await sleep(800, 1500);
+    await page.mouse.wheel(0, -(100 + Math.floor(Math.random() * 100)));
+    await sleep(300, 600);
+
+    // ── Strategy 1: intercepted API data ──────────────────────────────────
+    if (capturedApiData.length > 0) {
+      console.log(`[tripParser/RT] Parsing ${capturedApiData.length} captured API responses...`);
+      const apiFlights = parseApiResponsesRoundTrip(
+        capturedApiData, url, origin, destination, departureDate, returnDate,
+      );
+      if (apiFlights.length > 0) {
+        await browser.close();
+        const validation = validateRoundTripResult(apiFlights);
+        console.log(`[tripParser/RT] API strategy: ${validation.summary}`);
+        if (validation.issues.length) console.warn('[tripParser/RT] Issues:', validation.issues);
+        return validation.valid;
+      }
+    }
+
+    // ── Strategy 2: DOM extraction ─────────────────────────────────────────
+    console.log('[tripParser/RT] Falling back to DOM extraction...');
+    const domScript = buildDomParserScriptRoundTrip(originIATA, destIATA);
+    const rawFlights: Array<{
+      index: number;
+      outAirline: string; outDep: string; outArr: string;
+      retAirline: string; retDep: string; retArr: string;
+      price: number; outDur: string; retDur: string;
+      outStops: number; retStops: number;
+    }> = await page.evaluate(domScript) as any;
+
+    await browser.close();
+
+    const validRaw = (rawFlights ?? []).filter(f => f?.price > 0).slice(0, 10);
+    console.log(`[tripParser/RT] DOM extraction found ${validRaw.length} roundtrip bundles.`);
+    if (validRaw.length === 0) return [];
+
+    const domResults: FlightData[] = validRaw.map(f => ({
+      id: `tripcom_rt_dom_${departureDate}_${returnDate}_${f.index}_${Date.now()}`,
+      type: 'flight' as const,
+      tripType: 'roundtrip' as const,
+      provider: 'Trip.com',
+      title: `${origin} ⇄ ${destination} · 來回`,
+      price: f.price,
+      currency: 'TWD',
+      emoji: '✈️',
+      affiliate_url: url,
+      details: {
+        airline: f.outAirline || 'Unknown',
+        departure: f.outDep,
+        arrival: f.outArr,
+        stops: f.outStops,
+        duration: f.outDur || '--',
+      },
+      returnLeg: {
+        airline: f.retAirline || 'Unknown',
+        departure: f.retDep,
+        arrival: f.retArr,
+        stops: f.retStops,
+        duration: f.retDur || '--',
+      },
+    }));
+
+    const domValidation = validateRoundTripResult(domResults);
+    console.log(`[tripParser/RT] DOM strategy: ${domValidation.summary}`);
+    if (domValidation.issues.length) console.warn('[tripParser/RT] Issues:', domValidation.issues);
+    return domValidation.valid;
+
+  } catch (error: any) {
+    if (browser) await browser.close();
+    console.warn('[tripParser/RT] Scraper failed:', error?.message ?? error);
     return [];
   }
 }
