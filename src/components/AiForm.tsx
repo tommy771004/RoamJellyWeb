@@ -2,17 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import GlassCard from './GlassCard';
+import IconImg from './ui/IconImg';
 import { TRAVEL_GUIDE_DESTINATIONS, TravelGuideDestination } from '../data/travelGuideDestinations';
 import { LocationPickerPopup } from './LocationPickerPopup';
 import { useSearchStore } from '../store/useSearchStore';
 
 const COMPANION_OPTIONS = [
-  { id: 'solo', label: '獨自行走', emoji: '🚶' },
-  { id: 'couple', label: '浪漫雙人', emoji: '💑' },
-  { id: 'family', label: '親子育兒', emoji: '👨‍👩‍👧‍👦' },
-  { id: 'elderly', label: '帶長輩', emoji: '👵' },
-  { id: 'friends', label: '三五好友', emoji: '🍻' },
-  { id: 'pets', label: '毛小孩', emoji: '🐕' },
+  { id: 'solo', label: '獨自行走', emoji: 'hiking-boot' },
+  { id: 'couple', label: '浪漫雙人', emoji: 'heart' },
+  { id: 'family', label: '親子育兒', emoji: 'tent' },
+  { id: 'elderly', label: '帶長輩', emoji: 'hat' },
+  { id: 'friends', label: '三五好友', emoji: 'cocktail' },
+  { id: 'pets', label: '毛小孩', emoji: 'backpack' },
 ];
 
 const VIBE_OPTIONS = ['特種兵急行軍', '睡到自然醒', '隨興漫遊', '在地深度文化', '網美打卡秘境', '奢華極致享受', '文青慢活步調', '夜生活狂歡'];
@@ -132,6 +133,14 @@ export default function AiForm({
     onSubmit(formData);
   };
 
+  const stepOneHint = !formData.departure
+    ? '先選擇出發地。'
+    : !formData.destination
+      ? '再選擇目的地。'
+      : !formData.companions
+        ? '最後選擇同行者。'
+        : '已完成基本資料，下一步可微調節奏、飲食與預算。';
+
   return (
     <div className="relative flex flex-col h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* Immersive Background for AI Form */}
@@ -236,7 +245,7 @@ export default function AiForm({
                     {isSelected && (
                       <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-100/50 to-transparent pointer-events-none" />
                     )}
-                    <span className="text-[40px] sm:text-[48px] filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300 origin-bottom">{opt.emoji}</span>
+                    <IconImg value={opt.emoji} size={40} className="filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300 origin-bottom" />
                     <span className={`text-xs sm:text-sm font-black uppercase tracking-widest relative z-10 ${isSelected ? 'text-fuchsia-600' : 'text-slate-600'}`}>{opt.label}</span>
                   </button>
                 );
@@ -257,6 +266,9 @@ export default function AiForm({
               下一步，微調細節
               <ArrowLeft className="rotate-180" size={20} />
             </button>
+            <p className="mt-3 px-2 text-[12px] font-bold text-slate-500 tracking-wide">
+              {stepOneHint}
+            </p>
           </div>
         </motion.div>
       )}
