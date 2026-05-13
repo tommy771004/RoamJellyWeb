@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy, Globe, ExternalLink, Bed, Ticket, CarFront } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { Input } from './ui/input';
@@ -26,6 +26,7 @@ import type { CountryGuide } from '../data/countryGuideData';
 import { EXPERT_HANDBOOKS } from '../data/expertHandbooks';
 import DatePickerPopup from './DatePickerPopup';
 import { triggerHapticFeedback } from '../lib/haptics';
+import { layoutIndicatorTransition, pressableSurfaceClass, raisedHoverClass, subtlePressableClass } from '../lib/motionTokens';
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -97,7 +98,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
         }
       }}
     >
-      <GlassCard className="!p-0 bg-white/70 backdrop-blur-xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:bg-white flex-1 flex flex-col overflow-hidden rounded-[24px] group-hover/card:-translate-y-1 transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]">
+      <GlassCard className={`!p-0 bg-white/70 backdrop-blur-xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:bg-white flex-1 flex flex-col overflow-hidden rounded-[24px] ${pressableSurfaceClass} ${raisedHoverClass}`}>
         
         {/* Top Section: Airline & Route */}
         <div className="p-4 flex flex-col gap-3">
@@ -118,7 +119,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
             </div>
             <button
               onClick={onToggleSave}
-              className={`w-7 h-7 rounded-full flex justify-center items-center transition-all duration-200 active:scale-90 ${
+              className={`w-7 h-7 rounded-full flex justify-center items-center ${subtlePressableClass} ${
                 isSaved ? 'bg-pink-100 text-pink-600' : 'bg-slate-100/80 text-slate-400 hover:bg-pink-50 hover:text-pink-500'
               }`}
             >
@@ -216,7 +217,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
           <div className="flex items-center gap-1.5">
             <button
               onClick={(e) => { e.stopPropagation(); onToggleTrack(e); }}
-              className={`w-8 h-8 rounded-[10px] flex items-center justify-center transition-all active:scale-95 border ${
+              className={`w-8 h-8 rounded-[10px] flex items-center justify-center border ${subtlePressableClass} ${raisedHoverClass} ${
                 isTracked 
                   ? 'bg-slate-900 border-slate-900 text-white shadow-md' 
                   : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-800 shadow-sm hover:shadow'
@@ -226,7 +227,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onImportToTrip(e); }}
-              className="h-8 px-3 rounded-[10px] flex items-center gap-1.5 transition-all active:scale-95 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg"
+              className={`h-8 px-3 rounded-[10px] flex items-center gap-1.5 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg ${subtlePressableClass} ${raisedHoverClass}`}
             >
               <PlaneTakeoff size={14} strokeWidth={2.5} />
               <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">帶入</span>
@@ -234,7 +235,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
             {isExpanded && (
               <button
                 onClick={(e) => { e.stopPropagation(); onPress(); }}
-                className="h-8 px-4 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold transition-transform active:scale-95 shadow-md ml-1"
+                className={`h-8 px-4 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-md ml-1 ${subtlePressableClass} ${raisedHoverClass}`}
               >
                 <span className="text-[10px] uppercase tracking-widest leading-none">購買</span>
               </button>
@@ -528,6 +529,11 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [activeGuide, setActiveGuide] = useState<CountryGuide | null>(null);
   const [activeHandbook, setActiveHandbook] = useState<typeof EXPERT_HANDBOOKS[0] | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const prefersReducedMotion = useReducedMotion();
+  const cardSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
+  const cardActionClass = `${subtlePressableClass} ${raisedHoverClass}`;
+  const searchFieldSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
+  const chipPressClass = `${subtlePressableClass} ${raisedHoverClass}`;
 
   const handleCopyExpertItinerary = (e: React.MouseEvent | undefined, handbook: typeof EXPERT_HANDBOOKS[0]) => {
     e?.stopPropagation?.();
@@ -844,7 +850,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="space-y-2">
                   <Label htmlFor="search-from-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">出發從哪裡</Label>
                   <div
-                    className="flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px]"
+                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -865,7 +871,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="space-y-2">
                   <Label htmlFor="search-to-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">飛往目的地</Label>
                   <div
-                    className="flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px]"
+                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -886,7 +892,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="space-y-2">
                   <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">去程日期</span>
                   <div
-                    className="flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px]"
+                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -906,10 +912,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <button
                   onClick={() => void handleSearch()}
                   disabled={isSearchDisabled || loading || isOffline}
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border transition-all active:scale-95 ${
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border ${
                     isSearchDisabled || loading || isOffline
                       ? 'border-white/70 bg-white/55 text-slate-300 cursor-not-allowed'
-                      : 'border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,240,244,0.72))] text-slate-900 shadow-[0_12px_24px_rgba(156,63,89,0.14)] hover:-translate-y-0.5'
+                      : `border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,240,244,0.72))] text-slate-900 shadow-[0_12px_24px_rgba(156,63,89,0.14)] ${chipPressClass}`
                   }`}
                 >
                   {loading ? <div className="w-4 h-4 border-2 border-slate-300/40 border-t-slate-800 rounded-full animate-spin" /> : <SearchIcon size={18} strokeWidth={3} />}
@@ -922,7 +928,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               <div className="flex-1 max-w-[648px] rounded-full border border-white/85 bg-[rgba(255,255,255,0.42)] px-[9px] py-[9px] shadow-[0_16px_44px_rgba(255,255,255,0.22),0_18px_36px_rgba(156,63,89,0.08)] backdrop-blur-[20px]">
                 <div className="flex items-stretch rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.28),rgba(255,255,255,0.08))]">
                   <div
-                    className="relative flex-1 flex items-center gap-2.5 px-5 py-[13px] rounded-full transition-colors cursor-text hover:bg-white/28"
+                    className={`relative flex-1 flex items-center gap-2.5 px-5 py-[13px] rounded-full cursor-text hover:bg-white/28 ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                   >
                     <PlaneTakeoff size={17} className="text-[#b35f76] shrink-0" />
@@ -941,7 +947,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   </div>
                   <div className="w-px bg-white/55 self-stretch my-3" />
                   <div
-                    className="relative flex-1 flex items-center gap-2.5 px-5 py-[13px] transition-colors cursor-text hover:bg-white/28"
+                    className={`relative flex-1 flex items-center gap-2.5 px-5 py-[13px] cursor-text hover:bg-white/28 ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                   >
                     <Globe size={17} className="text-[#2c6956] shrink-0" />
@@ -960,7 +966,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   </div>
                   <div className="w-px bg-white/55 self-stretch my-3" />
                   <div
-                    className={`flex items-center gap-2.5 px-5 py-[13px] cursor-pointer transition-colors rounded-full ${showDatePicker ? 'bg-white/36' : 'hover:bg-white/28'}`}
+                    className={`flex items-center gap-2.5 px-5 py-[13px] cursor-pointer rounded-full ${showDatePicker ? 'bg-white/36' : 'hover:bg-white/28'} ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
                   >
                     <Calendar size={17} className={showDatePicker ? 'text-[#2c6956]' : 'text-[#3a637c]'} />
@@ -980,10 +986,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 onClick={() => void handleSearch()}
                 disabled={isSearchDisabled || loading || isOffline}
                 title={isOffline ? '請連線網路以進行機票比價' : ''}
-                className={`w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0 ${
+                className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shrink-0 ${
                   isSearchDisabled || loading || isOffline
                     ? 'bg-white/55 text-slate-300 cursor-not-allowed border border-white/70'
-                    : 'bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-[0_16px_30px_rgba(236,72,153,0.28)] hover:shadow-[0_18px_34px_rgba(249,115,22,0.30)] hover:-translate-y-0.5'
+                    : `bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-[0_16px_30px_rgba(236,72,153,0.28)] hover:shadow-[0_18px_34px_rgba(249,115,22,0.30)] ${chipPressClass}`
                 }`}
               >
                 {loading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={20} strokeWidth={3} />}
@@ -999,15 +1005,15 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         <div className="max-w-3xl mx-auto w-full pt-3 sm:pt-4 pb-1 sm:pb-2">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 mb-3 sm:mb-3.5">旅途中也常用</p>
           <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-1">
-            <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
+            <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start ${chipPressClass}`}>
               <Bed size={17} className="text-[#B92A8E] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
               <span className="font-bold text-[13px] tracking-wide">找住宿</span>
             </a>
-            <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
+            <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start ${chipPressClass}`}>
               <Ticket size={15} className="text-[#F18400] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
               <span className="font-bold text-[13px] tracking-wide">門票 & 觀光行程</span>
             </a>
-            <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start">
+            <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start ${chipPressClass}`}>
               <div className="relative text-[#EC4899] group-hover:scale-110 transition-transform">
                 <CarFront size={17} strokeWidth={2.5} />
                 <PlaneTakeoff size={9} strokeWidth={3} className="absolute -top-1 -left-1" />
@@ -1044,13 +1050,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     <button 
                       key={type}
                       onClick={() => setFilterType(type)}
-                      className={`relative px-2.5 py-1.5 rounded-[8px] text-[10px] font-black tracking-widest uppercase transition-colors duration-300 z-10 whitespace-nowrap ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                      className={`relative px-2.5 py-1.5 rounded-[8px] text-[10px] font-black tracking-widest uppercase z-10 whitespace-nowrap ${subtlePressableClass} ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
                     >
                       {filterType === type && (
                         <motion.div
                           layoutId="filterTypeIndicator"
                           className="absolute inset-0 bg-white rounded-[8px] -z-10 shadow-sm border border-slate-200"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          transition={layoutIndicatorTransition}
                         />
                       )}
                       {type === 'all' ? '全部' : type === 'flight' ? '機票' : type === 'ticket' ? '票券' : '其他'}
@@ -1097,17 +1103,18 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     viewType === 'grid' ? (
                       <motion.div 
                         key="grid-view"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                        transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                         className="flex gap-3 overflow-x-auto px-1 pr-7 pb-2 snap-x snap-mandatory hide-scrollbar sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pr-0 sm:pb-0 lg:grid-cols-3"
                       >
                         {filteredResults.map((flight, index) => (
                           <motion.div
                             key={flight.id}
-                            initial={{ opacity: 0, y: 24, scale: 0.96 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={{ delay: index * 0.05, type: 'spring', bounce: 0.35 }}
+                            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={prefersReducedMotion ? { duration: 0.16 } : { delay: Math.min(index, 5) * 0.028, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
                             className="h-full min-w-[76vw] snap-center sm:min-w-0"
                           >
                             <DestinationCard
@@ -1147,9 +1154,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     ) : (
                       <motion.div
                         key="table-view"
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
+                        exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                        transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                       >
                         <FlightTable 
                           results={filteredResults}
@@ -1202,8 +1210,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   ) : hasSearched && !loading ? (
                     <motion.div
                       key="no-results"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                       className="flex flex-col items-center justify-center py-20 bg-white/40 backdrop-blur-xl rounded-3xl border border-white mx-2 shadow-sm"
                     >
                       <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-5xl mb-6 grayscale opacity-60">
@@ -1242,7 +1251,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                                 triggerHapticFeedback([16]);
                                 setActiveHandbook(handbook);
                               }}
-                              className="group/demo overflow-hidden rounded-[28px] border border-white/70 dark:border-white/10 bg-white/90 dark:bg-slate-900/80 text-left shadow-lg shadow-slate-200/40 dark:shadow-black/30 transition-all hover:-translate-y-1 hover:shadow-xl"
+                              className={`group/demo overflow-hidden rounded-[28px] border border-white/70 dark:border-white/10 bg-white/90 dark:bg-slate-900/80 text-left shadow-lg shadow-slate-200/40 dark:shadow-black/30 hover:shadow-xl ${cardSurfaceClass}`}
                             >
                               <div className="relative h-36 overflow-hidden">
                                 <img src={handbook.image} alt={handbook.title} className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-105" loading="lazy" />
@@ -1292,7 +1301,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                                updateField('to', city);
                                setShowDestinationPicker(false);
                              }}
-                             className="px-4 py-2 bg-white hover:bg-slate-900 hover:text-white text-slate-600 rounded-full text-xs font-black tracking-widest border border-slate-200 hover:border-slate-900 transition-all shadow-sm duration-300"
+                             className={`px-4 py-2 bg-white hover:bg-slate-900 hover:text-white text-slate-600 rounded-full text-xs font-black tracking-widest border border-slate-200 hover:border-slate-900 shadow-sm ${chipPressClass}`}
                            >
                              {city}
                            </button>
@@ -1324,10 +1333,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   {communityTrips.map((trip) => (
                     <motion.div
                       key={trip.id}
-                      whileHover={{ y: -6 }}
                       className="w-[280px] sm:w-[320px] group/trip"
                     >
-                      <GlassCard className="!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all flex flex-col">
+                      <GlassCard className={`!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col ${cardSurfaceClass}`}>
                         <div className="relative h-44 overflow-hidden flex-shrink-0">
                           <img
                             src={trip.cover}
@@ -1361,7 +1369,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
                           <button
                             onClick={(event) => handleCloneTrip(event, trip)}
-                            className="mt-auto w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-sky-600 active:scale-95 group/btn"
+                            className={`mt-auto w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-sky-600 group/btn ${cardActionClass}`}
                           >
                             <Copy size={14} className="transition-transform group-hover/btn:rotate-12" />
                             一鍵複製到我的草稿
@@ -1390,10 +1398,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 {FEATURED_DESTINATIONS.map((dest) => (
                   <motion.div
                     key={dest.id}
-                    whileHover={{ y: -6 }}
                     className="w-[260px] sm:w-[300px] group/dest"
                   >
-                    <GlassCard className="!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all flex flex-col">
+                    <GlassCard className={`!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col ${cardSurfaceClass}`}>
                       {/* Cover Image */}
                       <div className="relative h-44 overflow-hidden flex-shrink-0">
                         <img
@@ -1432,7 +1439,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         </div>
 
                         <button
-                          className="mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-emerald-600 active:scale-95 group/btn"
+                          className={`mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 group/btn ${cardActionClass}`}
                           onClick={(e) => { e.stopPropagation(); const g = getCountryGuide(dest.id); if (g) setActiveGuide(g); }}
                         >
                           <ExternalLink size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
@@ -1458,10 +1465,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 {EXPERT_HANDBOOKS.map((handbook) => (
                   <motion.div
                     key={handbook.id}
-                    whileHover={{ y: -5 }}
                     className="w-[280px] sm:w-[320px] group/handbook"
                   >
-                    <GlassCard onClick={() => setActiveHandbook(handbook)} className="!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all cursor-pointer">
+                    <GlassCard onClick={() => setActiveHandbook(handbook)} className={`!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] cursor-pointer ${cardSurfaceClass}`}>
                       <div className="relative h-44 overflow-hidden">
                         <img
                           src={handbook.image}
@@ -1493,7 +1499,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         
                         <button
                           onClick={(e) => handleCopyExpertItinerary(e, handbook)}
-                          className="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:bg-slate-800 active:scale-95 group/btn"
+                          className={`w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 group/btn ${cardActionClass}`}
                         >
                           <Copy size={14} className="transition-transform group-hover/btn:rotate-12" />
                           複製行程
