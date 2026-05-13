@@ -130,11 +130,12 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     const init = async () => {
       try {
         setLoading(true);
-        const [checklistData, collaboratorsData, weatherData, tripInfoData] = await Promise.all([
+        const [checklistData, collaboratorsData, weatherData, tripInfoData, settlementHistoryData] = await Promise.all([
           fetchChecklist(tripId),
           fetchCollaborators(tripId),
           fetchWeather(tripInfo?.destination || '您的目的地').catch(() => null),
           fetchTripInfo(tripId).catch(() => null),
+          import('../lib/workflowApi').then(m => m.fetchSettlementHistory(tripId)).catch(() => []),
         ]);
         if (weatherData) setWeather(weatherData);
 
@@ -146,6 +147,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
 
         const memberNames = collaboratorsData.map((m: any) => m.name).filter(Boolean);
         setChecklist(checklistData);
+        setSettlementHistory(settlementHistoryData);
         if (memberNames.length > 0) {
           setMembers(memberNames);
           // Only update initial form state once when we get members

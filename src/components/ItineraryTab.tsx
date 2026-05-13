@@ -2,6 +2,7 @@ import React, { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState }
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, Reorder, useReducedMotion } from 'motion/react';
 
+import MapSelectorModal from './MapSelectorModal';
 
 import { 
   List as ListIcon, 
@@ -3628,6 +3629,9 @@ function ManualAddNode({
   const [linkedFactId, setLinkedFactId] = useState('');
   const facts = useTripFactsStore(s => s.facts);
 
+  const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [isMapSelectorOpen, setIsMapSelectorOpen] = useState(false);
+
   useEffect(() => {
     if (!isAdding) {
       setDate(getDateForDay(day, tripStartDate) || '');
@@ -3655,9 +3659,12 @@ function ManualAddNode({
       image_url: imageUrl || undefined,
       is_visited: isVisited,
       linkedFactId: linkedFactId || undefined,
+      lat: coords?.lat,
+      lng: coords?.lng,
     });
     setTitle('');
     setLocationName('');
+    setCoords(null);
     setDescription('');
     setTransportToNext('');
     setImageUrl('');
@@ -3771,9 +3778,13 @@ function ManualAddNode({
                       className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
                     />
                   </div>
-                  <button type="button" disabled className="shrink-0 px-4 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-300 font-bold text-sm tracking-wide flex items-center justify-center gap-2 cursor-not-allowed">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsMapSelectorOpen(true)}
+                    className="shrink-0 px-4 py-4 rounded-2xl bg-white border border-fuchsia-200 text-fuchsia-600 font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-fuchsia-50 hover:shadow-sm active:scale-95 transition-all"
+                  >
                     <MapPin size={16} />
-                    地圖選取即將支援
+                    {coords ? '已選取座標' : '地圖選取'}
                   </button>
                 </div>
               </div>
@@ -3892,6 +3903,14 @@ function ManualAddNode({
           </div>
         </motion.div>
       </div>
+      <MapSelectorModal 
+        isOpen={isMapSelectorOpen}
+        onClose={() => setIsMapSelectorOpen(false)}
+        onSelect={(lat, lng) => {
+          setCoords({ lat, lng });
+          if (!locationName) setLocationName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        }}
+      />
     </AnimatePresence>,
     document.body
   );
