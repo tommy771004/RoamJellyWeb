@@ -23,6 +23,7 @@ import {
   Sparkles as SparklesIcon,
   CalendarDays as CalendarDaysIcon,
   Luggage as LuggageIcon,
+  PlaneTakeoff,
 } from 'lucide-react';
 import BottomTabs, { TABS } from './components/BottomTabs';
 import AiLoadingState from './components/AiLoadingState';
@@ -254,7 +255,9 @@ export default function App() {
   if (!authReady) {
     return (
       <div className="flex-1 justify-center items-center bg-purple-50 flex h-screen w-screen">
-        <img src="/icons/airplane.png" alt="loading" width={32} height={32} className="object-contain animate-pulse" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80">
+          <PlaneTakeoff size={22} className="text-pink-500 animate-pulse" strokeWidth={2.5} />
+        </div>
       </div>
     );
   }
@@ -685,7 +688,7 @@ export default function App() {
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             className="pt-[80px]"
           >
-            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><img src="/icons/airplane.png" alt="loading" width={32} height={32} className="object-contain animate-spin" /></div>}>
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80"><PlaneTakeoff size={22} className="text-pink-500 animate-spin" strokeWidth={2.5} /></div></div>}>
               {renderContent()}
             </Suspense>
           </motion.div>
