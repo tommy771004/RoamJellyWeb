@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
+import IconImg from './ui/IconImg';
 import { ItinerarySkeletonCard } from './SkeletonCard';
 import {
   searchOffers,
@@ -152,7 +153,7 @@ function getDynamicMapPercent(nodes: any[], lat: number, lng: number) {
   };
 }
 
-const EMOJI_OPTIONS = ['🏯', '🗼', '🌸', '🍣', '🍜', '🎌', '⛩️', '🏔️', '🛍️', '🎡', '🌿', '🏖️'];
+const EMOJI_OPTIONS = ['camera', 'mountain', 'beach', 'food-drink', 'hotel', 'heart', 'star', 'compass', 'backpack', 'tent', 'globe', 'map'];
 type AiGenerateMode = 'selected_day' | 'overwrite_all' | 'generate_for_selected_days';
 const AI_LOADING_QUOTES = [
   '正在打包行李，替今天塞進剛剛好的節奏...',
@@ -163,16 +164,16 @@ const AI_LOADING_QUOTES = [
 const DELETE_UNDO_WINDOW_MS = 3600;
 
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
-  flight: { label: '航班', icon: '✈️' },
-  transport: { label: '交通', icon: '🚆' },
-  landmark: { label: '景點', icon: '🏯' },
-  food: { label: '美食', icon: '🍜' },
-  shopping: { label: '購物', icon: '🛍️' },
-  nature: { label: '自然', icon: '🌿' },
-  hotel: { label: '住宿', icon: '🏨' },
-  activity: { label: '活動', icon: '🎡' },
-  nightlife: { label: '夜生活', icon: '🌃' },
-  other: { label: '其他', icon: '📍' },
+  flight: { label: '航班', icon: 'airplane' },
+  transport: { label: '交通', icon: 'train' },
+  landmark: { label: '景點', icon: 'camera' },
+  food: { label: '美食', icon: 'food-drink' },
+  shopping: { label: '購物', icon: 'ticket' },
+  nature: { label: '自然', icon: 'mountain' },
+  hotel: { label: '住宿', icon: 'hotel' },
+  activity: { label: '活動', icon: 'hot-air-balloon' },
+  nightlife: { label: '夜生活', icon: 'cocktail' },
+  other: { label: '其他', icon: 'compass' },
 };
 
 const CATEGORY_OPTIONS = Object.keys(CATEGORY_META);
@@ -438,6 +439,16 @@ export default function ItineraryTab() {
         if (r.status === 'fulfilled' && r.value) {
           rawNodes[i].lat = r.value.lat;
           rawNodes[i].lng = r.value.lng;
+        }
+      });
+
+      // Fetch spot images (Wikipedia thumbnail) in parallel; fall back silently
+      const enrichResults = await Promise.allSettled(
+        rawNodes.map(n => fetchSpotEnrichment(n.title))
+      );
+      enrichResults.forEach((r, i) => {
+        if (r.status === 'fulfilled' && r.value?.thumbnail) {
+          rawNodes[i].image_url = r.value.thumbnail;
         }
       });
 
@@ -1814,9 +1825,9 @@ export default function ItineraryTab() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg active:scale-90 transition-all"
+                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center active:scale-90 transition-all"
                     >
-                      {newSpotEmoji}
+                      <IconImg value={newSpotEmoji} size={20} />
                     </button>
                     <input
                       value={newSpotTitle}
@@ -1836,7 +1847,7 @@ export default function ItineraryTab() {
                   {showEmojiPicker && (
                     <div className="flex flex-wrap gap-1.5 mt-3 p-2 bg-white rounded-xl border border-slate-100 shadow-xl overflow-y-auto max-h-[120px] no-scrollbar">
                       {EMOJI_OPTIONS.map(em => (
-                        <button key={em} onClick={() => { setNewSpotEmoji(em); setShowEmojiPicker(false); }} className="w-8 h-8 flex items-center justify-center hover:bg-pink-50 rounded-lg text-lg">{em}</button>
+                        <button key={em} onClick={() => { setNewSpotEmoji(em); setShowEmojiPicker(false); }} className="w-8 h-8 flex items-center justify-center hover:bg-pink-50 rounded-lg transition-all"><IconImg value={em} size={20} /></button>
                       ))}
                     </div>
                   )}
@@ -1869,7 +1880,7 @@ export default function ItineraryTab() {
                   .slice(0, 12)
                   .map((n: ItineraryNode) => (
                     <span key={n.node_id} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 rounded-full text-[12px] font-bold text-slate-700 border border-pink-100 shadow-sm">
-                      <span>{n.emoji}</span>
+                      <IconImg value={n.emoji} size={14} />
                       <span className="line-clamp-1 max-w-[100px]">{n.title}</span>
                     </span>
                   ))}
@@ -2487,7 +2498,7 @@ function DraggableFavoriteSpot({
           <div className="w-10 h-10 rounded-[14px] bg-white flex items-center justify-center text-xl shadow-sm border border-slate-100/50 group-hover:scale-105 transition-transform overflow-hidden shrink-0">
             {enrichment.thumbnail
               ? <img src={enrichment.thumbnail} alt={spot.title} className="w-full h-full object-cover" />
-              : spot.emoji}
+              : <IconImg value={spot.emoji} size={20} />}
           </div>
           <div>
             <h4 className="font-black text-slate-800 text-[13px] leading-tight">{spot.title}</h4>
@@ -2763,15 +2774,15 @@ function ItineraryListItem({
             <div className={`relative w-6 h-6 sm:w-8 sm:h-8 shrink-0 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-sm sm:text-base shadow-inner border border-slate-100/50 transition-all group-hover:scale-110 group-hover:rotate-3 duration-700 ${item.category === 'flight' ? 'bg-gradient-to-br from-indigo-50 to-blue-50' : 'bg-white'}`}>
               {isEditing ? (
                  <button type="button" aria-label="選擇景點表情" title="選擇景點表情" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="animate-pulse active:scale-95 transition-transform w-full h-full flex items-center justify-center">
-                    {editEmoji}
+                    <IconImg value={editEmoji} size={16} />
                  </button>
               ) : (
-                 <span className="filter drop-shadow-sm select-none transition-transform group-hover:scale-110">{item.emoji}</span>
+                 <span className="filter drop-shadow-sm select-none transition-transform group-hover:scale-110"><IconImg value={item.emoji} size={16} /></span>
               )}
               {isEditing && showEmojiPicker && (
                  <div className="absolute top-full left-0 mt-2 p-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white z-[100] flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
                    {EMOJI_OPTIONS.map(e => (
-                     <button key={e} type="button" title={`使用 ${e}`} onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl text-xl transition-colors">{e}</button>
+                     <button key={e} type="button" title={`使用 ${e}`} onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl transition-colors"><IconImg value={e} size={24} /></button>
                    ))}
                  </div>
               )}
@@ -3738,14 +3749,14 @@ function ManualAddNode({
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="w-full py-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center justify-center text-3xl shadow-sm hover:border-pink-200 transition-all active:scale-95"
+                      className="w-full py-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center justify-center shadow-sm hover:border-pink-200 transition-all active:scale-95"
                     >
-                      {emoji}
+                      <IconImg value={emoji} size={28} />
                     </button>
                     {showEmojiPicker && (
                       <div className="absolute top-full mt-2 left-0 z-50 p-3 bg-white rounded-2xl border border-slate-100 shadow-xl overflow-y-auto max-h-[160px] w-64 flex flex-wrap gap-2">
                           {EMOJI_OPTIONS.map(em => (
-                            <button key={em} type="button" onClick={() => { setEmoji(em); setShowEmojiPicker(false); }} className={`w-10 h-10 flex items-center justify-center rounded-xl text-xl transition-all ${emoji === em ? 'bg-pink-100 scale-110 shadow-sm' : 'hover:bg-slate-50'}`}>{em}</button>
+                            <button key={em} type="button" onClick={() => { setEmoji(em); setShowEmojiPicker(false); }} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${emoji === em ? 'bg-pink-100 scale-110 shadow-sm' : 'hover:bg-slate-50'}`}><IconImg value={em} size={24} /></button>
                           ))}
                       </div>
                     )}
@@ -4099,7 +4110,7 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                            >
                              <div className="flex flex-col w-full min-w-0">
                                <div className="flex items-center gap-1 w-full min-w-0">
-                                 <span className="shrink-0 text-[14px]">{node.emoji}</span>
+                                 <IconImg value={node.emoji} size={16} className="shrink-0" />
                                  <span className="truncate flex-1">{node.title}</span>
                                </div>
                                {node.time && <span className={`text-[9px] mt-0.5 tracking-wider ${selectedNodeId === node.node_id ? 'text-white/80' : 'text-slate-400'}`}>{node.time}</span>}
@@ -4136,8 +4147,8 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                 )}
                 
                 <div className="flex items-start gap-4 mt-2">
-                   <div className="w-14 h-14 shrink-0 rounded-[1.5rem] bg-gradient-to-br from-pink-50 to-fuchsia-50 text-3xl flex items-center justify-center border border-white shadow-md shadow-pink-100/50">
-                     {selectedNode.emoji}
+                   <div className="w-14 h-14 shrink-0 rounded-[1.5rem] bg-gradient-to-br from-pink-50 to-fuchsia-50 flex items-center justify-center border border-white shadow-md shadow-pink-100/50">
+                     <IconImg value={selectedNode.emoji} size={32} />
                    </div>
                    <div className="flex-1 pt-1">
                      <h3 className="font-black text-xl text-slate-800 leading-tight mb-2">{selectedNode.title}</h3>

@@ -2,6 +2,7 @@ import React, { createContext, use, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CloudRain, Check, Sparkles, Sun, Send, CheckCircle2, Plane, Star, ExternalLink, SlidersHorizontal, ArrowDownUp } from 'lucide-react';
 import GlassCard from './GlassCard';
+import IconImg from './ui/IconImg';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
@@ -461,11 +462,11 @@ function ChecklistSection() {
         {checklist.length === 0 && <span className="text-sm text-slate-400 italic">目前沒有行李項目</span>}
         {(() => {
           const CAT_META: Record<string, { label: string; emoji: string }> = {
-            documents:   { label: '證件', emoji: '🪪' },
+            documents:   { label: '證件', emoji: 'passport' },
             electronics: { label: '電子', emoji: '🔌' },
             clothing:    { label: '服裝', emoji: '👕' },
-            toiletries:  { label: '盥洗', emoji: '🧴' },
-            other:       { label: '其他', emoji: '🎒' },
+            toiletries:  { label: '盥洗', emoji: 'towel' },
+            other:       { label: '其他', emoji: 'backpack' },
           };
           const ORDER = ['documents', 'electronics', 'clothing', 'toiletries', 'other'];
           const grouped = ORDER.map(cat => ({
@@ -476,7 +477,7 @@ function ChecklistSection() {
           return grouped.map(({ cat, meta, items: catItems }) => (
             <div key={cat} className="mb-4 last:mb-0">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-base leading-none">{meta.emoji}</span>
+                <IconImg value={meta.emoji} size={18} />
                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{meta.label}</span>
               </div>
               <div className="flex flex-col gap-2">

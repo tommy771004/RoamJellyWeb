@@ -250,7 +250,7 @@ export default function App() {
   if (!authReady) {
     return (
       <div className="flex-1 justify-center items-center bg-purple-50 flex h-screen w-screen">
-        <span style={{ fontSize: 32 }}>✈️</span>
+        <img src="/icons/airplane.png" alt="loading" width={32} height={32} className="object-contain animate-pulse" />
       </div>
     );
   }
@@ -536,7 +536,6 @@ export default function App() {
         <nav className="hidden md:flex flex-row items-center justify-center gap-2 absolute left-1/2 -translate-x-1/2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
-            const Icon = tab.Icon;
             return (
               <button
                 key={tab.id}
@@ -547,10 +546,13 @@ export default function App() {
                     : 'text-pink-500/70 hover:bg-white/50 hover:text-pink-500'
                 }`}
               >
-                <Icon 
-                  size={18}
-                  strokeWidth={isActive ? 2.5 : 2}
-                  className={isActive ? 'text-pink-600' : 'text-pink-500/70'}
+                <img
+                  src={`/icons/${tab.iconName}.png`}
+                  alt={tab.label}
+                  width={18}
+                  height={18}
+                  className={`object-contain shrink-0 ${isActive ? 'opacity-100' : 'opacity-60'}`}
+                  draggable={false}
                 />
                 <span className="font-bold text-sm tracking-wide">{tab.label}</span>
               </button>
@@ -684,7 +686,7 @@ export default function App() {
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             className="pt-[80px]"
           >
-            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><span className="text-2xl animate-spin">✈️</span></div>}>
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><img src="/icons/airplane.png" alt="loading" width={32} height={32} className="object-contain animate-spin" /></div>}>
               {renderContent()}
             </Suspense>
           </motion.div>

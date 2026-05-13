@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "description": "RoamJelly custom icon set — 50 pastel travel icons",
+  "icons": [
+    "airplane", "hotel", "compass", "map", "train", "sun", "tent",
+    "postcard", "food-drink", "beach", "mountain", "bicycle", "ship",
+    "wifi", "ticket", "heart", "backpack", "cocktail", "palm-tree",
+    "umbrella", "suitcase", "passport", "camera", "globe", "hiking-boot",
+    "hot-air-balloon", "lantern", "diving-mask", "surfboard", "anchor",
+    "binoculars", "telescope", "campfire", "sleeping-bag", "towel",
+    "sunglasses", "hat", "wallet", "key", "bell", "star", "cloud",
+    "lightning", "water-drop", "snowflake", "thermometer", "calendar",
+    "clock", "gift", "roam-jelly"
+  ],
+  "format": "PNG",
+  "naming": "<icon-name>.png",
+  "usage": "Place all 50 PNG files in this directory: public/icons/"
+}
