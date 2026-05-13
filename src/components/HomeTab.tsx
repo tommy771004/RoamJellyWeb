@@ -387,45 +387,92 @@ interface DestinationCardProps {
 }
 
 function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSave }: DestinationCardProps) {
+  const providerName = flight.details?.airline || flight.provider;
+  const rawDep = (flight.details?.depCode || '').toUpperCase().substring(0, 3);
   const rawArr = (flight.details?.arrCode || '').toUpperCase().substring(0, 3);
   const meta = DEST_META[rawArr] ?? DEST_META_FALLBACK;
-  const displayName = meta.name !== 'Unknown' ? `${meta.name}, ${meta.country}` : (flight.title || rawArr || 'Destination');
+  const title = meta.name !== 'Unknown' ? meta.name : (flight.title || rawArr || 'Destination');
+  const routeLabel = [rawDep || 'TPE', rawArr || 'TYO'].filter(Boolean).join(' → ');
+  const stopLabel = flight.details?.stops === 0 ? '直飛' : `${flight.details?.stops ?? 1} 轉`;
 
   return (
-    <div className="group/dest rounded-[24px] overflow-hidden bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-1.5 border border-slate-100/80 flex flex-col h-full">
-      {/* Image */}
-      <div className="relative h-52 overflow-hidden cursor-pointer flex-shrink-0" onClick={onPress}>
+    <div className="group/dest h-full min-w-[82vw] snap-center sm:min-w-0">
+      <div className="relative h-full min-h-[360px] overflow-hidden rounded-[32px] border border-white/70 bg-white/70 shadow-[0_8px_32px_rgba(15,23,42,0.08)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_54px_rgba(15,23,42,0.14)]">
         <img
           src={meta.image}
-          alt={displayName}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover/dest:scale-105"
+          alt={title}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover/dest:scale-105"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+        <button
+          type="button"
+          onClick={onPress}
+          className="absolute inset-0"
+          aria-label={`查看 ${title} 航班詳情`}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/5 via-transparent to-slate-950/45" />
+        <div className="absolute left-4 top-4 inline-flex items-center rounded-full bg-white/88 px-3 py-1.5 shadow-md backdrop-blur-md">
+          <span className="text-[11px] font-black tracking-tight text-rose-500">From {flight.currency} {flight.price.toLocaleString()}</span>
+        </div>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleSave(e); }}
-          className={`absolute top-3 right-3 w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all active:scale-90 shadow-sm ${isSaved ? 'bg-pink-500 text-white' : 'bg-white/80 text-slate-500 hover:bg-white hover:text-pink-500'}`}
+          className={`absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md transition-all active:scale-90 shadow-sm ${isSaved ? 'bg-pink-500 text-white' : 'bg-white/85 text-slate-500 hover:bg-white hover:text-pink-500'}`}
         >
           <Heart size={15} fill={isSaved ? 'currentColor' : 'transparent'} strokeWidth={2} />
         </button>
-      </div>
-      {/* Info */}
-      <div className="p-4 flex flex-col flex-1 cursor-pointer" onClick={onPress}>
-        <h3 className="text-[17px] font-black text-slate-900 mb-0.5 leading-tight">
-          {displayName} {meta.flag}
-        </h3>
-        <p className="text-[12px] text-slate-500 font-medium mb-3 line-clamp-2 leading-relaxed flex-1">{meta.tagline}</p>
-        <div className="flex items-center justify-between mt-auto">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">From</span>
-            <span className="text-[18px] font-black text-rose-500 leading-tight">{flight.currency} {flight.price.toLocaleString()}</span>
+        <div className="absolute inset-x-4 bottom-4 z-10 rounded-[28px] border border-white/65 bg-white/78 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 shadow-sm">
+                  {meta.country} {meta.flag}
+                </span>
+              </div>
+              <h3 className="text-[28px] font-black leading-none tracking-tight text-slate-950 sm:text-[32px]">{title}</h3>
+              <p className="mt-1 text-[13px] font-medium leading-relaxed text-slate-600 line-clamp-2">{meta.tagline}</p>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); onPress(); }}
+              className="shrink-0 rounded-full bg-rose-100 px-4 py-2 text-[13px] font-black text-rose-500 transition-all active:scale-95 hover:bg-rose-200/80"
+            >
+              Explore
+            </button>
           </div>
-          <button
-            onClick={(e) => { e.stopPropagation(); onPress(); }}
-            className="px-5 py-2.5 bg-rose-500 hover:bg-rose-400 text-white rounded-[14px] text-[12px] font-black tracking-wide transition-all active:scale-95 shadow-sm shadow-rose-500/20"
-          >
-            Explore
-          </button>
+
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <AirlineLogo providerName={providerName} className="h-8 w-8 rounded-[10px] text-sm" />
+              <div className="min-w-0">
+                <div className="truncate text-[13px] font-black text-slate-900">{providerName}</div>
+                <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{flight.provider}</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-slate-900">
+                <span className="text-lg font-black leading-none">{flight.details?.departure || '--:--'}</span>
+                <span className="text-slate-300">→</span>
+                <span className="text-lg font-black leading-none">{flight.details?.arrival || '--:--'}</span>
+              </div>
+              <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${flight.details?.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
+                {stopLabel}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-bold text-slate-500">{routeLabel}</p>
+                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{flight.details?.duration || '3h 15m'}</p>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); onImportToTrip(e); }}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-slate-900 px-3.5 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-white transition-all active:scale-95 hover:bg-slate-800"
+              >
+                <PlaneTakeoff size={13} strokeWidth={2.5} />
+                帶入旅程
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1058,7 +1105,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                        className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory hide-scrollbar sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:pb-0 lg:grid-cols-3"
                       >
                         {filteredResults.map((flight, index) => (
                           <motion.div
@@ -1066,7 +1113,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                             initial={{ opacity: 0, y: 24, scale: 0.96 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             transition={{ delay: index * 0.05, type: 'spring', bounce: 0.35 }}
-                            className="h-full"
+                            className="h-full min-w-[82vw] snap-center sm:min-w-0"
                           >
                             <DestinationCard
                               flight={flight}
