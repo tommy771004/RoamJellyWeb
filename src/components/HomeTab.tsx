@@ -441,7 +441,7 @@ function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSav
             </span>
           </div>
 
-          <div className="mt-4.5 flex items-end justify-between gap-3 sm:mt-5">
+          <div className="mt-[18px] flex items-end justify-between gap-3 sm:mt-5">
             <div className="min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">From</p>
               <p className="mt-1 text-[21px] font-black leading-none tracking-[-0.035em] text-slate-950 sm:text-[23px]">
@@ -459,7 +459,7 @@ function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSav
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onPress(); }}
-                className="h-10 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-500 px-4 py-2 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(236,72,153,0.28)] transition-all active:scale-95 hover:brightness-105 sm:h-auto sm:px-4.5 sm:py-2.5 sm:text-[12px]"
+                className="h-10 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-500 px-4 py-2 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(236,72,153,0.28)] transition-all active:scale-95 hover:brightness-105 sm:h-auto sm:px-[18px] sm:py-2.5 sm:text-[12px]"
               >
                 Explore
               </button>
@@ -826,7 +826,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         <div className="absolute -top-10 right-10 w-72 h-72 bg-rose-300/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 left-0 w-72 h-72 bg-sky-300/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-3xl mx-auto">
+        <div className="relative z-10 max-w-[980px] mx-auto w-full">
           {/* Hero title */}
           <div className="text-center mb-6 sm:mb-8">
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
@@ -913,19 +913,19 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             </div>
 
             {/* Desktop layout: horizontal pill */}
-            <div className="hidden md:block">
-              <GlassCard className="!p-2 shadow-2xl shadow-pink-900/10 bg-white/95 backdrop-blur-xl rounded-[2.5rem] border border-white">
-                <div className="flex items-stretch">
+            <div className="hidden md:flex items-center justify-center gap-4 pt-1">
+              <div className="flex-1 max-w-[760px] rounded-full border border-white/85 bg-[rgba(255,255,255,0.42)] px-2 py-2 shadow-[0_16px_44px_rgba(255,255,255,0.22),0_18px_36px_rgba(156,63,89,0.08)] backdrop-blur-[20px]">
+                <div className="flex items-stretch rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.28),rgba(255,255,255,0.08))]">
                   <div
-                    className="relative flex-1 flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50/60 rounded-[2rem] transition-colors cursor-text"
+                    className="relative flex-1 flex items-center gap-3 px-6 py-3.5 rounded-full transition-colors cursor-text hover:bg-white/28"
                     onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                   >
-                    <PlaneTakeoff size={18} className="text-orange-400 shrink-0" />
+                    <PlaneTakeoff size={18} className="text-[#b35f76] shrink-0" />
                     <div className="flex flex-col min-w-0">
-                      <Label htmlFor="search-from-d" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5 cursor-text">出發從哪裡</Label>
+                      <Label htmlFor="search-from-d" className="text-[9px] font-black tracking-[0.2em] text-slate-500/80 uppercase mb-0.5 cursor-text">出發從哪裡</Label>
                       <input
                         id="search-from-d"
-                        className="bg-transparent border-none p-0 text-base font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[15px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none"
                         value={searchForm.from}
                         onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('from', e.target.value)}
@@ -934,17 +934,17 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       />
                     </div>
                   </div>
-                  <div className="w-px bg-slate-200/70 self-stretch my-3" />
+                  <div className="w-px bg-white/55 self-stretch my-3" />
                   <div
-                    className="relative flex-1 flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50/60 transition-colors cursor-text"
+                    className="relative flex-1 flex items-center gap-3 px-6 py-3.5 transition-colors cursor-text hover:bg-white/28"
                     onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                   >
-                    <Globe size={18} className="text-purple-400 shrink-0" />
+                    <Globe size={18} className="text-[#2c6956] shrink-0" />
                     <div className="flex flex-col min-w-0">
-                      <Label htmlFor="search-to-d" className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5 cursor-text">飛往目的地</Label>
+                      <Label htmlFor="search-to-d" className="text-[9px] font-black tracking-[0.2em] text-slate-500/80 uppercase mb-0.5 cursor-text">飛往目的地</Label>
                       <input
                         id="search-to-d"
-                        className="bg-transparent border-none p-0 text-base font-black text-slate-900 placeholder:text-slate-300 w-full outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[15px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none"
                         value={searchForm.to}
                         onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('to', e.target.value)}
@@ -953,38 +953,36 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       />
                     </div>
                   </div>
-                  <div className="w-px bg-slate-200/70 self-stretch my-3" />
+                  <div className="w-px bg-white/55 self-stretch my-3" />
                   <div
-                    className={`flex items-center gap-3 px-6 py-3.5 cursor-pointer transition-colors rounded-r-[2rem] ${showDatePicker ? 'bg-emerald-50' : 'hover:bg-slate-50/60'}`}
+                    className={`flex items-center gap-3 px-6 py-3.5 cursor-pointer transition-colors rounded-full ${showDatePicker ? 'bg-white/36' : 'hover:bg-white/28'}`}
                     onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
                   >
-                    <Calendar size={18} className={showDatePicker ? 'text-emerald-500' : 'text-emerald-400'} />
-                    <div className="flex flex-col min-w-0 w-36">
-                      <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase mb-0.5">去程日期</span>
-                      <span className={`text-base font-black truncate leading-none ${!searchForm.date ? 'text-slate-300' : 'text-slate-900'}`}>
+                    <Calendar size={18} className={showDatePicker ? 'text-[#2c6956]' : 'text-[#3a637c]'} />
+                    <div className="flex flex-col min-w-0 w-[156px]">
+                      <span className="text-[9px] font-black tracking-[0.2em] text-slate-500/80 uppercase mb-0.5">去程日期</span>
+                      <span className={`text-[15px] font-black truncate leading-none ${!searchForm.date ? 'text-slate-500/65' : 'text-slate-900'}`}>
                         {searchForm.date || '選擇日期'}
                       </span>
                     </div>
-                  </div>
-                  <div className="flex items-center pl-2 pr-1">
-                    <button
-                      onClick={() => void handleSearch()}
-                      disabled={isSearchDisabled || loading || isOffline}
-                      title={isOffline ? '請連線網路以進行機票比價' : ''}
-                      className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 ${
-                        isSearchDisabled || loading || isOffline
-                          ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                          : 'bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 hover:-translate-y-0.5'
-                      }`}
-                    >
-                      {loading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={22} strokeWidth={3} />}
-                    </button>
                   </div>
                 </div>
                 {(dateError || (!dateError && searchBlockReason)) && (
                   <div className="text-[11px] text-slate-500 font-bold px-6 pt-2 pb-1.5">{dateError || searchBlockReason}</div>
                 )}
-              </GlassCard>
+              </div>
+              <button
+                onClick={() => void handleSearch()}
+                disabled={isSearchDisabled || loading || isOffline}
+                title={isOffline ? '請連線網路以進行機票比價' : ''}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0 ${
+                  isSearchDisabled || loading || isOffline
+                    ? 'bg-white/55 text-slate-300 cursor-not-allowed border border-white/70'
+                    : 'bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-[0_16px_30px_rgba(236,72,153,0.28)] hover:shadow-[0_18px_34px_rgba(249,115,22,0.30)] hover:-translate-y-0.5'
+                }`}
+              >
+                {loading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={22} strokeWidth={3} />}
+              </button>
             </div>
           </div>
         </div>

@@ -1,5 +1,4 @@
 import React from 'react';
-import * as LucideIcons from 'lucide-react';
 
 export const CUSTOM_ICONS = [
   'airplane', 'hotel', 'compass', 'map', 'train', 'sun', 'tent',
@@ -17,7 +16,7 @@ export type CustomIconName = typeof CUSTOM_ICONS[number];
 
 type IconTone = 'rose' | 'sky' | 'mint' | 'lilac' | 'amber' | 'peach';
 
-const CUSTOM_ICON_FALLBACKS: Record<CustomIconName, string> = {
+const CUSTOM_ICON_EMOJIS: Record<CustomIconName, string> = {
   airplane: '✈️',
   hotel: '🏨',
   compass: '🧭',
@@ -123,104 +122,46 @@ const ICON_THEME_MAP: Partial<Record<CustomIconName, IconTone>> = {
   'roam-jelly': 'sky',
 };
 
-const LUCIDE_ICON_MAP: Partial<Record<CustomIconName, string>> = {
-  airplane: 'Plane',
-  hotel: 'Hotel',
-  compass: 'Compass',
-  map: 'Map',
-  train: 'TrainFront',
-  sun: 'Sun',
-  tent: 'Tent',
-  postcard: 'Image',
-  'food-drink': 'UtensilsCrossed',
-  beach: 'Umbrella',
-  mountain: 'Mountain',
-  bicycle: 'Bike',
-  ship: 'Ship',
-  wifi: 'Wifi',
-  ticket: 'Ticket',
-  heart: 'Heart',
-  backpack: 'Backpack',
-  cocktail: 'Martini',
-  'palm-tree': 'TreePalm',
-  umbrella: 'Umbrella',
-  suitcase: 'Luggage',
-  camera: 'Camera',
-  globe: 'Globe',
-  lantern: 'Lamp',
-  'diving-mask': 'Glasses',
-  surfboard: 'Waves',
-  anchor: 'Anchor',
-  binoculars: 'Binoculars',
-  telescope: 'Telescope',
-  campfire: 'Flame',
-  sunglasses: 'Glasses',
-  wallet: 'Wallet',
-  key: 'KeyRound',
-  bell: 'Bell',
-  star: 'Star',
-  cloud: 'Cloud',
-  lightning: 'Zap',
-  'water-drop': 'Droplets',
-  snowflake: 'Snowflake',
-  thermometer: 'Thermometer',
-  calendar: 'CalendarDays',
-  clock: 'Clock3',
-  gift: 'Gift',
-  'roam-jelly': 'Sparkles',
-};
+const GLASS_BASE = 'rgba(255,255,255,0.4)';
 
-const ICON_THEME_STYLES: Record<IconTone, { background: string; outline: string; highlight: string; accent: string; shadow: string }> = {
+const ICON_THEME_STYLES: Record<IconTone, { tint: string; tintSoft: string; glow: string; emojiGlow: string }> = {
   rose: {
-    background: 'linear-gradient(135deg, #fee3ec 0%, #f4dfff 100%)',
-    outline: 'rgba(255,255,255,0.92)',
-    highlight: 'linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.18) 100%)',
-    accent: '#c4688a',
-    shadow: '0 12px 28px rgba(244, 114, 182, 0.20)',
+    tint: '#ffd9df',
+    tintSoft: '#ffb1c2',
+    glow: '0 12px 30px rgba(156, 63, 89, 0.16)',
+    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(156, 63, 89, 0.16))',
   },
   sky: {
-    background: 'linear-gradient(135deg, #e5efff 0%, #dff5ff 100%)',
-    outline: 'rgba(255,255,255,0.94)',
-    highlight: 'linear-gradient(180deg, rgba(255,255,255,0.90) 0%, rgba(255,255,255,0.16) 100%)',
-    accent: '#7d9ac8',
-    shadow: '0 12px 28px rgba(125, 155, 210, 0.18)',
+    tint: '#c7e7ff',
+    tintSoft: '#a3cce9',
+    glow: '0 12px 30px rgba(58, 99, 124, 0.15)',
+    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(58, 99, 124, 0.16))',
   },
   mint: {
-    background: 'linear-gradient(135deg, #e4f7ef 0%, #ddf6ff 100%)',
-    outline: 'rgba(255,255,255,0.92)',
-    highlight: 'linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.18) 100%)',
-    accent: '#71a99c',
-    shadow: '0 12px 28px rgba(52, 211, 153, 0.16)',
+    tint: '#b1efd8',
+    tintSoft: '#96d3bd',
+    glow: '0 12px 30px rgba(44, 105, 86, 0.14)',
+    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(44, 105, 86, 0.14))',
   },
   lilac: {
-    background: 'linear-gradient(135deg, #efe5ff 0%, #e5ecff 100%)',
-    outline: 'rgba(255,255,255,0.94)',
-    highlight: 'linear-gradient(180deg, rgba(255,255,255,0.90) 0%, rgba(255,255,255,0.20) 100%)',
-    accent: '#9c83c9',
-    shadow: '0 12px 28px rgba(168, 139, 250, 0.18)',
+    tint: '#efe5ff',
+    tintSoft: '#e4d5ff',
+    glow: '0 12px 30px rgba(140, 116, 188, 0.15)',
+    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(140, 116, 188, 0.16))',
   },
   amber: {
-    background: 'linear-gradient(135deg, #fff1cf 0%, #ffe0bf 100%)',
-    outline: 'rgba(255,255,255,0.92)',
-    highlight: 'linear-gradient(180deg, rgba(255,255,255,0.90) 0%, rgba(255,255,255,0.18) 100%)',
-    accent: '#d6a14c',
-    shadow: '0 12px 28px rgba(251, 191, 36, 0.18)',
+    tint: '#fff0c9',
+    tintSoft: '#ffd69b',
+    glow: '0 12px 30px rgba(214, 161, 76, 0.16)',
+    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(214, 161, 76, 0.16))',
   },
   peach: {
-    background: 'linear-gradient(135deg, #f9e5db 0%, #f5ecff 100%)',
-    outline: 'rgba(255,255,255,0.92)',
-    highlight: 'linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.18) 100%)',
-    accent: '#bc8d74',
-    shadow: '0 12px 28px rgba(251, 146, 60, 0.14)',
+    tint: '#ffe0d4',
+    tintSoft: '#f6d9bd',
+    glow: '0 12px 30px rgba(188, 141, 116, 0.14)',
+    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(188, 141, 116, 0.14))',
   },
 };
-
-const LUCIDE_REGISTRY = LucideIcons as unknown as Record<string, React.ComponentType<{
-  size?: number;
-  color?: string;
-  strokeWidth?: number;
-  className?: string;
-}>>;
 
 export function isCustomIcon(value: string): boolean {
   return (CUSTOM_ICONS as readonly string[]).includes(value);
@@ -238,30 +179,27 @@ const IconImg: React.FC<IconImgProps> = ({ value, size = 24, className = '' }) =
     const tone = ICON_THEME_MAP[iconKey] ?? 'sky';
     const theme = ICON_THEME_STYLES[tone];
     const shellSize = Math.max(14, size);
-    const isMini = shellSize <= 16;
-    const borderRadius = Math.round(shellSize * 0.32);
-    const iconSize = isMini ? Math.max(12, Math.round(shellSize * 0.9)) : Math.max(12, Math.round(shellSize * 0.52));
-    const lucideName = LUCIDE_ICON_MAP[iconKey];
-    const LucideIcon = lucideName ? LUCIDE_REGISTRY[lucideName] : undefined;
-    const glyph = LucideIcon ? (
-      <LucideIcon size={iconSize} color={theme.accent} strokeWidth={isMini ? 2.3 : 2.15} />
-    ) : (
-      <span style={{ fontSize: Math.max(11, Math.round(iconSize * 0.9)), lineHeight: 1 }}>
-        {CUSTOM_ICON_FALLBACKS[iconKey] ?? '✈️'}
-      </span>
-    );
+    const hasGlassShell = shellSize >= 17;
+    const borderRadius = shellSize >= 36 ? 16 : shellSize >= 24 ? 14 : 11;
+    const iconSize = shellSize >= 40 ? Math.round(shellSize * 0.56) : shellSize >= 24 ? Math.round(shellSize * 0.6) : Math.round(shellSize * 0.72);
+    const shellInset = shellSize >= 36 ? 1.5 : 1.25;
+    const topHighlightWidth = shellSize * 0.46;
+    const topHighlightHeight = shellSize * 0.26;
+    const glyph = CUSTOM_ICON_EMOJIS[iconKey] ?? '✈️';
 
-    if (isMini) {
+    if (!hasGlassShell) {
       return (
         <span
           className={`inline-flex shrink-0 select-none items-center justify-center ${className}`}
           style={{
             width: shellSize,
             height: shellSize,
-            filter: 'drop-shadow(0 1px 1px rgba(255,255,255,0.9))',
+            fontSize: Math.max(12, iconSize),
+            lineHeight: 1,
+            filter: `${theme.emojiGlow} saturate(0.94) brightness(0.98)`,
           }}
         >
-          {glyph}
+          <span style={{ transform: 'translateY(-0.5px)' }}>{glyph}</span>
         </span>
       );
     }
@@ -273,18 +211,20 @@ const IconImg: React.FC<IconImgProps> = ({ value, size = 24, className = '' }) =
           width: shellSize,
           height: shellSize,
           borderRadius,
-          background: theme.background,
-          border: `1px solid ${theme.outline}`,
-          boxShadow: `${theme.shadow}, inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -8px 14px rgba(255,255,255,0.28)`,
+          border: '1.5px solid transparent',
+          background: `linear-gradient(180deg, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0.18) 100%) padding-box, linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.12) 100%) border-box, radial-gradient(circle at 24% 18%, ${theme.tint} 0%, ${theme.tintSoft} 38%, ${GLASS_BASE} 100%) border-box`,
+          boxShadow: `${theme.glow}, inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -10px 18px rgba(255,255,255,0.16)`,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
         }}
       >
         <span
           aria-hidden="true"
           style={{
             position: 'absolute',
-            inset: 1,
+            inset: shellInset,
             borderRadius: Math.max(borderRadius - 2, 8),
-            background: theme.highlight,
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.10) 100%)',
           }}
         />
         <span
@@ -293,17 +233,36 @@ const IconImg: React.FC<IconImgProps> = ({ value, size = 24, className = '' }) =
             position: 'absolute',
             left: shellSize * 0.12,
             top: shellSize * 0.1,
-            width: shellSize * 0.44,
-            height: shellSize * 0.28,
+            width: topHighlightWidth,
+            height: topHighlightHeight,
             borderRadius: 999,
-            background: 'rgba(255,255,255,0.56)',
-            filter: 'blur(2px)',
+            background: 'rgba(255,255,255,0.62)',
+            filter: 'blur(3px)',
             opacity: 0.95,
           }}
         />
         <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            right: shellSize * 0.1,
+            bottom: shellSize * 0.12,
+            width: shellSize * 0.34,
+            height: shellSize * 0.24,
+            borderRadius: 999,
+            background: `${theme.tint}55`,
+            filter: 'blur(8px)',
+            opacity: 0.72,
+          }}
+        />
+        <span
           className="relative z-10 inline-flex items-center justify-center"
-          style={{ filter: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 3px 6px rgba(148, 163, 184, 0.22))' }}
+          style={{
+            fontSize: Math.max(12, iconSize),
+            lineHeight: 1,
+            transform: shellSize >= 32 ? 'translateY(-1px)' : 'translateY(-0.5px)',
+            filter: `${theme.emojiGlow} saturate(0.95) brightness(0.99)`,
+          }}
         >
           {glyph}
         </span>
