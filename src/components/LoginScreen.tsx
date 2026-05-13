@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createGuestSession, loginUser, registerUser, setClientAccessToken } from '../lib/workflowApi';
+import { pressableSurfaceClass, raisedHoverClass, subtlePressableClass } from '../lib/motionTokens';
 
 interface Props {
   onLogin: (userId: string) => void;
@@ -14,6 +15,53 @@ interface Props {
 type Mode = 'login' | 'register';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
+
+type GuestPreviewItem = {
+  label: string;
+  title: string;
+  meta: string;
+  value: string;
+  toneClass: string;
+};
+
+const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string; items: GuestPreviewItem[] }> = {
+  'AI 旅程規劃': {
+    eyebrow: '先試排旅程，再決定是否同步帳號',
+    panelLabel: 'AI Draft Preview',
+    items: [
+      { label: 'Prompt', title: '東京 5 天，偏城市散步與咖啡店', meta: 'AI 會先幫你抓節奏、分區與動線。', value: 'Draft', toneClass: 'bg-fuchsia-400/18 text-fuchsia-100 border-fuchsia-300/30' },
+      { label: 'Style', title: '慢節奏 / 雨備 / 一人旅行', meta: '先確認方向，再登入保存和微調。', value: '3 tags', toneClass: 'bg-cyan-400/18 text-cyan-100 border-cyan-300/30' },
+      { label: 'Output', title: 'Day 1 到 Day 5 的初版行程', meta: '生成後可直接帶去手帳繼續編修。', value: '5 days', toneClass: 'bg-amber-300/18 text-amber-50 border-amber-200/30' },
+    ],
+  },
+  '行程手帳': {
+    eyebrow: '先開一份旅程，再決定要不要綁正式帳號',
+    panelLabel: 'Trip Notebook Preview',
+    items: [
+      { label: 'Today', title: 'Day 2 ・ 淺草 -> 上野 -> 神保町', meta: '先試排與拖拉順序，喜歡再保存同步。', value: '3 stops', toneClass: 'bg-sky-400/18 text-sky-100 border-sky-300/30' },
+      { label: 'Pocket List', title: '口袋名單 / 旅遊事實 / 航班帶入', meta: '收藏、帶入與 AI 草稿可以先直接試。', value: 'Ready', toneClass: 'bg-emerald-400/18 text-emerald-100 border-emerald-300/30' },
+      { label: 'Collab', title: '之後登入即可接手共編與同步', meta: '現在先確認手帳編排是不是順手。', value: 'Sync later', toneClass: 'bg-fuchsia-400/18 text-fuchsia-100 border-fuchsia-300/30' },
+    ],
+  },
+  '旅途工具包': {
+    eyebrow: '工具頁先跟旅程綁定，再決定是否登入',
+    panelLabel: 'Tools Preview',
+    items: [
+      { label: 'Weather', title: '東京 24°C ・ 降雨機率 20%', meta: '先看即時天氣與出門條件。', value: 'Live', toneClass: 'bg-sky-400/18 text-sky-100 border-sky-300/30' },
+      { label: 'Checklist', title: '行李清單 6 / 9 完成', meta: '打包、提醒與分享可以先試流程。', value: '6/9', toneClass: 'bg-emerald-400/18 text-emerald-100 border-emerald-300/30' },
+      { label: 'Split', title: '晚餐與車資已拆帳', meta: '登入後再接手成員與歷史紀錄即可。', value: 'TWD 1,250', toneClass: 'bg-amber-300/18 text-amber-50 border-amber-200/30' },
+    ],
+  },
+  '快速體驗': {
+    eyebrow: '不用先註冊，先跑過整個流程',
+    panelLabel: 'Quick Preview',
+    items: [
+      { label: 'Explore', title: '先看首頁搜尋、Demo 與攻略', meta: '確認整體產品方向是不是你要的。', value: 'Start', toneClass: 'bg-fuchsia-400/18 text-fuchsia-100 border-fuchsia-300/30' },
+      { label: 'Draft', title: '喜歡再開旅程或請 AI 排行程', meta: '訪客模式先讓你摸到主要功能。', value: 'Flow', toneClass: 'bg-cyan-400/18 text-cyan-100 border-cyan-300/30' },
+      { label: 'Save', title: '之後再登入綁定與同步', meta: '不用一開始就進入註冊流程。', value: 'Later', toneClass: 'bg-emerald-400/18 text-emerald-100 border-emerald-300/30' },
+    ],
+  },
+};
 
 export default function LoginScreen({ onLogin, onCancel, guestFirst = false, contextLabel, title, description, guestCtaLabel }: Props) {
   const shouldShowGuestHero = guestFirst || Boolean(title) || Boolean(description);
@@ -93,64 +141,124 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
   };
 
   const resolvedGuestCtaLabel = guestCtaLabel || '先用訪客身分體驗';
+  const previewContent = GUEST_PREVIEW_LOOKUP[contextLabel || '快速體驗'] || GUEST_PREVIEW_LOOKUP['快速體驗'];
 
   return (
     <div
-      className="flex-1 p-6 flex flex-col min-h-[100dvh] w-screen jelly-bg dark:bg-gradient-to-br dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900 relative overflow-y-auto overflow-x-hidden transition-colors duration-500"
+      className="flex-1 min-h-[100dvh] w-screen jelly-bg dark:bg-gradient-to-br dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900 relative overflow-y-auto overflow-x-hidden transition-colors duration-500"
     >
-      <div className="fixed top-[-10%] left-[-20%] w-[80vw] h-[80vw] rounded-full bg-fuchsia-300/20 blur-[120px] pointer-events-none" />
-      <div className="fixed top-[20%] right-[-20%] w-[70vw] h-[70vw] rounded-full bg-cyan-300/20 blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-purple-300/20 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-8%] left-[-10%] h-[32rem] w-[32rem] rounded-full bg-fuchsia-300/18 blur-[96px] pointer-events-none" />
+      <div className="absolute right-[-8%] top-[8%] h-[26rem] w-[26rem] rounded-full bg-cyan-300/18 blur-[90px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[18%] h-[24rem] w-[24rem] rounded-full bg-purple-300/14 blur-[84px] pointer-events-none" />
 
-      <div className="flex-1 flex flex-col justify-center py-12 w-full max-w-[360px] mx-auto relative z-10">
-        {/* Logo */}
-        <div className="items-center mb-8 flex flex-col">
-          <span style={{ fontSize: 48, marginBottom: 8 }}>✈️</span>
-          <span className="text-2xl font-bold text-purple-700">果凍漫遊</span>
-          <span className="text-sm text-purple-400 mt-1">RoamJelly</span>
-        </div>
-
+      <div className={`relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1040px] flex-col justify-center px-5 py-8 sm:px-6 sm:py-10 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
         {shouldShowGuestHero && (
-          <div className="mb-5 rounded-[28px] bg-slate-900/90 px-6 py-5 text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] border border-white/10 backdrop-blur-xl">
-            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fuchsia-300">
-              {contextLabel || '快速體驗'}
+          <section className="mb-4 rounded-[34px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.52))] p-5 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-[18px] sm:p-6 lg:mb-0">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-slate-900 text-xl text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
+                  ✈️
+                </div>
+                <div>
+                  <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">RoamJelly</div>
+                  <div className="mt-1 text-[18px] font-black tracking-tight text-slate-900">{contextLabel || '快速體驗'}</div>
+                </div>
+              </div>
+              <div className="rounded-full border border-slate-200/70 bg-white/75 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+                Guest Preview
+              </div>
             </div>
-            <h1 className="mt-2 text-[26px] leading-tight font-black tracking-tight">
-              {title || '先用訪客身分開始，喜歡再註冊也不遲'}
-            </h1>
-            <p className="mt-3 text-[13px] leading-relaxed text-slate-300 font-semibold">
-              {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
-            </p>
-            {guestFirst && (
-              <>
-                <button
-                  onClick={() => void handleGuestLogin()}
-                  disabled={loading}
-                  className="mt-4 flex w-full justify-center border-none appearance-none cursor-pointer outline-none transition-all active:scale-95 bg-white text-slate-900 hover:bg-fuchsia-50 disabled:opacity-70"
-                  style={{ paddingTop: 15, paddingBottom: 15, borderRadius: 24, alignItems: 'center' }}
-                >
-                  <span style={{ color: '#0f172a', fontWeight: '900', fontSize: 14, letterSpacing: '0.04em' }}>
-                    {resolvedGuestCtaLabel}
-                  </span>
-                </button>
-                <p className="mt-3 text-[11px] font-bold tracking-wide text-slate-400">
-                  不用密碼，先進站體驗；之後再補註冊也可以。
-                </p>
-              </>
-            )}
-          </div>
+
+            <div className="mt-5 rounded-[28px] bg-slate-950/90 p-5 text-white shadow-[0_18px_44px_rgba(15,23,42,0.20)] border border-white/10">
+              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fuchsia-300">
+                {previewContent.eyebrow}
+              </div>
+              <h1 className="mt-2 text-[28px] leading-tight font-black tracking-tight">
+                {title || '先用訪客身分開始，喜歡再註冊也不遲'}
+              </h1>
+              <p className="mt-3 max-w-[48ch] text-[13px] font-semibold leading-relaxed text-slate-300">
+                {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
+              </p>
+
+              <div className="mt-5 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04]">
+                <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3">
+                  <span className="h-2.5 w-2.5 rounded-full bg-rose-300" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
+                  <span className="ml-auto text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{previewContent.panelLabel}</span>
+                </div>
+                <div className="space-y-3 p-4">
+                  {previewContent.items.map((item) => (
+                    <div key={`${item.label}-${item.title}`} className="rounded-[22px] border border-white/10 bg-white/[0.05] px-4 py-3.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{item.label}</div>
+                          <div className="mt-1 text-[15px] font-black tracking-tight text-white">{item.title}</div>
+                          <div className="mt-1 text-[12px] font-semibold leading-relaxed text-slate-300">{item.meta}</div>
+                        </div>
+                        <div className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${item.toneClass}`}>
+                          {item.value}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {guestFirst && (
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <button
+                    onClick={() => void handleGuestLogin()}
+                    disabled={loading}
+                    className={`flex w-full items-center justify-center rounded-[22px] border-none bg-white px-5 py-4 text-slate-900 hover:bg-fuchsia-50 disabled:opacity-70 sm:flex-1 ${subtlePressableClass}`}
+                  >
+                    <span className="text-[14px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAuthCardExpanded(true)}
+                    className={`flex items-center justify-center rounded-[22px] border border-white/12 bg-white/[0.06] px-5 py-4 text-white hover:bg-white/[0.11] sm:flex-1 ${subtlePressableClass}`}
+                  >
+                    <span className="text-[13px] font-black tracking-[0.04em]">改用帳號同步</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-slate-400">
+                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">不用密碼就能先試</span>
+                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">喜歡再綁正式帳號</span>
+                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">同步與保存留到下一步</span>
+              </div>
+            </div>
+          </section>
         )}
 
-        {/* Card */}
         <div
-          className="rounded-[32px] p-6 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 flex flex-col relative overflow-hidden"
-          style={{ backgroundColor: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.6)' }}
+          className={`rounded-[32px] border border-white/60 bg-white/70 p-6 shadow-[0_16px_40px_rgba(15,23,42,0.10)] backdrop-blur-[18px] flex flex-col relative overflow-hidden ${shouldShowGuestHero ? '' : 'mt-0'} ${pressableSurfaceClass}`}
         >
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[linear-gradient(180deg,rgba(255,255,255,0.5),transparent)]" />
+          <div className="relative z-10 mb-5 flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">
+                {shouldShowGuestHero ? '同步帳號' : '登入 / 註冊'}
+              </div>
+              <div className="mt-2 text-[26px] font-black tracking-tight text-slate-900">
+                {shouldShowGuestHero ? '保存進度與跨裝置同步' : '登入果凍漫遊'}
+              </div>
+              <div className="mt-2 text-[13px] font-semibold leading-relaxed text-slate-500">
+                {shouldShowGuestHero ? '需要保存、同步或共編時再登入即可，前面的體驗不用重跑。' : '建立帳號後即可保存旅程、同步裝置與多人共編。'}
+              </div>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/70 bg-white/80 text-xl shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
+              🔐
+            </div>
+          </div>
+
           {shouldShowGuestHero ? (
             <button
               type="button"
               onClick={() => setIsAuthCardExpanded((current) => !current)}
-              className="mb-1 flex items-center justify-between rounded-[24px] border border-white/70 bg-white/75 px-4 py-4 text-left transition-colors hover:bg-white/90"
+              className={`mb-1 flex items-center justify-between rounded-[24px] border border-white/70 bg-white/75 px-4 py-4 text-left hover:bg-white/90 ${subtlePressableClass}`}
             >
               <div>
                 <div className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
