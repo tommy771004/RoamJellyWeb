@@ -39,7 +39,7 @@ export default function DynamicItineraryView({
 
   // All nodes with valid coordinates for a top-level overview map
   const allGeoNodes: ItineraryNode[] = useMemo(
-    () => (result?.rawSuggestions || []).filter((n: ItineraryNode) => n.lat && n.lng),
+    () => (result?.rawSuggestions || []).filter((n: ItineraryNode) => n.lat != null && n.lng != null).map((n: ItineraryNode) => ({ ...n, lat: Number(n.lat), lng: Number(n.lng) })),
     [result?.rawSuggestions],
   );
 
@@ -76,9 +76,9 @@ export default function DynamicItineraryView({
 
         {/* Overview route map — shows all geocoded nodes */}
         {allGeoNodes.length >= 2 && (
-          <div className="mb-6 rounded-3xl overflow-hidden shadow-lg border-2 border-white/60" style={{ height: '240px' }}>
+          <div className="mb-6 rounded-[2.5rem] overflow-hidden shadow-xl border-[6px] border-white/60 relative" style={{ height: '360px' }}>
             <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-sm">載入地圖中...</div>}>
-              <ItineraryMapView items={allGeoNodes} compact />
+              <ItineraryMapView items={allGeoNodes} />
             </Suspense>
           </div>
         )}
@@ -87,7 +87,7 @@ export default function DynamicItineraryView({
           {itinerary.map((dayData: any, i: number) => {
             const dayNum: number = dayData.day || i + 1;
             const dayRawNodes: ItineraryNode[] = rawByDay[dayNum] || [];
-            const dayGeoNodes = dayRawNodes.filter(n => n.lat && n.lng);
+            const dayGeoNodes = dayRawNodes.filter(n => n.lat != null && n.lng != null).map((n: ItineraryNode) => ({ ...n, lat: Number(n.lat), lng: Number(n.lng) }));
 
             return (
               <div key={i} className="bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl p-6">
@@ -97,9 +97,9 @@ export default function DynamicItineraryView({
 
                 {/* Per-day mini route map */}
                 {dayGeoNodes.length >= 2 && (
-                  <div className="mb-5 rounded-2xl overflow-hidden border border-white/60 shadow-sm" style={{ height: '180px' }}>
+                  <div className="mb-5 rounded-[2.5rem] overflow-hidden border-[6px] border-white/60 shadow-md relative" style={{ height: '300px' }}>
                     <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-xs">載入地圖中...</div>}>
-                      <ItineraryMapView items={dayGeoNodes} compact />
+                      <ItineraryMapView items={dayGeoNodes} />
                     </Suspense>
                   </div>
                 )}
@@ -110,7 +110,7 @@ export default function DynamicItineraryView({
                     const imageUrl: string | undefined = rawNode?.image_url;
                     const hasCoords = rawNode?.lat && rawNode?.lng;
                     const mapsUrl = hasCoords
-                      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.name)}`
+                      ? `https://www.google.com/maps/search/?api=1&query=${rawNode.lat},${rawNode.lng}`
                       : undefined;
 
                     return (

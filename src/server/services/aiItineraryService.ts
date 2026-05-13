@@ -59,8 +59,14 @@ interface AiResponse {
   }>;
 }
 \`\`\`
+【語言與格式要求】
+1. **請一律使用「繁體中文 (Traditional Chinese)」**：無論景點在世界上哪個地方，請將景點名稱（name）、提醒（ai_note）、摘要等全部翻譯或轉寫為繁體中文（專有名詞可加上括號註記外文）。
+2. **嚴格的 JSON 格式**：請務必且只能使用**標準雙引號 \`"\`** 來包覆 JSON 裡的屬性(Key)與字串值(Value)。字串內容若需要用到引號，請直接使用全形引號「」或是單引號，切勿使用會破壞 JSON 解析的不合法引號。
+
+【內容客製化要求】
 若使用者未提供飲食禁忌，請忽略該限制；若為情侶，請安排浪漫景點。
-根據旅伴類型、節奏偏好與興趣，客製化每日行程安排與景點選擇。
+根據旅伴類型、節奏偏好與興趣，客製化每日行程安排與景點選擇。如果節奏為「特種兵急行軍」，請增加每日景點數量並緊湊安排；如果是「悠閒漫遊」，請減少景點數量，拉長單一景點停留時間，並在 transport_to_next 中反映出適當的預估交通時間與交通方式。
+請務必完整考慮「食、衣、住、行」四個面向：每日行程必須包含確切的住宿點（hotel）、合適的餐飲安排（food），以及與當地氣候或場合相關的服裝提醒或購物點（例如在 ai_note 中給予穿著建議以滿足「衣」的需求）。
 請極度客製化，發揮創意，**不要給出制式的「抵達與放行李」、「在地必吃美食推薦」、「深度體驗行程」、「經典夜生活」這種通用名稱**，請務必給出真實的當地景點名稱或特色店家名稱，並依據使用者選取的 Travel Vibes 和 Interests 打造有靈魂的旅程。
 
 Details: 
@@ -153,6 +159,7 @@ export async function regenerateSpot(params: {
     if (jsonStart === -1 || jsonEnd === -1 || jsonStart >= jsonEnd) {
       throw new Error('No JSON object found in AI response');
     }
+    
     const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
     if (parsed && typeof parsed.title === 'string') {
       return parsed;
@@ -210,13 +217,16 @@ ${params.travelFactsContext || '無'}
   "category": "landmark|food|shopping|nature|hotel|activity|nightlife|transport|other",
   "ai_note": "一句話的貼心提醒，說明為何適合替換",
   "transport_to_next": "預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)（可選）",
-  "lat": 緯度數字（可選）,
-  "lng": 經度數字（可選）,
+  "intensity": "chill|balanced|hardcore",
+  "lat": 緯度(純數字的浮點數，例如 25.0339)，不可遺漏,
+  "lng": 經度(純數字的浮點數，例如 121.5644)，不可遺漏,
   "linkedFactId": "如果這明確綁定到某個 Travel Fact 可選填"
 }
 
 注意：
 1. 若沒有充分理由，time 請維持 ${params.currentTime}。
 2. 替換後請考量上下個節點的節奏、距離與旅程錨點。
-3. 請直接輸出 JSON，不要有任何多餘說明。`;
+3. **請一律使用繁體中文 (Traditional Chinese)** 填寫。
+4. **嚴格的 JSON 格式**：請務必且只能使用**標準雙引號 \`"\`** 來包覆 JSON 裡的屬性(Key)與字串值(Value)。字串內容若需要用到引號，請直接使用全形引號「」或是單引號，切勿使用會破壞 JSON 解析的不合法引號。
+5. 請直接輸出 JSON，不要有任何多餘說明。`;
 }

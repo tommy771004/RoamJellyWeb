@@ -2551,22 +2551,6 @@ async function startServer() {
 
   if (!REAL_BACKEND_BASE_URL) {
     try {
-      const flights = await repo.getAllFlights();
-      if (flights.length === 0) {
-        console.log('Seeding demo flights...');
-        const demoFlights = [
-          { id: 'f1', provider: 'EVA Air', time: '08:00 - 12:15', price: 12500 },
-          { id: 'f2', provider: 'Starlux Airlines', time: '10:30 - 14:45', price: 14200 },
-          { id: 'f3', provider: 'China Airlines', time: '12:00 - 16:15', price: 11800 },
-          { id: 'f4', provider: 'Tigerair Taiwan', time: '14:20 - 17:05', price: 8500 },
-          { id: 'f5', provider: 'Peach Aviation', time: '16:55 - 20:40', price: 7900 },
-        ];
-        for (const f of demoFlights) {
-          await db.insert(schema.flights).values(f).onConflictDoNothing();
-        }
-        console.log('Demo flights seeded successfully');
-      }
-
       const publicTrips = await repo.getPublicTrips(1);
       if (publicTrips.length === 0) {
         console.log('Seeding demo public trips...');

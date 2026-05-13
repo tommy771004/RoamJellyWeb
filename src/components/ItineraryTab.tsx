@@ -63,6 +63,7 @@ import {
 import { suggestItineraryWithForm, AiRateLimitedError } from '../lib/openrouterApi';
 import { haversineKm, estimateTransport } from '../lib/geoUtils';
 import { useItineraryStore } from '../store/useItineraryStore';
+import { useSearchStore } from '../store/useSearchStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTripFactsStore } from '../store/useTripFactsStore';
 import type {
@@ -193,10 +194,10 @@ function withAutoCategoryIcon(node: ItineraryNode): ItineraryNode {
   };
 }
 
-function buildDefaultPlannerForm(destination: string, days: number): ItineraryPlannerForm {
+function buildDefaultPlannerForm(destination: string, days: number, profile?: any): ItineraryPlannerForm {
   return {
     days,
-    departureFrom: '台北',
+    departureFrom: profile?.departure || '台北',
     arrivalTo: destination,
     flightDate: '2026-06-15',
     countries: [],
@@ -205,12 +206,12 @@ function buildDefaultPlannerForm(destination: string, days: number): ItineraryPl
     autoFlightSegments: [],
     notes: '',
     travelFactsContext: '',
-    companions: '',
-    vibes: [] as string[],
-    interests: [] as string[],
-    budget: '',
-    dietary: [] as string[],
-    transport: [] as string[],
+    companions: profile?.companions || '',
+    vibes: Array.isArray(profile?.vibes) ? [...profile.vibes] : ([] as string[]),
+    interests: Array.isArray(profile?.interests) ? [...profile.interests] : ([] as string[]),
+    budget: profile?.budget || '',
+    dietary: Array.isArray(profile?.dietary) ? [...profile.dietary] : ([] as string[]),
+    transport: Array.isArray(profile?.transport) ? [...profile.transport] : ([] as string[]),
   } as any;
 }
 
@@ -318,7 +319,8 @@ export default function ItineraryTab() {
   const [newSpotEmoji, setNewSpotEmoji] = useState('📍');
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
   const [addingFavorite, setAddingFavorite] = useState<boolean>(false);
-  const [plannerForm, setPlannerForm] = useState<ItineraryPlannerForm>(buildDefaultPlannerForm('', 5));
+  const { aiProfile } = useSearchStore();
+  const [plannerForm, setPlannerForm] = useState<ItineraryPlannerForm>(buildDefaultPlannerForm('', 5, aiProfile));
   const [flightsLoading, setFlightsLoading] = useState<boolean>(false);
   const [aiGenerateMode, setAiGenerateMode] = useState<AiGenerateMode>('selected_day');
   const [rangeStartDay, setRangeStartDay] = useState<number>(1);
@@ -666,7 +668,7 @@ export default function ItineraryTab() {
           ? 5 
           : (tripResult.days || 5);
 
-        setPlannerForm(buildDefaultPlannerForm(tripResult.destination, initialPlannerDays));
+        setPlannerForm(buildDefaultPlannerForm(tripResult.destination, initialPlannerDays, aiProfile));
         setFavorites(favResult);
         setCollaborators(collabResult);
         if (Array.isArray(factsResult)) {
@@ -1273,6 +1275,7 @@ export default function ItineraryTab() {
                 description: spot.ai_note || '',
                 ai_note: spot.ai_note || '',
                 intensity: spot.intensity,
+                transport_to_next: spot.transport_to_next,
                 lat: spot.lat,
                 lng: spot.lng,
                 linkedFactId: spot.linkedFactId,
@@ -1293,6 +1296,7 @@ export default function ItineraryTab() {
             description: spot.ai_note || '',
             ai_note: spot.ai_note || '',
             intensity: spot.intensity,
+            transport_to_next: spot.transport_to_next,
             lat: spot.lat,
             lng: spot.lng,
             linkedFactId: spot.linkedFactId,
@@ -1305,31 +1309,91 @@ export default function ItineraryTab() {
 
       if (effectiveMode === 'overwrite_all') {
         await removeNodesBatch([...nodes]);
-        finalNodes = assignDaysBasedOnTimeAndOrder(suggestedNodes, plannerForm.flightDate);
+        
+        let tempNodes = assignDaysBasedOnTimeAndOrder(suggestedNodes, plannerForm.flightDate);
+        const maxGeneratedDay = tempNodes.length > 0 ? Math.max(...tempNodes.map(n => n.day)) : 0;
+        
+        if (maxGeneratedDay < genDays) {
+          for (let d = maxGeneratedDay + 1; d <= genDays; d++) {
+            tempNodes.push({
+               node_id: `ai_${Date.now()}_empty_day_${d}`,
+               day: d,
+               time: '10:00',
+               title: '自由活動',
+               emoji: '🏖️',
+               category: 'activity',
+               description: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+               ai_note: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+               intensity: 'chill',
+               source: 'local'
+            } as any);
+          }
+          tempNodes = assignDaysBasedOnTimeAndOrder(tempNodes, plannerForm.flightDate);
+        }
+        finalNodes = tempNodes;
+        
       } else if (effectiveMode === 'generate_for_selected_days') {
         const targetDays = Array.from({ length: rangeEndDay - rangeStartDay + 1 }, (_, i) => rangeStartDay + i);
         const currentDaysNodes = nodes.filter((node: ItineraryNode) => targetDays.includes(node.day));
         await removeNodesBatch(currentDaysNodes);
         
-        finalNodes = suggestedNodes.map((node, index) => {
+        const offsetNodes = suggestedNodes.map((node, index) => {
           let targetDay = rangeStartDay + (node.day - 1);
           if (targetDay > rangeEndDay) targetDay = rangeEndDay;
+          return { ...node, day: targetDay, sort_order: index + 1 };
+        });
+        
+        const generatedDays = new Set(offsetNodes.map(n => n.day));
+        for (const targetDay of targetDays) {
+          if (!generatedDays.has(targetDay)) {
+            offsetNodes.push({
+               node_id: `ai_${Date.now()}_empty_day_${targetDay}`,
+               day: targetDay,
+               time: '10:00',
+               title: '自由活動',
+               emoji: '🏖️',
+               category: 'activity',
+               description: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+               ai_note: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+               intensity: 'chill',
+               source: 'local',
+               sort_order: 1
+            } as any);
+          }
+        }
+        
+        finalNodes = offsetNodes.map((node) => {
           return normalizeScheduleForNode(
             {
               ...node,
-              day: targetDay,
-              date: getDateForDay(targetDay, plannerForm.flightDate),
+              date: getDateForDay(node.day, plannerForm.flightDate),
             },
             {
               tripStartDate: plannerForm.flightDate,
-              fallbackDay: targetDay,
-              fallbackSortOrder: index + 1,
+              fallbackDay: node.day,
+              fallbackSortOrder: node.sort_order,
             },
           ) as ItineraryNode;
         });
       } else {
         const currentDayNodes = nodes.filter((node: ItineraryNode) => node.day === safeSelectedDay);
         await removeNodesBatch(currentDayNodes);
+        
+        if (suggestedNodes.length === 0) {
+           suggestedNodes.push({
+             node_id: `ai_${Date.now()}_empty_day_${selectedDay}`,
+             day: selectedDay,
+             time: '10:00',
+             title: '自由活動',
+             emoji: '🏖️',
+             category: 'activity',
+             description: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+             ai_note: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+             intensity: 'chill',
+             source: 'local'
+           } as any);
+        }
+        
         finalNodes = suggestedNodes.map((node, index) =>
           normalizeScheduleForNode(
             {
@@ -2665,7 +2729,8 @@ function ItineraryListItem({
 
   const [isNavigating, setIsNavigating] = useState(false);
 
-  const handleNavigate = async () => {
+  const handleNavigate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     let lat = item.lat;
     let lng = item.lng;
     
@@ -2689,11 +2754,8 @@ function ItineraryListItem({
       return;
     }
 
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const destinationCoords = encodeURIComponent(`${lat},${lng}`);
-    const url = isIOS
-      ? `https://maps.apple.com/?daddr=${destinationCoords}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
     triggerHapticFeedback([18]);
     window.open(url, '_blank');
   };
