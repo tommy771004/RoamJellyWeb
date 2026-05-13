@@ -18,7 +18,11 @@ import {
   LogOut, 
   Settings, 
   Menu,
-  ChevronDown
+  ChevronDown,
+  Home as HomeIcon,
+  Sparkles as SparklesIcon,
+  CalendarDays as CalendarDaysIcon,
+  Luggage as LuggageIcon,
 } from 'lucide-react';
 import BottomTabs, { TABS } from './components/BottomTabs';
 import AiLoadingState from './components/AiLoadingState';
@@ -536,6 +540,8 @@ export default function App() {
         <nav className="hidden md:flex flex-row items-center justify-center gap-2 absolute left-1/2 -translate-x-1/2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
+            const iconMap: Record<string, any> = { home: HomeIcon, ai_form: SparklesIcon, itinerary: CalendarDaysIcon, tools: LuggageIcon };
+            const Icon = iconMap[tab.id];
             return (
               <button
                 key={tab.id}
@@ -546,14 +552,7 @@ export default function App() {
                     : 'text-pink-500/70 hover:bg-white/50 hover:text-pink-500'
                 }`}
               >
-                <img
-                  src={`/icons/${tab.iconName}.png`}
-                  alt={tab.label}
-                  width={18}
-                  height={18}
-                  className={`object-contain shrink-0 ${isActive ? 'opacity-100' : 'opacity-60'}`}
-                  draggable={false}
-                />
+                {Icon && <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'opacity-100' : 'opacity-60'} />}
                 <span className="font-bold text-sm tracking-wide">{tab.label}</span>
               </button>
             );
