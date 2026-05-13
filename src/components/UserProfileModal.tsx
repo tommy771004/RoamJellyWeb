@@ -19,6 +19,21 @@ const DIETARY_OPTIONS = ['無特殊', '蛋奶素', '全素', '不吃牛', '海�
 const TRANSPORT_OPTIONS = ['大眾運輸', '自駕', '包車', '計程車', '步行優先'];
 const BUDGET_OPTIONS = ['小資窮遊', '高CP值', '奢華度假', '預算無上限'];
 
+function PillButton({ label, selected, onClick }: { label: string, selected: boolean, onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2.5 rounded-xl text-[13px] sm:text-sm font-bold transition-all active:scale-[0.98] duration-200 flex items-center justify-center ${
+        selected 
+          ? 'bg-slate-900 text-white shadow-md border border-transparent' 
+          : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   const { showToast } = useAppStore();
   const [loading, setLoading] = useState(false);
@@ -99,203 +114,175 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50"
           />
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            initial={{ y: '100%', opacity: 0.5 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-white rounded-t-3xl shadow-2xl z-50 flex flex-col md:inset-0 md:m-auto md:max-w-lg md:h-[85vh] md:rounded-3xl"
+            className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-slate-50 rounded-t-[32px] shadow-2xl z-50 flex flex-col md:inset-0 md:m-auto md:max-w-2xl md:h-[85vh] md:rounded-[32px] overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-500">
-                  <User size={18} />
+            <div className="flex items-center justify-between px-6 sm:px-8 py-5 sm:py-6 bg-white shrink-0 z-10 rounded-t-[32px] shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 shadow-sm border border-indigo-100">
+                  <User size={20} />
                 </div>
-                <h2 className="text-lg font-bold text-slate-800">AI 行程偏好設定</h2>
+                <div>
+                  <h2 className="text-xl font-black text-slate-800 tracking-tight">AI 專屬行程偏好</h2>
+                  <p className="text-xs font-bold text-slate-500 mt-0.5">預設保存，讓 AI 更懂你的旅行風格</p>
+                </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200 transition-colors"
+                aria-label="關閉"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 bg-slate-50">
               {loading ? (
                 <div className="flex flex-col items-center justify-center h-40 gap-3 text-slate-400">
                   <Loader2 size={24} className="animate-spin" />
-                  <p className="text-sm">載入中...</p>
+                  <p className="text-sm font-medium tracking-wide">載入中...</p>
                 </div>
               ) : (
                 <React.Fragment>
                   {/* Basic Info */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-                      <MapPin size={16} className="text-pink-500" /> 基本習慣
-                    </h3>
-                    
-                    <div className="space-y-2">
-                      <Label className="text-xs text-slate-500">通常出發地</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm flex flex-col gap-3">
+                      <Label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 mb-1">
+                        <MapPin size={16} className="text-blue-500" /> 通常出發地
+                      </Label>
                       <Input 
-                        placeholder="例如：TPE 桃園機場" 
+                        placeholder="例如：TPE 桃園機場、高雄" 
                         value={profile.departure}
                         onChange={(e) => setProfile(p => ({ ...p, departure: e.target.value }))}
-                        className="bg-slate-50"
+                        className="bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-300 focus:ring-blue-100 h-12 rounded-xl text-[15px]"
                       />
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label className="text-xs text-slate-500">同行者類型</Label>
+                    <div className="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm flex flex-col gap-3">
+                      <Label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 mb-1">
+                        <Users size={16} className="text-orange-500" /> 同行者類型
+                      </Label>
                       <Input 
                         placeholder="例如：情侶、親子、朋友群" 
                         value={profile.companions}
                         onChange={(e) => setProfile(p => ({ ...p, companions: e.target.value }))}
-                        className="bg-slate-50"
+                        className="bg-slate-50 border-slate-200 focus:bg-white focus:border-orange-300 focus:ring-orange-100 h-12 rounded-xl text-[15px]"
                       />
                     </div>
                   </div>
 
-                  {/* Vibes */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-                      <Sparkles size={16} className="text-amber-500" /> 旅遊節奏 (Vibes)
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {VIBE_OPTIONS.map(vibe => {
-                        const isSelected = profile.vibes.includes(vibe);
-                        return (
-                          <button
-                            key={vibe}
-                            onClick={() => toggleArrayItem('vibes', vibe)}
-                            className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all border ${
-                              isSelected 
-                                ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm' 
-                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                            }`}
-                          >
-                            {vibe}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Interests */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-                      <Heart size={16} className="text-rose-500" /> 旅遊興趣
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {INTEREST_OPTIONS.map(opt => {
-                        const isSelected = profile.interests.includes(opt);
-                        return (
-                          <button
-                            key={opt}
-                            onClick={() => toggleArrayItem('interests', opt)}
-                            className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all border ${
-                              isSelected 
-                                ? 'bg-rose-100 text-rose-700 border-rose-200 shadow-sm' 
-                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                            }`}
-                          >
-                            {opt}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Transport */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-                      <Car size={16} className="text-blue-500" /> 交通方式偏好
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {TRANSPORT_OPTIONS.map(opt => {
-                        const isSelected = profile.transport.includes(opt);
-                        return (
-                          <button
-                            key={opt}
-                            onClick={() => toggleArrayItem('transport', opt)}
-                            className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all border ${
-                              isSelected 
-                                ? 'bg-blue-100 text-blue-700 border-blue-200 shadow-sm' 
-                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                            }`}
-                          >
-                            {opt}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Budget & Diet */}
-                  <div className="space-y-6">
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-                        <DollarSign size={16} className="text-green-500" /> 預算等級
+                  <div className="bg-white border border-slate-200/60 p-5 sm:p-6 rounded-2xl shadow-sm space-y-5">
+                    {/* Vibes */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 mb-2">
+                        <Sparkles size={16} className="text-amber-500" /> 旅遊節奏 (Vibes)
                       </h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        {BUDGET_OPTIONS.map(opt => {
-                          const isSelected = profile.budget === opt;
-                          return (
-                            <button
-                              key={opt}
-                              onClick={() => setProfile(p => ({ ...p, budget: opt }))}
-                              className={`px-3 py-2 rounded-xl text-[13px] font-medium transition-all border ${
-                                isSelected 
-                                  ? 'bg-green-100 text-green-700 border-green-200 shadow-sm' 
-                                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                              }`}
-                            >
-                              {opt}
-                            </button>
-                          );
-                        })}
+                      <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                        {VIBE_OPTIONS.map(vibe => (
+                          <PillButton
+                            key={vibe}
+                            label={vibe}
+                            selected={profile.vibes.includes(vibe)}
+                            onClick={() => toggleArrayItem('vibes', vibe)}
+                          />
+                        ))}
                       </div>
                     </div>
 
-                    <div className="space-y-4 pb-8">
-                      <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                    <hr className="border-slate-100" />
+
+                    {/* Interests */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 mb-2">
+                        <Heart size={16} className="text-rose-500" /> 旅遊興趣
+                      </h3>
+                      <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                        {INTEREST_OPTIONS.map(opt => (
+                          <PillButton
+                            key={opt}
+                            label={opt}
+                            selected={profile.interests.includes(opt)}
+                            onClick={() => toggleArrayItem('interests', opt)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <hr className="border-slate-100" />
+
+                    {/* Transport */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 mb-2">
+                        <Car size={16} className="text-blue-500" /> 交通方式偏好
+                      </h3>
+                      <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                        {TRANSPORT_OPTIONS.map(opt => (
+                          <PillButton
+                            key={opt}
+                            label={opt}
+                            selected={profile.transport.includes(opt)}
+                            onClick={() => toggleArrayItem('transport', opt)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <hr className="border-slate-100" />
+
+                    {/* Diet */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 mb-2">
                         <Coffee size={16} className="text-orange-500" /> 飲食禁忌
                       </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {DIETARY_OPTIONS.map(opt => {
-                          const isSelected = profile.dietary.includes(opt);
-                          return (
-                            <button
-                              key={opt}
-                              onClick={() => toggleArrayItem('dietary', opt)}
-                              className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all border ${
-                                isSelected 
-                                  ? 'bg-orange-100 text-orange-700 border-orange-200 shadow-sm' 
-                                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                              }`}
-                            >
-                              {opt}
-                            </button>
-                          );
-                        })}
+                      <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                        {DIETARY_OPTIONS.map(opt => (
+                          <PillButton
+                            key={opt}
+                            label={opt}
+                            selected={profile.dietary.includes(opt)}
+                            onClick={() => toggleArrayItem('dietary', opt)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <hr className="border-slate-100" />
+
+                    {/* Budget */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 mb-2">
+                        <DollarSign size={16} className="text-teal-600" /> 預算等級 (單選)
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                        {BUDGET_OPTIONS.map(opt => (
+                          <PillButton
+                            key={opt}
+                            label={opt}
+                            selected={profile.budget === opt}
+                            onClick={() => setProfile(p => ({ ...p, budget: p.budget === opt ? '' : opt }))}
+                          />
+                        ))}
                       </div>
                     </div>
                   </div>
-
                 </React.Fragment>
               )}
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-100 bg-white md:rounded-b-3xl">
+            <div className="p-4 sm:p-6 border-t border-slate-100 bg-white md:rounded-b-[32px] shrink-0 z-10 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
               <Button 
                 onClick={handleSave} 
-                className="w-full bg-pink-500 hover:bg-pink-600 text-white rounded-xl py-6 font-bold shadow-pink flex items-center justify-center gap-2"
+                className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl py-4 font-black shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 text-[15px] sm:text-base tracking-widest transition-all"
                 disabled={saving || loading}
               >
-                {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                儲存偏好設定
+                {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                {saving ? '儲存中...' : '儲存預設偏好'}
               </Button>
             </div>
           </motion.div>
@@ -304,3 +291,4 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
     </AnimatePresence>
   );
 }
+
