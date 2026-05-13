@@ -1,8 +1,9 @@
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Home, Sparkles, CalendarDays, Luggage } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import type { TabName } from '../types/workflow';
+import { bottomBarTransition, layoutIndicatorTransition, subtlePressableClass } from '../lib/motionTokens';
 
 const TAB_ICONS = {
   home: Home,
@@ -22,33 +23,76 @@ export default function BottomTabs() {
   const { activeTab, setActiveTab } = useAppStore();
   const [isHidden, setIsHidden] = useState(false);
   const lastScrollYRef = useRef(0);
+  const scrollMomentumRef = useRef(0);
+  const scrollFrameRef = useRef<number | null>(null);
+  const pendingScrollYRef = useRef(0);
+  const isHiddenRef = useRef(false);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY;
+    isHiddenRef.current = isHidden;
+  }, [isHidden]);
+
+  useEffect(() => {
+    const updateVisibility = () => {
+      scrollFrameRef.current = null;
+
+      const currentY = pendingScrollYRef.current;
       const delta = currentY - lastScrollYRef.current;
 
-      if (currentY < 24) {
-        setIsHidden(false);
-      } else if (delta > 8) {
+      if (Math.abs(delta) < 2) {
+        lastScrollYRef.current = currentY;
+        return;
+      }
+
+      if (currentY <= 32) {
+        scrollMomentumRef.current = 0;
+        if (isHiddenRef.current) {
+          isHiddenRef.current = false;
+          setIsHidden(false);
+        }
+        lastScrollYRef.current = currentY;
+        return;
+      }
+
+      const nextMomentum = Math.max(-48, Math.min(48, scrollMomentumRef.current + delta));
+      scrollMomentumRef.current = nextMomentum;
+
+      if (!isHiddenRef.current && currentY > 72 && nextMomentum > 24) {
+        isHiddenRef.current = true;
         setIsHidden(true);
-      } else if (delta < -8) {
+        scrollMomentumRef.current = 0;
+      } else if (isHiddenRef.current && nextMomentum < -18) {
+        isHiddenRef.current = false;
         setIsHidden(false);
+        scrollMomentumRef.current = 0;
       }
 
       lastScrollYRef.current = currentY;
     };
 
+    const handleScroll = () => {
+      pendingScrollYRef.current = window.scrollY;
+      if (scrollFrameRef.current != null) return;
+      scrollFrameRef.current = window.requestAnimationFrame(updateVisibility);
+    };
+
     lastScrollYRef.current = window.scrollY;
+    pendingScrollYRef.current = window.scrollY;
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      if (scrollFrameRef.current != null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   return (
     <motion.nav
       className="md:hidden fixed bottom-6 w-full z-50 flex justify-center items-center px-6 pointer-events-none pb-safe"
-      animate={{ y: isHidden ? 120 : 0, opacity: isHidden ? 0 : 1 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+      animate={prefersReducedMotion ? { opacity: isHidden ? 0 : 1 } : { y: isHidden ? 112 : 0, opacity: isHidden ? 0 : 1 }}
+      transition={prefersReducedMotion ? { duration: 0.16 } : bottomBarTransition}
       aria-hidden={isHidden}
     >
       <div className="bg-white/80 backdrop-blur-[30px] backdrop-saturate-[180%] rounded-[36px] shadow-[0_16px_40px_-5px_rgba(255,183,206,0.5),inset_0_1px_2px_rgba(255,255,255,0.7)] border border-pink-100/50 flex justify-between items-center p-1.5 pointer-events-auto w-full max-w-[380px] mx-auto overflow-hidden">
@@ -58,9 +102,9 @@ export default function BottomTabs() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-col items-center justify-center text-pink-500 flex-1 min-w-0 pt-2.5 pb-2 transition-all rounded-[30px] relative ${
+              className={`flex flex-col items-center justify-center text-pink-500 flex-1 min-w-0 pt-2.5 pb-2 rounded-[30px] relative ${subtlePressableClass} ${
                 isActive 
-                  ? 'scale-105 active:scale-95' 
+                  ? 'scale-[1.03]' 
                   : 'opacity-60 hover:opacity-100'
               }`}
             >
@@ -68,7 +112,7 @@ export default function BottomTabs() {
                 <motion.div 
                   layoutId="tab-pill"
                   className="absolute inset-0 bg-white shadow-sm border border-pink-100 rounded-[30px] -z-10"
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
+                  transition={layoutIndicatorTransition}
                 />
               )}
               {(() => { const Icon = TAB_ICONS[tab.id as keyof typeof TAB_ICONS]; return Icon ? <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.5 : 2} className={`mb-1 transition-all ${isActive ? 'opacity-100' : 'opacity-50'}`} /> : null; })()}

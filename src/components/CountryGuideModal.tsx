@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import type { CountryGuide, GuidePlace, AreaColor } from '../data/countryGuideData';
+import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 
 // ─── Color helpers ────────────────────────────────────────────────────────────
 
@@ -212,6 +213,9 @@ interface CountryGuideModalProps {
 
 export default function CountryGuideModal({ open, onClose, guide }: CountryGuideModalProps) {
   const [activeArea, setActiveArea] = useState('全部');
+  const prefersReducedMotion = useReducedMotion();
+  const overlayTransition = getOverlayTransition(prefersReducedMotion);
+  const modalMotion = getModalMotion(prefersReducedMotion);
 
   const handleClose = useCallback(() => {
     setActiveArea('全部');
@@ -236,7 +240,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={overlayTransition}
           className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6"
           onClick={handleClose}
         >
@@ -245,10 +249,10 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
           {/* Modal panel */}
           <motion.div
             key="cgm-panel"
-            initial={{ opacity: 0, y: 60, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.95 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 350 }}
+            initial={modalMotion.initial}
+            animate={modalMotion.animate}
+            exit={modalMotion.exit}
+            transition={modalMotion.transition}
             className="relative w-full sm:max-w-4xl md:max-w-5xl bg-[#f8fafc] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col overflow-hidden"
             style={{ maxHeight: 'calc(100vh - 2rem)' }}
             onClick={(e) => e.stopPropagation()}

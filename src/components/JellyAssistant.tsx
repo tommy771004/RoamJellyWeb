@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Sparkles, X, Send, PlusCircle } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { getOverlayTransition, getSheetMotion, subtlePressableClass } from '../lib/motionTokens';
 
 const assistantAvatar = '✨';
 
@@ -15,6 +16,9 @@ export default function JellyAssistant() {
   const [typingText, setTypingText] = useState('');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const overlayTransition = getOverlayTransition(prefersReducedMotion);
+  const sheetMotion = getSheetMotion(prefersReducedMotion);
 
   const { showToast } = useAppStore();
 
@@ -77,15 +81,16 @@ export default function JellyAssistant() {
       <AnimatePresence>
         {!isOpen && (
           <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
+            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.92 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.92 }}
+            transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-gradient-to-tr from-fuchsia-500 via-purple-500 to-indigo-500 shadow-[0_8px_30px_rgba(217,70,239,0.4)] flex items-center justify-center z-40 transition-transform active:scale-95 group focus:outline-none"
-            style={{ animation: 'float 3s ease-in-out infinite' }}
+            className={`fixed bottom-24 right-6 w-14 h-14 rounded-full border border-white/20 bg-gradient-to-tr from-fuchsia-500 via-purple-500 to-indigo-500 shadow-[0_12px_28px_rgba(217,70,239,0.28)] flex items-center justify-center z-40 focus:outline-none ${subtlePressableClass}`}
+            aria-label="開啟 Jelly AI 行程顧問"
           >
-            <div className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-75" style={{ animationDuration: '3s' }} />
-            <Sparkles size={24} className="text-white relative z-10 group-hover:rotate-12 transition-transform" />
+            <div className="absolute inset-[1px] rounded-full bg-gradient-to-br from-white/22 to-transparent opacity-80" />
+            <Sparkles size={24} className="text-white relative z-10" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -97,8 +102,9 @@ export default function JellyAssistant() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={overlayTransition}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 bg-slate-900/28 backdrop-blur-[6px] z-[100]"
           />
         )}
       </AnimatePresence>
@@ -107,12 +113,15 @@ export default function JellyAssistant() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-0 right-0 max-w-[600px] mx-auto h-[80vh] bg-white/80 dark:bg-black/60 backdrop-blur-[40px] border-t border-white/40 dark:border-white/10 rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-[101] flex flex-col overflow-hidden"
+            initial={sheetMotion.initial}
+            animate={sheetMotion.animate}
+            exit={sheetMotion.exit}
+            transition={sheetMotion.transition}
+            className="fixed bottom-0 left-0 right-0 max-w-[600px] mx-auto h-[80vh] bg-white/82 dark:bg-black/62 backdrop-blur-[28px] border-t border-white/45 dark:border-white/10 rounded-t-[40px] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] z-[101] flex flex-col overflow-hidden overscroll-contain"
           >
+            <div className="flex justify-center pt-2 pb-1 bg-white/36 dark:bg-black/24">
+              <div className="h-1.5 w-10 rounded-full bg-slate-300/80 dark:bg-white/15" />
+            </div>
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/20 dark:border-white/5 bg-white/40 dark:bg-black/40">
               <div className="flex items-center gap-3">
@@ -133,7 +142,7 @@ export default function JellyAssistant() {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 flex flex-col gap-4 scrollbar-hide">
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {message.role === 'ai' && (
@@ -147,8 +156,9 @@ export default function JellyAssistant() {
                     </div>
                     {message.hasCard && (
                       <motion.div 
-                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                         className="w-full bg-white/90 dark:bg-white/10 border border-white/50 dark:border-white/10 rounded-[24px] overflow-hidden shadow-lg mt-2"
                       >
                         <div className="h-24 bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center relative">
@@ -236,12 +246,6 @@ export default function JellyAssistant() {
           </motion.div>
         )}
       </AnimatePresence>
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-      `}} />
     </>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 
 interface DatePickerPopupProps {
   selectedDate: string;
@@ -13,6 +14,9 @@ interface DatePickerPopupProps {
 export default function DatePickerPopup({ selectedDate, onSelect, onClose, allowPast = false }: DatePickerPopupProps) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(selectedDate ? new Date(selectedDate) : new Date());
+  const prefersReducedMotion = useReducedMotion();
+  const overlayTransition = getOverlayTransition(prefersReducedMotion);
+  const modalMotion = getModalMotion(prefersReducedMotion);
   const effectiveViewDate = isNaN(viewDate.getTime()) ? new Date() : viewDate;
 
   const month = effectiveViewDate.getMonth();
@@ -50,13 +54,15 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={overlayTransition}
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-md"
           onClick={onClose}
         />
         <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 30, scale: 0.95 }}
+          initial={modalMotion.initial}
+          animate={modalMotion.animate}
+          exit={modalMotion.exit}
+          transition={modalMotion.transition}
           className="relative w-[90vw] md:w-[480px] max-w-[480px] min-w-[300px] shrink-0 bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-[210] overflow-hidden p-6 md:p-8"
         >
           <div className="flex flex-row justify-between items-center mb-8">

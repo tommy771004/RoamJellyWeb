@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import HomeTab from './components/HomeTab';
 import RedirectModal from './components/RedirectModal';
 import { assignDaysBasedOnTimeAndOrder } from './lib/itineraryUtils';
@@ -67,7 +67,10 @@ export default function App() {
 
   const isLoggedIn = !!userId;
   const lastActivityRef = useRef<number>(Date.now());
+  const lastPersistedActivityRef = useRef<number>(Date.now());
   const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+  const ACTIVITY_PERSIST_INTERVAL = 15 * 1000;
+  const prefersReducedMotion = useReducedMotion();
 
   // Auto-logout logic
   useEffect(() => {
@@ -76,8 +79,19 @@ export default function App() {
     // Load last activity from localStorage to survive page refresh
     const storedLastActivity = localStorage.getItem('last_activity');
     if (storedLastActivity) {
-      lastActivityRef.current = parseInt(storedLastActivity, 10);
+      const parsedLastActivity = parseInt(storedLastActivity, 10);
+      lastActivityRef.current = parsedLastActivity;
+      lastPersistedActivityRef.current = parsedLastActivity;
     }
+
+    const persistActivity = (timestamp: number, force = false) => {
+      if (!force && timestamp - lastPersistedActivityRef.current < ACTIVITY_PERSIST_INTERVAL) {
+        return;
+      }
+
+      lastPersistedActivityRef.current = timestamp;
+      localStorage.setItem('last_activity', timestamp.toString());
+    };
 
     const checkSession = () => {
       const now = Date.now();
@@ -91,20 +105,28 @@ export default function App() {
     const updateActivity = () => {
       const now = Date.now();
       lastActivityRef.current = now;
-      localStorage.setItem('last_activity', now.toString());
+      persistActivity(now);
+    };
+
+    const flushActivity = () => {
+      persistActivity(lastActivityRef.current || Date.now(), true);
     };
 
     // Events to monitor activity
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
-    const passiveEvents = new Set(['scroll', 'touchstart', 'mousemove']);
+    const events = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+    const passiveEvents = new Set(['wheel', 'touchstart']);
     events.forEach(event =>
       window.addEventListener(event, updateActivity, passiveEvents.has(event) ? { passive: true } : undefined)
     );
+    window.addEventListener('pagehide', flushActivity);
+    document.addEventListener('visibilitychange', flushActivity);
 
     const interval = setInterval(checkSession, 30000); // Check every 30 seconds
 
     return () => {
       events.forEach(event => window.removeEventListener(event, updateActivity));
+      window.removeEventListener('pagehide', flushActivity);
+      document.removeEventListener('visibilitychange', flushActivity);
       clearInterval(interval);
     };
   }, [isLoggedIn]);
@@ -161,8 +183,11 @@ export default function App() {
   }, [activeTab]);
 
   const handleLogin = (loggedInUserId: string) => {
+    const now = Date.now();
     localStorage.setItem('user_id', loggedInUserId);
-    localStorage.setItem('last_activity', Date.now().toString());
+    localStorage.setItem('last_activity', now.toString());
+    lastActivityRef.current = now;
+    lastPersistedActivityRef.current = now;
     setAuthenticated(loggedInUserId);
     setLoginPromptMode('default');
     setShowLogin(false);
@@ -677,14 +702,14 @@ export default function App() {
             key={showLogin ? `login-${loginPromptMode}` : !isLoggedIn && activeTab !== 'home' ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
-              enter: (dir: number) => ({ opacity: 0, x: dir * 56, scale: 0.98 }),
-              center: { opacity: 1, x: 0, scale: 1 },
-              exit: (dir: number) => ({ opacity: 0, x: -dir * 40, scale: 0.99 }),
+              enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, x: dir * 18 }),
+              center: { opacity: 1, x: 0 },
+              exit: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, x: -dir * 12 }),
             }}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ type: 'spring', bounce: 0.12, duration: 0.42 }}
+            transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             className="pt-[80px]"
           >
