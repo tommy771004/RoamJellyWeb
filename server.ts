@@ -18,7 +18,7 @@ import { signAccessToken, type AuthUser, verifyAccessToken } from './src/server/
 import { hashPassword, verifyPassword } from './src/server/auth/password';
 import * as schema from './src/server/db/schema';
 
-import { scrapeTripFlights } from './src/server/services/tripParser';
+import { scrapeTripFlights, scrapeTripRoundTrip } from './src/server/services/tripParser';
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
 
 // Vercel serverless: resolve/reject the app promise once startServer() finishes setup
@@ -1551,6 +1551,8 @@ async function startServer() {
     const from = String(req.query.from ?? '').trim();
     const to = String(req.query.to ?? '').trim();
     const date = String(req.query.date ?? '').trim();
+    const tripType = String(req.query.tripType ?? 'oneway').trim();
+    const returnDate = String(req.query.returnDate ?? '').trim();
 
     // If no params, return "Popular Recommendations" (latest flights)
     if (!from || !to || !date) {
@@ -1570,7 +1572,7 @@ async function startServer() {
       return;
     }
 
-    const cacheKey = `${from.toUpperCase()}_${to.toUpperCase()}_${date}`;
+    const cacheKey = `${from.toUpperCase()}_${to.toUpperCase()}_${date}_${tripType}_${returnDate}`;
     const cached = await getSearchCacheData(cacheKey);
     if (cached) {
       await appendSearchHistory({
@@ -1586,7 +1588,17 @@ async function startServer() {
     }
 
     // Try OTA provider first; if no data, return empty array to keep it real
-    const otaData = await fetchFromOtaProvider(from, to, date);
+    let otaData: SearchItem[] | null = null;
+    if (tripType === 'roundtrip' && returnDate) {
+      try {
+        otaData = await scrapeTripRoundTrip(from, to, date, returnDate);
+      } catch (err) {
+        console.error('scrapeTripRoundTrip failed, falling back to oneway:', err);
+        otaData = await fetchFromOtaProvider(from, to, date);
+      }
+    } else {
+      otaData = await fetchFromOtaProvider(from, to, date);
+    }
     const data: SearchItem[] = otaData || [];
 
     await setSearchCacheData(cacheKey, data);
@@ -2551,22 +2563,6 @@ async function startServer() {
 
   if (!REAL_BACKEND_BASE_URL) {
     try {
-      const flights = await repo.getAllFlights();
-      if (flights.length === 0) {
-        console.log('Seeding demo flights...');
-        const demoFlights = [
-          { id: 'f1', provider: 'EVA Air', time: '08:00 - 12:15', price: 12500 },
-          { id: 'f2', provider: 'Starlux Airlines', time: '10:30 - 14:45', price: 14200 },
-          { id: 'f3', provider: 'China Airlines', time: '12:00 - 16:15', price: 11800 },
-          { id: 'f4', provider: 'Tigerair Taiwan', time: '14:20 - 17:05', price: 8500 },
-          { id: 'f5', provider: 'Peach Aviation', time: '16:55 - 20:40', price: 7900 },
-        ];
-        for (const f of demoFlights) {
-          await db.insert(schema.flights).values(f).onConflictDoNothing();
-        }
-        console.log('Demo flights seeded successfully');
-      }
-
       const publicTrips = await repo.getPublicTrips(1);
       if (publicTrips.length === 0) {
         console.log('Seeding demo public trips...');
