@@ -3138,11 +3138,11 @@ function ItineraryListItem({
                   )}
 
                   {detailCopy ? (
-                    <p className={`text-[12px] font-medium text-slate-700 whitespace-pre-line tracking-tight leading-relaxed transition-all duration-500 font-sans ${isExpanded ? '' : 'line-clamp-3'}`}>
+                    <p className={`text-[14px] font-medium text-slate-700 whitespace-pre-line tracking-tight leading-relaxed transition-all duration-500 font-sans ${isExpanded ? '' : 'line-clamp-3'}`}>
                       {detailCopy}
                     </p>
                   ) : (
-                    <p className="text-[10px] font-bold text-slate-500 italic opacity-80 transition-opacity">
+                    <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity">
                       點擊卡片編輯手帳內容、細節或照片...
                     </p>
                   )}
