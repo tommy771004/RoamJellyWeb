@@ -22,11 +22,13 @@ import {
 } from 'lucide-react';
 import BottomTabs, { TABS } from './components/BottomTabs';
 import AiLoadingState from './components/AiLoadingState';
+import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
 import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
 import { JellyToast } from './components/JellyToast';
+type LoginPromptMode = 'default' | 'guest-first';
 
 /** Extract /trip/:tripId from the current URL path, null if no match. */
 function getTripLandingId(): string | null {
@@ -40,6 +42,7 @@ export default function App() {
     activeTab, setActiveTab,
     redirectModal, closeRedirectModal,
     userId, toasts, removeToast, showToast, setAuthenticated,
+    activeTripId,
     isOffline, setOffline,
     isDarkMode, setDarkMode,
     notifications, clearNotifications,
@@ -55,6 +58,7 @@ export default function App() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [loginPromptMode, setLoginPromptMode] = useState<LoginPromptMode>('default');
 
   const isLoggedIn = !!userId;
   const lastActivityRef = useRef<number>(Date.now());
@@ -155,6 +159,7 @@ export default function App() {
     localStorage.setItem('user_id', loggedInUserId);
     localStorage.setItem('last_activity', Date.now().toString());
     setAuthenticated(loggedInUserId);
+    setLoginPromptMode('default');
     setShowLogin(false);
   };
 
@@ -187,6 +192,39 @@ export default function App() {
     showToast(`已導向至 ${current.provider}`);
   };
 
+  const getGuestLoginCopy = (tab: typeof activeTab) => {
+    switch (tab) {
+      case 'tools':
+        return {
+          contextLabel: '旅途工具包',
+          title: '先建一個訪客旅程，工具包就會立刻解鎖',
+          description: '不用先註冊，先用訪客身分建立或挑一份行程，就能開始看天氣、整理清單和分帳。',
+          guestCtaLabel: '先用訪客身分開一趟旅程',
+        };
+      case 'itinerary':
+        return {
+          contextLabel: '行程手帳',
+          title: '先用訪客身分開一份旅程，喜歡再正式註冊',
+          description: 'AI 規劃、共編手帳、旅程收藏都可以先體驗，之後再把進度綁到正式帳號。',
+          guestCtaLabel: '先用訪客身分開始規劃',
+        };
+      case 'ai_form':
+        return {
+          contextLabel: 'AI 旅程規劃',
+          title: '先讓 AI 幫你排一版，再決定要不要留下帳號',
+          description: '先用訪客身分生成旅程，確認方向對了，再登入同步與保存。',
+          guestCtaLabel: '先用訪客身分交給 AI',
+        };
+      default:
+        return {
+          contextLabel: '快速體驗',
+          title: '先用訪客身分開始，喜歡再註冊也不遲',
+          description: '收藏、複製手帳、Demo 預覽都可以先玩，不必一開始就進入註冊流程。',
+          guestCtaLabel: '先用訪客身分體驗',
+        };
+    }
+  };
+
   const renderTab = () => {
     switch (activeTab) {
       case 'home':
@@ -201,12 +239,18 @@ export default function App() {
   };
 
   const prevActiveTabRef = useRef<string>(activeTab);
+    const isAuthSurfaceVisible = showLogin || (!isLoggedIn && activeTab !== 'home');
+    const shouldShowAssistant =
+      !isAuthSurfaceVisible &&
+      activeTab !== 'ai_form' &&
+      activeTab !== 'ai_result' &&
+      !((activeTab === 'tools' || activeTab === 'itinerary') && !activeTripId);
 
   // Show nothing while checking localStorage (avoids flash)
   if (!authReady) {
     return (
       <div className="flex-1 justify-center items-center bg-purple-50 flex h-screen w-screen">
-        <span style={{ fontSize: 32 }}>✈️</span>
+        <img src="/icons/airplane.png" alt="loading" width={32} height={32} className="object-contain animate-pulse" />
       </div>
     );
   }
@@ -235,6 +279,7 @@ export default function App() {
 
   const renderContent = () => {
     if (showLogin) {
+      const loginCopy = loginPromptMode === 'guest-first' ? getGuestLoginCopy(activeTab) : undefined;
       return (
         <LoginScreen
           onLogin={(id) => {
@@ -242,21 +287,30 @@ export default function App() {
             setShowLogin(false);
           }}
           onCancel={() => {
+            setLoginPromptMode('default');
             setShowLogin(false);
             if (activeTab !== 'home') setActiveTab('home');
           }}
+          guestFirst={loginPromptMode === 'guest-first'}
+          {...loginCopy}
         />
       );
     }
     if (activeTab === 'home') {
-      return <HomeTab onRequireLogin={() => setShowLogin(true)} isLoggedIn={isLoggedIn} />;
+      return <HomeTab onRequireLogin={() => {
+        setLoginPromptMode('guest-first');
+        setShowLogin(true);
+      }} isLoggedIn={isLoggedIn} />;
     }
     if (!isLoggedIn) {
-      return <LoginScreen 
-        onLogin={handleLogin} 
+      return <LoginScreen
+        onLogin={handleLogin}
         onCancel={() => {
+          setLoginPromptMode('default');
           setActiveTab('home');
         }}
+        guestFirst
+        {...getGuestLoginCopy(activeTab)}
       />;
     }
     if (activeTab === 'ai_form') {
@@ -460,7 +514,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex-1 jelly-bg w-full h-full flex flex-col min-h-[100dvh] relative overflow-hidden font-body-md text-slate-800 transition-colors duration-500">
+    <div className="flex-1 jelly-bg w-full h-full flex flex-col min-h-[100dvh] relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
       {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
       {(import.meta as any).env.MODE !== 'production' && (
         <div className="fixed top-2 left-2 z-[60] flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
@@ -472,7 +526,7 @@ export default function App() {
       )}
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.05)] transition-colors duration-500">
+      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-white/70 dark:bg-slate-950/72 backdrop-blur-xl border-b border-white/50 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.45)] transition-colors duration-500">
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20">
           <h1 className="text-[22px] sm:text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>
@@ -482,7 +536,6 @@ export default function App() {
         <nav className="hidden md:flex flex-row items-center justify-center gap-2 absolute left-1/2 -translate-x-1/2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
-            const Icon = tab.Icon;
             return (
               <button
                 key={tab.id}
@@ -493,10 +546,13 @@ export default function App() {
                     : 'text-pink-500/70 hover:bg-white/50 hover:text-pink-500'
                 }`}
               >
-                <Icon 
-                  size={18}
-                  strokeWidth={isActive ? 2.5 : 2}
-                  className={isActive ? 'text-pink-600' : 'text-pink-500/70'}
+                <img
+                  src={`/icons/${tab.iconName}.png`}
+                  alt={tab.label}
+                  width={18}
+                  height={18}
+                  className={`object-contain shrink-0 ${isActive ? 'opacity-100' : 'opacity-60'}`}
+                  draggable={false}
                 />
                 <span className="font-bold text-sm tracking-wide">{tab.label}</span>
               </button>
@@ -579,6 +635,7 @@ export default function App() {
           <div 
             onClick={() => {
               if (!isLoggedIn) {
+                setLoginPromptMode('default');
                 setShowLogin(true);
               } else {
                 setShowLogoutModal(true);
@@ -615,7 +672,7 @@ export default function App() {
       <div className="flex-1 relative z-10 w-full overflow-hidden flex flex-col">
         <AnimatePresence mode="wait" custom={tabSlideDir}>
           <motion.div
-            key={!isLoggedIn && activeTab !== 'home' ? 'login' : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
+            key={showLogin ? `login-${loginPromptMode}` : !isLoggedIn && activeTab !== 'home' ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
               enter: (dir: number) => ({ opacity: 0, x: dir * 56, scale: 0.98 }),
@@ -629,7 +686,7 @@ export default function App() {
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             className="pt-[80px]"
           >
-            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><span className="text-2xl animate-spin">✈️</span></div>}>
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><img src="/icons/airplane.png" alt="loading" width={32} height={32} className="object-contain animate-spin" /></div>}>
               {renderContent()}
             </Suspense>
           </motion.div>
@@ -638,7 +695,8 @@ export default function App() {
 
       {/* Bottom Fixed Navigation (Mobile Only) */}
       <BottomTabs />
-      <JellyAssistant />
+      <PwaInstallPrompt />
+      {shouldShowAssistant ? <JellyAssistant /> : null}
 
       <AnimatePresence>
         {redirectModal.isOpen && (
