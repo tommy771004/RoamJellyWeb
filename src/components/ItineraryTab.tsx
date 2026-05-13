@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 
@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
+import IconImg from './ui/IconImg';
 import { ItinerarySkeletonCard } from './SkeletonCard';
 import {
   searchOffers,
@@ -86,6 +87,9 @@ import {
   getDayForDate,
   sortNodesForDisplay,
 } from '../lib/itineraryUtils';
+import { triggerHapticFeedback } from '../lib/haptics';
+
+const ItineraryMapView = lazy(() => import('./ItineraryMapView'));
 
 const DESTINATION_IMAGES: Array<{ keywords: string[]; url: string }> = [
   { keywords: ['台北', 'taipei'], url: 'https://images.unsplash.com/photo-1470004914212-05527e49370b?w=800&auto=format&fit=crop' },
@@ -149,20 +153,27 @@ function getDynamicMapPercent(nodes: any[], lat: number, lng: number) {
   };
 }
 
-const EMOJI_OPTIONS = ['🏯', '🗼', '🌸', '🍣', '🍜', '🎌', '⛩️', '🏔️', '🛍️', '🎡', '🌿', '🏖️'];
+const EMOJI_OPTIONS = ['camera', 'mountain', 'beach', 'food-drink', 'hotel', 'heart', 'star', 'compass', 'backpack', 'tent', 'globe', 'map'];
 type AiGenerateMode = 'selected_day' | 'overwrite_all' | 'generate_for_selected_days';
+const AI_LOADING_QUOTES = [
+  '正在打包行李，替今天塞進剛剛好的節奏...',
+  '正在幫你喬靠窗座位，也順便避開太硬的移動路線...',
+  '正在請教在地老饕，看看哪一站最值得停久一點...',
+  '正在替你把交通、景點與休息點排成順手的旅途節拍...',
+];
+const DELETE_UNDO_WINDOW_MS = 3600;
 
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
-  flight: { label: '航班', icon: '✈️' },
-  transport: { label: '交通', icon: '🚆' },
-  landmark: { label: '景點', icon: '🏯' },
-  food: { label: '美食', icon: '🍜' },
-  shopping: { label: '購物', icon: '🛍️' },
-  nature: { label: '自然', icon: '🌿' },
-  hotel: { label: '住宿', icon: '🏨' },
-  activity: { label: '活動', icon: '🎡' },
-  nightlife: { label: '夜生活', icon: '🌃' },
-  other: { label: '其他', icon: '📍' },
+  flight: { label: '航班', icon: 'airplane' },
+  transport: { label: '交通', icon: 'train' },
+  landmark: { label: '景點', icon: 'camera' },
+  food: { label: '美食', icon: 'food-drink' },
+  shopping: { label: '購物', icon: 'ticket' },
+  nature: { label: '自然', icon: 'mountain' },
+  hotel: { label: '住宿', icon: 'hotel' },
+  activity: { label: '活動', icon: 'hot-air-balloon' },
+  nightlife: { label: '夜生活', icon: 'cocktail' },
+  other: { label: '其他', icon: 'compass' },
 };
 
 const CATEGORY_OPTIONS = Object.keys(CATEGORY_META);
@@ -326,6 +337,7 @@ export default function ItineraryTab() {
   const reconnectHighlightTimerRef = useRef<number | null>(null);
   const offlineSnapshotRef = useRef<ItineraryNode[]>([]);
   const pendingReconnectSummaryRef = useRef(false);
+  const pendingDeleteTimersRef = useRef<Record<string, number>>({});
   const [recentlySyncedNodeIds, setRecentlySyncedNodeIds] = useState<string[]>([]);
 
   const { nodes, setNodes, replaceDayNodes, addNode, updateNode, patchNode, removeNode, collaborators, setCollaborators, isOffline, setOffline } =
@@ -345,6 +357,9 @@ export default function ItineraryTab() {
     if (reconnectHighlightTimerRef.current) {
       window.clearTimeout(reconnectHighlightTimerRef.current);
     }
+    Object.values(pendingDeleteTimersRef.current).forEach((timer) => {
+      window.clearTimeout(timer);
+    });
   }, []);
 
   const normalizeAiCategory = (raw?: string): string => {
@@ -397,8 +412,8 @@ export default function ItineraryTab() {
       });
 
       const rawNodes: ItineraryNode[] = [];
-      suggestions.itinerary.forEach((dayData) => {
-        dayData.spots.forEach((spot, i) => {
+      suggestions.itinerary.forEach((dayData: any) => {
+        dayData.spots.forEach((spot: any, i: number) => {
            rawNodes.push({
              node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
              day: dayData.day || 1,
@@ -424,6 +439,16 @@ export default function ItineraryTab() {
         if (r.status === 'fulfilled' && r.value) {
           rawNodes[i].lat = r.value.lat;
           rawNodes[i].lng = r.value.lng;
+        }
+      });
+
+      // Fetch spot images (Wikipedia thumbnail) in parallel; fall back silently
+      const enrichResults = await Promise.allSettled(
+        rawNodes.map(n => fetchSpotEnrichment(n.title))
+      );
+      enrichResults.forEach((r, i) => {
+        if (r.status === 'fulfilled' && r.value?.thumbnail) {
+          rawNodes[i].image_url = r.value.thumbnail;
         }
       });
 
@@ -499,7 +524,7 @@ export default function ItineraryTab() {
     );
 
     pendingReorderRef.current = reorderedNodes;
-    const otherDaysNodes = nodes.filter((node) => node.day !== safeSelectedDay);
+    const otherDaysNodes = nodes.filter((node: ItineraryNode) => node.day !== safeSelectedDay);
     setNodes([...otherDaysNodes, ...reorderedNodes]);
 
     if (reorderCommitTimerRef.current) {
@@ -907,11 +932,28 @@ export default function ItineraryTab() {
       showToast('缺少行程 ID，無法分享旅程');
       return;
     }
-    const deepLink = `${window.location.origin}/trip/${activeTripId}`;
+    const shareUrl = `${window.location.origin}/share/trip/${activeTripId}`;
+    const shareTitle = tripInfo?.name || tripInfo?.destination || 'RoamJelly 行程';
+    const shareText = tripInfo?.destination
+      ? `一起看 ${tripInfo.destination} 的旅程安排`
+      : '一起打開這份 RoamJelly 旅程';
     try {
-      await navigator.clipboard.writeText(deepLink);
-      showToast('🎉 行程連結已複製！邀請朋友加入吧', 'success');
+      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        triggerHapticFeedback([20]);
+        showToast('已開啟分享面板，快傳給旅伴吧。', 'success');
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      triggerHapticFeedback([20]);
+      showToast('🎉 可預覽的分享連結已複製！邀請朋友加入吧', 'success');
     } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
       showToast('分享失敗，請手動複製網址', 'warning');
     }
   };
@@ -937,7 +979,7 @@ export default function ItineraryTab() {
   };
 
   // Add a favorite spot from the DB to the selected day's timeline
-  const addSpotToDay = (spot: FavoriteSpot, day: number) => {
+  const addSpotToDay = (spot: FavoriteSpot, day: number, options?: { silent?: boolean }) => {
     if (isOffline || !activeTripId) return;
 
     const fallbackSortOrder =
@@ -1006,7 +1048,25 @@ export default function ItineraryTab() {
       });
     }
 
-    showToast(`${normalized.emoji} ${spot.title} 已加入 Day ${day}！`);
+    if (!options?.silent) {
+      showToast(`${normalized.emoji} ${spot.title} 已加入 Day ${day}！`);
+    }
+  };
+
+  const handleFillDayFromFavorites = (day: number) => {
+    const candidateFavorites = favorites.filter(
+      (spot) => !nodes.some((node: ItineraryNode) => node.day === day && node.title.trim() === spot.title.trim()),
+    );
+
+    if (candidateFavorites.length === 0) {
+      showToast('口袋名單暫時沒有新的景點可以抽進今天。', 'warning');
+      return;
+    }
+
+    const shuffled = [...candidateFavorites].sort(() => Math.random() - 0.5);
+    const picks = shuffled.slice(0, Math.min(3, shuffled.length));
+    picks.forEach((spot) => addSpotToDay(spot, day, { silent: true }));
+    showToast(`已從口袋名單替 Day ${day} 補上 ${picks.length} 個靈感景點。`, 'success');
   };
 
   // Add a new custom favorite (geocoded by backend via Nominatim)
@@ -1041,21 +1101,46 @@ export default function ItineraryTab() {
     }
   };
 
-  const handleDeleteNode = async (node_id: string) => {
+  const handleDeleteNode = (node_id: string) => {
     const removedNode = nodes.find((node: ItineraryNode) => node.node_id === node_id);
     if (!removedNode) return;
-    removeNode(node_id);
-    try {
-      await deleteItineraryNode(node_id);
-      socketRef.current?.emit('sync_itinerary', {
-        trip_id: activeTripId,
-        action: 'remove_node',
-        payload: { node_id } as ItineraryNode,
-      });
-    } catch {
-      addNode(removedNode);
-      showToast('刪除失敗，已還原。', 'warning');
+
+    if (pendingDeleteTimersRef.current[node_id]) {
+      window.clearTimeout(pendingDeleteTimersRef.current[node_id]);
     }
+
+    removeNode(node_id);
+    triggerHapticFeedback([18, 40, 18]);
+
+    pendingDeleteTimersRef.current[node_id] = window.setTimeout(() => {
+      void (async () => {
+        try {
+          await deleteItineraryNode(node_id);
+          socketRef.current?.emit('sync_itinerary', {
+            trip_id: activeTripId,
+            action: 'remove_node',
+            payload: { node_id } as ItineraryNode,
+          });
+        } catch {
+          addNode(removedNode);
+          showToast('刪除失敗，已還原。', 'warning');
+        } finally {
+          delete pendingDeleteTimersRef.current[node_id];
+        }
+      })();
+    }, DELETE_UNDO_WINDOW_MS);
+
+    showToast(`已移除「${removedNode.title}」，可在幾秒內復原。`, 'warning', {
+      actionLabel: '復原',
+      onAction: () => {
+        if (pendingDeleteTimersRef.current[node_id]) {
+          window.clearTimeout(pendingDeleteTimersRef.current[node_id]);
+          delete pendingDeleteTimersRef.current[node_id];
+        }
+        addNode(removedNode);
+        showToast(`已復原「${removedNode.title}」。`, 'success');
+      },
+    });
   };
 
   const handleUpdateNode = async (node: ItineraryNode) => {
@@ -1146,16 +1231,17 @@ export default function ItineraryTab() {
     }
   };
 
-  const handleAiSuggest = async () => {
+  const handleAiSuggest = async (modeOverride?: AiGenerateMode) => {
     if (isOffline) { showToast('離線中無法使用 AI 功能 📴'); return; }
     if (!activeTripId) { showToast('缺少行程 ID，無法生成行程'); return; }
     setAiLoading(true);
     try {
       const destination = tripInfo?.destination || '您的目的地';
+      const effectiveMode = modeOverride ?? aiGenerateMode;
       
       let genDays = plannerForm.days;
-      if (aiGenerateMode === 'selected_day') genDays = 1;
-      else if (aiGenerateMode === 'generate_for_selected_days') genDays = rangeEndDay - rangeStartDay + 1;
+      if (effectiveMode === 'selected_day') genDays = 1;
+      else if (effectiveMode === 'generate_for_selected_days') genDays = rangeEndDay - rangeStartDay + 1;
       
       const dietaryStr = (plannerForm.dietary || []).join(',');
       const transportStr = (plannerForm.transport || []).join(',');
@@ -1213,10 +1299,10 @@ export default function ItineraryTab() {
 
       let finalNodes: ItineraryNode[] = [];
 
-      if (aiGenerateMode === 'overwrite_all') {
+      if (effectiveMode === 'overwrite_all') {
         await removeNodesBatch([...nodes]);
         finalNodes = assignDaysBasedOnTimeAndOrder(suggestedNodes, plannerForm.flightDate);
-      } else if (aiGenerateMode === 'generate_for_selected_days') {
+      } else if (effectiveMode === 'generate_for_selected_days') {
         const targetDays = Array.from({ length: rangeEndDay - rangeStartDay + 1 }, (_, i) => rangeStartDay + i);
         const currentDaysNodes = nodes.filter((node: ItineraryNode) => targetDays.includes(node.day));
         await removeNodesBatch(currentDaysNodes);
@@ -1268,9 +1354,9 @@ export default function ItineraryTab() {
         });
       }
 
-      if (aiGenerateMode === 'overwrite_all') {
+      if (effectiveMode === 'overwrite_all') {
         showToast(`✨ 已一鍵覆蓋行程，共 ${finalNodes.length} 個新節點`);
-      } else if (aiGenerateMode === 'generate_for_selected_days') {
+      } else if (effectiveMode === 'generate_for_selected_days') {
         showToast(`✨ 已重建 Day ${rangeStartDay} 到 Day ${rangeEndDay}`);
       } else {
         showToast(`✨ 已重建 Day ${selectedDay}，共 ${finalNodes.length} 個節點`);
@@ -1707,7 +1793,7 @@ export default function ItineraryTab() {
                 </div>
              </div>
              <div className="flex flex-row items-center">
-                {collaborators.map((c, i) => (
+                {collaborators.map((c: Collaborator, i: number) => (
                   <CollaboratorAvatar key={c.id} collaborator={c} index={i} isOnline={true} />
                 ))}
              </div>
@@ -1739,9 +1825,9 @@ export default function ItineraryTab() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg active:scale-90 transition-all"
+                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center active:scale-90 transition-all"
                     >
-                      {newSpotEmoji}
+                      <IconImg value={newSpotEmoji} size={20} />
                     </button>
                     <input
                       value={newSpotTitle}
@@ -1761,7 +1847,7 @@ export default function ItineraryTab() {
                   {showEmojiPicker && (
                     <div className="flex flex-wrap gap-1.5 mt-3 p-2 bg-white rounded-xl border border-slate-100 shadow-xl overflow-y-auto max-h-[120px] no-scrollbar">
                       {EMOJI_OPTIONS.map(em => (
-                        <button key={em} onClick={() => { setNewSpotEmoji(em); setShowEmojiPicker(false); }} className="w-8 h-8 flex items-center justify-center hover:bg-pink-50 rounded-lg text-lg">{em}</button>
+                        <button key={em} onClick={() => { setNewSpotEmoji(em); setShowEmojiPicker(false); }} className="w-8 h-8 flex items-center justify-center hover:bg-pink-50 rounded-lg transition-all"><IconImg value={em} size={20} /></button>
                       ))}
                     </div>
                   )}
@@ -1790,11 +1876,11 @@ export default function ItineraryTab() {
               <h3 className="font-black text-slate-800 text-xl mb-3">{tripInfo.name} · 旅行記憶</h3>
               <div className="flex flex-wrap gap-2">
                 {nodes
-                  .filter(n => n.emoji && n.title)
+                  .filter((n: ItineraryNode) => n.emoji && n.title)
                   .slice(0, 12)
-                  .map(n => (
+                  .map((n: ItineraryNode) => (
                     <span key={n.node_id} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 rounded-full text-[12px] font-bold text-slate-700 border border-pink-100 shadow-sm">
-                      <span>{n.emoji}</span>
+                      <IconImg value={n.emoji} size={14} />
                       <span className="line-clamp-1 max-w-[100px]">{n.title}</span>
                     </span>
                   ))}
@@ -2122,10 +2208,13 @@ export default function ItineraryTab() {
                   onManualAdd={handleManualAddNode}
                   onQuickExpense={setExpenseTargetNode}
                   draggingFavorite={draggingFavorite}
+                  favoriteSuggestions={favorites}
                   onFavoriteDrop={(spot, dropDay) => {
                     addSpotToDay(spot, dropDay);
                     setDraggingFavorite(null);
                   }}
+                  onAskAiForDay={() => void handleAiSuggest('selected_day')}
+                  onRandomizeFromFavorites={() => handleFillDayFromFavorites(safeSelectedDay)}
                   isOffline={isOffline}
                   aiLoading={aiLoading}
                   tripId={activeTripId}
@@ -2146,7 +2235,21 @@ export default function ItineraryTab() {
                 transition={{ duration: 0.4 }}
                 className="w-full"
               >
-                <MapView items={selectedDayNodes} allNodes={nodes} />
+                <Suspense
+                  fallback={
+                    <GlassCard className="h-[55vh] flex items-center justify-center border-4 border-white/40 !rounded-[2.5rem]">
+                      <div className="flex flex-col items-center gap-3 text-center">
+                        <div className="h-10 w-10 rounded-full border-4 border-fuchsia-200 border-t-fuchsia-500 animate-spin" />
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-fuchsia-500">Map Chunk</p>
+                          <p className="mt-1 text-sm font-bold text-slate-500">正在載入地圖體驗...</p>
+                        </div>
+                      </div>
+                    </GlassCard>
+                  }
+                >
+                  <ItineraryMapView items={selectedDayNodes} allNodes={nodes} />
+                </Suspense>
               </motion.div>
             ) : (
               <motion.div
@@ -2157,7 +2260,7 @@ export default function ItineraryTab() {
                 transition={{ duration: 0.4 }}
                 className="w-full"
               >
-                <CalendarView nodes={nodes} tripStartDate={tripInfo?.startDate} />
+                <CalendarView nodes={nodes} tripStartDate={tripInfo?.startDate ?? undefined} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -2236,7 +2339,7 @@ export default function ItineraryTab() {
                        spot={spot}
                        selectedDay={safeSelectedDay}
                        isOffline={isOffline}
-                       onAdd={(node) => { addSpotToDay(node); setShowMobileFavorites(false); }}
+                       onAdd={(node, day) => { addSpotToDay(node, day); setShowMobileFavorites(false); }}
                        onDelete={handleDeleteFavorite}
                        onDragStart={setDraggingFavorite}
                        onDragEnd={() => setDraggingFavorite(null)}
@@ -2297,24 +2400,52 @@ const getCategoryStyle = (category: string) => {
   switch (category) {
     case 'food':
     case 'restaurant':
-      return 'border-orange-200 bg-gradient-to-br from-orange-50/70 to-amber-50/70';
+      return 'border-orange-200/80 bg-gradient-to-br from-white/95 via-orange-50/90 to-amber-50/90';
     case 'landmark':
     case 'attraction':
-      return 'border-sky-200 bg-gradient-to-br from-sky-50/70 to-blue-50/70';
+      return 'border-sky-200/80 bg-gradient-to-br from-white/95 via-sky-50/92 to-blue-50/90';
     case 'activity':
-      return 'border-emerald-200 bg-gradient-to-br from-emerald-50/70 to-teal-50/70';
+      return 'border-emerald-200/80 bg-gradient-to-br from-white/95 via-emerald-50/92 to-teal-50/88';
     case 'shopping':
-      return 'border-purple-200 bg-gradient-to-br from-purple-50/70 to-fuchsia-50/70';
+      return 'border-purple-200/80 bg-gradient-to-br from-white/95 via-purple-50/92 to-fuchsia-50/88';
     case 'hotel':
     case 'accommodation':
-      return 'border-rose-200 bg-gradient-to-br from-rose-50/70 to-pink-50/70';
+      return 'border-indigo-200/80 bg-gradient-to-br from-white/95 via-indigo-50/92 to-slate-100/92';
     case 'transport':
     case 'flight':
-      return 'border-indigo-200 bg-gradient-to-br from-indigo-50/70 to-slate-50/70';
+      return 'border-indigo-200/80 bg-gradient-to-br from-white/95 via-indigo-50/92 to-slate-100/92';
     default:
-      return 'border-white/80 bg-white/40';
+      return 'border-slate-200/80 bg-white/88';
   }
 };
+
+function splitRouteLabel(value?: string | null) {
+  if (!value) return null;
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  for (const separator of ['→', '->', '➜', '➡', '⇢']) {
+    if (!normalized.includes(separator)) continue;
+    const [from, to] = normalized.split(separator).map((part) => part.trim()).filter(Boolean);
+    if (from && to) return { from, to };
+  }
+  const matched = normalized.match(/^(.+?)\s+(?:to|TO)\s+(.+)$/);
+  if (matched) {
+    return { from: matched[1].trim(), to: matched[2].trim() };
+  }
+  return null;
+}
+
+function getFlightRouteSummary(item: ItineraryNode, linkedFact?: TravelFact) {
+  const metadata = linkedFact?.metadata || {};
+  const from = String(metadata.depCode || '').trim();
+  const to = String(metadata.arrCode || linkedFact?.locationName || '').trim();
+  const parsed = splitRouteLabel(item.title) || splitRouteLabel(item.description) || splitRouteLabel(item.notes);
+
+  return {
+    from: from || parsed?.from || '出發地',
+    to: to || parsed?.to || '目的地',
+    flightNumber: String(metadata.flightNumber || metadata.airline || metadata.provider || 'BOARDING PASS').trim(),
+  };
+}
 
 // ─── Draggable Favorite Spot ─────────────────────────────────────────────────
 
@@ -2349,13 +2480,17 @@ function DraggableFavoriteSpot({
       layout
       whileHover={{ y: -2 }}
       draggable={!isOffline}
-      onDragStart={(event) => {
+      onDragStart={(event: any) => {
         if (isOffline) return;
         event.dataTransfer.effectAllowed = 'copy';
         event.dataTransfer.setData('text/plain', spot.id);
+        triggerHapticFeedback([14]);
         onDragStart?.(spot);
       }}
-      onDragEnd={() => onDragEnd?.()}
+      onDragEnd={() => {
+        triggerHapticFeedback([10, 32, 12]);
+        onDragEnd?.();
+      }}
       className="group relative flex flex-col gap-2 p-3 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[20px] shadow-sm hover:shadow-xl transition-all"
     >
       <div className="flex items-center justify-between">
@@ -2363,7 +2498,7 @@ function DraggableFavoriteSpot({
           <div className="w-10 h-10 rounded-[14px] bg-white flex items-center justify-center text-xl shadow-sm border border-slate-100/50 group-hover:scale-105 transition-transform overflow-hidden shrink-0">
             {enrichment.thumbnail
               ? <img src={enrichment.thumbnail} alt={spot.title} className="w-full h-full object-cover" />
-              : spot.emoji}
+              : <IconImg value={spot.emoji} size={20} />}
           </div>
           <div>
             <h4 className="font-black text-slate-800 text-[13px] leading-tight">{spot.title}</h4>
@@ -2446,11 +2581,18 @@ function ItineraryListItem({
   const [editLinkedFactId, setEditLinkedFactId] = useState(item.linkedFactId || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const facts = useTripFactsStore(s => s.facts);
   const linkedFact = item.linkedFactId ? facts.find((fact) => fact.id === item.linkedFactId) : undefined;
   const linkedFactRedirect = getTravelFactRedirectPayload(linkedFact);
   const linkedFactBookingLabel = getTravelFactBookingLabel(linkedFact);
+  const detailCopy = item.description || item.notes || '';
+  const isFlightCard = item.category === 'flight';
+  const isHotelCard = item.category === 'hotel' || item.category === 'accommodation';
+  const isAnchorCard = isFlightCard || isHotelCard;
+  const flightRoute = isFlightCard ? getFlightRouteSummary(item, linkedFact) : null;
+  const canExpandCopy = item.title.trim().length > 28 || detailCopy.length > 110;
 
   useEffect(() => {
     setEditTitle(item.title);
@@ -2462,6 +2604,7 @@ function ItineraryListItem({
     setEditImageUrl(item.image_url || '');
     setEditAttachments(item.attachments || []);
     setEditLinkedFactId(item.linkedFactId || '');
+    setIsExpanded(false);
   }, [item, tripStartDate]);
 
   const handleAttachmentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -2504,6 +2647,17 @@ function ItineraryListItem({
     onEditingChange?.(item.node_id, getDayForDate(editDate, tripStartDate, item.day), false);
   };
 
+  const openEditor = () => {
+    if (collaboratingLock && !isEditing) {
+      useAppStore.getState().showToast(`${collaboratingLock.userName} 正在編輯這個景點。`, 'warning');
+      return;
+    }
+    if (!isOffline && !isEditing) {
+      setIsEditing(true);
+      onEditingChange?.(item.node_id, item.day, true);
+    }
+  };
+
   const [isNavigating, setIsNavigating] = useState(false);
 
   const handleNavigate = async () => {
@@ -2529,12 +2683,13 @@ function ItineraryListItem({
       useAppStore.getState().showToast('無法取得景點座標', 'warning');
       return;
     }
-    
+
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const label = encodeURIComponent(item.title);
-    const url = isIOS 
-      ? `maps://maps.apple.com/?q=${label}&ll=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    const destinationCoords = encodeURIComponent(`${lat},${lng}`);
+    const url = isIOS
+      ? `https://maps.apple.com/?daddr=${destinationCoords}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
+    triggerHapticFeedback([18]);
     window.open(url, '_blank');
   };
 
@@ -2604,16 +2759,9 @@ function ItineraryListItem({
       )}
       <GlassCard
         className={`flex-1 !p-1.5 sm:!p-2.5 md:!p-3 !rounded-[16px] sm:!rounded-[20px] ${getCategoryStyle(item.category)} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-700 border border-white/80 relative z-10 ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingLock ? 'ring-2 ring-fuchsia-400/60' : ''} ${isRecentlySynced ? 'ring-2 ring-emerald-300/80 bg-emerald-50/40 shadow-[0_0_18px_-6px_rgba(16,185,129,0.45)]' : ''} ${item.linkedFactId ? 'ring-2 ring-sky-300/40 border-sky-200/50 shadow-[0_0_15px_-5px_rgba(14,165,233,0.3)]' : ''}`}
-        onClick={(e) => {
+        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
            if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
-          if (collaboratingLock && !isEditing) {
-            useAppStore.getState().showToast(`${collaboratingLock.userName} 正在編輯這個景點。`, 'warning');
-            return;
-          }
-           if (!isOffline && !isEditing) {
-              setIsEditing(true); 
-              onEditingChange?.(item.node_id, item.day, true);
-           }
+          openEditor();
         }}
       >
         {item.linkedFactId && !isEditing && (
@@ -2625,30 +2773,68 @@ function ItineraryListItem({
           <div className="flex flex-row items-center sm:items-start gap-2 sm:gap-2.5">
             <div className={`relative w-6 h-6 sm:w-8 sm:h-8 shrink-0 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-sm sm:text-base shadow-inner border border-slate-100/50 transition-all group-hover:scale-110 group-hover:rotate-3 duration-700 ${item.category === 'flight' ? 'bg-gradient-to-br from-indigo-50 to-blue-50' : 'bg-white'}`}>
               {isEditing ? (
-                 <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="animate-pulse active:scale-95 transition-transform w-full h-full flex items-center justify-center">
-                    {editEmoji}
+                 <button type="button" aria-label="選擇景點表情" title="選擇景點表情" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="animate-pulse active:scale-95 transition-transform w-full h-full flex items-center justify-center">
+                    <IconImg value={editEmoji} size={16} />
                  </button>
               ) : (
-                 <span className="filter drop-shadow-sm select-none transition-transform group-hover:scale-110">{item.emoji}</span>
+                 <span className="filter drop-shadow-sm select-none transition-transform group-hover:scale-110"><IconImg value={item.emoji} size={16} /></span>
               )}
               {isEditing && showEmojiPicker && (
                  <div className="absolute top-full left-0 mt-2 p-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white z-[100] flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
                    {EMOJI_OPTIONS.map(e => (
-                     <button key={e} type="button" onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl text-xl transition-colors">{e}</button>
+                     <button key={e} type="button" title={`使用 ${e}`} onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl transition-colors"><IconImg value={e} size={24} /></button>
                    ))}
                  </div>
               )}
             </div>
 
             <div className="flex-1 min-w-0">
-               {!isEditing && (
-                 <h3 className="text-[11px] sm:text-[13px] font-black tracking-tight text-slate-800 leading-tight mb-0.5 line-clamp-2 md:line-clamp-none font-sans">
+               {!isEditing && isFlightCard && flightRoute && (
+                 <div className="mb-2 overflow-hidden rounded-[18px] border border-indigo-200/80 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 px-3 py-3 text-white shadow-lg">
+                   <div className="flex items-center justify-between gap-3">
+                     <div className="min-w-0">
+                       <div className="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-100/70">Departure</div>
+                       <div className={`text-lg sm:text-xl font-black leading-none ${isExpanded ? 'whitespace-normal' : 'truncate'}`}>{flightRoute.from}</div>
+                     </div>
+                     <div className="flex-1 min-w-[72px] px-2">
+                       <div className="flex items-center gap-2 text-indigo-100/80">
+                         <div className="h-px flex-1 border-t border-dashed border-white/35" />
+                         <Plane size={14} className="shrink-0" />
+                         <div className="h-px flex-1 border-t border-dashed border-white/35" />
+                       </div>
+                       <div className="mt-1 text-center text-[10px] font-black uppercase tracking-[0.18em] text-indigo-100/70 truncate">{flightRoute.flightNumber}</div>
+                     </div>
+                     <div className="min-w-0 text-right">
+                       <div className="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-100/70">Arrival</div>
+                       <div className={`text-lg sm:text-xl font-black leading-none ${isExpanded ? 'whitespace-normal' : 'truncate'}`}>{flightRoute.to}</div>
+                     </div>
+                   </div>
+                 </div>
+               )}
+               {!isEditing && isHotelCard && (
+                 <div className="mb-2 rounded-[18px] border border-indigo-200/70 bg-gradient-to-r from-indigo-900 via-slate-900 to-slate-950 px-3 py-3 text-white shadow-lg">
+                   <div className="flex items-center justify-between gap-3">
+                     <div className="min-w-0">
+                       <div className="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-100/70">Tonight's Stay</div>
+                       <div className={`text-lg sm:text-xl font-black leading-tight ${isExpanded ? 'whitespace-normal' : 'truncate'}`}>{item.title}</div>
+                     </div>
+                     <span className="shrink-0 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-indigo-50">休息錨點</span>
+                   </div>
+                 </div>
+               )}
+               {!isEditing && !isAnchorCard && (
+                 <h3 title={item.title} className={`text-[12px] sm:text-[14px] font-black tracking-tight text-slate-900 leading-tight mb-0.5 font-sans ${isExpanded ? '' : 'line-clamp-2'}`}>
                    {item.title}
                  </h3>
                )}
+               {!isEditing && isAnchorCard && (
+                 <p className="mb-1 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.18em] text-slate-600">
+                   {isFlightCard ? '跨區交通錨點' : '今晚住宿錨點'}
+                 </p>
+               )}
                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
                {item.date && (
-                 <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/80 text-[10px] sm:text-[11px] font-black tracking-widest text-slate-500 border border-slate-200 flex items-center gap-0.5">
+                 <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/95 text-[10px] sm:text-[11px] font-black tracking-widest text-slate-600 border border-slate-200 flex items-center gap-0.5">
                    <Calendar size={11} className="sm:w-[13px] sm:h-[13px]" />
                    {item.date}
                  </span>
@@ -2657,7 +2843,7 @@ function ItineraryListItem({
                   <Clock size={11} className="sm:w-[13px] sm:h-[13px]" />
                   {item.time}
                </span>
-               <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-500 border border-pink-100/50">
+               <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-700 border border-pink-100/70">
                  {meta.label}
                </span>
                {item.intensity && (
@@ -2695,8 +2881,9 @@ function ItineraryListItem({
                {!isEditing && (
                  <button 
                    type="button"
+                   aria-label={item.is_visited ? '標記為未打卡' : '標記為已打卡'}
                    onClick={() => onUpdate({ ...item, is_visited: !item.is_visited })}
-                   className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em] transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
+                   className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em] transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}
                  >
                     {item.is_visited ? <CheckCircle2 size={13} className="text-emerald-500" /> : <div className="w-3 h-3 rounded-full border-2 border-slate-300" />}
                    {item.is_visited ? '已打卡' : '未打卡'}
@@ -2719,13 +2906,13 @@ function ItineraryListItem({
                    autoFocus
                    value={editTitle}
                     onChange={e => setEditTitle(e.target.value)}
-                    className="text-lg font-black text-slate-800 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
+                    className="text-lg font-black text-slate-900 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setShowDatePicker(true)}
-                      className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none hover:ring-4 hover:ring-pink-100 transition-all text-left flex items-center gap-2"
+                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none hover:ring-4 hover:ring-pink-100 transition-all text-left flex items-center gap-2"
                     >
                       <span className="text-pink-400">📅</span>
                       {editDate || '選擇日期'}
@@ -2739,35 +2926,38 @@ function ItineraryListItem({
                       />
                     )}
                     <input
+                      type="time"
+                      inputMode="numeric"
+                      step={300}
                       value={editTime}
                       onChange={e => setEditTime(e.target.value)}
-                      className="text-sm font-black text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">詳細說明 / 備註 (Description)</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">詳細說明 / 備註 (Description)</label>
                     <textarea
                       value={editDescription}
                       onChange={e => setEditDescription(e.target.value)}
                       placeholder="寫下你的旅行手帳日記，或是更詳細的行程說明..."
-                      className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
+                      className="text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
                     />
                   </div>
                   <input
                     value={editTransport}
                     onChange={e => setEditTransport(e.target.value)}
                     placeholder="前往下一站交通資訊，例如：地鐵約 20 分鐘"
-                    className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                    className="text-xs font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                   />
                   <input
                     value={editImageUrl}
                     onChange={e => setEditImageUrl(e.target.value)}
                     placeholder="貼上照片網址 (例如: https://...jpg)"
-                    className="text-xs font-bold text-slate-500 bg-white/50 border border-slate-100 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                    className="text-xs font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                   />
-                  <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white/50 px-4 py-4">
+                  <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">附件 / 票券</label>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">附件 / 票券</label>
                       <label className="px-3 py-2 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors">
                         上傳圖片或 PDF
                         <input type="file" accept="image/*,.pdf,application/pdf" multiple className="hidden" onChange={handleAttachmentUpload} />
@@ -2792,6 +2982,8 @@ function ItineraryListItem({
                               </button>
                               <button
                                 type="button"
+                                aria-label={`移除附件 ${attachment.name}`}
+                                title={`移除附件 ${attachment.name}`}
                                 onClick={() => removeAttachment(attachment.id)}
                                 className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 text-slate-500 hover:text-rose-500 shadow-sm opacity-0 group-hover/attachment:opacity-100 transition-opacity"
                               >
@@ -2802,14 +2994,14 @@ function ItineraryListItem({
                         })}
                       </div>
                     ) : (
-                      <p className="text-xs font-bold text-slate-400">可放電子票、QR code 截圖或 PDF 憑證。</p>
+                      <p className="text-xs font-bold text-slate-500">可放電子票、QR code 截圖或 PDF 憑證。</p>
                     )}
                   </div>
                   {facts && facts.length > 0 && (
                     <select
                       value={editLinkedFactId}
                       onChange={e => setEditLinkedFactId(e.target.value)}
-                      className="text-sm font-bold text-slate-600 bg-white/50 border border-slate-100 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                      className="text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
                     >
                       <option value="">無關聯 Travel Fact (未選擇)</option>
                       {facts.map(f => (
@@ -2821,7 +3013,7 @@ function ItineraryListItem({
                   )}
                   <div className="flex items-center gap-3 flex-wrap">
                      <button type="button" onClick={handleSave} className="px-6 py-2 rounded-full bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">保存</button>
-                     <button type="button" onClick={(e) => { e.stopPropagation(); setIsEditing(false); onEditingChange?.(item.node_id, item.day, false); }} className="px-6 py-2 rounded-full bg-slate-100 text-slate-400 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">取消</button>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setIsEditing(false); onEditingChange?.(item.node_id, item.day, false); }} className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all">取消</button>
                   </div>
                 </div>
             ) : (
@@ -2829,12 +3021,14 @@ function ItineraryListItem({
                   <div className="mb-1.5">
                     <button
                       type="button"
+                      aria-label={`導航至 ${item.title}`}
+                      title={`導航至 ${item.title}`}
                       onClick={handleNavigate}
                       disabled={isNavigating}
-                      className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all disabled:opacity-50"
+                      className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-black text-emerald-700 bg-emerald-50/95 border border-emerald-200 px-2 sm:px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all disabled:opacity-50"
                     >
                       {isNavigating ? <Loader2 size={8} className="animate-spin" /> : <MapPin size={8} strokeWidth={3} />}
-                      在地圖查看
+                      開始導航
                     </button>
                   </div>
                   
@@ -2875,14 +3069,27 @@ function ItineraryListItem({
                     </div>
                   )}
 
-                  { (item.description || item.notes) ? (
-                    <p className="text-[11px] font-medium text-slate-600 whitespace-pre-line tracking-tight leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all duration-700 font-sans opacity-90 group-hover:opacity-100">
-                      {item.description || item.notes}
+                  {detailCopy ? (
+                    <p className={`text-[12px] font-medium text-slate-700 whitespace-pre-line tracking-tight leading-relaxed transition-all duration-500 font-sans ${isExpanded ? '' : 'line-clamp-3'}`}>
+                      {detailCopy}
                     </p>
                   ) : (
-                    <p className="text-[10px] font-bold text-slate-400 italic opacity-50 group-hover:opacity-80 transition-opacity">
+                    <p className="text-[10px] font-bold text-slate-500 italic opacity-80 transition-opacity">
                       點擊卡片編輯手帳內容、細節或照片...
                     </p>
+                  )}
+
+                  {canExpandCopy && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setIsExpanded((prev) => !prev);
+                      }}
+                      className="mt-2 inline-flex w-fit items-center gap-1 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-600 transition-all hover:border-slate-300 hover:bg-white"
+                    >
+                      {isExpanded ? '收起全文' : '查看全文'}
+                    </button>
                   )}
 
                   {linkedFact && (
@@ -2904,7 +3111,7 @@ function ItineraryListItem({
                         {linkedFact.metadata?.address && (
                           <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
                             <MapPin size={10} className="text-slate-400" />
-                            <span className="truncate max-w-[150px]">{linkedFact.metadata?.address}</span>
+                            <span title={String(linkedFact.metadata?.address)} className="max-w-[210px] break-words">{linkedFact.metadata?.address}</span>
                           </div>
                         )}
                         {linkedFact.startAt && (
@@ -2930,28 +3137,62 @@ function ItineraryListItem({
                     </div>
                   )}
                   
-                  <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-100/50 flex items-center justify-between">
-                     <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-200/70 flex items-center justify-between gap-2 flex-wrap">
+                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => onUpdate({ ...item, is_visited: !item.is_visited })}
-                          className={`sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-inner' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'}`}
+                          className={`sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${item.is_visited ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-inner' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}
                         >
                           <Check size={12} strokeWidth={3} className={item.is_visited ? 'scale-110' : 'scale-90 opacity-40'} />
                           {item.is_visited ? '已打卡' : '未打卡'}
                         </button>
                      </div>
                      {!isOffline && (
-                        <div className="flex items-center gap-2 transition-all duration-500 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
-                        <button onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; onQuickExpense?.(item); }} disabled={Boolean(collaboratingLock)} className="px-3 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 hover:shadow-md transition-all active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest" title="為這個景點快速記一筆">
-                          💸 記一筆
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; void handleRegenerate(); }} disabled={Boolean(collaboratingLock)} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-fuchsia-500 hover:border-fuchsia-100 hover:shadow-md transition-all active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed" title="AI 換一個建議">
-                              <RefreshCw size={16} strokeWidth={3} />
-                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; onDelete(item.node_id); }} disabled={Boolean(collaboratingLock)} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-100 hover:shadow-md transition-all active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed" title="刪除此節點">
-                              <Trash2 size={18} strokeWidth={2.5} />
-                           </button>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; openEditor(); }}
+                            disabled={Boolean(collaboratingLock)}
+                            className="px-3 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center gap-1.5 text-slate-700 hover:border-slate-300 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest"
+                            title="編輯此節點"
+                            aria-label="編輯此節點"
+                          >
+                            <Pencil size={14} strokeWidth={2.75} />
+                            編輯
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; onQuickExpense?.(item); }}
+                            disabled={Boolean(collaboratingLock)}
+                            className="px-3 h-10 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest"
+                            title="為這個景點快速記一筆"
+                            aria-label="為這個景點快速記一筆"
+                          >
+                            💸 記一筆
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; void handleRegenerate(); }}
+                            disabled={Boolean(collaboratingLock) || regenerating}
+                            className="px-3 h-10 rounded-full bg-white border border-fuchsia-200 flex items-center justify-center gap-1.5 text-fuchsia-700 hover:bg-fuchsia-50 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest"
+                            title="AI 換一個建議"
+                            aria-label="AI 換一個建議"
+                          >
+                            {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} strokeWidth={2.75} />}
+                            換一個
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); if (collaboratingLock) return; onDelete(item.node_id); }}
+                            disabled={Boolean(collaboratingLock)}
+                            className="px-3 h-10 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center gap-1.5 text-rose-700 hover:bg-rose-100 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest"
+                            title="刪除此節點"
+                            aria-label="刪除此節點"
+                          >
+                            <Trash2 size={14} strokeWidth={2.75} />
+                            刪除
+                          </button>
                         </div>
                      )}
                   </div>
@@ -2979,7 +3220,10 @@ function ItineraryList({
   onManualAdd,
   onQuickExpense,
   draggingFavorite,
+  favoriteSuggestions,
   onFavoriteDrop,
+  onAskAiForDay,
+  onRandomizeFromFavorites,
   isOffline,
   aiLoading,
   tripId,
@@ -2998,7 +3242,10 @@ function ItineraryList({
   onManualAdd: (node: Partial<ItineraryNode>) => void;
   onQuickExpense?: (node: ItineraryNode) => void;
   draggingFavorite?: FavoriteSpot | null;
+  favoriteSuggestions?: FavoriteSpot[];
   onFavoriteDrop?: (spot: FavoriteSpot, day: number) => void;
+  onAskAiForDay?: () => void;
+  onRandomizeFromFavorites?: () => void;
   isOffline: boolean;
   aiLoading: boolean;
   tripId: string;
@@ -3010,12 +3257,29 @@ function ItineraryList({
   nodeEditingLocks?: Record<string, { userName: string; day: number }>;
 }) {
   const [isFavoriteDragOver, setIsFavoriteDragOver] = useState(false);
+  const [manualAddTrigger, setManualAddTrigger] = useState(0);
+  const [aiQuoteIndex, setAiQuoteIndex] = useState(0);
 
   useEffect(() => {
     if (!draggingFavorite) {
       setIsFavoriteDragOver(false);
     }
   }, [draggingFavorite]);
+
+  useEffect(() => {
+    if (!aiLoading) {
+      setAiQuoteIndex(0);
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setAiQuoteIndex((prev) => (prev + 1) % AI_LOADING_QUOTES.length);
+    }, 1600);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [aiLoading]);
 
   const getDailyWeather = () => {
     if (!weather || !weather.length) return null;
@@ -3085,12 +3349,38 @@ function ItineraryList({
         )}
         
         {items.length === 0 && !aiLoading && (
-          <GlassCard className="!p-10 sm:!p-16 !rounded-[32px] sm:!rounded-[48px] border border-white/60 bg-gradient-to-b from-white/30 to-pink-50/20 flex flex-col items-center justify-center text-center backdrop-blur-2xl shadow-sm hover:shadow-xl transition-shadow duration-700 mx-2 sm:mx-0">
-            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[28px] sm:rounded-[40px] bg-white flex items-center justify-center text-4xl sm:text-6xl mb-6 sm:mb-8 shadow-xl border border-slate-100/50 hover:rotate-3 hover:scale-105 transition-all duration-300">
+          <GlassCard className="!p-10 sm:!p-16 !rounded-[32px] sm:!rounded-[48px] border border-white/70 bg-gradient-to-b from-white/80 to-pink-50/55 flex flex-col items-center justify-center text-center backdrop-blur-2xl shadow-sm hover:shadow-xl transition-shadow duration-700 mx-2 sm:mx-0">
+            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[28px] sm:rounded-[40px] bg-white flex items-center justify-center text-4xl sm:text-6xl mb-6 sm:mb-8 shadow-xl border border-slate-200/70 hover:rotate-3 hover:scale-105 transition-all duration-300">
               🏝️
             </div>
-            <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2 sm:mb-3 tracking-tight">Day {day} 還是空白的</h3>
-            <p className="text-slate-400 font-bold max-w-[320px] leading-relaxed uppercase text-[10px] tracking-[0.2em] px-4">使用 AI 助理或從側選單/下方拖入景點開始您的旅程</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 sm:mb-3 tracking-tight">Day {day} 還是空白的</h3>
+            <p className="text-slate-600 font-bold max-w-[360px] leading-relaxed text-[12px] tracking-[0.06em] px-4">現在不是提醒你空白，而是直接幫你補上第一步。</p>
+            <div className="mt-6 flex w-full max-w-[340px] flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => onAskAiForDay?.()}
+                disabled={isOffline}
+                className="w-full rounded-full bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-3 text-sm font-black tracking-[0.12em] text-white shadow-lg shadow-fuchsia-200/60 transition-all hover:-translate-y-0.5 disabled:opacity-40"
+              >
+                ✨ 讓 AI 幫我填滿今天
+              </button>
+              <button
+                type="button"
+                onClick={() => onRandomizeFromFavorites?.()}
+                disabled={isOffline || !favoriteSuggestions?.length}
+                className="w-full rounded-full border border-slate-200 bg-white/90 px-5 py-3 text-sm font-black tracking-[0.08em] text-slate-700 transition-all hover:border-slate-300 hover:bg-white disabled:opacity-40"
+              >
+                📌 從口袋名單隨機挑 3 個景點
+              </button>
+              <button
+                type="button"
+                onClick={() => setManualAddTrigger((prev) => prev + 1)}
+                disabled={isOffline}
+                className="w-full rounded-full border border-emerald-200 bg-emerald-50/95 px-5 py-3 text-sm font-black tracking-[0.08em] text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-40"
+              >
+                ➕ 手動新增景點
+              </button>
+            </div>
           </GlassCard>
         )}
 
@@ -3099,8 +3389,23 @@ function ItineraryList({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="flex flex-col gap-8"
+          className="flex flex-col gap-5"
         >
+           <motion.div
+             initial={{ opacity: 0, y: 8 }}
+             animate={{ opacity: 1, y: 0 }}
+             className="rounded-[28px] border border-indigo-100 bg-white/90 px-5 py-4 shadow-lg shadow-indigo-100/50"
+           >
+             <div className="flex items-center gap-3">
+               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-indigo-600 text-xl text-white shadow-lg shadow-fuchsia-200/50">
+                 ✨
+               </div>
+               <div className="min-w-0">
+                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-500">AI 正在排今天的節奏</p>
+                 <p className="mt-1 text-sm font-bold text-slate-700">{AI_LOADING_QUOTES[aiQuoteIndex]}</p>
+               </div>
+             </div>
+           </motion.div>
            {[0, 1, 2].map(i => (
              <motion.div
                key={i}
@@ -3144,6 +3449,8 @@ function ItineraryList({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, x: -30 }}
                 transition={{ type: 'spring', bounce: 0.4, duration: 0.5, delay: idx * 0.05 }}
+                onDragStart={() => triggerHapticFeedback([14])}
+                onDragEnd={() => triggerHapticFeedback([10, 32, 12])}
                 className="flex flex-col w-full relative group/reorder"
               >
                 <ItineraryListItem
@@ -3174,6 +3481,7 @@ function ItineraryList({
                     ? estimateTransport(haversineKm(item.lat, item.lng, nextItem.lat!, nextItem.lng!))
                     : null;
                   const hasTransitConflict = Boolean(autoTransport && timeGapMinutes > 0 && autoTransport.minutes > timeGapMinutes);
+                  const hasTightScheduleConflict = Boolean(nextItem && timeGapMinutes > 0 && timeGapMinutes < 30);
                   const showBadge = nextItem && (timeGapStr || item.transport_to_next || autoTransport);
                   return showBadge ? (
                     <div className="flex justify-start sm:pl-[60px] pl-[40px] my-1 relative z-0">
@@ -3181,7 +3489,7 @@ function ItineraryList({
                       <div className="flex flex-col justify-center ml-3 sm:ml-4">
                         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                           {timeGapStr && (
-                            <span className="px-3 py-1 bg-slate-50/80 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
+                            <span className="px-3 py-1 bg-slate-50/95 rounded-full text-[10px] font-black text-slate-600 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
                               <Clock size={12} />
                               約 {timeGapStr}
                             </span>
@@ -3196,6 +3504,12 @@ function ItineraryList({
                             <span className="px-3 py-1 bg-rose-50/90 rounded-full text-[10px] font-black text-rose-600 uppercase tracking-widest border border-rose-200 shadow-sm flex items-center gap-1.5">
                               <span>⚠️</span>
                               交通時間可能塞不下
+                            </span>
+                          )}
+                          {hasTightScheduleConflict && (
+                            <span className="px-3 py-1 bg-amber-50/95 rounded-full text-[10px] font-black text-amber-700 uppercase tracking-widest border border-amber-200 shadow-sm flex items-center gap-1.5">
+                              <span>⚠️</span>
+                              行程似乎太緊湊了
                             </span>
                           )}
                         </div>
@@ -3214,7 +3528,7 @@ function ItineraryList({
       </Reorder.Group>
 
       {/* Manual Add Node UI */}
-      <ManualAddNode onAdd={onManualAdd} isOffline={isOffline} day={day} tripStartDate={tripStartDate} />
+      <ManualAddNode onAdd={onManualAdd} isOffline={isOffline} day={day} tripStartDate={tripStartDate} openTrigger={manualAddTrigger} />
     </div>
   );
 }
@@ -3224,11 +3538,13 @@ function ManualAddNode({
   isOffline,
   day,
   tripStartDate,
+  openTrigger,
 }: {
   onAdd: (node: Partial<ItineraryNode>) => void;
   isOffline: boolean;
   day: number;
   tripStartDate?: string | null;
+  openTrigger?: number;
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState('');
@@ -3250,6 +3566,12 @@ function ManualAddNode({
       setDate(getDateForDay(day, tripStartDate) || '');
     }
   }, [day, tripStartDate, isAdding]);
+
+  useEffect(() => {
+    if (openTrigger && !isOffline) {
+      setIsAdding(true);
+    }
+  }, [openTrigger, isOffline]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -3427,14 +3749,14 @@ function ManualAddNode({
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="w-full py-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center justify-center text-3xl shadow-sm hover:border-pink-200 transition-all active:scale-95"
+                      className="w-full py-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center justify-center shadow-sm hover:border-pink-200 transition-all active:scale-95"
                     >
-                      {emoji}
+                      <IconImg value={emoji} size={28} />
                     </button>
                     {showEmojiPicker && (
                       <div className="absolute top-full mt-2 left-0 z-50 p-3 bg-white rounded-2xl border border-slate-100 shadow-xl overflow-y-auto max-h-[160px] w-64 flex flex-wrap gap-2">
                           {EMOJI_OPTIONS.map(em => (
-                            <button key={em} type="button" onClick={() => { setEmoji(em); setShowEmojiPicker(false); }} className={`w-10 h-10 flex items-center justify-center rounded-xl text-xl transition-all ${emoji === em ? 'bg-pink-100 scale-110 shadow-sm' : 'hover:bg-slate-50'}`}>{em}</button>
+                            <button key={em} type="button" onClick={() => { setEmoji(em); setShowEmojiPicker(false); }} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${emoji === em ? 'bg-pink-100 scale-110 shadow-sm' : 'hover:bg-slate-50'}`}><IconImg value={em} size={24} /></button>
                           ))}
                       </div>
                     )}
@@ -3691,68 +4013,6 @@ function QuickExpenseModal({
   );
 }
 
-// ─── Map View ───────────────────────────────────────────────────────────
-
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, ScaleControl } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix leafet default icon path issues in Vite
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-function MapUpdater({ selectedLat, selectedLng, items, allItems }: { selectedLat?: number, selectedLng?: number, items: ItineraryNode[], allItems?: ItineraryNode[] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (selectedLat && selectedLng) {
-      map.setView([selectedLat, selectedLng], 15, { animate: true });
-    } else {
-      let validItems = items.filter(n => n.lat && n.lng);
-      if (validItems.length === 0 && allItems && allItems.length > 0) {
-        validItems = allItems.filter(n => n.lat && n.lng);
-      }
-      if (validItems.length > 0) {
-        const bounds = L.latLngBounds(validItems.map(n => [n.lat!, n.lng!]));
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-      }
-    }
-  }, [selectedLat, selectedLng, items, allItems, map]);
-  return null;
-}
-
-function CustomMarker({ item, isSelected, onClick }: { item: ItineraryNode, isSelected: boolean, onClick: () => void }) {
-  const iconHtml = `
-    <div class="relative flex flex-col items-center">
-      <div class="bg-white rounded-2xl px-2.5 py-1.5 border-2 ${isSelected ? 'border-pink-500 scale-110 shadow-lg shadow-pink-100' : 'border-white shadow-md'} flex items-center justify-center transition-all cursor-pointer group hover:scale-110">
-        <span class="text-xl leading-none group-hover:scale-110 transition-transform">${item.emoji}</span>
-      </div>
-      <div class="w-3 h-3 -mt-2 border-r-2 border-b-2 rotate-45 ${isSelected ? 'bg-pink-500 border-pink-500' : 'bg-white border-white'}"></div>
-      <div class="mt-1 px-2.5 py-1 rounded-full ${isSelected ? 'bg-pink-600 text-white shadow-md' : 'bg-slate-800/90 text-white/90'} transition-all"><span class="text-[10px] font-bold whitespace-nowrap block max-w-[120px] truncate">${item.title}</span></div>
-    </div>
-  `;
-
-  const customIcon = L.divIcon({
-    html: iconHtml,
-    className: 'bg-transparent border-none',
-    iconSize: [120, 80],
-    iconAnchor: [60, 60],
-    popupAnchor: [0, -60],
-  });
-
-  return (
-    <Marker 
-      position={[item.lat!, item.lng!]} 
-      icon={customIcon}
-      eventHandlers={{ click: onClick }}
-      zIndexOffset={isSelected ? 1000 : 0}
-    />
-  );
-}
-
 function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripStartDate?: string }) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   
@@ -3850,7 +4110,7 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                            >
                              <div className="flex flex-col w-full min-w-0">
                                <div className="flex items-center gap-1 w-full min-w-0">
-                                 <span className="shrink-0 text-[14px]">{node.emoji}</span>
+                                 <IconImg value={node.emoji} size={16} className="shrink-0" />
                                  <span className="truncate flex-1">{node.title}</span>
                                </div>
                                {node.time && <span className={`text-[9px] mt-0.5 tracking-wider ${selectedNodeId === node.node_id ? 'text-white/80' : 'text-slate-400'}`}>{node.time}</span>}
@@ -3887,8 +4147,8 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                 )}
                 
                 <div className="flex items-start gap-4 mt-2">
-                   <div className="w-14 h-14 shrink-0 rounded-[1.5rem] bg-gradient-to-br from-pink-50 to-fuchsia-50 text-3xl flex items-center justify-center border border-white shadow-md shadow-pink-100/50">
-                     {selectedNode.emoji}
+                   <div className="w-14 h-14 shrink-0 rounded-[1.5rem] bg-gradient-to-br from-pink-50 to-fuchsia-50 flex items-center justify-center border border-white shadow-md shadow-pink-100/50">
+                     <IconImg value={selectedNode.emoji} size={32} />
                    </div>
                    <div className="flex-1 pt-1">
                      <h3 className="font-black text-xl text-slate-800 leading-tight mb-2">{selectedNode.title}</h3>
@@ -3997,7 +4257,7 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                            {redirectPayload && bookingLabel && (
                              <button
                                type="button"
-                               onClick={() => openRedirectModal(redirectPayload)}
+                               onClick={() => useAppStore.getState().openRedirectModal(redirectPayload)}
                                className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-200 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-widest text-cyan-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50 hover:shadow-md"
                              >
                                <ExternalLink size={14} strokeWidth={3} />
@@ -4012,103 +4272,6 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
              </GlassCard>
           </motion.div>
        )}
-    </div>
-  );
-}
-
-function MapView({ items, allNodes }: { items: ItineraryNode[], allNodes?: ItineraryNode[] }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selectedNode = items.find(n => n.node_id === selectedId) ?? null;
-  const validItems = items.filter(n => n.lat && n.lng);
-
-  // default center fallback: Tokyo
-  let defaultCenter: [number, number] = [35.6762, 139.6503];
-  if (validItems.length > 0) defaultCenter = [validItems[0].lat!, validItems[0].lng!];
-  else if (allNodes) {
-    const allValid = allNodes.filter(n => n.lat && n.lng);
-    if (allValid.length > 0) defaultCenter = [allValid[0].lat!, allValid[0].lng!];
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      <GlassCard className="h-[55vh] relative overflow-hidden !p-0 border-4 border-white/40 rounded-[2.5rem]">
-        <MapContainer 
-          center={defaultCenter} 
-          zoom={13} 
-          scrollWheelZoom={true} 
-          className="w-full h-full z-10"
-          zoomControl={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://carto.com/">Carto</a>'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          />
-          <MapUpdater 
-            selectedLat={selectedNode?.lat} 
-            selectedLng={selectedNode?.lng} 
-            items={validItems} 
-            allItems={allNodes}
-          />
-          
-          {validItems.length > 1 && (
-            <Polyline 
-              positions={validItems.map(item => [item.lat!, item.lng!])}
-              pathOptions={{ 
-                color: '#ec4899', 
-                weight: 4, 
-                dashArray: '1, 10', 
-                lineCap: 'round',
-                opacity: 0.6
-              }}
-            />
-          )}
-
-          {validItems.map((item) => (
-            <CustomMarker 
-              key={item.node_id}
-              item={item}
-              isSelected={item.node_id === selectedId}
-              onClick={() => setSelectedId(item.node_id === selectedId ? null : item.node_id)}
-            />
-          ))}
-          <ScaleControl position="bottomright" />
-        </MapContainer>
-        
-        {items.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-[1000]">
-            <span className="text-slate-400 font-semibold bg-white px-6 py-3 rounded-full shadow-sm">目前沒有行程顯示在地圖上</span>
-          </div>
-        )}
-      </GlassCard>
-
-      {/* Selected node detail card */}
-      <AnimatePresence>
-        {selectedNode && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          >
-            <GlassCard className="!p-4 flex items-center gap-4 !rounded-2xl border border-fuchsia-100 bg-white/90 shadow-lg">
-              <div className="w-12 h-12 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-2xl shrink-0 shadow-sm border border-fuchsia-100/50">
-                {selectedNode.emoji}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-black text-slate-800 text-[15px] truncate">{selectedNode.title}</p>
-                <div className="flex items-center gap-2 mt-0.5 max-w-full overflow-x-auto no-scrollbar shrink-0">
-                  {selectedNode.time && <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">{selectedNode.time}</span>}
-                  {selectedNode.category && <span className="text-[10px] font-bold text-fuchsia-500 bg-fuchsia-50/80 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 border border-fuchsia-100/50">{selectedNode.category}</span>}
-                </div>
-                {selectedNode.description && <p className="text-[12px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{selectedNode.description}</p>}
-              </div>
-              <button onClick={() => setSelectedId(null)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0 outline-none">
-                <X size={14} strokeWidth={3} />
-              </button>
-            </GlassCard>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
