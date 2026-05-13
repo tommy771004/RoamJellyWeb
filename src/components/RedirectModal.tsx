@@ -1,6 +1,7 @@
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Store, Plane, Clock, Heart, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
 import GlassCard from './GlassCard';
+import { getModalMotion, getOverlayTransition, subtlePressableClass } from '../lib/motionTokens';
 
 interface RedirectModalProps {
   provider: string;
@@ -32,29 +33,35 @@ export default function RedirectModal({
   onSave 
 }: RedirectModalProps) {
   const airlineInitial = (airline || provider || '?').charAt(0).toUpperCase();
+  const prefersReducedMotion = useReducedMotion();
+  const overlayTransition = getOverlayTransition(prefersReducedMotion);
+  const modalMotion = getModalMotion(prefersReducedMotion);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+      transition={overlayTransition}
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-900/56 backdrop-blur-[8px]"
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-[500px]"
+        initial={modalMotion.initial}
+        animate={modalMotion.animate}
+        exit={modalMotion.exit}
+        transition={modalMotion.transition}
+        className="w-full max-w-[520px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative group">
+        <div className="relative">
           {/* Liquid Glow Effect */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-400 rounded-[48px] blur-2xl opacity-10 group-hover:opacity-30 transition-opacity duration-1000"></div>
+          <div className="absolute -inset-1 rounded-[42px] bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-400 blur-[20px] opacity-[0.12]"></div>
           
-          <GlassCard className="relative items-center !p-0 border border-white/40 shadow-2xl bg-white/60 backdrop-blur-[50px] rounded-[48px] overflow-hidden">
+          <GlassCard className="relative items-center !p-0 border border-white/42 shadow-[0_20px_56px_rgba(15,23,42,0.16)] bg-white/70 backdrop-blur-[26px] rounded-t-[34px] rounded-b-[28px] sm:rounded-[40px] overflow-hidden">
+            <div className="flex justify-center pt-2 sm:hidden bg-white/36">
+              <div className="h-1.5 w-10 rounded-full bg-slate-300/80" />
+            </div>
             {/* Header / Airline Logo Section */}
             <div className="w-full bg-gradient-to-br from-slate-50 to-white/30 p-8 border-b border-white/40 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -125,7 +132,7 @@ export default function RedirectModal({
               <div className="flex flex-col space-y-4 w-full">
                 <button
                   onClick={onConfirm}
-                  className="group relative w-full py-5 rounded-2xl bg-slate-900 border-none shadow-2xl shadow-slate-200 flex items-center justify-center overflow-hidden transition-all active:scale-[0.97] hover:bg-slate-800"
+                  className={`group relative w-full py-5 rounded-2xl bg-slate-900 border-none shadow-2xl shadow-slate-200 flex items-center justify-center overflow-hidden hover:bg-slate-800 ${subtlePressableClass}`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <span className="font-black text-white text-[18px] tracking-wide relative z-10 flex items-center gap-3">
@@ -136,14 +143,14 @@ export default function RedirectModal({
                 <div className="flex gap-4">
                   <button
                     onClick={onSave}
-                    className="flex-1 py-4.5 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2.5 hover:bg-pink-50 hover:border-pink-200 transition-all active:scale-[0.97] group"
+                    className={`flex-1 py-4.5 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2.5 hover:bg-pink-50 hover:border-pink-200 group ${subtlePressableClass}`}
                   >
                     <Heart size={20} className="text-pink-400 group-hover:text-pink-500 group-hover:fill-pink-500 transition-all" />
                     <span className="font-bold text-slate-600 group-hover:text-pink-600 text-[15px]">收藏方案</span>
                   </button>
                   <button
                     onClick={onClose}
-                    className="flex-1 py-4.5 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-all active:scale-[0.97]"
+                    className={`flex-1 py-4.5 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 ${subtlePressableClass}`}
                   >
                     <span className="font-bold text-slate-500 text-[15px]">暫時關閉</span>
                   </button>
