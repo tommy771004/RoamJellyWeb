@@ -106,6 +106,10 @@
   --color-surface-container: #efeded;
   --color-on-surface: #1b1c1c;
   --color-outline: #877275;
+  --motion-ios-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --glass-blur-strong: 18px;
+  --glass-blur-medium: 14px;
+  --glass-blur-soft: 10px;
 }
 
 @utility glass-card {
@@ -148,14 +152,19 @@
   }
 }
 
+html {
+  scroll-behavior: auto;
+}
+
 body {
   margin: 0;
   font-family: var(--font-body-md);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
-  scroll-behavior: smooth;
   background-color: var(--color-surface);
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: contain;
 }
 
 .jelly-bg {
@@ -164,7 +173,8 @@ body {
       radial-gradient(circle at 90% 80%, rgba(201, 230, 255, 0.5) 0%, transparent 40%),
       radial-gradient(circle at 50% 50%, rgba(178, 242, 187, 0.3) 0%, transparent 50%);
   background-color: var(--color-surface);
-  background-attachment: fixed;
+  background-attachment: scroll;
+  background-position: center top;
 }
 .dark .jelly-bg {
   background-image: none;
@@ -173,69 +183,101 @@ body {
 
 .jelly-surface {
   background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  backdrop-filter: blur(var(--glass-blur-strong));
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong));
   border-top: 1.5px solid rgba(255, 255, 255, 0.5);
   border-left: 1.5px solid rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.8), 0 8px 32px rgba(134, 77, 97, 0.05);
+  box-shadow: inset 0 1px 8px rgba(255, 255, 255, 0.72), 0 6px 24px rgba(134, 77, 97, 0.05);
 }
 .dark .jelly-surface {
   background: rgba(0, 0, 0, 0.4);
   border-top: 1.5px solid rgba(255, 255, 255, 0.2);
   border-left: 1.5px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 1px 8px rgba(255, 255, 255, 0.08), 0 6px 24px rgba(0, 0, 0, 0.38);
 }
 
 .jelly-button {
   background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(var(--glass-blur-medium));
+  -webkit-backdrop-filter: blur(var(--glass-blur-medium));
   border-top: 1.5px solid rgba(255, 255, 255, 0.7);
   border-left: 1.5px solid rgba(255, 255, 255, 0.7);
-  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.9), 0 4px 15px rgba(134, 77, 97, 0.1);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: inset 0 1px 8px rgba(255, 255, 255, 0.84), 0 4px 14px rgba(134, 77, 97, 0.08);
+  transition: transform 0.2s var(--motion-ios-ease), box-shadow 0.2s var(--motion-ios-ease), background-color 0.2s var(--motion-ios-ease), backdrop-filter 0.2s var(--motion-ios-ease);
 }
 .dark .jelly-button {
   background: rgba(0, 0, 0, 0.4);
   border-top: 1.5px solid rgba(255, 255, 255, 0.2);
   border-left: 1.5px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.1), 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 8px rgba(255, 255, 255, 0.08), 0 4px 14px rgba(0, 0, 0, 0.24);
 }
 
 .jelly-button:active {
-  transform: scale(0.95);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
+  transform: scale(0.98);
+  backdrop-filter: blur(var(--glass-blur-strong));
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong));
 }
 
 .glass-panel {
   background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  backdrop-filter: blur(var(--glass-blur-strong));
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong));
   border-top: 1.5px solid rgba(255, 255, 255, 0.5);
   border-left: 1.5px solid rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.8), 0 8px 32px rgba(134, 77, 97, 0.1);
+  box-shadow: inset 0 1px 8px rgba(255, 255, 255, 0.72), 0 6px 24px rgba(134, 77, 97, 0.08);
 }
 .dark .glass-panel {
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(var(--glass-blur-strong));
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong));
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   border-left: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 1px 8px rgba(255, 255, 255, 0.08), 0 6px 24px rgba(0, 0, 0, 0.38);
 }
 
 .glass-node {
   background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(var(--glass-blur-medium));
+  -webkit-backdrop-filter: blur(var(--glass-blur-medium));
   border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(134, 77, 97, 0.15);
+  box-shadow: inset 0 1px 6px rgba(255, 255, 255, 0.82), 0 4px 10px rgba(134, 77, 97, 0.12);
 }
 .dark .glass-node {
   background: rgba(40, 40, 40, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 6px rgba(255, 255, 255, 0.08), 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .jelly-bg {
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(250, 179, 202, 0.22) 0%, transparent 34%),
+      radial-gradient(circle at 90% 80%, rgba(201, 230, 255, 0.28) 0%, transparent 34%);
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .jelly-surface,
+  .jelly-button,
+  .glass-panel,
+  .glass-node {
+    backdrop-filter: blur(var(--glass-blur-soft));
+    -webkit-backdrop-filter: blur(var(--glass-blur-soft));
+  }
+
+  .jelly-bg {
+    background-size: 130% 130%, 130% 130%, 140% 140%;
+  }
 }
 
 .material-icons-outlined {
