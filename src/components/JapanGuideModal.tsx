@@ -1,7 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, MapPin } from 'lucide-react';
+import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 
 interface JapanGuideModalProps {
   open: boolean;
@@ -55,6 +56,10 @@ const REGION_CARDS = [
 ];
 
 export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const overlayTransition = getOverlayTransition(prefersReducedMotion);
+  const modalMotion = getModalMotion(prefersReducedMotion);
+
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -63,7 +68,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
+          transition={overlayTransition}
           className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center"
           onClick={onClose}
         >
@@ -73,10 +78,10 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
           {/* Modal panel */}
           <motion.div
             key="japan-modal-panel"
-            initial={{ opacity: 0, y: 60, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.97 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            initial={modalMotion.initial}
+            animate={modalMotion.animate}
+            exit={modalMotion.exit}
+            transition={modalMotion.transition}
             className="relative w-full sm:max-w-2xl max-h-[90vh] sm:max-h-[85vh] bg-[#0d0d14] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-white/10"
             onClick={(e) => e.stopPropagation()}
           >
