@@ -1454,6 +1454,8 @@ export default function ItineraryTab() {
             <div className="flex-1">
               <AiForm onSubmit={handleAiFormSubmit} />
             </div>
+            {/* Mobile bottom nav spacer */}
+            <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
           </div>
         </div>
       );
@@ -1602,6 +1604,8 @@ export default function ItineraryTab() {
           </div>
         )}
       </div>
+      {/* Mobile bottom nav spacer */}
+      <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
     </div>
     );
   }
@@ -1669,6 +1673,8 @@ export default function ItineraryTab() {
             </div>
           </div>
         </div>
+        {/* Mobile bottom nav spacer */}
+        <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
       </main>
     );
   }
@@ -2455,6 +2461,8 @@ export default function ItineraryTab() {
           onClose={() => setExpenseTargetNode(null)}
         />
       )}
+      {/* Mobile bottom nav spacer */}
+      <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
       </div>
     </main>
   );

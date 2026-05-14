@@ -1191,6 +1191,8 @@ function ToolsTabContent() {
             )}
           </div>
         </div>
+        {/* Mobile bottom nav spacer */}
+        <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
       </div>
     </div>
   );
