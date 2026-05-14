@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search, Calendar, Users, Heart, Coffee, Car, DollarSign } from 'lucide-react';
+import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search, Calendar, Users, Heart, Coffee, Car, DollarSign, Check } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import GlassCard from './GlassCard';
 import IconImg from './ui/IconImg';
@@ -43,16 +43,34 @@ export const MultiSelectPill: React.FC<{
   label: string; 
   selected: boolean; 
   onClick: () => void;
-}> = ({ label, selected, onClick }) => {
+  accentColor?: 'indigo' | 'emerald' | 'rose' | 'blue' | 'amber';
+}> = ({ label, selected, onClick, accentColor = 'indigo' }) => {
+  const selectedClasses: Record<string, string> = {
+    indigo: 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-[0_2px_10px_-3px_rgba(99,102,241,0.2)]',
+    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-[0_2px_10px_-3px_rgba(16,185,129,0.2)]',
+    rose: 'bg-rose-50 border-rose-200 text-rose-700 shadow-[0_2px_10px_-3px_rgba(244,63,94,0.2)]',
+    blue: 'bg-blue-50 border-blue-200 text-blue-700 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)]',
+    amber: 'bg-amber-50 border-amber-200 text-amber-900 shadow-[0_2px_10px_-3px_rgba(245,158,11,0.2)]',
+  };
+
+  const ringClasses: Record<string, string> = {
+    indigo: 'ring-indigo-500/20',
+    emerald: 'ring-emerald-500/20',
+    rose: 'ring-rose-500/20',
+    blue: 'ring-blue-500/20',
+    amber: 'ring-amber-500/20',
+  };
+
   return (
     <button
       onClick={onClick}
-      className={`min-h-[44px] px-4 sm:px-5 py-2.5 rounded-2xl text-[14px] sm:text-[15px] font-bold transition-all active:scale-[0.98] duration-200 relative overflow-hidden flex items-center justify-center ${
+      className={`min-h-[44px] px-4 sm:px-5 py-2.5 rounded-2xl text-[14px] sm:text-[15px] font-bold transition-all active:scale-[0.98] duration-200 relative overflow-hidden flex items-center justify-center gap-2 border ${
         selected 
-          ? 'bg-slate-900 text-white shadow-md border-transparent -translate-y-0.5' 
-          : 'bg-white/70 backdrop-blur-md text-slate-600 hover:bg-white hover:text-slate-900 border border-slate-200/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300'
+          ? `${selectedClasses[accentColor]} ring-2 ${ringClasses[accentColor]} ring-offset-1 -translate-y-0.5` 
+          : 'bg-white/70 backdrop-blur-md text-slate-600 hover:bg-white hover:text-slate-900 border-slate-200/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300'
       }`}
     >
+      {selected && <Check size={16} strokeWidth={3} className="shrink-0" />}
       <span className="relative z-10">{label}</span>
     </button>
   );
@@ -335,6 +353,7 @@ export default function AiForm({
                     <MultiSelectPill
                       key={vibe}
                       label={vibe}
+                      accentColor="amber"
                       selected={formData.vibes.includes(vibe)}
                       onClick={() => toggleArrayItem('vibes', vibe)}
                     />
@@ -352,6 +371,7 @@ export default function AiForm({
                     <MultiSelectPill
                       key={interest}
                       label={interest}
+                      accentColor="rose"
                       selected={formData.interests.includes(interest)}
                       onClick={() => toggleArrayItem('interests', interest)}
                     />
@@ -369,6 +389,7 @@ export default function AiForm({
                     <MultiSelectPill
                       key={diet}
                       label={diet}
+                      accentColor="indigo"
                       selected={formData.dietary.includes(diet)}
                       onClick={() => toggleArrayItem('dietary', diet)}
                     />
@@ -386,6 +407,7 @@ export default function AiForm({
                     <MultiSelectPill
                       key={trans}
                       label={trans}
+                      accentColor="blue"
                       selected={formData.transport.includes(trans)}
                       onClick={() => toggleArrayItem('transport', trans)}
                     />
@@ -403,6 +425,7 @@ export default function AiForm({
                     <MultiSelectPill
                       key={budget}
                       label={budget}
+                      accentColor="emerald"
                       selected={formData.budget === budget}
                       onClick={() => setFormData(p => ({ ...p, budget: p.budget === budget ? '' : budget }))}
                     />

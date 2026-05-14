@@ -61,6 +61,7 @@ import {
   fetchDirections,
   fetchSpotEnrichment,
   submitLedgerExpense,
+  deleteTripApi,
 } from '../lib/workflowApi';
 import { suggestItineraryWithForm, AiRateLimitedError } from '../lib/openrouterApi';
 import { haversineKm, estimateTransport } from '../lib/geoUtils';
@@ -1532,7 +1533,10 @@ export default function ItineraryTab() {
                 whileHover={{ scale: 1.05, y: -12 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                onClick={() => setActiveTripId(trip.tripId ?? trip.id)}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest('.delete-trip-btn')) return;
+                  setActiveTripId(trip.tripId ?? trip.id);
+                }}
                 className="cursor-pointer group"
               >
                 <GlassCard className="!p-0 overflow-hidden rounded-[32px] border border-white/60 shadow-lg hover:shadow-2xl transition-all h-full flex flex-col">
@@ -1545,7 +1549,32 @@ export default function ItineraryTab() {
                           (e.target as HTMLImageElement).src = DEFAULT_TRIP_IMAGE;
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+                      <div className="absolute top-4 right-4 z-10">
+                        <button
+                          title="刪除此專案"
+                          className="delete-trip-btn w-8 h-8 bg-white/40 hover:bg-red-500 hover:text-white text-white flex items-center justify-center rounded-full backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (window.confirm('確定要刪除「' + trip.name + '」？這將刪除所有相關資料（包含帳務、清單等）且無法復原。')) {
+                              try {
+                                const ok = await deleteTripApi(trip.tripId ?? trip.id);
+                                if (ok) {
+                                  useAppStore.getState().showToast('行程專案已刪除', 'success');
+                                  setUserTrips(prev => prev.filter(t => (t.tripId ?? t.id) !== (trip.tripId ?? trip.id)));
+                                } else {
+                                  useAppStore.getState().showToast('刪除失敗，或您不是該專案擁有者', 'error');
+                                }
+                              } catch (err) {
+                                useAppStore.getState().showToast('刪除發生錯誤', 'error');
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 size={16} strokeWidth={2.5} />
+                        </button>
+                      </div>
                       {(trip.days ?? null) != null && (
                       <div className="absolute bottom-4 left-6">
                          <span className="text-white/80 text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-white/20 backdrop-blur-md rounded-md">

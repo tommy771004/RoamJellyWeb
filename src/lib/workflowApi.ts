@@ -278,6 +278,15 @@ export async function fetchUserTrips(): Promise<any> {
   return Array.isArray(data) ? data : (data.trips || []);
 }
 
+export async function deleteTripApi(tripId: string): Promise<boolean> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/trips/${encodeURIComponent(tripId)}`, {
+    method: 'DELETE',
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+  });
+  return res.ok;
+}
+
 export async function fetchUserPreferences(): Promise<UserPreferencesResponse | null> {
   const token = getStoredToken();
   if (!token) return null;

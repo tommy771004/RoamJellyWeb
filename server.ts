@@ -1691,21 +1691,26 @@ async function startServer() {
     let lng = String(req.query.lng ?? '');
     try {
       if (city && !req.query.lat && !req.query.lng) {
-        const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
-        const geoRes = await fetch(geoUrl);
+        const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
+        const geoRes = await fetch(geoUrl, { headers: { 'User-Agent': 'RoamJelly/1.0' } });
         if (geoRes.ok) {
           const geoData = await geoRes.json();
-          if (geoData.results && geoData.results.length > 0) {
-            lat = String(geoData.results[0].latitude);
-            lng = String(geoData.results[0].longitude);
+          if (geoData && geoData.length > 0) {
+            lat = String(geoData[0].lat);
+            lng = String(geoData[0].lon);
           }
         }
+      }
+
+      if (!lat || !lng) {
+        res.status(404).json({ status: 'error', message: 'location not found' });
+        return;
       }
 
       const url =
         `https://api.open-meteo.com/v1/forecast` +
         `?latitude=${lat}&longitude=${lng}` +
-        `&current=temperature_2m,precipitation_probability` +
+        `&current=temperature_2m,precipitation_probability,weather_code` +
         `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code` +
         `&timezone=auto&forecast_days=14`;
       const apiRes = await fetch(url);
@@ -1716,6 +1721,7 @@ async function startServer() {
         temp_max: Math.round(data.daily?.temperature_2m_max?.[0] || 0),
         temp_min: Math.round(data.daily?.temperature_2m_min?.[0] || 0),
         rain_prob: data.current?.precipitation_probability ?? data.daily?.precipitation_probability_max?.[0] ?? 0,
+        weather_code: data.current?.weather_code ?? data.daily?.weather_code?.[0] ?? 0,
         daily: data.daily?.time?.map((timeStr, idx) => ({
            date: timeStr,
            temp_max: Math.round(data.daily.temperature_2m_max[idx]),
@@ -1869,6 +1875,30 @@ async function startServer() {
         destination: trip.destination ?? '',
       })),
     );
+  });
+
+  app.delete('/api/trips/:trip_id', async (req, res) => {
+    const userId = getRequestUserId(req);
+    const { trip_id } = req.params;
+    if (!userId) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
+    // Only owner can delete the trip
+    const allowed = await ensureTripRole(req, res, trip_id, 'owner');
+    if (!allowed) return;
+
+    try {
+      await repo.deleteTrip(trip_id);
+      
+      // Also broadcast to the room if needed, so clients connected to this trip can react
+      io.to(`trip_${trip_id}`).emit('trip_deleted', { trip_id });
+      
+      res.json({ status: 'success' });
+    } catch (error) {
+      console.error('Delete trip error:', error);
+      res.status(500).json({ status: 'error', message: 'failed to delete trip' });
+    }
   });
 
   // ── Trip: Create new trip ────────────────────────────────────────────────────
