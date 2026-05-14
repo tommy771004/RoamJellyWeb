@@ -35,6 +35,22 @@ export async function geocodeSpot(title: string, city = ''): Promise<{ lat: numb
   return null;
 }
 
+export async function fetchDirections(lng1: number, lat1: number, lng2: number, lat2: number): Promise<number | null> {
+  try {
+    const coords = encodeURIComponent(`${lng1},${lat1};${lng2},${lat2}`);
+    const url = `/api/directions?coords=${coords}`;
+    const apiRes = await fetch(url);
+    if (!apiRes.ok) return null;
+    const data = await apiRes.json();
+    if (data && typeof data.duration === 'number') {
+      return data.duration;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export function getStoredToken(): string | null {
   return localStorage.getItem('access_token');
 }
@@ -482,7 +498,7 @@ export async function updateTripPublicState(tripId: string, isPublic: boolean): 
     body: JSON.stringify({ isPublic }),
   });
   if (!res.ok) {
-    throw await parseApiError(res, '更新公開模板狀態失敗');
+    throw await parseApiError(res, '更新行程狀態失敗');
   }
   return res.json();
 }

@@ -394,8 +394,8 @@ export default function App() {
                      description: spot.ai_note || '',
                      ai_note: spot.ai_note || '',
                      intensity: spot.intensity,
-                     lat: undefined as any,
-                     lng: undefined as any,
+                     lat: spot.lat,
+                     lng: spot.lng,
                      source: 'local' as const,
                    });
                  });
@@ -420,9 +420,9 @@ export default function App() {
             });
           }
 
-          // Geocode all spots in parallel; fall back silently if any fail
+          // Priorities AI generated lat/lng, otherwise Geocode spots in parallel; fall back silently if any fail
           const geocodeResults = await Promise.allSettled(
-            nodes.map(n => geocodeSpot(n.title, data.destination))
+            nodes.map(n => (n.lat && n.lng) ? Promise.resolve({ lat: n.lat, lng: n.lng }) : geocodeSpot(n.title, data.destination))
           );
           geocodeResults.forEach((r, i) => {
             if (r.status === 'fulfilled' && r.value) {

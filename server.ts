@@ -1642,6 +1642,25 @@ async function startServer() {
   });
 
   // ── Spot enrichment via Wikipedia ─────────────────────────────────────────
+  app.get('/api/directions', async (req, res) => {
+    const coords = String(req.query.coords ?? '');
+    if (!coords) { res.json({ duration: null }); return; }
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=false`;
+      const apiRes = await fetch(url, { headers: { 'User-Agent': 'RoamJellyApp/1.0' } });
+      if (!apiRes.ok) { res.json({ duration: null }); return; }
+      const data = (await apiRes.json()) as any;
+      if (data.routes && data.routes.length > 0) {
+        // duration is in seconds
+        res.json({ duration: Math.round(data.routes[0].duration / 60) });
+      } else {
+        res.json({ duration: null });
+      }
+    } catch {
+      res.json({ duration: null });
+    }
+  });
+
   app.get('/api/spots/enrich', async (req, res) => {
     const name = String(req.query.name ?? '').trim();
     if (!name) { res.json({}); return; }

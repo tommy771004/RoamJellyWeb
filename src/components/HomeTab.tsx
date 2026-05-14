@@ -1477,7 +1477,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Globe className="text-sky-500" size={24} />
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight">公開模板大廳</h2>
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight">分享行程</h2>
                 </div>
                 <span className="text-[10px] font-black tracking-[0.15em] uppercase text-slate-400">fork-and-remix</span>
               </div>
