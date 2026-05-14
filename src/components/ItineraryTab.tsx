@@ -1467,7 +1467,7 @@ export default function ItineraryTab() {
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-32 animate-in fade-in duration-700">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-12">
             <div>
-              <h1 className="text-2xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight">您的行程手帳</h1>
+              <h1 className="text-2xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight text-balance">您的行程手帳</h1>
               <p className="text-slate-400 font-bold">請選擇一個現有行程專案，或由 AI 啟動規劃 🌍</p>
             </div>
           </div>
@@ -1486,7 +1486,7 @@ export default function ItineraryTab() {
                   <div className="flex items-center gap-2 mb-4">
                      <span className="bg-fuchsia-100 text-fuchsia-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Powered by AI</span>
                   </div>
-                  <h2 className="text-xl sm:text-3xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-6 leading-tight tracking-tight">準備好下一個目的地了嗎？</h2>
+                  <h2 className="text-xl sm:text-3xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-6 leading-tight tracking-tight text-balance">準備好下一個目的地了嗎？</h2>
                   <p className="text-slate-500 font-bold text-sm sm:text-xl mb-4 sm:mb-10 leading-relaxed max-w-2xl">
                     輸入想去的地方與偏好，讓 AI 為您量身打造專屬行程，並立即啟動即時共編。
                   </p>
@@ -1708,6 +1708,7 @@ export default function ItineraryTab() {
         <div className="absolute top-8 left-5 right-5 flex justify-between items-start z-50 lg:hidden">
             <button
               onClick={handleBackToTrips}
+              aria-label="返回"
               className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
             >
               <ArrowLeft size={20} strokeWidth={3} />
@@ -1722,6 +1723,7 @@ export default function ItineraryTab() {
               </button>
               <button
                 onClick={handleShare}
+                aria-label="分享行程"
                 className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
               >
                 <Share2 size={18} strokeWidth={3} />
@@ -1730,7 +1732,7 @@ export default function ItineraryTab() {
         </div>
 
         <div className="absolute bottom-8 left-6 right-6 lg:hidden flex flex-col gap-3 z-50">
-          <h1 className="text-4xl sm:text-5xl font-black text-slate-800 leading-tight drop-shadow-sm font-serif tracking-tight line-clamp-2">
+          <h1 className="text-4xl sm:text-5xl font-black text-slate-800 leading-tight drop-shadow-sm font-serif tracking-tight line-clamp-2 text-balance">
             {tripInfo?.name || tripInfo?.destination}
           </h1>
           <div className="flex items-center gap-2 text-slate-700 font-black text-[10px] uppercase tracking-widest flex-wrap">
@@ -2013,7 +2015,7 @@ export default function ItineraryTab() {
                       <span>DAY</span>
                       {loadingDay === day && <Loader2 size={11} className="animate-spin" />}
                     </span>
-                    <span className="text-lg sm:text-xl leading-none">{day}</span>
+                    <span className="text-lg sm:text-xl leading-none tabular-nums">{day}</span>
                     {displayDate && <span className={`text-[10px] font-bold mt-1.5 opacity-60 tracking-tight`}>{displayDate}</span>}
                   </motion.button>
                 );
@@ -2372,7 +2374,8 @@ export default function ItineraryTab() {
       {/* Floating Action Buttons (Mobile Only) */}
       <div className="md:hidden fixed bottom-24 right-5 flex flex-col gap-4 z-50">
         {!loading && favorites.length > 0 && (
-          <button 
+          <button
+            aria-label={`口袋名單 (${favorites.length} 個景點)`}
             onClick={() => setShowMobileFavorites(true)}
             className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl active:scale-90 transition-all group overflow-hidden shadow-fuchsia-200/50 relative"
           >
@@ -2385,7 +2388,8 @@ export default function ItineraryTab() {
             </div>
           </button>
         )}
-        <button 
+        <button
+          aria-label="AI 行程規劃"
           onClick={() => setIsPlanningNew(true)}
           className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl active:scale-90 transition-all group overflow-hidden shadow-pink-200/50"
         >
@@ -2424,7 +2428,8 @@ export default function ItineraryTab() {
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Saved Spots</p>
                   </div>
                 </div>
-                <button 
+                <button
+                  aria-label="關閉口袋名單"
                   onClick={() => setShowMobileFavorites(false)}
                   className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors"
                 >

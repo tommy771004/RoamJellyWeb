@@ -152,6 +152,18 @@
   }
 }
 
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 html {
   scroll-behavior: auto;
 }
@@ -165,6 +177,10 @@ body {
   background-color: var(--color-surface);
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: contain;
+}
+
+button, a {
+  touch-action: manipulation;
 }
 
 .jelly-bg {

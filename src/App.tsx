@@ -692,17 +692,18 @@ export default function App() {
             )}
           </div>
           
-          <div 
+          <button
+            type="button"
+            aria-label={isLoggedIn ? '個人檔案' : '登入'}
             onClick={() => {
               if (!isLoggedIn) {
                 setLoginPromptMode('default');
                 setShowLogin(true);
               } else {
-                // Open user profile directly if clicking avatar on mobile (or desktop)
                 setShowUserProfile(true);
               }
             }}
-            className={`flex items-center gap-3 cursor-pointer group rounded-full border shadow-sm transition-all pl-3 pr-1 py-1 ${isLoggedIn ? 'bg-fuchsia-50/80 border-fuchsia-200/50 hover:bg-fuchsia-100/80' : 'bg-slate-50/80 border-slate-200 hover:bg-white/90'}`}
+            className={`flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'bg-fuchsia-50/80 border-fuchsia-200/50 hover:bg-fuchsia-100/80' : 'bg-slate-50/80 border-slate-200 hover:bg-white/90'}`}
           >
             <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-fuchsia-700' : 'text-slate-500'}`}>
               {isLoggedIn ? `${userId} 您好` : '未登入'}
@@ -710,7 +711,7 @@ export default function App() {
             <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center pb-1 transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-pink-100' : 'bg-slate-200'}`}>
               <span className="text-lg pt-1">{isLoggedIn ? '🐴' : '🤫'}</span>
             </div>
-          </div>
+          </button>
         </div>
       </header>
 
