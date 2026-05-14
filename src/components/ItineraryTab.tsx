@@ -2599,6 +2599,16 @@ function DraggableFavoriteSpot({
   );
 }
 
+function extractMinutes(text: string): number {
+  if (!text) return 0;
+  let totalMinutes = 0;
+  const hrMatch = text.match(/(\d+)\s*(h|hr|小時|時)/i);
+  if (hrMatch) totalMinutes += parseInt(hrMatch[1], 10) * 60;
+  const minMatch = text.match(/(\d+)\s*(m|min|分鐘|分)/i);
+  if (minMatch) totalMinutes += parseInt(minMatch[1], 10);
+  return totalMinutes;
+}
+
 function TransportGapIndicator({ item, nextItem, timeGapMinutes, timeGapStr }: { item: ItineraryNode; nextItem: ItineraryNode; timeGapMinutes: number; timeGapStr: string }) {
   const [apiDuration, setApiDuration] = useState<number | null>(null);
 
@@ -2621,7 +2631,9 @@ function TransportGapIndicator({ item, nextItem, timeGapMinutes, timeGapStr }: {
     : null;
 
   const displayTransport = (() => {
-    if (item.transport_to_next) return { emoji: '🚇', label: item.transport_to_next, minutes: 0, isApi: false };
+    if (item.transport_to_next) {
+      return { emoji: '🚇', label: item.transport_to_next, minutes: extractMinutes(item.transport_to_next), isApi: false };
+    }
     if (autoTransport) {
       if (apiDuration && km > 2) {
         return { emoji: '🚗', label: `預計車程 ${apiDuration} 分鐘`, minutes: apiDuration, isApi: true };
@@ -2632,7 +2644,6 @@ function TransportGapIndicator({ item, nextItem, timeGapMinutes, timeGapStr }: {
   })();
 
   const hasTransitConflict = Boolean(displayTransport && timeGapMinutes > 0 && displayTransport.minutes > timeGapMinutes);
-  const hasTightScheduleConflict = Boolean(timeGapMinutes > 0 && timeGapMinutes < 30);
   const showBadge = timeGapStr || displayTransport;
 
   return showBadge ? (
@@ -2647,22 +2658,16 @@ function TransportGapIndicator({ item, nextItem, timeGapMinutes, timeGapStr }: {
             </span>
           )}
           {displayTransport && (
-            <span className={`px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 transition-transform hover:scale-105 ${hasTransitConflict ? 'bg-rose-50/90 text-rose-600 border-rose-100' : (displayTransport.isApi ? 'bg-sky-50 text-sky-600 border-sky-100 shadow-[0_0_10px_-2px_rgba(14,165,233,0.2)]' : 'bg-indigo-50/90 text-indigo-500 border-indigo-100')}`}>
+            <span className={`px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 transition-transform hover:scale-105 ${hasTransitConflict ? 'bg-amber-50/90 text-amber-600 border-amber-100' : (displayTransport.isApi ? 'bg-sky-50 text-sky-600 border-sky-100 shadow-[0_0_10px_-2px_rgba(14,165,233,0.2)]' : 'bg-indigo-50/90 text-indigo-500 border-indigo-100')}`}>
               <span>{displayTransport.emoji}</span>
               {displayTransport.label}
               {displayTransport.isApi && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />}
             </span>
           )}
           {hasTransitConflict && (
-            <span className="px-3.5 py-1.5 bg-rose-50/90 rounded-full text-[10px] sm:text-[11px] font-black text-rose-600 uppercase tracking-widest border border-rose-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5">
+            <span className="px-3.5 py-1.5 bg-amber-50/90 rounded-full text-[10px] sm:text-[11px] font-black text-amber-600 uppercase tracking-widest border border-amber-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5">
               <span>⚠️</span>
-              交通時間可能塞不下
-            </span>
-          )}
-          {hasTightScheduleConflict && (
-            <span className="px-3.5 py-1.5 bg-amber-50/95 rounded-full text-[10px] sm:text-[11px] font-black text-amber-600 uppercase tracking-widest border border-amber-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5">
-              <span>⚠️</span>
-              緊湊行程
+              行程太緊湊
             </span>
           )}
         </div>
@@ -3098,7 +3103,7 @@ function ItineraryListItem({
          
          <div className="w-full">
            {isEditing ? (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 pb-32">
                  <input 
                    autoFocus
                    value={editTitle}
@@ -3106,29 +3111,19 @@ function ItineraryListItem({
                     className="text-lg font-black text-slate-900 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowDatePicker(true)}
-                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none hover:ring-4 hover:ring-pink-100 transition-all text-left flex items-center gap-2"
-                    >
-                      <span className="text-pink-400">📅</span>
-                      {editDate || '選擇日期'}
-                    </button>
-                    {showDatePicker && (
-                      <DatePickerPopup
-                        allowPast
-                        selectedDate={editDate}
-                        onSelect={setEditDate}
-                        onClose={() => setShowDatePicker(false)}
-                      />
-                    )}
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={e => setEditDate(e.target.value)}
+                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
+                    />
                     <input
                       type="time"
                       inputMode="numeric"
                       step={300}
                       value={editTime}
                       onChange={e => setEditTime(e.target.value)}
-                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -3792,10 +3787,10 @@ function ManualAddNode({
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
-          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] overflow-hidden"
+          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] overflow-hidden flex flex-col max-h-[90dvh]"
         >
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400" />
-          <div className="p-8">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
+          <div className="p-5 sm:p-8 overflow-y-auto w-full pb-32">
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-4">
@@ -4094,10 +4089,10 @@ function QuickExpenseModal({
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-[230] overflow-hidden"
+          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-[230] overflow-hidden flex flex-col max-h-[90dvh]"
         >
-          <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400" />
-          <form onSubmit={handleSubmit} className="p-7 sm:p-8 flex flex-col gap-5">
+          <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 z-10" />
+          <form onSubmit={handleSubmit} className="p-7 sm:p-8 flex flex-col gap-5 pb-32 overflow-y-auto">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Quick Expense</p>
