@@ -564,7 +564,40 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [activeGuide, setActiveGuide] = useState<CountryGuide | null>(null);
   const [activeHandbook, setActiveHandbook] = useState<typeof EXPERT_HANDBOOKS[0] | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const [searchProgress, setSearchProgress] = useState(0);
+  const [progressMsgIdx, setProgressMsgIdx] = useState(0);
   const prefersReducedMotion = useReducedMotion();
+
+  const SEARCH_LOADING_MESSAGES = ['搜尋航班中...', '比較多家票價...', '篩選最優惠...', '整理結果中...'];
+
+  useEffect(() => {
+    if (!loading) {
+      if (searchProgress > 0) {
+        setSearchProgress(100);
+        const t = setTimeout(() => setSearchProgress(0), 500);
+        return () => clearTimeout(t);
+      }
+      return;
+    }
+    setSearchProgress(0);
+    setProgressMsgIdx(0);
+    const progressInterval = setInterval(() => {
+      setSearchProgress(prev => {
+        if (prev < 30) return prev + 4;
+        if (prev < 60) return prev + 1.8;
+        if (prev < 82) return prev + 0.6;
+        return Math.min(prev + 0.08, 92);
+      });
+    }, 120);
+    const msgInterval = setInterval(() => {
+      setProgressMsgIdx(prev => (prev + 1) % SEARCH_LOADING_MESSAGES.length);
+    }, 2000);
+    return () => {
+      clearInterval(progressInterval);
+      clearInterval(msgInterval);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
   const cardSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
   const cardActionClass = `${subtlePressableClass} ${raisedHoverClass}`;
   const searchFieldSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
@@ -1242,21 +1275,49 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           </div>
 
           <div className="relative min-h-[300px]">
-            {/* Loading Overlay */}
+            {/* Loading Overlay — Skyscanner-style progress bar */}
             <AnimatePresence>
               {loading && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-50 flex flex-col items-center pt-24 bg-white/40 rounded-[24px]"
+                  className="absolute inset-0 z-50 flex flex-col items-center pt-20 bg-white/50 backdrop-blur-sm rounded-[24px]"
                 >
-                  <div className="flex flex-col items-center space-y-4 p-8 bg-white/95 shadow-2xl rounded-3xl border border-slate-200/80">
-                    <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin shadow-sm" />
-                    <div className="text-center">
-                      <p className="text-slate-800 font-black text-sm tracking-widest uppercase mb-1">正在即時爬取航班資訊...</p>
-                      <p className="text-slate-500 font-medium text-xs tracking-wider">這可能會需要一些時間，請稍候</p>
+                  <div className="flex flex-col items-center gap-5 p-7 bg-white/97 shadow-2xl rounded-3xl border border-slate-200/80 w-[88%] max-w-sm">
+                    {/* Animated plane */}
+                    <div className="relative w-full h-6 flex items-center overflow-hidden">
+                      <motion.div
+                        animate={{ x: ['0%', '85%', '0%'] }}
+                        transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+                        className="absolute"
+                      >
+                        <PlaneTakeoff size={20} className="text-[#b35f76]" />
+                      </motion.div>
                     </div>
+
+                    {/* Progress bar */}
+                    <div className="w-full flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest leading-none">
+                          {SEARCH_LOADING_MESSAGES[progressMsgIdx]}
+                        </span>
+                        <span className="text-[11px] font-black text-slate-400 tabular-nums">
+                          {Math.round(searchProgress)}%
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full rounded-full bg-gradient-to-r from-[#b35f76] via-[#7b5ea7] to-[#2c6956]"
+                          animate={{ width: `${searchProgress}%` }}
+                          transition={{ duration: 0.25, ease: 'easeOut' }}
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-slate-400 font-medium text-[11px] tracking-wide text-center">
+                      即時爬取航班資訊，這可能需要一些時間
+                    </p>
                   </div>
                 </motion.div>
               )}

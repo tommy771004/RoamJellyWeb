@@ -1593,7 +1593,11 @@ async function startServer() {
       try {
         otaData = await scrapeTripRoundTrip(from, to, date, returnDate);
       } catch (err) {
-        console.error('scrapeTripRoundTrip failed, falling back to oneway:', err);
+        console.error('scrapeTripRoundTrip threw, falling back to oneway:', err);
+      }
+      // scrapeTripRoundTrip catches its own errors and returns [] — check empty too
+      if (!otaData || otaData.length === 0) {
+        console.log('[search] roundtrip scraper returned empty, falling back to oneway');
         otaData = await fetchFromOtaProvider(from, to, date);
       }
     } else {
