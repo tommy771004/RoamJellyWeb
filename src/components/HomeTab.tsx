@@ -564,6 +564,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [activeGuide, setActiveGuide] = useState<CountryGuide | null>(null);
   const [activeHandbook, setActiveHandbook] = useState<typeof EXPERT_HANDBOOKS[0] | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const [isHeroExpanded, setIsHeroExpanded] = useState<boolean>(true);
   const [searchProgress, setSearchProgress] = useState(0);
   const [progressMsgIdx, setProgressMsgIdx] = useState(0);
   const prefersReducedMotion = useReducedMotion();
@@ -598,6 +599,11 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
+
+  useEffect(() => {
+    if (!loading && hasSearched) setIsHeroExpanded(false);
+  }, [loading]);
+
   const cardSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
   const cardActionClass = `${subtlePressableClass} ${raisedHoverClass}`;
   const searchFieldSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
@@ -960,14 +966,14 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-32 md:pb-14"
     >
       {/* === HERO SECTION with gradient background === */}
-      <div className="relative z-10 w-full pt-14 sm:pt-[72px] pb-12 sm:pb-14 px-4 sm:px-6 overflow-visible">
+      <div className={`relative z-10 w-full pt-14 sm:pt-[72px] ${!isHeroExpanded ? 'pb-3' : 'pb-12 sm:pb-14'} px-4 sm:px-6 overflow-visible`}>
         <div className="absolute inset-0 bg-gradient-to-br from-rose-200/90 via-pink-100 to-sky-200/80 pointer-events-none" />
         <div className="absolute -top-10 right-10 w-72 h-72 bg-rose-300/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 left-0 w-72 h-72 bg-sky-300/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-20 max-w-[980px] mx-auto w-full">
           {/* Hero title */}
-          <div className="text-center mb-5 sm:mb-6">
+          <div className={`text-center mb-5 sm:mb-6${!isHeroExpanded ? ' hidden sm:block' : ''}`}>
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-2.5">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight">AI 智慧行程規劃</h1>
               <span className="px-2.5 py-1 rounded-full bg-white/60 border border-pink-200 text-pink-600 text-[10px] sm:text-[11px] font-black uppercase tracking-wider backdrop-blur-sm">BETA</span>
@@ -977,7 +983,26 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
           {/* === SEARCH FORM === */}
           <div className={`relative z-20 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
+            {/* Compact search summary bar — mobile only, shown after search */}
+            {!isHeroExpanded && (
+              <button
+                onClick={() => setIsHeroExpanded(true)}
+                className="relative z-20 md:hidden w-full flex items-center gap-2.5 rounded-[28px] border border-white/80 bg-[rgba(255,255,255,0.72)] px-4 py-3 shadow-[0_8px_24px_rgba(156,63,89,0.12)] backdrop-blur-[20px]"
+              >
+                <PlaneTakeoff size={16} className="text-[#b35f76] shrink-0" />
+                <span className="flex-1 text-left text-[15px] font-black text-slate-900 truncate">
+                  {searchForm.from || '—'} → {searchForm.to || '—'}
+                </span>
+                <span className="text-[11px] font-bold text-slate-400 shrink-0 truncate max-w-[150px]">
+                  {searchForm.date}{searchForm.tripType === 'roundtrip' && searchForm.returnDate ? ` · ↩ ${searchForm.returnDate}` : ''}
+                </span>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-md">
+                  <SearchIcon size={13} strokeWidth={3} />
+                </div>
+              </button>
+            )}
             {/* Mobile layout: vertical stacked fields */}
+            {isHeroExpanded && (
             <div className="relative z-20 md:hidden rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(255,255,255,0.32))] p-5 shadow-[0_18px_44px_rgba(156,63,89,0.10)] backdrop-blur-[24px]">
               {/* Trip type toggle */}
               <div className="flex items-center gap-1 mb-4 p-1 rounded-full bg-white/50 border border-white/70 w-fit">
@@ -994,7 +1019,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="space-y-2">
                   <Label htmlFor="search-from-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">出發從哪裡</Label>
                   <div
-                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
+                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -1015,7 +1040,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="space-y-2">
                   <Label htmlFor="search-to-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">飛往目的地</Label>
                   <div
-                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
+                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -1036,7 +1061,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="space-y-2">
                   <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">去程日期</span>
                   <div
-                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
+                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); setShowReturnDatePicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -1052,7 +1077,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   <div className="space-y-2">
                     <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">回程日期</span>
                     <div
-                      className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
+                      className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                       onClick={() => { setShowReturnDatePicker(!showReturnDatePicker); setShowDatePicker(false); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
                     >
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -1083,6 +1108,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 </button>
               </div>
             </div>
+            )}
 
             {/* Desktop layout: horizontal pill */}
             <div className="relative z-20 hidden md:flex flex-col items-center gap-3 pt-2">

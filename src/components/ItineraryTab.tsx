@@ -1443,7 +1443,7 @@ export default function ItineraryTab() {
   if (!activeTripId) {
     if (isPlanningNew) {
       return (
-        <div className="flex-1 flex flex-col pt-8 sm:pt-12 bg-[#fcfdff] min-h-[100dvh] max-h-[100dvh] overflow-y-auto scroll-smooth">
+        <div className="flex-1 flex flex-col pt-4 sm:pt-10 bg-[#fcfdff] min-h-[100dvh] max-h-[100dvh] overflow-y-auto scroll-smooth">
           <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
             <button 
               onClick={() => setIsPlanningNew(false)}
@@ -1464,38 +1464,38 @@ export default function ItineraryTab() {
 
     return (
       <div className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] selection:bg-pink-100">
-        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-10 font-sans pb-32 animate-in fade-in duration-700">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-32 animate-in fade-in duration-700">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-12">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight">您的行程手帳</h1>
+              <h1 className="text-2xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight">您的行程手帳</h1>
               <p className="text-slate-400 font-bold">請選擇一個現有行程專案，或由 AI 啟動規劃 🌍</p>
             </div>
           </div>
 
         {/* AI Planning Entry Hero */}
-        <div className="mb-16">
-          <motion.div 
+        <div className="mb-8 md:mb-16">
+          <motion.div
             whileHover={{ scale: 1.02, y: -8 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             onClick={() => setIsPlanningNew(true)}
             className="cursor-pointer group relative overflow-hidden rounded-[40px] p-1 shadow-2xl bg-gradient-to-r from-pink-500 via-fuchsia-500 to-indigo-500"
           >
-            <div className="bg-white rounded-[38px] p-10 md:p-12 h-full flex flex-col md:flex-row items-center gap-10">
+            <div className="bg-white rounded-[38px] p-5 sm:p-8 md:p-12 h-full flex flex-col md:flex-row items-center gap-5 md:gap-10">
                <div className="flex-1">
                   <div className="flex items-center gap-2 mb-4">
                      <span className="bg-fuchsia-100 text-fuchsia-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Powered by AI</span>
                   </div>
-                  <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-6 leading-tight tracking-tight">準備好下一個目的地了嗎？</h2>
-                  <p className="text-slate-500 font-bold text-xl mb-10 leading-relaxed max-w-2xl">
+                  <h2 className="text-xl sm:text-3xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-6 leading-tight tracking-tight">準備好下一個目的地了嗎？</h2>
+                  <p className="text-slate-500 font-bold text-sm sm:text-xl mb-4 sm:mb-10 leading-relaxed max-w-2xl">
                     輸入想去的地方與偏好，讓 AI 為您量身打造專屬行程，並立即啟動即時共編。
                   </p>
-                  <button className="px-10 py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest flex items-center gap-3 group-hover:bg-slate-800 transition-all shadow-xl">
+                  <button className="px-5 py-3 sm:px-10 sm:py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest flex items-center gap-3 group-hover:bg-slate-800 transition-all shadow-xl">
                     <Sparkles size={20} />
                     開始智慧 AI 規劃
                   </button>
                </div>
-               <div className="w-full md:w-1/3 flex justify-center">
+               <div className="hidden md:flex md:w-1/3 justify-center">
                   <div className="relative">
                     <div className="w-48 h-48 bg-fuchsia-100 rounded-[48px] rotate-12 absolute -inset-2 opacity-50 blur-2xl animate-pulse" />
                     <div className="w-48 h-48 bg-white border-4 border-slate-50 rounded-[48px] shadow-xl flex items-center justify-center text-6xl relative z-10">
@@ -1696,7 +1696,7 @@ export default function ItineraryTab() {
         )}
 
       {/* Cover Image Banner */}
-      <div className="relative w-full h-[45vh] md:h-64 overflow-hidden md:rounded-[40px] mb-8 print:hidden -mt-4 md:mt-0 shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-10 sm:max-w-[calc(100%-2rem)] sm:mx-auto">
+      <div className="relative w-full h-[28vh] sm:h-[35vh] md:h-64 overflow-hidden md:rounded-[40px] mb-8 print:hidden -mt-4 md:mt-0 shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-10 sm:max-w-[calc(100%-2rem)] sm:mx-auto">
         {tripInfo?.coverImage ? (
           <img src={tripInfo.coverImage} alt={tripInfo.destination} className="w-full h-full object-cover scale-105" />
         ) : (

@@ -624,7 +624,7 @@ export default function App() {
           )}
           <button
             onClick={() => setDarkMode(!isDarkMode)}
-            className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
             aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
