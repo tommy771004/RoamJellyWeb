@@ -93,6 +93,7 @@ import {
 } from '../lib/itineraryUtils';
 import { triggerHapticFeedback } from '../lib/haptics';
 import { getModalMotion, getOverlayTransition, getSheetMotion } from '../lib/motionTokens';
+import { useTypewriter } from '../lib/useTypewriter';
 
 const ItineraryMapView = lazy(() => import('./ItineraryMapView'));
 
@@ -3488,6 +3489,7 @@ function ItineraryList({
   const [isFavoriteDragOver, setIsFavoriteDragOver] = useState(false);
   const [manualAddTrigger, setManualAddTrigger] = useState(0);
   const [aiQuoteIndex, setAiQuoteIndex] = useState(0);
+  const { displayed: aiQuoteDisplayed, done: aiQuoteDone } = useTypewriter(AI_LOADING_QUOTES[aiQuoteIndex], 40);
 
   useEffect(() => {
     if (!draggingFavorite) {
@@ -3631,7 +3633,10 @@ function ItineraryList({
                </div>
                <div className="min-w-0">
                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-500">AI 正在排今天的節奏</p>
-                 <p className="mt-1 text-sm font-bold text-slate-700">{AI_LOADING_QUOTES[aiQuoteIndex]}</p>
+                 <p className="mt-1 text-sm font-bold text-slate-700">
+                   {aiQuoteDisplayed}
+                   <span className={`inline-block w-[1.5px] h-[0.9em] ml-[1px] align-middle bg-indigo-400 ${aiQuoteDone ? 'opacity-0' : 'animate-pulse'}`} />
+                 </p>
                </div>
              </div>
            </motion.div>

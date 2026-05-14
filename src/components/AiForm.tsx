@@ -5,6 +5,7 @@ import GlassCard from './GlassCard';
 import IconImg from './ui/IconImg';
 import { LocationPickerPopup } from './LocationPickerPopup';
 import { useSearchStore } from '../store/useSearchStore';
+import { useKeyboardHeight } from '../lib/useKeyboardHeight';
 
 const COMPANION_OPTIONS = [
   { id: 'solo', label: '獨自行走', emoji: 'hiking-boot' },
@@ -84,6 +85,7 @@ export default function AiForm({
   onCancel?: () => void;
 }) {
   const { aiProfile, saveAiProfile } = useSearchStore();
+  const keyboardHeight = useKeyboardHeight();
   const [step, setStep] = useState(1);
   const [showDestDropdown, setShowDestDropdown] = useState(false);
   const [showDepDropdown, setShowDepDropdown] = useState(false);
@@ -297,23 +299,31 @@ export default function AiForm({
               </div>
             </div>
 
-            {/* Next Button */}
-            <div className="pt-4 sticky bottom-4 sm:static z-[100]">
-              <button
-                onClick={handleNext}
-                disabled={!formData.departure || !formData.destination || !formData.companions}
-                className={`w-full h-14 sm:h-16 rounded-2xl font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-200 shadow-lg sm:shadow-md ${
-                  !formData.departure || !formData.destination || !formData.companions
-                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none'
-                    : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98] border border-transparent'
-                }`}
-              >
-                下一步，設定偏好細節
-                <ArrowLeft className="rotate-180" size={18} />
-              </button>
-              <p className="mt-3 text-center text-[12px] font-medium text-slate-500 tracking-wide">
-                {stepOneHint}
-              </p>
+            {/* Spacer so last field isn't hidden under fixed button on mobile */}
+            <div className="sm:hidden shrink-0" style={{ height: keyboardHeight > 0 ? keyboardHeight + 80 : 16 }} />
+
+            {/* Next Button — fixed above keyboard on mobile, static on desktop */}
+            <div
+              className="fixed bottom-0 left-0 right-0 z-[100] sm:static sm:z-auto sm:pt-4"
+              style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 16 }}
+            >
+              <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-0 sm:pb-0 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none">
+                <button
+                  onClick={handleNext}
+                  disabled={!formData.departure || !formData.destination || !formData.companions}
+                  className={`w-full h-14 sm:h-16 rounded-2xl font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-200 shadow-lg sm:shadow-md ${
+                    !formData.departure || !formData.destination || !formData.companions
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none'
+                      : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98] border border-transparent'
+                  }`}
+                >
+                  下一步，設定偏好細節
+                  <ArrowLeft className="rotate-180" size={18} />
+                </button>
+                <p className="mt-2 text-center text-[12px] font-medium text-slate-500 tracking-wide">
+                  {stepOneHint}
+                </p>
+              </div>
             </div>
           </motion.div>
         )}
@@ -434,20 +444,31 @@ export default function AiForm({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 pt-2 w-full sticky bottom-4 sm:static z-[100]">
-              <button
-                onClick={handleBack}
-                className="w-full sm:w-auto px-6 h-14 sm:h-16 rounded-2xl font-bold text-[15px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-sm hover:shadow-md transition-all active:scale-95 shrink-0"
-              >
-                返回
-              </button>
-              <button
-                onClick={handleSubmit}
-                className="flex-1 w-full h-14 sm:h-16 rounded-2xl font-black text-[15px] sm:text-base text-white flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg active:scale-[0.98] transition-all tracking-wider border border-transparent"
-              >
-                生成行程
-                <Sparkles size={20} />
-              </button>
+            {/* Spacer so last field isn't hidden under fixed button on mobile */}
+            <div className="sm:hidden shrink-0" style={{ height: keyboardHeight > 0 ? keyboardHeight + 80 : 16 }} />
+
+            {/* Submit buttons — fixed above keyboard on mobile, static on desktop */}
+            <div
+              className="fixed bottom-0 left-0 right-0 z-[100] sm:static sm:z-auto"
+              style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 16 }}
+            >
+              <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-2 sm:pb-0 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none">
+                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
+                  <button
+                    onClick={handleBack}
+                    className="w-full sm:w-auto px-6 h-14 sm:h-16 rounded-2xl font-bold text-[15px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-sm hover:shadow-md transition-all active:scale-95 shrink-0"
+                  >
+                    返回
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 w-full h-14 sm:h-16 rounded-2xl font-black text-[15px] sm:text-base text-white flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg active:scale-[0.98] transition-all tracking-wider border border-transparent"
+                  >
+                    生成行程
+                    <Sparkles size={20} />
+                  </button>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
