@@ -570,7 +570,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex-1 jelly-bg w-full h-full flex flex-col min-h-[100dvh] relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
+    <div className="flex-1 jelly-bg w-full h-full flex flex-col min-h-screen-dvh relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
       {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
       {(import.meta as any).env.MODE !== 'production' && (
         <div className="fixed top-2 left-2 z-[60] flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
