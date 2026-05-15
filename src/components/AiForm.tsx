@@ -161,15 +161,15 @@ export default function AiForm({
   return (
     <div className="relative flex flex-col h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* Refined Immersive Background for AI Form */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden fixed bg-[#fafbfc]">
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#fafbfc]">
         <div className="absolute top-[-10%] right-[-10%] w-[80%] h-[80%] bg-pink-100/40 blur-[120px] rounded-full mix-blend-multiply" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[80%] h-[80%] bg-indigo-100/40 blur-[120px] rounded-full mix-blend-multiply" />
       </div>
 
-      <div className="relative z-10 flex flex-col h-full w-full px-4 sm:px-8 py-6 sm:py-10 pb-tab-safe max-w-4xl mx-auto">
-        <div className="flex justify-between items-start mb-6 sm:mb-10">
+      <div className="relative z-10 flex flex-col h-full w-full px-4 sm:px-8 py-4 sm:py-10 pb-tab-safe max-w-4xl mx-auto">
+        <div className="flex justify-between items-start mb-4 sm:mb-10">
           <div>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-800 leading-tight tracking-tight mb-2">
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-800 leading-tight tracking-tight mb-1 sm:mb-2">
               為您量身打造行程
             </h2>
             <div className="flex items-center gap-2">
@@ -300,12 +300,12 @@ export default function AiForm({
             </div>
 
             {/* Spacer so last field isn't hidden under fixed button on mobile */}
-            <div className="sm:hidden shrink-0" style={{ height: keyboardHeight > 0 ? keyboardHeight + 80 : 16 }} />
+            <div className="sm:hidden shrink-0" style={{ height: keyboardHeight > 0 ? keyboardHeight + 80 : 80 }} />
 
             {/* Next Button — fixed above keyboard on mobile, static on desktop */}
             <div
               className="fixed bottom-0 left-0 right-0 w-full z-[100] sm:static sm:z-auto sm:pt-4"
-              style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 16 }}
+              style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
             >
               <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-0 sm:pb-0 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none">
                 <button
@@ -445,12 +445,12 @@ export default function AiForm({
             </div>
 
             {/* Spacer so last field isn't hidden under fixed button on mobile */}
-            <div className="sm:hidden shrink-0" style={{ height: keyboardHeight > 0 ? keyboardHeight + 80 : 16 }} />
+            <div className="sm:hidden shrink-0" style={{ height: keyboardHeight > 0 ? keyboardHeight + 80 : 80 }} />
 
             {/* Submit buttons — fixed above keyboard on mobile, static on desktop */}
             <div
               className="fixed bottom-0 left-0 right-0 w-full z-[100] sm:static sm:z-auto"
-              style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 16 }}
+              style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
             >
               <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-2 sm:pb-0 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none">
                 <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
