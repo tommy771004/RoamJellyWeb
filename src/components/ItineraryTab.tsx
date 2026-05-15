@@ -3040,10 +3040,10 @@ function ItineraryListItem({
       {collaboratingLock && (
         <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
-      <GlassCard
-        className={`flex-1 !p-2 sm:!p-3.5 md:!p-4 !rounded-[20px] sm:!rounded-[24px] ${getCategoryStyle(item.category)} shadow-[0_4px_20px_-8px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-700 border border-white/80 relative z-10 w-full ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingLock ? 'ring-2 ring-fuchsia-400/60' : ''} ${isRecentlySynced ? 'ring-2 ring-emerald-300/80 bg-emerald-50/40 shadow-[0_0_18px_-6px_rgba(16,185,129,0.45)]' : ''} ${item.linkedFactId ? 'ring-2 ring-sky-300/40 border-sky-200/50 shadow-[0_0_15px_-5px_rgba(14,165,233,0.3)]' : ''}`}
+      <div
+        className={`flex-1 p-2 sm:p-3.5 md:p-4 rounded-[20px] sm:rounded-[24px] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 relative z-10 w-full ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingLock ? 'ring-2 ring-fuchsia-400/60' : ''} ${isRecentlySynced ? 'ring-2 ring-emerald-300/80 shadow-emerald-100' : ''} ${item.linkedFactId ? 'ring-2 ring-sky-300/40 border-sky-200/50' : ''}`}
         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
-           if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+          if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
           openEditor();
         }}
       >
@@ -3053,6 +3053,18 @@ function ItineraryListItem({
           </div>
         )}
         <div className="flex flex-col gap-2 sm:gap-2 w-full">
+          {!isEditing && (
+            <div className="flex items-center mb-1">
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border ${
+                item.source === 'remote'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800'
+                  : 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full inline-block ${item.source === 'remote' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                {item.source === 'remote' ? 'CONFIRMED' : 'LOCAL'}
+              </span>
+            </div>
+          )}
           <div className="flex flex-row items-center sm:items-start gap-2 sm:gap-2.5">
             <div className={`relative w-6 h-6 sm:w-8 sm:h-8 shrink-0 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-sm sm:text-base shadow-inner border border-slate-100/50 transition-all group-hover:scale-110 group-hover:rotate-3 duration-700 ${item.category === 'flight' ? 'bg-gradient-to-br from-indigo-50 to-blue-50' : 'bg-white'}`}>
               {isEditing ? (
@@ -3555,7 +3567,7 @@ function ItineraryListItem({
             </div>
           )}
         </div>
-      </GlassCard>
+      </div>
     </div>
   );
 }
