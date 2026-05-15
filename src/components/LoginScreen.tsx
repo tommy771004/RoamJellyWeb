@@ -145,13 +145,13 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
 
   return (
     <div
-      className="flex-1 min-h-[100dvh] w-screen jelly-bg dark:bg-gradient-to-br dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900 relative overflow-y-auto overflow-x-hidden transition-colors duration-500"
+      className="flex-1 min-h-screen-dvh w-screen jelly-bg dark:bg-gradient-to-br dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900 relative overflow-y-auto overflow-x-hidden transition-colors duration-500"
     >
       <div className="absolute top-[-8%] left-[-10%] h-[32rem] w-[32rem] rounded-full bg-fuchsia-300/18 blur-[96px] pointer-events-none" />
       <div className="absolute right-[-8%] top-[8%] h-[26rem] w-[26rem] rounded-full bg-cyan-300/18 blur-[90px] pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[18%] h-[24rem] w-[24rem] rounded-full bg-purple-300/14 blur-[84px] pointer-events-none" />
 
-      <div className={`relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1040px] flex-col justify-center px-5 pt-8 pb-32 md:pb-10 sm:px-6 sm:py-10 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
+      <div className={`relative z-10 mx-auto flex min-h-screen-dvh w-full max-w-[1040px] flex-col justify-center px-5 pt-8 pb-32 md:pb-10 sm:px-6 sm:py-10 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
         {shouldShowGuestHero && (
           <section className="mb-4 rounded-[34px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.52))] p-5 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-[18px] sm:p-6 lg:mb-0">
             <div className="flex items-center justify-between gap-3">
@@ -272,7 +272,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 </div>
               </div>
               <span
-                className="ml-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-black text-white transition-transform"
+                className="ml-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-sm font-black text-white transition-transform shrink-0"
                 style={{ transform: isAuthCardExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
               >
                 v
