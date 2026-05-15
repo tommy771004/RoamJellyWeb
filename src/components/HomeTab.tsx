@@ -182,11 +182,11 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-1 px-1">
-                <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm whitespace-nowrap ${flight.returnLeg.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
+                <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm whitespace-nowrap ${flight.returnLeg.stops === 0 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}`}>
                   {flight.returnLeg.stops === 0 ? '直飛 DIRECT' : `${flight.returnLeg.stops} 轉 STOP`}
                 </span>
                 {flight.returnLeg.duration && (
-                  <span className="text-[10px] font-bold uppercase tracking-tight text-slate-500 whitespace-nowrap">{flight.returnLeg.duration}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 whitespace-nowrap">{flight.returnLeg.duration}</span>
                 )}
               </div>
             </div>
