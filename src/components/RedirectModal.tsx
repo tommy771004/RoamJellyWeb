@@ -27,8 +27,7 @@ export default function RedirectModal({
   stops,
   price, 
   currency, 
-  emoji, 
-  onClose, 
+  onClose,
   onConfirm,
   onSave 
 }: RedirectModalProps) {
@@ -115,18 +114,33 @@ export default function RedirectModal({
                 </div>
               </div>
 
-              {/* Pricing breakdown */}
-              <div className="bg-slate-50/50 rounded-3xl p-6 mb-8 border border-white/50 flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">Total Estimated Price</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-bold text-slate-400">{currency}</span>
-                    <span className="text-3xl font-black text-slate-800 decoration-fuchsia-400/30 underline decoration-4 underline-offset-2 tabular-nums">{price?.toLocaleString()}</span>
+              {/* Fare breakdown */}
+              <div className="rounded-3xl p-5 mb-8 border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Base Fare (1 Adult)</span>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200 tabular-nums">
+                    {currency} {price ? Math.round(price * 0.85).toLocaleString() : '--'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    Taxes & Fees <span className="text-[10px] text-slate-400">(est.)</span>
+                  </span>
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200 tabular-nums">
+                    {currency} {price ? Math.round(price * 0.15).toLocaleString() : '--'}
+                  </span>
+                </div>
+                <div className="h-px bg-slate-100 dark:bg-slate-700" />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">Total Price</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-violet-400">{currency}</span>
+                    <span className="text-2xl font-black text-violet-600 dark:text-violet-400 tabular-nums">
+                      {price?.toLocaleString()}
+                    </span>
                   </div>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-2xl shadow-sm">
-                  {emoji || '✨'}
-                </div>
+                <p className="text-[10px] text-slate-400 -mt-1">* 費用僅供參考，以訂票頁面為準</p>
               </div>
 
               <div className="flex flex-col space-y-4 w-full">
