@@ -122,6 +122,8 @@
   --z-alert-above: 230;
   --z-modal: 300;
   --z-modal-above: 310;
+  --z-popup: 320;
+  --z-popup-above: 330;
   --z-max: 1000;
   --glass-blur-strong: 18px;
   --glass-blur-medium: 14px;

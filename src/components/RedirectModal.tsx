@@ -32,7 +32,7 @@ export default function RedirectModal({
   onSave 
 }: RedirectModalProps) {
   const airlineInitial = (airline || provider || '?').charAt(0).toUpperCase();
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const modalMotion = getModalMotion(prefersReducedMotion);
 
@@ -42,7 +42,7 @@ export default function RedirectModal({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={overlayTransition}
-      className="fixed inset-0 z-overlay flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-900/56 backdrop-blur-[8px]"
+      className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-900/56 backdrop-blur-[8px]"
       onClick={onClose}
     >
       <motion.div

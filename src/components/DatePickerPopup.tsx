@@ -16,7 +16,7 @@ interface DatePickerPopupProps {
 export default function DatePickerPopup({ selectedDate, onSelect, onClose, allowPast = false, minDate }: DatePickerPopupProps) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(selectedDate ? new Date(selectedDate) : new Date());
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const modalMotion = getModalMotion(prefersReducedMotion);
   const effectiveViewDate = isNaN(viewDate.getTime()) ? new Date() : viewDate;
@@ -51,7 +51,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
 
   const content = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-sheet flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-popup flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -65,7 +65,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative w-[90vw] md:w-[480px] max-w-[480px] min-w-[300px] shrink-0 bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-sheet-above overflow-hidden p-6 md:p-8"
+          className="relative w-[90vw] md:w-[480px] max-w-[480px] min-w-[300px] shrink-0 bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-popup-above overflow-hidden p-6 md:p-8"
         >
           <div className="flex flex-row justify-between items-center mb-8">
             <div className="flex flex-col">
