@@ -162,6 +162,61 @@
   }
 }
 
+/* Safari: no-scrollbar was referenced in 9 places but never defined */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Safari dvh fallback utilities ────────────────────────────────────────────
+ * Double-declaration pattern: vh = fallback for Safari < 15.4, dvh = override.
+ * Browsers that don't recognise dvh simply skip the second declaration.       */
+
+@utility min-h-screen-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+@utility max-h-screen-dvh {
+  max-height: 100vh;
+  max-height: 100dvh;
+}
+
+@utility h-screen-dvh {
+  height: 100vh;
+  height: 100dvh;
+}
+
+@utility h-80dvh {
+  height: 80vh;
+  height: 80dvh;
+}
+
+@utility h-82dvh {
+  height: 82vh;
+  height: 82dvh;
+}
+
+@utility max-h-90dvh {
+  max-height: 90vh;
+  max-height: 90dvh;
+}
+
+/* Used by modal panels: calc(100dvh - 2rem) */
+@utility max-h-modal-dvh {
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+}
+
+/* Used by desktop sidebar: calc(100dvh - 120px) */
+@utility max-h-sidebar-dvh {
+  max-height: calc(100vh - 120px);
+  max-height: calc(100dvh - 120px);
+}
+
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -196,6 +251,23 @@ body {
 
 button, a {
   touch-action: manipulation;
+}
+
+/* ── iOS Safari: remove default inner-shadow + border-radius on text inputs ── */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+textarea,
+select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ── iOS Safari momentum scrolling on overflow containers ─────────────────── */
+@media (hover: none) and (pointer: coarse) {
+  .overflow-y-auto,
+  .overflow-y-scroll,
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Ensure interactive elements meet 44×44px touch target on touch devices */
