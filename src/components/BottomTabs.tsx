@@ -20,7 +20,7 @@ export const TABS = [
 ];
 
 export default function BottomTabs() {
-  const { activeTab, setActiveTab } = useAppStore();
+  const { activeTab, setActiveTab, isNavVisible } = useAppStore();
   const prefersReducedMotion = useReducedMotion();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -41,7 +41,11 @@ export default function BottomTabs() {
     <motion.nav
       className="md:hidden fixed bottom-6 w-full z-50 flex justify-center items-center px-4 pointer-events-none pb-safe"
       initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
-      animate={{ y: 0, opacity: 1 }}
+      animate={{ 
+        y: isNavVisible ? 0 : 100, 
+        opacity: isNavVisible ? 1 : 0,
+        pointerEvents: isNavVisible ? 'auto' : 'none' 
+      }}
       transition={prefersReducedMotion ? { duration: 0.16 } : bottomBarTransition}
       aria-label="底部導覽"
     >

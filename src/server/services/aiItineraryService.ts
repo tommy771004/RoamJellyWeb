@@ -54,6 +54,7 @@ interface AiResponse {
       transport_to_next?: string; // 預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)
       lat: number; // 緯度(純數字的浮點數，例如 25.0339)，不可遺漏
       lng: number; // 經度(純數字的浮點數，例如 121.5644)，不可遺漏
+      image_url?: string; // (可選) 若能取得外部真實景點圖片的 url 則填入 (如 Wikimedia 等公開圖庫的圖片網址)
       linkedFactId?: string; // 如果該行程節點明確對應到 [Travel facts anchors] 中的某個已知項目，請填寫其 ID
     }>;
   }>;
@@ -221,6 +222,7 @@ ${params.travelFactsContext || '無'}
   "intensity": "chill|balanced|hardcore",
   "lat": 緯度(純數字的浮點數，例如 25.0339)，不可遺漏,
   "lng": 經度(純數字的浮點數，例如 121.5644)，不可遺漏,
+  "image_url": "若能取得外部真實景點圖片的 url 則填入 (如 Wikimedia 等的網址，可選)",
   "linkedFactId": "如果這明確綁定到某個 Travel Fact 可選填"
 }
 

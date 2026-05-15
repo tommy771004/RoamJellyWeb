@@ -37,7 +37,9 @@ import {
   CheckCircle2,
   Settings2,
   Bookmark,
-  Lock
+  Lock,
+  ZoomIn,
+  Instagram
 } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import GlassCard from './GlassCard';
@@ -70,6 +72,7 @@ import { useItineraryStore } from '../store/useItineraryStore';
 import { useSearchStore } from '../store/useSearchStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTripFactsStore } from '../store/useTripFactsStore';
+import { useHideNavOnScroll } from '../hooks/useHideNavOnScroll';
 import type {
   Collaborator,
   FavoriteSpot,
@@ -306,6 +309,7 @@ export default function ItineraryTab() {
   const [viewMode, setViewMode] = useState<'list' | 'map' | 'calendar'>('list');
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [tip, setTip] = useState('');
   const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [isSocketConnected, setIsSocketConnected] = useState<boolean>(false);
@@ -341,6 +345,7 @@ export default function ItineraryTab() {
   const [loadingDay, setLoadingDay] = useState<number | null>(null);
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const sheetMotion = getSheetMotion(prefersReducedMotion);
+  const { onScroll } = useHideNavOnScroll();
 
   const socketRef = useRef<Socket | null>(null);
   const reorderCommitTimerRef = useRef<number | null>(null);
@@ -1283,6 +1288,7 @@ export default function ItineraryTab() {
                 transport_to_next: spot.transport_to_next,
                 lat: spot.lat,
                 lng: spot.lng,
+                image_url: spot.image_url,
                 linkedFactId: spot.linkedFactId,
                 source: 'local' as const
               });
@@ -1304,11 +1310,21 @@ export default function ItineraryTab() {
             transport_to_next: spot.transport_to_next,
             lat: spot.lat,
             lng: spot.lng,
+            image_url: spot.image_url,
             linkedFactId: spot.linkedFactId,
             source: 'local' as const
           });
         });
       }
+      
+      const enrichResults = await Promise.allSettled(
+        suggestedNodes.map(n => n.image_url ? Promise.resolve(null) : fetchSpotEnrichment(n.title))
+      );
+      enrichResults.forEach((r, i) => {
+        if (r.status === 'fulfilled' && r.value?.thumbnail) {
+          suggestedNodes[i].image_url = r.value.thumbnail;
+        }
+      });
 
       let finalNodes: ItineraryNode[] = [];
 
@@ -1444,7 +1460,7 @@ export default function ItineraryTab() {
   if (!activeTripId) {
     if (isPlanningNew) {
       return (
-        <div className="flex-1 flex flex-col pt-4 sm:pt-10 bg-[#fcfdff] min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth">
+        <div onScroll={onScroll} className="flex-1 flex flex-col pt-4 sm:pt-10 bg-[#fcfdff] min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth">
           <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
             <button 
               onClick={() => setIsPlanningNew(false)}
@@ -1464,7 +1480,7 @@ export default function ItineraryTab() {
     }
 
     return (
-      <div className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] selection:bg-pink-100">
+      <div onScroll={onScroll} className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] selection:bg-pink-100">
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-tab-safe animate-in fade-in duration-700">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-12">
             <div>
@@ -1614,7 +1630,7 @@ export default function ItineraryTab() {
 
   if (loading) {
     return (
-      <main className="flex-1 w-full overflow-y-auto animate-in fade-in duration-500">
+      <main onScroll={onScroll} className="flex-1 w-full overflow-y-auto animate-in fade-in duration-500">
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-6 pb-tab-safe">
           {/* Header skeleton */}
           <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -1658,20 +1674,26 @@ export default function ItineraryTab() {
                 </div>
                 <div className="h-12 w-36 bg-slate-200 rounded-full animate-pulse hidden sm:block" />
               </div>
-              {/* Itinerary node skeletons */}
-              <div className="relative pl-6 flex flex-col gap-8">
-                <div className="absolute left-6 top-0 bottom-0 w-px bg-slate-100" />
-                {[0, 1, 2, 3].map((i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08, duration: 0.35, ease: 'easeOut' }}
-                  >
-                    <ItinerarySkeletonCard />
-                  </motion.div>
-                ))}
-              </div>
+              {/* Itinerary node skeletons or view skeletons */}
+              {viewMode === 'map' ? (
+                <div className="h-[60vh] sm:h-[70vh] rounded-[32px] bg-slate-200/50 animate-pulse border-4 border-white/40 mt-4 shadow-sm" />
+              ) : viewMode === 'calendar' ? (
+                <div className="h-[60vh] sm:h-[70vh] rounded-[32px] bg-slate-200/50 animate-pulse border border-slate-200 mt-4 shadow-sm" />
+              ) : (
+                <div className="relative pl-6 flex flex-col gap-8">
+                  <div className="absolute left-6 top-0 bottom-0 w-px bg-slate-100" />
+                  {[0, 1, 2, 3].map((i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.35, ease: 'easeOut' }}
+                    >
+                      <ItinerarySkeletonCard />
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1682,7 +1704,7 @@ export default function ItineraryTab() {
   }
 
   return (
-    <main className="flex-1 w-full overflow-y-auto selection:bg-pink-100 animate-in fade-in duration-700 scroll-smooth bg-[#fafafb]/30">
+    <main onScroll={onScroll} className="flex-1 w-full overflow-y-auto selection:bg-pink-100 animate-in fade-in duration-700 scroll-smooth bg-[#fafafb]/30">
       <div className="max-w-[1440px] mx-auto w-full pb-tab-safe md:px-4 lg:px-8 mt-0 sm:mt-4 md:mt-6">
         {isOffline && (
           <div className="mx-4 md:mx-8 mb-6 mt-6 glass-card rounded-2xl p-4 bg-amber-50/80 border-amber-200 shadow-sm flex items-center justify-center gap-2">
@@ -2320,6 +2342,7 @@ export default function ItineraryTab() {
                   onRandomizeFromFavorites={() => handleFillDayFromFavorites(safeSelectedDay)}
                   isOffline={isOffline}
                   aiLoading={aiLoading}
+                  isDayLoading={loadingDay === safeSelectedDay}
                   tripId={activeTripId}
                   destination={tripInfo?.destination || ''}
                   tripStartDate={tripInfo?.startDate}
@@ -2327,6 +2350,7 @@ export default function ItineraryTab() {
                   recentlySyncedNodeIds={recentlySyncedNodeIds}
                   onEditingChange={handleEditingChange}
                   nodeEditingLocks={nodeEditingLocks}
+                  onPreviewImage={setPreviewImageUrl}
                 />
               </motion.div>
             ) : viewMode === 'map' ? (
@@ -2351,7 +2375,25 @@ export default function ItineraryTab() {
                     </GlassCard>
                   }
                 >
-                  <ItineraryMapView items={selectedDayNodes} allNodes={nodes} />
+                  <div className="relative h-full w-full rounded-[2.5rem]">
+                    {(aiLoading || loadingDay === safeSelectedDay) && (
+                      <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-md rounded-[2.5rem] transition-all duration-300">
+                        <div className="bg-white/80 backdrop-blur-xl px-10 py-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-5 border border-white/60">
+                           <div className="relative">
+                             <div className="absolute inset-0 bg-pink-400 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                             <Loader2 className="animate-spin text-pink-500 relative z-10" size={36} />
+                           </div>
+                           <div className="text-center">
+                             <p className="text-sm font-black tracking-widest text-slate-800 uppercase">
+                               {aiLoading ? 'AI 正在分析景點' : '正在載入地圖資料'}
+                             </p>
+                             <p className="text-xs font-bold text-slate-400 mt-1">請稍候片刻</p>
+                           </div>
+                        </div>
+                      </div>
+                    )}
+                    <ItineraryMapView items={selectedDayNodes} allNodes={nodes} />
+                  </div>
                 </Suspense>
               </motion.div>
             ) : (
@@ -2468,6 +2510,16 @@ export default function ItineraryTab() {
           onClose={() => setExpenseTargetNode(null)}
         />
       )}
+
+      <AnimatePresence>
+        {previewImageUrl && (
+          <ImagePreviewModal 
+            imageUrl={previewImageUrl} 
+            onClose={() => setPreviewImageUrl(null)} 
+          />
+        )}
+      </AnimatePresence>
+
       {/* Mobile bottom nav spacer */}
       <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
       </div>
@@ -2740,7 +2792,8 @@ function ItineraryListItem({
   isRecentlySynced,
   onQuickExpense,
   onEditingChange,
-  collaboratingLock
+  collaboratingLock,
+  onPreviewImage
 }: {
   item: ItineraryNode;
   idx: number;
@@ -2756,6 +2809,7 @@ function ItineraryListItem({
   onQuickExpense?: (node: ItineraryNode) => void;
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
   collaboratingLock?: { userName: string; day: number };
+  onPreviewImage?: (url: string) => void;
   key?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -2882,6 +2936,34 @@ function ItineraryListItem({
     window.open(url, '_blank');
   };
 
+  const handleShareToIGStory = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (collaboratingLock) return;
+
+    const shortDest = destination ? destination.split(',')[0].trim() : '旅行';
+    const safeTitle = item.title.trim().replace(/\s+/g, '');
+    const tags = `#${shortDest} #${safeTitle} #旅遊日記`;
+    const text = `剛踩點了 ${item.title}！🤩\n${item.image_url ? `\n查看美照：\n${item.image_url}\n` : ''}\n${tags}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${item.title} - ${shortDest}`,
+          text: text,
+        });
+      } catch (err) {
+        console.error('Share failed:', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(text);
+        useAppStore.getState().showToast?.('分享文案已複製到剪貼簿，可直接貼上字體到 Instagram！', 'success');
+      } catch (err) {
+        useAppStore.getState().showToast?.('不支援分享且複製失敗', 'warning');
+      }
+    }
+  };
+
   const handleRegenerate = async () => {
     if (!tripId || !destination) return;
     setRegenerating(true);
@@ -2915,9 +2997,19 @@ function ItineraryListItem({
         travel_facts_context: travelFactsContext,
       });
       const { ai_note, intensity, ...restNode } = newNode as any;
+      
+      let finalImageUrl = restNode.image_url;
+      if (!finalImageUrl && restNode.title) {
+        try {
+          const enrich = await fetchSpotEnrichment(restNode.title);
+          if (enrich?.thumbnail) finalImageUrl = enrich.thumbnail;
+        } catch (e) {}
+      }
+
       onUpdate({
         ...item,
         ...restNode,
+        image_url: finalImageUrl,
         time: restNode.time || item.time,
         date: item.date,
         day: item.day,
@@ -3269,9 +3361,17 @@ function ItineraryListItem({
                   </div>
                   
                   {item.image_url && (
-                    <div className="w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative">
+                    <div 
+                      className="w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative cursor-pointer"
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        onPreviewImage && onPreviewImage(item.image_url!); 
+                      }}
+                    >
                       <img src={item.image_url} alt={item.title} className="w-full h-full object-cover rounded-[12px] sm:rounded-[16px] group-hover:scale-105 transition-transform duration-1000" loading="lazy" referrerPolicy="no-referrer" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <ZoomIn className="text-white drop-shadow-md" size={32} strokeWidth={1.5} />
+                      </div>
                     </div>
                   )}
 
@@ -3395,7 +3495,7 @@ function ItineraryListItem({
                             aria-label="編輯此節點"
                           >
                             <Pencil size={14} strokeWidth={2.75} />
-                            編輯
+                            
                           </button>
                           <button
                             type="button"
@@ -3405,7 +3505,7 @@ function ItineraryListItem({
                             title="為這個景點快速記一筆"
                             aria-label="為這個景點快速記一筆"
                           >
-                            💸 記一筆
+                            💸 
                           </button>
                           <button
                             type="button"
@@ -3416,7 +3516,18 @@ function ItineraryListItem({
                             aria-label="AI 換一個建議"
                           >
                             {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} strokeWidth={2.75} />}
-                            換一個
+                            
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleShareToIGStory}
+                            disabled={Boolean(collaboratingLock)}
+                            className="px-3 h-10 rounded-full bg-gradient-to-tr from-pink-50 to-orange-50 border border-orange-200 flex items-center justify-center gap-1.5 text-pink-600 hover:opacity-80 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest"
+                            title="分享至 IG Story"
+                            aria-label="分享至 IG Story"
+                          >
+                            <Instagram size={14} strokeWidth={2.75} />
+                            分享
                           </button>
                           <button
                             type="button"
@@ -3427,7 +3538,7 @@ function ItineraryListItem({
                             aria-label="刪除此節點"
                           >
                             <Trash2 size={14} strokeWidth={2.75} />
-                            刪除
+                            
                           </button>
                         </div>
                      )}
@@ -3462,13 +3573,15 @@ function ItineraryList({
   onRandomizeFromFavorites,
   isOffline,
   aiLoading,
+  isDayLoading,
   tripId,
   destination,
   tripStartDate,
   weather,
   recentlySyncedNodeIds,
   onEditingChange,
-  nodeEditingLocks
+  nodeEditingLocks,
+  onPreviewImage
 }: {
   items: ItineraryNode[];
   day: number;
@@ -3484,6 +3597,7 @@ function ItineraryList({
   onRandomizeFromFavorites?: () => void;
   isOffline: boolean;
   aiLoading: boolean;
+  isDayLoading?: boolean;
   tripId: string;
   destination: string;
   tripStartDate?: string | null;
@@ -3491,6 +3605,7 @@ function ItineraryList({
   recentlySyncedNodeIds?: string[];
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
   nodeEditingLocks?: Record<string, { userName: string; day: number }>;
+  onPreviewImage?: (url: string) => void;
 }) {
   const [isFavoriteDragOver, setIsFavoriteDragOver] = useState(false);
   const [manualAddTrigger, setManualAddTrigger] = useState(0);
@@ -3585,7 +3700,22 @@ function ItineraryList({
           </div>
         )}
         
-        {items.length === 0 && !aiLoading && (
+        {isDayLoading && (
+          <div className="flex flex-col gap-5 mt-4">
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={`day-loading-${i}`}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ delay: i * 0.1, duration: 0.4, ease: 'easeOut' }}
+              >
+                <ItinerarySkeletonCard />
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {!isDayLoading && items.length === 0 && !aiLoading && (
           <GlassCard className="!p-10 sm:!p-16 !rounded-[32px] sm:!rounded-[48px] border border-white/70 bg-gradient-to-b from-white/80 to-pink-50/55 flex flex-col items-center justify-center text-center backdrop-blur-2xl shadow-sm hover:shadow-xl transition-shadow duration-700 mx-2 sm:mx-0">
             <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[28px] sm:rounded-[40px] bg-gradient-to-br from-fuchsia-100 to-indigo-100 flex items-center justify-center text-4xl sm:text-6xl mb-6 sm:mb-8 shadow-xl shadow-fuchsia-200/40 border border-white hover:rotate-3 hover:scale-105 transition-all duration-300">
               🏝️
@@ -3708,6 +3838,7 @@ function ItineraryList({
                   isRecentlySynced={recentlySyncedNodeIds?.includes(item.node_id)}
                   onEditingChange={onEditingChange}
                   collaboratingLock={nodeEditingLocks?.[item.node_id]}
+                  onPreviewImage={onPreviewImage}
                 />
                 
                 {/* Drag handle for mobile/explicit drag */}
@@ -4723,4 +4854,41 @@ function readFileAsDataUrl(file: File) {
     reader.onerror = () => reject(reader.error ?? new Error('file read failed'));
     reader.readAsDataURL(file);
   });
+}
+
+function ImagePreviewModal({ imageUrl, onClose }: { imageUrl: string; onClose: () => void }) {
+  return createPortal(
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-10"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ type: 'spring', bounce: 0.4, duration: 0.6 }}
+        className="relative max-w-5xl w-full max-h-[90vh] rounded-[32px] overflow-hidden shadow-2xl z-10 flex items-center justify-center"
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center hover:bg-white hover:text-slate-800 transition-colors shadow-sm"
+          aria-label="關閉"
+        >
+          <X size={20} strokeWidth={2.5} />
+        </button>
+        <img 
+          src={imageUrl} 
+          alt="預覽圖片" 
+          className="w-full h-full max-h-[90vh] object-contain shrink-0" 
+          referrerPolicy="no-referrer" 
+        />
+      </motion.div>
+    </motion.div>,
+    document.body
+  );
 }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy, Globe, ExternalLink, Bed, Ticket, CarFront } from 'lucide-react';
@@ -10,6 +10,7 @@ import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchH
 import { useSearchStore } from '../store/useSearchStore';
 import { useAppStore } from '../store/useAppStore';
 import { useItineraryStore } from '../store/useItineraryStore';
+import { useHideNavOnScroll } from '../hooks/useHideNavOnScroll';
 import type { SearchItem, SyncItineraryPayload } from '../types/workflow';
 import {
   TRAVEL_GUIDE_DESTINATIONS,
@@ -568,6 +569,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const [searchProgress, setSearchProgress] = useState(0);
   const [progressMsgIdx, setProgressMsgIdx] = useState(0);
   const prefersReducedMotion = useReducedMotion();
+  const { onScroll } = useHideNavOnScroll();
 
   const SEARCH_LOADING_MESSAGES = ['搜尋航班中...', '比較多家票價...', '篩選最優惠...', '整理結果中...'];
 
@@ -960,6 +962,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   return (
     <motion.div 
+      onScroll={onScroll}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}

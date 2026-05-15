@@ -23,6 +23,7 @@ import type { TripInfo, WeatherData, TripSummary, ChecklistItem, Settlement, Set
 import { AiRateLimitedError, suggestPackingList } from '../lib/openrouterApi';
 import { useToolsStore, Expense } from '../store/useToolsStore';
 import { useAppStore } from '../store/useAppStore';
+import { useHideNavOnScroll } from '../hooks/useHideNavOnScroll';
 
 function getCurrentSeason(): string {
   const month = new Date().getMonth() + 1;
@@ -966,6 +967,7 @@ function ToolsTabContent() {
   const [activities, setActivities] = useState<any[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
   const [filterMode, setFilterMode] = useState<'best' | 'filters' | 'nonstop'>('best');
+  const { onScroll } = useHideNavOnScroll();
 
   useEffect(() => {
     if (activeTripId) {
@@ -1038,7 +1040,7 @@ function ToolsTabContent() {
   }
 
   return (
-    <div className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] transition-all duration-300">
+    <div onScroll={onScroll} className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] transition-all duration-300">
       <div className="pt-8 pb-tab-safe px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-10">
         <TripSelectorBar />
         
