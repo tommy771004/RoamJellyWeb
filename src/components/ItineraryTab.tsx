@@ -2014,35 +2014,37 @@ export default function ItineraryTab() {
             </div>
           )}
 
-          {/* Mobile Day Selector */}
-          <div className="lg:hidden flex items-center gap-3 mb-6 overflow-hidden">
-            <div className="flex gap-2.5 overflow-x-auto py-3 px-1 no-scrollbar flex-1 -mx-2 snap-x">
-              {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
-                const isActive = safeSelectedDay === day;
-                const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
-                const dateStr = getDateForDay(day, tripInfo?.startDate) || '';
-                const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }) : '';
+          {/* Mobile Day Selector — SGD pill toggle style */}
+          <div className="lg:hidden mb-6 overflow-hidden -mx-1">
+            <div className="overflow-x-auto py-2 px-1 no-scrollbar snap-x">
+              <div className="inline-flex bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5 min-w-max">
+                {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
+                  const isActive = safeSelectedDay === day;
+                  const dateStr = getDateForDay(day, tripInfo?.startDate) || '';
+                  const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }) : '';
 
-                return (
-                  <motion.button
-                    key={day}
-                    onClick={() => setSelectedDay(day)}
-                    whileTap={{ scale: 0.95 }}
-                    className={`flex flex-col min-w-[70px] sm:min-w-[85px] p-3 sm:p-4 rounded-3xl font-black text-xs transition-all uppercase tracking-widest shrink-0 border-2 snap-center ${
-                      isActive
-                        ? 'bg-white text-pink-600 border-pink-500 shadow-xl shadow-pink-100/50 scale-105'
-                        : 'bg-white/40 border-white/60 text-slate-500 backdrop-blur-sm'
-                    }`}
-                  >
-                    <span className="text-[10px] mb-1 opacity-70 uppercase tracking-widest flex items-center gap-1 justify-center">
-                      <span>DAY</span>
-                      {loadingDay === day && <Loader2 size={11} className="animate-spin" />}
-                    </span>
-                    <span className="text-lg sm:text-xl leading-none tabular-nums">{day}</span>
-                    {displayDate && <span className={`text-[10px] font-bold mt-1.5 opacity-60 tracking-tight`}>{displayDate}</span>}
-                  </motion.button>
-                );
-              })}
+                  return (
+                    <motion.button
+                      key={day}
+                      onClick={() => setSelectedDay(day)}
+                      whileTap={{ scale: 0.97 }}
+                      className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-sm transition-all shrink-0 snap-center ${
+                        isActive
+                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                          : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'
+                      }`}
+                    >
+                      <span>Day {day}</span>
+                      {displayDate && (
+                        <span className={`text-[10px] font-medium hidden sm:inline ${isActive ? 'text-slate-500' : 'text-slate-300'}`}>
+                          {displayDate}
+                        </span>
+                      )}
+                      {loadingDay === day && <Loader2 size={11} className="animate-spin ml-0.5" />}
+                    </motion.button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
