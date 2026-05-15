@@ -136,7 +136,7 @@ export default function RedirectModal({
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm font-bold text-violet-400">{currency}</span>
                     <span className="text-2xl font-black text-violet-600 dark:text-violet-400 tabular-nums">
-                      {price?.toLocaleString()}
+                      {price ? price.toLocaleString() : '--'}
                     </span>
                   </div>
                 </div>
