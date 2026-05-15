@@ -983,141 +983,43 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 </div>
               </button>
             )}
-            {/* Mobile layout: vertical stacked fields */}
+            {/* Unified search form */}
             {isHeroExpanded && (
-            <div className="relative z-20 md:hidden rounded-3xl sm:rounded-[34px] border-none sm:border-solid sm:border sm:border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.7),rgba(255,255,255,0.4))] p-4 shadow-sm backdrop-blur-xl">
-              {/* Trip type toggle */}
-              <div className="flex items-center gap-1 mb-4 p-1 rounded-full bg-white/40 sm:bg-white/50 border border-transparent sm:border-white/70 w-fit">
-                <button
-                  onClick={() => updateField('tripType', 'oneway')}
-                  className={`px-5 py-2.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType !== 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >單程</button>
-                <button
-                  onClick={() => updateField('tripType', 'roundtrip')}
-                  className={`px-5 py-2.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType === 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >來回</button>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="search-from-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">出發從哪裡</Label>
-                  <div
-                    className={`flex items-center gap-3 rounded-[20px] sm:rounded-[24px] bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
-                    onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
-                      <PlaneTakeoff size={17} className="text-[#b35f76]" />
-                    </div>
-                    <input
-                      id="search-from-m"
-                      className="bg-transparent border-none p-0 text-[18px] font-black text-slate-900 placeholder:text-slate-500/60 w-full outline-none leading-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40 rounded"
-                      value={searchForm.from}
-                      onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
-                      onChange={(e) => updateField('from', e.target.value)}
-                      placeholder="台北 TPE"
-                      autoComplete="off"
-                    />
-                  </div>
+              <div className="relative z-20">
+                {/* Trip type toggle */}
+                <div className="flex items-center gap-1 mb-3 p-1 rounded-full bg-white/50 border border-white/70 w-fit">
+                  <button
+                    onClick={() => updateField('tripType', 'oneway')}
+                    className={`px-5 py-2 rounded-full text-[11px] font-black tracking-wide transition-all ${
+                      searchForm.tripType !== 'roundtrip'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >單程</button>
+                  <button
+                    onClick={() => updateField('tripType', 'roundtrip')}
+                    className={`px-5 py-2 rounded-full text-[11px] font-black tracking-wide transition-all ${
+                      searchForm.tripType === 'roundtrip'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >來回</button>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="search-to-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">飛往目的地</Label>
-                  <div
-                    className={`flex items-center gap-3 rounded-[20px] sm:rounded-[24px] bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
-                    onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
-                      <Globe size={17} className="text-[#2c6956]" />
-                    </div>
-                    <input
-                      id="search-to-m"
-                      className="bg-transparent border-none p-0 text-[18px] font-black text-slate-900 placeholder:text-slate-500/60 w-full outline-none leading-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40 rounded"
-                      value={searchForm.to}
-                      onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
-                      onChange={(e) => updateField('to', e.target.value)}
-                      placeholder="東京 NRT"
-                      autoComplete="off"
-                    />
-                  </div>
-                </div>
+                {/* Search card */}
+                <div className="bg-white/90 dark:bg-slate-800/90 rounded-3xl border border-white/80 dark:border-slate-700 shadow-sm backdrop-blur-xl p-4 flex flex-col gap-3">
 
-                <div className="space-y-2">
-                  <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">去程日期</span>
-                  <div
-                    className={`flex items-center gap-3 rounded-[20px] sm:rounded-[24px] bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
-                    onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); setShowReturnDatePicker(false); }}
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
-                      <Calendar size={17} className={showDatePicker ? 'text-[#2c6956]' : 'text-[#3a637c]'} />
-                    </div>
-                    <span className={`text-[18px] font-black leading-none ${!searchForm.date ? 'text-slate-500/60' : 'text-slate-900'}`}>
-                      {searchForm.date || '選擇日期'}
-                    </span>
-                  </div>
-                </div>
-
-                {searchForm.tripType === 'roundtrip' && (
-                  <div className="space-y-2">
-                    <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">回程日期</span>
+                  {/* FROM / TO row */}
+                  <div className="relative grid grid-cols-2">
+                    {/* FROM cell */}
                     <div
-                      className={`flex items-center gap-3 rounded-[20px] sm:rounded-[24px] bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
-                      onClick={() => { setShowReturnDatePicker(!showReturnDatePicker); setShowDatePicker(false); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
+                      className={`flex flex-col gap-1 px-4 py-3 rounded-2xl cursor-text ${searchFieldSurfaceClass}`}
+                      onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); setShowReturnDatePicker(false); }}
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
-                        <Calendar size={17} className={showReturnDatePicker ? 'text-sky-500' : 'text-[#3a637c]'} />
-                      </div>
-                      <span className={`text-[18px] font-black leading-none ${!searchForm.returnDate ? 'text-slate-500/60' : 'text-slate-900'}`}>
-                        {searchForm.returnDate || '選擇回程日期'}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-5 flex items-end justify-between gap-4">
-                <span className="flex-1 text-[12px] font-bold text-slate-500/85 leading-relaxed">
-                  {dateError || searchBlockReason || ''}
-                </span>
-                <button
-                  onClick={() => void handleSearch()}
-                  disabled={isSearchDisabled || loading || isOffline}
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border ${
-                    isSearchDisabled || loading || isOffline
-                      ? 'border-white/70 bg-white/55 text-slate-300 cursor-not-allowed'
-                      : `border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,240,244,0.72))] text-slate-900 shadow-[0_12px_24px_rgba(156,63,89,0.14)] ${chipPressClass}`
-                  }`}
-                >
-                  {loading ? <div className="w-4 h-4 border-2 border-slate-300/40 border-t-slate-800 rounded-full animate-spin" /> : <SearchIcon size={18} strokeWidth={3} />}
-                </button>
-              </div>
-            </div>
-            )}
-
-            {/* Desktop layout: horizontal pill */}
-            <div className="relative z-20 hidden md:flex flex-col items-center gap-3 pt-2">
-              {/* Trip type toggle — desktop */}
-              <div className="flex items-center gap-1 p-1 rounded-full bg-white/50 border border-white/70 self-start ml-1">
-                <button
-                  onClick={() => updateField('tripType', 'oneway')}
-                  className={`px-4 py-1.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType !== 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >單程</button>
-                <button
-                  onClick={() => updateField('tripType', 'roundtrip')}
-                  className={`px-4 py-1.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType === 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >來回</button>
-              </div>
-              <div className="flex items-center justify-center gap-[14px] w-full">
-              <div className="flex-1 max-w-[648px] rounded-full border border-white/85 bg-[rgba(255,255,255,0.42)] px-[9px] py-[9px] shadow-[0_16px_44px_rgba(255,255,255,0.22),0_18px_36px_rgba(156,63,89,0.08)] backdrop-blur-[20px]">
-                <div className="flex items-stretch rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.28),rgba(255,255,255,0.08))]">
-                  <div
-                    className={`relative flex-1 flex items-center gap-2.5 px-5 py-[13px] rounded-full cursor-text hover:bg-white/28 ${searchFieldSurfaceClass}`}
-                    onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
-                  >
-                    <PlaneTakeoff size={17} className="text-[#b35f76] shrink-0" />
-                    <div className="flex flex-col min-w-0">
-                      <Label htmlFor="search-from-d" className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5 cursor-text">出發從哪裡</Label>
+                      <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase">FROM</span>
                       <input
-                        id="search-from-d"
-                        className="bg-transparent border-none p-0 text-[14px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40 rounded"
+                        id="search-from"
+                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-400 w-full outline-none leading-none"
                         value={searchForm.from}
                         onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('from', e.target.value)}
@@ -1125,18 +1027,21 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         autoComplete="off"
                       />
                     </div>
-                  </div>
-                  <div className="w-px bg-white/55 self-stretch my-3" />
-                  <div
-                    className={`relative flex-1 flex items-center gap-2.5 px-5 py-[13px] cursor-text hover:bg-white/28 ${searchFieldSurfaceClass}`}
-                    onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
-                  >
-                    <Globe size={17} className="text-[#2c6956] shrink-0" />
-                    <div className="flex flex-col min-w-0">
-                      <Label htmlFor="search-to-d" className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5 cursor-text">飛往目的地</Label>
+
+                    {/* Center airplane divider */}
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center">
+                      <PlaneTakeoff size={14} className="text-pink-500" strokeWidth={2.5} />
+                    </div>
+
+                    {/* TO cell */}
+                    <div
+                      className={`flex flex-col gap-1 px-4 py-3 rounded-2xl cursor-text ${searchFieldSurfaceClass}`}
+                      onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); setShowReturnDatePicker(false); }}
+                    >
+                      <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase">TO</span>
                       <input
-                        id="search-to-d"
-                        className="bg-transparent border-none p-0 text-[14px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40 rounded"
+                        id="search-to"
+                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-400 w-full outline-none leading-none"
                         value={searchForm.to}
                         onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('to', e.target.value)}
@@ -1145,55 +1050,72 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       />
                     </div>
                   </div>
-                  <div className="w-px bg-white/55 self-stretch my-3" />
-                  <div
-                    className={`flex items-center gap-2.5 px-5 py-[13px] cursor-pointer rounded-full ${showDatePicker ? 'bg-white/36' : 'hover:bg-white/28'} ${searchFieldSurfaceClass}`}
-                    onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); setShowReturnDatePicker(false); }}
-                  >
-                    <Calendar size={17} className={showDatePicker ? 'text-[#2c6956]' : 'text-[#3a637c]'} />
-                    <div className="flex flex-col min-w-0 w-[144px]">
-                      <span className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5">去程日期</span>
-                      <span className={`text-[14px] font-black truncate leading-none ${!searchForm.date ? 'text-slate-500/65' : 'text-slate-900'}`}>
+
+                  {/* Date / Return Date row */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Departure date */}
+                    <div
+                      className={`flex flex-col gap-1 px-4 py-3 rounded-2xl cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 ${searchFieldSurfaceClass}`}
+                      onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); setShowReturnDatePicker(false); }}
+                    >
+                      <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase flex items-center gap-1">
+                        <Calendar size={10} />
+                        去程日期
+                      </span>
+                      <span className={`text-[15px] font-black leading-none ${!searchForm.date ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>
                         {searchForm.date || '選擇日期'}
                       </span>
                     </div>
+
+                    {/* Return date — always visible; clicking in oneway mode auto-switches to roundtrip */}
+                    <div
+                      className={`flex flex-col gap-1 px-4 py-3 rounded-2xl cursor-pointer border ${
+                        searchForm.tripType === 'oneway'
+                          ? 'bg-slate-50/30 border-dashed border-slate-200 dark:border-slate-600 opacity-60'
+                          : 'bg-slate-50/60 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700'
+                      } ${searchFieldSurfaceClass}`}
+                      onClick={() => {
+                        if (searchForm.tripType === 'oneway') updateField('tripType', 'roundtrip');
+                        setShowReturnDatePicker(!showReturnDatePicker);
+                        setShowDatePicker(false);
+                        setShowDeparturePicker(false);
+                        setShowDestinationPicker(false);
+                      }}
+                    >
+                      <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase flex items-center gap-1">
+                        <Calendar size={10} />
+                        回程日期
+                      </span>
+                      <span className={`text-[15px] font-black leading-none ${!searchForm.returnDate ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>
+                        {searchForm.returnDate || (searchForm.tripType === 'oneway' ? '+ 加回程' : '選擇回程')}
+                      </span>
+                    </div>
                   </div>
-                  {searchForm.tripType === 'roundtrip' && (
-                    <>
-                      <div className="w-px bg-white/55 self-stretch my-3" />
-                      <div
-                        className={`flex items-center gap-2.5 px-5 py-[13px] cursor-pointer rounded-full ${showReturnDatePicker ? 'bg-white/36' : 'hover:bg-white/28'} ${searchFieldSurfaceClass}`}
-                        onClick={() => { setShowReturnDatePicker(!showReturnDatePicker); setShowDatePicker(false); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
-                      >
-                        <Calendar size={17} className={showReturnDatePicker ? 'text-sky-500' : 'text-[#3a637c]'} />
-                        <div className="flex flex-col min-w-0 w-[144px]">
-                          <span className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5">回程日期</span>
-                          <span className={`text-[14px] font-black truncate leading-none ${!searchForm.returnDate ? 'text-slate-500/65' : 'text-slate-900'}`}>
-                            {searchForm.returnDate || '選擇回程日期'}
-                          </span>
-                        </div>
-                      </div>
-                    </>
+
+                  {/* Error / hint */}
+                  {(dateError || searchBlockReason) && (
+                    <p className="text-[11px] text-slate-500 font-bold px-1 -mt-1">{dateError || searchBlockReason}</p>
                   )}
+
+                  {/* Search CTA */}
+                  <button
+                    onClick={() => void handleSearch()}
+                    disabled={isSearchDisabled || loading || isOffline}
+                    title={isOffline ? '請連線網路以進行機票比價' : ''}
+                    className={`w-full py-4 rounded-2xl font-black text-[15px] tracking-wide flex items-center justify-center gap-2 transition-colors shadow-sm ${
+                      isSearchDisabled || loading || isOffline
+                        ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                        : 'bg-pink-500 hover:bg-pink-600 text-white shadow-pink-200'
+                    }`}
+                  >
+                    {loading
+                      ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      : <><SearchIcon size={17} strokeWidth={3} /> 搜尋航班 →</>
+                    }
+                  </button>
                 </div>
-                {(dateError || (!dateError && searchBlockReason)) && (
-                  <div className="text-[11px] text-slate-500 font-bold px-6 pt-2 pb-1.5">{dateError || searchBlockReason}</div>
-                )}
               </div>
-              <button
-                onClick={() => void handleSearch()}
-                disabled={isSearchDisabled || loading || isOffline}
-                title={isOffline ? '請連線網路以進行機票比價' : ''}
-                className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shrink-0 ${
-                  isSearchDisabled || loading || isOffline
-                    ? 'bg-white/55 text-slate-300 cursor-not-allowed border border-white/70'
-                    : `bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-[0_16px_30px_rgba(236,72,153,0.28)] hover:shadow-[0_18px_34px_rgba(249,115,22,0.30)] ${chipPressClass}`
-                }`}
-              >
-                {loading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <SearchIcon size={20} strokeWidth={3} />}
-              </button>
-            </div>{/* end flex items-center gap-[14px] */}
-            </div>{/* end flex-col desktop wrapper */}
+            )}
           </div>
         </div>
       </div>
