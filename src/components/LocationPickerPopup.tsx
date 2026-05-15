@@ -46,7 +46,7 @@ export const LocationPickerPopup = ({
           initial={{ opacity: 0, y: 30, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.98 }}
-          className="relative z-[210] flex h-[82dvh] w-full flex-col overflow-hidden rounded-t-[32px] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.25)] border border-white md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-3xl md:shadow-[0_32px_80px_rgba(0,0,0,0.35)]"
+          className="relative z-[210] flex h-82dvh w-full flex-col overflow-hidden rounded-t-[32px] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.25)] border border-white md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-3xl md:shadow-[0_32px_80px_rgba(0,0,0,0.35)]"
         >
           <div className="sticky top-0 z-20 bg-white/95 px-5 pb-4 pt-4 backdrop-blur-xl md:px-7 md:pb-5 md:pt-7">
             <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-slate-200 md:hidden" />
