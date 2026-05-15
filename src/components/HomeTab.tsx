@@ -1871,10 +1871,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           >
             {flyingCard.handbook ? (
               <div className="w-full h-full flex flex-col pointer-events-none">
-                <img 
-                  src={flyingCard.handbook.image || flyingCard.handbook.coverImage} 
-                  alt="" 
-                  className="w-full h-2/3 object-cover" 
+                <img
+                  src={flyingCard.handbook.image || flyingCard.handbook.coverImage}
+                  alt={flyingCard.handbook.title || '達人手帳預覽'}
+                  className="w-full h-2/3 object-cover"
                 />
                 <div className="p-4 flex-1 bg-white">
                   <div className="w-3/4 h-4 bg-slate-200 rounded-full mb-2"></div>
