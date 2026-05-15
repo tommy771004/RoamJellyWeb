@@ -1241,61 +1241,68 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         </div>
 
         <div className="pt-5 sm:pt-7 pb-16 md:pb-32 flex flex-col flex-1 min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-5 sm:mb-6 md:mb-7">
-            <div className="flex flex-col items-start gap-1.5 md:gap-1">
-              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter leading-none flex items-baseline gap-2 sm:gap-3">
-                   探索航班與活動
-                   {searchForm.date && (
-                     <span className="text-lg sm:text-xl text-slate-400 font-bold tracking-tight">
-                       {searchForm.date.replace(/-/g, '/')}
-                     </span>
-                   )}
-                 </h2>
-                 {filteredResults.length > 0 && (
-                   <span className="px-2 py-0.5 bg-slate-900 text-white rounded-[6px] text-[10px] font-black tracking-widest uppercase shadow-sm">
-                     {filteredResults.length} 個結果
-                   </span>
-                 )}
-              </div>
-              <p className="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">Explore Travels</p>
-            </div>
-            {results.length > 0 && (
-              <div className="flex flex-row flex-wrap items-center gap-2 justify-end">
-                <div className="flex items-center bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 relative overflow-x-auto hide-scrollbar max-w-full">
-                  {(['all', 'flight', 'ticket', 'other'] as const).map((type) => (
-                    <button 
-                      key={type}
-                      onClick={() => setFilterType(type)}
-                      className={`relative px-3 py-2.5 min-h-[40px] flex items-center rounded-[8px] text-[10px] font-black tracking-widest uppercase z-10 whitespace-nowrap ${subtlePressableClass} ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
-                    >
-                      {filterType === type && (
-                        <motion.div
-                          layoutId="filterTypeIndicator"
-                          className="absolute inset-0 bg-white rounded-[8px] -z-10 shadow-sm border border-slate-200"
-                          transition={layoutIndicatorTransition}
-                        />
-                      )}
-                      {type === 'all' ? '全部' : type === 'flight' ? '機票' : type === 'ticket' ? '票券' : '其他'}
-                    </button>
-                  ))}
+          <div className="flex flex-col gap-3 mb-5 sm:mb-6 md:mb-7">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-col items-start gap-1.5 md:gap-1">
+                <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter leading-none flex items-baseline gap-2 sm:gap-3">
+                    探索航班與活動
+                    {searchForm.date && (
+                      <span className="text-lg sm:text-xl text-slate-400 font-bold tracking-tight">
+                        {searchForm.date.replace(/-/g, '/')}
+                      </span>
+                    )}
+                  </h2>
+                  {filteredResults.length > 0 && (
+                    <span className="px-2 py-0.5 bg-slate-900 text-white rounded-[6px] text-[10px] font-black tracking-widest uppercase shadow-sm">
+                      {filteredResults.length} 個結果
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-1 bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60">
+                <p className="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">Explore Travels</p>
+              </div>
+              {results.length > 0 && (
+                <div className="flex items-center gap-1 bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 shrink-0">
                   <button
                     onClick={() => setViewType('grid')}
-                    className={`w-10 h-10 flex items-center justify-center rounded-[8px] transition-colors ${viewType === 'grid' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-colors ${viewType === 'grid' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
                     title="卡片檢視"
+                    aria-label="卡片檢視"
+                    aria-pressed={viewType === 'grid'}
                   >
                     <LayoutGrid size={16} strokeWidth={2.5} />
                   </button>
                   <button
                     onClick={() => setViewType('table')}
-                    className={`w-10 h-10 flex items-center justify-center rounded-[8px] transition-colors ${viewType === 'table' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-colors ${viewType === 'table' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
                     title="列表檢視"
+                    aria-label="列表檢視"
+                    aria-pressed={viewType === 'table'}
                   >
                     <List size={16} strokeWidth={2.5} />
                   </button>
                 </div>
+              )}
+            </div>
+            {results.length > 0 && (
+              <div className="flex items-center bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                {(['all', 'flight', 'ticket', 'other'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilterType(type)}
+                    className={`relative flex-1 sm:flex-none px-3 py-2.5 min-h-[44px] flex items-center justify-center rounded-[8px] text-[10px] font-black tracking-widest uppercase z-10 whitespace-nowrap ${subtlePressableClass} ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                    aria-pressed={filterType === type}
+                  >
+                    {filterType === type && (
+                      <motion.div
+                        layoutId="filterTypeIndicator"
+                        className="absolute inset-0 bg-white rounded-[8px] -z-10 shadow-sm border border-slate-200"
+                        transition={layoutIndicatorTransition}
+                      />
+                    )}
+                    {type === 'all' ? '全部' : type === 'flight' ? '機票' : type === 'ticket' ? '票券' : '其他'}
+                  </button>
+                ))}
               </div>
             )}
           </div>
