@@ -166,7 +166,7 @@ export default function AiForm({
         <div className="absolute bottom-[-10%] left-[-10%] w-[80%] h-[80%] bg-indigo-100/40 blur-[120px] rounded-full mix-blend-multiply" />
       </div>
 
-      <div className="relative z-10 flex flex-col h-full w-full px-4 sm:px-8 py-6 sm:py-10 pb-32 max-w-4xl mx-auto">
+      <div className="relative z-10 flex flex-col h-full w-full px-4 sm:px-8 py-6 sm:py-10 pb-tab-safe max-w-4xl mx-auto">
         <div className="flex justify-between items-start mb-6 sm:mb-10">
           <div>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-800 leading-tight tracking-tight mb-2">
