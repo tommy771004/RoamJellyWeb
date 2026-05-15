@@ -146,7 +146,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: '100%', opacity: 0, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-[#f8fafc] rounded-t-[32px] shadow-2xl z-50 flex flex-col md:inset-0 md:m-auto md:max-w-2xl md:h-[85vh] md:rounded-[32px] border border-slate-200/50 overflow-hidden"
+            className="fixed bottom-0 left-0 right-0 w-full max-h-[90vh] bg-[#f8fafc] rounded-t-[32px] shadow-2xl z-50 flex flex-col md:inset-0 md:m-auto md:max-w-2xl md:h-[85vh] md:rounded-[32px] border border-slate-200/50 overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 sm:px-8 py-5 bg-white/80 backdrop-blur-xl shrink-0 z-10 rounded-t-[32px] border-b border-slate-100/80">
