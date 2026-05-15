@@ -84,95 +84,85 @@ interface FlightCardProps {
 
 function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onToggleSave, onToggleTrack }: FlightCardProps) {
   const providerName = flight.details?.airline || flight.provider;
-  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div 
-      onClick={() => setIsExpanded(!isExpanded)} 
-      className="block w-full h-full text-left appearance-none cursor-pointer border-none bg-transparent p-0 flex flex-col focus:outline-none group/card"
+    <div
+      className="block w-full h-full text-left appearance-none border-none bg-transparent p-0 flex flex-col focus:outline-none group/card cursor-pointer"
       role="button"
       tabIndex={0}
+      onClick={onPress}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          setIsExpanded(!isExpanded);
+          onPress();
         }
       }}
     >
-      <GlassCard className={`!p-0 bg-white/70 backdrop-blur-xl border border-transparent sm:border-pink-100/60 shadow-sm sm:shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] sm:hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] sm:hover:bg-white flex-1 flex flex-col overflow-hidden rounded-[32px] ${pressableSurfaceClass} ${raisedHoverClass}`}>
-        
+      <GlassCard className={`!p-0 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md flex-1 flex flex-col overflow-hidden rounded-2xl transition-shadow duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}>
+
         {/* Top Section: Airline & Route */}
         <div className="p-4 flex flex-col gap-3">
-          {/* Header Row: Airline + Save Button */}
+
+          {/* Header: Airline + stop/duration badge */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AirlineLogo providerName={providerName} className="w-7 h-7 rounded-lg text-sm" />
               <div className="flex flex-col">
-                <div className="flex items-center gap-1 leading-none mb-1">
-                  <span className="text-xs font-semibold text-slate-900">{flight.details?.airline || flight.provider}</span>
-                  <div className="w-1 h-1 rounded-full bg-slate-300" />
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{flight.provider}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-fuchsia-600 bg-fuchsia-50 px-1 py-[2px] rounded-sm tracking-tight">VERIFIED</span>
-                </div>
+                <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                  {flight.details?.airline || flight.provider}
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {flight.provider}
+                </span>
               </div>
             </div>
-            <button
-              onClick={onToggleSave}
-              className={`w-11 h-11 rounded-full flex justify-center items-center ${subtlePressableClass} ${
-                isSaved ? 'bg-pink-100 text-pink-600' : 'bg-slate-100/80 text-slate-400 hover:bg-pink-50 hover:text-pink-500'
-              }`}
-            >
-              <Heart
-                size={14}
-                fill={isSaved ? 'currentColor' : 'transparent'}
-                strokeWidth={2.5}
-              />
-            </button>
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${
+                flight.details?.stops === 0
+                  ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                  : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+              }`}>
+                {flight.details?.stops === 0 ? 'DIRECT' : `${flight.details?.stops} STOP`}
+              </span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight whitespace-nowrap">
+                {flight.details?.duration || '3h 15m'}
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleSave(e); }}
+                className={`w-8 h-8 rounded-full flex justify-center items-center ${subtlePressableClass} ${
+                  isSaved ? 'bg-pink-100 text-pink-600' : 'bg-slate-100/80 text-slate-400 hover:bg-pink-50 hover:text-pink-500'
+                }`}
+              >
+                <Heart size={13} fill={isSaved ? 'currentColor' : 'transparent'} strokeWidth={2.5} />
+              </button>
+            </div>
           </div>
 
           {/* Time & Airports Row */}
           <div className="flex items-center justify-between mt-1 px-0.5 relative">
             <div className="absolute left-[3rem] right-[3rem] top-1/2 -translate-y-1/2 flex items-center">
-               <div className="w-1.5 h-1.5 rounded-full border border-slate-300 bg-white z-10" />
-               <div className="flex-1 border-t-[1.5px] border-dashed border-slate-300" />
-               <div className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center z-10 absolute left-1/2 -translate-x-1/2 rotate-90">
-                 <PlaneTakeoff size={8} strokeWidth={2.5} className="-ml-0.5" />
-               </div>
-               <div className="w-1.5 h-1.5 rounded-full border border-slate-300 bg-white z-10" />
+              <div className="w-1.5 h-1.5 rounded-full border border-slate-300 bg-white z-10" />
+              <div className="flex-1 border-t-[1.5px] border-dashed border-slate-300" />
+              <div className="w-4 h-4 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center z-10 absolute left-1/2 -translate-x-1/2 rotate-90">
+                <PlaneTakeoff size={8} strokeWidth={2.5} className="-ml-0.5" />
+              </div>
+              <div className="w-1.5 h-1.5 rounded-full border border-slate-300 bg-white z-10" />
             </div>
-
-            <div className="flex flex-col items-start z-10 bg-white/40 backdrop-blur-sm pr-1">
-              <span className="text-xl font-black text-slate-900 tracking-tighter leading-none mb-1">
+            <div className="flex flex-col items-start z-10 bg-white/40 dark:bg-transparent backdrop-blur-sm pr-1">
+              <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
                 {flight.details?.departure}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">
-                Depart
-              </span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">Depart</span>
             </div>
-
-            <div className="flex flex-col items-end z-10 bg-white/40 backdrop-blur-sm pl-1">
-              <span className="text-xl font-black text-slate-900 tracking-tighter leading-none mb-1">
+            <div className="flex flex-col items-end z-10 bg-white/40 dark:bg-transparent backdrop-blur-sm pl-1">
+              <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
                 {flight.details?.arrival}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">
-                Arrive
-              </span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">Arrive</span>
             </div>
-          </div>
-          
-          {/* Flight Info Badges */}
-          <div className="flex items-center gap-2 mt-1 text-slate-500 px-1">
-            <div className="flex items-center gap-1">
-               <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm whitespace-nowrap ${flight.details?.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
-                 {flight.details?.stops === 0 ? '直飛 DIRECT' : `${flight.details?.stops} 轉 STOP`}
-               </span>
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-tight whitespace-nowrap">{flight.details?.duration || '3h 15m'}</span>
           </div>
 
-          {/* Return leg row — shown for roundtrip bundles */}
+          {/* Return leg row — roundtrip bundles */}
           {flight.tripType === 'roundtrip' && flight.returnLeg && (
             <div className="mt-2 pt-2 border-t border-dashed border-slate-200">
               <div className="flex items-center gap-1 mb-1">
@@ -180,14 +170,14 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
               </div>
               <div className="flex items-center justify-between px-0.5">
                 <div className="flex flex-col items-start min-w-0">
-                  <span className="text-base font-black text-slate-900 tracking-tighter leading-none whitespace-nowrap">{flight.returnLeg.departure}</span>
+                  <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">{flight.returnLeg.departure}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Depart</span>
                 </div>
                 <div className="flex-1 flex items-center justify-center px-2">
                   <div className="w-full border-t border-dashed border-slate-300" />
                 </div>
                 <div className="flex flex-col items-end min-w-0">
-                  <span className="text-base font-black text-slate-900 tracking-tighter leading-none whitespace-nowrap">{flight.returnLeg.arrival}</span>
+                  <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">{flight.returnLeg.arrival}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Arrive</span>
                 </div>
               </div>
@@ -203,46 +193,22 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
           )}
         </div>
 
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-t border-slate-200/50 bg-slate-50/80"
-            >
-              <div className="p-4 px-5 text-sm flex flex-col gap-3">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Flight Details</span>
-                  <p className="text-slate-600 font-medium leading-relaxed">
-                    Operated by {flight.details?.airline || flight.provider}. This flight takes {flight.details?.duration || '3h 15m'} and offers an excellent travel experience. Please double-check terminal information upon arrival.
-                  </p>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Baggage & Extras</span>
-                  <p className="text-slate-600 font-medium leading-relaxed">
-                    Standard fare typically includes one cabin bag. Additional baggage allowance and seat selection may incur extra charges with {flight.provider}.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Separator with cutout effect */}
+        {/* Ticket cutout separator */}
         <div className="relative flex items-center h-3 w-full">
-          <div className="absolute left-[-6px] w-3 h-3 bg-[#FAFAFA] rounded-full border-r border-slate-200/60 shadow-inner" />
-          <div className="absolute right-[-6px] w-3 h-3 bg-[#FAFAFA] rounded-full border-l border-slate-200/60 shadow-inner" />
+          <div className="absolute left-[-6px] w-3 h-3 bg-[#FAFAFA] dark:bg-slate-900 rounded-full border-r border-slate-200/60 shadow-inner" />
+          <div className="absolute right-[-6px] w-3 h-3 bg-[#FAFAFA] dark:bg-slate-900 rounded-full border-l border-slate-200/60 shadow-inner" />
           <div className="w-full border-t border-dashed border-slate-300 mx-2.5" />
         </div>
 
-        {/* Bottom Section: Price & CTA */}
-        <div className="p-4 pt-2 bg-gradient-to-b from-transparent to-slate-50/80 flex items-end justify-between mt-auto">
+        {/* Bottom: Price & CTAs */}
+        <div className="p-4 pt-2 flex items-end justify-between mt-auto">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Estimated Price</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xs font-bold text-slate-400">{flight.currency}</span>
-              <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none tabular-nums">{flight.price.toLocaleString()}</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
+                {flight.price.toLocaleString()}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -263,14 +229,12 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
               <PlaneTakeoff size={14} strokeWidth={2.5} />
               <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">帶入</span>
             </button>
-            {isExpanded && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onPress(); }}
-                className={`h-11 px-5 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-md ml-1 ${subtlePressableClass} ${raisedHoverClass}`}
-              >
-                <span className="text-[10px] uppercase tracking-widest leading-none">購買</span>
-              </button>
-            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onPress(); }}
+              className={`h-11 px-5 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-md ${subtlePressableClass} ${raisedHoverClass}`}
+            >
+              <span className="text-[10px] uppercase tracking-widest leading-none">購買</span>
+            </button>
           </div>
         </div>
       </GlassCard>
