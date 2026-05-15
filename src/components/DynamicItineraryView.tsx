@@ -51,10 +51,10 @@ export default function DynamicItineraryView({
         backgroundSize: '24px 24px'
       }} />
 
-      <div className="relative z-10 px-6 pt-16 pb-32">
-        <button 
+      <div className="relative z-10 px-4 sm:px-6 pt-6 sm:pt-16 pb-tab-safe">
+        <button
           onClick={onBack}
-          className="w-10 h-10 rounded-full bg-white/40 backdrop-blur-md border border-white/60 flex items-center justify-center shadow-sm text-slate-800 hover:bg-white/80 active:scale-[0.98] transition-all duration-200 mb-6"
+          className="w-11 h-11 rounded-full bg-white/40 backdrop-blur-md border border-white/60 flex items-center justify-center shadow-sm text-slate-800 hover:bg-white/80 active:scale-[0.98] transition-all duration-200 mb-4 sm:mb-6"
         >
           <ArrowLeft size={20} />
         </button>
@@ -194,7 +194,7 @@ export default function DynamicItineraryView({
           <button 
             onClick={() => onSave(result)}
             className="w-full mt-10 py-5 rounded-full bg-slate-900 border border-white/20 text-white font-bold text-lg shadow-xl hover:bg-slate-800 transition-transform duration-200 active:scale-[0.98] flex items-center justify-center gap-2">
-            <span>💾 Save to Trip</span>
+            <span>💾 儲存此行程</span>
           </button>
         )}
       </div>
