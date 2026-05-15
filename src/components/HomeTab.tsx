@@ -119,7 +119,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
             </div>
             <button
               onClick={onToggleSave}
-              className={`w-7 h-7 rounded-full flex justify-center items-center ${subtlePressableClass} ${
+              className={`w-11 h-11 rounded-full flex justify-center items-center ${subtlePressableClass} ${
                 isSaved ? 'bg-pink-100 text-pink-600' : 'bg-slate-100/80 text-slate-400 hover:bg-pink-50 hover:text-pink-500'
               }`}
             >
@@ -247,9 +247,9 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
           <div className="flex items-center gap-1.5">
             <button
               onClick={(e) => { e.stopPropagation(); onToggleTrack(e); }}
-              className={`w-8 h-8 rounded-[10px] flex items-center justify-center border ${subtlePressableClass} ${raisedHoverClass} ${
-                isTracked 
-                  ? 'bg-slate-900 border-slate-900 text-white shadow-md' 
+              className={`w-11 h-11 rounded-[10px] flex items-center justify-center border ${subtlePressableClass} ${raisedHoverClass} ${
+                isTracked
+                  ? 'bg-slate-900 border-slate-900 text-white shadow-md'
                   : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-800 shadow-sm hover:shadow'
               }`}
             >
@@ -257,7 +257,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onImportToTrip(e); }}
-              className={`h-8 px-3 rounded-[10px] flex items-center gap-1.5 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg ${subtlePressableClass} ${raisedHoverClass}`}
+              className={`h-11 px-4 rounded-[10px] flex items-center gap-1.5 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg ${subtlePressableClass} ${raisedHoverClass}`}
             >
               <PlaneTakeoff size={14} strokeWidth={2.5} />
               <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">帶入</span>
@@ -265,7 +265,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
             {isExpanded && (
               <button
                 onClick={(e) => { e.stopPropagation(); onPress(); }}
-                className={`h-8 px-4 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-md ml-1 ${subtlePressableClass} ${raisedHoverClass}`}
+                className={`h-11 px-5 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-md ml-1 ${subtlePressableClass} ${raisedHoverClass}`}
               >
                 <span className="text-[10px] uppercase tracking-widest leading-none">購買</span>
               </button>
@@ -349,9 +349,9 @@ function FlightTable({
             <div className="flex items-center justify-end w-full gap-2 transition-colors">
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleSave(e, flight.id); }}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
-                  savedItems.includes(flight.id) 
-                    ? 'bg-pink-50 border-pink-100 text-pink-500' 
+                className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
+                  savedItems.includes(flight.id)
+                    ? 'bg-pink-50 border-pink-100 text-pink-500'
                     : 'bg-white border-slate-200 text-slate-300 hover:text-pink-400 hover:border-pink-200 shadow-sm'
                 }`}
                 title="收藏"
@@ -360,9 +360,9 @@ function FlightTable({
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleTrack(e, flight); }}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
-                  trackedPrices.includes(flight.id) 
-                    ? 'bg-slate-900 border-slate-900 text-white shadow-md' 
+                className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
+                  trackedPrices.includes(flight.id)
+                    ? 'bg-slate-900 border-slate-900 text-white shadow-md'
                     : 'bg-white border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300 shadow-sm'
                 }`}
                 title="追蹤降價"
@@ -371,7 +371,7 @@ function FlightTable({
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onImportToTrip(e, flight); }}
-                className="flex-1 sm:w-full h-10 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 shadow-sm"
+                className="flex-1 sm:w-full h-11 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 shadow-sm"
                 title="帶入行程"
               >
                 <PlaneTakeoff size={15} strokeWidth={2.5} />
@@ -457,7 +457,7 @@ function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSav
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); onToggleSave(e); }}
-              className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/65 backdrop-blur-md transition-all active:scale-90 shadow-sm sm:h-11 sm:w-11 ${isSaved ? 'bg-pink-500 text-white' : 'bg-white/85 text-slate-500 hover:bg-white hover:text-pink-500'}`}
+              className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/65 backdrop-blur-md transition-all active:scale-90 shadow-sm ${isSaved ? 'bg-pink-500 text-white' : 'bg-white/85 text-slate-500 hover:bg-white hover:text-pink-500'}`}
             >
               <Heart size={15} fill={isSaved ? 'currentColor' : 'transparent'} strokeWidth={2} />
             </button>
@@ -963,7 +963,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-32 md:pb-14"
+      className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-tab-safe md:pb-14"
     >
       {/* === HERO SECTION with gradient background === */}
       <div className={`relative z-10 w-full pt-14 sm:pt-[72px] ${!isHeroExpanded ? 'pb-3' : 'pb-12 sm:pb-14'} px-4 sm:px-6 overflow-visible`}>
@@ -1008,11 +1008,11 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               <div className="flex items-center gap-1 mb-4 p-1 rounded-full bg-white/50 border border-white/70 w-fit">
                 <button
                   onClick={() => updateField('tripType', 'oneway')}
-                  className={`px-4 py-1.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType !== 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`px-5 py-2.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType !== 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >單程</button>
                 <button
                   onClick={() => updateField('tripType', 'roundtrip')}
-                  className={`px-4 py-1.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType === 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`px-5 py-2.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType === 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >來回</button>
               </div>
               <div className="space-y-4">
@@ -1267,7 +1267,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     <button 
                       key={type}
                       onClick={() => setFilterType(type)}
-                      className={`relative px-2.5 py-1.5 rounded-[8px] text-[10px] font-black tracking-widest uppercase z-10 whitespace-nowrap ${subtlePressableClass} ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                      className={`relative px-3 py-2.5 min-h-[40px] flex items-center rounded-[8px] text-[10px] font-black tracking-widest uppercase z-10 whitespace-nowrap ${subtlePressableClass} ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
                     >
                       {filterType === type && (
                         <motion.div
@@ -1283,14 +1283,14 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="flex items-center gap-1 bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60">
                   <button
                     onClick={() => setViewType('grid')}
-                    className={`p-1.5 rounded-[8px] transition-colors ${viewType === 'grid' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-[8px] transition-colors ${viewType === 'grid' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
                     title="卡片檢視"
                   >
                     <LayoutGrid size={16} strokeWidth={2.5} />
                   </button>
                   <button
                     onClick={() => setViewType('table')}
-                    className={`p-1.5 rounded-[8px] transition-colors ${viewType === 'table' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-[8px] transition-colors ${viewType === 'table' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
                     title="列表檢視"
                   >
                     <List size={16} strokeWidth={2.5} />

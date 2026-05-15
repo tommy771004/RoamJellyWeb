@@ -555,7 +555,7 @@ function ChecklistSection() {
               </div>
               <div className="flex flex-col gap-2">
                 {catItems.map((item: any) => (
-                  <label key={item.id} className={`flex items-center gap-4 group p-2 rounded-2xl transition-colors ${isOffline ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-fuchsia-50/50'}`} onClick={(e) => { e.preventDefault(); if (!isOffline) actions.toggleCheck(item); }}>
+                  <label key={item.id} className={`flex items-center gap-4 group p-3 min-h-[52px] rounded-2xl transition-colors ${isOffline ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-fuchsia-50/50'}`} onClick={(e) => { e.preventDefault(); if (!isOffline) actions.toggleCheck(item); }}>
                     <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
                       <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
                       <motion.div
@@ -842,15 +842,17 @@ function SettlementsSection() {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="min-h-[44px] px-4"
                           onClick={() => void actions.sendReminder()}
                         >
                           <Send size={14} className="opacity-70 mr-1.5" />
                           <span className="text-[11px] font-bold tracking-wide uppercase">提醒</span>
                         </Button>
-                        
+
                         <Button
                           variant="default"
                           size="sm"
+                          className="min-h-[44px] px-4"
                           onClick={() => void actions.handleClearSettlement(settlement)}
                           disabled={clearingId === settlement.id || isOffline}
                         >
@@ -1037,7 +1039,7 @@ function ToolsTabContent() {
 
   return (
     <div className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] transition-all duration-300">
-      <div className="pt-8 pb-32 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-10">
+      <div className="pt-8 pb-tab-safe md:pb-32 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-10">
         <TripSelectorBar />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
