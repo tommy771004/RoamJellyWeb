@@ -282,7 +282,7 @@ export default function App() {
   // Show nothing while checking localStorage (avoids flash)
   if (!authReady) {
     return (
-      <div className="flex-1 justify-center items-center bg-purple-50 flex h-screen w-screen">
+      <div className="flex-1 justify-center items-center bg-purple-50 flex min-h-screen-dvh w-full">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80">
           <PlaneTakeoff size={22} className="text-pink-500 animate-pulse" strokeWidth={2.5} />
         </div>
@@ -722,7 +722,7 @@ export default function App() {
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
-            className="fixed top-[72px] left-0 right-0 z-40 px-4 pt-2 pb-1 pointer-events-none"
+            className="fixed top-[72px] left-0 right-0 w-full z-40 px-4 pt-2 pb-1 pointer-events-none"
           >
             <div className="max-w-2xl mx-auto bg-red-500/80 dark:bg-red-900/80 backdrop-blur-md rounded-2xl p-2.5 shadow-lg border border-red-400/50 dark:border-red-500/30 flex items-center justify-center gap-2 pointer-events-auto">
               <span className="text-white text-[13px] font-bold tracking-wide">✈️ 目前處於離線狀態，已切換至本機快取模式。</span>
