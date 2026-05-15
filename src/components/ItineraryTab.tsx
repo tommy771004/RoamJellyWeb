@@ -1,4 +1,4 @@
-import React, { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, Reorder, useReducedMotion } from 'motion/react';
 
@@ -2452,14 +2452,14 @@ export default function ItineraryTab() {
               exit={{ opacity: 0 }}
               transition={overlayTransition}
               onClick={() => setShowMobileFavorites(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] lg:hidden"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-sheet lg:hidden"
             />
             <motion.div
               initial={sheetMotion.initial}
               animate={sheetMotion.animate}
               exit={sheetMotion.exit}
               transition={sheetMotion.transition}
-              className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-[210] flex flex-col lg:hidden"
+              className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-sheet-above flex flex-col lg:hidden"
             >
               <div className="shrink-0 p-6 pb-2 border-b border-slate-100 flex items-center justify-between bg-white/90 backdrop-blur-xl rounded-t-3xl sticky top-0 z-10">
                 <div className="flex items-center gap-3">
@@ -3061,7 +3061,7 @@ function ItineraryListItem({
                  <span className="filter drop-shadow-sm select-none transition-transform group-hover:scale-110"><IconImg value={item.emoji} size={16} /></span>
               )}
               {isEditing && showEmojiPicker && (
-                 <div className="absolute top-full left-0 mt-2 p-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white z-[100] flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
+                 <div className="absolute top-full left-0 mt-2 p-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white z-overlay flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
                    {EMOJI_OPTIONS.map(e => (
                      <button key={e} type="button" title={`使用 ${e}`} onClick={() => { setEditEmoji(e); setShowEmojiPicker(false); }} className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl transition-colors"><IconImg value={e} size={24} /></button>
                    ))}
@@ -3137,9 +3137,9 @@ function ItineraryListItem({
                  </button>
                  {showTimeQuickEdit && (
                    <>
-                     <div className="fixed inset-0 z-[90]" onClick={(e) => { e.stopPropagation(); setShowTimeQuickEdit(false); }} />
+                     <div className="fixed inset-0 z-backdrop" onClick={(e) => { e.stopPropagation(); setShowTimeQuickEdit(false); }} />
                      <div 
-                       className="absolute top-full left-0 mt-2 p-1.5 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 z-[100] flex flex-col gap-1 w-36 animate-in zoom-in-95 duration-200"
+                       className="absolute top-full left-0 mt-2 p-1.5 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 z-overlay flex flex-col gap-1 w-36 animate-in zoom-in-95 duration-200"
                        onClick={(e) => e.stopPropagation()}
                      >
                         {[
@@ -3954,7 +3954,7 @@ function ManualAddNode({
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-sheet flex items-center justify-center p-4">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -3966,7 +3966,7 @@ function ManualAddNode({
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
-          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] overflow-hidden flex flex-col max-h-90dvh"
+          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-sheet-above overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
           <div className="p-5 sm:p-8 overflow-y-auto w-full pb-32">
@@ -4254,7 +4254,7 @@ function QuickExpenseModal({
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[220] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-alert flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -4268,7 +4268,7 @@ function QuickExpenseModal({
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-[230] overflow-hidden flex flex-col max-h-90dvh"
+          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-alert-above overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 z-10" />
           <form onSubmit={handleSubmit} className="p-7 sm:p-8 flex flex-col gap-5 pb-32 overflow-y-auto">
@@ -4862,7 +4862,7 @@ function ImagePreviewModal({ imageUrl, onClose }: { imageUrl: string; onClose: (
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-10"
+      className="fixed inset-0 z-max flex items-center justify-center p-4 sm:p-10"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />

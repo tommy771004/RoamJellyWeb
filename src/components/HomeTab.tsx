@@ -242,7 +242,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Estimated Price</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xs font-bold text-slate-400">{flight.currency}</span>
-              <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">{flight.price.toLocaleString()}</span>
+              <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none tabular-nums">{flight.price.toLocaleString()}</span>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -343,7 +343,7 @@ function FlightTable({
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">總價</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-sm font-bold text-slate-500">{flight.currency}</span>
-                <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">{flight.price.toLocaleString()}</span>
+                <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none tabular-nums">{flight.price.toLocaleString()}</span>
               </div>
             </div>
 
@@ -480,7 +480,7 @@ function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSav
           <div className="mt-[18px] flex items-end justify-between gap-3 sm:mt-5">
             <div className="min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">From</p>
-              <p className="mt-1 text-[21px] font-black leading-none tracking-[-0.035em] text-slate-950 sm:text-[23px]">
+              <p className="mt-1 text-[21px] font-black leading-none tracking-[-0.035em] text-slate-950 sm:text-[23px] tabular-nums">
                 {flight.currency} {flight.price.toLocaleString()}
               </p>
               <p className="mt-1 truncate text-[10px] font-bold text-slate-500 sm:text-[11px]">{routeLabel}</p>
@@ -667,18 +667,16 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
         if (handbook.nodes && handbook.nodes.length) {
           setNodes([]);
-          const syncedNodes: any[] = [];
-          for (const rawNode of handbook.nodes) {
-             const normalized = { ...rawNode, source: 'local' } as any;
-             addNode(normalized);
-             const payload = { trip_id: ensuredTripId, action: 'add_node', payload: normalized } as any;
-             try {
-               await syncItinerary(payload);
-               syncedNodes.push(normalized);
-             } catch {
-               setNodes(syncedNodes);
-               throw new Error('clone sync failed');
-             }
+          const normalized = handbook.nodes.map((rawNode: any) => ({ ...rawNode, source: 'local' } as any));
+          normalized.forEach((n: any) => addNode(n));
+          const results = await Promise.allSettled(
+            normalized.map((n: any) =>
+              syncItinerary({ trip_id: ensuredTripId, action: 'add_node', payload: n } as any)
+            )
+          );
+          if (results.some(r => r.status === 'rejected')) {
+            setNodes(normalized.filter((_: any, i: number) => results[i].status === 'fulfilled'));
+            throw new Error('clone sync failed');
           }
         }
 

@@ -136,7 +136,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           fetchChecklist(tripId),
           fetchCollaborators(tripId),
           fetchTripInfo(tripId).catch(() => null),
-          import('../lib/workflowApi').then(m => m.fetchSettlementHistory(tripId)).catch(() => []),
+          fetchSettlementHistory(tripId).catch(() => []),
         ]);
 
         let initialCurrency = 'TWD';
@@ -646,7 +646,7 @@ function LedgerSection() {
                       </td>
                       <td data-label="金額" className="amount">
                         <div className="flex flex-col items-end">
-                          <span className="font-black text-fuchsia-500 text-[16px]">{exp.currency} {exp.amount.toLocaleString()}</span>
+                          <span className="font-black text-fuchsia-500 text-[16px] tabular-nums">{exp.currency} {exp.amount.toLocaleString()}</span>
                         </div>
                       </td>
                     </tr>
@@ -835,7 +835,7 @@ function SettlementsSection() {
                     </td>
                     <td data-label="結算金額" className="amount">
                       <div className="flex justify-end">
-                        <span className="font-black text-fuchsia-500 text-[18px]">{settlement.currency} {settlement.amount.toLocaleString()}</span>
+                        <span className="font-black text-fuchsia-500 text-[18px] tabular-nums">{settlement.currency} {settlement.amount.toLocaleString()}</span>
                       </div>
                     </td>
                     <td data-label="動作">
@@ -898,7 +898,7 @@ function SettlementHistorySection() {
             </div>
             <div className="flex flex-col items-end gap-0.5 shrink-0">
               {Object.entries(entry.currencyTotals ?? {}).map(([cur, amt]) => (
-                <span key={cur} className="text-[13px] font-black text-green-600">
+                <span key={cur} className="text-[13px] font-black text-green-600 tabular-nums">
                   {cur} {Math.round(amt).toLocaleString()}
                 </span>
               ))}

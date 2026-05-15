@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search, Calendar, Users, Heart, Coffee, Car, DollarSign, Check } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import GlassCard from './GlassCard';
@@ -304,7 +304,7 @@ export default function AiForm({
 
             {/* Next Button — fixed above keyboard on mobile, static on desktop */}
             <div
-              className="fixed bottom-0 left-0 right-0 w-full z-[100] sm:static sm:z-auto sm:pt-4"
+              className="fixed bottom-0 left-0 right-0 w-full z-overlay sm:static sm:z-auto sm:pt-4"
               style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
             >
               <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-0 sm:pb-0 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none">
@@ -449,7 +449,7 @@ export default function AiForm({
 
             {/* Submit buttons — fixed above keyboard on mobile, static on desktop */}
             <div
-              className="fixed bottom-0 left-0 right-0 w-full z-[100] sm:static sm:z-auto"
+              className="fixed bottom-0 left-0 right-0 w-full z-overlay sm:static sm:z-auto"
               style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
             >
               <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-2 sm:pb-0 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none">

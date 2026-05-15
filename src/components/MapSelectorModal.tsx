@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
@@ -43,7 +43,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -55,7 +55,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
-          className="relative w-full max-w-2xl h-[70vh] bg-white rounded-[40px] shadow-2xl z-[310] flex flex-col overflow-hidden"
+          className="relative w-full max-w-2xl h-[70vh] bg-white rounded-[40px] shadow-2xl z-modal-above flex flex-col overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
           

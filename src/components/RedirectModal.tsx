@@ -1,4 +1,4 @@
-import { motion, useReducedMotion } from 'motion/react';
+﻿import { motion, useReducedMotion } from 'motion/react';
 import { Store, Plane, Clock, Heart, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { getModalMotion, getOverlayTransition, subtlePressableClass } from '../lib/motionTokens';
@@ -43,7 +43,7 @@ export default function RedirectModal({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={overlayTransition}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-900/56 backdrop-blur-[8px]"
+      className="fixed inset-0 z-overlay flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-900/56 backdrop-blur-[8px]"
       onClick={onClose}
     >
       <motion.div
@@ -121,7 +121,7 @@ export default function RedirectModal({
                   <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">Total Estimated Price</span>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-sm font-bold text-slate-400">{currency}</span>
-                    <span className="text-3xl font-black text-slate-800 decoration-fuchsia-400/30 underline decoration-4 underline-offset-2">{price?.toLocaleString()}</span>
+                    <span className="text-3xl font-black text-slate-800 decoration-fuchsia-400/30 underline decoration-4 underline-offset-2 tabular-nums">{price?.toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-2xl shadow-sm">

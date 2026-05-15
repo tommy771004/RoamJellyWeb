@@ -1,11 +1,23 @@
 {
   "version": 1,
   "skills": {
+    "baseline-ui": {
+      "source": "ibelick/ui-skills",
+      "sourceType": "github",
+      "skillPath": "skills/baseline-ui/SKILL.md",
+      "computedHash": "e6340729e5db277987e5a8deb7f2e8e282bbd07f84ed6b98bb2dfb2a4b05b55f"
+    },
     "browser-use": {
       "source": "browser-use/browser-use",
       "sourceType": "github",
       "skillPath": "skills/browser-use/SKILL.md",
       "computedHash": "d98a56c484e23fcf4ee88b4cc0df824f48a374e1848fc79eb352f2fa214767e9"
+    },
+    "sleek-design-mobile-apps": {
+      "source": "sleekdotdesign/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/design-mobile-apps/SKILL.md",
+      "computedHash": "8781ac3cb1c8567942c897133c15d74736e5a3acc0f493041d91a5b6b88a7d21"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",

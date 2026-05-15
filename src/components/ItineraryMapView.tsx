@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
 import { MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from 'react-leaflet';
@@ -211,7 +211,7 @@ export default function ItineraryMapView({
         </MapContainer>
 
         {items.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-[1000]">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-max">
             <span className="text-slate-400 font-semibold bg-white px-6 py-3 rounded-full shadow-sm">目前沒有行程顯示在地圖上</span>
           </div>
         )}

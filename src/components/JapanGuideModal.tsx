@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, MapPin } from 'lucide-react';
@@ -69,7 +69,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={overlayTransition}
-          className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center"
+          className="fixed inset-0 z-modal flex items-end sm:items-center justify-center"
           onClick={onClose}
         >
           {/* Backdrop */}

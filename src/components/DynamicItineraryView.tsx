@@ -37,6 +37,16 @@ export default function DynamicItineraryView({
     return map;
   }, [result?.rawSuggestions]);
 
+  const geoNodesByDay = useMemo(() => {
+    const map: Record<number, ItineraryNode[]> = {};
+    Object.entries(rawByDay).forEach(([day, nodes]) => {
+      map[Number(day)] = (nodes as ItineraryNode[])
+        .filter(n => n.lat != null && n.lng != null)
+        .map(n => ({ ...n, lat: Number(n.lat), lng: Number(n.lng) }));
+    });
+    return map;
+  }, [rawByDay]);
+
   // All nodes with valid coordinates for a top-level overview map
   const allGeoNodes: ItineraryNode[] = useMemo(
     () => (result?.rawSuggestions || []).filter((n: ItineraryNode) => n.lat != null && n.lng != null).map((n: ItineraryNode) => ({ ...n, lat: Number(n.lat), lng: Number(n.lng) })),
@@ -87,7 +97,7 @@ export default function DynamicItineraryView({
           {itinerary.map((dayData: any, i: number) => {
             const dayNum: number = dayData.day || i + 1;
             const dayRawNodes: ItineraryNode[] = rawByDay[dayNum] || [];
-            const dayGeoNodes = dayRawNodes.filter(n => n.lat != null && n.lng != null).map((n: ItineraryNode) => ({ ...n, lat: Number(n.lat), lng: Number(n.lng) }));
+            const dayGeoNodes = geoNodesByDay[dayNum] || [];
 
             return (
               <div key={i} className="bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl p-6">

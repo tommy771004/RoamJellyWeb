@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Sparkles, X, Send, PlusCircle } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
@@ -104,7 +104,7 @@ export default function JellyAssistant() {
             exit={{ opacity: 0 }}
             transition={overlayTransition}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-slate-900/28 backdrop-blur-[6px] z-[100]"
+            className="fixed inset-0 bg-slate-900/28 backdrop-blur-[6px] z-overlay"
           />
         )}
       </AnimatePresence>
@@ -117,7 +117,7 @@ export default function JellyAssistant() {
             animate={sheetMotion.animate}
             exit={sheetMotion.exit}
             transition={sheetMotion.transition}
-            className="fixed bottom-0 left-0 right-0 w-full max-w-[600px] mx-auto h-80dvh bg-white/82 dark:bg-black/62 border-t border-white/45 dark:border-white/10 rounded-t-[40px] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] z-[101] flex flex-col overflow-hidden overscroll-contain"
+            className="fixed bottom-0 left-0 right-0 w-full max-w-[600px] mx-auto h-80dvh bg-white/82 dark:bg-black/62 border-t border-white/45 dark:border-white/10 rounded-t-[40px] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] z-overlay-above flex flex-col overflow-hidden overscroll-contain pb-safe"
             style={{ backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)' }}
           >
             <div className="flex justify-center pt-2 pb-1 bg-white/36 dark:bg-black/24">

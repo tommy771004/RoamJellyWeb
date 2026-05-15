@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
+﻿import { useState, useEffect, useCallback, useRef, lazy, Suspense, type ComponentType } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import HomeTab from './components/HomeTab';
 import RedirectModal from './components/RedirectModal';
@@ -28,6 +28,13 @@ import {
   PlaneTakeoff,
 } from 'lucide-react';
 import BottomTabs, { TABS } from './components/BottomTabs';
+
+const TAB_ICON_MAP: Record<string, ComponentType<{ size?: number; strokeWidth?: number; className?: string }>> = {
+  home: HomeIcon,
+  ai_form: SparklesIcon,
+  itinerary: CalendarDaysIcon,
+  tools: LuggageIcon,
+};
 import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
@@ -585,7 +592,7 @@ export default function App() {
     <div className="flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
       {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
       {(import.meta as any).env.MODE !== 'production' && (
-        <div className="fixed top-2 left-2 z-[60] flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
+        <div className="fixed top-2 left-2 z-floating flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
           <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
             <input type="checkbox" checked={isOffline} onChange={e => setOffline(e.target.checked)} className="accent-red-500" />
             斷網
@@ -604,8 +611,7 @@ export default function App() {
         <nav className="hidden md:flex flex-row items-center justify-center gap-2 absolute left-1/2 -translate-x-1/2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
-            const iconMap: Record<string, any> = { home: HomeIcon, ai_form: SparklesIcon, itinerary: CalendarDaysIcon, tools: LuggageIcon };
-            const Icon = iconMap[tab.id];
+            const Icon = TAB_ICON_MAP[tab.id];
             return (
               <button
                 key={tab.id}
@@ -796,7 +802,7 @@ export default function App() {
           />
         )}
         {showLogoutModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-overlay flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

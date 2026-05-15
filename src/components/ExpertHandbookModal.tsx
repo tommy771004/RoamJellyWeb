@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+﻿import React, { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, MapPin, Calendar, Clock, Download } from 'lucide-react';
@@ -61,7 +61,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={overlayTransition}
-          className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6"
+          className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6"
           onClick={handleClose}
         >
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" />

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
@@ -15,7 +15,7 @@ export interface ToastProps {
 
 export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], removeToast: (id: string) => void }) {
   const content = (
-    <div aria-live="polite" aria-atomic="false" className="fixed bottom-24 left-0 right-0 w-full z-[200] flex flex-col items-center gap-3 pointer-events-none px-4">
+    <div aria-live="polite" aria-atomic="false" className="fixed bottom-24 left-0 right-0 w-full z-sheet flex flex-col items-center gap-3 pointer-events-none px-4">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div

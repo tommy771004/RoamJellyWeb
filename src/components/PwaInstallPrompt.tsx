@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -73,7 +73,7 @@ export default function PwaInstallPrompt() {
   };
 
   const content = (
-    <div className="fixed left-0 right-0 bottom-24 z-[190] w-full px-4 md:px-6 pointer-events-none">
+    <div className="fixed left-0 right-0 bottom-24 z-prompt w-full px-4 md:px-6 pointer-events-none">
       <div
         className="mx-auto max-w-xl rounded-[28px] border border-white/20 bg-slate-950/90 px-5 py-4 text-white shadow-2xl shadow-slate-950/40 pointer-events-auto dark:border-white/10 dark:bg-slate-950/90"
         style={{ backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)' }}
