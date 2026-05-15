@@ -152,6 +152,23 @@
   }
 }
 
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Ensures content clears the floating bottom tab bar (≈ 80px) + 24px gap + safe-area on iOS notch devices */
+@utility pb-tab-safe {
+  padding-bottom: max(8rem, calc(8rem + env(safe-area-inset-bottom, 0px)));
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 html {
   scroll-behavior: auto;
 }
@@ -165,6 +182,10 @@ body {
   background-color: var(--color-surface);
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: contain;
+}
+
+button, a {
+  touch-action: manipulation;
 }
 
 .jelly-bg {
