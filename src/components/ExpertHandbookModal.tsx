@@ -73,8 +73,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
-            className="relative w-full sm:max-w-3xl md:max-w-4xl bg-[#f8fafc] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col overflow-hidden"
-            style={{ maxHeight: 'calc(100vh - 2rem)' }}
+            className="relative w-full sm:max-w-3xl md:max-w-4xl bg-[#f8fafc] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col overflow-hidden max-h-modal-dvh"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
