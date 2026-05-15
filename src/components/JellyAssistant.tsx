@@ -117,7 +117,8 @@ export default function JellyAssistant() {
             animate={sheetMotion.animate}
             exit={sheetMotion.exit}
             transition={sheetMotion.transition}
-            className="fixed bottom-0 left-0 right-0 max-w-[600px] mx-auto h-80dvh bg-white/82 dark:bg-black/62 backdrop-blur-[28px] border-t border-white/45 dark:border-white/10 rounded-t-[40px] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] z-[101] flex flex-col overflow-hidden overscroll-contain"
+            className="fixed bottom-0 left-0 right-0 w-full max-w-[600px] mx-auto h-80dvh bg-white/82 dark:bg-black/62 border-t border-white/45 dark:border-white/10 rounded-t-[40px] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] z-[101] flex flex-col overflow-hidden overscroll-contain"
+            style={{ backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)' }}
           >
             <div className="flex justify-center pt-2 pb-1 bg-white/36 dark:bg-black/24">
               <div className="h-1.5 w-10 rounded-full bg-slate-300/80 dark:bg-white/15" />
