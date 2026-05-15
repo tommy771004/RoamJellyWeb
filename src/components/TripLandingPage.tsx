@@ -61,7 +61,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
 
   return (
     <div
-      className="flex-1 justify-center items-center p-6 flex flex-col h-[100dvh] w-screen bg-[#f8fafc] relative overflow-hidden"
+      className="flex-1 justify-center items-center p-6 flex flex-col h-screen-dvh w-screen bg-[#f8fafc] relative overflow-hidden"
     >
       <div className="absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] rounded-full bg-fuchsia-300/20 blur-[120px] pointer-events-none" />
       <div className="absolute top-[20%] right-[-20%] w-[70vw] h-[70vw] rounded-full bg-cyan-300/20 blur-[120px] pointer-events-none" />
@@ -89,7 +89,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
         <div style={{ width: '100%', maxWidth: 360 }} className="relative z-10">
           <div
             className="rounded-[32px] p-6 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 items-center flex flex-col relative overflow-hidden"
-            style={{ backgroundColor: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.6)' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.6)' }}
           >
             <span style={{ fontSize: 48, marginBottom: 16 }}>✈️</span>
             <span className="text-slate-500 mb-2 font-bold tracking-widest text-[13px] uppercase">
