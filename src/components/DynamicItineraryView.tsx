@@ -76,7 +76,7 @@ export default function DynamicItineraryView({
 
         {/* Overview route map — shows all geocoded nodes */}
         {allGeoNodes.length >= 2 && (
-          <div className="mb-6 rounded-[2.5rem] overflow-hidden shadow-xl border-[6px] border-white/60 relative" style={{ height: '360px' }}>
+          <div className="mb-6 rounded-[2.5rem] overflow-hidden shadow-xl border-[6px] border-white/60 relative h-[260px] sm:h-[360px]">
             <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-sm">載入地圖中...</div>}>
               <ItineraryMapView items={allGeoNodes} />
             </Suspense>
@@ -97,7 +97,7 @@ export default function DynamicItineraryView({
 
                 {/* Per-day mini route map */}
                 {dayGeoNodes.length >= 2 && (
-                  <div className="mb-5 rounded-[2.5rem] overflow-hidden border-[6px] border-white/60 shadow-md relative" style={{ height: '300px' }}>
+                  <div className="mb-5 rounded-[2.5rem] overflow-hidden border-[6px] border-white/60 shadow-md relative h-[200px] sm:h-[300px]">
                     <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-xs">載入地圖中...</div>}>
                       <ItineraryMapView items={dayGeoNodes} />
                     </Suspense>
