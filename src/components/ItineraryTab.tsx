@@ -1443,7 +1443,7 @@ export default function ItineraryTab() {
   if (!activeTripId) {
     if (isPlanningNew) {
       return (
-        <div className="flex-1 flex flex-col pt-4 sm:pt-10 bg-[#fcfdff] min-h-[100dvh] max-h-[100dvh] overflow-y-auto scroll-smooth">
+        <div className="flex-1 flex flex-col pt-4 sm:pt-10 bg-[#fcfdff] min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth">
           <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
             <button 
               onClick={() => setIsPlanningNew(false)}
@@ -1464,7 +1464,7 @@ export default function ItineraryTab() {
 
     return (
       <div className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] selection:bg-pink-100">
-        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-32 animate-in fade-in duration-700">
+        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-tab-safe animate-in fade-in duration-700">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-12">
             <div>
               <h1 className="text-2xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight text-balance">您的行程手帳</h1>
@@ -1614,7 +1614,7 @@ export default function ItineraryTab() {
   if (loading) {
     return (
       <main className="flex-1 w-full overflow-y-auto animate-in fade-in duration-500">
-        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-6 pb-32">
+        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-6 pb-tab-safe">
           {/* Header skeleton */}
           <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div className="flex flex-col gap-3">
@@ -1682,7 +1682,7 @@ export default function ItineraryTab() {
 
   return (
     <main className="flex-1 w-full overflow-y-auto selection:bg-pink-100 animate-in fade-in duration-700 scroll-smooth bg-[#fafafb]/30">
-      <div className="max-w-[1440px] mx-auto w-full pb-32 md:px-4 lg:px-8 mt-0 sm:mt-4 md:mt-6">
+      <div className="max-w-[1440px] mx-auto w-full pb-tab-safe md:px-4 lg:px-8 mt-0 sm:mt-4 md:mt-6">
         {isOffline && (
           <div className="mx-4 md:mx-8 mb-6 mt-6 glass-card rounded-2xl p-4 bg-amber-50/80 border-amber-200 shadow-sm flex items-center justify-center gap-2">
             <span className="text-amber-700 font-bold text-sm tracking-wide flex items-center gap-2">
@@ -1841,7 +1841,7 @@ export default function ItineraryTab() {
 
       <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-10">
         {/* Left Column: Filters & Info */}
-        <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pr-2 no-scrollbar">
+        <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit max-h-sidebar-dvh overflow-y-auto pr-2 no-scrollbar">
           <GlassCard className="!p-6 shadow-xl shadow-slate-200/40 ring-1 ring-white/60 bg-white/70 backdrop-blur-3xl overflow-hidden rounded-[32px] border border-white">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
               <h3 className="font-black text-[10px] xl:text-[11px] uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
@@ -3834,7 +3834,7 @@ function ManualAddNode({
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
-          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] overflow-hidden flex flex-col max-h-[90dvh]"
+          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
           <div className="p-5 sm:p-8 overflow-y-auto w-full pb-32">
@@ -4136,7 +4136,7 @@ function QuickExpenseModal({
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-[230] overflow-hidden flex flex-col max-h-[90dvh]"
+          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-[230] overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 z-10" />
           <form onSubmit={handleSubmit} className="p-7 sm:p-8 flex flex-col gap-5 pb-32 overflow-y-auto">
