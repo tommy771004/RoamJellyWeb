@@ -234,6 +234,11 @@ export default function JellyAssistant() {
                   }}
                   placeholder="輸入訊息或指令..."
                   className="flex-1 bg-transparent border-none outline-none px-4 text-[15px] dark:text-white placeholder:text-slate-400"
+                  inputMode="text"
+                  autoCapitalize="off"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
                 />
                 <button 
                   onClick={() => handleSend()}
