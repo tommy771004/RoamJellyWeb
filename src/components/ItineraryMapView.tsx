@@ -33,13 +33,13 @@ function MapUpdater({
       return;
     }
 
-    let validItems = items.filter((node) => node.lat && node.lng);
+    let validItems = items.filter((node) => node.lat != null && node.lng != null);
     if (validItems.length === 0 && allItems && allItems.length > 0) {
-      validItems = allItems.filter((node) => node.lat && node.lng);
+      validItems = allItems.filter((node) => node.lat != null && node.lng != null);
     }
 
     if (validItems.length > 0) {
-      const bounds = L.latLngBounds(validItems.map((node) => [node.lat!, node.lng!]));
+      const bounds = L.latLngBounds(validItems.map((node) => [Number(node.lat!), Number(node.lng!)]));
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
   }, [selectedLat, selectedLng, items, allItems, map]);
@@ -118,12 +118,18 @@ export default function ItineraryMapView({
   const validItems = useMemo(
     () =>
       items
-        .filter((node) => node.lat && node.lng)
+        .filter((node) => node.lat != null && node.lng != null)
+        .map(node => ({ ...node, lat: Number(node.lat), lng: Number(node.lng) }))
         .sort((a, b) => {
+          const dayA = a.day ?? 999;
+          const dayB = b.day ?? 999;
+          if (dayA !== dayB) return dayA - dayB;
+          
           const orderA = a.sort_order ?? 999;
           const orderB = b.sort_order ?? 999;
           if (orderA !== orderB) return orderA - orderB;
-          return (a.time || '00:00').localeCompare(b.time || '00:00');
+          
+          return ((a.time as string) || '00:00').localeCompare((b.time as string) || '00:00');
         }),
     [items],
   );
@@ -131,19 +137,21 @@ export default function ItineraryMapView({
   let defaultCenter: [number, number] = [35.6762, 139.6503];
   if (validItems.length > 0) defaultCenter = [validItems[0].lat!, validItems[0].lng!];
   else if (allNodes) {
-    const allValid = allNodes.filter((node) => node.lat && node.lng);
-    if (allValid.length > 0) defaultCenter = [allValid[0].lat!, allValid[0].lng!];
+    const allValid = allNodes.filter((node) => node.lat != null && node.lng != null);
+    if (allValid.length > 0) defaultCenter = [Number(allValid[0].lat!), Number(allValid[0].lng!)];
   }
 
   return (
     <div className={compact ? 'w-full h-full' : 'flex flex-col gap-3'}>
-      <GlassCard className={`${compact ? 'h-full' : 'h-[55vh]'} relative overflow-hidden !p-0 ${compact ? 'rounded-none border-0' : 'border-4 border-white/40 rounded-[2.5rem]'}`}>
+      <GlassCard className={`${compact ? 'h-full' : 'h-[55vh]'} relative w-full overflow-hidden !p-0 ${compact ? 'rounded-none border-0' : 'border-4 border-white/40 rounded-[2.5rem]'}`}>
         <MapContainer
           center={defaultCenter}
           zoom={13}
-          scrollWheelZoom={!compact}
+          scrollWheelZoom={true}
           className="w-full h-full z-10"
-          zoomControl={!compact}
+          zoomControl={true}
+          dragging={true}
+          touchZoom={true}
         >
           <TileLayer
             attribution='&copy; <a href="https://carto.com/">Carto</a>'
@@ -186,7 +194,7 @@ export default function ItineraryMapView({
               key={item.node_id}
               item={item}
               isSelected={item.node_id === selectedId}
-              onClick={() => !compact && setSelectedId(item.node_id === selectedId ? null : item.node_id)}
+              onClick={() => setSelectedId(item.node_id === selectedId ? null : item.node_id)}
               seqNum={idx + 1}
               compact={compact}
             />

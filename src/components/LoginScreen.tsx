@@ -151,7 +151,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
       <div className="absolute right-[-8%] top-[8%] h-[26rem] w-[26rem] rounded-full bg-cyan-300/18 blur-[90px] pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[18%] h-[24rem] w-[24rem] rounded-full bg-purple-300/14 blur-[84px] pointer-events-none" />
 
-      <div className={`relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1040px] flex-col justify-center px-5 py-8 sm:px-6 sm:py-10 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
+      <div className={`relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[1040px] flex-col justify-center px-5 pt-8 pb-32 md:pb-10 sm:px-6 sm:py-10 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
         {shouldShowGuestHero && (
           <section className="mb-4 rounded-[34px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.52))] p-5 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-[18px] sm:p-6 lg:mb-0">
             <div className="flex items-center justify-between gap-3">

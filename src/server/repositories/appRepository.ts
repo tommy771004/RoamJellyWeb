@@ -419,6 +419,20 @@ export class AppRepository {
     return row || null;
   }
 
+  async deleteTrip(tripId: string) {
+    if (!this.db) return;
+    return await this.db.transaction(async (tx: any) => {
+      // Delete all related records
+      await tx.delete(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId)).catch(() => {});
+      await tx.delete(schema.expenses).where(eq(schema.expenses.tripId, tripId)).catch(() => {});
+      await tx.delete(schema.tripTravelFacts).where(eq(schema.tripTravelFacts.tripId, tripId)).catch(() => {});
+      await tx.delete(schema.favorites).where(eq(schema.favorites.tripId, tripId)).catch(() => {});
+      await tx.delete(schema.itineraryNodes).where(eq(schema.itineraryNodes.tripId, tripId)).catch(() => {});
+      await tx.delete(schema.tripMembers).where(eq(schema.tripMembers.tripId, tripId)).catch(() => {});
+      await tx.delete(schema.trips).where(eq(schema.trips.id, tripId)).catch(() => {});
+    });
+  }
+
   async getTripsByUser(userId: string) {
     if (!this.db) return [];
     const members = await this.db.select().from(schema.tripMembers).where(eq(schema.tripMembers.userId, userId));

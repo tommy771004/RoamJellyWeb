@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 const FEATURE_CHUNK_RULES: Array<{name: string; patterns: string[]}> = [
   {
@@ -112,6 +113,35 @@ export default defineConfig(({mode}) => {
     plugins: [
       react(),
       tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        manifestFilename: 'manifest.json',
+        includeAssets: ['favicon.ico', 'icon-app.svg', 'icon-app-maskable.svg'],
+        manifest: {
+          name: 'RoamJelly 果凍漫遊',
+          short_name: 'RoamJelly',
+          description: 'AI 旅遊行程規劃、多人即時共編、機票搜尋比價與旅途工具包。',
+          lang: 'zh-TW',
+          theme_color: '#0f172a',
+          background_color: '#0f172a',
+          display: 'standalone',
+          orientation: 'portrait-primary',
+          icons: [
+            {
+              src: '/icon-app.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'any'
+            },
+            {
+              src: '/icon-app-maskable.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'maskable'
+            }
+          ]
+        }
+      }),
     ],
     define: {
       'import.meta.env.VITE_OPENROUTER_API_KEY': JSON.stringify(env.VITE_OPENROUTER_API_KEY || env.OPENROUTER_API_KEY),

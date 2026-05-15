@@ -2,6 +2,7 @@ import React, { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState }
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, Reorder, useReducedMotion } from 'motion/react';
 
+import MapSelectorModal from './MapSelectorModal';
 
 import { 
   List as ListIcon, 
@@ -57,12 +58,15 @@ import {
   regenerateItinerarySpot,
   updateTripPublicState,
   geocodeSpot,
+  fetchDirections,
   fetchSpotEnrichment,
   submitLedgerExpense,
+  deleteTripApi,
 } from '../lib/workflowApi';
 import { suggestItineraryWithForm, AiRateLimitedError } from '../lib/openrouterApi';
 import { haversineKm, estimateTransport } from '../lib/geoUtils';
 import { useItineraryStore } from '../store/useItineraryStore';
+import { useSearchStore } from '../store/useSearchStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTripFactsStore } from '../store/useTripFactsStore';
 import type {
@@ -89,6 +93,7 @@ import {
 } from '../lib/itineraryUtils';
 import { triggerHapticFeedback } from '../lib/haptics';
 import { getModalMotion, getOverlayTransition, getSheetMotion } from '../lib/motionTokens';
+import { useTypewriter } from '../lib/useTypewriter';
 
 const ItineraryMapView = lazy(() => import('./ItineraryMapView'));
 
@@ -193,10 +198,10 @@ function withAutoCategoryIcon(node: ItineraryNode): ItineraryNode {
   };
 }
 
-function buildDefaultPlannerForm(destination: string, days: number): ItineraryPlannerForm {
+function buildDefaultPlannerForm(destination: string, days: number, profile?: any): ItineraryPlannerForm {
   return {
     days,
-    departureFrom: '台北',
+    departureFrom: profile?.departure || '台北',
     arrivalTo: destination,
     flightDate: '2026-06-15',
     countries: [],
@@ -205,12 +210,12 @@ function buildDefaultPlannerForm(destination: string, days: number): ItineraryPl
     autoFlightSegments: [],
     notes: '',
     travelFactsContext: '',
-    companions: '',
-    vibes: [] as string[],
-    interests: [] as string[],
-    budget: '',
-    dietary: [] as string[],
-    transport: [] as string[],
+    companions: profile?.companions || '',
+    vibes: Array.isArray(profile?.vibes) ? [...profile.vibes] : ([] as string[]),
+    interests: Array.isArray(profile?.interests) ? [...profile.interests] : ([] as string[]),
+    budget: profile?.budget || '',
+    dietary: Array.isArray(profile?.dietary) ? [...profile.dietary] : ([] as string[]),
+    transport: Array.isArray(profile?.transport) ? [...profile.transport] : ([] as string[]),
   } as any;
 }
 
@@ -318,7 +323,8 @@ export default function ItineraryTab() {
   const [newSpotEmoji, setNewSpotEmoji] = useState('📍');
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
   const [addingFavorite, setAddingFavorite] = useState<boolean>(false);
-  const [plannerForm, setPlannerForm] = useState<ItineraryPlannerForm>(buildDefaultPlannerForm('', 5));
+  const { aiProfile } = useSearchStore();
+  const [plannerForm, setPlannerForm] = useState<ItineraryPlannerForm>(buildDefaultPlannerForm('', 5, aiProfile));
   const [flightsLoading, setFlightsLoading] = useState<boolean>(false);
   const [aiGenerateMode, setAiGenerateMode] = useState<AiGenerateMode>('selected_day');
   const [rangeStartDay, setRangeStartDay] = useState<number>(1);
@@ -435,9 +441,9 @@ export default function ItineraryTab() {
         });
       });
 
-      // Geocode all spots in parallel; fall back silently if any fail
+      // Priorities AI generated lat/lng, otherwise Geocode spots in parallel; fall back silently if any fail
       const geocodeResults = await Promise.allSettled(
-        rawNodes.map(n => geocodeSpot(n.title, formData.destination))
+        rawNodes.map(n => (n.lat && n.lng) ? Promise.resolve({ lat: n.lat, lng: n.lng }) : geocodeSpot(n.title, formData.destination))
       );
       geocodeResults.forEach((r, i) => {
         if (r.status === 'fulfilled' && r.value) {
@@ -666,7 +672,7 @@ export default function ItineraryTab() {
           ? 5 
           : (tripResult.days || 5);
 
-        setPlannerForm(buildDefaultPlannerForm(tripResult.destination, initialPlannerDays));
+        setPlannerForm(buildDefaultPlannerForm(tripResult.destination, initialPlannerDays, aiProfile));
         setFavorites(favResult);
         setCollaborators(collabResult);
         if (Array.isArray(factsResult)) {
@@ -974,9 +980,9 @@ export default function ItineraryTab() {
         isPublic: Boolean(data.isPublic ?? nextPublicState),
         forkCount: Number(data.forkCount ?? prev.forkCount ?? 0),
       } : prev);
-      showToast(nextPublicState ? '已發布到公開模板大廳。' : '已從公開模板大廳下架。', 'success');
+      showToast(nextPublicState ? '已發布到公開分享行程。' : '已從公開分享行程移除。', 'success');
     } catch (error: any) {
-      showToast(error?.message || '更新公開模板狀態失敗。', 'warning');
+      showToast(error?.message || '更新公開分享行程狀態失敗。', 'warning');
     } finally {
       setIsUpdatingPublicState(false);
     }
@@ -1273,6 +1279,7 @@ export default function ItineraryTab() {
                 description: spot.ai_note || '',
                 ai_note: spot.ai_note || '',
                 intensity: spot.intensity,
+                transport_to_next: spot.transport_to_next,
                 lat: spot.lat,
                 lng: spot.lng,
                 linkedFactId: spot.linkedFactId,
@@ -1293,6 +1300,7 @@ export default function ItineraryTab() {
             description: spot.ai_note || '',
             ai_note: spot.ai_note || '',
             intensity: spot.intensity,
+            transport_to_next: spot.transport_to_next,
             lat: spot.lat,
             lng: spot.lng,
             linkedFactId: spot.linkedFactId,
@@ -1305,31 +1313,91 @@ export default function ItineraryTab() {
 
       if (effectiveMode === 'overwrite_all') {
         await removeNodesBatch([...nodes]);
-        finalNodes = assignDaysBasedOnTimeAndOrder(suggestedNodes, plannerForm.flightDate);
+        
+        let tempNodes = assignDaysBasedOnTimeAndOrder(suggestedNodes, plannerForm.flightDate);
+        const maxGeneratedDay = tempNodes.length > 0 ? Math.max(...tempNodes.map(n => n.day)) : 0;
+        
+        if (maxGeneratedDay < genDays) {
+          for (let d = maxGeneratedDay + 1; d <= genDays; d++) {
+            tempNodes.push({
+               node_id: `ai_${Date.now()}_empty_day_${d}`,
+               day: d,
+               time: '10:00',
+               title: '自由活動',
+               emoji: '🏖️',
+               category: 'activity',
+               description: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+               ai_note: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+               intensity: 'chill',
+               source: 'local'
+            } as any);
+          }
+          tempNodes = assignDaysBasedOnTimeAndOrder(tempNodes, plannerForm.flightDate);
+        }
+        finalNodes = tempNodes;
+        
       } else if (effectiveMode === 'generate_for_selected_days') {
         const targetDays = Array.from({ length: rangeEndDay - rangeStartDay + 1 }, (_, i) => rangeStartDay + i);
         const currentDaysNodes = nodes.filter((node: ItineraryNode) => targetDays.includes(node.day));
         await removeNodesBatch(currentDaysNodes);
         
-        finalNodes = suggestedNodes.map((node, index) => {
+        const offsetNodes = suggestedNodes.map((node, index) => {
           let targetDay = rangeStartDay + (node.day - 1);
           if (targetDay > rangeEndDay) targetDay = rangeEndDay;
+          return { ...node, day: targetDay, sort_order: index + 1 };
+        });
+        
+        const generatedDays = new Set(offsetNodes.map(n => n.day));
+        for (const targetDay of targetDays) {
+          if (!generatedDays.has(targetDay)) {
+            offsetNodes.push({
+               node_id: `ai_${Date.now()}_empty_day_${targetDay}`,
+               day: targetDay,
+               time: '10:00',
+               title: '自由活動',
+               emoji: '🏖️',
+               category: 'activity',
+               description: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+               ai_note: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+               intensity: 'chill',
+               source: 'local',
+               sort_order: 1
+            } as any);
+          }
+        }
+        
+        finalNodes = offsetNodes.map((node) => {
           return normalizeScheduleForNode(
             {
               ...node,
-              day: targetDay,
-              date: getDateForDay(targetDay, plannerForm.flightDate),
+              date: getDateForDay(node.day, plannerForm.flightDate),
             },
             {
               tripStartDate: plannerForm.flightDate,
-              fallbackDay: targetDay,
-              fallbackSortOrder: index + 1,
+              fallbackDay: node.day,
+              fallbackSortOrder: node.sort_order,
             },
           ) as ItineraryNode;
         });
       } else {
         const currentDayNodes = nodes.filter((node: ItineraryNode) => node.day === safeSelectedDay);
         await removeNodesBatch(currentDayNodes);
+        
+        if (suggestedNodes.length === 0) {
+           suggestedNodes.push({
+             node_id: `ai_${Date.now()}_empty_day_${selectedDay}`,
+             day: selectedDay,
+             time: '10:00',
+             title: '自由活動',
+             emoji: '🏖️',
+             category: 'activity',
+             description: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+             ai_note: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+             intensity: 'chill',
+             source: 'local'
+           } as any);
+        }
+        
         finalNodes = suggestedNodes.map((node, index) =>
           normalizeScheduleForNode(
             {
@@ -1375,7 +1443,7 @@ export default function ItineraryTab() {
   if (!activeTripId) {
     if (isPlanningNew) {
       return (
-        <div className="flex-1 flex flex-col pt-8 sm:pt-12 bg-[#fcfdff] min-h-[100dvh] max-h-[100dvh] overflow-y-auto scroll-smooth">
+        <div className="flex-1 flex flex-col pt-4 sm:pt-10 bg-[#fcfdff] min-h-[100dvh] max-h-[100dvh] overflow-y-auto scroll-smooth">
           <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
             <button 
               onClick={() => setIsPlanningNew(false)}
@@ -1387,6 +1455,8 @@ export default function ItineraryTab() {
             <div className="flex-1">
               <AiForm onSubmit={handleAiFormSubmit} />
             </div>
+            {/* Mobile bottom nav spacer */}
+            <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
           </div>
         </div>
       );
@@ -1394,38 +1464,38 @@ export default function ItineraryTab() {
 
     return (
       <div className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] selection:bg-pink-100">
-        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-10 font-sans pb-32 animate-in fade-in duration-700">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-32 animate-in fade-in duration-700">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-12">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight">您的行程手帳</h1>
+              <h1 className="text-2xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight text-balance">您的行程手帳</h1>
               <p className="text-slate-400 font-bold">請選擇一個現有行程專案，或由 AI 啟動規劃 🌍</p>
             </div>
           </div>
 
         {/* AI Planning Entry Hero */}
-        <div className="mb-16">
-          <motion.div 
+        <div className="mb-8 md:mb-16">
+          <motion.div
             whileHover={{ scale: 1.02, y: -8 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             onClick={() => setIsPlanningNew(true)}
             className="cursor-pointer group relative overflow-hidden rounded-[40px] p-1 shadow-2xl bg-gradient-to-r from-pink-500 via-fuchsia-500 to-indigo-500"
           >
-            <div className="bg-white rounded-[38px] p-10 md:p-12 h-full flex flex-col md:flex-row items-center gap-10">
+            <div className="bg-white rounded-[38px] p-5 sm:p-8 md:p-12 h-full flex flex-col md:flex-row items-center gap-5 md:gap-10">
                <div className="flex-1">
                   <div className="flex items-center gap-2 mb-4">
                      <span className="bg-fuchsia-100 text-fuchsia-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Powered by AI</span>
                   </div>
-                  <h2 className="text-3xl md:text-5xl font-black text-slate-800 mb-6 leading-tight tracking-tight">準備好下一個目的地了嗎？</h2>
-                  <p className="text-slate-500 font-bold text-xl mb-10 leading-relaxed max-w-2xl">
+                  <h2 className="text-xl sm:text-3xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-6 leading-tight tracking-tight text-balance">準備好下一個目的地了嗎？</h2>
+                  <p className="text-slate-500 font-bold text-sm sm:text-xl mb-4 sm:mb-10 leading-relaxed max-w-2xl">
                     輸入想去的地方與偏好，讓 AI 為您量身打造專屬行程，並立即啟動即時共編。
                   </p>
-                  <button className="px-10 py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest flex items-center gap-3 group-hover:bg-slate-800 transition-all shadow-xl">
+                  <button className="px-5 py-3 sm:px-10 sm:py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest flex items-center gap-3 group-hover:bg-slate-800 transition-all shadow-xl">
                     <Sparkles size={20} />
                     開始智慧 AI 規劃
                   </button>
                </div>
-               <div className="w-full md:w-1/3 flex justify-center">
+               <div className="hidden md:flex md:w-1/3 justify-center">
                   <div className="relative">
                     <div className="w-48 h-48 bg-fuchsia-100 rounded-[48px] rotate-12 absolute -inset-2 opacity-50 blur-2xl animate-pulse" />
                     <div className="w-48 h-48 bg-white border-4 border-slate-50 rounded-[48px] shadow-xl flex items-center justify-center text-6xl relative z-10">
@@ -1466,7 +1536,10 @@ export default function ItineraryTab() {
                 whileHover={{ scale: 1.05, y: -12 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                onClick={() => setActiveTripId(trip.tripId ?? trip.id)}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest('.delete-trip-btn')) return;
+                  setActiveTripId(trip.tripId ?? trip.id);
+                }}
                 className="cursor-pointer group"
               >
                 <GlassCard className="!p-0 overflow-hidden rounded-[32px] border border-white/60 shadow-lg hover:shadow-2xl transition-all h-full flex flex-col">
@@ -1479,7 +1552,32 @@ export default function ItineraryTab() {
                           (e.target as HTMLImageElement).src = DEFAULT_TRIP_IMAGE;
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+                      <div className="absolute top-4 right-4 z-10">
+                        <button
+                          title="刪除此專案"
+                          className="delete-trip-btn w-8 h-8 bg-white/40 hover:bg-red-500 hover:text-white text-white flex items-center justify-center rounded-full backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (window.confirm('確定要刪除「' + trip.name + '」？這將刪除所有相關資料（包含帳務、清單等）且無法復原。')) {
+                              try {
+                                const ok = await deleteTripApi(trip.tripId ?? trip.id);
+                                if (ok) {
+                                  useAppStore.getState().showToast('行程專案已刪除', 'success');
+                                  setUserTrips(prev => prev.filter(t => (t.tripId ?? t.id) !== (trip.tripId ?? trip.id)));
+                                } else {
+                                  useAppStore.getState().showToast('刪除失敗，或您不是該專案擁有者', 'error');
+                                }
+                              } catch (err) {
+                                useAppStore.getState().showToast('刪除發生錯誤', 'error');
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 size={16} strokeWidth={2.5} />
+                        </button>
+                      </div>
                       {(trip.days ?? null) != null && (
                       <div className="absolute bottom-4 left-6">
                          <span className="text-white/80 text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-white/20 backdrop-blur-md rounded-md">
@@ -1507,6 +1605,8 @@ export default function ItineraryTab() {
           </div>
         )}
       </div>
+      {/* Mobile bottom nav spacer */}
+      <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
     </div>
     );
   }
@@ -1574,13 +1674,15 @@ export default function ItineraryTab() {
             </div>
           </div>
         </div>
+        {/* Mobile bottom nav spacer */}
+        <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
       </main>
     );
   }
 
   return (
-    <main className="flex-1 w-full overflow-y-auto selection:bg-pink-100 animate-in fade-in duration-700 scroll-smooth bg-[#fafafb]">
-      <div className="max-w-[1440px] mx-auto w-full pb-32">
+    <main className="flex-1 w-full overflow-y-auto selection:bg-pink-100 animate-in fade-in duration-700 scroll-smooth bg-[#fafafb]/30">
+      <div className="max-w-[1440px] mx-auto w-full pb-32 md:px-4 lg:px-8 mt-0 sm:mt-4 md:mt-6">
         {isOffline && (
           <div className="mx-4 md:mx-8 mb-6 mt-6 glass-card rounded-2xl p-4 bg-amber-50/80 border-amber-200 shadow-sm flex items-center justify-center gap-2">
             <span className="text-amber-700 font-bold text-sm tracking-wide flex items-center gap-2">
@@ -1594,60 +1696,51 @@ export default function ItineraryTab() {
         )}
 
       {/* Cover Image Banner */}
-      <div className="relative w-full h-[40vh] md:h-64 overflow-hidden md:rounded-[40px] mb-6 print:hidden -mt-4 md:mt-0 shadow-2xl z-10 sm:max-w-[calc(100%-2rem)] sm:mx-auto">
+      <div className="relative w-full h-[28vh] sm:h-[35vh] md:h-64 overflow-hidden md:rounded-[40px] mb-8 print:hidden -mt-4 md:mt-0 shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-10 sm:max-w-[calc(100%-2rem)] sm:mx-auto">
         {tripInfo?.coverImage ? (
           <img src={tripInfo.coverImage} alt={tripInfo.destination} className="w-full h-full object-cover scale-105" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 animate-pulse" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#fafafb] via-[#fafafb]/20 to-black/40 md:to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#fafafb] via-[#fafafb]/30 to-black/60 md:to-black/20" />
         
         {/* Mobile Header Overlay Info - Adjusted for better immersion */}
-        <div className="absolute top-6 left-4 right-4 flex justify-between items-start z-50 lg:hidden">
+        <div className="absolute top-8 left-5 right-5 flex justify-between items-start z-50 lg:hidden">
             <button
               onClick={handleBackToTrips}
-              className="w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
+              aria-label="返回"
+              className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
             >
-              <ArrowLeft size={18} strokeWidth={3} />
+              <ArrowLeft size={20} strokeWidth={3} />
             </button>
-            <div className="flex gap-2">
+            <div className="flex gap-2.5">
               <button
                 onClick={handleTogglePublicTemplate}
                 disabled={isUpdatingPublicState}
-                className="px-3 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg text-[10px] font-black uppercase tracking-widest disabled:opacity-60"
+                className="px-4 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg text-[11px] font-black uppercase tracking-widest disabled:opacity-60"
               >
                 {tripInfo?.isPublic ? '公開中' : '發布'}
               </button>
               <button
                 onClick={handleShare}
-                className="w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
+                aria-label="分享行程"
+                className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
               >
-                <Share2 size={16} strokeWidth={3} />
-              </button>
-              <button
-                onClick={handleExportIcs}
-                className="w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
-              >
-                <Calendar size={16} strokeWidth={3} />
+                <Share2 size={18} strokeWidth={3} />
               </button>
             </div>
         </div>
 
-        <div className="absolute bottom-6 left-5 right-5 lg:hidden flex flex-col gap-2 z-50">
-          <h1 className="text-3xl font-black text-slate-900 leading-tight drop-shadow-md truncate font-sans tracking-tight">
+        <div className="absolute bottom-8 left-6 right-6 lg:hidden flex flex-col gap-3 z-50">
+          <h1 className="text-4xl sm:text-5xl font-black text-slate-800 leading-tight drop-shadow-sm font-serif tracking-tight line-clamp-2 text-balance">
             {tripInfo?.name || tripInfo?.destination}
           </h1>
           <div className="flex items-center gap-2 text-slate-700 font-black text-[10px] uppercase tracking-widest flex-wrap">
-            <span className="bg-white/90 backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm">{totalDays} DAYS</span>
-            <span className="bg-white/90 backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm">{collaborators.length} TRAVELERS</span>
-            <span className={`backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm ${tripInfo?.isPublic ? 'bg-emerald-100/90 text-emerald-700' : 'bg-white/90 text-slate-500'}`}>
+            <span className="bg-white/95 backdrop-blur-xl px-3.5 py-1.5 rounded-full shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)]">{totalDays} DAYS</span>
+            <span className="bg-white/95 backdrop-blur-xl px-3.5 py-1.5 rounded-full shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)]">{collaborators.length} TRAVELERS</span>
+            <span className={`backdrop-blur-xl px-3.5 py-1.5 rounded-full shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] ${tripInfo?.isPublic ? 'bg-emerald-100/95 text-emerald-700' : 'bg-white/95 text-slate-500'}`}>
               {tripInfo?.isPublic ? 'PUBLIC TEMPLATE' : 'PRIVATE DRAFT'}
             </span>
-            {!!tripInfo?.forkCount && (
-              <span className="bg-white/90 backdrop-blur-xl px-3 py-1.5 rounded-full shadow-sm text-slate-500">
-                FORKS {tripInfo.forkCount}
-              </span>
-            )}
           </div>
         </div>
       </div>
@@ -1676,7 +1769,7 @@ export default function ItineraryTab() {
               className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95 disabled:opacity-60 ${tripInfo?.isPublic ? 'bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-600' : 'bg-white hover:bg-slate-50 border border-slate-100 text-slate-500'}`}
             >
               <Lock size={12} strokeWidth={3} />
-              {tripInfo?.isPublic ? '取消公開' : '發布模板'}
+              {tripInfo?.isPublic ? '取消公開' : '分享行程'}
             </button>
             <button
               onClick={handleExportIcs}
@@ -1694,29 +1787,29 @@ export default function ItineraryTab() {
             </button>
           </div>
           
-          <div className="hidden lg:block">
-            <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-2 flex items-center gap-3 font-serif tracking-tight leading-tight">
+          <div className="hidden lg:block mt-8">
+            <h1 className="text-5xl lg:text-6xl font-black text-slate-800 mb-4 flex items-center gap-3 font-serif tracking-tight leading-tight">
               <div className="flex items-center gap-2 group/title">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600">
                    {tripInfo?.name || tripInfo?.destination || '未命名目的地'}
                 </span>
-                <span className="text-3xl md:text-4xl animate-bounce group-hover/title:scale-125 transition-transform">✨</span>
+                <span className="text-4xl lg:text-5xl animate-bounce group-hover/title:scale-125 transition-transform">✨</span>
               </div>
             </h1>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-slate-500 font-bold text-[14px]">
-               <div className="flex items-center gap-2 px-3 py-1 bg-fuchsia-50/50 rounded-full border border-fuchsia-100/50 shadow-sm">
-                  <Calendar size={16} className="text-fuchsia-500 shrink-0" />
-                  <span className="text-slate-700 tracking-tight">{tripInfo?.startDate && tripInfo?.endDate ? `${tripInfo.startDate} - ${tripInfo.endDate} • ` : null}<span className="text-fuchsia-600 font-black">{totalDays}</span> 天</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 text-slate-500 font-bold text-[14px]">
+               <div className="flex items-center gap-2 px-4 py-1.5 bg-white rounded-full border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                  <Calendar size={16} className="text-pink-500 shrink-0" />
+                  <span className="text-slate-700 tracking-tight">{tripInfo?.startDate && tripInfo?.endDate ? `${tripInfo.startDate} - ${tripInfo.endDate} • ` : null}<span className="text-pink-600 font-black">{totalDays}</span> 天</span>
                </div>
-               <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50/50 rounded-full border border-indigo-100/50 shadow-sm">
+               <div className="flex items-center gap-2 px-4 py-1.5 bg-white rounded-full border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                   <Users size={16} className="text-indigo-500 shrink-0" />
                   <span className="text-slate-700 tracking-tight"><span className="text-indigo-600 font-black">{collaborators.length}</span> 位旅行者</span>
                </div>
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-full border shadow-sm ${tripInfo?.isPublic ? 'bg-emerald-50/60 border-emerald-100/60' : 'bg-slate-50/70 border-slate-100/70'}`}>
+              <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full border shadow-sm hover:shadow-md transition-shadow ${tripInfo?.isPublic ? 'bg-emerald-50/60 border-emerald-100/60' : 'bg-white border-slate-100'}`}>
                 <Share2 size={16} className={tripInfo?.isPublic ? 'text-emerald-500 shrink-0' : 'text-slate-400 shrink-0'} />
-                <span className="text-slate-700 tracking-tight">{tripInfo?.isPublic ? '公開模板已上架' : '目前為私人草稿'}</span>
+                <span className="text-slate-700 tracking-tight">{tripInfo?.isPublic ? '公開行程中...' : '目前為私人行程'}</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1 bg-amber-50/50 rounded-full border border-amber-100/50 shadow-sm">
+              <div className="flex items-center gap-2 px-4 py-1.5 bg-white rounded-full border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                 <Bookmark size={16} className="text-amber-500 shrink-0" />
                 <span className="text-slate-700 tracking-tight"><span className="text-amber-600 font-black">{tripInfo?.forkCount ?? 0}</span> 次複製</span>
               </div>
@@ -1724,41 +1817,41 @@ export default function ItineraryTab() {
           </div>
         </div>
         
-        <div className="flex gap-2 p-1.5 md:p-1.5 rounded-[2rem] w-[calc(100%-2rem)] mx-auto md:w-auto md:mx-0 overflow-x-auto no-scrollbar shadow-lg shadow-pink-100/30 md:shadow-xl border border-white bg-white/70 backdrop-blur-xl sticky top-4 z-40 md:relative md:top-0">
+        <div className="flex gap-2 p-1.5 md:p-2 rounded-full w-[calc(100%-2rem)] mx-auto md:w-auto md:mx-0 overflow-x-auto no-scrollbar shadow-lg shadow-pink-100/30 md:shadow-xl border border-white bg-white/70 backdrop-blur-xl sticky top-4 z-40 md:relative md:top-0 md:mt-8">
           <button 
             onClick={() => setViewMode('list')}
-            className={`flex-1 md:flex-none px-5 md:px-8 py-2.5 md:py-3 rounded-full font-black text-[10px] md:text-xs tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'list' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-white border sm:border-transparent'}`}
+            className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'list' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-700 hover:bg-white border sm:border-transparent'}`}
           >
             LIST
           </button>
           <button 
             onClick={() => setViewMode('map')}
-            className={`flex-1 md:flex-none px-5 md:px-8 py-2.5 md:py-3 rounded-full font-black text-[10px] md:text-xs tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-white border sm:border-transparent'}`}
+            className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-700 hover:bg-white border sm:border-transparent'}`}
           >
             EXPLORE
           </button>
           <button 
             onClick={() => setViewMode('calendar')}
-            className={`flex-1 md:flex-none px-5 md:px-8 py-2.5 md:py-3 rounded-full font-black text-[10px] md:text-xs tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'calendar' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-600 hover:bg-white border sm:border-transparent'}`}
+            className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'calendar' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-700 hover:bg-white border sm:border-transparent'}`}
           >
             CALENDAR
           </button>
         </div>
       </div>
 
-      <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-10">
         {/* Left Column: Filters & Info */}
         <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pr-2 no-scrollbar">
           <GlassCard className="!p-6 shadow-xl shadow-slate-200/40 ring-1 ring-white/60 bg-white/70 backdrop-blur-3xl overflow-hidden rounded-[32px] border border-white">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-black text-[11px] uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+              <h3 className="font-black text-[10px] xl:text-[11px] uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
                  <span>旅程天數</span> <span className="text-sm">📅</span>
               </h3>
-              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+              <div className="w-7 h-7 xl:w-8 xl:h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
                 <Settings2 size={14} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 relative z-10">
+            <div className="grid grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2 xl:gap-3 relative z-10 w-full overflow-hidden">
               {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
                 const isActive = safeSelectedDay === day;
                 const count = nodes.filter((n: ItineraryNode) => n.day === day).length;
@@ -1769,18 +1862,21 @@ export default function ItineraryTab() {
                   <button
                     key={day}
                     onClick={() => setSelectedDay(day)}
-                    className={`px-4 py-3.5 rounded-2xl font-black text-sm transition-all flex flex-col items-center gap-1 border ${
+                    className={`px-1 py-3 xl:px-2 xl:py-3.5 rounded-2xl font-black text-xs xl:text-sm transition-all flex flex-col items-center justify-center gap-1 border min-w-0 ${
                       isActive
                         ? 'bg-pink-50 text-pink-600 border-pink-200 shadow-inner'
                         : 'bg-white/60 text-slate-400 border-white hover:bg-white hover:text-pink-400'
                     }`}
                   >
                     <span className="flex items-center gap-1">
-                      <span>DAY {day}</span>
-                      {loadingDay === day && <Loader2 size={12} className="animate-spin" />}
+                      <span className="truncate">DAY {day}</span>
+                      {loadingDay === day && <Loader2 size={12} className="animate-spin shrink-0" />}
                     </span>
-                    {displayDate && <span className="text-[10px] opacity-70 tracking-tighter">{displayDate}</span>}
-                    <span className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">{count} SPOTS</span>
+                    {displayDate && <span className="text-[9px] xl:text-[10px] opacity-70 tracking-tighter truncate w-full text-center px-1">{displayDate}</span>}
+                    <span className="text-[9px] xl:text-[10px] font-bold opacity-60 uppercase tracking-tighter truncate">
+                      {count} <span className="hidden xl:inline">SPOTS</span>
+                      <span className="inline xl:hidden">站</span>
+                    </span>
                   </button>
                 );
               })}
@@ -1788,15 +1884,15 @@ export default function ItineraryTab() {
           </GlassCard>
 
           {/* Collaborators with presence */}
-          <GlassCard className="!p-6">
-             <div className="flex items-center justify-between mb-5">
-                <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">目前在線</span>
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[10px] font-black text-emerald-600 uppercase">LIVE</span>
+          <GlassCard className="!p-4 xl:!p-6 overflow-hidden">
+             <div className="flex items-center justify-between mb-4 xl:mb-5 flex-wrap gap-2">
+                <span className="font-black text-[10px] xl:text-xs uppercase tracking-[0.2em] text-slate-400">目前在線</span>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 shrink-0">
+                  <div className="w-1 h-1 xl:w-1.5 xl:h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[8px] xl:text-[10px] font-black text-emerald-600 uppercase tracking-wider">LIVE</span>
                 </div>
              </div>
-             <div className="flex flex-row items-center">
+             <div className="flex flex-row flex-wrap items-center gap-x-2 gap-y-3 pl-1 xl:pl-3">
                 {collaborators.map((c: Collaborator, i: number) => (
                   <CollaboratorAvatar key={c.id} collaborator={c} index={i} isOnline={true} />
                 ))}
@@ -1919,7 +2015,7 @@ export default function ItineraryTab() {
                       <span>DAY</span>
                       {loadingDay === day && <Loader2 size={11} className="animate-spin" />}
                     </span>
-                    <span className="text-lg sm:text-xl leading-none">{day}</span>
+                    <span className="text-lg sm:text-xl leading-none tabular-nums">{day}</span>
                     {displayDate && <span className={`text-[10px] font-bold mt-1.5 opacity-60 tracking-tight`}>{displayDate}</span>}
                   </motion.button>
                 );
@@ -1967,11 +2063,12 @@ export default function ItineraryTab() {
                 )}
 
                 {/* AI Assistant Quick Trigger */}
-                <div className="group relative">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 rounded-[32px] blur-2xl opacity-10 group-hover:opacity-20 transition-opacity duration-1000" />
-                  <GlassCard className="!p-6 !rounded-[32px] border border-white/80 shadow-xl overflow-hidden">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                      <div className="flex items-center gap-5">
+                {nodes.length > 0 && (
+                  <div className="group relative">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 rounded-[32px] blur-2xl opacity-10 group-hover:opacity-20 transition-opacity duration-1000" />
+                    <GlassCard className="!p-6 !rounded-[32px] border border-white/80 shadow-xl overflow-hidden">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-5">
                         <div className="w-16 h-16 rounded-[22px] bg-gradient-to-tr from-pink-500 to-fuchsia-600 flex items-center justify-center text-white shadow-lg shadow-pink-200">
                           <Sparkles size={28} />
                         </div>
@@ -2202,6 +2299,7 @@ export default function ItineraryTab() {
                     </AnimatePresence>
                   </GlassCard>
                 </div>
+                )}
 
                 <ItineraryList
                   items={selectedDayNodes}
@@ -2276,7 +2374,8 @@ export default function ItineraryTab() {
       {/* Floating Action Buttons (Mobile Only) */}
       <div className="md:hidden fixed bottom-24 right-5 flex flex-col gap-4 z-50">
         {!loading && favorites.length > 0 && (
-          <button 
+          <button
+            aria-label={`口袋名單 (${favorites.length} 個景點)`}
             onClick={() => setShowMobileFavorites(true)}
             className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl active:scale-90 transition-all group overflow-hidden shadow-fuchsia-200/50 relative"
           >
@@ -2289,7 +2388,8 @@ export default function ItineraryTab() {
             </div>
           </button>
         )}
-        <button 
+        <button
+          aria-label="AI 行程規劃"
           onClick={() => setIsPlanningNew(true)}
           className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl active:scale-90 transition-all group overflow-hidden shadow-pink-200/50"
         >
@@ -2328,7 +2428,8 @@ export default function ItineraryTab() {
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Saved Spots</p>
                   </div>
                 </div>
-                <button 
+                <button
+                  aria-label="關閉口袋名單"
                   onClick={() => setShowMobileFavorites(false)}
                   className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors"
                 >
@@ -2366,6 +2467,8 @@ export default function ItineraryTab() {
           onClose={() => setExpenseTargetNode(null)}
         />
       )}
+      {/* Mobile bottom nav spacer */}
+      <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
       </div>
     </main>
   );
@@ -2539,6 +2642,87 @@ function DraggableFavoriteSpot({
   );
 }
 
+function extractMinutes(text: string): number {
+  if (!text) return 0;
+  let totalMinutes = 0;
+  const hrMatch = text.match(/(\d+)\s*(h|hr|小時|時)/i);
+  if (hrMatch) totalMinutes += parseInt(hrMatch[1], 10) * 60;
+  const minMatch = text.match(/(\d+)\s*(m|min|分鐘|分)/i);
+  if (minMatch) totalMinutes += parseInt(minMatch[1], 10);
+  return totalMinutes;
+}
+
+function TransportGapIndicator({ item, nextItem, timeGapMinutes, timeGapStr }: { item: ItineraryNode; nextItem: ItineraryNode; timeGapMinutes: number; timeGapStr: string }) {
+  const [apiDuration, setApiDuration] = useState<number | null>(null);
+
+  const km = (item.lat && item.lng && nextItem.lat && nextItem.lng)
+    ? haversineKm(item.lat, item.lng, nextItem.lat, nextItem.lng)
+    : 0;
+
+  useEffect(() => {
+    if (km > 2 && !item.transport_to_next && item.lng && item.lat && nextItem.lng && nextItem.lat) {
+      fetchDirections(item.lng, item.lat, nextItem.lng, nextItem.lat).then(duration => {
+        if (duration) setApiDuration(duration);
+      });
+    } else {
+      setApiDuration(null);
+    }
+  }, [km, item.transport_to_next, item.lat, item.lng, nextItem.lat, nextItem.lng]);
+
+  const autoTransport = (!item.transport_to_next && km > 0)
+    ? estimateTransport(km)
+    : null;
+
+  const displayTransport = (() => {
+    if (item.transport_to_next) {
+      return { emoji: '🚇', label: item.transport_to_next, minutes: extractMinutes(item.transport_to_next), isApi: false };
+    }
+    if (autoTransport) {
+      if (apiDuration && km > 2) {
+        return { emoji: '🚗', label: `預計車程 ${apiDuration} 分鐘`, minutes: apiDuration, isApi: true };
+      }
+      return { ...autoTransport, isApi: false };
+    }
+    return null;
+  })();
+
+  const hasTransitConflict = Boolean(displayTransport && timeGapMinutes > 0 && displayTransport.minutes > timeGapMinutes);
+  const showBadge = timeGapStr || displayTransport;
+
+  return showBadge ? (
+    <div className="flex justify-start sm:pl-[70px] pl-[50px] lg:pl-[80px] my-2 relative z-0">
+      <div className="w-[3px] min-h-[2rem] sm:min-h-[2.5rem] bg-gradient-to-b from-slate-200 to-slate-200" />
+      <div className="flex flex-col justify-center ml-4 sm:ml-5 -mt-2 sm:-mt-1">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+          {timeGapStr && (
+            <span className="px-3.5 py-1.5 bg-white rounded-full text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 transition-transform hover:scale-105">
+              <Clock size={12} className="text-slate-400" />
+              約 {timeGapStr}
+            </span>
+          )}
+          {displayTransport && (
+            <span className={`px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 transition-transform hover:scale-105 ${hasTransitConflict ? 'bg-amber-50/90 text-amber-600 border-amber-100' : (displayTransport.isApi ? 'bg-sky-50 text-sky-600 border-sky-100 shadow-[0_0_10px_-2px_rgba(14,165,233,0.2)]' : 'bg-indigo-50/90 text-indigo-500 border-indigo-100')}`}>
+              <span>{displayTransport.emoji}</span>
+              {displayTransport.label}
+              {displayTransport.isApi && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />}
+            </span>
+          )}
+          {hasTransitConflict && (
+            <span className="px-3.5 py-1.5 bg-amber-50/90 rounded-full text-[10px] sm:text-[11px] font-black text-amber-600 uppercase tracking-widest border border-amber-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5">
+              <span>⚠️</span>
+              行程太緊湊
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="flex justify-start sm:pl-[70px] pl-[50px] lg:pl-[80px] my-1 relative z-0">
+      <div className="w-[3px] h-8 sm:h-10 bg-gradient-to-b from-slate-200 to-slate-200" />
+    </div>
+  );
+}
+
 // ─── Itinerary List ───────────────────────────────────────────────────────────
 
 function ItineraryListItem({
@@ -2586,6 +2770,7 @@ function ItineraryListItem({
   const [editLinkedFactId, setEditLinkedFactId] = useState(item.linkedFactId || '');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimeQuickEdit, setShowTimeQuickEdit] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const facts = useTripFactsStore(s => s.facts);
@@ -2665,7 +2850,8 @@ function ItineraryListItem({
 
   const [isNavigating, setIsNavigating] = useState(false);
 
-  const handleNavigate = async () => {
+  const handleNavigate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     let lat = item.lat;
     let lng = item.lng;
     
@@ -2689,11 +2875,8 @@ function ItineraryListItem({
       return;
     }
 
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const destinationCoords = encodeURIComponent(`${lat},${lng}`);
-    const url = isIOS
-      ? `https://maps.apple.com/?daddr=${destinationCoords}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
     triggerHapticFeedback([18]);
     window.open(url, '_blank');
   };
@@ -2753,17 +2936,17 @@ function ItineraryListItem({
   const meta = getCategoryMeta(item.category);
 
   return (
-    <div className="relative flex items-stretch group w-full px-1 pl-6 sm:px-0 sm:pl-8 lg:pl-10">
+    <div className="relative flex items-stretch group w-full px-1 pl-5 sm:px-0 sm:pl-10 lg:pl-12">
       {/* Timeline Thread */}
-      <div className="absolute left-2.5 sm:left-3.5 lg:left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-slate-200 via-slate-200 to-slate-200/50 rounded-full group-last:bottom-auto group-last:h-12" />
-      <div className={`absolute left-1 sm:left-2 lg:left-2.5 top-5 sm:top-6 w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-4.5 lg:h-4.5 rounded-full border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? 'bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]' : 'bg-slate-300 group-hover:bg-fuchsia-400'}`} />
+      <div className="absolute left-2.5 sm:left-4 lg:left-5 top-0 bottom-0 w-[3px] bg-gradient-to-b from-slate-200 via-slate-200 to-transparent rounded-full group-last:bottom-auto group-last:h-12" />
+      <div className={`absolute left-1 sm:left-2 lg:left-3 top-5 sm:top-6 w-[14px] h-[14px] sm:w-[18px] sm:h-[18px] lg:w-[20px] lg:h-[20px] rounded-full border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? 'bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]' : 'bg-slate-300 group-hover:bg-fuchsia-400'}`} />
 
       {/* Content Card */}
       {collaboratingLock && (
         <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
       <GlassCard
-        className={`flex-1 !p-1.5 sm:!p-2.5 md:!p-3 !rounded-[16px] sm:!rounded-[20px] ${getCategoryStyle(item.category)} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-700 border border-white/80 relative z-10 ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingLock ? 'ring-2 ring-fuchsia-400/60' : ''} ${isRecentlySynced ? 'ring-2 ring-emerald-300/80 bg-emerald-50/40 shadow-[0_0_18px_-6px_rgba(16,185,129,0.45)]' : ''} ${item.linkedFactId ? 'ring-2 ring-sky-300/40 border-sky-200/50 shadow-[0_0_15px_-5px_rgba(14,165,233,0.3)]' : ''}`}
+        className={`flex-1 !p-2 sm:!p-3.5 md:!p-4 !rounded-[20px] sm:!rounded-[24px] ${getCategoryStyle(item.category)} shadow-[0_4px_20px_-8px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-700 border border-white/80 relative z-10 w-full ${!isOffline && !isEditing ? 'cursor-pointer' : ''} ${collaboratingLock ? 'ring-2 ring-fuchsia-400/60' : ''} ${isRecentlySynced ? 'ring-2 ring-emerald-300/80 bg-emerald-50/40 shadow-[0_0_18px_-6px_rgba(16,185,129,0.45)]' : ''} ${item.linkedFactId ? 'ring-2 ring-sky-300/40 border-sky-200/50 shadow-[0_0_15px_-5px_rgba(14,165,233,0.3)]' : ''}`}
         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
            if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
           openEditor();
@@ -2844,10 +3027,67 @@ function ItineraryListItem({
                    {item.date}
                  </span>
                )}
-               <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-800 text-[10px] sm:text-[11px] font-black tracking-widest text-white border border-slate-900 flex items-center gap-0.5">
-                  <Clock size={11} className="sm:w-[13px] sm:h-[13px]" />
-                  {item.time}
-               </span>
+               <div className="relative">
+                 <button 
+                   type="button" 
+                   aria-label="快速編輯時間"
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     if (!isOffline && !collaboratingLock) {
+                        setShowTimeQuickEdit(!showTimeQuickEdit);
+                     }
+                   }}
+                   className="px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-800 hover:bg-slate-700 text-[10px] sm:text-[11px] font-black tracking-widest text-white border border-slate-900 flex items-center gap-0.5 transition-colors"
+                 >
+                    <Clock size={11} className="sm:w-[13px] sm:h-[13px]" />
+                    {item.time}
+                 </button>
+                 {showTimeQuickEdit && (
+                   <>
+                     <div className="fixed inset-0 z-[90]" onClick={(e) => { e.stopPropagation(); setShowTimeQuickEdit(false); }} />
+                     <div 
+                       className="absolute top-full left-0 mt-2 p-1.5 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 z-[100] flex flex-col gap-1 w-36 animate-in zoom-in-95 duration-200"
+                       onClick={(e) => e.stopPropagation()}
+                     >
+                        {[
+                          { label: '上午 9 點', time: '09:00', icon: '🌅' },
+                          { label: '中午 12 點', time: '12:00', icon: '☀️' },
+                          { label: '下午 2 點', time: '14:00', icon: '☕' },
+                          { label: '晚上 7 點', time: '19:00', icon: '🌙' }
+                        ].map(t => (
+                          <button
+                            type="button"
+                            key={t.time}
+                            className="flex items-center gap-2.5 px-3 py-2.5 sm:py-2 hover:bg-fuchsia-100 rounded-xl text-left text-xs sm:text-sm font-black text-slate-700 transition-colors"
+                            onClick={() => {
+                              setShowTimeQuickEdit(false);
+                              onUpdate({
+                                ...item,
+                                time: t.time,
+                                timestamp: buildTimestampFromDateTime(item.date, t.time) ?? item.timestamp,
+                              });
+                            }}
+                          >
+                            <span className="text-base">{t.icon}</span>
+                            <span>{t.label}</span>
+                          </button>
+                        ))}
+                        <div className="h-px bg-slate-100 my-1" />
+                        <button
+                          type="button"
+                          className="flex items-center gap-2.5 px-3 py-2.5 sm:py-2 hover:bg-slate-100 rounded-xl text-left text-xs sm:text-sm font-black text-slate-500 transition-colors"
+                          onClick={() => {
+                            setShowTimeQuickEdit(false);
+                            openEditor();
+                          }}
+                        >
+                          <Clock size={16} className="text-slate-400" />
+                          <span>手動輸入</span>
+                        </button>
+                     </div>
+                   </>
+                 )}
+               </div>
                <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-700 border border-pink-100/70">
                  {meta.label}
                </span>
@@ -2906,7 +3146,7 @@ function ItineraryListItem({
          
          <div className="w-full">
            {isEditing ? (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 pb-32">
                  <input 
                    autoFocus
                    value={editTitle}
@@ -2914,29 +3154,19 @@ function ItineraryListItem({
                     className="text-lg font-black text-slate-900 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowDatePicker(true)}
-                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none hover:ring-4 hover:ring-pink-100 transition-all text-left flex items-center gap-2"
-                    >
-                      <span className="text-pink-400">📅</span>
-                      {editDate || '選擇日期'}
-                    </button>
-                    {showDatePicker && (
-                      <DatePickerPopup
-                        allowPast
-                        selectedDate={editDate}
-                        onSelect={setEditDate}
-                        onClose={() => setShowDatePicker(false)}
-                      />
-                    )}
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={e => setEditDate(e.target.value)}
+                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
+                    />
                     <input
                       type="time"
                       inputMode="numeric"
                       step={300}
                       value={editTime}
                       onChange={e => setEditTime(e.target.value)}
-                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -3075,11 +3305,11 @@ function ItineraryListItem({
                   )}
 
                   {detailCopy ? (
-                    <p className={`text-[12px] font-medium text-slate-700 whitespace-pre-line tracking-tight leading-relaxed transition-all duration-500 font-sans ${isExpanded ? '' : 'line-clamp-3'}`}>
+                    <p className={`text-[14px] font-medium text-slate-700 whitespace-pre-line tracking-tight leading-relaxed transition-all duration-500 font-sans ${isExpanded ? '' : 'line-clamp-3'}`}>
                       {detailCopy}
                     </p>
                   ) : (
-                    <p className="text-[10px] font-bold text-slate-500 italic opacity-80 transition-opacity">
+                    <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity">
                       點擊卡片編輯手帳內容、細節或照片...
                     </p>
                   )}
@@ -3264,6 +3494,7 @@ function ItineraryList({
   const [isFavoriteDragOver, setIsFavoriteDragOver] = useState(false);
   const [manualAddTrigger, setManualAddTrigger] = useState(0);
   const [aiQuoteIndex, setAiQuoteIndex] = useState(0);
+  const { displayed: aiQuoteDisplayed, done: aiQuoteDone } = useTypewriter(AI_LOADING_QUOTES[aiQuoteIndex], 40);
 
   useEffect(() => {
     if (!draggingFavorite) {
@@ -3407,7 +3638,10 @@ function ItineraryList({
                </div>
                <div className="min-w-0">
                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-500">AI 正在排今天的節奏</p>
-                 <p className="mt-1 text-sm font-bold text-slate-700">{AI_LOADING_QUOTES[aiQuoteIndex]}</p>
+                 <p className="mt-1 text-sm font-bold text-slate-700">
+                   {aiQuoteDisplayed}
+                   <span className={`inline-block w-[1.5px] h-[0.9em] ml-[1px] align-middle bg-indigo-400 ${aiQuoteDone ? 'opacity-0' : 'animate-pulse'}`} />
+                 </p>
                </div>
              </div>
            </motion.div>
@@ -3480,52 +3714,9 @@ function ItineraryList({
                    <GripVertical size={18} className="sm:w-[20px] sm:h-[20px]" />
                 </div>
 
-                {(() => {
-                  const autoTransport = (!item.transport_to_next && nextItem &&
-                    item.lat && item.lng && nextItem.lat && nextItem.lng)
-                    ? estimateTransport(haversineKm(item.lat, item.lng, nextItem.lat!, nextItem.lng!))
-                    : null;
-                  const hasTransitConflict = Boolean(autoTransport && timeGapMinutes > 0 && autoTransport.minutes > timeGapMinutes);
-                  const hasTightScheduleConflict = Boolean(nextItem && timeGapMinutes > 0 && timeGapMinutes < 30);
-                  const showBadge = nextItem && (timeGapStr || item.transport_to_next || autoTransport);
-                  return showBadge ? (
-                    <div className="flex justify-start sm:pl-[60px] pl-[40px] my-1 relative z-0">
-                      <div className="w-0.5 min-h-[1.5rem] sm:min-h-[2rem] bg-gradient-to-b from-slate-200 to-slate-200" />
-                      <div className="flex flex-col justify-center ml-3 sm:ml-4">
-                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                          {timeGapStr && (
-                            <span className="px-3 py-1 bg-slate-50/95 rounded-full text-[10px] font-black text-slate-600 uppercase tracking-widest border border-slate-200 shadow-sm flex items-center gap-1.5">
-                              <Clock size={12} />
-                              約 {timeGapStr}
-                            </span>
-                          )}
-                          {(item.transport_to_next || autoTransport) && (
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-1.5 ${hasTransitConflict ? 'bg-rose-50/90 text-rose-600 border-rose-200' : 'bg-indigo-50/80 text-indigo-500 border-indigo-100'}`}>
-                              <span>{autoTransport?.emoji ?? '🚇'}</span>
-                              {item.transport_to_next ?? autoTransport?.label}
-                            </span>
-                          )}
-                          {hasTransitConflict && (
-                            <span className="px-3 py-1 bg-rose-50/90 rounded-full text-[10px] font-black text-rose-600 uppercase tracking-widest border border-rose-200 shadow-sm flex items-center gap-1.5">
-                              <span>⚠️</span>
-                              交通時間可能塞不下
-                            </span>
-                          )}
-                          {hasTightScheduleConflict && (
-                            <span className="px-3 py-1 bg-amber-50/95 rounded-full text-[10px] font-black text-amber-700 uppercase tracking-widest border border-amber-200 shadow-sm flex items-center gap-1.5">
-                              <span>⚠️</span>
-                              行程似乎太緊湊了
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : nextItem ? (
-                    <div className="flex justify-start sm:pl-[60px] pl-[40px] my-1 relative z-0">
-                      <div className="w-0.5 h-6 sm:h-8 bg-gradient-to-b from-slate-200 to-slate-200" />
-                    </div>
-                  ) : null;
-                })()}
+                {nextItem && (
+                  <TransportGapIndicator item={item} nextItem={nextItem} timeGapMinutes={timeGapMinutes} timeGapStr={timeGapStr} />
+                )}
               </Reorder.Item>
             );
           })}
@@ -3566,6 +3757,9 @@ function ManualAddNode({
   const [linkedFactId, setLinkedFactId] = useState('');
   const facts = useTripFactsStore(s => s.facts);
 
+  const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [isMapSelectorOpen, setIsMapSelectorOpen] = useState(false);
+
   useEffect(() => {
     if (!isAdding) {
       setDate(getDateForDay(day, tripStartDate) || '');
@@ -3593,9 +3787,12 @@ function ManualAddNode({
       image_url: imageUrl || undefined,
       is_visited: isVisited,
       linkedFactId: linkedFactId || undefined,
+      lat: coords?.lat,
+      lng: coords?.lng,
     });
     setTitle('');
     setLocationName('');
+    setCoords(null);
     setDescription('');
     setTransportToNext('');
     setImageUrl('');
@@ -3637,10 +3834,10 @@ function ManualAddNode({
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
-          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] overflow-hidden"
+          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-[210] overflow-hidden flex flex-col max-h-[90dvh]"
         >
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400" />
-          <div className="p-8">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
+          <div className="p-5 sm:p-8 overflow-y-auto w-full pb-32">
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-4">
@@ -3709,9 +3906,13 @@ function ManualAddNode({
                       className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
                     />
                   </div>
-                  <button type="button" disabled className="shrink-0 px-4 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-300 font-bold text-sm tracking-wide flex items-center justify-center gap-2 cursor-not-allowed">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsMapSelectorOpen(true)}
+                    className="shrink-0 px-4 py-4 rounded-2xl bg-white border border-fuchsia-200 text-fuchsia-600 font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-fuchsia-50 hover:shadow-sm active:scale-95 transition-all"
+                  >
                     <MapPin size={16} />
-                    地圖選取即將支援
+                    {coords ? '已選取座標' : '地圖選取'}
                   </button>
                 </div>
               </div>
@@ -3830,6 +4031,14 @@ function ManualAddNode({
           </div>
         </motion.div>
       </div>
+      <MapSelectorModal 
+        isOpen={isMapSelectorOpen}
+        onClose={() => setIsMapSelectorOpen(false)}
+        onSelect={(lat, lng) => {
+          setCoords({ lat, lng });
+          if (!locationName) setLocationName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        }}
+      />
     </AnimatePresence>,
     document.body
   );
@@ -3927,10 +4136,10 @@ function QuickExpenseModal({
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-[230] overflow-hidden"
+          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-[230] overflow-hidden flex flex-col max-h-[90dvh]"
         >
-          <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400" />
-          <form onSubmit={handleSubmit} className="p-7 sm:p-8 flex flex-col gap-5">
+          <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 z-10" />
+          <form onSubmit={handleSubmit} className="p-7 sm:p-8 flex flex-col gap-5 pb-32 overflow-y-auto">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Quick Expense</p>

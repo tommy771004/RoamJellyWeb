@@ -8,6 +8,7 @@ const ItineraryTab = lazy(() => import('./components/ItineraryTab'));
 const ToolsTab = lazy(() => import('./components/ToolsTab'));
 const LoginScreen = lazy(() => import('./components/LoginScreen'));
 const TripLandingPage = lazy(() => import('./components/TripLandingPage'));
+const UserProfileModal = lazy(() => import('./components/UserProfileModal'));
 const JellyAssistant = lazy(() => import('./components/JellyAssistant'));
 const AiForm = lazy(() => import('./components/AiForm'));
 const DynamicItineraryView = lazy(() => import('./components/DynamicItineraryView'));
@@ -16,7 +17,8 @@ import {
   Sun, 
   Moon, 
   LogOut, 
-  Settings, 
+  Settings,
+  Settings2,
   Menu,
   ChevronDown,
   Home as HomeIcon,
@@ -61,6 +63,7 @@ export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [loginPromptMode, setLoginPromptMode] = useState<LoginPromptMode>('default');
@@ -391,8 +394,8 @@ export default function App() {
                      description: spot.ai_note || '',
                      ai_note: spot.ai_note || '',
                      intensity: spot.intensity,
-                     lat: undefined as any,
-                     lng: undefined as any,
+                     lat: spot.lat,
+                     lng: spot.lng,
                      source: 'local' as const,
                    });
                  });
@@ -417,9 +420,9 @@ export default function App() {
             });
           }
 
-          // Geocode all spots in parallel; fall back silently if any fail
+          // Priorities AI generated lat/lng, otherwise Geocode spots in parallel; fall back silently if any fail
           const geocodeResults = await Promise.allSettled(
-            nodes.map(n => geocodeSpot(n.title, data.destination))
+            nodes.map(n => (n.lat && n.lng) ? Promise.resolve({ lat: n.lat, lng: n.lng }) : geocodeSpot(n.title, data.destination))
           );
           geocodeResults.forEach((r, i) => {
             if (r.status === 'fulfilled' && r.value) {
@@ -432,7 +435,28 @@ export default function App() {
           const { assignDaysBasedOnTimeAndOrder } = await import('./lib/itineraryUtils');
           const startDate = new Date();
           startDate.setDate(startDate.getDate() + 1);
-          const finalNodes = assignDaysBasedOnTimeAndOrder(nodes, startDate.toISOString());
+          let finalNodes = assignDaysBasedOnTimeAndOrder(nodes, startDate.toISOString());
+          
+          const maxGeneratedDay = finalNodes.length > 0 ? Math.max(...finalNodes.map(n => n.day)) : 0;
+          const requestedDays = data.days || 3;
+          
+          if (maxGeneratedDay < requestedDays) {
+            for (let d = maxGeneratedDay + 1; d <= requestedDays; d++) {
+              finalNodes.push({
+                 node_id: `ai_${Date.now()}_empty_day_${d}`,
+                 day: d,
+                 time: '10:00',
+                 title: '自由活動',
+                 emoji: '🏖️',
+                 category: 'activity',
+                 description: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+                 ai_note: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+                 intensity: 'chill',
+                 source: 'local'
+              } as any);
+            }
+            finalNodes = assignDaysBasedOnTimeAndOrder(finalNodes, startDate.toISOString());
+          }
 
           useAppStore.getState().setAiResult({
              fullResponse: suggestions,
@@ -589,9 +613,18 @@ export default function App() {
 
         {/* Right: User Avatar & Greetings */}
         <div className="flex items-center gap-2 sm:gap-3 z-20">
+          {isLoggedIn && (
+            <button
+              onClick={() => setShowUserProfile(true)}
+              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+              aria-label="偏好設定"
+            >
+              <Settings2 size={20} />
+            </button>
+          )}
           <button
             onClick={() => setDarkMode(!isDarkMode)}
-            className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
             aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -659,16 +692,18 @@ export default function App() {
             )}
           </div>
           
-          <div 
+          <button
+            type="button"
+            aria-label={isLoggedIn ? '個人檔案' : '登入'}
             onClick={() => {
               if (!isLoggedIn) {
                 setLoginPromptMode('default');
                 setShowLogin(true);
               } else {
-                setShowLogoutModal(true);
+                setShowUserProfile(true);
               }
             }}
-            className={`flex items-center gap-3 cursor-pointer group rounded-full border shadow-sm transition-all pl-3 pr-1 py-1 ${isLoggedIn ? 'bg-fuchsia-50/80 border-fuchsia-200/50 hover:bg-fuchsia-100/80' : 'bg-slate-50/80 border-slate-200 hover:bg-white/90'}`}
+            className={`flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'bg-fuchsia-50/80 border-fuchsia-200/50 hover:bg-fuchsia-100/80' : 'bg-slate-50/80 border-slate-200 hover:bg-white/90'}`}
           >
             <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-fuchsia-700' : 'text-slate-500'}`}>
               {isLoggedIn ? `${userId} 您好` : '未登入'}
@@ -676,7 +711,7 @@ export default function App() {
             <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center pb-1 transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-pink-100' : 'bg-slate-200'}`}>
               <span className="text-lg pt-1">{isLoggedIn ? '🐴' : '🤫'}</span>
             </div>
-          </div>
+          </button>
         </div>
       </header>
 
@@ -789,6 +824,9 @@ export default function App() {
       </AnimatePresence>
 
       <JellyToast toasts={toasts} removeToast={removeToast} />
+      <Suspense fallback={null}>
+        <UserProfileModal isOpen={showUserProfile} onClose={() => setShowUserProfile(false)} />
+      </Suspense>
     </div>
   );
 }

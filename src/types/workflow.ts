@@ -62,6 +62,7 @@ export interface WeatherData {
   temp_min: number;
   temp_max: number;
   rain_prob: number;
+  weather_code?: number;
   daily?: any[];
 }
 
