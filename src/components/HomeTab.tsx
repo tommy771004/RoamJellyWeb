@@ -242,110 +242,127 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
   );
 }
 
-function FlightTable({ 
-  results, 
-  savedItems, 
-  trackedPrices, 
-  onPress, 
+function FlightTable({
+  results,
+  savedItems,
+  trackedPrices,
+  onPress,
   onImportToTrip,
-  onToggleSave, 
-  onToggleTrack 
-}: { 
-  results: SearchItem[]; 
-  savedItems: string[]; 
-  trackedPrices: string[]; 
+  onToggleSave,
+  onToggleTrack,
+}: {
+  results: SearchItem[];
+  savedItems: string[];
+  trackedPrices: string[];
   onPress: (f: SearchItem) => void;
   onImportToTrip: (e: React.MouseEvent, f: SearchItem) => void;
   onToggleSave: (e: React.MouseEvent, id: string) => void;
   onToggleTrack: (e: React.MouseEvent, f: SearchItem) => void;
 }) {
   return (
-    <div className="flex flex-col gap-4 w-full pb-4">
-      {results.map((flight) => (
-        <div 
-          key={flight.id} 
-          className="group/row flex flex-col sm:flex-row bg-white border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] rounded-2xl md:rounded-[24px] overflow-hidden cursor-pointer transition-all duration-300"
-          onClick={() => onPress(flight)}
-        >
-          {/* Main Content Area */}
-          <div className="flex-1 p-5 sm:p-6 flex flex-col justify-center">
-            {/* Top row: Airline & Stops Badges */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <AirlineLogo providerName={flight.details?.airline || flight.provider} className="w-6 h-6 rounded-md text-xs" />
-                <span className="text-slate-600 text-sm font-medium">{flight.details?.airline || flight.provider}</span>
-              </div>
-              <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${flight.details?.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
-                {flight.details?.stops === 0 ? '直飛' : `${flight.details?.stops} 轉`}
-              </span>
-            </div>
+    <div className="flex flex-col gap-3 w-full pb-4">
+      {results.map((flight) => {
+        const providerName = flight.details?.airline || flight.provider;
+        const isSaved = savedItems.includes(flight.id);
+        const isTracked = trackedPrices.includes(flight.id);
 
-            {/* Middle row: Time, Route, Duration */}
-            <div className="flex items-center justify-between px-2 sm:px-4">
-              <div className="flex flex-col items-center">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{flight.details?.departure || '--:--'}</span>
-                <span className="text-xs text-slate-400 font-bold tracking-widest mt-1">{(flight.details?.depCode || 'TPE').toUpperCase().substring(0,3)}</span>
-              </div>
+        return (
+          <div
+            key={flight.id}
+            className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md rounded-2xl overflow-hidden cursor-pointer transition-shadow duration-200"
+            onClick={() => onPress(flight)}
+          >
+            <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
 
-              <div className="flex flex-col items-center justify-center flex-1 px-4 sm:px-8">
-                <span className="text-xs text-slate-400 font-medium mb-1">{flight.details?.duration || '3h 15m'}</span>
-                <div className="w-full relative flex items-center justify-center h-[2px] bg-slate-200 rounded-full">
-                  <div className="absolute right-0 w-2 h-2 rounded-full border border-slate-300 bg-white translate-x-1" />
+              {/* Left: Airline + Route */}
+              <div className="flex-1 flex flex-col gap-3">
+                {/* Airline header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AirlineLogo providerName={providerName} className="w-6 h-6 rounded-md text-xs" />
+                    <span className="text-sm font-semibold text-slate-700 dark:text-white">{providerName}</span>
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${
+                    flight.details?.stops === 0
+                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                  }`}>
+                    {flight.details?.stops === 0 ? '直飛' : `${flight.details?.stops} 轉`}
+                  </span>
+                </div>
+
+                {/* Route times */}
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex flex-col items-start">
+                    <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                      {flight.details?.departure || '--:--'}
+                    </span>
+                    <span className="text-xs text-slate-400 font-bold tracking-widest mt-0.5">
+                      {(flight.details?.depCode || 'TPE').toUpperCase().substring(0, 3)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center flex-1 px-4 sm:px-8">
+                    <span className="text-xs text-slate-400 font-medium mb-1">{flight.details?.duration || '3h 15m'}</span>
+                    <div className="w-full relative flex items-center justify-center h-[2px] bg-slate-200 dark:bg-slate-600 rounded-full">
+                      <div className="absolute right-0 w-2 h-2 rounded-full border border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-700 translate-x-1" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                      {flight.details?.arrival || '--:--'}
+                    </span>
+                    <span className="text-xs text-slate-400 font-bold tracking-widest mt-0.5">
+                      {(flight.details?.arrCode || 'TYO').toUpperCase().substring(0, 3)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-col items-center">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{flight.details?.arrival || '--:--'}</span>
-                <span className="text-xs text-slate-400 font-bold tracking-widest mt-1">{(flight.details?.arrCode || 'TYO').toUpperCase().substring(0,3)}</span>
+              {/* Right: Price + Actions */}
+              <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center sm:min-w-[160px] gap-3 border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-700 pt-3 sm:pt-0 sm:pl-5">
+                <div className="flex flex-col items-start sm:items-end">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">總價</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-slate-500">{flight.currency}</span>
+                    <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
+                      {flight.price.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleSave(e, flight.id); }}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
+                      isSaved
+                        ? 'bg-pink-50 border-pink-100 text-pink-500'
+                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-300 hover:text-pink-400 hover:border-pink-200 shadow-sm'
+                    }`}
+                  >
+                    <Heart size={15} fill={isSaved ? 'currentColor' : 'transparent'} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleTrack(e, flight); }}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
+                      isTracked
+                        ? 'bg-slate-900 border-slate-900 text-white shadow-md'
+                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-400 hover:text-slate-700 hover:border-slate-300 shadow-sm'
+                    }`}
+                  >
+                    {isTracked ? <BellRing size={15} strokeWidth={2.5} /> : <Bell size={15} strokeWidth={2.5} />}
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onImportToTrip(e, flight); }}
+                    className="h-10 px-4 rounded-xl flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition-all active:scale-95 border border-transparent"
+                  >
+                    <PlaneTakeoff size={14} strokeWidth={2.5} />
+                    <span className="text-sm font-bold">帶入</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Right/Bottom Sidebar Area: Price & Actions */}
-          <div className="bg-slate-50 border-t sm:border-t-0 sm:border-l border-slate-100 p-5 sm:p-6 flex flex-row sm:flex-col items-center justify-between sm:justify-center sm:min-w-[180px] gap-4">
-            <div className="flex flex-col items-start sm:items-end w-full">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">總價</span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-slate-500">{flight.currency}</span>
-                <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none tabular-nums">{flight.price.toLocaleString()}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end w-full gap-2 transition-colors">
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleSave(e, flight.id); }}
-                className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
-                  savedItems.includes(flight.id)
-                    ? 'bg-pink-50 border-pink-100 text-pink-500'
-                    : 'bg-white border-slate-200 text-slate-300 hover:text-pink-400 hover:border-pink-200 shadow-sm'
-                }`}
-                title="收藏"
-              >
-                <Heart size={16} fill={savedItems.includes(flight.id) ? 'currentColor' : 'transparent'} strokeWidth={2.5} />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleTrack(e, flight); }}
-                className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
-                  trackedPrices.includes(flight.id)
-                    ? 'bg-slate-900 border-slate-900 text-white shadow-md'
-                    : 'bg-white border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300 shadow-sm'
-                }`}
-                title="追蹤降價"
-              >
-                {trackedPrices.includes(flight.id) ? <BellRing size={16} strokeWidth={2.5} /> : <Bell size={16} strokeWidth={2.5} />}
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onImportToTrip(e, flight); }}
-                className="flex-1 sm:w-full h-11 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600 shadow-sm"
-                title="帶入行程"
-              >
-                <PlaneTakeoff size={15} strokeWidth={2.5} />
-                <span className="text-sm font-bold">帶入</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
