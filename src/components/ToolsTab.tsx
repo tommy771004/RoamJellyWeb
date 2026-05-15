@@ -996,20 +996,20 @@ function ToolsTabContent() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl w-full bg-white/70 backdrop-blur-2xl border border-white rounded-[48px] p-10 md:p-16 shadow-2xl flex flex-col md:flex-row items-center gap-10 md:gap-16 my-auto"
+          className="max-w-4xl w-full bg-white/70 backdrop-blur-2xl border border-white rounded-[32px] sm:rounded-[48px] p-6 sm:p-10 md:p-16 shadow-2xl flex flex-col md:flex-row items-center gap-6 sm:gap-10 md:gap-16 my-auto"
         >
-          <div className="w-32 h-32 bg-fuchsia-100 rounded-[40px] flex items-center justify-center text-6xl shadow-inner shrink-0 animate-pulse">
+          <div className="w-24 h-24 sm:w-32 sm:h-32 bg-fuchsia-100 rounded-[32px] sm:rounded-[40px] flex items-center justify-center text-5xl sm:text-6xl shadow-inner shrink-0 animate-pulse">
             🧳
           </div>
           <div className="flex-1 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full bg-fuchsia-50 border border-fuchsia-100 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-fuchsia-600 mb-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-fuchsia-50 border border-fuchsia-100 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-fuchsia-600 mb-3 sm:mb-4">
               解鎖工具包
             </div>
-            <h2 className="text-[32px] md:text-4xl font-black text-slate-800 mb-4 tracking-tight leading-tight">尚未選擇行程專案</h2>
-            <p className="text-slate-500 font-bold text-lg mb-10 leading-relaxed">
+            <h2 className="text-[24px] sm:text-[32px] md:text-4xl font-black text-slate-800 mb-3 sm:mb-4 tracking-tight leading-tight">尚未選擇行程專案</h2>
+            <p className="text-slate-500 font-bold text-base sm:text-lg mb-6 sm:mb-10 leading-relaxed">
               旅途工具包（天氣、清單、分帳）需要與特定行程連結，請先選擇或建立一個行程專案。
             </p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-2.5 mb-8">
+            <div className="flex flex-wrap justify-center md:justify-start gap-2.5 mb-6 sm:mb-8">
               {['天氣提醒', '行李清單', '旅伴分帳'].map((label) => (
                 <span key={label} className="rounded-full bg-slate-100/90 border border-slate-200 px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-600">
                   {label}
@@ -1017,16 +1017,16 @@ function ToolsTabContent() {
               ))}
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <button 
+              <button
                 onClick={() => setActiveTab('ai_form')}
-                className="w-full md:w-auto px-8 py-5 rounded-[24px] bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3"
+                className="w-full md:w-auto px-6 sm:px-8 py-4 sm:py-5 rounded-[20px] sm:rounded-[24px] bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3"
               >
                 <Sparkles size={20} />
                 直接交給 AI 開始規劃
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('home')}
-                className="w-full md:w-auto px-8 py-5 rounded-[24px] bg-white text-slate-700 font-black text-sm uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-3"
+                className="w-full md:w-auto px-6 sm:px-8 py-4 sm:py-5 rounded-[20px] sm:rounded-[24px] bg-white text-slate-700 font-black text-sm uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-3"
               >
                 先回首頁看 Demo
               </button>
@@ -1059,8 +1059,8 @@ function ToolsTabContent() {
         <div className="flex flex-col gap-y-6">
           <div className="flex flex-col gap-2 mb-2 mt-4 relative">
             <div className="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-fuchsia-500 to-purple-600 rounded-full" />
-            <h1 className="text-[32px] md:text-4xl font-black text-[#111111] leading-tight tracking-tight">推薦行程與航班</h1>
-            <p className="text-[17px] text-slate-500 font-bold tracking-wide">為您的旅程精選的機票與活動票券</p>
+            <h1 className="text-[24px] sm:text-[32px] md:text-4xl font-black text-[#111111] leading-tight tracking-tight">推薦行程與航班</h1>
+            <p className="text-[15px] sm:text-[17px] text-slate-500 font-bold tracking-wide">為您的旅程精選的機票與活動票券</p>
           </div>
 
           {/* Filters */}
