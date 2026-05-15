@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -71,9 +72,12 @@ export default function PwaInstallPrompt() {
     dismiss();
   };
 
-  return (
-    <div className="fixed inset-x-0 bottom-24 z-[90] px-4 md:px-6 pointer-events-none">
-      <div className="mx-auto max-w-xl rounded-[28px] border border-white/20 bg-slate-950/88 px-5 py-4 text-white shadow-2xl shadow-slate-950/40 backdrop-blur-2xl pointer-events-auto dark:border-white/10 dark:bg-slate-950/92">
+  const content = (
+    <div className="fixed left-0 right-0 bottom-24 z-[190] w-full px-4 md:px-6 pointer-events-none">
+      <div
+        className="mx-auto max-w-xl rounded-[28px] border border-white/20 bg-slate-950/90 px-5 py-4 text-white shadow-2xl shadow-slate-950/40 pointer-events-auto dark:border-white/10 dark:bg-slate-950/90"
+        style={{ backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)' }}
+      >
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-cyan-400 text-xl shadow-lg shadow-fuchsia-500/20">
             ✨
@@ -113,4 +117,6 @@ export default function PwaInstallPrompt() {
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : null;
 }
