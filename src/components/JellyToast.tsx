@@ -15,7 +15,7 @@ export interface ToastProps {
 
 export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], removeToast: (id: string) => void }) {
   const content = (
-    <div className="fixed bottom-24 left-0 right-0 w-full z-[200] flex flex-col items-center gap-3 pointer-events-none px-4">
+    <div aria-live="polite" aria-atomic="false" className="fixed bottom-24 left-0 right-0 w-full z-[200] flex flex-col items-center gap-3 pointer-events-none px-4">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
@@ -48,7 +48,8 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
             )}
             <button 
               onClick={() => removeToast(toast.id)}
-              className="p-1 hover:bg-black/10 rounded-full transition-colors opacity-70 hover:opacity-100 shrink-0"
+              aria-label="關閉通知"
+              className="p-1 hover:bg-black/10 rounded-full transition-colors opacity-70 hover:opacity-100 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             >
               <X size={16} />
             </button>

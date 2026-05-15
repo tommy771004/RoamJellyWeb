@@ -96,8 +96,7 @@ export const LocationPickerPopup = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="搜尋國家、城市或景點別名"
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50/80 py-3.5 pl-11 pr-4 text-[14px] font-bold text-slate-700 outline-none transition-all focus:border-fuchsia-200 focus:bg-white focus:ring-4 focus:ring-fuchsia-100"
-                autoFocus
+                className="w-full rounded-2xl border border-slate-100 bg-slate-50/80 py-3.5 pl-11 pr-4 text-[14px] font-bold text-slate-700 outline-none transition-[border-color,background-color,box-shadow] focus:border-fuchsia-200 focus:bg-white focus:ring-4 focus:ring-fuchsia-100"
                 autoCapitalize="none"
                 autoCorrect="off"
               />
@@ -105,7 +104,7 @@ export const LocationPickerPopup = ({
           </div>
 
             {/* Cities Grid */}
-            <div className="grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-4 pr-1 sm:grid-cols-3 md:px-7 md:pb-5 md:pt-0">
+            <div className="grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-4 pr-1 sm:grid-cols-3 md:px-7 md:pb-5 md:pt-0">
               {filteredDestinations.length > 0 ? (
                 filteredDestinations.map((dest) => (
                   <button

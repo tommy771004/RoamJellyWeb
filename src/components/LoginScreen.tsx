@@ -437,7 +437,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               <button
                 onClick={() => void handleSubmit()}
                 disabled={loading}
-                className={`flex justify-center border-none appearance-none cursor-pointer outline-none transition-all active:scale-95 shadow-[0_8px_16px_rgb(217,70,239,0.25)] ${loading ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:opacity-90'}`}
+                className={`flex justify-center border-none appearance-none cursor-pointer transition-all active:scale-95 shadow-[0_8px_16px_rgb(217,70,239,0.25)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60 ${loading ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:opacity-90'}`}
                 style={{
                   paddingTop: 16, paddingBottom: 16,
                   borderRadius: 24,
@@ -446,7 +446,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 }}
               >
                 {loading ? (
-                  <span style={{ color: 'white', fontWeight: '800' }}>處理中...</span>
+                  <span style={{ color: 'white', fontWeight: '800' }}>處理中…</span>
                 ) : (
                   <span style={{ color: 'white', fontWeight: '900', fontSize: 16, letterSpacing: '0.05em' }}>
                     {mode === 'login' ? '登入' : '建立帳號'}
@@ -458,7 +458,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 <button
                   onClick={() => void handleGuestLogin()}
                   disabled={loading}
-                  className="flex justify-center border appearance-none cursor-pointer outline-none transition-all active:scale-95 w-full bg-white/70 border-slate-200 hover:bg-white mt-3"
+                  className="flex justify-center border appearance-none cursor-pointer transition-all active:scale-95 w-full bg-white/70 border-slate-200 hover:bg-white mt-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60"
                   style={{
                     paddingTop: 14,
                     paddingBottom: 14,
@@ -483,7 +483,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     alignItems: 'center',
                     backgroundColor: 'transparent',
                   }}
-                  className="flex justify-center border-none appearance-none cursor-pointer outline-none hover:bg-black/5 transition-all active:scale-95"
+                  className="flex justify-center border-none appearance-none cursor-pointer hover:bg-black/5 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/60"
                 >
                   <span style={{ color: '#64748b', fontWeight: '800', fontSize: 14, letterSpacing: '0.05em' }}>取消</span>
                 </button>

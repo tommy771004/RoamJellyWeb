@@ -1030,7 +1030,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     </div>
                     <input
                       id="search-from-m"
-                      className="bg-transparent border-none p-0 text-[18px] font-black text-slate-900 placeholder:text-slate-500/60 w-full outline-none leading-none"
+                      className="bg-transparent border-none p-0 text-[18px] font-black text-slate-900 placeholder:text-slate-500/60 w-full outline-none leading-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40 rounded"
                       value={searchForm.from}
                       onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                       onChange={(e) => updateField('from', e.target.value)}
@@ -1051,7 +1051,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     </div>
                     <input
                       id="search-to-m"
-                      className="bg-transparent border-none p-0 text-[18px] font-black text-slate-900 placeholder:text-slate-500/60 w-full outline-none leading-none"
+                      className="bg-transparent border-none p-0 text-[18px] font-black text-slate-900 placeholder:text-slate-500/60 w-full outline-none leading-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40 rounded"
                       value={searchForm.to}
                       onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                       onChange={(e) => updateField('to', e.target.value)}
@@ -1138,7 +1138,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       <Label htmlFor="search-from-d" className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5 cursor-text">出發從哪裡</Label>
                       <input
                         id="search-from-d"
-                        className="bg-transparent border-none p-0 text-[14px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[14px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40 rounded"
                         value={searchForm.from}
                         onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('from', e.target.value)}
@@ -1157,7 +1157,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       <Label htmlFor="search-to-d" className="text-[8px] font-black tracking-[0.18em] text-slate-500/80 uppercase mb-0.5 cursor-text">飛往目的地</Label>
                       <input
                         id="search-to-d"
-                        className="bg-transparent border-none p-0 text-[14px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[14px] font-black text-slate-900 placeholder:text-slate-500/65 w-full outline-none leading-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40 rounded"
                         value={searchForm.to}
                         onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('to', e.target.value)}

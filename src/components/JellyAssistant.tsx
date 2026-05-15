@@ -86,7 +86,7 @@ export default function JellyAssistant() {
             exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.92 }}
             transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
             onClick={() => setIsOpen(true)}
-            className={`fixed bottom-24 right-6 w-14 h-14 rounded-full border border-white/20 bg-gradient-to-tr from-fuchsia-500 via-purple-500 to-indigo-500 shadow-[0_12px_28px_rgba(217,70,239,0.28)] flex items-center justify-center z-40 focus:outline-none ${subtlePressableClass}`}
+            className={`fixed bottom-24 right-6 w-14 h-14 rounded-full border border-white/20 bg-gradient-to-tr from-fuchsia-500 via-purple-500 to-indigo-500 shadow-[0_12px_28px_rgba(217,70,239,0.28)] flex items-center justify-center z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60 ${subtlePressableClass}`}
             aria-label="開啟 Jelly AI 行程顧問"
           >
             <div className="absolute inset-[1px] rounded-full bg-gradient-to-br from-white/22 to-transparent opacity-80" />
@@ -136,7 +136,8 @@ export default function JellyAssistant() {
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-white/20 transition-colors"
+                aria-label="關閉 AI 顏問"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
               >
                 <X size={20} />
               </button>
@@ -232,8 +233,8 @@ export default function JellyAssistant() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleSend();
                   }}
-                  placeholder="輸入訊息或指令..."
-                  className="flex-1 bg-transparent border-none outline-none px-4 text-[15px] dark:text-white placeholder:text-slate-400"
+                  placeholder="輸入訊息或指令…"
+                  className="flex-1 bg-transparent border-none outline-none px-4 text-[15px] dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-fuchsia-400/40 rounded-full"
                   inputMode="text"
                   autoCapitalize="off"
                   autoComplete="off"
@@ -243,7 +244,8 @@ export default function JellyAssistant() {
                 <button 
                   onClick={() => handleSend()}
                   disabled={!inputValue.trim() || isTyping}
-                  className="w-10 h-10 rounded-full bg-fuchsia-500 text-white flex items-center justify-center disabled:opacity-50 disabled:bg-slate-300 transition-colors active:scale-95"
+                  aria-label="送出"
+                  className="w-10 h-10 rounded-full bg-fuchsia-500 text-white flex items-center justify-center disabled:opacity-50 disabled:bg-slate-300 transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
                 >
                   <Send size={18} className="ml-1" />
                 </button>

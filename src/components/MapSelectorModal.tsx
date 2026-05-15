@@ -68,8 +68,9 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
             </div>
             <button 
               type="button" 
-              onClick={onClose} 
-              className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              onClick={onClose}
+              aria-label="關閉地圖選取"
+              className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
             >
               <X size={20}/>
             </button>

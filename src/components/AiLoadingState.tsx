@@ -53,7 +53,7 @@ export default function AiLoadingState() {
           </motion.div>
         </div>
 
-        <div className="min-h-[3rem] flex flex-col items-center justify-center px-8 max-w-xs sm:max-w-sm text-center">
+        <div aria-live="polite" aria-atomic="true" className="min-h-[3rem] flex flex-col items-center justify-center px-8 max-w-xs sm:max-w-sm text-center">
           <AnimatePresence mode="wait">
             <motion.p
               key={msgIndex}

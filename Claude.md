@@ -390,3 +390,19 @@
 ---
 
 本文件定位為 AI 上下文入口。若與程式碼衝突，以程式碼為準，並回頭更新本文件版本。
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues for this repo (`tommy771004/RoamJellyWeb`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-label vocabulary (`needs-triage` / `needs-info` / `ready-for-agent` / `ready-for-human` / `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

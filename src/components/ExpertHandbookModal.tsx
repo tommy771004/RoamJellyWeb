@@ -79,15 +79,15 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
             {/* Header */}
             <div className="flex-shrink-0 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 sm:px-8 pt-6 sm:pt-8 pb-5 z-20">
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200">
-                    <img src={handbook.image} alt={handbook.title} className="w-full h-full object-cover" />
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200">
+                    <img src={handbook.image} alt={handbook.title} width={64} height={64} className="w-full h-full object-cover" />
                   </div>
-                  <div>
-                    <h1 className="font-extrabold text-slate-900 text-2xl sm:text-3xl tracking-tight leading-tight">
+                  <div className="min-w-0">
+                    <h1 className="font-extrabold text-slate-900 text-xl sm:text-3xl tracking-tight leading-tight line-clamp-2">
                       {handbook.title}
                     </h1>
-                    <div className="flex items-center gap-3 mt-2">
+                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2">
                        <span className="text-slate-500 font-bold text-sm tracking-wide bg-slate-100 px-2 py-0.5 rounded-md">
                          {handbook.author}
                        </span>
@@ -102,7 +102,8 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                 </div>
                 <button
                   onClick={handleClose}
-                  className="w-10 h-10 rounded-full bg-slate-100/50 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors flex-shrink-0"
+                  aria-label="關閉手帳"
+                  className="w-10 h-10 rounded-full bg-slate-100/50 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
                 >
                   <X size={18} />
                 </button>

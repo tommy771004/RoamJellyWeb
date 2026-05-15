@@ -73,10 +73,10 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
               <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Select Date</span>
             </div>
             <div className="flex gap-x-3">
-              <button onClick={() => changeMonth(-1)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-all">
+              <button onClick={() => changeMonth(-1)} aria-label="上個月" className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                 <ChevronLeft size={24} className="text-slate-600" />
               </button>
-              <button onClick={() => changeMonth(1)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-all">
+              <button onClick={() => changeMonth(1)} aria-label="下個月" className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                 <ChevronRight size={24} className="text-slate-600" />
               </button>
             </div>

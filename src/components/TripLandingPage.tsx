@@ -68,7 +68,10 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
       <div className="absolute bottom-[-10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-purple-300/20 blur-[120px] pointer-events-none" />
 
       {fetching ? (
-        <div className="text-fuchsia-600 text-lg font-medium relative z-10"></div>
+        <div className="text-fuchsia-600 text-lg font-bold relative z-10 flex items-center gap-2">
+          <span className="animate-pulse">✈️</span>
+          <span>載入旅程中…</span>
+        </div>
       ) : notFound || fetchError ? (
         <div className="items-center flex flex-col relative z-10">
           <span style={{ fontSize: 56, marginBottom: 16 }}>{notFound ? '🤔' : '⚠️'}</span>
@@ -78,12 +81,12 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
           <span className="text-slate-500 text-center mb-6">
             {notFound ? '邀請連結可能已失效或旅程不存在' : fetchError}
           </span>
-          <button
-            onClick={() => { window.location.href = '/'; }}
-            className="px-8 py-3 rounded-2xl bg-[#d946ef] flex justify-center border-none appearance-none cursor-pointer outline-none hover:bg-[#c026d3] transition-colors"
+          <a
+            href="/"
+            className="px-8 py-3 rounded-2xl bg-[#d946ef] flex justify-center border-none appearance-none cursor-pointer hover:bg-[#c026d3] transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60"
           >
             <span className="text-white font-bold">返回首頁</span>
-          </button>
+          </a>
         </div>
       ) : (
         <div style={{ width: '100%', maxWidth: 360 }} className="relative z-10">
@@ -129,6 +132,8 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                   placeholder="例如：小美"
+                  name="nickname"
+                  autoComplete="nickname"
                   className="w-full rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-[14px] font-bold text-slate-700 outline-none focus:ring-4 focus:ring-fuchsia-100"
                   maxLength={32}
                 />
@@ -145,10 +150,10 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
                 borderRadius: 24,
                 alignItems: 'center',
               }}
-              className={`flex justify-center border-none appearance-none cursor-pointer outline-none transition-all active:scale-95 shadow-[0_8px_16px_rgb(217,70,239,0.25)] ${joining ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:opacity-90'}`}
+              className={`flex justify-center border-none appearance-none cursor-pointer transition-all active:scale-95 shadow-[0_8px_16px_rgb(217,70,239,0.25)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60 ${joining ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:opacity-90'}`}
             >
               {joining ? (
-                <span style={{ color: 'white', fontWeight: '800' }}>處理中...</span>
+                <span style={{ color: 'white', fontWeight: '800' }}>處理中…</span>
               ) : (
                 <span style={{ color: 'white', fontWeight: '900', fontSize: 16, letterSpacing: '0.05em' }}>加入旅程</span>
               )}
