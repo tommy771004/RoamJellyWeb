@@ -4,7 +4,6 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy, Globe, ExternalLink, Bed, Ticket, CarFront } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { Input } from './ui/input';
-import { Label } from './ui/label';
 import { FlightSkeletonCard } from './SkeletonCard';
 import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchHandbooks, createTripFact, syncItinerary } from '../lib/workflowApi';
 import { useSearchStore } from '../store/useSearchStore';
