@@ -342,6 +342,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   placeholder="3–30 個英數字或底線"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
                   autoCapitalize="none"
                   autoCorrect="off"
                 />
@@ -367,6 +368,8 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     placeholder="顯示給其他成員的名稱"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
+                    autoComplete="name"
+                    maxLength={50}
                   />
                 </div>
               )}
@@ -391,6 +394,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   placeholder="至少 8 個字元"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 />
               </div>
 
@@ -415,6 +419,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     placeholder="再次輸入密碼"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
                   />
                 </div>
               )}
