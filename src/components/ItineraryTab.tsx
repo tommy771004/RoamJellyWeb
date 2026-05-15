@@ -1542,7 +1542,7 @@ export default function ItineraryTab() {
                 }}
                 className="cursor-pointer group"
               >
-                <GlassCard className="!p-0 overflow-hidden rounded-[32px] border border-white/60 shadow-lg hover:shadow-2xl transition-all h-full flex flex-col">
+                <GlassCard className="!p-0 overflow-hidden rounded-[32px] border border-transparent sm:border-white/60 shadow-lg hover:shadow-2xl transition-all h-full flex flex-col">
                    <div className="h-40 bg-slate-100 flex items-center justify-center overflow-hidden relative">
                       <img 
                         src={getTripCoverImage(trip.destination)}
@@ -1567,10 +1567,10 @@ export default function ItineraryTab() {
                                   useAppStore.getState().showToast('行程專案已刪除', 'success');
                                   setUserTrips(prev => prev.filter(t => (t.tripId ?? t.id) !== (trip.tripId ?? trip.id)));
                                 } else {
-                                  useAppStore.getState().showToast('刪除失敗，或您不是該專案擁有者', 'error');
+                                  useAppStore.getState().showToast('刪除失敗，或您不是該專案擁有者', 'warning');
                                 }
                               } catch (err) {
-                                useAppStore.getState().showToast('刪除發生錯誤', 'error');
+                                useAppStore.getState().showToast('刪除發生錯誤', 'warning');
                               }
                             }
                           }}
@@ -1822,19 +1822,19 @@ export default function ItineraryTab() {
             onClick={() => setViewMode('list')}
             className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'list' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-700 hover:bg-white border sm:border-transparent'}`}
           >
-            LIST
+            行程列表
           </button>
           <button 
             onClick={() => setViewMode('map')}
             className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'map' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-700 hover:bg-white border sm:border-transparent'}`}
           >
-            EXPLORE
+            景點地圖
           </button>
           <button 
             onClick={() => setViewMode('calendar')}
             className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === 'calendar' ? 'bg-slate-800 text-white shadow-xl scale-95 md:scale-100' : 'text-slate-400 hover:text-slate-700 hover:bg-white border sm:border-transparent'}`}
           >
-            CALENDAR
+            日程
           </button>
         </div>
       </div>
@@ -2599,7 +2599,7 @@ function DraggableFavoriteSpot({
         triggerHapticFeedback([10, 32, 12]);
         onDragEnd?.();
       }}
-      className="group relative flex flex-col gap-2 p-3 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[20px] shadow-sm hover:shadow-xl transition-all"
+      className="group relative flex flex-col gap-2 p-3 bg-white/40 backdrop-blur-xl border-none sm:border-solid sm:border sm:border-white/60 rounded-[20px] shadow-sm hover:shadow-xl transition-all"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

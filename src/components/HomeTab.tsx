@@ -98,7 +98,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
         }
       }}
     >
-      <GlassCard className={`!p-0 bg-white/70 backdrop-blur-xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:bg-white flex-1 flex flex-col overflow-hidden rounded-[24px] ${pressableSurfaceClass} ${raisedHoverClass}`}>
+      <GlassCard className={`!p-0 bg-white/70 backdrop-blur-xl border border-transparent sm:border-slate-200/60 shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] sm:hover:bg-white flex-1 flex flex-col overflow-hidden rounded-[24px] ${pressableSurfaceClass} ${raisedHoverClass}`}>
         
         {/* Top Section: Airline & Route */}
         <div className="p-4 flex flex-col gap-3">
@@ -604,10 +604,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     if (!loading && hasSearched) setIsHeroExpanded(false);
   }, [loading]);
 
-  const cardSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
-  const cardActionClass = `${subtlePressableClass} ${raisedHoverClass}`;
-  const searchFieldSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
-  const chipPressClass = `${subtlePressableClass} ${raisedHoverClass}`;
+  const cardSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass} border-none sm:border-solid sm:border sm:border-white/60 shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)]`;
+  const cardActionClass = `${subtlePressableClass} ${raisedHoverClass} border-none sm:border-solid sm:border sm:border-white/60`;
+  const searchFieldSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass} border-none sm:border-solid sm:border sm:border-white/60`;
+  const chipPressClass = `${subtlePressableClass} ${raisedHoverClass} border-none sm:border-solid sm:border sm:border-slate-200/40`;
 
   const handleCopyExpertItinerary = (e: React.MouseEvent | undefined, handbook: typeof EXPERT_HANDBOOKS[0]) => {
     e?.stopPropagation?.();
@@ -1003,9 +1003,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             )}
             {/* Mobile layout: vertical stacked fields */}
             {isHeroExpanded && (
-            <div className="relative z-20 md:hidden rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(255,255,255,0.32))] p-5 shadow-[0_18px_44px_rgba(156,63,89,0.10)] backdrop-blur-[24px]">
+            <div className="relative z-20 md:hidden rounded-3xl sm:rounded-[34px] border-none sm:border-solid sm:border sm:border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.7),rgba(255,255,255,0.4))] p-4 shadow-sm backdrop-blur-xl">
               {/* Trip type toggle */}
-              <div className="flex items-center gap-1 mb-4 p-1 rounded-full bg-white/50 border border-white/70 w-fit">
+              <div className="flex items-center gap-1 mb-4 p-1 rounded-full bg-white/40 sm:bg-white/50 border border-transparent sm:border-white/70 w-fit">
                 <button
                   onClick={() => updateField('tripType', 'oneway')}
                   className={`px-5 py-2.5 rounded-full text-[11px] font-black tracking-wide transition-all ${searchForm.tripType !== 'roundtrip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -1019,7 +1019,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="space-y-2">
                   <Label htmlFor="search-from-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">出發從哪裡</Label>
                   <div
-                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
+                    className={`flex items-center gap-3 rounded-[20px] sm:rounded-[24px] bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -1040,7 +1040,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="space-y-2">
                   <Label htmlFor="search-to-m" className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase cursor-text">飛往目的地</Label>
                   <div
-                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
+                    className={`flex items-center gap-3 rounded-[20px] sm:rounded-[24px] bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -1061,7 +1061,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 <div className="space-y-2">
                   <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">去程日期</span>
                   <div
-                    className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
+                    className={`flex items-center gap-3 rounded-[20px] sm:rounded-[24px] bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                     onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); setShowReturnDatePicker(false); }}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">
@@ -1077,7 +1077,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   <div className="space-y-2">
                     <span className="px-1 text-[11px] font-black tracking-[0.18em] text-slate-500/80 uppercase">回程日期</span>
                     <div
-                      className={`flex items-center gap-3 rounded-[24px] border border-white/80 bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
+                      className={`flex items-center gap-3 rounded-[20px] sm:rounded-[24px] bg-[rgba(255,255,255,0.52)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_8px_22px_rgba(255,255,255,0.20)] backdrop-blur-[18px] ${searchFieldSurfaceClass}`}
                       onClick={() => { setShowReturnDatePicker(!showReturnDatePicker); setShowDatePicker(false); setShowDeparturePicker(false); setShowDestinationPicker(false); }}
                     >
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.52)] shadow-sm backdrop-blur-md">

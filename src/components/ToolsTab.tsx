@@ -996,7 +996,7 @@ function ToolsTabContent() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl w-full bg-white/70 backdrop-blur-2xl border border-white rounded-[32px] sm:rounded-[48px] p-6 sm:p-10 md:p-16 shadow-2xl flex flex-col md:flex-row items-center gap-6 sm:gap-10 md:gap-16 my-auto"
+          className="max-w-4xl w-full bg-white/70 backdrop-blur-2xl border-none sm:border-solid sm:border sm:border-white rounded-[32px] sm:rounded-[48px] p-6 sm:p-10 md:p-16 shadow-lg sm:shadow-2xl flex flex-col md:flex-row items-center gap-6 sm:gap-10 md:gap-16 my-auto"
         >
           <div className="w-24 h-24 sm:w-32 sm:h-32 bg-fuchsia-100 rounded-[32px] sm:rounded-[40px] flex items-center justify-center text-5xl sm:text-6xl shadow-inner shrink-0 animate-pulse">
             🧳
@@ -1039,7 +1039,7 @@ function ToolsTabContent() {
 
   return (
     <div className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] transition-all duration-300">
-      <div className="pt-8 pb-tab-safe md:pb-32 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-10">
+      <div className="pt-8 pb-tab-safe px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-10">
         <TripSelectorBar />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -1088,7 +1088,7 @@ function ToolsTabContent() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
             {isLoadingOffers ? (
               <>
                 <GlassCard className="!p-6 flex flex-col h-[280px] animate-pulse">

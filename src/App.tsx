@@ -282,7 +282,7 @@ export default function App() {
   // Show nothing while checking localStorage (avoids flash)
   if (!authReady) {
     return (
-      <div className="flex-1 justify-center items-center bg-purple-50 flex min-h-screen-dvh w-full">
+      <div className="flex-1 justify-center items-center bg-purple-50 flex h-full w-full">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80">
           <PlaneTakeoff size={22} className="text-pink-500 animate-pulse" strokeWidth={2.5} />
         </div>
@@ -570,7 +570,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex-1 jelly-bg w-full h-full flex flex-col min-h-screen-dvh relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
+    <div className="flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
       {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
       {(import.meta as any).env.MODE !== 'production' && (
         <div className="fixed top-2 left-2 z-[60] flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
