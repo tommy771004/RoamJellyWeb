@@ -2369,7 +2369,7 @@ export default function ItineraryTab() {
         </div>
       </div>
 
-      {tip ? <span className="fixed bottom-28 left-0 right-0 text-center text-xs font-black text-slate-400 pointer-events-none animate-pulse">{tip}</span> : null}
+      {tip ? <span className="fixed bottom-28 left-0 right-0 w-full text-center text-xs font-black text-slate-400 pointer-events-none animate-pulse">{tip}</span> : null}
 
       {/* Floating Action Buttons (Mobile Only) */}
       <div className="md:hidden fixed bottom-24 right-5 flex flex-col gap-4 z-50">
@@ -2416,7 +2416,7 @@ export default function ItineraryTab() {
               animate={sheetMotion.animate}
               exit={sheetMotion.exit}
               transition={sheetMotion.transition}
-              className="fixed bottom-0 left-0 right-0 max-h-[85vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-[210] flex flex-col lg:hidden"
+              className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-[210] flex flex-col lg:hidden"
             >
               <div className="shrink-0 p-6 pb-2 border-b border-slate-100 flex items-center justify-between bg-white/90 backdrop-blur-xl rounded-t-3xl sticky top-0 z-10">
                 <div className="flex items-center gap-3">
@@ -2487,7 +2487,7 @@ function CollaboratorAvatar({ collaborator, index, isOnline }: { collaborator: C
     >
       <div className={`w-12 h-12 rounded-full border-[3px] border-white shadow-xl overflow-hidden transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1 relative ${isOnline ? 'ring-2 ring-emerald-400 ring-offset-2' : ''}`}>
         <div className="w-full h-full bg-pink-50 flex items-center justify-center text-xl">
-           {(collaborator.avatar?.length ?? 0) > 2 ? <img src={collaborator.avatar} className="w-full h-full object-cover" /> : (collaborator.avatar ?? '👤')}
+           {(collaborator.avatar?.length ?? 0) > 2 ? <img src={collaborator.avatar} alt={collaborator.name ?? '協作者'} className="w-full h-full object-cover" /> : (collaborator.avatar ?? '👤')}
         </div>
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
       </div>
