@@ -64,6 +64,7 @@ interface ToolsTabState {
   loading: boolean;
   tip: string;
   weather: WeatherData | null;
+  tripInfo: TripInfo | null;
   destination: string;
   checklist: ChecklistItem[];
   settlements: Settlement[];
@@ -130,22 +131,27 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     const init = async () => {
       try {
         setLoading(true);
-        const [checklistData, collaboratorsData, weatherData, tripInfoData] = await Promise.all([
+        const [checklistData, collaboratorsData, tripInfoData, settlementHistoryData] = await Promise.all([
           fetchChecklist(tripId),
           fetchCollaborators(tripId),
-          fetchWeather(tripInfo?.destination || '您的目的地').catch(() => null),
           fetchTripInfo(tripId).catch(() => null),
+          import('../lib/workflowApi').then(m => m.fetchSettlementHistory(tripId)).catch(() => []),
         ]);
-        if (weatherData) setWeather(weatherData);
 
         let initialCurrency = 'TWD';
         if (tripInfoData) {
           setTripInfo(tripInfoData);
           initialCurrency = getCurrencyFromDestination(tripInfoData.destination);
+          
+          if (tripInfoData.destination) {
+            const weatherData = await fetchWeather(tripInfoData.destination).catch(() => null);
+            if (weatherData) setWeather(weatherData);
+          }
         }
 
         const memberNames = collaboratorsData.map((m: any) => m.name).filter(Boolean);
         setChecklist(checklistData);
+        setSettlementHistory(settlementHistoryData);
         if (memberNames.length > 0) {
           setMembers(memberNames);
           // Only update initial form state once when we get members
@@ -316,6 +322,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     loading,
     tip,
     weather,
+    tripInfo,
     destination: tripInfo?.destination ?? '',
     checklist,
     settlements,
@@ -340,9 +347,67 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function WeatherCard() {
-  const { state: { weather, destination, loading } } = useToolsTabContext();
+  const { state: { weather, destination, loading, tripInfo } } = useToolsTabContext();
   const { isOffline } = useAppStore();
-  const Icon = weather && weather.rain_prob >= 50 ? CloudRain : Sun;
+
+  const getWeatherDescription = (code?: number) => {
+    if (code === undefined) return '未知天氣';
+    if (code === 0) return '晴朗';
+    if (code === 1) return '晴時多雲';
+    if (code === 2) return '多雲';
+    if (code === 3) return '陰天';
+    if (code === 45 || code === 48) return '起霧';
+    if (code >= 51 && code <= 55) return '毛毛雨';
+    if (code === 56 || code === 57) return '冰雨';
+    if (code === 61 || code === 80) return '小雨';
+    if (code === 63 || code === 81) return '中雨';
+    if (code === 65 || code === 82) return '大雨';
+    if (code === 66 || code === 67) return '結冰雨';
+    if (code === 71 || code === 73 || code === 75 || code === 85 || code === 86) return '下雪';
+    if (code === 77) return '冰霰';
+    if (code >= 95 && code <= 99) return '雷雨';
+    return '多雲';
+  };
+
+  // Determine target weather data from trip start date
+  let targetWeather = null;
+  let isCurrentDay = true;
+  let targetDateString = '今天';
+
+  if (weather) {
+    targetWeather = {
+      temp_current: weather.temp_current,
+      temp_max: weather.temp_max,
+      temp_min: weather.temp_min,
+      rain_prob: weather.rain_prob,
+      weather_code: weather.weather_code,
+    };
+    if (tripInfo?.startDate && weather.daily?.length > 0) {
+      const start = new Date(tripInfo.startDate);
+      if (!isNaN(start.getTime())) {
+        const match = weather.daily.find((d: any) => {
+          const dDate = new Date(d.date);
+          return dDate.getTime() === start.getTime() || d.date === tripInfo.startDate;
+        });
+        if (match) {
+           isCurrentDay = new Date().toDateString() === start.toDateString();
+           targetDateString = isCurrentDay ? '今天' : `${start.getMonth()+1}/${start.getDate()}`;
+           targetWeather = {
+             temp_current: isCurrentDay ? weather.temp_current : Math.round((match.temp_max + match.temp_min) / 2),
+             temp_max: match.temp_max,
+             temp_min: match.temp_min,
+             rain_prob: match.rain_prob,
+             weather_code: match.weather_code,
+           };
+        } else if (start.getTime() > new Date().getTime()) {
+           targetDateString = `${start.getMonth()+1}/${start.getDate()} (無預報)`;
+           targetWeather = null; // Too far in the future
+        }
+      }
+    }
+  }
+
+  const Icon = targetWeather && targetWeather.rain_prob >= 50 ? CloudRain : Sun;
 
   if (!weather && loading) {
     return (
@@ -359,7 +424,7 @@ function WeatherCard() {
   }
   
   const getOutfitSuggestion = (temp?: number, rainProb?: number) => {
-    if (!temp) return { title: '輕便舒適穿搭', desc: '建議搭飛機時洋蔥式穿搭，並預備舒適好走的鞋子。' };
+    if (temp == null) return { title: '輕便舒適穿搭', desc: '建議搭飛機時洋蔥式穿搭，並預備舒適好走的鞋子。' };
     let desc = '建議帶件薄外套與好走的鞋。';
     let title = '輕薄層次穿搭';
     if (temp >= 28) { title = '透氣涼爽穿搭'; desc = '建議穿著短袖與透氣材質，注意防曬避暑。'; }
@@ -373,7 +438,10 @@ function WeatherCard() {
     return { title, desc };
   };
 
-  const outfit = getOutfitSuggestion(weather?.temp_current, weather?.rain_prob);
+  const outfit = getOutfitSuggestion(targetWeather?.temp_current, targetWeather?.rain_prob);
+  const weatherText = targetWeather 
+    ? getWeatherDescription(targetWeather.weather_code) 
+    : (weather ? '無該日期的預報' : '未能取得天氣資料');
 
   return (
     <GlassCard className="!p-5 sm:!p-8 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-500 hover:shadow-xl group border-white/80">
@@ -381,7 +449,7 @@ function WeatherCard() {
       <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-sky-300/20 rounded-full blur-[30px] pointer-events-none group-hover:scale-125 transition-transform duration-700 delay-75" />
       
       <div className="relative z-10">
-        <h2 className="font-serif text-[26px] sm:text-3xl text-[#2C302E] mb-1 leading-tight">明天在 {destination || '您的目的地'}</h2>
+        <h2 className="font-serif text-[26px] sm:text-3xl text-[#2C302E] mb-1 leading-tight">{targetDateString}在 {destination || '您的目的地'}</h2>
         <div className="flex flex-col gap-1 mb-5 sm:mb-6">
           <p className="text-[10px] sm:text-[11px] uppercase tracking-widest text-fuchsia-600/70 font-black">Local Weather & Outfit</p>
           {isOffline && (
@@ -393,16 +461,21 @@ function WeatherCard() {
           <div className="flex flex-col gap-3">
              <div className="flex bg-white/80 backdrop-blur-md rounded-full px-3.5 py-1.5 sm:px-4 sm:py-2 items-center gap-2 border border-slate-100 shadow-sm w-fit">
                <Icon size={16} className="text-fuchsia-500 sm:w-[18px] sm:h-[18px]" strokeWidth={2.5} />
-               <span className="text-slate-700 font-black text-xs sm:text-sm">{weather && weather.rain_prob >= 50 ? '可能有雨' : '晴朗好天氣'}</span>
+               <span className="text-slate-700 font-black text-xs sm:text-sm">{weatherText}</span>
              </div>
-             {weather && (
-               <span className="text-slate-500 font-bold text-[10px] sm:text-xs tracking-wider pl-1">
-                 最高 {weather.daily?.[0]?.temp_max ?? '--'}° / 降雨 {weather.rain_prob}%
+             {targetWeather && (
+               <span className="text-slate-500 font-bold text-[10px] sm:text-xs tracking-wider pl-1 flex items-center gap-2">
+                 <span>最高 {targetWeather.temp_max ?? '--'}°</span>
+                 <span className="opacity-50">|</span>
+                 <span>最低 {targetWeather.temp_min ?? '--'}°</span>
+                 <span className="opacity-50">|</span>
+                 <span>降雨 {targetWeather.rain_prob}%</span>
                </span>
              )}
           </div>
-          <div className="text-[48px] sm:text-[56px] leading-none font-black tracking-tighter text-slate-800 drop-shadow-sm">
-            {weather ? weather.temp_current : '--'}°
+          <div className="text-[48px] sm:text-[56px] leading-none font-black tracking-tighter text-slate-800 drop-shadow-sm flex items-start gap-1 whitespace-nowrap">
+            {targetWeather?.temp_current != null ? targetWeather.temp_current : '--'}
+            <span className="text-2xl mt-2 font-bold text-slate-400">°</span>
           </div>
         </div>
 
@@ -482,7 +555,7 @@ function ChecklistSection() {
               </div>
               <div className="flex flex-col gap-2">
                 {catItems.map((item: any) => (
-                  <label key={item.id} className={`flex items-center gap-4 group p-2 rounded-2xl transition-colors ${isOffline ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-fuchsia-50/50'}`} onClick={(e) => { e.preventDefault(); if (!isOffline) actions.toggleCheck(item); }}>
+                  <label key={item.id} className={`flex items-center gap-4 group p-3 min-h-[52px] rounded-2xl transition-colors ${isOffline ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-fuchsia-50/50'}`} onClick={(e) => { e.preventDefault(); if (!isOffline) actions.toggleCheck(item); }}>
                     <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
                       <input readOnly checked={item.checked} className="peer sr-only" type="checkbox"/>
                       <motion.div
@@ -769,15 +842,17 @@ function SettlementsSection() {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="min-h-[44px] px-4"
                           onClick={() => void actions.sendReminder()}
                         >
                           <Send size={14} className="opacity-70 mr-1.5" />
                           <span className="text-[11px] font-bold tracking-wide uppercase">提醒</span>
                         </Button>
-                        
+
                         <Button
                           variant="default"
                           size="sm"
+                          className="min-h-[44px] px-4"
                           onClick={() => void actions.handleClearSettlement(settlement)}
                           disabled={clearingId === settlement.id || isOffline}
                         >
@@ -964,7 +1039,7 @@ function ToolsTabContent() {
 
   return (
     <div className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] transition-all duration-300">
-      <div className="pt-8 pb-32 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-10">
+      <div className="pt-8 pb-tab-safe md:pb-32 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-10">
         <TripSelectorBar />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -1118,6 +1193,8 @@ function ToolsTabContent() {
             )}
           </div>
         </div>
+        {/* Mobile bottom nav spacer */}
+        <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
       </div>
     </div>
   );
