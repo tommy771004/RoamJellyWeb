@@ -6,6 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import GlassCard from './GlassCard';
 import type { ItineraryNode } from '../types/workflow';
+import { openNativeMap } from '../lib/workflowApi';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -96,7 +97,14 @@ function CustomMarker({
     <Marker
       position={[item.lat!, item.lng!]}
       icon={customIcon}
-      eventHandlers={{ click: onClick }}
+      eventHandlers={{ 
+        click: () => {
+          onClick();
+          if (item.lat && item.lng) {
+             openNativeMap(Number(item.lat), Number(item.lng), item.title);
+          }
+        }
+      }}
       zIndexOffset={isSelected ? 1000 : 0}
     />
   );

@@ -59,7 +59,7 @@ export async function suggestItinerary(destination: string, days: number): Promi
       if (Array.isArray(dayData.spots)) {
         dayData.spots.forEach((spot: any, i: number) => {
           nodes.push({
-            node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+            node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${dayData.day}_${i}`,
             day: dayData.day || 1,
             time: normalizeTime(spot.time),
             title: String(spot.name || spot.title || '景點'),

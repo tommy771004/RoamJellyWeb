@@ -50,7 +50,7 @@ function AreaTabs({ areas, active, onChange }: { areas: string[]; active: string
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
-            <span className="relative z-10 tracking-wide">{area}</span>
+            <span className="relative z-10 tracking-wide whitespace-nowrap">{area}</span>
           </button>
         ))}
       </div>
@@ -124,13 +124,13 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
             )}
             <button
               onClick={() => setOpen((v) => !v)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm active:scale-95 ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm active:scale-95 whitespace-nowrap ${
                 open
                   ? 'bg-slate-200/80 text-slate-800 hover:bg-slate-300'
                   : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-md'
               }`}
             >
-              {open ? '收起' : '探索'}
+              <span className="whitespace-nowrap">{open ? '收起' : '探索'}</span>
               <motion.div
                 animate={{ rotate: open ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -295,7 +295,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                 <div className="mb-6">
                   {activeArea === '全部' && (
                     <div className="flex items-center gap-3 mb-4">
-                      <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest px-1">基本資訊</h2>
+                      <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest px-1 whitespace-nowrap">基本資訊</h2>
                       <div className="flex-1 h-px bg-slate-200/60" />
                     </div>
                   )}
@@ -311,7 +311,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                 <div>
                   {activeArea === '全部' && infoCards.length > 0 && (
                     <div className="flex items-center gap-3 mt-4 mb-4">
-                      <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest px-1">各地區指南</h2>
+                      <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest px-1 whitespace-nowrap">各地區指南</h2>
                       <div className="flex-1 h-px bg-slate-200/60" />
                     </div>
                   )}
@@ -333,7 +333,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                 href={guide.guideUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-slate-700 hover:text-slate-900 text-[13px] font-bold transition-colors bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full"
+                className="flex items-center gap-2 text-slate-700 hover:text-slate-900 text-[13px] font-bold transition-colors bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full whitespace-nowrap"
               >
                 <ExternalLink size={13} strokeWidth={2.5} />
                 查看全站

@@ -132,8 +132,8 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                       className="group flex flex-col items-center gap-1.5 py-3.5 px-2 rounded-2xl bg-white/5 border border-white/8 hover:bg-rose-500/10 hover:border-rose-400/30 transition-all cursor-pointer"
                     >
                       <span className="text-xl">{card.emoji}</span>
-                      <span className="text-white font-bold text-xs text-center leading-tight">{card.name}</span>
-                      <span className="text-white/35 text-[10px] text-center">{card.desc}</span>
+                      <span className="text-white font-bold text-xs text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.name}</span>
+                      <span className="text-white/35 text-[10px] text-center whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.desc}</span>
                     </motion.a>
                   ))}
                 </div>
@@ -157,8 +157,8 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                       className="group flex flex-col items-center gap-1 py-3 px-1.5 rounded-2xl bg-white/4 border border-white/6 hover:bg-white/10 hover:border-white/20 active:scale-95 transition-all cursor-pointer"
                     >
                       <span className="text-lg leading-none">{card.emoji}</span>
-                      <span className="text-white/90 font-bold text-[11px] text-center leading-tight mt-0.5">{card.name}</span>
-                      <span className="text-white/30 text-[9px] text-center leading-tight">{card.desc}</span>
+                      <span className="text-white/90 font-bold text-[11px] text-center leading-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.name}</span>
+                      <span className="text-white/30 text-[9px] text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.desc}</span>
                     </motion.a>
                   ))}
                 </div>

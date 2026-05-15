@@ -100,10 +100,10 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
                 }
               }}
               disabled={!selectedPos}
-              className="w-full h-14 rounded-full bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-white font-black text-[15px] uppercase tracking-widest shadow-lg shadow-fuchsia-200/60 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full h-14 rounded-full bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-white font-black text-[15px] uppercase tracking-widest shadow-lg shadow-fuchsia-200/60 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap"
             >
-              <Check size={20} />
-              確認選取座標
+              <Check size={20} className="shrink-0" />
+              <span>確認選取座標</span>
             </button>
           </div>
         </motion.div>

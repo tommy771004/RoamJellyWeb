@@ -51,6 +51,19 @@ export async function fetchDirections(lng1: number, lat1: number, lng2: number, 
   return null;
 }
 
+export function getNativeMapUrl(lat: number, lng: number, title: string, isIOS: boolean): string {
+  const q = title ? encodeURIComponent(title) : `${lat},${lng}`;
+  if (isIOS) {
+    return `maps://?q=${q}&ll=${lat},${lng}`;
+  } else {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  }
+}
+
+export function openNativeMap(lat: number, lng: number, title?: string) {
+  window.dispatchEvent(new CustomEvent('open-map', { detail: { lat, lng, title: title || '' } }));
+}
+
 export function getStoredToken(): string | null {
   return localStorage.getItem('access_token');
 }

@@ -91,7 +91,7 @@ export default function DynamicItineraryView({
 
             return (
               <div key={i} className="bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl p-6">
-                <h3 className="text-xl font-bold text-slate-800 mb-4 bg-white/60 w-fit px-5 py-2 rounded-full shadow-sm text-center">
+                <h3 className="text-xl font-bold text-slate-800 mb-4 bg-white/60 w-fit px-5 py-2 rounded-full shadow-sm text-center whitespace-nowrap">
                   第 {dayData.day} 天
                 </h3>
 

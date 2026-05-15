@@ -181,7 +181,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                 className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm px-6 py-2.5 rounded-full shadow-md hover:shadow-lg transition-all active:scale-95"
               >
                 <Download size={16} strokeWidth={2.5}/>
-                <span>一鍵複製行程</span>
+                <span className="whitespace-nowrap">一鍵複製行程</span>
               </button>
             </div>
           </motion.div>

@@ -62,6 +62,7 @@ import {
   fetchSpotEnrichment,
   submitLedgerExpense,
   deleteTripApi,
+  openNativeMap,
 } from '../lib/workflowApi';
 import { suggestItineraryWithForm, AiRateLimitedError } from '../lib/openrouterApi';
 import { haversineKm, estimateTransport } from '../lib/geoUtils';
@@ -425,7 +426,7 @@ export default function ItineraryTab() {
       suggestions.itinerary.forEach((dayData: any) => {
         dayData.spots.forEach((spot: any, i: number) => {
            rawNodes.push({
-             node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+             node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${dayData.day}_${i}`,
              day: dayData.day || 1,
              time: normalizeClockInput(spot.time || '10:00'),
              title: spot.name || '景點',
@@ -1270,7 +1271,7 @@ export default function ItineraryTab() {
           if (Array.isArray(dayData.spots)) {
             dayData.spots.forEach((spot: any, i: number) => {
               suggestedNodes.push({
-                node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+                node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${dayData.day}_${i}`,
                 day: dayData.day || 1,
                 time: spot.time || '10:00',
                 title: String(spot.name || spot.title || '景點'),
@@ -1291,7 +1292,7 @@ export default function ItineraryTab() {
       } else if (Array.isArray(suggestionsRaw)) {
         suggestionsRaw.forEach((spot: any, i: number) => {
           suggestedNodes.push({
-            node_id: spot.node_id || `ai_${Date.now()}_${spot.day || 1}_${i}`,
+            node_id: spot.node_id || `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${spot.day || 1}_${i}`,
             day: spot.day || 1,
             time: spot.time || '10:00',
             title: String(spot.name || spot.title || '景點'),
@@ -1320,7 +1321,7 @@ export default function ItineraryTab() {
         if (maxGeneratedDay < genDays) {
           for (let d = maxGeneratedDay + 1; d <= genDays; d++) {
             tempNodes.push({
-               node_id: `ai_${Date.now()}_empty_day_${d}`,
+               node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_empty_day_${d}`,
                day: d,
                time: '10:00',
                title: '自由活動',
@@ -1351,7 +1352,7 @@ export default function ItineraryTab() {
         for (const targetDay of targetDays) {
           if (!generatedDays.has(targetDay)) {
             offsetNodes.push({
-               node_id: `ai_${Date.now()}_empty_day_${targetDay}`,
+               node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_empty_day_${targetDay}`,
                day: targetDay,
                time: '10:00',
                title: '自由活動',
@@ -1385,7 +1386,7 @@ export default function ItineraryTab() {
         
         if (suggestedNodes.length === 0) {
            suggestedNodes.push({
-             node_id: `ai_${Date.now()}_empty_day_${selectedDay}`,
+             node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_empty_day_${selectedDay}`,
              day: selectedDay,
              time: '10:00',
              title: '自由活動',
@@ -3586,35 +3587,35 @@ function ItineraryList({
         
         {items.length === 0 && !aiLoading && (
           <GlassCard className="!p-10 sm:!p-16 !rounded-[32px] sm:!rounded-[48px] border border-white/70 bg-gradient-to-b from-white/80 to-pink-50/55 flex flex-col items-center justify-center text-center backdrop-blur-2xl shadow-sm hover:shadow-xl transition-shadow duration-700 mx-2 sm:mx-0">
-            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[28px] sm:rounded-[40px] bg-white flex items-center justify-center text-4xl sm:text-6xl mb-6 sm:mb-8 shadow-xl border border-slate-200/70 hover:rotate-3 hover:scale-105 transition-all duration-300">
+            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-[28px] sm:rounded-[40px] bg-gradient-to-br from-fuchsia-100 to-indigo-100 flex items-center justify-center text-4xl sm:text-6xl mb-6 sm:mb-8 shadow-xl shadow-fuchsia-200/40 border border-white hover:rotate-3 hover:scale-105 transition-all duration-300">
               🏝️
             </div>
-            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 sm:mb-3 tracking-tight">Day {day} 還是空白的</h3>
-            <p className="text-slate-600 font-bold max-w-[360px] leading-relaxed text-[12px] tracking-[0.06em] px-4">現在不是提醒你空白，而是直接幫你補上第一步。</p>
-            <div className="mt-6 flex w-full max-w-[340px] flex-col gap-3">
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 sm:mb-3 tracking-tight">新增行程</h3>
+            <p className="text-slate-600 font-bold max-w-[360px] leading-relaxed text-[12px] tracking-[0.06em] px-4 whitespace-nowrap">現在不是提醒你空白，而是直接幫你補上第一步。</p>
+            <div className="mt-8 flex w-full max-w-[340px] flex-col gap-3.5">
               <button
                 type="button"
                 onClick={() => onAskAiForDay?.()}
                 disabled={isOffline}
-                className="w-full rounded-full bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-3 text-sm font-black tracking-[0.12em] text-white shadow-lg shadow-fuchsia-200/60 transition-all hover:-translate-y-0.5 disabled:opacity-40"
+                className="w-full rounded-[24px] bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-4 text-[15px] font-black tracking-widest text-white shadow-lg shadow-fuchsia-200/60 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap"
               >
-                ✨ 讓 AI 幫我填滿今天
+                ✨ AI 助手幫我填滿
               </button>
               <button
                 type="button"
                 onClick={() => onRandomizeFromFavorites?.()}
                 disabled={isOffline || !favoriteSuggestions?.length}
-                className="w-full rounded-full border border-slate-200 bg-white/90 px-5 py-3 text-sm font-black tracking-[0.08em] text-slate-700 transition-all hover:border-slate-300 hover:bg-white disabled:opacity-40"
+                className="w-full rounded-[24px] bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 text-[15px] font-black tracking-widest text-white shadow-lg shadow-sky-200/60 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap"
               >
-                📌 從口袋名單隨機挑 3 個景點
+                📌 從口袋名單挑選
               </button>
               <button
                 type="button"
                 onClick={() => setManualAddTrigger((prev) => prev + 1)}
                 disabled={isOffline}
-                className="w-full rounded-full border border-emerald-200 bg-emerald-50/95 px-5 py-3 text-sm font-black tracking-[0.08em] text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-40"
+                className="w-full rounded-[24px] bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 text-[15px] font-black tracking-widest text-white shadow-lg shadow-emerald-200/60 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap"
               >
-                ➕ 手動新增景點
+                ➕ 手動新增
               </button>
             </div>
           </GlassCard>
@@ -4371,11 +4372,21 @@ function CalendarView({ nodes, tripStartDate }: { nodes: ItineraryNode[], tripSt
                    </div>
                    <div className="flex-1 pt-1">
                      <h3 className="font-black text-xl text-slate-800 leading-tight mb-2">{selectedNode.title}</h3>
-                     {selectedNode.time && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-xs font-black text-slate-500 uppercase tracking-[0.1em] border border-white shadow-sm">
-                           <Clock size={12} strokeWidth={3} /> {selectedNode.time}
-                        </div>
-                     )}
+                     <div className="flex items-center gap-2 flex-wrap">
+                       {selectedNode.time && (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-xs font-black text-slate-500 uppercase tracking-[0.1em] border border-white shadow-sm whitespace-nowrap">
+                             <Clock size={12} strokeWidth={3} /> {selectedNode.time}
+                          </div>
+                       )}
+                       {selectedNode.lat && selectedNode.lng && (
+                          <button
+                            onClick={() => openNativeMap(Number(selectedNode.lat!), Number(selectedNode.lng!), selectedNode.title)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-black uppercase tracking-[0.1em] border border-blue-100 shadow-sm transition-colors cursor-pointer whitespace-nowrap"
+                          >
+                            <MapPin size={12} strokeWidth={3} /> 導航
+                          </button>
+                       )}
+                     </div>
                    </div>
                 </div>
                 

@@ -47,12 +47,12 @@ export default function BottomTabs() {
     >
       <motion.div 
         layout
-        className="bg-white/90 backdrop-blur-[30px] backdrop-saturate-[180%] rounded-[36px] shadow-[0_16px_40px_-5px_rgba(255,183,206,0.6),inset_0_1px_2px_rgba(255,255,255,0.8)] border border-pink-100/60 p-1.5 pointer-events-auto flex items-center overflow-hidden"
+        className="bg-white/80 backdrop-blur-[40px] backdrop-saturate-[200%] rounded-[40px] shadow-[0_20px_40px_-10px_rgba(255,160,200,0.5),inset_0_2px_4px_rgba(255,255,255,1),inset_0_-2px_6px_rgba(255,200,230,0.2)] border border-white/60 p-1.5 pointer-events-auto flex items-center overflow-hidden"
         style={{
            width: isExpanded ? '100%' : 'auto',
            maxWidth: isExpanded ? '380px' : 'fit-content'
         }}
-        transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+        transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           {!isExpanded ? (
@@ -64,10 +64,10 @@ export default function BottomTabs() {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
               onClick={() => setIsExpanded(true)}
-              className="flex items-center justify-center w-12 h-12 rounded-full text-pink-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+              className="flex items-center justify-center w-14 h-14 rounded-full text-pink-500 hover:text-pink-600 hover:bg-pink-50 shadow-inner bg-white/80 transition-colors"
               aria-label="展開選單"
             >
-              <ActiveIcon size={24} strokeWidth={2.5} />
+              <ActiveIcon size={26} strokeWidth={3} />
             </motion.button>
           ) : (
             <motion.div 
@@ -82,7 +82,7 @@ export default function BottomTabs() {
               {isAiFlow && (
                  <button
                    onClick={() => setIsExpanded(false)}
-                   className="absolute -left-1 sm:-left-3 p-2 text-slate-400 hover:text-pink-500 z-20"
+                   className="absolute -left-1 sm:-left-3 p-2 text-slate-300 hover:text-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-300 rounded-full z-20 transition-colors"
                    aria-label="收起選單"
                  >
                    <X size={18} strokeWidth={3} />
@@ -100,22 +100,29 @@ export default function BottomTabs() {
                            setIsExpanded(false);
                         }
                     }}
-                    className={`flex flex-col items-center justify-center text-pink-500 flex-1 min-w-0 pt-2.5 pb-2 rounded-[30px] relative ${subtlePressableClass} ${
+                    className={`flex flex-col items-center justify-center flex-1 min-w-0 pt-3 pb-2 rounded-[32px] relative ${subtlePressableClass} ${
                       isActive
-                        ? 'scale-[1.03]'
-                        : 'opacity-60 hover:opacity-100'
-                    }`}
+                        ? 'scale-[1.05] text-pink-500'
+                        : 'opacity-70 hover:opacity-100 text-slate-400 hover:text-pink-400'
+                    } transition-all duration-300`}
                     aria-current={isActive ? 'page' : undefined}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="tab-pill"
-                        className="absolute inset-0 bg-white shadow-sm border border-pink-100 rounded-[30px] -z-10"
-                        transition={layoutIndicatorTransition}
+                        className="absolute inset-0 bg-gradient-to-tr from-white to-pink-50/50 shadow-[0_4px_12px_rgba(255,183,206,0.3),inset_0_1px_1px_rgba(255,255,255,1)] border border-pink-100/50 rounded-[32px] -z-10"
+                        transition={{type: "spring", stiffness: 300, damping: 24}}
                       />
                     )}
-                    {Icon ? <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.5 : 2} className={`mb-1 transition-all ${isActive ? 'opacity-100' : 'opacity-50'}`} /> : null}
-                    <span className={`text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-1 z-10 transition-colors ${isActive ? 'text-pink-600' : 'text-pink-500'}`}>
+                    {Icon ? (
+                      <motion.div
+                        animate={isActive ? { y: -2, scale: 1.1 } : { y: 0, scale: 1 }}
+                        transition={{ type: "spring", stiffness: 400 }}
+                      >
+                         <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.5 : 2} className={`mb-1 transition-all drop-shadow-sm ${isActive ? 'text-pink-500 fill-pink-500/20' : ''}`} />
+                      </motion.div>
+                    ) : null}
+                    <span className={`text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-1 z-10 transition-colors ${isActive ? 'text-pink-600' : ''}`}>
                       {tab.label}
                     </span>
                   </button>

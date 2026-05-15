@@ -57,7 +57,7 @@ function PillButton({ label, selected, onClick, accentColor = 'indigo' }: { labe
           <Check size={14} strokeWidth={3} />
         </motion.div>
       )}
-      <span>{label}</span>
+      <span className="whitespace-nowrap">{label}</span>
     </motion.button>
   );
 }
@@ -156,7 +156,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                   <Sparkles size={22} className="relative z-10" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2 whitespace-nowrap">
                     AI 專屬行程偏好
                   </h2>
                   <p className="text-[13px] font-medium text-slate-500 mt-0.5">預設保存，讓 AI 更懂你的旅行風格</p>
@@ -340,7 +340,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             <div className="p-4 sm:p-5 border-t border-slate-100 bg-white md:rounded-b-[32px] shrink-0 z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] px-6">
               <Button 
                 onClick={handleSave} 
-                className="w-full h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl py-4 font-bold shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] flex items-center justify-center gap-2 text-[15px] sm:text-base tracking-wide transition-all overflow-hidden relative group"
+                className="w-full h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl py-4 font-bold shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] flex items-center justify-center gap-2 text-[15px] sm:text-base tracking-wide transition-all overflow-hidden relative group whitespace-nowrap"
                 disabled={saving || loading}
               >
                 <div className="absolute inset-0 bg-white/20 -translate-x-[150%] skew-x-[-15deg] group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></div>

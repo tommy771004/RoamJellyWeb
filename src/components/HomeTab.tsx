@@ -98,7 +98,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
         }
       }}
     >
-      <GlassCard className={`!p-0 bg-white/70 backdrop-blur-xl border border-transparent sm:border-slate-200/60 shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] sm:hover:bg-white flex-1 flex flex-col overflow-hidden rounded-[24px] ${pressableSurfaceClass} ${raisedHoverClass}`}>
+      <GlassCard className={`!p-0 bg-white/70 backdrop-blur-xl border border-transparent sm:border-pink-100/60 shadow-sm sm:shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] sm:hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] sm:hover:bg-white flex-1 flex flex-col overflow-hidden rounded-[32px] ${pressableSurfaceClass} ${raisedHoverClass}`}>
         
         {/* Top Section: Airline & Route */}
         <div className="p-4 flex flex-col gap-3">
@@ -164,38 +164,38 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
           {/* Flight Info Badges */}
           <div className="flex items-center gap-2 mt-1 text-slate-500 px-1">
             <div className="flex items-center gap-1">
-               <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm ${flight.details?.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
+               <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm whitespace-nowrap ${flight.details?.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
                  {flight.details?.stops === 0 ? '直飛 DIRECT' : `${flight.details?.stops} 轉 STOP`}
                </span>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-tight">{flight.details?.duration || '3h 15m'}</span>
+            <span className="text-[10px] font-bold uppercase tracking-tight whitespace-nowrap">{flight.details?.duration || '3h 15m'}</span>
           </div>
 
           {/* Return leg row — shown for roundtrip bundles */}
           {flight.tripType === 'roundtrip' && flight.returnLeg && (
             <div className="mt-2 pt-2 border-t border-dashed border-slate-200">
               <div className="flex items-center gap-1 mb-1">
-                <span className="text-[9px] font-black tracking-[0.2em] uppercase text-sky-500 bg-sky-50 px-1.5 py-[2px] rounded-sm">回程</span>
+                <span className="text-[9px] font-black tracking-[0.2em] uppercase text-sky-500 bg-sky-50 px-1.5 py-[2px] rounded-sm whitespace-nowrap">回程</span>
               </div>
               <div className="flex items-center justify-between px-0.5">
-                <div className="flex flex-col items-start">
-                  <span className="text-base font-black text-slate-900 tracking-tighter leading-none">{flight.returnLeg.departure}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Depart</span>
+                <div className="flex flex-col items-start min-w-0">
+                  <span className="text-base font-black text-slate-900 tracking-tighter leading-none whitespace-nowrap">{flight.returnLeg.departure}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Depart</span>
                 </div>
                 <div className="flex-1 flex items-center justify-center px-2">
                   <div className="w-full border-t border-dashed border-slate-300" />
                 </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-base font-black text-slate-900 tracking-tighter leading-none">{flight.returnLeg.arrival}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Arrive</span>
+                <div className="flex flex-col items-end min-w-0">
+                  <span className="text-base font-black text-slate-900 tracking-tighter leading-none whitespace-nowrap">{flight.returnLeg.arrival}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Arrive</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-1 px-1">
-                <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm ${flight.returnLeg.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
+                <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm whitespace-nowrap ${flight.returnLeg.stops === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
                   {flight.returnLeg.stops === 0 ? '直飛 DIRECT' : `${flight.returnLeg.stops} 轉 STOP`}
                 </span>
                 {flight.returnLeg.duration && (
-                  <span className="text-[10px] font-bold uppercase tracking-tight text-slate-500">{flight.returnLeg.duration}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-tight text-slate-500 whitespace-nowrap">{flight.returnLeg.duration}</span>
                 )}
               </div>
             </div>
@@ -464,14 +464,14 @@ function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSav
           </div>
 
           <div className="mt-3.5 flex flex-wrap gap-1.5 sm:mt-4 sm:gap-2">
-            <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white/72 px-2.5 py-1.5 text-[10px] font-black text-slate-700 shadow-sm sm:gap-2 sm:px-3 sm:py-2 sm:text-[11px]">
-              <AirlineLogo providerName={providerName} className="h-5 w-5 rounded-full text-[9px]" />
+            <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white/72 px-2.5 py-1.5 text-[10px] font-black text-slate-700 shadow-sm sm:gap-2 sm:px-3 sm:py-2 sm:text-[11px] whitespace-nowrap">
+              <AirlineLogo providerName={providerName} className="h-5 w-5 rounded-full text-[9px] shrink-0" />
               <span className="truncate max-w-[130px]">{providerName}</span>
             </span>
-            <span className="inline-flex items-center rounded-full bg-white/72 px-2.5 py-1.5 text-[10px] font-black text-slate-700 shadow-sm sm:px-3 sm:py-2 sm:text-[11px]">
+            <span className="inline-flex items-center rounded-full bg-white/72 px-2.5 py-1.5 text-[10px] font-black text-slate-700 shadow-sm sm:px-3 sm:py-2 sm:text-[11px] whitespace-nowrap">
               {flight.details?.departure || '--:--'} → {flight.details?.arrival || '--:--'}
             </span>
-            <span className={`inline-flex items-center rounded-full px-2.5 py-1.5 text-[10px] font-black shadow-sm sm:px-3 sm:py-2 sm:text-[11px] ${flight.details?.stops === 0 ? 'bg-emerald-50/95 text-emerald-600' : 'bg-white/72 text-slate-700'}`}>
+            <span className={`inline-flex items-center rounded-full px-2.5 py-1.5 text-[10px] font-black shadow-sm sm:px-3 sm:py-2 sm:text-[11px] whitespace-nowrap ${flight.details?.stops === 0 ? 'bg-emerald-50/95 text-emerald-600' : 'bg-white/72 text-slate-700'}`}>
               {flight.details?.duration || '3h 15m'} · {stopLabel}
             </span>
           </div>
@@ -1332,7 +1332,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     {/* Progress bar */}
                     <div className="w-full flex flex-col gap-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest leading-none">
+                        <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest leading-none whitespace-nowrap">
                           {SEARCH_LOADING_MESSAGES[progressMsgIdx]}
                         </span>
                         <span className="text-[11px] font-black text-slate-400 tabular-nums">
@@ -1348,7 +1348,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       </div>
                     </div>
 
-                    <p className="text-slate-400 font-medium text-[11px] tracking-wide text-center">
+                    <p className="text-slate-400 font-medium text-[11px] tracking-wide text-center whitespace-nowrap">
                       即時爬取航班資訊，這可能需要一些時間
                     </p>
                   </div>
@@ -1603,7 +1603,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       key={trip.id}
                       className="w-[280px] sm:w-[320px] group/trip"
                     >
-                      <GlassCard className={`!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col ${cardSurfaceClass}`}>
+                    <GlassCard className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] flex flex-col ${cardSurfaceClass}`}>
                         <div className="relative h-44 overflow-hidden flex-shrink-0">
                           <img
                             src={trip.cover}
@@ -1668,7 +1668,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     key={dest.id}
                     className="w-[260px] sm:w-[300px] group/dest"
                   >
-                    <GlassCard className={`!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col ${cardSurfaceClass}`}>
+                    <GlassCard className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] flex flex-col ${cardSurfaceClass}`}>
                       {/* Cover Image */}
                       <div className="relative h-44 overflow-hidden flex-shrink-0">
                         <img
@@ -1735,7 +1735,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     key={handbook.id}
                     className="w-[280px] sm:w-[320px] group/handbook"
                   >
-                    <GlassCard onClick={() => setActiveHandbook(handbook)} className={`!p-0 overflow-hidden h-full rounded-3xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] cursor-pointer ${cardSurfaceClass}`}>
+                    <GlassCard onClick={() => setActiveHandbook(handbook)} className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] cursor-pointer ${cardSurfaceClass}`}>
                       <div className="relative h-44 overflow-hidden">
                         <img
                           src={handbook.image}

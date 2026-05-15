@@ -32,7 +32,7 @@ import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, getNativeMapUrl } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
 import { JellyToast } from './components/JellyToast';
 type LoginPromptMode = 'default' | 'guest-first';
@@ -55,6 +55,18 @@ export default function App() {
     notifications, clearNotifications,
   } = useAppStore();
   const { loadPreferences, toggleSave, savedItems } = useSearchStore();
+
+  useEffect(() => {
+    const handleMapOpen = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { lat, lng, title } = customEvent.detail;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const mapUrl = getNativeMapUrl(lat, lng, title, isIOS);
+      window.open(mapUrl, '_blank', 'noopener,noreferrer');
+    };
+    window.addEventListener('open-map', handleMapOpen);
+    return () => window.removeEventListener('open-map', handleMapOpen);
+  }, []);
 
   // Detect trip landing URL once on mount (before any auth check)
   const [tripLandingId] = useState<string | null>(getTripLandingId);
@@ -385,7 +397,7 @@ export default function App() {
               if (dayData.spots) {
                  dayData.spots.forEach((spot: any, i: number) => {
                    nodes.push({
-                     node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+                     node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${dayData.day}_${i}`,
                      day: dayData.day || 1,
                      time: spot.time || "10:00",
                      title: String(spot.name || spot.title || '景點'),
@@ -404,7 +416,7 @@ export default function App() {
           } else if (Array.isArray(suggestions)) {
             suggestions.forEach((spot: any, i: number) => {
               nodes.push({
-                node_id: spot.node_id || `ai_${Date.now()}_${spot.day || 1}_${i}`,
+                node_id: spot.node_id || `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${spot.day || 1}_${i}`,
                 day: spot.day || 1,
                 time: spot.time || "10:00",
                 title: String(spot.name || spot.title || '景點'),
@@ -443,7 +455,7 @@ export default function App() {
           if (maxGeneratedDay < requestedDays) {
             for (let d = maxGeneratedDay + 1; d <= requestedDays; d++) {
               finalNodes.push({
-                 node_id: `ai_${Date.now()}_empty_day_${d}`,
+                 node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_empty_day_${d}`,
                  day: d,
                  time: '10:00',
                  title: '自由活動',
@@ -582,7 +594,7 @@ export default function App() {
       )}
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-white/70 dark:bg-slate-950/72 backdrop-blur-xl border-b border-white/50 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.45)] transition-colors duration-500">
+      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-white/60 dark:bg-slate-950/72 backdrop-blur-[30px] backdrop-saturate-[180%] border-b border-white/80 dark:border-white/10 shadow-[0_10px_40px_-10px_rgba(255,160,200,0.15)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.45)] transition-all duration-500">
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20">
           <h1 className="text-[22px] sm:text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>

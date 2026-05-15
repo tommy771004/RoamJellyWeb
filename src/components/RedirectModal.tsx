@@ -135,31 +135,31 @@ export default function RedirectModal({
                   className={`group relative w-full py-5 rounded-2xl bg-slate-900 border-none shadow-2xl shadow-slate-200 flex items-center justify-center overflow-hidden hover:bg-slate-800 ${subtlePressableClass}`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <span className="font-black text-white text-[18px] tracking-wide relative z-10 flex items-center gap-3">
-                    立即前往預訂 <ArrowRight size={20} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
+                  <span className="font-black text-white text-[18px] tracking-wide relative z-10 flex items-center gap-3 whitespace-nowrap">
+                    立即前往預訂 <ArrowRight size={20} strokeWidth={3} className="group-hover:translate-x-1 transition-transform shrink-0" />
                   </span>
                 </button>
                 
                 <div className="flex gap-4">
                   <button
                     onClick={onSave}
-                    className={`flex-1 py-4.5 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2.5 hover:bg-pink-50 hover:border-pink-200 group ${subtlePressableClass}`}
+                    className={`flex-1 py-4.5 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center gap-2.5 hover:bg-pink-50 hover:border-pink-200 group whitespace-nowrap ${subtlePressableClass}`}
                   >
-                    <Heart size={20} className="text-pink-400 group-hover:text-pink-500 group-hover:fill-pink-500 transition-all" />
+                    <Heart size={20} className="text-pink-400 group-hover:text-pink-500 group-hover:fill-pink-500 transition-all shrink-0" />
                     <span className="font-bold text-slate-600 group-hover:text-pink-600 text-[15px]">收藏方案</span>
                   </button>
                   <button
                     onClick={onClose}
-                    className={`flex-1 py-4.5 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 ${subtlePressableClass}`}
+                    className={`flex-1 py-4.5 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 whitespace-nowrap ${subtlePressableClass}`}
                   >
                     <span className="font-bold text-slate-500 text-[15px]">暫時關閉</span>
                   </button>
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-center gap-2 text-slate-400">
-                <Clock size={14} />
-                <span className="text-[11px] font-bold tracking-wide">價格與位子變動快速，建議及早確認</span>
+              <div className="mt-8 flex items-center justify-center gap-2 text-slate-400 whitespace-nowrap overflow-hidden">
+                <Clock size={14} className="shrink-0" />
+                <span className="text-[11px] font-bold tracking-wide truncate">價格與位子變動快速，建議及早確認</span>
               </div>
             </div>
           </GlassCard>

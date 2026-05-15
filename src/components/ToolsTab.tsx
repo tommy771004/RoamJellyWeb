@@ -209,7 +209,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       try {
         const suggestions = await suggestPackingList(tripInfo?.destination ?? '目的地', getCurrentSeason());
         const newItems: ChecklistItem[] = suggestions.map((text, i) => ({
-          id: `ai_${Date.now()}_${i}`,
+          id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${i}`,
           text,
           checked: false,
         }));
@@ -930,16 +930,16 @@ function TripSelectorBar() {
             <button
               key={trip.tripId}
               onClick={() => setActiveTripId(trip.tripId)}
-              className={`px-5 py-4 flex flex-col rounded-[24px] border transition-all text-left shadow-sm shrink-0 min-w-[120px] ${
+              className={`px-5 py-4 flex flex-col rounded-[24px] border transition-all text-left shadow-sm shrink-0 min-w-[120px] max-w-[240px] overflow-hidden ${
                 active 
                   ? 'bg-fuchsia-500 border-fuchsia-500 text-white shadow-fuchsia-200' 
                   : 'bg-white bg-opacity-60 backdrop-blur-md border-white/50 text-slate-500 hover:bg-white hover:text-fuchsia-500'
               }`}
             >
-              <span className={`text-[16px] font-bold whitespace-nowrap ${active ? 'text-white' : 'text-[#2C302E]'}`}>
+              <span className={`text-[16px] font-bold whitespace-nowrap overflow-hidden text-ellipsis w-full block ${active ? 'text-white' : 'text-[#2C302E]'}`}>
                 {trip.name}
               </span>
-              <span className={`text-[11px] uppercase tracking-[0.1em] font-black mt-1 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] ${active ? 'text-white/80' : 'text-slate-400'}`}>
+              <span className={`text-[11px] uppercase tracking-[0.1em] font-black mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full block ${active ? 'text-white/80' : 'text-slate-400'}`}>
                 {trip.destination}
               </span>
             </button>
