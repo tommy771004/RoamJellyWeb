@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
@@ -13,8 +14,8 @@ export interface ToastProps {
 }
 
 export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], removeToast: (id: string) => void }) {
-  return (
-    <div className="fixed bottom-24 left-0 right-0 z-50 flex flex-col items-center gap-3 pointer-events-none px-4">
+  const content = (
+    <div className="fixed bottom-24 left-0 right-0 w-full z-[200] flex flex-col items-center gap-3 pointer-events-none px-4">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
@@ -56,4 +57,6 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
       </AnimatePresence>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : null;
 }
