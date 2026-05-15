@@ -155,6 +155,62 @@
   background: linear-gradient(120deg, #ffd9df 0%, #c7e7ff 100%);
 }
 
+@utility z-floating {
+  z-index: var(--z-floating);
+}
+
+@utility z-backdrop {
+  z-index: var(--z-backdrop);
+}
+
+@utility z-overlay {
+  z-index: var(--z-overlay);
+}
+
+@utility z-overlay-above {
+  z-index: var(--z-overlay-above);
+}
+
+@utility z-prompt {
+  z-index: var(--z-prompt);
+}
+
+@utility z-sheet {
+  z-index: var(--z-sheet);
+}
+
+@utility z-sheet-above {
+  z-index: var(--z-sheet-above);
+}
+
+@utility z-alert {
+  z-index: var(--z-alert);
+}
+
+@utility z-alert-above {
+  z-index: var(--z-alert-above);
+}
+
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+
+@utility z-modal-above {
+  z-index: var(--z-modal-above);
+}
+
+@utility z-popup {
+  z-index: var(--z-popup);
+}
+
+@utility z-popup-above {
+  z-index: var(--z-popup-above);
+}
+
+@utility z-max {
+  z-index: var(--z-max);
+}
+
 @utility text-gradient {
   background: linear-gradient(to right, #ec4899, #f97316);
   -webkit-background-clip: text;
