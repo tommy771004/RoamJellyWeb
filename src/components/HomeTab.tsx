@@ -201,6 +201,7 @@ function FlightCard({
                   e.stopPropagation();
                   onToggleSave(e);
                 }}
+                aria-label={isSaved ? "取消收藏" : "收藏航班"}
                 className={`w-8 h-8 rounded-full flex justify-center items-center ${subtlePressableClass} ${
                   isSaved
                     ? "bg-pink-100 text-pink-600"
@@ -319,6 +320,7 @@ function FlightCard({
                 e.stopPropagation();
                 onToggleTrack(e);
               }}
+              aria-label={isTracked ? "取消追蹤降價" : "追蹤降價"}
               className={`w-11 h-11 rounded-[10px] flex items-center justify-center border ${subtlePressableClass} ${raisedHoverClass} ${
                 isTracked
                   ? "bg-slate-900 border-slate-900 text-white shadow-md"
@@ -472,6 +474,7 @@ function FlightTable({
                       e.stopPropagation();
                       onToggleSave(e, flight.id);
                     }}
+                    aria-label={isSaved ? "取消收藏" : "收藏航班"}
                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
                       isSaved
                         ? "bg-pink-50 border-pink-100 text-pink-500"
@@ -489,6 +492,7 @@ function FlightTable({
                       e.stopPropagation();
                       onToggleTrack(e, flight);
                     }}
+                    aria-label={isTracked ? "取消追蹤降價" : "追蹤降價"}
                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
                       isTracked
                         ? "bg-slate-900 border-slate-900 text-white shadow-md"

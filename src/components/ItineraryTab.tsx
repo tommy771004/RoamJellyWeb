@@ -2033,6 +2033,7 @@ export default function ItineraryTab() {
                       <div className="absolute top-4 right-4 z-10">
                         <button
                           title="刪除此專案"
+                          aria-label={`刪除行程「${trip.name}」`}
                           className="delete-trip-btn w-8 h-8 bg-white/40 hover:bg-red-500 hover:text-white text-white flex items-center justify-center rounded-full backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
                           onClick={async (e) => {
                             e.preventDefault();
@@ -2528,6 +2529,7 @@ export default function ItineraryTab() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      aria-label="選擇圖示"
                       className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center active:scale-90 transition-all"
                     >
                       <IconImg value={newSpotEmoji} size={20} />
@@ -2546,6 +2548,7 @@ export default function ItineraryTab() {
                     <button
                       onClick={() => void handleAddFavorite()}
                       disabled={addingFavorite || !newSpotTitle.trim()}
+                      aria-label="新增收藏"
                       className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 text-white flex items-center justify-center disabled:opacity-30 active:scale-95 transition-all"
                     >
                       <Plus size={18} />
@@ -3544,11 +3547,13 @@ function DraggableFavoriteSpot({
             disabled={isOffline}
             className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all hover:bg-slate-900"
             title="加入今天"
+            aria-label={`將 ${spot.title} 加入 Day ${selectedDay}`}
           >
             <Plus size={16} strokeWidth={3} />
           </button>
           <button
             onClick={() => onDelete(spot.id)}
+            aria-label={`刪除收藏「${spot.title}」`}
             className="w-8 h-8 rounded-full bg-white/50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
           >
             <Trash2 size={14} />
