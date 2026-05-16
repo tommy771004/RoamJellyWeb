@@ -1,4 +1,4 @@
-import { eq, and, inArray, asc, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, inArray, asc, isNull, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
 
@@ -755,6 +755,55 @@ export class AppRepository {
   async unsaveUserItem(userId: string, itemId: string) {
     if (!this.db) return;
     await this.db.delete(schema.userSavedItems).where(and(eq(schema.userSavedItems.userId, userId), eq(schema.userSavedItems.itemId, itemId)));
+  }
+
+  async getRouteSearchDemand(fromVariants: string[], toVariants: string[]): Promise<{ month: number; count: number }[]> {
+    if (!this.db) return [];
+    const rows = await this.db.execute(sql`
+      SELECT
+        EXTRACT(MONTH FROM timestamp)::int AS month,
+        COUNT(*)::int AS count
+      FROM search_history
+      WHERE query_from = ANY(${fromVariants}::text[])
+        AND query_to = ANY(${toVariants}::text[])
+        AND timestamp > NOW() - INTERVAL '12 months'
+      GROUP BY month
+      ORDER BY month
+    `);
+    return (rows.rows as { month: number; count: number }[]);
+  }
+
+  async getPublicTripsByDestination(dbVariants: string[]): Promise<{
+    id: string;
+    name: string;
+    fork_count: number;
+    day: number;
+    time: string | null;
+    title: string;
+    category: string | null;
+    description: string | null;
+    sort_order: number;
+  }[]> {
+    if (!this.db) return [];
+    const rows = await this.db.execute(sql`
+      SELECT
+        t.id,
+        t.name,
+        t.fork_count,
+        n.day,
+        n.time,
+        n.title,
+        n.category,
+        n.description,
+        n.sort_order
+      FROM trips t
+      JOIN itinerary_nodes n ON n.trip_id = t.id
+      WHERE t.is_public = true
+        AND t.destination = ANY(${dbVariants}::text[])
+      ORDER BY t.fork_count DESC, n.day ASC, n.sort_order ASC
+      LIMIT 200
+    `);
+    return rows.rows as any[];
   }
 
 }
