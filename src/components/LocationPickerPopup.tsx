@@ -110,7 +110,7 @@ export const LocationPickerPopup = ({
                   <button
                     key={dest.id}
                     onClick={() => onSelect(dest)}
-                    className="flex w-full min-w-0 flex-col items-start overflow-hidden p-4 rounded-[20px] bg-white/60 border border-slate-100/50 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 transition-all group active:scale-95 shadow-sm"
+                    className="flex w-full min-w-0 flex-col items-start p-4 rounded-[20px] bg-white/60 border border-slate-100/50 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 transition-all group active:scale-95 shadow-sm"
                   >
                     <span className="text-[11px] font-black tracking-widest uppercase text-slate-400 group-hover:text-fuchsia-400 mb-0.5">{dest.country}</span>
                     <span className="w-full break-words text-base font-extrabold text-slate-700 group-hover:text-fuchsia-700">{dest.place}</span>
