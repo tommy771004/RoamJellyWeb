@@ -8,6 +8,7 @@ export interface KnownRoute {
   toDisplay: string;
   fromVariants: string[];
   toVariants: string[];
+  destinationSlug: string; // matches a slug in KNOWN_DESTINATIONS
 }
 
 export interface KnownDestination {
@@ -23,6 +24,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '東京',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['東京', 'NRT', 'Tokyo', '东京'],
+    destinationSlug: 'tokyo',
   },
   {
     slug: 'tpe-hnd',
@@ -30,6 +32,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '東京羽田',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['羽田', 'HND', '東京羽田'],
+    destinationSlug: 'tokyo',
   },
   {
     slug: 'tpe-icn',
@@ -37,6 +40,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '首爾',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['首爾', 'ICN', 'Seoul', '首尔'],
+    destinationSlug: 'seoul',
   },
   {
     slug: 'tpe-bkk',
@@ -44,6 +48,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '曼谷',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['曼谷', 'BKK', 'Bangkok'],
+    destinationSlug: 'bangkok',
   },
   {
     slug: 'tpe-sin',
@@ -51,6 +56,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '新加坡',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['新加坡', 'SIN', 'Singapore'],
+    destinationSlug: 'singapore',
   },
   {
     slug: 'tpe-hkg',
@@ -58,6 +64,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '香港',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['香港', 'HKG', 'Hong Kong', 'Hongkong'],
+    destinationSlug: 'hong-kong',
   },
   {
     slug: 'tpe-kix',
@@ -65,6 +72,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '大阪',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['大阪', 'KIX', 'Osaka'],
+    destinationSlug: 'osaka',
   },
   {
     slug: 'tpe-itm',
@@ -72,6 +80,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '大阪伊丹',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['伊丹', 'ITM', '大阪伊丹'],
+    destinationSlug: 'osaka',
   },
   {
     slug: 'tpe-oka',
@@ -79,6 +88,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '沖繩',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['沖繩', 'OKA', 'Okinawa', '冲绳'],
+    destinationSlug: 'okinawa',
   },
   {
     slug: 'tpe-fuk',
@@ -86,6 +96,7 @@ export const KNOWN_ROUTES: KnownRoute[] = [
     fromDisplay: '台北', toDisplay: '福岡',
     fromVariants: ['台北', 'TPE', 'Taipei', '臺北'],
     toVariants: ['福岡', 'FUK', 'Fukuoka', '福冈'],
+    destinationSlug: 'fukuoka',
   },
 ];
 

@@ -40,6 +40,7 @@ export async function buildRouteData(slug: string, repo: AppRepository): Promise
     totalSearches,
     peakMonth,
     lowMonth,
+    destinationSlug: route.destinationSlug,
   };
 }
 

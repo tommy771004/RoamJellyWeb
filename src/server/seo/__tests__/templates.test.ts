@@ -14,6 +14,7 @@ const sampleRoute: RouteData = {
   totalSearches: 560,
   peakMonth: 7,
   lowMonth: 1,
+  destinationSlug: 'tokyo',
 };
 
 test('buildRoutePage returns a string containing the target keyword', () => {

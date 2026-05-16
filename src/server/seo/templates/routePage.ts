@@ -1,5 +1,6 @@
 // src/server/seo/templates/routePage.ts
 import type { RouteData } from '../types.js';
+import { escHtml, safeJsonLd } from '../utils.js';
 
 const MONTH_NAMES_ZH = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 
@@ -48,7 +49,7 @@ export function buildRoutePage(data: RouteData): string {
   <meta property="og:title" content="${escHtml(title)}">
   <meta property="og:description" content="${escHtml(description)}">
   <meta property="og:type" content="website">
-  <script type="application/ld+json">${JSON.stringify({
+  <script type="application/ld+json">${safeJsonLd({
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     'name': `${data.fromDisplay} → ${data.toDisplay} 搜尋熱度資料`,
@@ -119,7 +120,7 @@ export function buildRoutePage(data: RouteData): string {
     <h2 style="font-size:16px;font-weight:700;margin-bottom:12px;">相關航線</h2>
     <ul style="list-style:none;display:flex;flex-wrap:wrap;gap:8px;">
       <li><a href="/fly/" style="color:#f43f5e;text-decoration:none;font-size:14px;">← 所有航線分析</a></li>
-      <li><a href="/trips/${data.toCode.toLowerCase()}/" style="color:#f43f5e;text-decoration:none;font-size:14px;">${escHtml(data.toDisplay)} 旅遊行程 →</a></li>
+      ${data.destinationSlug ? `<li><a href="/trips/${data.destinationSlug}/" style="color:#f43f5e;text-decoration:none;font-size:14px;">${escHtml(data.toDisplay)} 旅遊行程 →</a></li>` : ''}
     </ul>
   </div>
 
@@ -135,11 +136,3 @@ export function buildRoutePage(data: RouteData): string {
 </html>`;
 }
 
-function escHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-}

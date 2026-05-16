@@ -15,6 +15,7 @@ export interface RouteData {
   totalSearches: number;
   peakMonth: number | null;   // month with highest count, null if no data
   lowMonth: number | null;    // month with lowest count, null if no data
+  destinationSlug: string;
 }
 
 export interface TripNode {

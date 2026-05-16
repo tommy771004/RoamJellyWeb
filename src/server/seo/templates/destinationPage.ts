@@ -1,14 +1,6 @@
 // src/server/seo/templates/destinationPage.ts
 import type { DestinationData, PublicTrip } from '../types.js';
-
-function escHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-}
+import { escHtml, safeJsonLd } from '../utils.js';
 
 function renderTrip(trip: PublicTrip): string {
   const byDay = new Map<number, typeof trip.nodes>();
@@ -61,7 +53,7 @@ export function buildDestinationPage(data: DestinationData): string {
   <title>${escHtml(title)}</title>
   <meta name="description" content="${escHtml(description)}">
   <link rel="canonical" href="https://roamjelly.com/trips/${data.slug}/">
-  <script type="application/ld+json">${JSON.stringify({
+  <script type="application/ld+json">${safeJsonLd({
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     'name': `${data.displayName} 旅遊行程推薦`,

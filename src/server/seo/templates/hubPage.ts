@@ -1,9 +1,6 @@
 // src/server/seo/templates/hubPage.ts
 import { KNOWN_ROUTES, KNOWN_DESTINATIONS } from '../cities.js';
-
-function escHtml(str: string): string {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+import { escHtml } from '../utils.js';
 
 const BASE_STYLES = `
   *{box-sizing:border-box;margin:0;padding:0}
