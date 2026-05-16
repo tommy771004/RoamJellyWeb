@@ -61,7 +61,7 @@ export default function AiLoadingState() {
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, y: -15, filter: 'blur(4px)' }}
               transition={{ duration: 0.35 }}
-              className="text-slate-800 font-black tracking-widest text-xl sm:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 to-indigo-600 drop-shadow-sm leading-snug"
+              className="text-slate-800 font-black tracking-tight text-xl sm:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 to-indigo-600 drop-shadow-sm leading-snug"
             >
               <TypewriterMessage text={MESSAGES[msgIndex]} />
             </motion.p>
