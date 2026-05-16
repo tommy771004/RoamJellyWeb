@@ -64,13 +64,18 @@ export function createSeoRouter(repo: AppRepository): Router {
     const cached = getCached(cacheKey);
     if (cached) { res.setHeader('Cache-Control', 'public, max-age=3600'); res.send(cached); return; }
 
-    const data = await buildRouteData(slug, repo);
-    if (!data) { res.status(404).send('Not found'); return; }
+    try {
+      const data = await buildRouteData(slug, repo);
+      if (!data) { res.status(404).send('Not found'); return; }
 
-    const html = buildRoutePage(data);
-    setCached(cacheKey, html);
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.send(html);
+      const html = buildRoutePage(data);
+      setCached(cacheKey, html);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(html);
+    } catch (err) {
+      console.error('[seo] /fly/:slug error', err);
+      res.status(500).send('Internal Server Error');
+    }
   });
 
   // Destination detail: /trips/tokyo/
@@ -84,13 +89,18 @@ export function createSeoRouter(repo: AppRepository): Router {
     const cached = getCached(cacheKey);
     if (cached) { res.setHeader('Cache-Control', 'public, max-age=3600'); res.send(cached); return; }
 
-    const data = await buildDestinationData(slug, repo);
-    if (!data) { res.status(404).send('Not found'); return; }
+    try {
+      const data = await buildDestinationData(slug, repo);
+      if (!data) { res.status(404).send('Not found'); return; }
 
-    const html = buildDestinationPage(data);
-    setCached(cacheKey, html);
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.send(html);
+      const html = buildDestinationPage(data);
+      setCached(cacheKey, html);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(html);
+    } catch (err) {
+      console.error('[seo] /trips/:slug error', err);
+      res.status(500).send('Internal Server Error');
+    }
   });
 
   return router;

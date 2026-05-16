@@ -758,6 +758,7 @@ export class AppRepository {
   }
 
   async getRouteSearchDemand(fromVariants: string[], toVariants: string[]): Promise<{ month: number; count: number }[]> {
+    if (!this.db) return [];
     const rows = await this.db.execute(sql`
       SELECT
         EXTRACT(MONTH FROM timestamp)::int AS month,
@@ -783,6 +784,7 @@ export class AppRepository {
     description: string | null;
     sort_order: number;
   }[]> {
+    if (!this.db) return [];
     const rows = await this.db.execute(sql`
       SELECT
         t.id,

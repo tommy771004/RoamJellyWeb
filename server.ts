@@ -20,6 +20,7 @@ import * as schema from './src/server/db/schema';
 
 import { scrapeTripFlights, scrapeTripRoundTrip } from './src/server/services/tripParser';
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
+import { createSeoRouter } from './src/server/seo/router';
 
 // Vercel serverless: resolve/reject the app promise once startServer() finishes setup
 let _resolveApp!: (app: ReturnType<typeof express>) => void;
@@ -2599,6 +2600,9 @@ async function startServer() {
 
     res.json({ status: 'success' });
   });
+
+  // pSEO routes — must be registered before Vite middleware / static catch-all
+  app.use(createSeoRouter(repo));
 
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
