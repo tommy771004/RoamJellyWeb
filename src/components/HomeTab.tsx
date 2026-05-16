@@ -1514,6 +1514,7 @@ export default function HomeTab({
                       </span>
                       <input
                         id="search-from"
+                        aria-label="出發地"
                         className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-500 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.from}
                         onFocus={() => {
@@ -1551,6 +1552,7 @@ export default function HomeTab({
                       </span>
                       <input
                         id="search-to"
+                        aria-label="目的地"
                         className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-500 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.to}
                         onFocus={() => {
@@ -1568,8 +1570,10 @@ export default function HomeTab({
                   {/* Date / Return Date row */}
                   <div className="grid grid-cols-2 gap-2">
                     {/* Departure date */}
-                    <div
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 ${searchFieldSurfaceClass}`}
+                    <button
+                      type="button"
+                      aria-label={`去程日期：${searchForm.date || "尚未選擇"}`}
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-left w-full ${searchFieldSurfaceClass}`}
                       onClick={() => {
                         setShowDatePicker(!showDatePicker);
                         setShowDeparturePicker(false);
@@ -1586,11 +1590,13 @@ export default function HomeTab({
                       >
                         {searchForm.date || "選擇日期"}
                       </span>
-                    </div>
+                    </button>
 
                     {/* Return date — always visible; clicking in oneway mode auto-switches to roundtrip */}
-                    <div
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-pointer border ${
+                    <button
+                      type="button"
+                      aria-label={`回程日期：${searchForm.returnDate || (searchForm.tripType === "oneway" ? "單程（點擊切換來回）" : "尚未選擇")}`}
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-pointer border text-left w-full ${
                         searchForm.tripType === "oneway"
                           ? "bg-slate-50/30 border-dashed border-slate-200 dark:border-slate-600 opacity-60"
                           : "bg-slate-50/60 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700"
@@ -1616,7 +1622,7 @@ export default function HomeTab({
                             ? "+ 加回程"
                             : "選擇回程")}
                       </span>
-                    </div>
+                    </button>
                   </div>
 
                   {/* Error / hint */}
