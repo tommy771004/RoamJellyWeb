@@ -1,7 +1,8 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
+import { useKeyboardHeight } from '../lib/useKeyboardHeight';
 import { 
   TRAVEL_GUIDE_REGIONS, 
   TRAVEL_GUIDE_SOURCE_REPO, 
@@ -20,6 +21,7 @@ export const LocationPickerPopup = ({
   title: string;
   query: string;
 }) => {
+  const keyboardHeight = useKeyboardHeight();
   const [selectedRegion, setSelectedRegion] = useState<string>('全部地區');
   const [searchQuery, setSearchQuery] = useState(query);
 
@@ -47,13 +49,14 @@ export const LocationPickerPopup = ({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.98 }}
           className="relative z-popup-above flex h-82dvh w-full flex-col overflow-hidden rounded-t-[32px] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.25)] border border-white md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-3xl md:shadow-[0_32px_80px_rgba(0,0,0,0.35)]"
+          style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : {}}
         >
           <div className="sticky top-0 z-20 bg-white/95 px-5 pb-4 pt-4 backdrop-blur-xl md:px-7 md:pb-5 md:pt-7">
             <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-slate-200 md:hidden" />
             <div className="flex flex-row justify-between items-center mb-5 pl-1">
               <div className="flex flex-col">
                 <span className="font-black tracking-tight text-slate-800 text-xl">{title}</span>
-                <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Select Destination</span>
+                <span className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Select Destination</span>
               </div>
               <button 
                 onClick={onClose}
@@ -91,7 +94,7 @@ export const LocationPickerPopup = ({
             </div>
 
             <div className="relative">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -112,19 +115,19 @@ export const LocationPickerPopup = ({
                     onClick={() => onSelect(dest)}
                     className="flex w-full min-w-0 flex-col items-start p-4 rounded-[20px] bg-white/60 border border-slate-100/50 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 transition-all group active:scale-95 shadow-sm"
                   >
-                    <span className="text-[11px] font-black tracking-widest uppercase text-slate-400 group-hover:text-fuchsia-400 mb-0.5">{dest.country}</span>
+                    <span className="text-[11px] font-black tracking-widest uppercase text-slate-500 group-hover:text-fuchsia-400 mb-0.5">{dest.country}</span>
                     <span className="w-full break-words text-base font-extrabold text-slate-700 group-hover:text-fuchsia-700">{dest.place}</span>
                   </button>
                 ))
               ) : (
                 <div className="col-span-full py-10 flex flex-col items-center">
                   <span className="text-[40px] mb-3 grayscale opacity-30">🏔️</span>
-                  <span className="text-sm text-slate-400 font-bold">找不到符合條件的地點</span>
+                  <span className="text-sm text-slate-500 font-bold">找不到符合條件的地點</span>
                 </div>
               )}
             </div>
           <div className="bg-slate-50/50 p-4 border-t border-slate-100/50 flex justify-center shrink-0">
-            <span className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-400/80">
+            <span className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-500/80">
               {TRAVEL_GUIDE_SOURCE_REPO}
             </span>
           </div>

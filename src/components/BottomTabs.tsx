@@ -39,7 +39,8 @@ export default function BottomTabs() {
 
   return (
     <motion.nav
-      className="md:hidden fixed bottom-6 w-full z-50 flex justify-center items-center px-4 pointer-events-none pb-safe"
+      className="md:hidden fixed w-full z-50 flex justify-center items-center px-4 pointer-events-none"
+      style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
       initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
       animate={{ 
         y: isNavVisible ? 0 : 100, 
@@ -86,7 +87,7 @@ export default function BottomTabs() {
               {isAiFlow && (
                  <button
                    onClick={() => setIsExpanded(false)}
-                   className="absolute -left-1 sm:-left-3 p-2 text-slate-300 hover:text-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-300 rounded-full z-20 transition-colors"
+                   className="absolute -left-1 sm:-left-3 p-2 text-slate-400 hover:text-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-300 rounded-full z-20 transition-colors"
                    aria-label="收起選單"
                  >
                    <X size={18} strokeWidth={3} />
@@ -107,7 +108,7 @@ export default function BottomTabs() {
                     className={`flex flex-col items-center justify-center flex-1 min-w-0 pt-3 pb-2 rounded-[32px] relative ${subtlePressableClass} ${
                       isActive
                         ? 'scale-[1.05] text-pink-500'
-                        : 'opacity-70 hover:opacity-100 text-slate-400 hover:text-pink-400'
+                        : 'opacity-70 hover:opacity-100 text-slate-500 hover:text-pink-400'
                     } transition-all duration-300`}
                     aria-current={isActive ? 'page' : undefined}
                   >
@@ -126,7 +127,7 @@ export default function BottomTabs() {
                          <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.5 : 2} className={`mb-1 transition-all drop-shadow-sm ${isActive ? 'text-pink-500 fill-pink-500/20' : ''}`} />
                       </motion.div>
                     ) : null}
-                    <span className={`text-[10px] font-black uppercase tracking-wider whitespace-nowrap px-1 z-10 transition-colors ${isActive ? 'text-pink-600' : ''}`}>
+                    <span className={`text-[11px] font-black uppercase tracking-wider whitespace-nowrap px-1 z-10 transition-colors ${isActive ? 'text-pink-600' : ''}`}>
                       {tab.label}
                     </span>
                   </button>

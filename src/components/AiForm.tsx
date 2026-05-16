@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search, Calendar, Users, Heart, Coffee, Car, DollarSign, Check } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import GlassCard from './GlassCard';
@@ -215,10 +215,10 @@ export default function AiForm({
                     onClick={() => setShowDepDropdown(true)}
                     className="w-full text-left bg-white border border-slate-200 hover:border-blue-300 rounded-2xl py-4 px-5 text-base sm:text-lg text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-blue-100 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between min-h-[60px]"
                   >
-                    <span className={formData.departure ? "text-slate-800" : "text-slate-400 font-medium"}>
+                    <span className={formData.departure ? "text-slate-800" : "text-slate-500 font-medium"}>
                       {formData.departure || "請選擇出發城市"}
                     </span>
-                    {!formData.departure && <Search size={18} className="text-slate-300 group-hover:text-blue-400 transition-colors" />}
+                    {!formData.departure && <Search size={18} className="text-slate-400 group-hover:text-blue-400 transition-colors" />}
                   </button>
                 </div>
 
@@ -232,10 +232,10 @@ export default function AiForm({
                     onClick={() => setShowDestDropdown(true)}
                     className="w-full text-left bg-white border border-slate-200 hover:border-pink-300 rounded-2xl py-4 px-5 text-base sm:text-lg text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-pink-100 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between min-h-[60px]"
                   >
-                    <span className={formData.destination ? "text-slate-800" : "text-slate-400 font-medium"}>
+                    <span className={formData.destination ? "text-slate-800" : "text-slate-500 font-medium"}>
                       {formData.destination || "想去哪裡探索？"}
                     </span>
-                    {!formData.destination && <Search size={18} className="text-slate-300 group-hover:text-pink-400 transition-colors" />}
+                    {!formData.destination && <Search size={18} className="text-slate-400 group-hover:text-pink-400 transition-colors" />}
                   </button>
                 </div>
 
@@ -300,20 +300,24 @@ export default function AiForm({
             </div>
 
             {/* Spacer so last field isn't hidden under fixed button on mobile */}
-            <div className="sm:hidden shrink-0" style={{ height: keyboardHeight > 0 ? keyboardHeight + 80 : 80 }} />
+            <div className="sm:hidden w-full shrink-0" style={{ height: keyboardHeight > 0 ? "20px" : "120px" }} />
 
             {/* Next Button — fixed above keyboard on mobile, static on desktop */}
             <div
-              className="fixed bottom-0 left-0 right-0 w-full z-overlay sm:static sm:z-auto sm:pt-4"
-              style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
+              className="fixed bottom-0 left-0 right-0 w-full z-50 sm:static sm:z-auto sm:pt-4 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
+              style={{
+                paddingBottom: keyboardHeight > 0 
+                  ? `${keyboardHeight + 16}px` 
+                  : 'max(16px, env(safe-area-inset-bottom, 16px))'
+              }}
             >
-              <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-0 sm:pb-0 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none">
+              <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-0 sm:pb-0">
                 <button
                   onClick={handleNext}
                   disabled={!formData.departure || !formData.destination || !formData.companions}
                   className={`w-full h-14 sm:h-16 rounded-2xl font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-200 shadow-lg sm:shadow-md ${
                     !formData.departure || !formData.destination || !formData.companions
-                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none'
+                      ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none'
                       : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98] border border-transparent'
                   }`}
                 >
@@ -445,14 +449,18 @@ export default function AiForm({
             </div>
 
             {/* Spacer so last field isn't hidden under fixed button on mobile */}
-            <div className="sm:hidden shrink-0" style={{ height: keyboardHeight > 0 ? keyboardHeight + 80 : 80 }} />
+            <div className="sm:hidden w-full shrink-0" style={{ height: keyboardHeight > 0 ? "20px" : "120px" }} />
 
             {/* Submit buttons — fixed above keyboard on mobile, static on desktop */}
             <div
-              className="fixed bottom-0 left-0 right-0 w-full z-overlay sm:static sm:z-auto"
-              style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : { paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
+              className="fixed bottom-0 left-0 right-0 w-full z-50 sm:static sm:z-auto bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
+              style={{
+                paddingBottom: keyboardHeight > 0 
+                  ? `${keyboardHeight + 16}px`
+                  : 'max(16px, env(safe-area-inset-bottom, 16px))'
+              }}
             >
-              <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-2 sm:pb-0 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none">
+              <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-2 sm:pb-0">
                 <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                   <button
                     onClick={handleBack}

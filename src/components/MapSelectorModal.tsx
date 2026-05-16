@@ -62,7 +62,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
           <div className="flex items-center justify-between p-6 pb-4 shrink-0 shadow-sm z-10 bg-white">
             <div className="flex flex-col">
               <h3 className="text-xl font-black text-slate-800 tracking-tight">在地圖選取地點</h3>
-              <p className="text-[10px] sm:text-xs font-bold text-slate-400 mt-1">
+              <p className="text-[11px] sm:text-xs font-bold text-slate-500 mt-1">
                 點擊地圖標記地標，再按下確認
               </p>
             </div>
@@ -70,7 +70,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
               type="button" 
               onClick={onClose}
               aria-label="關閉地圖選取"
-              className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
+              className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
             >
               <X size={20}/>
             </button>

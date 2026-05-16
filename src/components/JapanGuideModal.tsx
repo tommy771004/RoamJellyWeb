@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, MapPin } from 'lucide-react';
@@ -97,7 +97,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                     <h2 className="text-white font-black text-lg leading-tight tracking-tight">
                       日本完整攻略
                     </h2>
-                    <p className="text-white/40 text-xs font-medium mt-0.5 flex items-center gap-1">
+                    <p className="text-white/60 text-xs font-medium mt-0.5 flex items-center gap-1">
                       <MapPin size={10} />
                       travel-guide-tw · 34 個地區指南
                     </p>
@@ -116,7 +116,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
             <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-6 scrollbar-hide">
               {/* Info section */}
               <section>
-                <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.15em] mb-3">
+                <p className="text-white/50 text-[11px] font-black uppercase tracking-[0.15em] mb-3">
                   基本資訊
                 </p>
                 <div className="grid grid-cols-3 gap-2.5">
@@ -133,7 +133,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                     >
                       <span className="text-xl">{card.emoji}</span>
                       <span className="text-white font-bold text-xs text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.name}</span>
-                      <span className="text-white/35 text-[10px] text-center whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.desc}</span>
+                      <span className="text-white/35 text-[11px] text-center whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.desc}</span>
                     </motion.a>
                   ))}
                 </div>
@@ -141,7 +141,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
 
               {/* Regions grid */}
               <section>
-                <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.15em] mb-3">
+                <p className="text-white/50 text-[11px] font-black uppercase tracking-[0.15em] mb-3">
                   各都道府縣
                 </p>
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
@@ -158,7 +158,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                     >
                       <span className="text-lg leading-none">{card.emoji}</span>
                       <span className="text-white/90 font-bold text-[11px] text-center leading-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.name}</span>
-                      <span className="text-white/30 text-[9px] text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.desc}</span>
+                      <span className="text-white/50 text-[9px] text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.desc}</span>
                     </motion.a>
                   ))}
                 </div>
@@ -166,8 +166,8 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
             </div>
 
             {/* Footer */}
-            <div className="flex-shrink-0 px-6 py-4 border-t border-white/8 flex items-center justify-between">
-              <span className="text-white/25 text-[10px] font-medium">
+            <div className="flex-shrink-0 px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] sm:py-4 border-t border-white/8 flex items-center justify-between">
+              <span className="text-white/25 text-[11px] font-medium">
                 內容來源：travel-guide-tw.github.io
               </span>
               <a

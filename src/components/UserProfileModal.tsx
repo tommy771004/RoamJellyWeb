@@ -164,7 +164,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
               </div>
               <button
                 onClick={onClose}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600 transition-colors"
                 aria-label="關閉"
               >
                 <X size={18} />
@@ -174,7 +174,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6 sm:space-y-8 bg-gradient-to-b from-white/50 to-transparent">
               {loading ? (
-                <div className="flex flex-col items-center justify-center h-64 gap-4 text-slate-400">
+                <div className="flex flex-col items-center justify-center h-64 gap-4 text-slate-500">
                   <Loader2 size={28} className="animate-spin text-indigo-500 text-opacity-80" />
                   <p className="text-sm font-medium tracking-wide">還原偏好設定中...</p>
                 </div>
@@ -190,7 +190,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         placeholder="例如：TPE 桃園機場、高雄" 
                         value={profile.departure}
                         onChange={(e) => setProfile(p => ({ ...p, departure: e.target.value }))}
-                        className="bg-slate-50/50 border-0 shadow-inner focus:bg-white focus:ring-0 focus-visible:ring-0 h-11 px-0 !text-slate-800 text-[15px] placeholder:text-slate-300 font-medium rounded-none"
+                        className="bg-slate-50/50 border-0 shadow-inner focus:bg-white focus:ring-0 focus-visible:ring-0 h-11 px-0 !text-slate-800 text-[15px] placeholder:text-slate-400 font-medium rounded-none"
                       />
                     </div>
                     
@@ -202,7 +202,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         placeholder="例如：情侶、親子、朋友群" 
                         value={profile.companions}
                         onChange={(e) => setProfile(p => ({ ...p, companions: e.target.value }))}
-                        className="bg-slate-50/50 border-0 shadow-inner focus:bg-white focus:ring-0 focus-visible:ring-0 h-11 px-0 !text-slate-800 text-[15px] placeholder:text-slate-300 font-medium rounded-none"
+                        className="bg-slate-50/50 border-0 shadow-inner focus:bg-white focus:ring-0 focus-visible:ring-0 h-11 px-0 !text-slate-800 text-[15px] placeholder:text-slate-400 font-medium rounded-none"
                       />
                     </div>
                   </div>
@@ -216,7 +216,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         </div>
                         旅遊節奏 (Vibes)
                       </h3>
-                      <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
+                      <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
                     </div>
                     <div className="flex flex-wrap gap-2.5 pt-1">
                       {VIBE_OPTIONS.map(vibe => (
@@ -240,7 +240,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         </div>
                         旅遊興趣
                       </h3>
-                      <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
+                      <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
                     </div>
                     <div className="flex flex-wrap gap-2.5 pt-1">
                       {INTEREST_OPTIONS.map(opt => (
@@ -264,7 +264,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         </div>
                         交通方式偏好
                       </h3>
-                      <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
+                      <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
                     </div>
                     <div className="flex flex-wrap gap-2.5 pt-1">
                       {TRANSPORT_OPTIONS.map(opt => (
@@ -290,7 +290,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                           </div>
                           預算等級
                         </h3>
-                        <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">單選</span>
+                        <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">單選</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2.5 pt-1">
                         {BUDGET_OPTIONS.map(opt => (
@@ -314,7 +314,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                           </div>
                           飲食禁忌
                         </h3>
-                        <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
+                        <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
                       </div>
                       <div className="flex flex-wrap gap-2.5 pt-1">
                         {DIETARY_OPTIONS.map(opt => (
@@ -337,7 +337,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             </div>
 
             {/* Footer */}
-            <div className="p-4 sm:p-5 border-t border-slate-100 bg-white md:rounded-b-[32px] shrink-0 z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] px-6">
+            <div className="p-4 sm:p-5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] sm:pb-5 border-t border-slate-100 bg-white md:rounded-b-[32px] shrink-0 z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] px-6">
               <Button 
                 onClick={handleSave} 
                 className="w-full h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl py-4 font-bold shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] flex items-center justify-center gap-2 text-[15px] sm:text-base tracking-wide transition-all overflow-hidden relative group whitespace-nowrap"

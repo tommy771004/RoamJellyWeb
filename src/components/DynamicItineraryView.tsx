@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useMemo } from 'react';
-import { ArrowLeft, Clock, MapPin, Leaf, Flame, Navigation2 } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Leaf, Flame, Navigation2, AlertTriangle } from 'lucide-react';
 import GlassCard from './GlassCard';
 import type { ItineraryNode } from '../types/workflow';
 
@@ -87,7 +87,7 @@ export default function DynamicItineraryView({
         {/* Overview route map — shows all geocoded nodes */}
         {allGeoNodes.length >= 2 && (
           <div className="mb-6 rounded-[2.5rem] overflow-hidden shadow-xl border-[6px] border-white/60 relative h-[260px] sm:h-[360px]">
-            <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-sm">載入地圖中...</div>}>
+            <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-500 text-sm">載入地圖中...</div>}>
               <ItineraryMapView items={allGeoNodes} />
             </Suspense>
           </div>
@@ -108,7 +108,7 @@ export default function DynamicItineraryView({
                 {/* Per-day mini route map */}
                 {dayGeoNodes.length >= 2 && (
                   <div className="mb-5 rounded-[2.5rem] overflow-hidden border-[6px] border-white/60 shadow-md relative h-[200px] sm:h-[300px]">
-                    <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-xs">載入地圖中...</div>}>
+                    <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-500 text-xs">載入地圖中...</div>}>
                       <ItineraryMapView items={dayGeoNodes} />
                     </Suspense>
                   </div>
@@ -163,7 +163,7 @@ export default function DynamicItineraryView({
                             <div className="flex items-center gap-2 mt-0.5">
                               {spot.time && (
                                 <p className={`text-slate-600 font-medium ${textScaleClass} flex items-center gap-1`}>
-                                  <Clock size={12} className="text-slate-400" />{spot.time}
+                                  <Clock size={12} className="text-slate-500" />{spot.time}
                                 </p>
                               )}
                             </div>
@@ -186,11 +186,27 @@ export default function DynamicItineraryView({
                         )}
 
                         {/* Transport to next */}
-                        {spot.transport_to_next && j !== (dayData.spots?.length || 0) - 1 && (
-                          <div className="mt-4 mb-2 flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 w-fit px-3 py-1.5 rounded-lg border border-slate-100">
-                            <Navigation2 size={12} className="text-slate-400" /> {spot.transport_to_next}
-                          </div>
-                        )}
+                        {spot.transport_to_next && j !== (dayData.spots?.length || 0) - 1 ? (() => {
+                          let minutes = 0;
+                          const hrMatch = spot.transport_to_next.match(/(\d+)\s*(h|hr|小時|時)/i);
+                          if (hrMatch) minutes += parseInt(hrMatch[1], 10) * 60;
+                          const minMatch = spot.transport_to_next.match(/(\d+)\s*(m|min|分鐘|分)/i);
+                          if (minMatch) minutes += parseInt(minMatch[1], 10);
+                          const isLong = minutes > 90;
+                          
+                          return (
+                            <div className={`mt-4 mb-2 flex items-center gap-2 text-xs font-bold w-fit px-3 py-2 rounded-xl border ${isLong ? 'bg-red-50 text-red-700 border-red-100 flex-wrap' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                              <Navigation2 size={14} className={isLong ? "text-red-500" : "text-slate-500"} /> 
+                              <span>{spot.transport_to_next}</span>
+                              {isLong && (
+                                <div className="flex items-center gap-1.5 ml-1 text-red-600 bg-white/60 px-2 py-0.5 rounded-md">
+                                  <AlertTriangle size={12} />
+                                  <span className="text-[11px] uppercase tracking-wider">車程較長</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })() : null}
                       </div>
                     );
                   })}

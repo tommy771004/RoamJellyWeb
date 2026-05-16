@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
@@ -15,7 +15,7 @@ export interface ToastProps {
 
 export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], removeToast: (id: string) => void }) {
   const content = (
-    <div aria-live="polite" aria-atomic="false" className="fixed bottom-24 left-0 right-0 w-full z-sheet flex flex-col items-center gap-3 pointer-events-none px-4">
+    <div aria-live="polite" aria-atomic="false" className="fixed left-0 right-0 w-full z-sheet flex flex-col items-center gap-3 pointer-events-none px-4" style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}>
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
@@ -33,7 +33,7 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
           >
             {toast.type === 'success' && <CheckCircle2 size={20} className="shrink-0 text-emerald-100" />}
             {toast.type === 'warning' && <AlertCircle size={20} className="shrink-0 text-amber-100" />}
-            {toast.type === 'info' && <Info size={20} className="shrink-0 text-slate-300" />}
+            {toast.type === 'info' && <Info size={20} className="shrink-0 text-slate-400" />}
             <span className="font-bold text-[14px] tracking-wide flex-1">{toast.message}</span>
             {toast.actionLabel && toast.onAction && (
               <button

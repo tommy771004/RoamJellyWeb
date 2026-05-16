@@ -70,6 +70,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [avatar, setAvatar] = useState('🐶');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAuthCardExpanded, setIsAuthCardExpanded] = useState(!shouldShowGuestHero);
@@ -111,7 +112,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
       const result =
         mode === 'login'
           ? await loginUser(trimmedUser, password)
-          : await registerUser(trimmedUser, password, displayName.trim() || trimmedUser);
+          : await registerUser(trimmedUser, password, displayName.trim() || trimmedUser, avatar);
           
       const token = result?.access_token || result?.token;
       if (!token) throw new Error('Token missing in response');
@@ -160,23 +161,23 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   ✈️
                 </div>
                 <div>
-                  <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">RoamJelly</div>
+                  <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">RoamJelly</div>
                   <div className="mt-1 text-[18px] font-black tracking-tight text-slate-900">{contextLabel || '快速體驗'}</div>
                 </div>
               </div>
-              <div className="rounded-full border border-slate-200/70 bg-white/75 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+              <div className="rounded-full border border-slate-200/70 bg-white/75 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
                 Guest Preview
               </div>
             </div>
 
             <div className="mt-5 rounded-[28px] bg-slate-950/90 p-5 text-white shadow-[0_18px_44px_rgba(15,23,42,0.20)] border border-white/10">
-              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fuchsia-300">
+              <div className="text-[11px] font-black uppercase tracking-[0.24em] text-fuchsia-300">
                 {previewContent.eyebrow}
               </div>
               <h1 className="mt-2 text-[28px] leading-tight font-black tracking-tight">
                 {title || '先用訪客身分開始，喜歡再註冊也不遲'}
               </h1>
-              <p className="mt-3 max-w-[48ch] text-[13px] font-semibold leading-relaxed text-slate-300">
+              <p className="mt-3 max-w-[48ch] text-[13px] font-semibold leading-relaxed text-slate-400">
                 {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
               </p>
 
@@ -185,18 +186,18 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   <span className="h-2.5 w-2.5 rounded-full bg-rose-300" />
                   <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
-                  <span className="ml-auto text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{previewContent.panelLabel}</span>
+                  <span className="ml-auto text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{previewContent.panelLabel}</span>
                 </div>
                 <div className="space-y-3 p-4">
                   {previewContent.items.map((item) => (
                     <div key={`${item.label}-${item.title}`} className="rounded-[22px] border border-white/10 bg-white/[0.05] px-4 py-3.5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{item.label}</div>
+                          <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{item.label}</div>
                           <div className="mt-1 text-[15px] font-black tracking-tight text-white">{item.title}</div>
-                          <div className="mt-1 text-[12px] font-semibold leading-relaxed text-slate-300">{item.meta}</div>
+                          <div className="mt-1 text-[12px] font-semibold leading-relaxed text-slate-400">{item.meta}</div>
                         </div>
-                        <div className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${item.toneClass}`}>
+                        <div className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${item.toneClass}`}>
                           {item.value}
                         </div>
                       </div>
@@ -224,7 +225,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 </div>
               )}
 
-              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-slate-400">
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-slate-500">
                 <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">不用密碼就能先試</span>
                 <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">喜歡再綁正式帳號</span>
                 <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">同步與保存留到下一步</span>
@@ -239,7 +240,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
           <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[linear-gradient(180deg,rgba(255,255,255,0.5),transparent)]" />
           <div className="relative z-10 mb-5 flex items-start justify-between gap-4">
             <div>
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
                 {shouldShowGuestHero ? '同步帳號' : '登入 / 註冊'}
               </div>
               <div className="mt-2 text-[26px] font-black tracking-tight text-slate-900">
@@ -348,29 +349,46 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 />
               </div>
 
-              {/* Display name – register only */}
+              {/* Display name and Avatar – register only */}
               {mode === 'register' && (
-                <div className="mb-4 flex flex-col">
-                  <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">暱稱（選填）</span>
-                  <input
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.8)',
-                      borderWidth: 1,
-                      borderColor: 'rgba(255,255,255,0.9)',
-                      borderRadius: 20,
-                      paddingInline: 20,
-                      paddingBlock: 14,
-                      color: '#1e293b',
-                      fontSize: 15,
-                      fontWeight: '700'
-                    }}
-                    className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
-                    placeholder="顯示給其他成員的名稱"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    autoComplete="name"
-                    maxLength={50}
-                  />
+                <div className="flex flex-col">
+                  <div className="mb-4 flex flex-col">
+                    <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">選擇旅伴頭像</span>
+                    <div className="flex gap-2 flex-wrap p-2 rounded-[20px] bg-white/50 border border-white/60">
+                      {['🐶', '🐱', '🦊', '🐰', '🐼', '🐨', '🐻', '🐯'].map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => setAvatar(emoji)}
+                          className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all ${avatar === emoji ? 'bg-fuchsia-100 ring-2 ring-fuchsia-400 scale-110' : 'hover:bg-black/5 hover:scale-105'}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mb-4 flex flex-col">
+                    <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">暱稱（選填）</span>
+                    <input
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        borderWidth: 1,
+                        borderColor: 'rgba(255,255,255,0.9)',
+                        borderRadius: 20,
+                        paddingInline: 20,
+                        paddingBlock: 14,
+                        color: '#1e293b',
+                        fontSize: 15,
+                        fontWeight: '700'
+                      }}
+                      className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
+                      placeholder="顯示給其他成員的名稱"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      autoComplete="name"
+                      maxLength={50}
+                    />
+                  </div>
                 </div>
               )}
 

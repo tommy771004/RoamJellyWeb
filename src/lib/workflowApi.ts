@@ -135,11 +135,11 @@ export async function loginUser(username: string, password: string): Promise<any
   return data;
 }
 
-export async function registerUser(username: string, password: string, display_name: string): Promise<any> {
+export async function registerUser(username: string, password: string, display_name: string, avatar?: string): Promise<any> {
   const res = await fetch('/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, display_name })
+    body: JSON.stringify({ username, password, display_name, avatar })
   });
   const data = await res.json();
   if (!res.ok) {

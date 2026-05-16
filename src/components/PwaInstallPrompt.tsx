@@ -83,9 +83,9 @@ export default function PwaInstallPrompt() {
             ✨
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-fuchsia-200">加入主畫面</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-fuchsia-200">加入主畫面</p>
             <p className="mt-1 text-sm font-bold text-white">把 RoamJelly 裝成全螢幕旅遊小工具，飛機上也能更快打開。</p>
-            <p className="mt-2 text-[12px] leading-relaxed text-slate-300">
+            <p className="mt-2 text-[12px] leading-relaxed text-slate-400">
               {deferredPrompt
                 ? '安裝後會以接近原生 App 的模式執行，保留離線快取與更沉浸的全螢幕體驗。'
                 : '在 Safari 點一下分享，再選「加入主畫面」，就能像 App 一樣從桌面直接打開。'}
@@ -107,7 +107,7 @@ export default function PwaInstallPrompt() {
               <button
                 type="button"
                 onClick={dismiss}
-                className="rounded-full border border-white/10 px-4 py-2 text-[12px] font-black uppercase tracking-[0.16em] text-slate-300 transition-colors hover:border-white/20 hover:text-white"
+                className="rounded-full border border-white/10 px-4 py-2 text-[12px] font-black uppercase tracking-[0.16em] text-slate-400 transition-colors hover:border-white/20 hover:text-white"
               >
                 稍後
               </button>

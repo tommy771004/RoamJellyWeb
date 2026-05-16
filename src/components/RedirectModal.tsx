@@ -1,4 +1,4 @@
-﻿import { motion, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Store, Plane, Clock, Heart, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { getModalMotion, getOverlayTransition, subtlePressableClass } from '../lib/motionTokens';
@@ -42,7 +42,7 @@ export default function RedirectModal({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={overlayTransition}
-      className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-3 sm:p-4 bg-slate-900/56 backdrop-blur-[8px]"
+      className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))] sm:pb-4 bg-slate-900/56 backdrop-blur-[8px]"
       onClick={onClose}
     >
       <motion.div
@@ -68,16 +68,16 @@ export default function RedirectModal({
                   {airlineInitial}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Airline / Provider</span>
+                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Airline / Provider</span>
                   <span className="text-xl font-black text-slate-800 leading-none">{airline || provider}</span>
                 </div>
               </div>
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-1.5 text-emerald-500 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 mb-1">
                   <ShieldCheck size={12} strokeWidth={3} />
-                  <span className="text-[10px] font-black uppercase tracking-tighter">Verified</span>
+                  <span className="text-[11px] font-black uppercase tracking-tighter">Verified</span>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{provider}</span>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{provider}</span>
               </div>
             </div>
 
@@ -87,10 +87,10 @@ export default function RedirectModal({
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 h-[2px] bg-slate-100 z-0"></div>
                 <div className="relative z-10 flex flex-col items-center">
                   <div className="w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center mb-2 shadow-sm">
-                    <MapPin size={18} className="text-slate-400" />
+                    <MapPin size={18} className="text-slate-500" />
                   </div>
                   <span className="text-2xl font-black text-slate-800 tracking-tight">{departure}</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Departure</span>
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">Departure</span>
                 </div>
 
                 <div className="relative z-10 flex flex-col items-center flex-1 mx-4">
@@ -99,7 +99,7 @@ export default function RedirectModal({
                    </div>
                    <div className="flex flex-col items-center">
                      <span className="text-[13px] font-black text-slate-700 whitespace-nowrap">{duration || '3h 30m'}</span>
-                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
                       {stops === 0 ? 'Direct' : `${stops} Stop${stops! > 1 ? 's' : ''}`}
                      </span>
                    </div>
@@ -110,21 +110,21 @@ export default function RedirectModal({
                     <MapPin size={18} className="text-fuchsia-400" />
                   </div>
                   <span className="text-2xl font-black text-slate-800 tracking-tight">{arrival}</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Arrival</span>
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">Arrival</span>
                 </div>
               </div>
 
               {/* Fare breakdown */}
               <div className="rounded-3xl p-5 mb-8 border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">Base Fare (1 Adult)</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-500">Base Fare (1 Adult)</span>
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200 tabular-nums">
                     {currency} {price ? Math.round(price * 0.85).toLocaleString() : '--'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
-                    Taxes & Fees <span className="text-[10px] text-slate-400">(est.)</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-500">
+                    Taxes & Fees <span className="text-[11px] text-slate-500">(est.)</span>
                   </span>
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200 tabular-nums">
                     {currency} {price ? Math.round(price * 0.15).toLocaleString() : '--'}
@@ -140,7 +140,7 @@ export default function RedirectModal({
                     </span>
                   </div>
                 </div>
-                <p className="text-[10px] text-slate-400 -mt-1">* 費用僅供參考，以訂票頁面為準</p>
+                <p className="text-[11px] text-slate-500 -mt-1">* 費用僅供參考，以訂票頁面為準</p>
               </div>
 
               <div className="flex flex-col space-y-4 w-full">
@@ -171,7 +171,7 @@ export default function RedirectModal({
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-center gap-2 text-slate-400 whitespace-nowrap overflow-hidden">
+              <div className="mt-8 flex items-center justify-center gap-2 text-slate-500 whitespace-nowrap overflow-hidden">
                 <Clock size={14} className="shrink-0" />
                 <span className="text-[11px] font-bold tracking-wide truncate">價格與位子變動快速，建議及早確認</span>
               </div>

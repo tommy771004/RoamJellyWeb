@@ -109,7 +109,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
                 </span>
                 <div className="flex flex-row items-center gap-x-2 mb-6 bg-white/50 border border-white/60 shadow-inner px-4 py-1.5 rounded-full">
                   <span className="text-slate-600 font-bold text-sm">📍 {tripInfo.destination}</span>
-                  <span className="text-slate-300">|</span>
+                  <span className="text-slate-400">|</span>
                   <span className="text-slate-600 font-bold text-sm">{tripInfo.days} 天行程</span>
                 </div>
               </>

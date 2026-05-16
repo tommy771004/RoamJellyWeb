@@ -896,6 +896,7 @@ async function startServer() {
     const username = String(req.body?.username ?? '').trim();
     const password = String(req.body?.password ?? '');
     const displayName = String(req.body?.display_name ?? username).trim() || username;
+    const avatar = req.body?.avatar ? String(req.body.avatar).trim() : undefined;
 
     if (!username || !password) {
       res.status(400).json({ status: 'error', message: '請提供使用者名稱和密碼' });
@@ -917,7 +918,7 @@ async function startServer() {
     }
 
     const passwordHash = await hashPassword(password);
-    await repo.createUserWithPassword(username, displayName, passwordHash);
+    await repo.createUserWithPassword(username, displayName, passwordHash, avatar);
     
     const token = signAccessToken({ userId: username });
     res.status(201).json({ status: 'success', token, user_id: username, expires_in: process.env.JWT_EXPIRES_IN ?? '12h' });

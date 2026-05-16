@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef, lazy, Suspense, type ComponentType } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense, type ComponentType } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import HomeTab from './components/HomeTab';
 import RedirectModal from './components/RedirectModal';
@@ -601,7 +601,7 @@ export default function App() {
       )}
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-white/70 dark:bg-slate-950/75 backdrop-blur-[40px] backdrop-saturate-[220%] border-b border-white/90 dark:border-white/12 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_12px_40px_-8px_rgba(220,130,170,0.2)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] transition-all duration-500">
+      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] sm:pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-3 sm:pb-4 flex justify-between items-center bg-white/70 dark:bg-slate-950/75 backdrop-blur-[40px] backdrop-saturate-[220%] border-b border-white/90 dark:border-white/12 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_12px_40px_-8px_rgba(220,130,170,0.2)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] transition-all duration-500">
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20">
           <h1 className="text-[22px] sm:text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>
@@ -764,7 +764,7 @@ export default function App() {
             exit="exit"
             transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-            className="pt-[80px]"
+            className="pt-[calc(80px+env(safe-area-inset-top,0px))]"
           >
             <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80"><PlaneTakeoff size={22} className="text-pink-500 animate-spin" strokeWidth={2.5} /></div></div>}>
               {renderContent()}

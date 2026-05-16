@@ -1,4 +1,4 @@
-﻿import React, { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, MapPin, Calendar, Clock, Download } from 'lucide-react';
@@ -91,10 +91,10 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                        <span className="text-slate-500 font-bold text-sm tracking-wide bg-slate-100 px-2 py-0.5 rounded-md">
                          {handbook.author}
                        </span>
-                       <span className="text-slate-400 font-medium text-xs tracking-wide flex items-center gap-1">
+                       <span className="text-slate-500 font-medium text-xs tracking-wide flex items-center gap-1">
                          <Calendar size={14}/> {handbook.days} 天旅程
                        </span>
-                       <span className="text-slate-400 font-medium text-xs tracking-wide flex items-center gap-1">
+                       <span className="text-slate-500 font-medium text-xs tracking-wide flex items-center gap-1">
                          <MapPin size={14}/> {handbook.nodes.length} 個行程點
                        </span>
                     </div>
@@ -145,10 +145,10 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                                <div className="flex items-start justify-between flex-wrap gap-2">
                                   <h3 className="font-extrabold text-slate-800 text-base leading-tight break-words">{node.title}</h3>
                                   <div className="flex gap-2">
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getIntensityColor(node.category)}`}>
+                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${getIntensityColor(node.category)}`}>
                                       {getCategoryLabel(node.category)}
                                     </span>
-                                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
                                       <Clock size={10} />
                                       {node.time || '10:00'}
                                     </span>
@@ -170,8 +170,8 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
             </div>
 
             {/* Footer */}
-            <div className="flex-shrink-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/60 px-6 sm:px-8 py-4 sm:py-5 flex items-center justify-between z-20">
-              <p className="text-slate-400 text-[11px] sm:text-xs font-medium">
+            <div className="flex-shrink-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/60 px-6 sm:px-8 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] sm:py-5 flex items-center justify-between z-20">
+              <p className="text-slate-500 text-[11px] sm:text-xs font-medium">
                 此為達人分享之公開行程，可一鍵匯入為草稿。
               </p>
               <button

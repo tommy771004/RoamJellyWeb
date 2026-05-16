@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -137,15 +137,28 @@
   border: 1.5px solid transparent;
   background-clip: padding-box;
   position: relative;
-  box-shadow: 0 4px 24px rgba(134, 77, 97, 0.08), 0 1px 4px rgba(134, 77, 97, 0.04), inset 0 1px 0 rgba(255,255,255,0.9);
+  box-shadow:
+    0 4px 24px rgba(134, 77, 97, 0.08),
+    0 1px 4px rgba(134, 77, 97, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   &::before {
     content: "";
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     border-radius: inherit;
     padding: 1.5px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,200,220,0.3) 50%, rgba(255,255,255,0.1) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 200, 220, 0.3) 50%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -296,7 +309,7 @@
 
 /* Ensures content clears the floating bottom tab bar (≈ 80px) + 24px gap + safe-area on iOS notch devices */
 @utility pb-tab-safe {
-  padding-bottom: max(8rem, calc(8rem + env(safe-area-inset-bottom, 0px)));
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 @utility pt-safe {
@@ -307,7 +320,9 @@
   margin-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   text-wrap: balance;
 }
 
@@ -330,12 +345,15 @@ body {
   overscroll-behavior-y: contain;
 }
 
-button, a {
+button,
+a {
   touch-action: manipulation;
 }
 
 /* ── iOS Safari: remove default inner-shadow + border-radius on text inputs ── */
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+    [type="file"]
+  ),
 textarea,
 select {
   -webkit-appearance: none;
@@ -353,7 +371,9 @@ select {
 
 /* Ensure interactive elements meet 44×44px touch target on touch devices */
 @media (hover: none) and (pointer: coarse) {
-  button, [role="button"], a {
+  button,
+  [role="button"],
+  a {
     min-height: 44px;
     min-width: 44px;
   }
@@ -361,19 +381,47 @@ select {
 
 .jelly-bg {
   background-image:
-      radial-gradient(ellipse at 10% 15%, rgba(255, 192, 219, 0.65) 0%, transparent 40%),
-      radial-gradient(ellipse at 88% 78%, rgba(196, 224, 255, 0.7) 0%, transparent 42%),
-      radial-gradient(ellipse at 55% 48%, rgba(255, 218, 240, 0.35) 0%, transparent 52%),
-      radial-gradient(ellipse at 75% 12%, rgba(200, 242, 210, 0.45) 0%, transparent 44%),
-      radial-gradient(ellipse at 20% 85%, rgba(230, 210, 255, 0.4) 0%, transparent 38%);
+    radial-gradient(
+      ellipse at 10% 15%,
+      rgba(255, 192, 219, 0.65) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      ellipse at 88% 78%,
+      rgba(196, 224, 255, 0.7) 0%,
+      transparent 42%
+    ),
+    radial-gradient(
+      ellipse at 55% 48%,
+      rgba(255, 218, 240, 0.35) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse at 75% 12%,
+      rgba(200, 242, 210, 0.45) 0%,
+      transparent 44%
+    ),
+    radial-gradient(
+      ellipse at 20% 85%,
+      rgba(230, 210, 255, 0.4) 0%,
+      transparent 38%
+    );
   background-color: #fdf6fb;
   background-attachment: fixed;
   background-position: center;
 }
 .dark .jelly-bg {
-  background-image: 
-      radial-gradient(circle at 10% 20%, rgba(150, 79, 102, 0.4) 0%, transparent 45%),
-      radial-gradient(circle at 90% 80%, rgba(101, 130, 155, 0.4) 0%, transparent 45%);
+  background-image:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(150, 79, 102, 0.4) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 90% 80%,
+      rgba(101, 130, 155, 0.4) 0%,
+      transparent 45%
+    );
   background-color: var(--color-surface);
 }
 
@@ -382,12 +430,17 @@ select {
   backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
   -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 1px 16px rgba(255, 255, 255, 0.95), 0 12px 40px rgba(134, 77, 97, 0.12), 0 2px 8px rgba(134, 77, 97, 0.06);
+  box-shadow:
+    inset 0 1px 16px rgba(255, 255, 255, 0.95),
+    0 12px 40px rgba(134, 77, 97, 0.12),
+    0 2px 8px rgba(134, 77, 97, 0.06);
 }
 .dark .jelly-surface {
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 1px 8px rgba(255, 255, 255, 0.1), 0 8px 30px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    inset 0 1px 8px rgba(255, 255, 255, 0.1),
+    0 8px 30px rgba(0, 0, 0, 0.4);
 }
 
 .jelly-button {
@@ -395,18 +448,28 @@ select {
   backdrop-filter: blur(var(--glass-blur-medium));
   -webkit-backdrop-filter: blur(var(--glass-blur-medium));
   border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.9), 0 6px 18px rgba(134, 77, 97, 0.1), 0 2px 4px rgba(134, 77, 97, 0.05);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s var(--motion-ios-ease), background-color 0.3s var(--motion-ios-ease);
+  box-shadow:
+    inset 0 2px 10px rgba(255, 255, 255, 0.9),
+    0 6px 18px rgba(134, 77, 97, 0.1),
+    0 2px 4px rgba(134, 77, 97, 0.05);
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s var(--motion-ios-ease),
+    background-color 0.3s var(--motion-ios-ease);
 }
 .dark .jelly-button {
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 1px 8px rgba(255, 255, 255, 0.08), 0 4px 14px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 8px rgba(255, 255, 255, 0.08),
+    0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .jelly-button:active {
   transform: scale(0.96) translateY(2px);
-  box-shadow: inset 0 1px 5px rgba(255, 255, 255, 0.9), 0 2px 8px rgba(134, 77, 97, 0.05);
+  box-shadow:
+    inset 0 1px 5px rgba(255, 255, 255, 0.9),
+    0 2px 8px rgba(134, 77, 97, 0.05);
   backdrop-filter: blur(var(--glass-blur-strong));
   -webkit-backdrop-filter: blur(var(--glass-blur-strong));
 }
@@ -419,7 +482,10 @@ select {
   border-left: 1.5px solid rgba(255, 255, 255, 0.88);
   border-right: 1px solid rgba(255, 255, 255, 0.5);
   border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: inset 0 2px 16px rgba(255, 255, 255, 0.9), 0 16px 48px rgba(134, 77, 97, 0.14), 0 4px 12px rgba(134, 77, 97, 0.06);
+  box-shadow:
+    inset 0 2px 16px rgba(255, 255, 255, 0.9),
+    0 16px 48px rgba(134, 77, 97, 0.14),
+    0 4px 12px rgba(134, 77, 97, 0.06);
   border-radius: 36px;
 }
 .dark .glass-panel {
@@ -430,7 +496,9 @@ select {
   border-left: 1px solid rgba(255, 255, 255, 0.25);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0 1px 8px rgba(255, 255, 255, 0.08), 0 6px 24px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    inset 0 1px 8px rgba(255, 255, 255, 0.08),
+    0 6px 24px rgba(0, 0, 0, 0.4);
 }
 
 .glass-node {
@@ -438,13 +506,17 @@ select {
   backdrop-filter: blur(var(--glass-blur-medium));
   -webkit-backdrop-filter: blur(var(--glass-blur-medium));
   border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(134, 77, 97, 0.06);
+  box-shadow:
+    inset 0 2px 10px rgba(255, 255, 255, 0.9),
+    0 4px 12px rgba(134, 77, 97, 0.06);
   border-radius: 20px;
 }
 .dark .glass-node {
   background: rgba(40, 40, 40, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 1px 6px rgba(255, 255, 255, 0.08), 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 6px rgba(255, 255, 255, 0.08),
+    0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -452,7 +524,9 @@ select {
     scroll-behavior: auto;
   }
 
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -460,8 +534,16 @@ select {
 
   .jelly-bg {
     background-image:
-      radial-gradient(circle at 10% 20%, rgba(250, 179, 202, 0.22) 0%, transparent 34%),
-      radial-gradient(circle at 90% 80%, rgba(201, 230, 255, 0.28) 0%, transparent 34%);
+      radial-gradient(
+        circle at 10% 20%,
+        rgba(250, 179, 202, 0.22) 0%,
+        transparent 34%
+      ),
+      radial-gradient(
+        circle at 90% 80%,
+        rgba(201, 230, 255, 0.28) 0%,
+        transparent 34%
+      );
   }
 }
 
@@ -475,12 +557,15 @@ select {
   }
 
   .jelly-bg {
-    background-size: 130% 130%, 130% 130%, 140% 140%;
+    background-size:
+      130% 130%,
+      130% 130%,
+      140% 140%;
   }
 }
 
 .material-icons-outlined {
-  font-family: 'Material Symbols Outlined';
+  font-family: "Material Symbols Outlined";
   font-weight: normal;
   font-style: normal;
   display: inline-block;
@@ -493,7 +578,7 @@ select {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'liga';
+  font-feature-settings: "liga";
 }
 
 /* ── Responsive Table (designUI.md compliant) ────────────────────────────────
@@ -507,7 +592,6 @@ select {
  * 4. font-variant-numeric: tabular-nums on amount columns
  * 5. min-width on desktop to prevent compression
  * ──────────────────────────────────────────────────────────────────────────── */
-
 
 /* ── Mobile-first: make every table element block-level ── */
 .responsive-table,
@@ -725,17 +809,35 @@ select {
 
 /* ─── Print / PDF ──────────────────────────────────────────────── */
 @media print {
-  body { background: white !important; font-size: 12px; }
-  .print\:hidden { display: none !important; }
-  nav, header, footer, [role="navigation"],
-  .bottom-nav, .tab-bar { display: none !important; }
+  body {
+    background: white !important;
+    font-size: 12px;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  nav,
+  header,
+  footer,
+  [role="navigation"],
+  .bottom-nav,
+  .tab-bar {
+    display: none !important;
+  }
   .glass-card {
     background: white !important;
     border: 1px solid #e2e8f0 !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
   }
-  h1 { font-size: 22px !important; }
-  h2 { font-size: 16px !important; page-break-before: always; }
-  h2:first-child { page-break-before: avoid; }
+  h1 {
+    font-size: 22px !important;
+  }
+  h2 {
+    font-size: 16px !important;
+    page-break-before: always;
+  }
+  h2:first-child {
+    page-break-before: avoid;
+  }
 }

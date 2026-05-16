@@ -222,7 +222,7 @@ export default function ItineraryMapView({
 
         {items.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-max">
-            <span className="text-slate-400 font-semibold bg-white px-6 py-3 rounded-full shadow-sm">目前沒有行程顯示在地圖上</span>
+            <span className="text-slate-500 font-semibold bg-white px-6 py-3 rounded-full shadow-sm">目前沒有行程顯示在地圖上</span>
           </div>
         )}
       </GlassCard>
@@ -243,12 +243,12 @@ export default function ItineraryMapView({
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-slate-800 text-[15px] truncate">{selectedNode.title}</p>
                   <div className="flex items-center gap-2 mt-0.5 max-w-full overflow-x-auto no-scrollbar shrink-0">
-                    {selectedNode.time && <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">{selectedNode.time}</span>}
-                    {selectedNode.category && <span className="text-[10px] font-bold text-fuchsia-500 bg-fuchsia-50/80 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 border border-fuchsia-100/50">{selectedNode.category}</span>}
+                    {selectedNode.time && <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest shrink-0">{selectedNode.time}</span>}
+                    {selectedNode.category && <span className="text-[11px] font-bold text-fuchsia-500 bg-fuchsia-50/80 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 border border-fuchsia-100/50">{selectedNode.category}</span>}
                   </div>
                   {selectedNode.description && <p className="text-[12px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{selectedNode.description}</p>}
                 </div>
-                <button onClick={() => setSelectedId(null)} aria-label="關閉景點詳情" className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
+                <button onClick={() => setSelectedId(null)} aria-label="關閉景點詳情" className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                   <X size={14} strokeWidth={3} />
                 </button>
               </GlassCard>

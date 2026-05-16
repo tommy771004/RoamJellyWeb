@@ -70,7 +70,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
           <div className="flex flex-row justify-between items-center mb-8">
             <div className="flex flex-col">
               <span className="text-2xl font-black text-slate-800 tracking-tight">{year}年 {monthNames[month]}</span>
-              <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Select Date</span>
+              <span className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Select Date</span>
             </div>
             <div className="flex gap-x-3">
               <button onClick={() => changeMonth(-1)} aria-label="上個月" className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
@@ -84,7 +84,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
 
           <div className="grid grid-cols-7 gap-1 mb-2">
             {['日', '一', '二', '三', '四', '五', '六'].map(d => (
-              <div key={d} className="text-center text-[11px] font-black text-slate-400 uppercase tracking-widest pb-2">{d}</div>
+              <div key={d} className="text-center text-[11px] font-black text-slate-500 uppercase tracking-widest pb-2">{d}</div>
             ))}
           </div>
 
@@ -107,7 +107,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
                     ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'}
                     ${isSelected
                       ? 'bg-pink-500 text-white shadow-md shadow-pink-500/20 z-10'
-                      : disabled ? 'text-slate-300 cursor-not-allowed' : 'text-slate-700 hover:bg-pink-50 hover:text-pink-600'}
+                      : disabled ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700 hover:bg-pink-50 hover:text-pink-600'}
                   `}
                 >
                   {date.getDate()}
@@ -122,7 +122,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
           <div className="mt-6 flex justify-center">
             <button
               onClick={onClose}
-              className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-400 hover:text-pink-500 transition-colors"
+              className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-500 hover:text-pink-500 transition-colors"
             >
               關閉
             </button>

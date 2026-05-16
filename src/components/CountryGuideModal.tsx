@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
@@ -78,7 +78,7 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
 
         {/* Top row: area badge + emoji */}
         <div className="flex items-start justify-between px-5 pt-5 pb-2">
-          <span className={`text-[10px] font-bold tracking-wide px-3 py-1 rounded-full border ${colors.badge} shadow-sm backdrop-blur-sm bg-white/50`}>
+          <span className={`text-[11px] font-bold tracking-wide px-3 py-1 rounded-full border ${colors.badge} shadow-sm backdrop-blur-sm bg-white/50`}>
             {place.areaLabel}
           </span>
           <span className="text-3xl transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">{place.emoji}</span>
@@ -163,7 +163,7 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
                     <div key={section.title} className="relative flex gap-4 mb-6 last:mb-0 group/section">
                       {/* Dot */}
                       <div className={`relative z-10 w-6 h-6 rounded-full ${colors.dot} flex-shrink-0 flex items-center justify-center mt-0.5 shadow-md ring-4 ring-white transition-transform group-hover/section:scale-110`}>
-                        <span className="text-[10px] leading-none">{section.emoji}</span>
+                        <span className="text-[11px] leading-none">{section.emoji}</span>
                       </div>
 
                       {/* Section content */}
@@ -264,10 +264,10 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                   <div>
                     <h1 className="font-extrabold text-slate-900 text-2xl sm:text-3xl tracking-tight leading-tight">
                       {guide.name}
-                      <span className="font-medium text-slate-400 ml-2 text-xl sm:text-2xl">攻略</span>
+                      <span className="font-medium text-slate-500 ml-2 text-xl sm:text-2xl">攻略</span>
                     </h1>
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-500">
                          <MapPin size={11} strokeWidth={2.5}/>
                       </div>
                       <p className="text-slate-500 font-medium text-xs tracking-wide">
@@ -325,8 +325,8 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
             </div>
 
             {/* Footer — fixed */}
-            <div className="flex-shrink-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/60 px-6 sm:px-8 py-4 flex items-center justify-between z-20">
-              <p className="text-slate-400 text-xs font-medium">
+            <div className="flex-shrink-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/60 px-6 sm:px-8 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] sm:pb-4 flex items-center justify-between z-20">
+              <p className="text-slate-500 text-xs font-medium">
                 內容來源：travel-guide-tw.github.io · CC BY-NC 4.0
               </p>
               <a

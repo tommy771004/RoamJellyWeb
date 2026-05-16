@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Sparkles, X, Send, PlusCircle } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
@@ -117,7 +117,7 @@ export default function JellyAssistant() {
             animate={sheetMotion.animate}
             exit={sheetMotion.exit}
             transition={sheetMotion.transition}
-            className="fixed bottom-0 left-0 right-0 z-sheet-above w-full max-w-[600px] mx-auto h-80dvh bg-white/82 dark:bg-black/62 border-t border-white/45 dark:border-white/10 rounded-t-[40px] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] flex flex-col overflow-hidden overscroll-contain pb-safe"
+            className="fixed bottom-0 left-0 right-0 z-sheet-above w-full max-w-[600px] mx-auto h-80dvh bg-white/82 dark:bg-black/62 border-t border-white/45 dark:border-white/10 rounded-t-[40px] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] flex flex-col overflow-hidden overscroll-contain"
             style={{ backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)' }}
           >
             <div className="flex justify-center pt-2 pb-1 bg-white/36 dark:bg-black/24">
@@ -131,13 +131,13 @@ export default function JellyAssistant() {
                 </div>
                 <div>
                   <h3 className="font-bold text-[16px] text-slate-800 dark:text-white">Jelly AI 行程顧問</h3>
-                  <p className="text-[12px] text-slate-500 dark:text-slate-400">Online</p>
+                  <p className="text-[12px] text-slate-500 dark:text-slate-500">Online</p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
                 aria-label="關閉 AI 顏問"
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-slate-500 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
               >
                 <X size={20} />
               </button>
@@ -168,7 +168,7 @@ export default function JellyAssistant() {
                           <h4 className="text-white font-black text-xl tracking-wider relative z-10 drop-shadow-md">TRIP PLAN</h4>
                         </div>
                         <div className="p-4 flex flex-col gap-3">
-                          <p className="text-[13px] text-slate-600 dark:text-slate-300">精選機加酒與必去景點，馬上開啟您的專屬之旅！</p>
+                          <p className="text-[13px] text-slate-600 dark:text-slate-400">精選機加酒與必去景點，馬上開啟您的專屬之旅！</p>
                           <button 
                             onClick={handleAddItinerary}
                             className="w-full py-2.5 bg-slate-900 dark:bg-fuchsia-500 text-white rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 hover:bg-slate-800 dark:hover:bg-fuchsia-600 transition-colors active:scale-95"
@@ -216,7 +216,7 @@ export default function JellyAssistant() {
                 </button>
                 <button 
                   onClick={() => handleSend('附近有什麼好吃的？')}
-                  className="px-4 py-2 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-full text-[13px] font-bold whitespace-nowrap active:scale-95 transition-transform border border-slate-200 dark:border-white/10"
+                  className="px-4 py-2 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded-full text-[13px] font-bold whitespace-nowrap active:scale-95 transition-transform border border-slate-200 dark:border-white/10"
                 >
                   🍣 附近有什麼好吃的？
                 </button>
@@ -224,7 +224,7 @@ export default function JellyAssistant() {
             )}
 
             {/* Input Area */}
-            <div className="p-4 pb-safe bg-white/40 dark:bg-black/40 border-t border-white/20 dark:border-white/5">
+            <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] bg-white/40 dark:bg-black/40 border-t border-white/20 dark:border-white/5">
               <div className="flex items-center bg-white/60 dark:bg-black/60 rounded-full p-1.5 pr-2 border border-white/50 dark:border-white/10 shadow-inner">
                 <input
                   type="text"
@@ -234,7 +234,7 @@ export default function JellyAssistant() {
                     if (e.key === 'Enter') handleSend();
                   }}
                   placeholder="輸入訊息或指令…"
-                  className="flex-1 bg-transparent border-none outline-none px-4 text-[15px] dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-fuchsia-400/40 rounded-full"
+                  className="flex-1 bg-transparent border-none outline-none px-4 text-[15px] dark:text-white placeholder:text-slate-500 focus:ring-2 focus:ring-fuchsia-400/40 rounded-full"
                   inputMode="text"
                   autoCapitalize="off"
                   autoComplete="off"

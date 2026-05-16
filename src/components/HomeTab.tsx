@@ -1,61 +1,114 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { Bell, BellRing, Heart, Search as SearchIcon, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, PlaneTakeoff, Sparkles, ArrowRight, Copy, Globe, ExternalLink, Bed, Ticket, CarFront } from 'lucide-react';
-import GlassCard from './GlassCard';
-import { Input } from './ui/input';
-import { FlightSkeletonCard } from './SkeletonCard';
-import { searchOffers, SearchServiceUnavailableError, SearchTimeoutError, fetchHandbooks, createTripFact, syncItinerary } from '../lib/workflowApi';
-import { useSearchStore } from '../store/useSearchStore';
-import { useAppStore } from '../store/useAppStore';
-import { useItineraryStore } from '../store/useItineraryStore';
-import { useHideNavOnScroll } from '../hooks/useHideNavOnScroll';
-import type { SearchItem, SyncItineraryPayload } from '../types/workflow';
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import {
+  Bell,
+  BellRing,
+  Heart,
+  Search as SearchIcon,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  LayoutGrid,
+  List,
+  PlaneTakeoff,
+  Sparkles,
+  ArrowRight,
+  Copy,
+  Globe,
+  ExternalLink,
+  Bed,
+  Ticket,
+  CarFront,
+} from "lucide-react";
+import GlassCard from "./GlassCard";
+import { Input } from "./ui/input";
+import { FlightSkeletonCard } from "./SkeletonCard";
+import {
+  searchOffers,
+  SearchServiceUnavailableError,
+  SearchTimeoutError,
+  fetchHandbooks,
+  createTripFact,
+  syncItinerary,
+} from "../lib/workflowApi";
+import { useSearchStore } from "../store/useSearchStore";
+import { useAppStore } from "../store/useAppStore";
+import { useItineraryStore } from "../store/useItineraryStore";
+import { useHideNavOnScroll } from "../hooks/useHideNavOnScroll";
+import type { SearchItem, SyncItineraryPayload } from "../types/workflow";
 import {
   TRAVEL_GUIDE_DESTINATIONS,
   TRAVEL_GUIDE_REGIONS,
   TRAVEL_GUIDE_SOURCE_REPO,
   matchTravelDestinations,
   type TravelGuideDestination,
-} from '../data/travelGuideDestinations';
-import { LocationPickerPopup } from './LocationPickerPopup';
-import CountryGuideModal from './CountryGuideModal';
-import ExpertHandbookModal from './ExpertHandbookModal';
-import { getCountryGuide } from '../data/countryGuideData';
-import type { CountryGuide } from '../data/countryGuideData';
-import { EXPERT_HANDBOOKS } from '../data/expertHandbooks';
-import DatePickerPopup from './DatePickerPopup';
-import { triggerHapticFeedback } from '../lib/haptics';
-import { layoutIndicatorTransition, pressableSurfaceClass, raisedHoverClass, subtlePressableClass } from '../lib/motionTokens';
+} from "../data/travelGuideDestinations";
+import { LocationPickerPopup } from "./LocationPickerPopup";
+import CountryGuideModal from "./CountryGuideModal";
+import ExpertHandbookModal from "./ExpertHandbookModal";
+import { getCountryGuide } from "../data/countryGuideData";
+import type { CountryGuide } from "../data/countryGuideData";
+import { EXPERT_HANDBOOKS } from "../data/expertHandbooks";
+import DatePickerPopup from "./DatePickerPopup";
+import { triggerHapticFeedback } from "../lib/haptics";
+import {
+  layoutIndicatorTransition,
+  pressableSurfaceClass,
+  raisedHoverClass,
+  subtlePressableClass,
+} from "../lib/motionTokens";
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 const AIRLINE_CODES: Record<string, string> = {
-  'EVA Air': 'BR', '長榮航空': 'BR',
-  'China Airlines': 'CI', '中華航空': 'CI',
-  'Starlux Airlines': 'JX', '星宇航空': 'JX',
-  'Tigerair Taiwan': 'IT', '台灣虎航': 'IT',
-  'Peach Aviation': 'MM', '樂桃航空': 'MM',
-  'Cathay Pacific': 'CX', '國泰航空': 'CX',
-  'Japan Airlines': 'JL', '日本航空': 'JL',
-  'All Nippon Airways': 'NH', '全日空': 'NH',
-  'Hong Kong Airlines': 'HX', '香港航空': 'HX',
-  'Asiana Airlines': 'OZ', '韓亞航空': 'OZ',
-  'Korean Air': 'KE', '大韓航空': 'KE',
-  'China Eastern Airlines': 'MU', '東方航空': 'MU',
-  'China Eastern': 'MU', '中國東方航空': 'MU',
-  'Air Macau': 'NX', '澳門航空': 'NX',
-  'Scoot': 'TR', '酷航': 'TR',
-  'HK Express': 'UO', '香港快運': 'UO',
+  "EVA Air": "BR",
+  長榮航空: "BR",
+  "China Airlines": "CI",
+  中華航空: "CI",
+  "Starlux Airlines": "JX",
+  星宇航空: "JX",
+  "Tigerair Taiwan": "IT",
+  台灣虎航: "IT",
+  "Peach Aviation": "MM",
+  樂桃航空: "MM",
+  "Cathay Pacific": "CX",
+  國泰航空: "CX",
+  "Japan Airlines": "JL",
+  日本航空: "JL",
+  "All Nippon Airways": "NH",
+  全日空: "NH",
+  "Hong Kong Airlines": "HX",
+  香港航空: "HX",
+  "Asiana Airlines": "OZ",
+  韓亞航空: "OZ",
+  "Korean Air": "KE",
+  大韓航空: "KE",
+  "China Eastern Airlines": "MU",
+  東方航空: "MU",
+  "China Eastern": "MU",
+  中國東方航空: "MU",
+  "Air Macau": "NX",
+  澳門航空: "NX",
+  Scoot: "TR",
+  酷航: "TR",
+  "HK Express": "UO",
+  香港快運: "UO",
   // standard OTAs no image
 };
 
-function AirlineLogo({ providerName, className }: { providerName: string, className: string }) {
-  const normalizedName = providerName?.trim() || '';
+function AirlineLogo({
+  providerName,
+  className,
+}: {
+  providerName: string;
+  className: string;
+}) {
+  const normalizedName = providerName?.trim() || "";
   const code = AIRLINE_CODES[normalizedName];
   if (code) {
     return (
-      <img 
+      <img
         src={`https://skyticket.com/img/airline_images/${code}.jpg`}
         alt={normalizedName}
         className={`${className} object-cover`}
@@ -63,9 +116,11 @@ function AirlineLogo({ providerName, className }: { providerName: string, classN
       />
     );
   }
-  const initial = normalizedName?.charAt(0) || '?';
+  const initial = normalizedName?.charAt(0) || "?";
   return (
-    <div className={`${className} bg-slate-900 flex items-center justify-center font-black text-white shadow-sm`}>
+    <div
+      className={`${className} bg-slate-900 flex items-center justify-center font-black text-white shadow-sm`}
+    >
       {initial}
     </div>
   );
@@ -81,7 +136,15 @@ interface FlightCardProps {
   onToggleTrack: (e: React.MouseEvent) => void;
 }
 
-function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onToggleSave, onToggleTrack }: FlightCardProps) {
+function FlightCard({
+  flight,
+  isSaved,
+  isTracked,
+  onPress,
+  onImportToTrip,
+  onToggleSave,
+  onToggleTrack,
+}: FlightCardProps) {
   const providerName = flight.details?.airline || flight.provider;
 
   return (
@@ -91,48 +154,64 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
       tabIndex={0}
       onClick={onPress}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onPress();
         }
       }}
     >
-      <GlassCard className={`!p-0 bg-white dark:bg-slate-800 border border-slate-100/80 dark:border-slate-700 shadow-[0_2px_12px_rgba(134,77,97,0.07),0_1px_3px_rgba(134,77,97,0.04)] hover:shadow-[0_8px_32px_rgba(134,77,97,0.14),0_2px_8px_rgba(134,77,97,0.07)] hover:-translate-y-0.5 flex-1 flex flex-col overflow-hidden rounded-2xl transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}>
-
+      <GlassCard
+        className={`!p-0 bg-white dark:bg-slate-800 border border-slate-100/80 dark:border-slate-700 shadow-[0_2px_12px_rgba(134,77,97,0.07),0_1px_3px_rgba(134,77,97,0.04)] hover:shadow-[0_8px_32px_rgba(134,77,97,0.14),0_2px_8px_rgba(134,77,97,0.07)] hover:-translate-y-0.5 flex-1 flex flex-col overflow-hidden rounded-2xl transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}
+      >
         {/* Top Section: Airline & Route */}
         <div className="p-4 flex flex-col gap-3">
-
           {/* Header: Airline + stop/duration badge */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AirlineLogo providerName={providerName} className="w-7 h-7 rounded-lg text-sm" />
+              <AirlineLogo
+                providerName={providerName}
+                className="w-7 h-7 rounded-lg text-sm"
+              />
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-slate-900 dark:text-white">
                   {flight.details?.airline || flight.provider}
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                   {flight.provider}
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${
-                flight.details?.stops === 0
-                  ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-              }`}>
-                {flight.details?.stops === 0 ? 'DIRECT' : `${flight.details?.stops} STOP`}
-              </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight whitespace-nowrap">
-                {flight.details?.duration || '3h 15m'}
-              </span>
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleSave(e); }}
-                className={`w-8 h-8 rounded-full flex justify-center items-center ${subtlePressableClass} ${
-                  isSaved ? 'bg-pink-100 text-pink-600' : 'bg-slate-100/80 text-slate-400 hover:bg-pink-50 hover:text-pink-500'
+              <span
+                className={`text-[11px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${
+                  flight.details?.stops === 0
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                    : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
                 }`}
               >
-                <Heart size={13} fill={isSaved ? 'currentColor' : 'transparent'} strokeWidth={2.5} />
+                {flight.details?.stops === 0
+                  ? "DIRECT"
+                  : `${flight.details?.stops} STOP`}
+              </span>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight whitespace-nowrap">
+                {flight.details?.duration || "3h 15m"}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSave(e);
+                }}
+                className={`w-8 h-8 rounded-full flex justify-center items-center ${subtlePressableClass} ${
+                  isSaved
+                    ? "bg-pink-100 text-pink-600"
+                    : "bg-slate-100/80 text-slate-500 hover:bg-pink-50 hover:text-pink-500"
+                }`}
+              >
+                <Heart
+                  size={13}
+                  fill={isSaved ? "currentColor" : "transparent"}
+                  strokeWidth={2.5}
+                />
               </button>
             </div>
           </div>
@@ -151,41 +230,61 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
               <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
                 {flight.details?.departure}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">Depart</span>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-none">
+                Depart
+              </span>
             </div>
             <div className="flex flex-col items-end z-10 bg-white/40 dark:bg-transparent backdrop-blur-sm pl-1">
               <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
                 {flight.details?.arrival}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">Arrive</span>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-none">
+                Arrive
+              </span>
             </div>
           </div>
 
           {/* Return leg row — roundtrip bundles */}
-          {flight.tripType === 'roundtrip' && flight.returnLeg && (
+          {flight.tripType === "roundtrip" && flight.returnLeg && (
             <div className="mt-2 pt-2 border-t border-dashed border-slate-200">
               <div className="flex items-center gap-1 mb-1">
-                <span className="text-[9px] font-black tracking-[0.2em] uppercase text-sky-500 bg-sky-50 px-1.5 py-[2px] rounded-sm whitespace-nowrap">回程</span>
+                <span className="text-[9px] font-black tracking-[0.2em] uppercase text-sky-500 bg-sky-50 px-1.5 py-[2px] rounded-sm whitespace-nowrap">
+                  回程
+                </span>
               </div>
               <div className="flex items-center justify-between px-0.5">
                 <div className="flex flex-col items-start min-w-0">
-                  <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">{flight.returnLeg.departure}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Depart</span>
+                  <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">
+                    {flight.returnLeg.departure}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                    Depart
+                  </span>
                 </div>
                 <div className="flex-1 flex items-center justify-center px-2">
                   <div className="w-full border-t border-dashed border-slate-300" />
                 </div>
                 <div className="flex flex-col items-end min-w-0">
-                  <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">{flight.returnLeg.arrival}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Arrive</span>
+                  <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">
+                    {flight.returnLeg.arrival}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                    Arrive
+                  </span>
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-1 px-1">
-                <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm whitespace-nowrap ${flight.returnLeg.stops === 0 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}`}>
-                  {flight.returnLeg.stops === 0 ? '直飛 DIRECT' : `${flight.returnLeg.stops} 轉 STOP`}
+                <span
+                  className={`text-[11px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm whitespace-nowrap ${flight.returnLeg.stops === 0 ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"}`}
+                >
+                  {flight.returnLeg.stops === 0
+                    ? "直飛 DIRECT"
+                    : `${flight.returnLeg.stops} 轉 STOP`}
                 </span>
                 {flight.returnLeg.duration && (
-                  <span className="text-[10px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 whitespace-nowrap">{flight.returnLeg.duration}</span>
+                  <span className="text-[11px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-500 whitespace-nowrap">
+                    {flight.returnLeg.duration}
+                  </span>
                 )}
               </div>
             </div>
@@ -202,9 +301,13 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
         {/* Bottom: Price & CTAs */}
         <div className="p-4 pt-2 flex items-end justify-between mt-auto">
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Estimated Price</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-0.5">
+              Estimated Price
+            </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-xs font-bold text-slate-400">{flight.currency}</span>
+              <span className="text-xs font-bold text-slate-500">
+                {flight.currency}
+              </span>
               <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
                 {flight.price.toLocaleString()}
               </span>
@@ -212,27 +315,44 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
           </div>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={(e) => { e.stopPropagation(); onToggleTrack(e); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleTrack(e);
+              }}
               className={`w-11 h-11 rounded-[10px] flex items-center justify-center border ${subtlePressableClass} ${raisedHoverClass} ${
                 isTracked
-                  ? 'bg-slate-900 border-slate-900 text-white shadow-md'
-                  : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-800 shadow-sm hover:shadow'
+                  ? "bg-slate-900 border-slate-900 text-white shadow-md"
+                  : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-800 shadow-sm hover:shadow"
               }`}
             >
-              {isTracked ? <BellRing size={14} strokeWidth={2.5} /> : <Bell size={14} strokeWidth={2.5} />}
+              {isTracked ? (
+                <BellRing size={14} strokeWidth={2.5} />
+              ) : (
+                <Bell size={14} strokeWidth={2.5} />
+              )}
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); onImportToTrip(e); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onImportToTrip(e);
+              }}
               className={`h-11 px-4 rounded-[10px] flex items-center gap-1.5 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg ${subtlePressableClass} ${raisedHoverClass}`}
             >
               <PlaneTakeoff size={14} strokeWidth={2.5} />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">帶入</span>
+              <span className="text-[11px] font-black uppercase tracking-widest hidden sm:inline">
+                帶入
+              </span>
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); onPress(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPress();
+              }}
               className={`h-11 px-5 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-md ${subtlePressableClass} ${raisedHoverClass}`}
             >
-              <span className="text-[10px] uppercase tracking-widest leading-none">購買</span>
+              <span className="text-[11px] uppercase tracking-widest leading-none">
+                購買
+              </span>
             </button>
           </div>
         </div>
@@ -272,21 +392,29 @@ function FlightTable({
             onClick={() => onPress(flight)}
           >
             <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-
               {/* Left: Airline + Route */}
               <div className="flex-1 flex flex-col gap-3">
                 {/* Airline header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <AirlineLogo providerName={providerName} className="w-6 h-6 rounded-md text-xs" />
-                    <span className="text-sm font-semibold text-slate-700 dark:text-white">{providerName}</span>
+                    <AirlineLogo
+                      providerName={providerName}
+                      className="w-6 h-6 rounded-md text-xs"
+                    />
+                    <span className="text-sm font-semibold text-slate-700 dark:text-white">
+                      {providerName}
+                    </span>
                   </div>
-                  <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${
-                    flight.details?.stops === 0
-                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                      : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                  }`}>
-                    {flight.details?.stops === 0 ? '直飛' : `${flight.details?.stops} 轉`}
+                  <span
+                    className={`text-[11px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${
+                      flight.details?.stops === 0
+                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
+                    }`}
+                  >
+                    {flight.details?.stops === 0
+                      ? "直飛"
+                      : `${flight.details?.stops} 轉`}
                   </span>
                 </div>
 
@@ -294,24 +422,30 @@ function FlightTable({
                 <div className="flex items-center justify-between px-1">
                   <div className="flex flex-col items-start">
                     <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {flight.details?.departure || '--:--'}
+                      {flight.details?.departure || "--:--"}
                     </span>
-                    <span className="text-xs text-slate-400 font-bold tracking-widest mt-0.5">
-                      {(flight.details?.depCode || 'TPE').toUpperCase().substring(0, 3)}
+                    <span className="text-xs text-slate-500 font-bold tracking-widest mt-0.5">
+                      {(flight.details?.depCode || "TPE")
+                        .toUpperCase()
+                        .substring(0, 3)}
                     </span>
                   </div>
                   <div className="flex flex-col items-center justify-center flex-1 px-4 sm:px-8">
-                    <span className="text-xs text-slate-400 font-medium mb-1">{flight.details?.duration || '3h 15m'}</span>
+                    <span className="text-xs text-slate-500 font-medium mb-1">
+                      {flight.details?.duration || "3h 15m"}
+                    </span>
                     <div className="w-full relative flex items-center justify-center h-[2px] bg-slate-200 dark:bg-slate-600 rounded-full">
                       <div className="absolute right-0 w-2 h-2 rounded-full border border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-700 translate-x-1" />
                     </div>
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {flight.details?.arrival || '--:--'}
+                      {flight.details?.arrival || "--:--"}
                     </span>
-                    <span className="text-xs text-slate-400 font-bold tracking-widest mt-0.5">
-                      {(flight.details?.arrCode || 'TYO').toUpperCase().substring(0, 3)}
+                    <span className="text-xs text-slate-500 font-bold tracking-widest mt-0.5">
+                      {(flight.details?.arrCode || "TYO")
+                        .toUpperCase()
+                        .substring(0, 3)}
                     </span>
                   </div>
                 </div>
@@ -320,9 +454,13 @@ function FlightTable({
               {/* Right: Price + Actions */}
               <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center sm:min-w-[160px] gap-3 border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-700 pt-3 sm:pt-0 sm:pl-5">
                 <div className="flex flex-col items-start sm:items-end">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">總價</span>
+                  <span className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mb-1">
+                    總價
+                  </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-sm font-bold text-slate-500">{flight.currency}</span>
+                    <span className="text-sm font-bold text-slate-500">
+                      {flight.currency}
+                    </span>
                     <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
                       {flight.price.toLocaleString()}
                     </span>
@@ -330,27 +468,44 @@ function FlightTable({
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={(e) => { e.stopPropagation(); onToggleSave(e, flight.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleSave(e, flight.id);
+                    }}
                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
                       isSaved
-                        ? 'bg-pink-50 border-pink-100 text-pink-500'
-                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-300 hover:text-pink-400 hover:border-pink-200 shadow-sm'
+                        ? "bg-pink-50 border-pink-100 text-pink-500"
+                        : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-400 hover:text-pink-400 hover:border-pink-200 shadow-sm"
                     }`}
                   >
-                    <Heart size={15} fill={isSaved ? 'currentColor' : 'transparent'} strokeWidth={2.5} />
+                    <Heart
+                      size={15}
+                      fill={isSaved ? "currentColor" : "transparent"}
+                      strokeWidth={2.5}
+                    />
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); onToggleTrack(e, flight); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleTrack(e, flight);
+                    }}
                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
                       isTracked
-                        ? 'bg-slate-900 border-slate-900 text-white shadow-md'
-                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-400 hover:text-slate-700 hover:border-slate-300 shadow-sm'
+                        ? "bg-slate-900 border-slate-900 text-white shadow-md"
+                        : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-500 hover:text-slate-700 hover:border-slate-300 shadow-sm"
                     }`}
                   >
-                    {isTracked ? <BellRing size={15} strokeWidth={2.5} /> : <Bell size={15} strokeWidth={2.5} />}
+                    {isTracked ? (
+                      <BellRing size={15} strokeWidth={2.5} />
+                    ) : (
+                      <Bell size={15} strokeWidth={2.5} />
+                    )}
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); onImportToTrip(e, flight); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onImportToTrip(e, flight);
+                    }}
                     className="h-10 px-4 rounded-xl flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition-all active:scale-95 border border-transparent"
                   >
                     <PlaneTakeoff size={14} strokeWidth={2.5} />
@@ -367,32 +522,202 @@ function FlightTable({
 }
 
 // Destination metadata lookup by IATA code
-const DEST_META: Record<string, { name: string; country: string; flag: string; tagline: string; image: string }> = {
-  NRT: { name: 'Tokyo', country: 'Japan', flag: '🇯🇵', tagline: 'Where tradition meets the future', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop' },
-  TYO: { name: 'Tokyo', country: 'Japan', flag: '🇯🇵', tagline: 'Where tradition meets the future', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop' },
-  HND: { name: 'Tokyo', country: 'Japan', flag: '🇯🇵', tagline: 'Where tradition meets the future', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop' },
-  KIX: { name: 'Osaka', country: 'Japan', flag: '🇯🇵', tagline: 'Street food capital of Japan', image: 'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=600&auto=format&fit=crop' },
-  OSA: { name: 'Osaka', country: 'Japan', flag: '🇯🇵', tagline: 'Street food capital of Japan', image: 'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=600&auto=format&fit=crop' },
-  ITM: { name: 'Osaka', country: 'Japan', flag: '🇯🇵', tagline: 'Street food capital of Japan', image: 'https://images.unsplash.com/photo-1590559899731-a382839e5549?w=600&auto=format&fit=crop' },
-  FUK: { name: 'Fukuoka', country: 'Japan', flag: '🇯🇵', tagline: 'Ramen city by the sea', image: 'https://images.unsplash.com/photo-1480796927426-f609979314bd?w=600&auto=format&fit=crop' },
-  OKA: { name: 'Okinawa', country: 'Japan', flag: '🇯🇵', tagline: 'Tropical paradise of East Asia', image: 'https://images.unsplash.com/photo-1590247813693-5541d1c609fd?w=600&auto=format&fit=crop' },
-  CTS: { name: 'Hokkaido', country: 'Japan', flag: '🇯🇵', tagline: 'Fresh seafood and winter wonderland', image: 'https://images.unsplash.com/photo-1553031977-03959cc47ac4?w=600&auto=format&fit=crop' },
-  CDG: { name: 'Paris', country: 'France', flag: '🇫🇷', tagline: 'City of Love and Light', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&auto=format&fit=crop' },
-  LHR: { name: 'London', country: 'UK', flag: '🇬🇧', tagline: 'Royal history meets modern culture', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&auto=format&fit=crop' },
-  JFK: { name: 'New York', country: 'USA', flag: '🇺🇸', tagline: 'The city that never sleeps', image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&auto=format&fit=crop' },
-  SIN: { name: 'Singapore', country: 'Singapore', flag: '🇸🇬', tagline: 'Garden city of Asia', image: 'https://images.unsplash.com/photo-1540202404-a2f29016b523?w=600&auto=format&fit=crop' },
-  BKK: { name: 'Bangkok', country: 'Thailand', flag: '🇹🇭', tagline: 'City of temples and street food', image: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=600&auto=format&fit=crop' },
-  HKG: { name: 'Hong Kong', country: 'HK', flag: '🇭🇰', tagline: 'East meets West harbour city', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop' },
-  ICN: { name: 'Seoul', country: 'Korea', flag: '🇰🇷', tagline: 'K-culture and street food paradise', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=600&auto=format&fit=crop' },
-  SEL: { name: 'Seoul', country: 'Korea', flag: '🇰🇷', tagline: 'K-culture and street food paradise', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=600&auto=format&fit=crop' },
-  TPE: { name: 'Taipei', country: 'Taiwan', flag: '🇹🇼', tagline: 'Night markets and mountain getaways', image: 'https://images.unsplash.com/photo-1541243440-2e0abf7e0de4?w=600&auto=format&fit=crop' },
-  DPS: { name: 'Bali', country: 'Indonesia', flag: '🇮🇩', tagline: 'Island of Gods and surf', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop' },
-  SYD: { name: 'Sydney', country: 'Australia', flag: '🇦🇺', tagline: 'Harbour city and beach life', image: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&auto=format&fit=crop' },
-  AMS: { name: 'Amsterdam', country: 'Netherlands', flag: '🇳🇱', tagline: 'Canals, tulips and freedom', image: 'https://images.unsplash.com/photo-1534351590666-13e3e96b5702?w=600&auto=format&fit=crop' },
-  BCN: { name: 'Barcelona', country: 'Spain', flag: '🇪🇸', tagline: 'Gaudí\'s city by the sea', image: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=600&auto=format&fit=crop' },
+const DEST_META: Record<
+  string,
+  {
+    name: string;
+    country: string;
+    flag: string;
+    tagline: string;
+    image: string;
+  }
+> = {
+  NRT: {
+    name: "Tokyo",
+    country: "Japan",
+    flag: "🇯🇵",
+    tagline: "Where tradition meets the future",
+    image:
+      "https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop",
+  },
+  TYO: {
+    name: "Tokyo",
+    country: "Japan",
+    flag: "🇯🇵",
+    tagline: "Where tradition meets the future",
+    image:
+      "https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop",
+  },
+  HND: {
+    name: "Tokyo",
+    country: "Japan",
+    flag: "🇯🇵",
+    tagline: "Where tradition meets the future",
+    image:
+      "https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop",
+  },
+  KIX: {
+    name: "Osaka",
+    country: "Japan",
+    flag: "🇯🇵",
+    tagline: "Street food capital of Japan",
+    image:
+      "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=600&auto=format&fit=crop",
+  },
+  OSA: {
+    name: "Osaka",
+    country: "Japan",
+    flag: "🇯🇵",
+    tagline: "Street food capital of Japan",
+    image:
+      "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=600&auto=format&fit=crop",
+  },
+  ITM: {
+    name: "Osaka",
+    country: "Japan",
+    flag: "🇯🇵",
+    tagline: "Street food capital of Japan",
+    image:
+      "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=600&auto=format&fit=crop",
+  },
+  FUK: {
+    name: "Fukuoka",
+    country: "Japan",
+    flag: "🇯🇵",
+    tagline: "Ramen city by the sea",
+    image:
+      "https://images.unsplash.com/photo-1480796927426-f609979314bd?w=600&auto=format&fit=crop",
+  },
+  OKA: {
+    name: "Okinawa",
+    country: "Japan",
+    flag: "🇯🇵",
+    tagline: "Tropical paradise of East Asia",
+    image:
+      "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?w=600&auto=format&fit=crop",
+  },
+  CTS: {
+    name: "Hokkaido",
+    country: "Japan",
+    flag: "🇯🇵",
+    tagline: "Fresh seafood and winter wonderland",
+    image:
+      "https://images.unsplash.com/photo-1553031977-03959cc47ac4?w=600&auto=format&fit=crop",
+  },
+  CDG: {
+    name: "Paris",
+    country: "France",
+    flag: "🇫🇷",
+    tagline: "City of Love and Light",
+    image:
+      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&auto=format&fit=crop",
+  },
+  LHR: {
+    name: "London",
+    country: "UK",
+    flag: "🇬🇧",
+    tagline: "Royal history meets modern culture",
+    image:
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&auto=format&fit=crop",
+  },
+  JFK: {
+    name: "New York",
+    country: "USA",
+    flag: "🇺🇸",
+    tagline: "The city that never sleeps",
+    image:
+      "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&auto=format&fit=crop",
+  },
+  SIN: {
+    name: "Singapore",
+    country: "Singapore",
+    flag: "🇸🇬",
+    tagline: "Garden city of Asia",
+    image:
+      "https://images.unsplash.com/photo-1540202404-a2f29016b523?w=600&auto=format&fit=crop",
+  },
+  BKK: {
+    name: "Bangkok",
+    country: "Thailand",
+    flag: "🇹🇭",
+    tagline: "City of temples and street food",
+    image:
+      "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=600&auto=format&fit=crop",
+  },
+  HKG: {
+    name: "Hong Kong",
+    country: "HK",
+    flag: "🇭🇰",
+    tagline: "East meets West harbour city",
+    image:
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop",
+  },
+  ICN: {
+    name: "Seoul",
+    country: "Korea",
+    flag: "🇰🇷",
+    tagline: "K-culture and street food paradise",
+    image:
+      "https://images.unsplash.com/photo-1534430480872-3498386e7856?w=600&auto=format&fit=crop",
+  },
+  SEL: {
+    name: "Seoul",
+    country: "Korea",
+    flag: "🇰🇷",
+    tagline: "K-culture and street food paradise",
+    image:
+      "https://images.unsplash.com/photo-1534430480872-3498386e7856?w=600&auto=format&fit=crop",
+  },
+  TPE: {
+    name: "Taipei",
+    country: "Taiwan",
+    flag: "🇹🇼",
+    tagline: "Night markets and mountain getaways",
+    image:
+      "https://images.unsplash.com/photo-1541243440-2e0abf7e0de4?w=600&auto=format&fit=crop",
+  },
+  DPS: {
+    name: "Bali",
+    country: "Indonesia",
+    flag: "🇮🇩",
+    tagline: "Island of Gods and surf",
+    image:
+      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop",
+  },
+  SYD: {
+    name: "Sydney",
+    country: "Australia",
+    flag: "🇦🇺",
+    tagline: "Harbour city and beach life",
+    image:
+      "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&auto=format&fit=crop",
+  },
+  AMS: {
+    name: "Amsterdam",
+    country: "Netherlands",
+    flag: "🇳🇱",
+    tagline: "Canals, tulips and freedom",
+    image:
+      "https://images.unsplash.com/photo-1534351590666-13e3e96b5702?w=600&auto=format&fit=crop",
+  },
+  BCN: {
+    name: "Barcelona",
+    country: "Spain",
+    flag: "🇪🇸",
+    tagline: "Gaudí's city by the sea",
+    image:
+      "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=600&auto=format&fit=crop",
+  },
 };
 
-const DEST_META_FALLBACK = { name: 'Unknown', country: '', flag: '✈️', tagline: 'A world waiting to be explored', image: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&auto=format&fit=crop' };
+const DEST_META_FALLBACK = {
+  name: "Unknown",
+  country: "",
+  flag: "✈️",
+  tagline: "A world waiting to be explored",
+  image:
+    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&auto=format&fit=crop",
+};
 
 interface DestinationCardProps {
   flight: SearchItem;
@@ -402,14 +727,26 @@ interface DestinationCardProps {
   onToggleSave: (e: React.MouseEvent) => void;
 }
 
-function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSave }: DestinationCardProps) {
+function DestinationCard({
+  flight,
+  isSaved,
+  onPress,
+  onImportToTrip,
+  onToggleSave,
+}: DestinationCardProps) {
   const providerName = flight.details?.airline || flight.provider;
-  const rawDep = (flight.details?.depCode || '').toUpperCase().substring(0, 3);
-  const rawArr = (flight.details?.arrCode || '').toUpperCase().substring(0, 3);
+  const rawDep = (flight.details?.depCode || "").toUpperCase().substring(0, 3);
+  const rawArr = (flight.details?.arrCode || "").toUpperCase().substring(0, 3);
   const meta = DEST_META[rawArr] ?? DEST_META_FALLBACK;
-  const title = meta.name !== 'Unknown' ? meta.name : (flight.title || rawArr || 'Destination');
-  const routeLabel = [rawDep || 'TPE', rawArr || 'TYO'].filter(Boolean).join(' → ');
-  const stopLabel = flight.details?.stops === 0 ? '直飛' : `${flight.details?.stops ?? 1} 轉`;
+  const title =
+    meta.name !== "Unknown"
+      ? meta.name
+      : flight.title || rawArr || "Destination";
+  const routeLabel = [rawDep || "TPE", rawArr || "TYO"]
+    .filter(Boolean)
+    .join(" → ");
+  const stopLabel =
+    flight.details?.stops === 0 ? "直飛" : `${flight.details?.stops ?? 1} 轉`;
 
   return (
     <div className="group/dest h-full min-w-[76vw] snap-center sm:min-w-0">
@@ -430,51 +767,78 @@ function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSav
         <div className="absolute inset-x-3.5 bottom-3.5 z-10 rounded-[30px] border border-white/72 bg-[linear-gradient(180deg,rgba(255,255,255,0.8),rgba(255,255,255,0.58))] p-4 shadow-[0_20px_44px_rgba(15,23,42,0.18)] backdrop-blur-[18px] sm:inset-x-4 sm:bottom-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <span className="mb-2 inline-flex items-center rounded-full bg-white/72 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 shadow-sm sm:text-[10px]">
+              <span className="mb-2 inline-flex items-center rounded-full bg-white/72 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 shadow-sm sm:text-xs">
                 {meta.country} {meta.flag}
               </span>
-              <h3 className="text-[28px] font-black leading-none tracking-[-0.04em] text-slate-950 sm:text-[33px]">{title}</h3>
-              <p className="mt-1.5 text-[13px] font-medium leading-[1.42] text-slate-600 line-clamp-2 sm:mt-2 sm:text-[14px]">{meta.tagline}</p>
+              <h3 className="text-[28px] font-black leading-none tracking-[-0.04em] text-slate-950 sm:text-[33px]">
+                {title}
+              </h3>
+              <p className="mt-1.5 text-[13px] font-medium leading-[1.42] text-slate-600 line-clamp-2 sm:mt-2 sm:text-[14px]">
+                {meta.tagline}
+              </p>
             </div>
             <button
-              onClick={(e) => { e.stopPropagation(); onToggleSave(e); }}
-              className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/65 backdrop-blur-md transition-all active:scale-90 shadow-sm ${isSaved ? 'bg-pink-500 text-white' : 'bg-white/85 text-slate-500 hover:bg-white hover:text-pink-500'}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSave(e);
+              }}
+              className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/65 backdrop-blur-md transition-all active:scale-90 shadow-sm ${isSaved ? "bg-pink-500 text-white" : "bg-white/85 text-slate-500 hover:bg-white hover:text-pink-500"}`}
             >
-              <Heart size={15} fill={isSaved ? 'currentColor' : 'transparent'} strokeWidth={2} />
+              <Heart
+                size={15}
+                fill={isSaved ? "currentColor" : "transparent"}
+                strokeWidth={2}
+              />
             </button>
           </div>
 
           <div className="mt-3.5 flex flex-wrap gap-1.5 sm:mt-4 sm:gap-2">
-            <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white/72 px-2.5 py-1.5 text-[10px] font-black text-slate-700 shadow-sm sm:gap-2 sm:px-3 sm:py-2 sm:text-[11px] whitespace-nowrap">
-              <AirlineLogo providerName={providerName} className="h-5 w-5 rounded-full text-[9px] shrink-0" />
+            <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white/72 px-2.5 py-1.5 text-[11px] font-black text-slate-700 shadow-sm sm:gap-2 sm:px-3 sm:py-2 sm:text-xs whitespace-nowrap">
+              <AirlineLogo
+                providerName={providerName}
+                className="h-5 w-5 rounded-full text-[9px] shrink-0"
+              />
               <span className="truncate max-w-[130px]">{providerName}</span>
             </span>
-            <span className="inline-flex items-center rounded-full bg-white/72 px-2.5 py-1.5 text-[10px] font-black text-slate-700 shadow-sm sm:px-3 sm:py-2 sm:text-[11px] whitespace-nowrap">
-              {flight.details?.departure || '--:--'} → {flight.details?.arrival || '--:--'}
+            <span className="inline-flex items-center rounded-full bg-white/72 px-2.5 py-1.5 text-[11px] font-black text-slate-700 shadow-sm sm:px-3 sm:py-2 sm:text-xs whitespace-nowrap">
+              {flight.details?.departure || "--:--"} →{" "}
+              {flight.details?.arrival || "--:--"}
             </span>
-            <span className={`inline-flex items-center rounded-full px-2.5 py-1.5 text-[10px] font-black shadow-sm sm:px-3 sm:py-2 sm:text-[11px] whitespace-nowrap ${flight.details?.stops === 0 ? 'bg-emerald-50/95 text-emerald-600' : 'bg-white/72 text-slate-700'}`}>
-              {flight.details?.duration || '3h 15m'} · {stopLabel}
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-1.5 text-[11px] font-black shadow-sm sm:px-3 sm:py-2 sm:text-xs whitespace-nowrap ${flight.details?.stops === 0 ? "bg-emerald-50/95 text-emerald-600" : "bg-white/72 text-slate-700"}`}
+            >
+              {flight.details?.duration || "3h 15m"} · {stopLabel}
             </span>
           </div>
 
           <div className="mt-[18px] flex items-end justify-between gap-3 sm:mt-5">
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">From</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">
+                From
+              </p>
               <p className="mt-1 text-[21px] font-black leading-none tracking-[-0.035em] text-slate-950 sm:text-[23px] tabular-nums">
                 {flight.currency} {flight.price.toLocaleString()}
               </p>
-              <p className="mt-1 truncate text-[10px] font-bold text-slate-500 sm:text-[11px]">{routeLabel}</p>
+              <p className="mt-1 truncate text-[11px] font-bold text-slate-500 sm:text-xs">
+                {routeLabel}
+              </p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <button
-                onClick={(e) => { e.stopPropagation(); onImportToTrip(e); }}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-slate-900/92 px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white transition-all active:scale-95 hover:bg-slate-800 sm:h-auto sm:px-3.5 sm:py-2.5 sm:text-[11px] sm:tracking-[0.16em]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onImportToTrip(e);
+                }}
+                className="flex h-10 items-center gap-1.5 rounded-full bg-slate-900/92 px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition-all active:scale-95 hover:bg-slate-800 sm:h-auto sm:px-3.5 sm:py-2.5 sm:text-xs sm:tracking-[0.16em]"
               >
                 <PlaneTakeoff size={12} strokeWidth={2.5} />
                 帶入
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); onPress(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPress();
+                }}
                 className="h-10 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-500 px-4 py-2 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(236,72,153,0.28)] transition-all active:scale-95 hover:brightness-105 sm:h-auto sm:px-[18px] sm:py-2.5 sm:text-[12px]"
               >
                 Explore
@@ -489,61 +853,105 @@ function DestinationCard({ flight, isSaved, onPress, onImportToTrip, onToggleSav
 
 const FEATURED_DESTINATIONS = [
   {
-    id: 'jp',
-    name: '日本',
-    flag: '🇯🇵',
-    image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop',
-    description: '東亞島國，以獨特文化、精緻料理與多彩自然景觀聞名。從千年古剎到繁華都會，橫跨北海道到九州八大地域，每個角落都值得深度探索。',
-    tags: ['文化', '美食', '自然'],
-    highlights: ['🗾 八大地域', '🌸 賞花勝地', '🍜 料理天堂', '🚅 JR 周遊券'],
-    guideUrl: 'https://travel-guide-tw.github.io/%E6%97%A5%E6%9C%AC/',
+    id: "jp",
+    name: "日本",
+    flag: "🇯🇵",
+    image:
+      "https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop",
+    description:
+      "東亞島國，以獨特文化、精緻料理與多彩自然景觀聞名。從千年古剎到繁華都會，橫跨北海道到九州八大地域，每個角落都值得深度探索。",
+    tags: ["文化", "美食", "自然"],
+    highlights: ["🗾 八大地域", "🌸 賞花勝地", "🍜 料理天堂", "🚅 JR 周遊券"],
+    guideUrl: "https://travel-guide-tw.github.io/%E6%97%A5%E6%9C%AC/",
   },
   {
-    id: 'np',
-    name: '尼泊爾',
-    flag: '🇳🇵',
-    image: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&auto=format&fit=crop',
-    description: '喜馬拉雅山脈的故鄉，擁有世界最高峰聖母峰。融合豐富宗教文化與壯麗高山景觀，是登山健行與靈性旅行的聖地。',
-    tags: ['登山', '文化', '冒險'],
-    highlights: ['🏔️ 世界屋脊', '🕌 加德滿都', '🥾 健行天堂', '🌿 自然生態'],
-    guideUrl: 'https://travel-guide-tw.github.io/%E5%B0%BC%E6%B3%8A%E7%88%BE/',
+    id: "np",
+    name: "尼泊爾",
+    flag: "🇳🇵",
+    image:
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&auto=format&fit=crop",
+    description:
+      "喜馬拉雅山脈的故鄉，擁有世界最高峰聖母峰。融合豐富宗教文化與壯麗高山景觀，是登山健行與靈性旅行的聖地。",
+    tags: ["登山", "文化", "冒險"],
+    highlights: ["🏔️ 世界屋脊", "🕌 加德滿都", "🥾 健行天堂", "🌿 自然生態"],
+    guideUrl: "https://travel-guide-tw.github.io/%E5%B0%BC%E6%B3%8A%E7%88%BE/",
   },
   {
-    id: 'no',
-    name: '挪威',
-    flag: '🇳🇴',
-    image: 'https://images.unsplash.com/photo-1531365737338-5a6d5e3abe3a?w=600&auto=format&fit=crop',
-    description: '北歐峽灣之國，壯闊的極光與冰川雕刻的峽灣地貌令人嘆為觀止。特羅姆瑟是追尋極光的最佳基地，峽灣巡遊更是一生必訪體驗。',
-    tags: ['極光', '峽灣', '自然'],
-    highlights: ['🌌 北極光', '🏔️ 峽灣奇景', '❄️ 特羅姆瑟', '🦌 馴鹿體驗'],
-    guideUrl: 'https://travel-guide-tw.github.io/%E6%8C%AA%E5%A8%81/',
+    id: "no",
+    name: "挪威",
+    flag: "🇳🇴",
+    image:
+      "https://images.unsplash.com/photo-1531365737338-5a6d5e3abe3a?w=600&auto=format&fit=crop",
+    description:
+      "北歐峽灣之國，壯闊的極光與冰川雕刻的峽灣地貌令人嘆為觀止。特羅姆瑟是追尋極光的最佳基地，峽灣巡遊更是一生必訪體驗。",
+    tags: ["極光", "峽灣", "自然"],
+    highlights: ["🌌 北極光", "🏔️ 峽灣奇景", "❄️ 特羅姆瑟", "🦌 馴鹿體驗"],
+    guideUrl: "https://travel-guide-tw.github.io/%E6%8C%AA%E5%A8%81/",
   },
   {
-    id: 'ch',
-    name: '瑞士',
-    flag: '🇨🇭',
-    image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=600&auto=format&fit=crop',
-    description: '歐洲心臟，由 26 個州組成。阿爾卑斯山脈、瑞士高原與侏羅山構成壯麗地貌，精緻鐘錶工藝與多語言文化造就獨特魅力。',
-    tags: ['阿爾卑斯', '精品', '自然'],
-    highlights: ['🏔️ 阿爾卑斯山', '🕰️ 鐘錶工藝', '🧀 起司美食', '🚂 登山列車'],
-    guideUrl: 'https://travel-guide-tw.github.io/%E7%91%9E%E5%A3%AB/',
+    id: "ch",
+    name: "瑞士",
+    flag: "🇨🇭",
+    image:
+      "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=600&auto=format&fit=crop",
+    description:
+      "歐洲心臟，由 26 個州組成。阿爾卑斯山脈、瑞士高原與侏羅山構成壯麗地貌，精緻鐘錶工藝與多語言文化造就獨特魅力。",
+    tags: ["阿爾卑斯", "精品", "自然"],
+    highlights: ["🏔️ 阿爾卑斯山", "🕰️ 鐘錶工藝", "🧀 起司美食", "🚂 登山列車"],
+    guideUrl: "https://travel-guide-tw.github.io/%E7%91%9E%E5%A3%AB/",
   },
 ];
 
-export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin?: () => void; isLoggedIn?: boolean }) {
-  const { searchForm, updateField, results, setResults, loading, setLoading, searchError, setSearchError, savedItems, toggleSave, trackedPrices, toggleTrack } =
-    useSearchStore();
-  const { openRedirectModal, isOffline, showToast, setActiveTab, activeTripId } = useAppStore();
+export default function HomeTab({
+  onRequireLogin,
+  isLoggedIn,
+}: {
+  onRequireLogin?: () => void;
+  isLoggedIn?: boolean;
+}) {
+  const {
+    searchForm,
+    updateField,
+    results,
+    setResults,
+    loading,
+    setLoading,
+    searchError,
+    setSearchError,
+    savedItems,
+    toggleSave,
+    trackedPrices,
+    toggleTrack,
+  } = useSearchStore();
+  const {
+    openRedirectModal,
+    isOffline,
+    showToast,
+    setActiveTab,
+    activeTripId,
+  } = useAppStore();
 
   const [dateError, setDateError] = useState<string | null>(null);
-  const [showDeparturePicker, setShowDeparturePicker] = useState<boolean>(false);
-  const [showDestinationPicker, setShowDestinationPicker] = useState<boolean>(false);
+  const [showDeparturePicker, setShowDeparturePicker] =
+    useState<boolean>(false);
+  const [showDestinationPicker, setShowDestinationPicker] =
+    useState<boolean>(false);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
-  const [showReturnDatePicker, setShowReturnDatePicker] = useState<boolean>(false);
+  const [showReturnDatePicker, setShowReturnDatePicker] =
+    useState<boolean>(false);
 
-  const [flyingCard, setFlyingCard] = useState<{ id: number; startX: number; startY: number; width: number; height: number; handbook?: any } | null>(null);
+  const [flyingCard, setFlyingCard] = useState<{
+    id: number;
+    startX: number;
+    startY: number;
+    width: number;
+    height: number;
+    handbook?: any;
+  } | null>(null);
   const [activeGuide, setActiveGuide] = useState<CountryGuide | null>(null);
-  const [activeHandbook, setActiveHandbook] = useState<typeof EXPERT_HANDBOOKS[0] | null>(null);
+  const [activeHandbook, setActiveHandbook] = useState<
+    (typeof EXPERT_HANDBOOKS)[0] | null
+  >(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [isHeroExpanded, setIsHeroExpanded] = useState<boolean>(true);
   const [searchProgress, setSearchProgress] = useState(0);
@@ -551,7 +959,12 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
   const prefersReducedMotion = useReducedMotion();
   const { onScroll } = useHideNavOnScroll();
 
-  const SEARCH_LOADING_MESSAGES = ['搜尋航班中...', '比較多家票價...', '篩選最優惠...', '整理結果中...'];
+  const SEARCH_LOADING_MESSAGES = [
+    "搜尋航班中...",
+    "比較多家票價...",
+    "篩選最優惠...",
+    "整理結果中...",
+  ];
 
   useEffect(() => {
     if (!loading) {
@@ -565,7 +978,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     setSearchProgress(0);
     setProgressMsgIdx(0);
     const progressInterval = setInterval(() => {
-      setSearchProgress(prev => {
+      setSearchProgress((prev) => {
         if (prev < 30) return prev + 4;
         if (prev < 60) return prev + 1.8;
         if (prev < 82) return prev + 0.6;
@@ -573,66 +986,83 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       });
     }, 120);
     const msgInterval = setInterval(() => {
-      setProgressMsgIdx(prev => (prev + 1) % SEARCH_LOADING_MESSAGES.length);
+      setProgressMsgIdx((prev) => (prev + 1) % SEARCH_LOADING_MESSAGES.length);
     }, 2000);
     return () => {
       clearInterval(progressInterval);
       clearInterval(msgInterval);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
   useEffect(() => {
     if (!loading && hasSearched) setIsHeroExpanded(false);
   }, [loading]);
 
-  const cardSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass} border-none sm:border-solid sm:border sm:border-white/60 shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)]`;
-  const cardActionClass = `${subtlePressableClass} ${raisedHoverClass} border-none sm:border-solid sm:border sm:border-white/60`;
-  const searchFieldSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass} border-none sm:border-solid sm:border sm:border-white/60`;
-  const chipPressClass = `${subtlePressableClass} ${raisedHoverClass} border-none sm:border-solid sm:border sm:border-slate-200/40`;
+  const cardSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass} shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)]`;
+  const cardActionClass = `${subtlePressableClass} ${raisedHoverClass}`;
+  const searchFieldSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
+  const chipPressClass = `${subtlePressableClass} ${raisedHoverClass}`;
 
-  const handleCopyExpertItinerary = (e: React.MouseEvent | undefined, handbook: typeof EXPERT_HANDBOOKS[0]) => {
+  const handleCopyExpertItinerary = (
+    e: React.MouseEvent | undefined,
+    handbook: (typeof EXPERT_HANDBOOKS)[0],
+  ) => {
     e?.stopPropagation?.();
-    
+
     if (!isLoggedIn) {
       if (onRequireLogin) {
         onRequireLogin();
       } else {
-        showToast('請先登入後再進行此操作', 'warning');
+        showToast("請先登入後再進行此操作", "warning");
       }
       return;
     }
 
     // Get card position for animation start
-    const cardElement = e?.currentTarget ? (e.currentTarget as HTMLElement).closest('.group\\/handbook') : null;
-    const rect = cardElement ? cardElement.getBoundingClientRect() : e?.currentTarget ? (e.currentTarget as HTMLElement).getBoundingClientRect() : { left: window.innerWidth / 2 - 140, top: window.innerHeight / 2 - 80, width: 280, height: 160 };
+    const cardElement = e?.currentTarget
+      ? (e.currentTarget as HTMLElement).closest(".group\\/handbook")
+      : null;
+    const rect = cardElement
+      ? cardElement.getBoundingClientRect()
+      : e?.currentTarget
+        ? (e.currentTarget as HTMLElement).getBoundingClientRect()
+        : {
+            left: window.innerWidth / 2 - 140,
+            top: window.innerHeight / 2 - 80,
+            width: 280,
+            height: 160,
+          };
     setFlyingCard({
       id: Date.now(),
       startX: rect.left + rect.width / 2,
       startY: rect.top + rect.height / 2,
       width: rect.width || 320,
       height: rect.height || 380,
-      handbook
+      handbook,
     });
 
     // Reset animation after it finishes
     setTimeout(async () => {
       setFlyingCard(null);
-      
+
       try {
-        const { useItineraryStore } = await import('../store/useItineraryStore');
-        const { useAppStore } = await import('../store/useAppStore');
-        const { syncItinerary, createTrip } = await import('../lib/workflowApi');
+        const { useItineraryStore } =
+          await import("../store/useItineraryStore");
+        const { useAppStore } = await import("../store/useAppStore");
+        const { syncItinerary, createTrip } =
+          await import("../lib/workflowApi");
         const { setNodes, addNode } = useItineraryStore.getState();
-        const { activeTripId, setActiveTripId, setActiveTab } = useAppStore.getState();
-        
+        const { activeTripId, setActiveTripId, setActiveTab } =
+          useAppStore.getState();
+
         let TRIP_ID = activeTripId;
 
         // If no active trip, create a new one first
         if (!TRIP_ID) {
-          const newTrip = await createTrip({ 
-            name: handbook.title, 
-            destination: handbook.tags[0] || '指定地點'
+          const newTrip = await createTrip({
+            name: handbook.title,
+            destination: handbook.tags[0] || "指定地點",
           });
           const newTripId = String(newTrip.id);
           TRIP_ID = newTripId;
@@ -640,48 +1070,62 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         }
 
         if (!TRIP_ID) {
-          throw new Error('trip id missing after clone bootstrap');
+          throw new Error("trip id missing after clone bootstrap");
         }
 
         const ensuredTripId = TRIP_ID;
 
         if (handbook.nodes && handbook.nodes.length) {
           setNodes([]);
-          const normalized = handbook.nodes.map((rawNode: any) => ({ ...rawNode, source: 'local' } as any));
+          const normalized = handbook.nodes.map(
+            (rawNode: any) => ({ ...rawNode, source: "local" }) as any,
+          );
           normalized.forEach((n: any) => addNode(n));
           const results = await Promise.allSettled(
             normalized.map((n: any) =>
-              syncItinerary({ trip_id: ensuredTripId, action: 'add_node', payload: n } as any)
-            )
+              syncItinerary({
+                trip_id: ensuredTripId,
+                action: "add_node",
+                payload: n,
+              } as any),
+            ),
           );
-          if (results.some(r => r.status === 'rejected')) {
-            setNodes(normalized.filter((_: any, i: number) => results[i].status === 'fulfilled'));
-            throw new Error('clone sync failed');
+          if (results.some((r) => r.status === "rejected")) {
+            setNodes(
+              normalized.filter(
+                (_: any, i: number) => results[i].status === "fulfilled",
+              ),
+            );
+            throw new Error("clone sync failed");
           }
         }
 
-        showToast(`已成功將 ${handbook.title} 複製到您的手帳！`, 'success');
-        setActiveTab('itinerary');
+        showToast(`已成功將 ${handbook.title} 複製到您的手帳！`, "success");
+        setActiveTab("itinerary");
       } catch (err) {
-        showToast('複製行程失敗', 'warning');
+        showToast("複製行程失敗", "warning");
       }
     }, 1200); // 1.2s to match animation duration
   };
 
   const [communityTrips, setCommunityTrips] = useState<any[]>([]);
-  const [viewType, setViewType] = useState<'grid' | 'table'>('table');
-  const [filterType, setFilterType] = useState<'all' | 'flight' | 'ticket' | 'other'>('all');
+  const [viewType, setViewType] = useState<"grid" | "table">("table");
+  const [filterType, setFilterType] = useState<
+    "all" | "flight" | "ticket" | "other"
+  >("all");
 
   const filteredResults = useMemo(() => {
-    if (filterType === 'all') return results;
-    return results.filter(r => r.type === filterType);
+    if (filterType === "all") return results;
+    return results.filter((r) => r.type === filterType);
   }, [results, filterType]);
 
   const demoTemplates = useMemo(() => EXPERT_HANDBOOKS.slice(0, 3), []);
 
   const resolveCurrentTripId = () =>
     activeTripId ||
-    (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('trip_id') : '');
+    (typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("trip_id")
+      : "");
 
   useEffect(() => {
     // Initial fetch for recommendations and handbooks
@@ -693,12 +1137,16 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
         const [handbooks, recommendations] = await Promise.all([
           fetchHandbooks(),
-          searchOffers({ from: searchForm.from || 'TPE', to: searchForm.to || 'TYO', date: seedDateStr }).catch(() => [])
+          searchOffers({
+            from: searchForm.from || "TPE",
+            to: searchForm.to || "TYO",
+            date: seedDateStr,
+          }).catch(() => []),
         ]);
         setCommunityTrips(handbooks);
         if (results.length === 0) setResults(recommendations);
       } catch (e) {
-        console.error('Failed to load initial data', e);
+        console.error("Failed to load initial data", e);
       }
     };
     void loadInitialData();
@@ -706,15 +1154,17 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
   const handleCloneTrip = async (e: React.MouseEvent, trip: any) => {
     e.stopPropagation();
-  triggerHapticFeedback([18]);
+    triggerHapticFeedback([18]);
 
     if (!isLoggedIn && onRequireLogin) {
       onRequireLogin();
       return;
     }
-    
+
     // Trigger animation
-    const cardElement = (e.currentTarget as HTMLElement).closest('.group\\/trip') || (e.currentTarget as HTMLElement);
+    const cardElement =
+      (e.currentTarget as HTMLElement).closest(".group\\/trip") ||
+      (e.currentTarget as HTMLElement);
     const rect = cardElement.getBoundingClientRect();
     setFlyingCard({
       id: Date.now(),
@@ -722,80 +1172,92 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       startY: rect.top + rect.height / 2,
       width: rect.width || 320,
       height: rect.height || 200,
-      handbook: trip
+      handbook: trip,
     });
 
     try {
-      const { getStoredToken } = await import('../lib/workflowApi');
+      const { getStoredToken } = await import("../lib/workflowApi");
       const token = getStoredToken();
       const res = await fetch(`/api/trips/${trip.id}/clone`, {
-        method: 'POST',
-        headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+        method: "POST",
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      
-      showToast(`已成功將行程 ${trip.name ?? trip.title ?? ''} 複製到您的手帳！`, 'success');
-      
+
+      showToast(
+        `已成功將行程 ${trip.name ?? trip.title ?? ""} 複製到您的手帳！`,
+        "success",
+      );
+
       // Navigate to the newly cloned trip
       setTimeout(() => {
         useAppStore.getState().setActiveTripId(data.data.new_trip_id);
-        setActiveTab('itinerary');
+        setActiveTab("itinerary");
       }, 800);
     } catch {
-      showToast('複製失敗', 'warning');
+      showToast("複製失敗", "warning");
     }
   };
 
-
-  const applyGuideDestination = (destination: TravelGuideDestination, field: 'from' | 'to') => {
+  const applyGuideDestination = (
+    destination: TravelGuideDestination,
+    field: "from" | "to",
+  ) => {
     // 根據選好的地方 顯示中文
     updateField(field, destination.place);
-    if (field === 'from') setShowDeparturePicker(false);
-    if (field === 'to') setShowDestinationPicker(false);
+    if (field === "from") setShowDeparturePicker(false);
+    if (field === "to") setShowDestinationPicker(false);
   };
 
   const selectDate = (dateStr: string) => {
-    updateField('date', dateStr);
+    updateField("date", dateStr);
     setShowDatePicker(false);
     if (dateError) setDateError(null);
     // Auto-clear return date if it's before the new departure date
     if (searchForm.returnDate && dateStr > searchForm.returnDate) {
-      updateField('returnDate', '');
+      updateField("returnDate", "");
     }
   };
 
   const selectReturnDate = (dateStr: string) => {
-    updateField('returnDate', dateStr);
+    updateField("returnDate", dateStr);
     setShowReturnDatePicker(false);
     if (dateError) setDateError(null);
   };
 
-  const isSearchDisabled = useMemo(
-    () => {
-      if (!searchForm.from.trim() || !searchForm.to.trim() || !searchForm.date.trim()) return true;
-      if (searchForm.tripType === 'roundtrip' && !searchForm.returnDate.trim()) return true;
-      return false;
-    },
-    [searchForm],
-  );
+  const isSearchDisabled = useMemo(() => {
+    if (
+      !searchForm.from.trim() ||
+      !searchForm.to.trim() ||
+      !searchForm.date.trim()
+    )
+      return true;
+    if (searchForm.tripType === "roundtrip" && !searchForm.returnDate.trim())
+      return true;
+    return false;
+  }, [searchForm]);
 
   const searchBlockReason = useMemo(() => {
-    if (isOffline) return '目前離線中，恢復連線後才能查詢即時票價。';
-    if (!searchForm.from.trim()) return '先填寫出發地。';
-    if (!searchForm.to.trim()) return '再補上目的地。';
-    if (!searchForm.date.trim()) return '最後選擇去程日期。';
-    if (searchForm.tripType === 'roundtrip' && !searchForm.returnDate.trim()) return '請選擇回程日期。';
+    if (isOffline) return "目前離線中，恢復連線後才能查詢即時票價。";
+    if (!searchForm.from.trim()) return "先填寫出發地。";
+    if (!searchForm.to.trim()) return "再補上目的地。";
+    if (!searchForm.date.trim()) return "最後選擇去程日期。";
+    if (searchForm.tripType === "roundtrip" && !searchForm.returnDate.trim())
+      return "請選擇回程日期。";
     return null;
   }, [isOffline, searchForm]);
 
   const handleSearch = async () => {
     if (!DATE_REGEX.test(searchForm.date.trim())) {
-      setDateError('日期格式需為 YYYY-MM-DD，例如 2025-08-01');
+      setDateError("日期格式需為 YYYY-MM-DD，例如 2025-08-01");
       return;
     }
-    if (searchForm.tripType === 'roundtrip' && !DATE_REGEX.test(searchForm.returnDate.trim())) {
-      setDateError('回程日期格式需為 YYYY-MM-DD，例如 2025-08-08');
+    if (
+      searchForm.tripType === "roundtrip" &&
+      !DATE_REGEX.test(searchForm.returnDate.trim())
+    ) {
+      setDateError("回程日期格式需為 YYYY-MM-DD，例如 2025-08-08");
       return;
     }
     setDateError(null);
@@ -807,11 +1269,11 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       setResults(result);
     } catch (error) {
       if (error instanceof SearchTimeoutError) {
-        setSearchError('timeout');
+        setSearchError("timeout");
       } else if (error instanceof SearchServiceUnavailableError) {
-        setSearchError('service');
+        setSearchError("service");
       } else {
-        setSearchError('service');
+        setSearchError("service");
       }
       setResults([]);
     } finally {
@@ -819,7 +1281,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     }
   };
 
-  const toHHMM = (s: string | undefined) => s?.match(/\d{1,2}:\d{2}/)?.[0] ?? '09:00';
+  const toHHMM = (s: string | undefined) =>
+    s?.match(/\d{1,2}:\d{2}/)?.[0] ?? "09:00";
 
   const handleImportFlight = async (flight: SearchItem) => {
     if (!isLoggedIn && onRequireLogin) {
@@ -829,20 +1292,22 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
     const tripId = resolveCurrentTripId();
     if (!tripId) {
-      showToast('請先開啟一趟旅程，再把航班帶入手帳。', 'warning');
+      showToast("請先開啟一趟旅程，再把航班帶入手帳。", "warning");
       return;
     }
 
     try {
-      const depCode = searchForm.from?.trim() || flight.details?.depCode || 'TPE';
-      const arrCode = searchForm.to?.trim() || flight.details?.arrCode || 'NRT';
-      const factDate = searchForm.date?.trim() || new Date().toISOString().slice(0, 10);
+      const depCode =
+        searchForm.from?.trim() || flight.details?.depCode || "TPE";
+      const arrCode = searchForm.to?.trim() || flight.details?.arrCode || "NRT";
+      const factDate =
+        searchForm.date?.trim() || new Date().toISOString().slice(0, 10);
       const newFact = await createTripFact(tripId, {
-        factType: 'flight_outbound',
-        source: 'imported_search',
+        factType: "flight_outbound",
+        source: "imported_search",
         title: `${flight.details?.airline || flight.provider} ${depCode} → ${arrCode}`,
         startAt: `${factDate}T${toHHMM(flight.details?.departure)}:00.000Z`,
-        endAt: `${factDate}T${toHHMM(flight.details?.arrival) || '13:00'}:00.000Z`,
+        endAt: `${factDate}T${toHHMM(flight.details?.arrival) || "13:00"}:00.000Z`,
         locationName: arrCode,
         referenceCode: flight.details?.flightNumber || null,
         metadata: {
@@ -859,39 +1324,39 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
       const payload: SyncItineraryPayload = {
         trip_id: tripId,
-        action: 'add_node',
+        action: "add_node",
         payload: {
-           node_id: `node_flight_${Date.now()}`,
-           day: 1,
-           date: factDate,
-           time: toHHMM(flight.details?.departure),
-           title: `${flight.details?.airline || flight.provider} 航班`,
-           emoji: '✈️',
-           category: 'flight',
-           description: `航班代號: ${flight.details?.flightNumber || '未知'}\n預定金額: ${flight.currency} ${flight.price}\n來源: ${flight.provider}`,
-           linkedFactId: newFact?.id,
-           source: 'remote'
+          node_id: `node_flight_${Date.now()}`,
+          day: 1,
+          date: factDate,
+          time: toHHMM(flight.details?.departure),
+          title: `${flight.details?.airline || flight.provider} 航班`,
+          emoji: "✈️",
+          category: "flight",
+          description: `航班代號: ${flight.details?.flightNumber || "未知"}\n預定金額: ${flight.currency} ${flight.price}\n來源: ${flight.provider}`,
+          linkedFactId: newFact?.id,
+          source: "remote",
         },
       };
       // Update local store immediately so the node appears in the UI
       useItineraryStore.getState().addNode(payload.payload);
-      
+
       try {
         await syncItinerary(payload);
       } catch {
         useItineraryStore.getState().removeNode(payload.payload.node_id);
-        throw new Error('flight import sync failed');
+        throw new Error("flight import sync failed");
       }
 
       // If roundtrip and return leg exists, create a second trip fact + node
-      if (flight.tripType === 'roundtrip' && flight.returnLeg) {
+      if (flight.tripType === "roundtrip" && flight.returnLeg) {
         const retDate = searchForm.returnDate?.trim() || factDate;
         const retFact = await createTripFact(tripId, {
-          factType: 'flight_return',
-          source: 'imported_search',
+          factType: "flight_return",
+          source: "imported_search",
           title: `${flight.returnLeg.airline || flight.provider} ${arrCode} → ${depCode}`,
           startAt: `${retDate}T${toHHMM(flight.returnLeg.departure)}:00.000Z`,
-          endAt: `${retDate}T${toHHMM(flight.returnLeg.arrival) || '13:00'}:00.000Z`,
+          endAt: `${retDate}T${toHHMM(flight.returnLeg.arrival) || "13:00"}:00.000Z`,
           locationName: depCode,
           referenceCode: null,
           metadata: {
@@ -907,18 +1372,18 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
         const retPayload: SyncItineraryPayload = {
           trip_id: tripId,
-          action: 'add_node',
+          action: "add_node",
           payload: {
             node_id: `node_flight_return_${Date.now()}`,
             day: 2,
             date: retDate,
             time: toHHMM(flight.returnLeg.departure),
             title: `${flight.returnLeg.airline || flight.provider} 回程航班`,
-            emoji: '🔄',
-            category: 'flight',
+            emoji: "🔄",
+            category: "flight",
             description: `回程航班\n預定金額: ${flight.currency} ${flight.price}（來回合計）\n來源: ${flight.provider}`,
             linkedFactId: retFact?.id,
-            source: 'remote',
+            source: "remote",
           },
         };
         useItineraryStore.getState().addNode(retPayload.payload);
@@ -929,17 +1394,17 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         }
       }
 
-      showToast(`已把 ${flight.provider} 航班帶入旅程錨點。`, 'success');
+      showToast(`已把 ${flight.provider} 航班帶入旅程錨點。`, "success");
       setTimeout(() => {
-        useAppStore.getState().setActiveTab('itinerary');
+        useAppStore.getState().setActiveTab("itinerary");
       }, 500);
     } catch {
-      showToast('帶入旅程失敗，請稍後再試。', 'warning');
+      showToast("帶入旅程失敗，請稍後再試。", "warning");
     }
   };
 
   return (
-    <motion.div 
+    <motion.div
       onScroll={onScroll}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -947,7 +1412,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-tab-safe md:pb-14"
     >
       {/* === HERO SECTION with gradient background === */}
-      <div className={`relative z-10 w-full pt-14 sm:pt-[72px] ${!isHeroExpanded ? 'pb-3' : 'pb-12 sm:pb-14'} px-4 sm:px-6 overflow-visible`}>
+      <div
+        className={`relative z-10 w-full pt-14 sm:pt-[72px] ${!isHeroExpanded ? "pb-3" : "pb-12 sm:pb-14"} px-4 sm:px-6 overflow-visible`}
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-rose-200/95 via-pink-100/90 to-sky-200/85 pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-transparent pointer-events-none" />
         <div className="absolute -top-16 right-8 w-80 h-80 bg-rose-300/30 rounded-full blur-[80px] pointer-events-none" />
@@ -956,16 +1423,26 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
         <div className="relative z-20 max-w-[980px] mx-auto w-full">
           {/* Hero title */}
-          <div className={`text-center mb-5 sm:mb-6${!isHeroExpanded ? ' hidden sm:block' : ''}`}>
+          <div
+            className={`text-center mb-5 sm:mb-6${!isHeroExpanded ? " hidden sm:block" : ""}`}
+          >
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-2.5">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight drop-shadow-[0_1px_2px_rgba(134,77,97,0.15)]">AI 智慧行程規劃</h1>
-              <span className="px-2.5 py-1 rounded-full bg-white/75 border border-pink-200/80 text-pink-600 text-[10px] sm:text-[11px] font-black uppercase tracking-wider backdrop-blur-md shadow-[0_2px_8px_rgba(236,72,153,0.15)]">BETA</span>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight drop-shadow-[0_1px_2px_rgba(134,77,97,0.15)]">
+                AI 智慧行程規劃
+              </h1>
+              <span className="px-2.5 py-1 rounded-full bg-white/75 border border-pink-200/80 text-pink-600 text-[11px] sm:text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-[0_2px_8px_rgba(236,72,153,0.15)]">
+                BETA
+              </span>
             </div>
-            <p className="text-slate-600/90 text-sm sm:text-base">輸入目的地，秒速生成專屬客製化旅航計畫</p>
+            <p className="text-slate-600/90 text-sm sm:text-base">
+              輸入目的地，秒速生成專屬客製化旅航計畫
+            </p>
           </div>
 
           {/* === SEARCH FORM === */}
-          <div className={`relative z-20 transition-opacity duration-300 ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
+          <div
+            className={`relative z-20 transition-opacity duration-300 ${loading ? "opacity-60 pointer-events-none" : ""}`}
+          >
             {/* Compact search summary bar — mobile only, shown after search */}
             {!isHeroExpanded && (
               <button
@@ -974,10 +1451,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               >
                 <PlaneTakeoff size={16} className="text-[#b35f76] shrink-0" />
                 <span className="flex-1 text-left text-[15px] font-black text-slate-900 truncate">
-                  {searchForm.from || '—'} → {searchForm.to || '—'}
+                  {searchForm.from || "—"} → {searchForm.to || "—"}
                 </span>
-                <span className="text-[11px] font-bold text-slate-400 shrink-0 truncate max-w-[150px]">
-                  {searchForm.date}{searchForm.tripType === 'roundtrip' && searchForm.returnDate ? ` · ↩ ${searchForm.returnDate}` : ''}
+                <span className="text-[11px] font-bold text-slate-500 shrink-0 truncate max-w-[150px]">
+                  {searchForm.date}
+                  {searchForm.tripType === "roundtrip" && searchForm.returnDate
+                    ? ` · ↩ ${searchForm.returnDate}`
+                    : ""}
                 </span>
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-md">
                   <SearchIcon size={13} strokeWidth={3} />
@@ -990,40 +1470,54 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 {/* Trip type toggle */}
                 <div className="flex items-center gap-1 mb-3 p-1 rounded-full bg-white/50 border border-white/70 w-fit">
                   <button
-                    onClick={() => updateField('tripType', 'oneway')}
+                    onClick={() => updateField("tripType", "oneway")}
                     className={`px-5 py-2 rounded-full text-[11px] font-black tracking-wide transition-all ${
-                      searchForm.tripType !== 'roundtrip'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
+                      searchForm.tripType !== "roundtrip"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
                     }`}
-                  >單程</button>
+                  >
+                    單程
+                  </button>
                   <button
-                    onClick={() => updateField('tripType', 'roundtrip')}
+                    onClick={() => updateField("tripType", "roundtrip")}
                     className={`px-5 py-2 rounded-full text-[11px] font-black tracking-wide transition-all ${
-                      searchForm.tripType === 'roundtrip'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
+                      searchForm.tripType === "roundtrip"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
                     }`}
-                  >來回</button>
+                  >
+                    來回
+                  </button>
                 </div>
 
                 {/* Search card */}
-                <div className="bg-white/92 dark:bg-slate-800/90 rounded-3xl border border-white/95 dark:border-slate-700 shadow-[0_8px_40px_rgba(134,77,97,0.12),0_2px_8px_rgba(134,77,97,0.06),inset_0_1px_0_rgba(255,255,255,1)] backdrop-blur-2xl p-4 flex flex-col gap-3">
-
+                <div className="bg-white/92 dark:bg-slate-800/90 rounded-[28px] sm:rounded-3xl border border-white/95 dark:border-slate-700 shadow-[0_8px_40px_rgba(134,77,97,0.12),0_2px_8px_rgba(134,77,97,0.06),inset_0_1px_0_rgba(255,255,255,1)] backdrop-blur-2xl p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
                   {/* FROM / TO row */}
                   <div className="relative grid grid-cols-2">
                     {/* FROM cell */}
                     <div
-                      className={`flex flex-col gap-1 px-4 py-3 rounded-2xl cursor-text ${searchFieldSurfaceClass}`}
-                      onClick={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); setShowReturnDatePicker(false); }}
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-text ${searchFieldSurfaceClass}`}
+                      onClick={() => {
+                        setShowDeparturePicker(true);
+                        setShowDestinationPicker(false);
+                        setShowDatePicker(false);
+                        setShowReturnDatePicker(false);
+                      }}
                     >
-                      <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase">FROM</span>
+                      <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
+                        FROM
+                      </span>
                       <input
                         id="search-from"
-                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-500 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.from}
-                        onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
-                        onChange={(e) => updateField('from', e.target.value)}
+                        onFocus={() => {
+                          setShowDeparturePicker(true);
+                          setShowDestinationPicker(false);
+                          setShowDatePicker(false);
+                        }}
+                        onChange={(e) => updateField("from", e.target.value)}
                         placeholder="台北 TPE"
                         autoComplete="off"
                       />
@@ -1031,21 +1525,36 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
                     {/* Center airplane divider */}
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center">
-                      <PlaneTakeoff size={14} className="text-pink-500" strokeWidth={2.5} />
+                      <PlaneTakeoff
+                        size={14}
+                        className="text-pink-500"
+                        strokeWidth={2.5}
+                      />
                     </div>
 
                     {/* TO cell */}
                     <div
-                      className={`flex flex-col gap-1 px-4 py-3 rounded-2xl cursor-text ${searchFieldSurfaceClass}`}
-                      onClick={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); setShowReturnDatePicker(false); }}
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-text ${searchFieldSurfaceClass}`}
+                      onClick={() => {
+                        setShowDestinationPicker(true);
+                        setShowDeparturePicker(false);
+                        setShowDatePicker(false);
+                        setShowReturnDatePicker(false);
+                      }}
                     >
-                      <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase">TO</span>
+                      <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
+                        TO
+                      </span>
                       <input
                         id="search-to"
-                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-500 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.to}
-                        onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
-                        onChange={(e) => updateField('to', e.target.value)}
+                        onFocus={() => {
+                          setShowDestinationPicker(true);
+                          setShowDeparturePicker(false);
+                          setShowDatePicker(false);
+                        }}
+                        onChange={(e) => updateField("to", e.target.value)}
                         placeholder="東京 NRT"
                         autoComplete="off"
                       />
@@ -1056,63 +1565,81 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   <div className="grid grid-cols-2 gap-2">
                     {/* Departure date */}
                     <div
-                      className={`flex flex-col gap-1 px-4 py-3 rounded-2xl cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 ${searchFieldSurfaceClass}`}
-                      onClick={() => { setShowDatePicker(!showDatePicker); setShowDeparturePicker(false); setShowDestinationPicker(false); setShowReturnDatePicker(false); }}
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 ${searchFieldSurfaceClass}`}
+                      onClick={() => {
+                        setShowDatePicker(!showDatePicker);
+                        setShowDeparturePicker(false);
+                        setShowDestinationPicker(false);
+                        setShowReturnDatePicker(false);
+                      }}
                     >
-                      <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase flex items-center gap-1">
+                      <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase flex items-center gap-1">
                         <Calendar size={10} />
                         去程日期
                       </span>
-                      <span className={`text-[15px] font-black leading-none ${!searchForm.date ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>
-                        {searchForm.date || '選擇日期'}
+                      <span
+                        className={`text-[15px] font-black leading-none ${!searchForm.date ? "text-slate-500" : "text-slate-900 dark:text-white"}`}
+                      >
+                        {searchForm.date || "選擇日期"}
                       </span>
                     </div>
 
                     {/* Return date — always visible; clicking in oneway mode auto-switches to roundtrip */}
                     <div
-                      className={`flex flex-col gap-1 px-4 py-3 rounded-2xl cursor-pointer border ${
-                        searchForm.tripType === 'oneway'
-                          ? 'bg-slate-50/30 border-dashed border-slate-200 dark:border-slate-600 opacity-60'
-                          : 'bg-slate-50/60 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700'
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-pointer border ${
+                        searchForm.tripType === "oneway"
+                          ? "bg-slate-50/30 border-dashed border-slate-200 dark:border-slate-600 opacity-60"
+                          : "bg-slate-50/60 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700"
                       } ${searchFieldSurfaceClass}`}
                       onClick={() => {
-                        if (searchForm.tripType === 'oneway') updateField('tripType', 'roundtrip');
+                        if (searchForm.tripType === "oneway")
+                          updateField("tripType", "roundtrip");
                         setShowReturnDatePicker(!showReturnDatePicker);
                         setShowDatePicker(false);
                         setShowDeparturePicker(false);
                         setShowDestinationPicker(false);
                       }}
                     >
-                      <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase flex items-center gap-1">
+                      <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase flex items-center gap-1">
                         <Calendar size={10} />
                         回程日期
                       </span>
-                      <span className={`text-[15px] font-black leading-none ${!searchForm.returnDate ? 'text-slate-400' : 'text-slate-900 dark:text-white'}`}>
-                        {searchForm.returnDate || (searchForm.tripType === 'oneway' ? '+ 加回程' : '選擇回程')}
+                      <span
+                        className={`text-[15px] font-black leading-none ${!searchForm.returnDate ? "text-slate-500" : "text-slate-900 dark:text-white"}`}
+                      >
+                        {searchForm.returnDate ||
+                          (searchForm.tripType === "oneway"
+                            ? "+ 加回程"
+                            : "選擇回程")}
                       </span>
                     </div>
                   </div>
 
                   {/* Error / hint */}
                   {(dateError || searchBlockReason) && (
-                    <p className="text-[11px] text-slate-500 font-bold px-1 -mt-1">{dateError || searchBlockReason}</p>
+                    <p className="text-[11px] text-slate-500 font-bold px-1 -mt-1">
+                      {dateError || searchBlockReason}
+                    </p>
                   )}
 
                   {/* Search CTA */}
                   <button
                     onClick={() => void handleSearch()}
                     disabled={isSearchDisabled || loading || isOffline}
-                    title={isOffline ? '請連線網路以進行機票比價' : ''}
+                    title={isOffline ? "請連線網路以進行機票比價" : ""}
                     className={`w-full py-4 rounded-2xl font-black text-[15px] tracking-wide flex items-center justify-center gap-2 transition-colors shadow-sm ${
                       isSearchDisabled || loading || isOffline
-                        ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                        : 'bg-pink-500 hover:bg-pink-600 text-white shadow-pink-200'
+                        ? "bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
+                        : "bg-pink-500 hover:bg-pink-600 text-white shadow-pink-200"
                     }`}
                   >
-                    {loading
-                      ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      : <><SearchIcon size={17} strokeWidth={3} /> 搜尋航班 →</>
-                    }
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <SearchIcon size={17} strokeWidth={3} /> 搜尋航班 →
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1125,22 +1652,57 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       <div className="relative z-0 flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60">
         {/* Quick External Links */}
         <div className="max-w-3xl mx-auto w-full pt-3 sm:pt-4 pb-1 sm:pb-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 mb-3 sm:mb-3.5">旅途中也常用</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 mb-3 sm:mb-3.5">
+            旅途中也常用
+          </p>
           <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-1">
-            <a href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start ${chipPressClass}`}>
-              <Bed size={17} className="text-[#B92A8E] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-              <span className="font-bold text-[13px] tracking-wide">找住宿</span>
+            <a
+              href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start ${chipPressClass}`}
+            >
+              <Bed
+                size={17}
+                className="text-[#B92A8E] group-hover:scale-110 transition-transform"
+                strokeWidth={2.5}
+              />
+              <span className="font-bold text-[13px] tracking-wide">
+                找住宿
+              </span>
             </a>
-            <a href="https://www.kkday.com/zh-tw?cid=4480" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start ${chipPressClass}`}>
-              <Ticket size={15} className="text-[#F18400] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-              <span className="font-bold text-[13px] tracking-wide">門票 & 觀光行程</span>
+            <a
+              href="https://www.kkday.com/zh-tw?cid=4480"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start ${chipPressClass}`}
+            >
+              <Ticket
+                size={15}
+                className="text-[#F18400] group-hover:scale-110 transition-transform"
+                strokeWidth={2.5}
+              />
+              <span className="font-bold text-[13px] tracking-wide">
+                門票 & 觀光行程
+              </span>
             </a>
-            <a href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start ${chipPressClass}`}>
+            <a
+              href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start ${chipPressClass}`}
+            >
               <div className="relative text-[#EC4899] group-hover:scale-110 transition-transform">
                 <CarFront size={17} strokeWidth={2.5} />
-                <PlaneTakeoff size={9} strokeWidth={3} className="absolute -top-1 -left-1" />
+                <PlaneTakeoff
+                  size={9}
+                  strokeWidth={3}
+                  className="absolute -top-1 -left-1"
+                />
               </div>
-              <span className="font-bold text-[13px] tracking-wide">機場接送</span>
+              <span className="font-bold text-[13px] tracking-wide">
+                機場接送
+              </span>
             </a>
           </div>
         </div>
@@ -1153,36 +1715,38 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter leading-none flex items-baseline gap-2 sm:gap-3">
                     探索航班與活動
                     {searchForm.date && (
-                      <span className="text-lg sm:text-xl text-slate-400 font-bold tracking-tight">
-                        {searchForm.date.replace(/-/g, '/')}
+                      <span className="text-lg sm:text-xl text-slate-500 font-bold tracking-tight">
+                        {searchForm.date.replace(/-/g, "/")}
                       </span>
                     )}
                   </h2>
                   {filteredResults.length > 0 && (
-                    <span className="px-2 py-0.5 bg-slate-900 text-white rounded-[6px] text-[10px] font-black tracking-widest uppercase shadow-sm">
+                    <span className="px-2 py-0.5 bg-slate-900 text-white rounded-[6px] text-[11px] font-black tracking-widest uppercase shadow-sm">
                       {filteredResults.length} 個結果
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">Explore Travels</p>
+                <p className="text-[11px] font-bold text-slate-500 tracking-[0.2em] uppercase">
+                  Explore Travels
+                </p>
               </div>
               {results.length > 0 && (
                 <div className="flex items-center gap-1 bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 shrink-0">
                   <button
-                    onClick={() => setViewType('grid')}
-                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-colors ${viewType === 'grid' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
+                    onClick={() => setViewType("grid")}
+                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-colors ${viewType === "grid" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600"}`}
                     title="卡片檢視"
                     aria-label="卡片檢視"
-                    aria-pressed={viewType === 'grid'}
+                    aria-pressed={viewType === "grid"}
                   >
                     <LayoutGrid size={16} strokeWidth={2.5} />
                   </button>
                   <button
-                    onClick={() => setViewType('table')}
-                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-colors ${viewType === 'table' ? 'bg-white shadow-sm text-slate-900 border border-slate-200/50' : 'text-slate-400 hover:text-slate-600'}`}
+                    onClick={() => setViewType("table")}
+                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-colors ${viewType === "table" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600"}`}
                     title="列表檢視"
                     aria-label="列表檢視"
-                    aria-pressed={viewType === 'table'}
+                    aria-pressed={viewType === "table"}
                   >
                     <List size={16} strokeWidth={2.5} />
                   </button>
@@ -1191,11 +1755,11 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             </div>
             {results.length > 0 && (
               <div className="flex items-center bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 w-full sm:w-auto overflow-x-auto hide-scrollbar">
-                {(['all', 'flight', 'ticket', 'other'] as const).map((type) => (
+                {(["all", "flight", "ticket", "other"] as const).map((type) => (
                   <button
                     key={type}
                     onClick={() => setFilterType(type)}
-                    className={`relative flex-1 sm:flex-none px-3 py-2.5 min-h-[44px] flex items-center justify-center rounded-[8px] text-[10px] font-black tracking-widest uppercase z-10 whitespace-nowrap ${subtlePressableClass} ${filterType === type ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                    className={`relative flex-1 sm:flex-none px-3 py-2.5 min-h-[44px] flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-widest uppercase z-10 whitespace-nowrap ${subtlePressableClass} ${filterType === type ? "text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
                     aria-pressed={filterType === type}
                   >
                     {filterType === type && (
@@ -1205,7 +1769,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         transition={layoutIndicatorTransition}
                       />
                     )}
-                    {type === 'all' ? '全部' : type === 'flight' ? '機票' : type === 'ticket' ? '票券' : '其他'}
+                    {type === "all"
+                      ? "全部"
+                      : type === "flight"
+                        ? "機票"
+                        : type === "ticket"
+                          ? "票券"
+                          : "其他"}
                   </button>
                 ))}
               </div>
@@ -1226,8 +1796,12 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     {/* Animated plane */}
                     <div className="relative w-full h-6 flex items-center overflow-hidden">
                       <motion.div
-                        animate={{ x: ['0%', '85%', '0%'] }}
-                        transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+                        animate={{ x: ["0%", "85%", "0%"] }}
+                        transition={{
+                          duration: 2.8,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
                         className="absolute"
                       >
                         <PlaneTakeoff size={20} className="text-[#b35f76]" />
@@ -1240,7 +1814,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest leading-none whitespace-nowrap">
                           {SEARCH_LOADING_MESSAGES[progressMsgIdx]}
                         </span>
-                        <span className="text-[11px] font-black text-slate-400 tabular-nums">
+                        <span className="text-[11px] font-black text-slate-500 tabular-nums">
                           {Math.round(searchProgress)}%
                         </span>
                       </div>
@@ -1248,12 +1822,12 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         <motion.div
                           className="h-full rounded-full bg-gradient-to-r from-[#b35f76] via-[#7b5ea7] to-[#2c6956]"
                           animate={{ width: `${searchProgress}%` }}
-                          transition={{ duration: 0.25, ease: 'easeOut' }}
+                          transition={{ duration: 0.25, ease: "easeOut" }}
                         />
                       </div>
                     </div>
 
-                    <p className="text-slate-400 font-medium text-[11px] tracking-wide text-center whitespace-nowrap">
+                    <p className="text-slate-500 font-medium text-[11px] tracking-wide text-center whitespace-nowrap">
                       即時爬取航班資訊，這可能需要一些時間
                     </p>
                   </div>
@@ -1262,32 +1836,62 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             </AnimatePresence>
 
             {/* List & Content Container */}
-            <div className={`transition-opacity duration-300 ${loading ? 'opacity-30 pointer-events-none' : ''}`}>
+            <div
+              className={`transition-opacity duration-300 ${loading ? "opacity-30 pointer-events-none" : ""}`}
+            >
               {searchError && !loading ? (
                 <GlassCard className="bg-[#fff1f2] border-[#fecdd3] flex flex-col">
-                  <span className="text-[#be123c] font-bold text-base">果凍精靈迷路了 🥺，請稍後再試試看！</span>
+                  <span className="text-[#be123c] font-bold text-base">
+                    果凍精靈迷路了 🥺，請稍後再試試看！
+                  </span>
                   <span className="text-[#be123c] mt-2 text-sm">
-                    {searchError === 'timeout' ? '目前查詢逾時，已先收起錯誤細節。' : '供應商稍忙，請再試一次。'}
+                    {searchError === "timeout"
+                      ? "目前查詢逾時，已先收起錯誤細節。"
+                      : "供應商稍忙，請再試一次。"}
                   </span>
                 </GlassCard>
               ) : (
                 <AnimatePresence mode="wait">
                   {filteredResults.length > 0 ? (
-                    viewType === 'grid' ? (
-                      <motion.div 
+                    viewType === "grid" ? (
+                      <motion.div
                         key="grid-view"
-                        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                        initial={
+                          prefersReducedMotion
+                            ? { opacity: 0 }
+                            : { opacity: 0, y: 8 }
+                        }
                         animate={{ opacity: 1, y: 0 }}
-                        exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-                        transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                        exit={
+                          prefersReducedMotion
+                            ? { opacity: 0 }
+                            : { opacity: 0, y: 8 }
+                        }
+                        transition={
+                          prefersReducedMotion
+                            ? { duration: 0.16 }
+                            : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
+                        }
                         className="flex gap-3 overflow-x-auto px-1 pr-7 pb-2 snap-x snap-mandatory hide-scrollbar sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pr-0 sm:pb-0 lg:grid-cols-3"
                       >
                         {filteredResults.map((flight, index) => (
                           <motion.div
                             key={flight.id}
-                            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+                            initial={
+                              prefersReducedMotion
+                                ? { opacity: 0 }
+                                : { opacity: 0, y: 16 }
+                            }
                             animate={{ opacity: 1, y: 0 }}
-                            transition={prefersReducedMotion ? { duration: 0.16 } : { delay: Math.min(index, 5) * 0.028, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                            transition={
+                              prefersReducedMotion
+                                ? { duration: 0.16 }
+                                : {
+                                    delay: Math.min(index, 5) * 0.028,
+                                    duration: 0.24,
+                                    ease: [0.22, 1, 0.36, 1],
+                                  }
+                            }
                             className="h-full min-w-[76vw] snap-center sm:min-w-0"
                           >
                             <DestinationCard
@@ -1327,12 +1931,24 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     ) : (
                       <motion.div
                         key="table-view"
-                        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                        initial={
+                          prefersReducedMotion
+                            ? { opacity: 0 }
+                            : { opacity: 0, y: 8 }
+                        }
                         animate={{ opacity: 1, y: 0 }}
-                        exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-                        transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                        exit={
+                          prefersReducedMotion
+                            ? { opacity: 0 }
+                            : { opacity: 0, y: 8 }
+                        }
+                        transition={
+                          prefersReducedMotion
+                            ? { duration: 0.16 }
+                            : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+                        }
                       >
-                        <FlightTable 
+                        <FlightTable
                           results={filteredResults}
                           savedItems={savedItems}
                           trackedPrices={trackedPrices}
@@ -1340,7 +1956,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                             e.stopPropagation();
                             void handleImportFlight(flight);
                           }}
-                          onPress={(flight) => 
+                          onPress={(flight) =>
                             openRedirectModal({
                               provider: flight.provider,
                               affiliateUrl: flight.affiliate_url,
@@ -1369,12 +1985,14 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                               onRequireLogin();
                               return;
                             }
-                            const isCurrentlyTracked = trackedPrices.includes(flight.id);
+                            const isCurrentlyTracked = trackedPrices.includes(
+                              flight.id,
+                            );
                             toggleTrack(flight.id);
                             showToast(
                               !isCurrentlyTracked
                                 ? `✨ 已開啟 ${flight.provider} 的降價提醒！`
-                                : `🔕 已關閉降價提醒`
+                                : `🔕 已關閉降價提醒`,
                             );
                           }}
                         />
@@ -1383,15 +2001,25 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                   ) : hasSearched && !loading ? (
                     <motion.div
                       key="no-results"
-                      initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                      initial={
+                        prefersReducedMotion
+                          ? { opacity: 0 }
+                          : { opacity: 0, y: 10 }
+                      }
                       animate={{ opacity: 1, y: 0 }}
-                      transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                      transition={
+                        prefersReducedMotion
+                          ? { duration: 0.16 }
+                          : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
+                      }
                       className="flex flex-col items-center justify-center py-20 bg-white/40 backdrop-blur-xl rounded-3xl border border-white mx-2 shadow-sm"
                     >
                       <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-5xl mb-6 grayscale opacity-60">
                         🔍
                       </div>
-                      <h3 className="text-xl font-black text-slate-800 mb-2">找不到符合條件的航班</h3>
+                      <h3 className="text-xl font-black text-slate-800 mb-2">
+                        找不到符合條件的航班
+                      </h3>
                       <p className="text-slate-500 font-bold max-w-xs text-center leading-relaxed">
                         請嘗試更換日期或是搜尋其他城市，果凍精靈會繼續為您守候。
                       </p>
@@ -1402,7 +2030,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 }}
-                      className="flex flex-col items-center justify-center py-14 sm:py-18 px-6 mx-2 bg-gradient-to-br from-white/70 to-slate-50/60 dark:from-slate-900/80 dark:to-slate-950/80 backdrop-blur-xl rounded-[40px] border border-white/60 dark:border-white/10 shadow-sm relative overflow-hidden group"
+                      className="flex flex-col items-center justify-center py-10 sm:py-18 px-3 sm:px-6 mx-1 sm:mx-2 bg-gradient-to-br from-white/70 to-slate-50/60 dark:from-slate-900/80 dark:to-slate-950/80 backdrop-blur-xl rounded-[32px] sm:rounded-[40px] border border-white/60 dark:border-white/10 shadow-sm relative overflow-hidden group"
                     >
                       <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-fuchsia-100 rounded-full blur-3xl opacity-50 mix-blend-multiply pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
                       <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-orange-100 rounded-full blur-3xl opacity-50 mix-blend-multiply pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
@@ -1410,10 +2038,16 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       <div className="relative z-10 w-full max-w-5xl mb-10">
                         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                           <div>
-                            <p className="text-[10px] font-black tracking-[0.24em] uppercase text-fuchsia-500">Demo Preview</p>
-                            <h4 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">先看別人排好的旅程，立刻進入狀況</h4>
+                            <p className="text-[11px] font-black tracking-[0.24em] uppercase text-fuchsia-500">
+                              Demo Preview
+                            </p>
+                            <h4 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                              先看別人排好的旅程，立刻進入狀況
+                            </h4>
                           </div>
-                          <p className="text-[12px] font-bold text-slate-500 dark:text-slate-300">免登入、免等待，直接預覽完整節奏與景點安排。</p>
+                          <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400">
+                            免登入、免等待，直接預覽完整節奏與景點安排。
+                          </p>
                         </div>
                         <div className="grid gap-3 md:grid-cols-3">
                           {demoTemplates.map((handbook) => (
@@ -1427,20 +2061,32 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                               className={`group/demo overflow-hidden rounded-[28px] border border-white/70 dark:border-white/10 bg-white/90 dark:bg-slate-900/80 text-left shadow-lg shadow-slate-200/40 dark:shadow-black/30 hover:shadow-xl ${cardSurfaceClass}`}
                             >
                               <div className="relative h-36 overflow-hidden">
-                                <img src={handbook.image} alt={handbook.title} className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-105" loading="lazy" />
+                                <img
+                                  src={handbook.image}
+                                  alt={handbook.title}
+                                  className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-105"
+                                  loading="lazy"
+                                />
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                                <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-slate-950/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                                <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-slate-950/45 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
                                   Instant Demo
                                 </div>
                                 <div className="absolute bottom-3 left-3 right-3 text-white">
-                                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/75">{handbook.days} Days</div>
-                                  <div className="mt-1 text-lg font-black leading-tight">{handbook.title}</div>
+                                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-white/75">
+                                    {handbook.days} Days
+                                  </div>
+                                  <div className="mt-1 text-lg font-black leading-tight">
+                                    {handbook.title}
+                                  </div>
                                 </div>
                               </div>
                               <div className="px-4 py-4">
                                 <div className="flex flex-wrap gap-2">
                                   {handbook.tags.slice(0, 3).map((tag) => (
-                                    <span key={tag} className="rounded-full bg-slate-100 dark:bg-white/8 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600 dark:text-slate-200">
+                                    <span
+                                      key={tag}
+                                      className="rounded-full bg-slate-100 dark:bg-white/8 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-600 dark:text-slate-200"
+                                    >
                                       #{tag}
                                     </span>
                                   ))}
@@ -1454,36 +2100,47 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="relative mb-8">
-                         <div className="w-24 h-24 bg-white shadow-xl shadow-slate-200/50 rounded-full flex items-center justify-center text-4xl relative z-10 group-hover:-translate-y-2 transition-transform duration-500 border border-slate-50">
-                           <PlaneTakeoff className="text-slate-900" size={32} strokeWidth={2.5} />
-                         </div>
-                         <div className="absolute -inset-4 border-2 border-dashed border-slate-200 rounded-full animate-[spin_15s_linear_infinite] opacity-50"></div>
+                        <div className="w-24 h-24 bg-white shadow-xl shadow-slate-200/50 rounded-full flex items-center justify-center text-4xl relative z-10 group-hover:-translate-y-2 transition-transform duration-500 border border-slate-50">
+                          <PlaneTakeoff
+                            className="text-slate-900"
+                            size={32}
+                            strokeWidth={2.5}
+                          />
+                        </div>
+                        <div className="absolute -inset-4 border-2 border-dashed border-slate-200 rounded-full animate-[spin_15s_linear_infinite] opacity-50"></div>
                       </div>
-                      
-                       <h3 className="text-2xl sm:text-[32px] font-black text-slate-900 dark:text-white mb-4 tracking-tight text-center leading-tight">
+
+                      <h3 className="text-2xl sm:text-[32px] font-black text-slate-900 dark:text-white mb-4 tracking-tight text-center leading-tight">
                         輸入出發地、目的地與日期，找出最聰明的飛航選擇。
                       </h3>
-                      
+
                       <div className="flex flex-wrap gap-2 justify-center mb-4">
-                         {['東京 NRT', '大阪 KIX', '倫敦 LHR', '紐約 JFK'].map((city, idx) => (
-                           <button 
-                             key={city}
-                             onClick={() => {
-                               updateField('to', city);
-                               setShowDestinationPicker(false);
-                             }}
-                             className={`px-4 py-2 bg-white hover:bg-slate-900 hover:text-white text-slate-600 rounded-full text-xs font-black tracking-widest border border-slate-200 hover:border-slate-900 shadow-sm ${chipPressClass}`}
-                           >
-                             {city}
-                           </button>
-                         ))}
+                        {["東京 NRT", "大阪 KIX", "倫敦 LHR", "紐約 JFK"].map(
+                          (city, idx) => (
+                            <button
+                              key={city}
+                              onClick={() => {
+                                updateField("to", city);
+                                setShowDestinationPicker(false);
+                              }}
+                              className={`px-4 py-2 bg-white hover:bg-slate-900 hover:text-white text-slate-600 rounded-full text-xs font-black tracking-widest border border-slate-200 hover:border-slate-900 shadow-sm ${chipPressClass}`}
+                            >
+                              {city}
+                            </button>
+                          ),
+                        )}
                       </div>
                     </motion.div>
                   ) : loading ? (
-                    <motion.div key="skeleton" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {[0, 1, 2, 3, 4, 5].map((i) => <FlightSkeletonCard key={i} />)}
+                    <motion.div
+                      key="skeleton"
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                    >
+                      {[0, 1, 2, 3, 4, 5].map((i) => (
+                        <FlightSkeletonCard key={i} />
+                      ))}
                     </motion.div>
                   ) : null}
                 </AnimatePresence>
@@ -1496,9 +2153,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Globe className="text-sky-500" size={24} />
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight">分享行程</h2>
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                    分享行程
+                  </h2>
                 </div>
-                <span className="text-[10px] font-black tracking-[0.15em] uppercase text-slate-400">fork-and-remix</span>
+                <span className="text-[11px] font-black tracking-[0.15em] uppercase text-slate-500">
+                  fork-and-remix
+                </span>
               </div>
 
               <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
@@ -1508,7 +2169,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       key={trip.id}
                       className="w-[280px] sm:w-[320px] group/trip"
                     >
-                    <GlassCard className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] flex flex-col ${cardSurfaceClass}`}>
+                      <GlassCard
+                        className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] flex flex-col ${cardSurfaceClass}`}
+                      >
                         <div className="relative h-44 overflow-hidden flex-shrink-0">
                           <img
                             src={trip.cover}
@@ -1517,13 +2180,17 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                             className="w-full h-full object-cover transition-transform duration-700 group-hover/trip:scale-110"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[10px] font-black tracking-widest uppercase text-white">
+                          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[11px] font-black tracking-widest uppercase text-white">
                             Public Template
                           </div>
                           <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
                             <div>
-                              <p className="text-white text-[10px] font-black uppercase tracking-[0.15em] opacity-80">by {trip.author || 'Anonymous'}</p>
-                              <h3 className="text-white font-black text-xl leading-tight drop-shadow-md line-clamp-2">{trip.title}</h3>
+                              <p className="text-white text-[11px] font-black uppercase tracking-[0.15em] opacity-80">
+                                by {trip.author || "Anonymous"}
+                              </p>
+                              <h3 className="text-white font-black text-xl leading-tight drop-shadow-md line-clamp-2">
+                                {trip.title}
+                              </h3>
                             </div>
                           </div>
                         </div>
@@ -1544,7 +2211,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                             onClick={(event) => handleCloneTrip(event, trip)}
                             className={`mt-auto w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-sky-600 group/btn ${cardActionClass}`}
                           >
-                            <Copy size={14} className="transition-transform group-hover/btn:rotate-12" />
+                            <Copy
+                              size={14}
+                              className="transition-transform group-hover/btn:rotate-12"
+                            />
                             一鍵複製到我的草稿
                           </button>
                         </div>
@@ -1561,9 +2231,13 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Globe className="text-emerald-500" size={24} />
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">精選目的地指南</h2>
+                <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                  精選目的地指南
+                </h2>
               </div>
-              <span className="text-[10px] font-black tracking-[0.15em] uppercase text-slate-400 hidden sm:block">travel-guide-tw</span>
+              <span className="text-[11px] font-black tracking-[0.15em] uppercase text-slate-500 hidden sm:block">
+                travel-guide-tw
+              </span>
             </div>
 
             <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
@@ -1573,7 +2247,9 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     key={dest.id}
                     className="w-[260px] sm:w-[300px] group/dest"
                   >
-                    <GlassCard className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] flex flex-col ${cardSurfaceClass}`}>
+                    <GlassCard
+                      className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] flex flex-col ${cardSurfaceClass}`}
+                    >
                       {/* Cover Image */}
                       <div className="relative h-44 overflow-hidden flex-shrink-0">
                         <img
@@ -1584,13 +2260,20 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                         <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end gap-2">
-                          <span className="text-3xl drop-shadow-lg">{dest.flag}</span>
-                          <h3 className="text-white font-black text-xl leading-tight drop-shadow-md">{dest.name}</h3>
+                          <span className="text-3xl drop-shadow-lg">
+                            {dest.flag}
+                          </span>
+                          <h3 className="text-white font-black text-xl leading-tight drop-shadow-md">
+                            {dest.name}
+                          </h3>
                         </div>
                         {/* Tag pills on top-right */}
                         <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
                           {dest.tags.map((tag) => (
-                            <span key={tag} className="text-[10px] font-black text-white bg-white/20 backdrop-blur-md border border-white/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            <span
+                              key={tag}
+                              className="text-[11px] font-black text-white bg-white/20 backdrop-blur-md border border-white/30 px-2 py-0.5 rounded-full uppercase tracking-wider"
+                            >
                               {tag}
                             </span>
                           ))}
@@ -1605,7 +2288,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
                         <div className="flex flex-wrap gap-1.5 mb-5">
                           {dest.highlights.map((h) => (
-                            <span key={h} className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl">
+                            <span
+                              key={h}
+                              className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl"
+                            >
                               {h}
                             </span>
                           ))}
@@ -1613,9 +2299,16 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
 
                         <button
                           className={`mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 group/btn ${cardActionClass}`}
-                          onClick={(e) => { e.stopPropagation(); const g = getCountryGuide(dest.id); if (g) setActiveGuide(g); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const g = getCountryGuide(dest.id);
+                            if (g) setActiveGuide(g);
+                          }}
                         >
-                          <ExternalLink size={13} className="transition-transform group-hover/btn:translate-x-0.5" />
+                          <ExternalLink
+                            size={13}
+                            className="transition-transform group-hover/btn:translate-x-0.5"
+                          />
                           查看完整攻略
                         </button>
                       </div>
@@ -1630,9 +2323,11 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
           <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="text-fuchsia-500" size={24} />
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight">熱門達人手帳</h2>
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                熱門達人手帳
+              </h2>
             </div>
-            
+
             <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
               <div className="flex gap-6 min-w-max">
                 {EXPERT_HANDBOOKS.map((handbook) => (
@@ -1640,7 +2335,10 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                     key={handbook.id}
                     className="w-[280px] sm:w-[320px] group/handbook"
                   >
-                    <GlassCard onClick={() => setActiveHandbook(handbook)} className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] cursor-pointer ${cardSurfaceClass}`}>
+                    <GlassCard
+                      onClick={() => setActiveHandbook(handbook)}
+                      className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] cursor-pointer ${cardSurfaceClass}`}
+                    >
                       <div className="relative h-44 overflow-hidden">
                         <img
                           src={handbook.image}
@@ -1651,30 +2349,42 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
                         <div className="absolute bottom-4 left-4 right-4">
                           <div className="flex items-center gap-2">
-                            <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-black text-white uppercase tracking-wider border border-white/30">
+                            <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[11px] font-black text-white uppercase tracking-wider border border-white/30">
                               {handbook.days} Days
                             </span>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="p-6">
-                        <h3 className="text-xl font-black text-slate-800 mb-1 leading-tight">{handbook.title}</h3>
-                        <p className="text-sm font-bold text-slate-400 mb-4">{handbook.author}</p>
-                        
+                        <h3 className="text-xl font-black text-slate-800 mb-1 leading-tight">
+                          {handbook.title}
+                        </h3>
+                        <p className="text-sm font-bold text-slate-500 mb-4">
+                          {handbook.author}
+                        </p>
+
                         <div className="flex flex-wrap gap-2 mb-6">
-                          {handbook.tags.map(tag => (
-                            <span key={tag} className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
+                          {handbook.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg"
+                            >
                               #{tag}
                             </span>
                           ))}
                         </div>
-                        
+
                         <button
-                          onClick={(e) => handleCopyExpertItinerary(e, handbook)}
+                          onClick={(e) =>
+                            handleCopyExpertItinerary(e, handbook)
+                          }
                           className={`w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 group/btn ${cardActionClass}`}
                         >
-                          <Copy size={14} className="transition-transform group-hover/btn:rotate-12" />
+                          <Copy
+                            size={14}
+                            className="transition-transform group-hover/btn:rotate-12"
+                          />
                           複製行程
                         </button>
                       </div>
@@ -1688,14 +2398,18 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       </div>
 
       {activeGuide && (
-        <CountryGuideModal open={!!activeGuide} guide={activeGuide} onClose={() => setActiveGuide(null)} />
+        <CountryGuideModal
+          open={!!activeGuide}
+          guide={activeGuide}
+          onClose={() => setActiveGuide(null)}
+        />
       )}
 
       {activeHandbook && (
-        <ExpertHandbookModal 
-          open={!!activeHandbook} 
-          handbook={activeHandbook} 
-          onClose={() => setActiveHandbook(null)} 
+        <ExpertHandbookModal
+          open={!!activeHandbook}
+          handbook={activeHandbook}
+          onClose={() => setActiveHandbook(null)}
           onCopyPath={(handbook) => {
             handleCopyExpertItinerary(undefined, handbook);
           }}
@@ -1703,25 +2417,25 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
       )}
 
       {showDeparturePicker && (
-        <LocationPickerPopup 
+        <LocationPickerPopup
           title="出發地"
           query={searchForm.from}
           onClose={() => setShowDeparturePicker(false)}
-          onSelect={(dest) => applyGuideDestination(dest, 'from')}
+          onSelect={(dest) => applyGuideDestination(dest, "from")}
         />
       )}
 
       {showDestinationPicker && (
-        <LocationPickerPopup 
+        <LocationPickerPopup
           title="熱門目的地"
           query={searchForm.to}
           onClose={() => setShowDestinationPicker(false)}
-          onSelect={(dest) => applyGuideDestination(dest, 'to')}
+          onSelect={(dest) => applyGuideDestination(dest, "to")}
         />
       )}
 
       {showDatePicker && (
-        <DatePickerPopup 
+        <DatePickerPopup
           selectedDate={searchForm.date}
           onSelect={selectDate}
           onClose={() => setShowDatePicker(false)}
@@ -1742,8 +2456,8 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
         {flyingCard && (
           <motion.div
             key={flyingCard.id}
-            initial={{ 
-              position: 'fixed',
+            initial={{
+              position: "fixed",
               top: flyingCard.startY,
               left: flyingCard.startX,
               width: flyingCard.width,
@@ -1751,34 +2465,45 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
               opacity: 1,
               scale: 1,
               zIndex: 9999,
-              borderRadius: '24px',
-              backgroundColor: 'white',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
-              x: '-50%',
-              y: '-50%'
+              borderRadius: "24px",
+              backgroundColor: "white",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.2)",
+              overflow: "hidden",
+              x: "-50%",
+              y: "-50%",
             }}
-            animate={{ 
-              top: [flyingCard.startY, flyingCard.startY - 100, window.innerHeight - 40],
-              left: [flyingCard.startX, flyingCard.startX + (window.innerWidth / 2 - flyingCard.startX) * 0.5, window.innerWidth / 2],
+            animate={{
+              top: [
+                flyingCard.startY,
+                flyingCard.startY - 100,
+                window.innerHeight - 40,
+              ],
+              left: [
+                flyingCard.startX,
+                flyingCard.startX +
+                  (window.innerWidth / 2 - flyingCard.startX) * 0.5,
+                window.innerWidth / 2,
+              ],
               width: [flyingCard.width, 160, 20],
               height: [flyingCard.height, 100, 20],
               scale: [1, 1.05, 0.1],
               opacity: [1, 1, 0],
-              rotate: [0, -10, -360]
+              rotate: [0, -10, -360],
             }}
             exit={{ opacity: 0 }}
-            transition={{ 
+            transition={{
               duration: 1.2,
               ease: [0.16, 1, 0.3, 1],
-              times: [0, 0.4, 1]
+              times: [0, 0.4, 1],
             }}
           >
             {flyingCard.handbook ? (
               <div className="w-full h-full flex flex-col pointer-events-none">
                 <img
-                  src={flyingCard.handbook.image || flyingCard.handbook.coverImage}
-                  alt={flyingCard.handbook.title || '達人手帳預覽'}
+                  src={
+                    flyingCard.handbook.image || flyingCard.handbook.coverImage
+                  }
+                  alt={flyingCard.handbook.title || "達人手帳預覽"}
                   className="w-full h-2/3 object-cover"
                 />
                 <div className="p-4 flex-1 bg-white">

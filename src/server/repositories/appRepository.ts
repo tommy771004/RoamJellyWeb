@@ -180,13 +180,14 @@ export class AppRepository {
     return user || null;
   }
 
-  async createUserWithPassword(username: string, displayName: string, passwordHash: string) {
+  async createUserWithPassword(username: string, displayName: string, passwordHash: string, avatar?: string) {
     if (!this.db) return;
     await this.db.insert(schema.users).values({
       userId: username, // using username as ID for simplicity
       username,
       displayName,
       passwordHash,
+      avatar,
     }).onConflictDoNothing();
   }
 
