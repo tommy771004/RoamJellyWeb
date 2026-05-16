@@ -1527,7 +1527,6 @@ export default function HomeTab({
                         FROM
                       </span>
                       <input
-                        id="search-from"
                         aria-label="出發地"
                         className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-500 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.from}
@@ -1565,7 +1564,6 @@ export default function HomeTab({
                         TO
                       </span>
                       <input
-                        id="search-to"
                         aria-label="目的地"
                         className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-500 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.to}
