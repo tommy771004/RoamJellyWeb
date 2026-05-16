@@ -4469,7 +4469,7 @@ function ItineraryListItem({
                   <button
                     type="button"
                     aria-label={`放大查看 ${item.title} 圖片`}
-                    className="w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative cursor-pointer"
+                    className="p-0 w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       onPreviewImage && onPreviewImage(item.image_url!);
