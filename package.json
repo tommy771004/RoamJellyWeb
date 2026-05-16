@@ -11,6 +11,7 @@
     "clean": "rm -rf dist",
     "postinstall": "npx -y playwright install chromium",
     "lint": "tsc --noEmit",
+    "test:seo": "tsx --test src/server/seo/__tests__/*.test.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:generate": "drizzle-kit generate",
     "sync:travel-guide": "node scripts/sync-travel-guide.mjs",
