@@ -5952,6 +5952,7 @@ function CalendarView({
             }
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
             title="上個月"
+            aria-label="上個月"
           >
             <ChevronLeft size={20} />
           </button>
@@ -5970,6 +5971,7 @@ function CalendarView({
             }
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
             title="下個月"
+            aria-label="下個月"
           >
             <ChevronRight size={20} />
           </button>

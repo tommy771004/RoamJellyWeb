@@ -152,6 +152,7 @@ function FlightCard({
       className="block w-full h-full text-left appearance-none border-none bg-transparent p-0 flex flex-col focus:outline-none group/card cursor-pointer"
       role="button"
       tabIndex={0}
+      aria-label={`查看 ${providerName} 航班 ${flight.details?.depCode || ""} → ${flight.details?.arrCode || ""} ${flight.currency} ${flight.price}`}
       onClick={onPress}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -338,6 +339,7 @@ function FlightCard({
                 e.stopPropagation();
                 onImportToTrip(e);
               }}
+              aria-label="帶入行程"
               className={`h-11 px-4 rounded-[10px] flex items-center gap-1.5 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg ${subtlePressableClass} ${raisedHoverClass}`}
             >
               <PlaneTakeoff size={14} strokeWidth={2.5} />
@@ -390,8 +392,17 @@ function FlightTable({
         return (
           <div
             key={flight.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`查看 ${providerName} 航班 ${flight.details?.depCode || ""} → ${flight.details?.arrCode || ""} ${flight.currency} ${flight.price}`}
             className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md rounded-2xl overflow-hidden cursor-pointer transition-shadow duration-200"
             onClick={() => onPress(flight)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onPress(flight);
+              }
+            }}
           >
             <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
               {/* Left: Airline + Route */}
@@ -786,6 +797,7 @@ function DestinationCard({
                 e.stopPropagation();
                 onToggleSave(e);
               }}
+              aria-label={isSaved ? "取消收藏目的地" : "收藏目的地"}
               className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/65 backdrop-blur-md transition-all active:scale-90 shadow-sm ${isSaved ? "bg-pink-500 text-white" : "bg-white/85 text-slate-500 hover:bg-white hover:text-pink-500"}`}
             >
               <Heart
@@ -1475,6 +1487,7 @@ export default function HomeTab({
                 <div className="flex items-center gap-1 mb-3 p-1 rounded-full bg-white/50 border border-white/70 w-fit">
                   <button
                     onClick={() => updateField("tripType", "oneway")}
+                    aria-pressed={searchForm.tripType !== "roundtrip"}
                     className={`px-5 py-2 rounded-full text-[11px] font-black tracking-wide transition-all ${
                       searchForm.tripType !== "roundtrip"
                         ? "bg-white text-slate-900 shadow-sm"
@@ -1485,6 +1498,7 @@ export default function HomeTab({
                   </button>
                   <button
                     onClick={() => updateField("tripType", "roundtrip")}
+                    aria-pressed={searchForm.tripType === "roundtrip"}
                     className={`px-5 py-2 rounded-full text-[11px] font-black tracking-wide transition-all ${
                       searchForm.tripType === "roundtrip"
                         ? "bg-white text-slate-900 shadow-sm"
