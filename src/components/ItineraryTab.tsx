@@ -3735,7 +3735,7 @@ function ItineraryList({
               🏝️
             </div>
             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 sm:mb-3 tracking-tight">新增行程</h3>
-            <p className="text-slate-600 font-bold max-w-[360px] leading-relaxed text-[12px] tracking-[0.06em] px-4 whitespace-nowrap">現在不是提醒你空白，而是直接幫你補上第一步。</p>
+            <p className="text-slate-600 font-bold max-w-[360px] leading-relaxed text-[12px] tracking-[0.06em] px-4 text-center">現在不是提醒你空白，而是直接幫你補上第一步。</p>
             <div className="mt-8 flex w-full max-w-[340px] flex-col gap-3.5">
               <button
                 type="button"

@@ -62,6 +62,7 @@
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "src": "/guide/(.*)", "dest": "/guide/$1" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/manifest.json", "dest": "/manifest.json" },
     { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?|webmanifest))", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]

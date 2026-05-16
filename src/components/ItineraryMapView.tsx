@@ -61,29 +61,29 @@ function CustomMarker({
   seqNum: number;
   compact?: boolean;
 }) {
-  const badgeColor = isSelected ? '#ec4899' : '#6366f1';
+  const badgeColor = isSelected ? '#ec4899' : '#a855f7';
   const iconHtml = compact
     ? `
     <div style="position:relative;display:flex;flex-direction:column;align-items:center">
-      <div style="background:white;border-radius:50%;width:28px;height:28px;border:2px solid ${badgeColor};display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,0.15);position:relative;">
+      <div style="background:linear-gradient(135deg,#fff0f8 0%,#fef9ff 100%);border-radius:50%;width:34px;height:34px;border:2.5px solid ${badgeColor};display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 4px 12px ${badgeColor}40,0 1px 4px rgba(0,0,0,0.12);position:relative;">
         ${item.emoji}
-        <span style="position:absolute;top:-6px;right:-6px;background:${badgeColor};color:white;border-radius:50%;width:14px;height:14px;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1;">${seqNum}</span>
+        <span style="position:absolute;top:-8px;right:-8px;background:${badgeColor};color:white;border-radius:50%;width:17px;height:17px;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1;border:1.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.2);">${seqNum}</span>
       </div>
-      <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid ${badgeColor};margin-top:-1px;"></div>
+      <div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:8px solid ${badgeColor};margin-top:-2px;filter:drop-shadow(0 2px 2px ${badgeColor}40);"></div>
     </div>`
     : `
-    <div class="relative flex flex-col items-center">
-      <div class="bg-white rounded-2xl px-2.5 py-1.5 border-2 ${isSelected ? 'border-pink-500 scale-110 shadow-lg shadow-pink-100' : 'border-white shadow-md'} flex items-center justify-center transition-all cursor-pointer group hover:scale-110 relative">
-        <span class="text-xl leading-none group-hover:scale-110 transition-transform">${item.emoji}</span>
-        <span style="position:absolute;top:-8px;right:-8px;background:${badgeColor};color:white;border-radius:9999px;min-width:18px;height:18px;padding:0 3px;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.3);">${seqNum}</span>
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center">
+      <div style="background:${isSelected ? 'linear-gradient(135deg,#fce7f3,#ede9fe)' : 'linear-gradient(135deg,#fff0f8,#fef9ff)'};border-radius:20px;padding:8px 12px;border:2px solid ${isSelected ? '#f472b6' : '#fbcfe8'};display:flex;align-items:center;justify-content:center;box-shadow:${isSelected ? '0 8px 24px #f472b640,0 2px 8px rgba(0,0,0,0.12)' : '0 4px 16px #f9a8d440,0 1px 4px rgba(0,0,0,0.08)'};position:relative;transform:${isSelected ? 'scale(1.12)' : 'scale(1)'};transition:all 0.2s;">
+        <span style="font-size:22px;line-height:1;">${item.emoji}</span>
+        <span style="position:absolute;top:-10px;right:-10px;background:${badgeColor};color:white;border-radius:9999px;min-width:21px;height:21px;padding:0 4px;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.2);border:2px solid white;">${seqNum}</span>
       </div>
-      <div class="w-3 h-3 -mt-2 border-r-2 border-b-2 rotate-45 ${isSelected ? 'bg-pink-500 border-pink-500' : 'bg-white border-white'}"></div>
-      <div class="mt-1 px-2.5 py-1 rounded-full ${isSelected ? 'bg-pink-600 text-white shadow-md' : 'bg-slate-800/90 text-white/90'} transition-all"><span class="text-[10px] font-bold whitespace-nowrap block max-w-[120px] truncate">${item.title}</span></div>
+      <div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid ${isSelected ? '#f472b6' : '#fbcfe8'};margin-top:-2px;"></div>
+      <div style="margin-top:3px;padding:3px 10px;border-radius:9999px;background:${isSelected ? 'linear-gradient(90deg,#db2777,#9333ea)' : 'linear-gradient(90deg,#fce7f3,#ede9fe)'};border:1px solid ${isSelected ? '#db277780' : '#f9a8d480'};box-shadow:0 2px 8px ${isSelected ? '#db277730' : '#f9a8d430'};"><span style="font-size:10px;font-weight:900;color:${isSelected ? 'white' : '#7c3aed'};white-space:nowrap;display:block;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${item.title}</span></div>
     </div>
   `;
 
-  const size: [number, number] = compact ? [40, 52] : [120, 80];
-  const anchor: [number, number] = compact ? [20, 52] : [60, 60];
+  const size: [number, number] = compact ? [48, 60] : [140, 90];
+  const anchor: [number, number] = compact ? [24, 60] : [70, 68];
 
   const customIcon = L.divIcon({
     html: iconHtml,
@@ -162,8 +162,8 @@ export default function ItineraryMapView({
           touchZoom={true}
         >
           <TileLayer
-            attribution='&copy; <a href="https://carto.com/">Carto</a>'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
           <MapUpdater
             selectedLat={selectedNode?.lat}
@@ -171,15 +171,25 @@ export default function ItineraryMapView({
             items={validItems}
             allItems={allNodes}
           />
-          {/* Route order: solid line connecting nodes in sequence, plus a subtle dashed outline */}
+          {/* Cute kawaii route: soft halo → white core → colorful dashes */}
           {validItems.length > 1 && (
             <>
               <Polyline
                 positions={validItems.map((item) => [item.lat!, item.lng!])}
                 pathOptions={{
-                  color: '#e879f9',
-                  weight: compact ? 3 : 5,
-                  opacity: 0.25,
+                  color: '#fce7f3',
+                  weight: compact ? 10 : 18,
+                  opacity: 0.55,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                }}
+              />
+              <Polyline
+                positions={validItems.map((item) => [item.lat!, item.lng!])}
+                pathOptions={{
+                  color: 'white',
+                  weight: compact ? 4 : 7,
+                  opacity: 0.9,
                   lineCap: 'round',
                   lineJoin: 'round',
                 }}
@@ -189,10 +199,10 @@ export default function ItineraryMapView({
                 pathOptions={{
                   color: '#ec4899',
                   weight: compact ? 2 : 3,
-                  dashArray: compact ? '4, 8' : '6, 10',
+                  dashArray: compact ? '4, 8' : '6, 12',
                   lineCap: 'round',
                   lineJoin: 'round',
-                  opacity: 0.85,
+                  opacity: 1,
                 }}
               />
             </>

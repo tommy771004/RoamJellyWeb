@@ -104,16 +104,16 @@ export const LocationPickerPopup = ({
           </div>
 
             {/* Cities Grid */}
-            <div className="grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-4 pr-1 sm:grid-cols-3 md:px-7 md:pb-5 md:pt-0">
+            <div className="grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-4 sm:grid-cols-3 md:px-7 md:pb-5 md:pt-0">
               {filteredDestinations.length > 0 ? (
                 filteredDestinations.map((dest) => (
                   <button
                     key={dest.id}
                     onClick={() => onSelect(dest)}
-                    className="flex flex-col items-start p-4 rounded-[20px] bg-white/60 border border-slate-100/50 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 transition-all group active:scale-95 shadow-sm"
+                    className="flex w-full min-w-0 flex-col items-start overflow-hidden p-4 rounded-[20px] bg-white/60 border border-slate-100/50 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 transition-all group active:scale-95 shadow-sm"
                   >
                     <span className="text-[11px] font-black tracking-widest uppercase text-slate-400 group-hover:text-fuchsia-400 mb-0.5">{dest.country}</span>
-                    <span className="text-base font-extrabold text-slate-700 group-hover:text-fuchsia-700">{dest.place}</span>
+                    <span className="w-full break-words text-base font-extrabold text-slate-700 group-hover:text-fuchsia-700">{dest.place}</span>
                   </button>
                 ))
               ) : (
