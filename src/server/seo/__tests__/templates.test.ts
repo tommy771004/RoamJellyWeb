@@ -43,3 +43,36 @@ test('buildRoutePage is valid HTML structure', () => {
   assert.ok(html.includes('<title>'));
   assert.ok(html.includes('</html>'));
 });
+
+import { buildDestinationPage } from '../templates/destinationPage.js';
+import type { DestinationData } from '../types.js';
+
+const sampleDest: DestinationData = {
+  slug: 'tokyo',
+  displayName: '東京',
+  trips: [
+    {
+      id: 'trip1',
+      name: '東京散策',
+      forkCount: 42,
+      nodes: [
+        { day: 1, time: '10:00', title: '淺草寺', category: 'spot', description: '東京著名神社' },
+        { day: 1, time: '14:00', title: '上野公園', category: 'spot', description: null },
+        { day: 2, time: '09:00', title: '新宿御苑', category: 'spot', description: null },
+      ],
+    },
+  ],
+  popularSpots: ['淺草寺', '上野公園', '新宿御苑'],
+};
+
+test('buildDestinationPage returns valid HTML with destination name', () => {
+  const html = buildDestinationPage(sampleDest);
+  assert.ok(html.startsWith('<!DOCTYPE html>'));
+  assert.ok(html.includes('東京'));
+  assert.ok(html.includes('淺草寺'));
+});
+
+test('buildDestinationPage includes registration CTA', () => {
+  const html = buildDestinationPage(sampleDest);
+  assert.ok(html.includes('免費') || html.includes('登入'));
+});
