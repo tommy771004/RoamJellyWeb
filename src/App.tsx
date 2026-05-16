@@ -601,7 +601,7 @@ export default function App() {
       )}
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-white/60 dark:bg-slate-950/72 backdrop-blur-[30px] backdrop-saturate-[180%] border-b border-white/80 dark:border-white/10 shadow-[0_10px_40px_-10px_rgba(255,160,200,0.15)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.45)] transition-all duration-500">
+      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-white/70 dark:bg-slate-950/75 backdrop-blur-[40px] backdrop-saturate-[220%] border-b border-white/90 dark:border-white/12 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_12px_40px_-8px_rgba(220,130,170,0.2)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] transition-all duration-500">
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20">
           <h1 className="text-[22px] sm:text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>

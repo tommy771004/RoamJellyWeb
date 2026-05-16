@@ -97,7 +97,7 @@ function FlightCard({ flight, isSaved, isTracked, onPress, onImportToTrip, onTog
         }
       }}
     >
-      <GlassCard className={`!p-0 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md flex-1 flex flex-col overflow-hidden rounded-2xl transition-shadow duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}>
+      <GlassCard className={`!p-0 bg-white dark:bg-slate-800 border border-slate-100/80 dark:border-slate-700 shadow-[0_2px_12px_rgba(134,77,97,0.07),0_1px_3px_rgba(134,77,97,0.04)] hover:shadow-[0_8px_32px_rgba(134,77,97,0.14),0_2px_8px_rgba(134,77,97,0.07)] hover:-translate-y-0.5 flex-1 flex flex-col overflow-hidden rounded-2xl transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}>
 
         {/* Top Section: Airline & Route */}
         <div className="p-4 flex flex-col gap-3">
@@ -948,16 +948,18 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
     >
       {/* === HERO SECTION with gradient background === */}
       <div className={`relative z-10 w-full pt-14 sm:pt-[72px] ${!isHeroExpanded ? 'pb-3' : 'pb-12 sm:pb-14'} px-4 sm:px-6 overflow-visible`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-200/90 via-pink-100 to-sky-200/80 pointer-events-none" />
-        <div className="absolute -top-10 right-10 w-72 h-72 bg-rose-300/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 left-0 w-72 h-72 bg-sky-300/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-rose-200/95 via-pink-100/90 to-sky-200/85 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute -top-16 right-8 w-80 h-80 bg-rose-300/30 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute -bottom-16 left-0 w-80 h-80 bg-sky-300/30 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-64 h-64 bg-fuchsia-200/20 rounded-full blur-[60px] pointer-events-none" />
 
         <div className="relative z-20 max-w-[980px] mx-auto w-full">
           {/* Hero title */}
           <div className={`text-center mb-5 sm:mb-6${!isHeroExpanded ? ' hidden sm:block' : ''}`}>
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-2.5">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight">AI 智慧行程規劃</h1>
-              <span className="px-2.5 py-1 rounded-full bg-white/60 border border-pink-200 text-pink-600 text-[10px] sm:text-[11px] font-black uppercase tracking-wider backdrop-blur-sm">BETA</span>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight drop-shadow-[0_1px_2px_rgba(134,77,97,0.15)]">AI 智慧行程規劃</h1>
+              <span className="px-2.5 py-1 rounded-full bg-white/75 border border-pink-200/80 text-pink-600 text-[10px] sm:text-[11px] font-black uppercase tracking-wider backdrop-blur-md shadow-[0_2px_8px_rgba(236,72,153,0.15)]">BETA</span>
             </div>
             <p className="text-slate-600/90 text-sm sm:text-base">輸入目的地，秒速生成專屬客製化旅航計畫</p>
           </div>
@@ -1006,7 +1008,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                 </div>
 
                 {/* Search card */}
-                <div className="bg-white/90 dark:bg-slate-800/90 rounded-3xl border border-white/80 dark:border-slate-700 shadow-sm backdrop-blur-xl p-4 flex flex-col gap-3">
+                <div className="bg-white/92 dark:bg-slate-800/90 rounded-3xl border border-white/95 dark:border-slate-700 shadow-[0_8px_40px_rgba(134,77,97,0.12),0_2px_8px_rgba(134,77,97,0.06),inset_0_1px_0_rgba(255,255,255,1)] backdrop-blur-2xl p-4 flex flex-col gap-3">
 
                   {/* FROM / TO row */}
                   <div className="relative grid grid-cols-2">
@@ -1018,7 +1020,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase">FROM</span>
                       <input
                         id="search-from"
-                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-400 w-full outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.from}
                         onFocus={() => { setShowDeparturePicker(true); setShowDestinationPicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('from', e.target.value)}
@@ -1040,7 +1042,7 @@ export default function HomeTab({ onRequireLogin, isLoggedIn }: { onRequireLogin
                       <span className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase">TO</span>
                       <input
                         id="search-to"
-                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-400 w-full outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.to}
                         onFocus={() => { setShowDestinationPicker(true); setShowDeparturePicker(false); setShowDatePicker(false); }}
                         onChange={(e) => updateField('to', e.target.value)}

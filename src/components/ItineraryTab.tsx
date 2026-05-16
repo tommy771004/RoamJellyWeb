@@ -1816,7 +1816,7 @@ export default function ItineraryTab() {
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600">
                    {tripInfo?.name || tripInfo?.destination || '未命名目的地'}
                 </span>
-                <span className="text-4xl lg:text-5xl animate-bounce group-hover/title:scale-125 transition-transform">✨</span>
+                <span className="text-4xl lg:text-5xl group-hover/title:scale-125 transition-transform duration-300">✨</span>
               </div>
             </h1>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 text-slate-500 font-bold text-[14px]">
