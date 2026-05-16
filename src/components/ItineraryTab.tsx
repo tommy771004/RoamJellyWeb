@@ -4466,7 +4466,9 @@ function ItineraryListItem({
                 </div>
 
                 {item.image_url && (
-                  <div
+                  <button
+                    type="button"
+                    aria-label={`放大查看 ${item.title} 圖片`}
                     className="w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -4487,7 +4489,7 @@ function ItineraryListItem({
                         strokeWidth={1.5}
                       />
                     </div>
-                  </div>
+                  </button>
                 )}
 
                 {item.attachments && item.attachments.length > 0 && (
@@ -6049,6 +6051,7 @@ function CalendarView({
             </span>
             <button
               onClick={() => setSelectedNodeId(null)}
+              aria-label="關閉詳細內容"
               className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-200 text-slate-500 hover:text-slate-600 transition-colors shadow-sm cursor-pointer border border-slate-200/50"
             >
               <X size={16} strokeWidth={3} />
