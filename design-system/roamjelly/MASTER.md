@@ -1,13 +1,13 @@
 # Design System Master File
 
-> **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
+> **LOGIC:** When building a specific page, first check `design-system/roamjelly/pages/[page-name].md`.
 > If that file exists, its rules **override** this Master file.
 > If not, strictly follow the rules below.
 
 ---
 
 **Project:** RoamJelly
-**Generated:** 2026-05-16 23:09:15
+**Generated:** 2026-05-17
 **Category:** Travel/Tourism Agency
 
 ---
@@ -30,7 +30,7 @@
 
 - **Heading Font:** Inter
 - **Body Font:** Inter
-- **Mood:** spatial, legible, glass, system, clean, neutral
+- **Mood:** inspirational, engaging, clean, mobile-first, collaborative
 - **Google Fonts:** [Inter + Inter](https://fonts.google.com/share?selection.family=Inter:wght@300;400;500;600)
 
 **CSS Import:**
@@ -153,21 +153,32 @@
 
 ## Style Guidelines
 
-**Style:** 3D & Hyperrealism
+**Style:** Motion-Driven
 
-**Keywords:** Depth, realistic textures, 3D models, spatial navigation, tactile, skeuomorphic elements, rich detail, immersive
+**Keywords:** Animation-heavy, microinteractions, smooth transitions, scroll effects, parallax, entrance animation, page transitions
 
-**Best For:** Gaming, product showcase, immersive experiences, high-end e-commerce, architectural viz, VR/AR
+**Best For:** Storytelling platforms, collaborative planners, interactive travel experiences, creative SaaS, feature-led marketing pages
 
-**Key Effects:** WebGL/Three.js 3D, realistic shadows (layers), physics lighting, parallax (3-5 layers), smooth 3D (300-400ms)
+**Key Effects:** Scroll-triggered reveals, hover feedback, layered parallax (3-5 layers max), entrance animations, route/page transitions
+
+**Performance:** Good when motion stays transform/opacity-based and lazy content is staged progressively
+
+**Accessibility:** Respect `prefers-reduced-motion`; motion should enhance orientation, not block task completion
 
 ### Page Pattern
 
-**Pattern Name:** App Store Style Landing
+**Pattern Name:** Storytelling-Driven + Hero
 
-- **Conversion Strategy:** Show real screenshots. Include ratings (4.5+ stars). QR code for mobile. Platform-specific CTAs.
-- **CTA Placement:** Download buttons prominent (App Store + Play Store) throughout
-- **Section Order:** 1. Hero with device mockup, 2. Screenshots carousel, 3. Features with icons, 4. Reviews/ratings, 5. Download CTAs
+- **Conversion Strategy:** Lead with the trip-planning outcome, then reduce friction by showing collaboration, map context, and clear next actions.
+- **CTA Placement:** Primary CTA above the fold, with secondary CTA after features or social proof.
+- **Section Order:** 1. Hero, 2. Features, 3. CTA
+
+### Motion Rules
+
+- Use 150-300ms transitions for buttons, cards, and state changes.
+- Reserve 300-400ms motion only for entrance sequences or layered hero storytelling.
+- Prefer opacity and transform animations; do not animate layout-affecting properties.
+- Disable parallax and non-essential entrance motion when reduced motion is requested.
 
 ---
 

@@ -81,12 +81,12 @@ export default function JellyAssistant() {
       <AnimatePresence>
         {!isOpen && (
           <motion.button
-            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.92 }}
+            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.8 }}
             animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.92 }}
-            transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.8 }}
+            transition={prefersReducedMotion ? { duration: 0.16 } : { type: 'spring', bounce: 0.6, duration: 0.7 }}
             onClick={() => setIsOpen(true)}
-            className={`fixed bottom-24 right-6 w-14 h-14 rounded-full border border-white/20 bg-gradient-to-tr from-fuchsia-500 via-purple-500 to-indigo-500 shadow-[0_12px_28px_rgba(217,70,239,0.28)] flex items-center justify-center z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60 ${subtlePressableClass}`}
+            className={`fixed bottom-24 right-6 w-14 h-14 rounded-full border border-white/20 bg-gradient-to-tr from-fuchsia-500 via-purple-500 to-indigo-500 shadow-[0_12px_32px_rgba(217,70,239,0.35)] flex items-center justify-center z-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60 ${subtlePressableClass}`}
             aria-label="開啟 Jelly AI 行程顧問"
           >
             <div className="absolute inset-[1px] rounded-full bg-gradient-to-br from-white/22 to-transparent opacity-80" />
@@ -153,17 +153,17 @@ export default function JellyAssistant() {
                     </div>
                   )}
                   <div className={`max-w-[80%] flex flex-col gap-2 ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`px-4 py-3 rounded-2xl ${message.role === 'user' ? 'bg-fuchsia-500 text-white rounded-tr-sm shadow-[0_4px_15px_rgba(217,70,239,0.3)]' : 'bg-white/90 dark:bg-white/10 dark:text-white text-slate-800 rounded-tl-sm shadow-sm border border-white/50 dark:border-white/5'}`}>
-                      <p className="text-[14.5px] leading-relaxed">{message.text}</p>
+                    <div className={`px-5 py-3.5 rounded-[24px] ${message.role === 'user' ? 'bg-gradient-to-br from-fuchsia-400 to-fuchsia-600 text-white rounded-tr-sm shadow-[0_8px_20px_rgba(217,70,239,0.25)]' : 'bg-white/95 dark:bg-white/10 dark:text-white text-slate-800 rounded-tl-sm shadow-[0_4px_16px_rgba(0,0,0,0.04)] border border-white/60 dark:border-white/5'}`}>
+                      <p className="text-[14.5px] leading-relaxed font-bold">{message.text}</p>
                     </div>
                     {message.hasCard && (
                       <motion.div 
-                        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                        className="w-full bg-white/90 dark:bg-white/10 border border-white/50 dark:border-white/10 rounded-[24px] overflow-hidden shadow-lg mt-2"
+                        initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 15, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={prefersReducedMotion ? { duration: 0.16 } : { type: 'spring', bounce: 0.5, duration: 0.6 }}
+                        className="w-full bg-white/95 dark:bg-white/10 border border-white/60 dark:border-white/10 rounded-[28px] overflow-hidden shadow-[0_12px_32px_rgba(0,0,0,0.1)] mt-2"
                       >
-                        <div className="h-24 bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center relative">
+                        <div className="h-28 bg-gradient-to-tr from-orange-400 via-pink-500 to-fuchsia-500 flex items-center justify-center relative">
                           <div className="absolute inset-0 bg-black/10" />
                           <h4 className="text-white font-black text-xl tracking-wider relative z-10 drop-shadow-md">TRIP PLAN</h4>
                         </div>

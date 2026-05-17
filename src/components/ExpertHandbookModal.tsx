@@ -73,7 +73,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
-            className="relative w-full sm:max-w-3xl md:max-w-4xl bg-[#f8fafc] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col overflow-hidden max-h-modal-dvh"
+            className="relative w-full sm:max-w-3xl md:max-w-4xl bg-[#f8fafc] rounded-t-[40px] sm:rounded-[40px] shadow-[0_32px_80px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden max-h-modal-dvh"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -179,7 +179,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                   onCopyPath(handbook);
                   handleClose();
                 }}
-                className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm px-6 py-2.5 rounded-full shadow-md hover:shadow-lg transition-all active:scale-95"
+                className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-black text-sm px-7 py-3 rounded-full shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(99,102,241,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(99,102,241,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.93] hover:-translate-y-1"
               >
                 <Download size={16} strokeWidth={2.5}/>
                 <span className="whitespace-nowrap">一鍵複製行程</span>

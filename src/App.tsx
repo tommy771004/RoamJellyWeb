@@ -26,6 +26,7 @@ import {
   CalendarDays as CalendarDaysIcon,
   Luggage as LuggageIcon,
   PlaneTakeoff,
+  UserRound,
 } from 'lucide-react';
 import BottomTabs, { TABS } from './components/BottomTabs';
 
@@ -39,10 +40,12 @@ import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, getNativeMapUrl } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, getNativeMapUrl, createGuestSession } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
 import { JellyToast } from './components/JellyToast';
 type LoginPromptMode = 'default' | 'guest-first';
+
+const AUTO_GUEST_TABS = new Set(['ai_form', 'itinerary', 'tools']);
 
 /** Extract /trip/:tripId from the current URL path, null if no match. */
 function getTripLandingId(): string | null {
@@ -86,8 +89,14 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [loginPromptMode, setLoginPromptMode] = useState<LoginPromptMode>('default');
+  const [guestBootstrapState, setGuestBootstrapState] = useState<'idle' | 'loading' | 'error'>('idle');
 
   const isLoggedIn = !!userId;
+  const shouldAutoGuestBootstrap =
+    !isLoggedIn &&
+    !showLogin &&
+    AUTO_GUEST_TABS.has(activeTab) &&
+    !(activeTab === 'tools' && !activeTripId);
   const lastActivityRef = useRef<number>(Date.now());
   const lastPersistedActivityRef = useRef<number>(Date.now());
   const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
@@ -225,6 +234,31 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (!shouldAutoGuestBootstrap) {
+      setGuestBootstrapState('idle');
+      return;
+    }
+
+    let cancelled = false;
+    setGuestBootstrapState('loading');
+
+    void createGuestSession()
+      .then((guest) => {
+        if (cancelled) return;
+        handleLogin(guest.user_id);
+        setGuestBootstrapState('idle');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setGuestBootstrapState('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shouldAutoGuestBootstrap]);
+
   const handleRedirectConfirm = async () => {
     const current = redirectModal;
     closeRedirectModal();
@@ -249,29 +283,29 @@ export default function App() {
       case 'tools':
         return {
           contextLabel: '旅途工具包',
-          title: '先建一個訪客旅程，工具包就會立刻解鎖',
-          description: '不用先註冊，先用訪客身分建立或挑一份行程，就能開始看天氣、整理清單和分帳。',
+          title: '先開一趟訪客旅程，再把清單、天氣與分帳接上工具包',
+          description: '不用先註冊，先用訪客身分建立或挑一份行程，工具包就會立刻拿到這趟旅程的上下文。',
           guestCtaLabel: '先用訪客身分開一趟旅程',
         };
       case 'itinerary':
         return {
           contextLabel: '行程手帳',
-          title: '先用訪客身分開一份旅程，喜歡再正式註冊',
-          description: 'AI 規劃、共編手帳、旅程收藏都可以先體驗，之後再把進度綁到正式帳號。',
+          title: '先選一趟旅程，再把 AI 草稿與共編安排接回手帳',
+          description: '先用訪客身分體驗行程手帳的主線，確認排序、收藏與共編節奏順手後，再決定是否正式註冊。',
           guestCtaLabel: '先用訪客身分開始規劃',
         };
       case 'ai_form':
         return {
           contextLabel: 'AI 旅程規劃',
-          title: '先讓 AI 幫你排一版，再決定要不要留下帳號',
-          description: '先用訪客身分生成旅程，確認方向對了，再登入同步與保存。',
+          title: '先讓 AI 起草一版旅程，再回到手帳慢慢補完',
+          description: '先用訪客身分生成可編輯的第一版旅程，確認方向對了，再登入同步與保存。',
           guestCtaLabel: '先用訪客身分交給 AI',
         };
       default:
         return {
           contextLabel: '快速體驗',
-          title: '先用訪客身分開始，喜歡再註冊也不遲',
-          description: '收藏、複製手帳、Demo 預覽都可以先玩，不必一開始就進入註冊流程。',
+          title: '先把旅程流程跑順，喜歡再註冊也不遲',
+          description: '首頁搜尋、AI 起草、手帳與工具包都可以先用訪客身分走過一遍，不必一開始就進入註冊流程。',
           guestCtaLabel: '先用訪客身分體驗',
         };
     }
@@ -291,8 +325,9 @@ export default function App() {
   };
 
   const prevActiveTabRef = useRef<string>(activeTab);
-    const isAuthSurfaceVisible = showLogin || (!isLoggedIn && activeTab !== 'home');
-    const shouldShowAssistant =
+  const canRenderPublicToolsEntry = !isLoggedIn && activeTab === 'tools' && !activeTripId;
+  const isAuthSurfaceVisible = showLogin || (!isLoggedIn && activeTab !== 'home' && !canRenderPublicToolsEntry);
+  const shouldShowAssistant =
       !isAuthSurfaceVisible &&
       activeTab !== 'ai_form' &&
       activeTab !== 'ai_result' &&
@@ -355,6 +390,42 @@ export default function App() {
         setLoginPromptMode('guest-first');
         setShowLogin(true);
       }} isLoggedIn={isLoggedIn} />;
+    }
+    if (shouldAutoGuestBootstrap && guestBootstrapState === 'loading') {
+      const bootstrapCopy = getGuestLoginCopy(activeTab);
+      return (
+        <div className="flex min-h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.2),transparent_34%),radial-gradient(circle_at_bottom,rgba(251,146,60,0.16),transparent_36%),#f8fafc] px-5 py-10">
+          <div className="w-full max-w-[560px] rounded-[32px] border border-white/80 bg-white/85 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-8">
+            <div className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-sky-700">
+              Guest Access
+            </div>
+            <h2 className="mt-4 text-balance text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+              正在幫你開一個訪客旅程入口
+            </h2>
+            <p className="mt-3 text-pretty text-sm font-bold leading-6 text-slate-600 sm:text-base sm:leading-7">
+              {bootstrapCopy.description}
+            </p>
+            <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
+                  <PlaneTakeoff size={18} strokeWidth={2.5} className="animate-pulse" />
+                </div>
+                <div>
+                  <p className="text-[12px] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {bootstrapCopy.contextLabel}
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-slate-700">
+                    建立訪客身分後，會直接帶你進入新的入口畫面。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (canRenderPublicToolsEntry) {
+      return <ToolsTab />;
     }
     if (!isLoggedIn) {
       return <LoginScreen
@@ -601,10 +672,10 @@ export default function App() {
       )}
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] sm:pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-3 sm:pb-4 flex justify-between items-center bg-white/70 dark:bg-slate-950/75 backdrop-blur-[40px] backdrop-saturate-[220%] border-b border-white/90 dark:border-white/12 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_12px_40px_-8px_rgba(220,130,170,0.2)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] transition-all duration-500">
+      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] sm:pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-3 sm:pb-4 flex justify-between items-center bg-[linear-gradient(135deg,rgba(255,255,255,0.84),rgba(255,247,251,0.76),rgba(240,249,255,0.82))] dark:bg-slate-950/75 backdrop-blur-[40px] backdrop-saturate-[220%] border-b border-white/95 dark:border-white/12 shadow-[0_1px_0_rgba(255,255,255,0.95)_inset,0_18px_42px_-18px_rgba(236,72,153,0.28),0_18px_42px_-16px_rgba(56,189,248,0.18)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] transition-all duration-500">
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20">
-          <h1 className="text-[22px] sm:text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>
+          <h1 className="bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 bg-clip-text text-[22px] text-transparent sm:text-2xl font-black italic tracking-tight font-plus-jakarta pr-2 drop-shadow-[0_6px_18px_rgba(251,146,60,0.18)]">RoamJelly</h1>
         </div>
         
         {/* Desktop Navigation (Center, hidden on mobile) */}
@@ -616,10 +687,10 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex flex-row items-center gap-2 px-5 py-2.5 transition-all rounded-[20px] ${
+                className={`flex flex-row items-center gap-2 px-5 py-2.5 transition-all rounded-[24px] border ${
                   isActive 
-                    ? 'bg-white/80 shadow-[0_0_15px_rgba(255,183,206,0.6)] text-pink-600' 
-                    : 'text-pink-500/70 hover:bg-white/50 hover:text-pink-500'
+                    ? 'border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(254,242,248,0.90),rgba(240,249,255,0.92))] shadow-[0_12px_24px_rgba(236,72,153,0.14)] text-pink-600' 
+                    : 'border-transparent text-slate-500 hover:bg-white/75 hover:border-white/80 hover:text-pink-500'
                 }`}
               >
                 {Icon && <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'opacity-100' : 'opacity-60'} />}
@@ -634,7 +705,7 @@ export default function App() {
           {isLoggedIn && (
             <button
               onClick={() => setShowUserProfile(true)}
-              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full jelly-button text-orange-400"
               aria-label="偏好設定"
             >
               <Settings2 size={20} />
@@ -642,7 +713,7 @@ export default function App() {
           )}
           <button
             onClick={() => setDarkMode(!isDarkMode)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+            className="w-10 h-10 flex items-center justify-center rounded-full jelly-button text-sky-500"
             aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -650,7 +721,7 @@ export default function App() {
           <div className="relative hidden sm:block">
             <button
               onClick={() => setShowNotifications(v => !v)}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400 relative"
+              className="w-10 h-10 flex items-center justify-center rounded-full jelly-button text-pink-400 relative"
               aria-label="通知"
               aria-expanded={showNotifications}
             >
@@ -721,13 +792,13 @@ export default function App() {
                 setShowUserProfile(true);
               }
             }}
-            className={`flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'bg-fuchsia-50/80 border-fuchsia-200/50 hover:bg-fuchsia-100/80' : 'bg-slate-50/80 border-slate-200 hover:bg-white/90'}`}
+            className={`flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'border-white/90 bg-[linear-gradient(135deg,rgba(254,242,248,0.95),rgba(240,249,255,0.88))] hover:bg-white/95' : 'border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88),rgba(254,242,248,0.76))] hover:bg-white/95'}`}
           >
-            <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-fuchsia-700' : 'text-slate-500'}`}>
+            <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-pink-700' : 'text-slate-600'}`}>
               {isLoggedIn ? `${userId} 您好` : '未登入'}
             </span>
-            <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center pb-1 transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-pink-100' : 'bg-slate-200'}`}>
-              <span className="text-lg pt-1">{isLoggedIn ? '🐴' : '🤫'}</span>
+            <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
+              {isLoggedIn ? <UserRound size={17} strokeWidth={2.4} /> : <SparklesIcon size={16} strokeWidth={2.4} />}
             </div>
           </button>
         </div>
@@ -752,7 +823,7 @@ export default function App() {
       <div className="flex-1 relative z-10 w-full overflow-hidden flex flex-col">
         <AnimatePresence mode="wait" custom={tabSlideDir}>
           <motion.div
-            key={showLogin ? `login-${loginPromptMode}` : !isLoggedIn && activeTab !== 'home' ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
+            key={showLogin ? `login-${loginPromptMode}` : isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
               enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, x: dir * 18 }),

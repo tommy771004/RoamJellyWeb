@@ -1,5 +1,5 @@
 import React, { createContext, use, useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import {
   CloudRain,
   Check,
@@ -13,8 +13,13 @@ import {
   SlidersHorizontal,
   ArrowDownUp,
   Loader2,
+  CalendarDays,
+  MapPin,
+  ArrowRight,
+  ChevronDown,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
+import InfoPeekModal, { type InfoPeekContent } from "./InfoPeekModal";
 import IconImg from "./ui/IconImg";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -44,6 +49,7 @@ import { AiRateLimitedError, suggestPackingList } from "../lib/openrouterApi";
 import { useToolsStore, Expense } from "../store/useToolsStore";
 import { useAppStore } from "../store/useAppStore";
 import { useHideNavOnScroll } from "../hooks/useHideNavOnScroll";
+import { cn } from "../lib/utils";
 
 function getCurrentSeason(): string {
   const month = new Date().getMonth() + 1;
@@ -65,6 +71,69 @@ function getCurrencyFromDestination(destination: string): string {
     return "EUR";
   return "TWD";
 }
+
+const TOOLS_ENTRY_PILLARS = [
+  {
+    icon: CloudRain,
+    eyebrow: "出發前",
+    title: "跟著旅程看天氣與穿搭",
+    description: "工具包會依據目的地與日期，補上最先影響行程節奏的提醒。",
+    details: [
+      "一旦旅程有目的地與日期，工具包就能自動帶出相對應的天氣提醒。",
+      "你不需要再開另一個 App 查穿搭，先在這裡確認出門條件就好。",
+      "先看天氣再排當天節奏，會比最後一刻補救更穩定。",
+    ],
+    tone: "sky",
+  },
+  {
+    icon: CheckCircle2,
+    eyebrow: "旅途中",
+    title: "把待辦與行李收回同一頁",
+    description: "清單不再散在聊天或備忘錄，旅伴可沿著同一趟旅程一起補完。",
+    details: [
+      "把行李、提醒與小待辦綁回旅程，才不會散在不同對話與備忘錄裡。",
+      "清單可以先自己補，等旅伴要加入時再一起整理也可以。",
+      "這種收整方式特別適合手機上快速勾選，不用切來切去。",
+    ],
+    tone: "orange",
+  },
+  {
+    icon: ArrowDownUp,
+    eyebrow: "旅伴協作",
+    title: "分帳與提醒跟著旅程同步",
+    description: "每一筆代墊與結清狀態都留在這趟旅程裡，不用另外整理。",
+    details: [
+      "代墊、提醒與結清紀錄會跟著旅程走，不會變成另一份獨立表單。",
+      "之後要補歷史紀錄或同步成員，也比較不容易弄亂上下文。",
+      "先把旅程主線建立好，再讓分帳自然接上，比一開始做表格更順。",
+    ],
+    tone: "cyan",
+  },
+] as const;
+
+const TOOLS_CARD_DECOR = [
+  {
+    shell:
+      "border-sky-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(239,246,255,0.92))]",
+    badge: "border-sky-100 bg-sky-50/95 text-sky-700",
+    glow: "bg-sky-200/50",
+    note: "旅程一同步，就先提醒今天要穿什麼。",
+  },
+  {
+    shell:
+      "border-orange-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,247,237,0.92))]",
+    badge: "border-orange-100 bg-orange-50/95 text-orange-700",
+    glow: "bg-orange-200/50",
+    note: "待辦像貼紙一樣，一張張補回旅程裡。",
+  },
+  {
+    shell:
+      "border-cyan-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(236,254,255,0.92))]",
+    badge: "border-cyan-100 bg-cyan-50/95 text-cyan-700",
+    glow: "bg-cyan-200/50",
+    note: "每筆代墊都留在同一趟旅程的上下文。",
+  },
+] as const;
 
 interface ExpenseForm {
   title: string;
@@ -169,6 +238,14 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    if (!tripId) {
+      setLoading(false);
+      setTripInfo(null);
+      setWeather(null);
+      setSettlementHistory([]);
+      return;
+    }
+
     const init = async () => {
       try {
         setLoading(true);
@@ -468,6 +545,7 @@ function WeatherCard() {
   let targetDateString = "今天";
 
   if (weather) {
+    const dailyForecast = weather.daily ?? [];
     targetWeather = {
       temp_current: weather.temp_current,
       temp_max: weather.temp_max,
@@ -475,10 +553,10 @@ function WeatherCard() {
       rain_prob: weather.rain_prob,
       weather_code: weather.weather_code,
     };
-    if (tripInfo?.startDate && weather.daily?.length > 0) {
+    if (tripInfo?.startDate && dailyForecast.length > 0) {
       const start = new Date(tripInfo.startDate);
       if (!isNaN(start.getTime())) {
-        const match = weather.daily.find((d: any) => {
+        const match = dailyForecast.find((d: any) => {
           const dDate = new Date(d.date);
           return (
             dDate.getTime() === start.getTime() || d.date === tripInfo.startDate
@@ -514,7 +592,7 @@ function WeatherCard() {
         <div className="h-5 w-32 bg-slate-200 rounded-full" />
         <div className="h-3 w-24 bg-slate-100 rounded-full" />
         <div className="flex items-end justify-between mt-2">
-          <div className="h-8 w-24 bg-fuchsia-100 rounded-full" />
+          <div className="h-8 w-24 bg-sky-100 rounded-full" />
           <div className="h-14 w-16 bg-slate-100 rounded-xl" />
         </div>
         <div className="h-12 w-full bg-slate-100 rounded-xl" />
@@ -561,16 +639,31 @@ function WeatherCard() {
       : "未能取得天氣資料";
 
   return (
-    <GlassCard className="!p-5 sm:!p-8 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-500 hover:shadow-xl group border-white/80">
-      <div className="absolute -top-10 -right-10 w-48 h-48 sm:w-64 sm:h-64 bg-gradient-to-br from-fuchsia-300/40 to-orange-300/20 rounded-full blur-[40px] pointer-events-none group-hover:scale-125 transition-transform duration-700" />
-      <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-sky-300/20 rounded-full blur-[30px] pointer-events-none group-hover:scale-125 transition-transform duration-700 delay-75" />
+    <GlassCard className="!p-5 sm:!p-8 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-200 hover:shadow-lg group border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(239,246,255,0.90),rgba(255,247,237,0.84))]">
+      <div className="absolute -top-10 -right-10 w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-sky-200/35 blur-[36px] pointer-events-none group-hover:scale-105 transition-transform duration-200" />
+      <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-orange-200/25 blur-[28px] pointer-events-none group-hover:scale-105 transition-transform duration-200" />
+      <div className="absolute top-5 left-5 flex gap-2 opacity-90">
+        <span className="size-2 rounded-full bg-sky-300" />
+        <span className="size-2 rounded-full bg-orange-300" />
+        <span className="size-2 rounded-full bg-emerald-300" />
+      </div>
 
       <div className="relative z-10">
-        <h2 className="font-serif text-[26px] sm:text-3xl text-[#2C302E] mb-1 leading-tight">
+        <div className="mb-5 flex flex-wrap items-center gap-2 pt-4 sm:pt-0">
+          <span className="inline-flex items-center rounded-full border border-sky-200 bg-white/82 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-sky-700 shadow-sm">
+            Weather Postcard
+          </span>
+          {destination ? (
+            <span className="inline-flex items-center rounded-full border border-orange-100 bg-orange-50/90 px-3 py-1 text-[11px] font-black text-orange-700 shadow-sm">
+              {destination}
+            </span>
+          ) : null}
+        </div>
+        <h2 className="text-balance text-[26px] sm:text-3xl font-black text-slate-900 mb-1 leading-tight">
           {targetDateString}在 {destination || "您的目的地"}
         </h2>
         <div className="flex flex-col gap-1 mb-5 sm:mb-6">
-          <p className="text-[11px] sm:text-xs uppercase tracking-widest text-fuchsia-600/70 font-black">
+          <p className="text-[11px] sm:text-xs uppercase text-sky-700 font-black">
             Local Weather & Outfit
           </p>
           {isOffline && (
@@ -580,12 +673,12 @@ function WeatherCard() {
           )}
         </div>
 
-        <div className="flex items-center sm:items-end justify-between mb-5 sm:mb-6 bg-white/40 p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-white/50 shadow-sm">
+        <div className="flex items-center sm:items-end justify-between mb-5 sm:mb-6 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(240,249,255,0.80),rgba(255,247,237,0.76))] p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-white/70 shadow-sm">
           <div className="flex flex-col gap-3">
             <div className="flex bg-white/80 backdrop-blur-md rounded-full px-3.5 py-1.5 sm:px-4 sm:py-2 items-center gap-2 border border-slate-100 shadow-sm w-fit">
               <Icon
                 size={16}
-                className="text-fuchsia-500 sm:w-[18px] sm:h-[18px]"
+                className="text-sky-500 sm:w-[18px] sm:h-[18px]"
                 strokeWidth={2.5}
               />
               <span className="text-slate-700 font-black text-xs sm:text-sm">
@@ -602,17 +695,22 @@ function WeatherCard() {
               </span>
             )}
           </div>
-          <div className="text-[48px] sm:text-[56px] leading-none font-black tracking-tighter text-slate-800 drop-shadow-sm flex items-start gap-1 whitespace-nowrap">
-            {targetWeather?.temp_current != null
-              ? targetWeather.temp_current
-              : "--"}
-            <span className="text-2xl mt-2 font-bold text-slate-500">°</span>
+          <div className="flex flex-col items-end rounded-[20px] border border-white/80 bg-white/78 px-4 py-3 shadow-sm">
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+              today vibe
+            </span>
+            <div className="text-[48px] sm:text-[56px] leading-none font-black tracking-tighter text-slate-800 drop-shadow-sm flex items-start gap-1 whitespace-nowrap">
+              {targetWeather?.temp_current != null
+                ? targetWeather.temp_current
+                : "--"}
+              <span className="text-2xl mt-2 font-bold text-slate-500">°</span>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white/60 backdrop-blur-md rounded-[20px] sm:rounded-[24px] p-4 flex items-center gap-4 border border-white/60 shadow-sm mb-5 sm:mb-6">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-gradient-to-br from-fuchsia-100 to-pink-50 flex items-center justify-center text-lg sm:text-xl shadow-inner border border-white shrink-0 group-hover:rotate-6 transition-transform">
-            👗
+        <div className="bg-[linear-gradient(135deg,rgba(255,255,255,0.84),rgba(224,242,254,0.76),rgba(255,247,237,0.72))] backdrop-blur-md rounded-[20px] sm:rounded-[24px] p-4 flex items-center gap-4 border border-white/70 shadow-sm mb-5 sm:mb-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-white/86 flex items-center justify-center text-sky-600 shadow-inner border border-white shrink-0 group-hover:-translate-y-0.5 transition-transform duration-200">
+            <Sparkles size={18} strokeWidth={2.5} />
           </div>
           <div className="flex flex-col">
             <span className="text-slate-800 font-black text-sm">
@@ -625,8 +723,8 @@ function WeatherCard() {
         </div>
 
         {weather && weather.daily && weather.daily.length > 0 && (
-          <div className="flex flex-col gap-2 border-t border-fuchsia-100/50 pt-4">
-            <span className="text-[11px] uppercase tracking-widest text-fuchsia-600/70 font-bold mb-1">
+          <div className="flex flex-col gap-2 border-t border-sky-100/80 pt-4">
+            <span className="text-[11px] uppercase text-sky-700 font-bold mb-1">
               14-Day Forecast
             </span>
             <div className="flex overflow-x-auto pb-4 -mx-2 px-2 gap-3 snap-x hide-scrollbar">
@@ -640,7 +738,7 @@ function WeatherCard() {
                 return (
                   <div
                     key={idx}
-                    className="flex flex-col items-center flex-shrink-0 bg-white/60 border border-fuchsia-50 shadow-sm rounded-2xl w-[68px] py-3 snap-center"
+                    className="flex flex-col items-center flex-shrink-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(240,249,255,0.82))] border border-white/80 shadow-sm rounded-2xl w-[72px] py-3 snap-center"
                   >
                     <span className="text-xs font-bold text-slate-500 mb-2">
                       {idx === 0 ? "Today" : dayName}
@@ -679,10 +777,10 @@ function ChecklistSection() {
   return (
     <section className="mb-8 font-sans">
       <div className="flex justify-between items-end mb-4 sm:mb-6 px-1 sm:px-2">
-        <h2 className="font-serif text-[26px] sm:text-[28px] text-[#2C302E]">
-          My Suitcase
+        <h2 className="text-balance text-[26px] sm:text-[28px] font-black text-slate-900">
+          旅途清單
         </h2>
-        <span className="text-[11px] sm:text-xs uppercase tracking-widest font-black text-fuchsia-600 bg-fuchsia-100/80 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-fuchsia-200">
+        <span className="text-[11px] sm:text-xs uppercase font-black text-sky-700 bg-sky-100/90 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-sky-200">
           {packedCount}/{checklist.length} Packed
         </span>
       </div>
@@ -798,10 +896,10 @@ function ChecklistSection() {
         onClick={() => void actions.handleAiPackingList()}
         disabled={aiLoading || isOffline}
         size="lg"
-        className="w-full mt-2 rounded-full h-14 font-bold text-[15px]"
+        className="w-full mt-2 h-14 rounded-full bg-slate-900 text-[15px] font-bold text-white hover:bg-slate-800"
       >
         <Sparkles size={18} className="mr-2" />
-        {aiLoading ? "AI 正在規劃..." : "Auto-Generate Packing List"}
+        {aiLoading ? "AI 正在規劃..." : "用 AI 補齊清單"}
       </Button>
     </section>
   );
@@ -814,19 +912,32 @@ function LedgerSection() {
   } = useToolsTabContext();
   const { isOffline } = useAppStore();
   return (
-    <GlassCard className="!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300">
-      <div className="absolute -top-10 -left-10 w-32 h-32 bg-purple-100/40 rounded-full blur-[20px] pointer-events-none" />
-      <div className="mb-6 flex flex-col relative z-10 px-2">
-        <h3 className="font-serif text-[28px] text-[#2C302E]">Split Bill</h3>
-        <span className="text-sm font-bold text-fuchsia-600/70">
-          Recent expenses & calculate.
-        </span>
+    <GlassCard className="!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(254,242,248,0.92),rgba(240,249,255,0.90))]">
+      <div className="absolute -top-10 -left-10 w-32 h-32 bg-pink-100/45 rounded-full blur-[24px] pointer-events-none" />
+      <div className="absolute -bottom-12 -right-8 w-36 h-36 bg-sky-100/35 rounded-full blur-[28px] pointer-events-none" />
+      <div className="mb-6 flex items-start justify-between gap-4 relative z-10 px-2">
+        <div>
+          <span className="inline-flex items-center rounded-full border border-pink-100 bg-white/88 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-pink-700 shadow-sm">
+            Trip Split
+          </span>
+          <h3 className="mt-3 text-balance text-[26px] sm:text-[28px] font-black text-slate-900">
+            把代墊、分攤與提醒收成同一張旅伴帳單
+          </h3>
+          <span className="mt-2 block text-sm font-bold text-slate-500">
+            先記錄最新花費，再讓結算跟著這趟旅程慢慢收斂。
+          </span>
+        </div>
+        <div className="shrink-0 rounded-[20px] border border-white/80 bg-white/82 px-4 py-3 text-right shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">本趟摘要</div>
+          <div className="mt-1 text-lg font-black text-slate-900">{expenses.length} 筆</div>
+          <div className="text-[12px] font-bold text-slate-500">{members.length || 0} 位旅伴</div>
+        </div>
       </div>
 
       <div className="flex flex-col gap-y-5 relative z-10">
         {/* Recent Expenses List */}
         {expenses && expenses.length > 0 && (
-          <div className="flex flex-col gap-3 mb-4 w-full">
+          <div className="flex flex-col gap-3 mb-4 w-full rounded-[24px] border border-white/90 bg-white/78 p-4 shadow-sm">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-2">
               最新花費紀錄
             </span>
@@ -1027,7 +1138,7 @@ function LedgerSection() {
           onClick={() => void actions.submitExpense()}
           disabled={submitting || isOffline}
           size="lg"
-          className="w-full mt-4 py-6 rounded-2xl flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4"
+          className="w-full mt-4 py-6 rounded-[24px] flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4 bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 text-white shadow-[0_14px_30px_rgba(244,114,182,0.20)] hover:opacity-95"
         >
           {submitting && (
             <Loader2 size={16} className="animate-spin shrink-0" />
@@ -1246,19 +1357,26 @@ function TripSelectorBar() {
             <button
               key={trip.tripId}
               onClick={() => setActiveTripId(trip.tripId)}
-              className={`px-5 py-4 flex flex-col rounded-[24px] border transition-all text-left shadow-sm shrink-0 min-w-[120px] max-w-[240px] overflow-hidden ${
+              className={cn(
+                "px-5 py-4 flex flex-col rounded-[24px] border transition-colors text-left shadow-sm shrink-0 min-w-[120px] max-w-[240px] overflow-hidden",
                 active
-                  ? "bg-fuchsia-500 border-fuchsia-500 text-white shadow-fuchsia-200"
-                  : "bg-white bg-opacity-60 backdrop-blur-md border-white/50 text-slate-500 hover:bg-white hover:text-fuchsia-500"
-              }`}
+                  ? "bg-sky-600 border-sky-600 text-white"
+                  : "bg-white/80 backdrop-blur-md border-slate-200 text-slate-500 hover:border-sky-200 hover:text-sky-700",
+              )}
             >
               <span
-                className={`text-[16px] font-bold whitespace-nowrap overflow-hidden text-ellipsis w-full block ${active ? "text-white" : "text-[#2C302E]"}`}
+                className={cn(
+                  "text-[16px] font-bold whitespace-nowrap overflow-hidden text-ellipsis w-full block",
+                  active ? "text-white" : "text-slate-900",
+                )}
               >
                 {trip.name}
               </span>
               <span
-                className={`text-[11px] uppercase tracking-[0.1em] font-black mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full block ${active ? "text-white/80" : "text-slate-500"}`}
+                className={cn(
+                  "text-[11px] uppercase font-black mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full block",
+                  active ? "text-white/80" : "text-slate-500",
+                )}
               >
                 {trip.destination}
               </span>
@@ -1282,13 +1400,58 @@ export default function ToolsTab() {
 
 function ToolsTabContent() {
   const { activeTripId, setActiveTab } = useAppStore();
+  const {
+    state: { checklist, destination, settlements, tripInfo, weather },
+  } = useToolsTabContext();
   const [flights, setFlights] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
   const [filterMode, setFilterMode] = useState<"best" | "filters" | "nonstop">(
     "best",
   );
+  const [activeInfoCard, setActiveInfoCard] = useState<InfoPeekContent | null>(null);
+  const [isPillarsExpanded, setIsPillarsExpanded] = useState<boolean>(
+    () => typeof window !== "undefined" && window.innerWidth >= 768
+  );
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState<boolean>(
+    () => typeof window !== "undefined" && window.innerWidth >= 768
+  );
   const { onScroll } = useHideNavOnScroll();
+  const prefersReducedMotion = useReducedMotion() ?? false;
+  const checkedChecklistCount = checklist.filter((item) => item.checked).length;
+  const toolHighlights = [
+    {
+      icon: CloudRain,
+      label: "天氣與穿搭",
+      value: destination ? `${destination}${weather ? " 已同步" : " 等待同步"}` : "等待旅程同步",
+      description: weather ? "依照日期提供出發前提醒。" : "連上旅程後自動帶出預報。",
+    },
+    {
+      icon: CheckCircle2,
+      label: "清單進度",
+      value:
+        checklist.length > 0
+          ? `${checkedChecklistCount}/${checklist.length} 已整理`
+          : "尚未建立清單",
+      description: "用同一份旅程把待辦與行李收整齊。",
+    },
+    {
+      icon: ArrowDownUp,
+      label: "分帳狀態",
+      value:
+        settlements.length > 0
+          ? `${settlements.length} 筆待處理`
+          : "目前沒有待結清",
+      description: "代墊與提醒會跟著旅程成員同步。",
+    },
+  ] as const;
+  const filterButtonClass = (active: boolean) =>
+    cn(
+      "rounded-full border px-5 py-3 text-sm font-black shadow-sm transition-colors",
+      active
+        ? "border-sky-200 bg-sky-100 text-sky-700"
+        : "border-slate-200 bg-white/85 text-slate-600 hover:border-sky-200 hover:text-sky-700",
+    );
 
   useEffect(() => {
     if (activeTripId) {
@@ -1321,52 +1484,210 @@ function ToolsTabContent() {
 
   if (!activeTripId) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50/30 overflow-y-auto scroll-smooth">
+      <div className="flex-1 overflow-y-auto bg-slate-50 px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] scroll-smooth sm:px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl w-full bg-white/70 backdrop-blur-2xl border border-white sm:border sm:border-white rounded-[32px] sm:rounded-[48px] p-6 sm:p-10 md:p-16 shadow-lg sm:shadow-2xl flex flex-col md:flex-row items-center gap-6 sm:gap-10 md:gap-16 my-auto"
+          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
+          animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: "easeOut" }}
+          className="mx-auto my-auto w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,250,251,0.88),rgba(240,249,255,0.88))] p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:rounded-[40px] sm:p-8 md:p-10"
         >
-          <div className="w-24 h-24 sm:w-32 sm:h-32 bg-fuchsia-100 rounded-[32px] sm:rounded-[40px] flex items-center justify-center text-5xl sm:text-6xl shadow-inner shrink-0 animate-pulse">
-            🧳
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full bg-fuchsia-50 border border-fuchsia-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-fuchsia-600 mb-3 sm:mb-4">
-              解鎖工具包
-            </div>
-            <h2 className="text-[24px] sm:text-[32px] md:text-4xl font-black text-slate-800 mb-3 sm:mb-4 tracking-tight leading-tight">
-              尚未選擇行程專案
-            </h2>
-            <p className="text-slate-500 font-bold text-base sm:text-lg mb-6 sm:mb-10 leading-relaxed">
-              旅途工具包（天氣、清單、分帳）需要與特定行程連結，請先選擇或建立一個行程專案。
-            </p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-2.5 mb-6 sm:mb-8">
-              {["天氣提醒", "行李清單", "旅伴分帳"].map((label) => (
-                <span
-                  key={label}
-                  className="rounded-full bg-slate-100/90 border border-slate-200 px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-600"
+          <div className="absolute -left-12 top-8 size-36 rounded-full bg-pink-200/35 blur-3xl" />
+          <div className="absolute right-6 top-10 size-32 rounded-full bg-sky-200/30 blur-3xl" />
+          <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-center">
+            <div className="space-y-5 text-center md:text-left">
+              <div className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
+                旅程工具包
+              </div>
+              <div className="space-y-3">
+                <h2 className="text-balance text-[28px] font-black leading-tight text-slate-900 sm:text-[34px] md:text-[40px]">
+                  先選一趟旅程，工具包才知道該替你同步哪裡
+                </h2>
+                <p className="text-pretty text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                  RoamJelly 的工具頁不是獨立功能清單，而是緊貼在特定旅程旁邊的提醒層。先建立或選擇一趟旅程，天氣、清單與分帳才會有真正的上下文。
+                </p>
+              </div>
+
+              {/* Collapsible pillars — mobile collapsed by default */}
+              <div className="rounded-[24px] border border-white/80 bg-white/50 overflow-hidden md:contents">
+                <button
+                  type="button"
+                  onClick={() => setIsPillarsExpanded(v => !v)}
+                  className="md:hidden w-full flex items-center justify-between px-4 py-3 text-left"
+                  aria-expanded={isPillarsExpanded}
                 >
-                  {label}
-                </span>
-              ))}
+                  <span className="text-[13px] font-black text-slate-700">功能說明（3 項）</span>
+                  <ChevronDown
+                    size={18}
+                    strokeWidth={2.5}
+                    className={`text-slate-400 transition-transform duration-200 ${isPillarsExpanded ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                <div className={`grid gap-3 sm:grid-cols-3 ${isPillarsExpanded ? 'p-3 md:p-0' : 'hidden md:grid'}`}>
+                  {TOOLS_ENTRY_PILLARS.map(({ icon: Icon, eyebrow, title, description, details, tone }, index) => {
+                    const decor = TOOLS_CARD_DECOR[index % TOOLS_CARD_DECOR.length];
+                    return (
+                    <div
+                      key={title}
+                      className={`relative overflow-hidden rounded-[28px] border p-4 text-left shadow-[0_16px_32px_rgba(15,23,42,0.08)] ${decor.shell}`}
+                    >
+                      <div className={`absolute -right-5 -top-5 size-20 rounded-full blur-2xl ${decor.glow}`} />
+                      <div className="relative flex items-center justify-between gap-3">
+                        <span className={`inline-flex items-center gap-2 rounded-full border bg-white/92 px-2.5 py-1 text-[11px] font-black shadow-sm ${decor.badge}`}>
+                          <Icon size={14} strokeWidth={2.5} />
+                          {eyebrow}
+                        </span>
+                        <span className="rounded-full border border-white/80 bg-white/88 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400 shadow-sm">
+                          0{index + 1}
+                        </span>
+                      </div>
+                      <h3 className="relative mt-3 text-balance text-sm font-black text-slate-900">{title}</h3>
+                      <div className="relative mt-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                          <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/90 text-[10px] font-black shadow-sm ${decor.badge}`}>
+                            <Icon size={12} strokeWidth={2.6} />
+                          </span>
+                          <span className="text-pretty">{decor.note}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveInfoCard({
+                              eyebrow,
+                              title,
+                              description,
+                              details,
+                              tone,
+                              icon: Icon,
+                            })
+                          }
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                        >
+                          查看說明
+                          <ArrowRight size={12} strokeWidth={2.6} />
+                        </button>
+                      </div>
+                    </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={() => setActiveTab("ai_form")}
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 px-6 py-3 text-sm font-black text-white shadow-sm transition-colors hover:from-sky-600 hover:to-orange-500"
+                >
+                  <Sparkles size={18} strokeWidth={2.5} />
+                  直接交給 AI 開始規劃
+                </button>
+                <button
+                  onClick={() => setActiveTab("home")}
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                >
+                  先回首頁看流程
+                </button>
+              </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
+
+            <div className="relative overflow-hidden rounded-[30px] border border-slate-900/10 bg-[linear-gradient(180deg,#18314f,#1f2937_38%,#312e81_100%)] shadow-[0_24px_46px_rgba(15,23,42,0.18)]">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.22),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(251,146,60,0.16),transparent_38%)] pointer-events-none" />
               <button
-                onClick={() => setActiveTab("ai_form")}
-                className="w-full md:w-auto px-6 sm:px-8 py-4 sm:py-5 rounded-[20px] sm:rounded-[24px] bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3"
+                type="button"
+                onClick={() => setIsPreviewExpanded(v => !v)}
+                className="relative w-full flex items-center justify-between gap-3 p-5 text-left"
+                aria-expanded={isPreviewExpanded}
               >
-                <Sparkles size={20} />
-                直接交給 AI 開始規劃
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/65">Tools Preview</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-sky-300" />
+                    <span className="size-2 rounded-full bg-orange-300" />
+                    <span className="size-2 rounded-full bg-emerald-300" />
+                  </div>
+                  <ChevronDown
+                    size={16}
+                    strokeWidth={2.5}
+                    className={`text-white/40 transition-transform duration-200 ${isPreviewExpanded ? 'rotate-180' : ''}`}
+                  />
+                </div>
               </button>
-              <button
-                onClick={() => setActiveTab("home")}
-                className="w-full md:w-auto px-6 sm:px-8 py-4 sm:py-5 rounded-[20px] sm:rounded-[24px] bg-white text-slate-700 font-black text-sm uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-3"
-              >
-                先回首頁看 Demo
-              </button>
+              <div className={`grid gap-3 ${isPreviewExpanded ? 'px-5 pb-5' : 'hidden'}` }>
+                {[
+                  {
+                    icon: MapPin,
+                    title: "WEATHER",
+                    subtitle: "LIVE",
+                    description: "東京 24°C・降雨機率 20%，先看天氣再決定穿搭順序。",
+                    details: [
+                      "工具包會沿用旅程中的日期與目的地，不用再重複設定。",
+                      "先看現場條件，再決定今天是排滿還是留一點彈性。",
+                    ],
+                    tone: "sky",
+                  },
+                  {
+                    icon: CalendarDays,
+                    title: "CHECKLIST",
+                    subtitle: "6/9",
+                    description: "行李清單先補齊護照、充電器與轉接頭，再慢慢加零食。",
+                    details: [
+                      "先把最關鍵的出發物件補齊，細節可以等旅伴一起補。",
+                      "這份清單會跟著旅程走，不需要另外開待辦工具。",
+                    ],
+                    tone: "emerald",
+                  },
+                  {
+                    icon: ArrowDownUp,
+                    title: "SPLIT BILL",
+                    subtitle: "JPY",
+                    description: "每一筆代墊都會回到同一份旅程，不用再翻聊天紀錄。",
+                    details: [
+                      "分帳資料會留在這趟旅程裡，提醒與結清也能沿著同一條線往下走。",
+                      "等你真的要同步時，再把帳號接上也不遲。",
+                    ],
+                    tone: "orange",
+                  },
+                ].map(({ icon: Icon, title, subtitle, description, details, tone }, index) => (
+                  <div key={title} className="flex items-start gap-3 rounded-[24px] border border-white/10 bg-white/10 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md">
+                    <div className="flex size-11 items-center justify-center rounded-2xl bg-white/12 text-sky-200 shadow-inner">
+                      <Icon size={17} strokeWidth={2.4} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-sm font-black tracking-[0.16em] text-white/80">{title}</h3>
+                        <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${index === 0 ? 'border-sky-300/30 bg-sky-400/12 text-sky-100' : index === 1 ? 'border-emerald-300/30 bg-emerald-400/12 text-emerald-100' : 'border-orange-300/30 bg-orange-400/12 text-orange-100'}`}>
+                          {subtitle}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveInfoCard({
+                            eyebrow: `${title} · ${subtitle}`,
+                            title,
+                            description,
+                            details,
+                            tone: tone as InfoPeekContent["tone"],
+                            icon: Icon,
+                          })
+                        }
+                        className="mt-3 inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-black text-white/80 transition-colors hover:bg-white/14 hover:text-white"
+                      >
+                        查看說明
+                        <ArrowRight size={12} strokeWidth={2.6} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>
+
+        <InfoPeekModal
+          open={!!activeInfoCard}
+          content={activeInfoCard}
+          onClose={() => setActiveInfoCard(null)}
+        />
       </div>
     );
   }
@@ -1374,10 +1695,76 @@ function ToolsTabContent() {
   return (
     <div
       onScroll={onScroll}
-      className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] bg-[radial-gradient(circle_at_top_right,rgba(245,208,254,0.4),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(230,255,244,0.3),transparent_50%)] text-[#2C302E] transition-all duration-300"
+      className="flex-1 w-full overflow-y-auto scroll-smooth bg-slate-50 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.24),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.18),transparent_45%)] text-slate-900 transition-colors"
     >
       <div className="pt-4 sm:pt-8 pb-tab-safe px-3 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-6 sm:gap-y-10">
         <TripSelectorBar />
+
+        <motion.section
+          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
+          animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
+          className="relative overflow-hidden rounded-[30px] border border-white/90 bg-white/86 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-6"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.14),transparent_46%)]" />
+          <div className="relative flex flex-col gap-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-3">
+                <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
+                  Trip Utility Layer
+                </span>
+                <div className="space-y-2">
+                  <h1 className="max-w-3xl text-balance text-[28px] font-black leading-tight text-slate-900 sm:text-[34px]">
+                    把天氣、清單與分帳，綁回{destination ? ` ${destination} ` : "這趟"}旅程
+                  </h1>
+                  <p className="max-w-2xl text-pretty text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                    工具頁不是額外任務區，而是沿著目前旅程延伸出的執行層。你可以先看現場會遇到的提醒，再回到手帳補完安排。
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab("itinerary")}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+              >
+                回到旅程手帳
+                <ArrowRight size={16} strokeWidth={2.6} />
+              </button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              {toolHighlights.map(({ icon: Icon, label, value, description }, index) => {
+                const decor = TOOLS_CARD_DECOR[index % TOOLS_CARD_DECOR.length];
+                return (
+                <div
+                  key={label}
+                  className={`relative overflow-hidden rounded-[26px] border p-4 shadow-[0_16px_28px_rgba(15,23,42,0.08)] ${decor.shell}`}
+                >
+                  <div className={`absolute -right-6 -top-6 size-20 rounded-full blur-2xl ${decor.glow}`} />
+                  <div className="relative flex items-center justify-between gap-3">
+                    <span className={`inline-flex items-center gap-2 rounded-full border bg-white/92 px-2.5 py-1 text-[11px] font-black shadow-sm ${decor.badge}`}>
+                      <Icon size={14} strokeWidth={2.5} />
+                      {label}
+                    </span>
+                    {tripInfo?.name ? (
+                      <span className="truncate text-[11px] font-bold text-slate-400">
+                        {tripInfo.name}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="relative mt-3 text-balance text-sm font-black text-slate-900">{value}</p>
+                  <p className="relative mt-1 text-pretty text-[13px] leading-5 text-slate-600">{description}</p>
+                  <div className="relative mt-4 flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                    <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/90 shadow-sm ${decor.badge}`}>
+                      <Icon size={12} strokeWidth={2.6} />
+                    </span>
+                    <span className="text-pretty">{decor.note}</span>
+                  </div>
+                </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           <div className="flex flex-col gap-y-8">
@@ -1394,13 +1781,15 @@ function ToolsTabContent() {
         <div className="h-px bg-slate-200/50 my-4" />
 
         <div className="flex flex-col gap-y-6">
-          <div className="flex flex-col gap-2 mb-2 mt-4 relative">
-            <div className="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-fuchsia-500 to-purple-600 rounded-full" />
-            <h1 className="text-[24px] sm:text-[32px] md:text-4xl font-black text-[#111111] leading-tight tracking-tight">
-              推薦行程與航班
-            </h1>
-            <p className="text-[15px] sm:text-[17px] text-slate-500 font-bold tracking-wide">
-              為您的旅程精選的機票與活動票券
+          <div className="flex flex-col gap-2 mb-2 mt-4">
+            <span className="inline-flex w-fit items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
+              For This Trip
+            </span>
+            <h2 className="text-balance text-[24px] sm:text-[32px] md:text-4xl font-black text-slate-900 leading-tight">
+              把延伸選項接回這趟旅程
+            </h2>
+            <p className="max-w-2xl text-pretty text-[14px] sm:text-[16px] leading-6 text-slate-600">
+              這裡的航班與活動建議不是獨立推薦牆，而是幫你把目前旅程還缺的移動與體驗補齊。
             </p>
           </div>
 
@@ -1408,45 +1797,45 @@ function ToolsTabContent() {
           <div className="flex flex-row overflow-x-auto scrollbar-hide gap-3 mb-2 -mx-5 px-5 sm:mx-0 sm:px-0 py-2">
             <button
               onClick={() => setFilterMode("best")}
-              className={`backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border ${filterMode === "best" ? "bg-fuchsia-100/80 border-fuchsia-200 text-fuchsia-700" : "bg-white/70 border-white text-[#2C302E] hover:border-fuchsia-200 hover:text-fuchsia-600"} group`}
+              className={cn(filterButtonClass(filterMode === "best"), "group flex shrink-0 items-center gap-2 backdrop-blur-md")}
             >
               <ArrowDownUp
                 size={16}
                 className={
                   filterMode === "best"
-                    ? "text-fuchsia-500"
-                    : "text-slate-500 group-hover:text-fuchsia-500"
+                    ? "text-sky-600"
+                    : "text-slate-500 group-hover:text-sky-600"
                 }
               />
-              Best Match
+              優先推薦
             </button>
             <button
               onClick={() => setFilterMode("filters")}
-              className={`backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border ${filterMode === "filters" ? "bg-fuchsia-100/80 border-fuchsia-200 text-fuchsia-700" : "bg-white/70 border-white text-[#2C302E] hover:border-fuchsia-200 hover:text-fuchsia-600"} group`}
+              className={cn(filterButtonClass(filterMode === "filters"), "group flex shrink-0 items-center gap-2 backdrop-blur-md")}
             >
               <SlidersHorizontal
                 size={16}
                 className={
                   filterMode === "filters"
-                    ? "text-fuchsia-500"
-                    : "text-slate-500 group-hover:text-fuchsia-500"
+                    ? "text-sky-600"
+                    : "text-slate-500 group-hover:text-sky-600"
                 }
               />
-              Filters
+              快速篩選
             </button>
             <button
               onClick={() => setFilterMode("nonstop")}
-              className={`backdrop-blur-md rounded-full px-6 py-3 shadow-sm font-black text-[15px] flex items-center gap-2 shrink-0 transition-all active:scale-95 border ${filterMode === "nonstop" ? "bg-fuchsia-100/80 border-fuchsia-200 text-fuchsia-700" : "bg-white/70 border-white text-[#2C302E] hover:border-fuchsia-200 hover:text-fuchsia-600"} group`}
+              className={cn(filterButtonClass(filterMode === "nonstop"), "group flex shrink-0 items-center gap-2 backdrop-blur-md")}
             >
               <Plane
                 size={16}
                 className={
                   filterMode === "nonstop"
-                    ? "text-fuchsia-500"
-                    : "text-slate-500 group-hover:text-fuchsia-500"
+                    ? "text-sky-600"
+                    : "text-slate-500 group-hover:text-sky-600"
                 }
               />
-              Non-stop
+              直飛優先
             </button>
           </div>
 
