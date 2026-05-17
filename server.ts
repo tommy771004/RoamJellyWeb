@@ -21,6 +21,7 @@ import * as schema from './src/server/db/schema';
 import { scrapeTripFlights } from './src/server/services/tripParser';
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
 import { createSeoRouter } from './src/server/seo/router';
+import { buildAllowedCorsOrigins, isCorsOriginAllowed } from './src/server/security/cors';
 
 // Vercel serverless: resolve/reject the app promise once startServer() finishes setup
 let _resolveApp!: (app: ReturnType<typeof express>) => void;
@@ -746,21 +747,27 @@ async function startServer() {
   }
 
   const httpServer = createServer(app);
-  const originList = (process.env.CORS_ALLOWED_ORIGINS ?? '')
-    .split(',')
-    .map((item: string) => item.trim())
-    .filter(Boolean);
+  const originList = buildAllowedCorsOrigins({
+    configuredOrigins: process.env.CORS_ALLOWED_ORIGINS,
+    nodeEnv: process.env.NODE_ENV,
+    vercelUrl: process.env.VERCEL_URL,
+    vercelBranchUrl: process.env.VERCEL_BRANCH_URL,
+    vercelProjectProductionUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  });
+  const corsOriginValidator = (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
+    callback(null, isCorsOriginAllowed(origin, originList));
+  };
 
   const io = new SocketServer(httpServer, {
     cors: {
-      origin: originList.length === 0 ? true : originList,
+      origin: corsOriginValidator,
       methods: ['GET', 'POST'],
     },
   });
 
   app.use(
     cors({
-      origin: originList.length === 0 ? true : originList,
+      origin: corsOriginValidator,
       credentials: true,
     }),
   );

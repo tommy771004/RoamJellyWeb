@@ -3950,7 +3950,7 @@ function ItineraryListItem({
     const destinationCoords = encodeURIComponent(`${lat},${lng}`);
     const url = `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
     triggerHapticFeedback([18]);
-    window.open(url, "_blank");
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const handleShareToIGStory = async (e: React.MouseEvent) => {
@@ -6385,7 +6385,14 @@ function extractFlightSegments(items: SearchItem[]): string[] {
 
 function readCachedItinerary(tripId: string): ItineraryNode[] {
   if (typeof window === "undefined" || !tripId) return [];
-  const raw = window.localStorage.getItem(`roamjelly_itinerary_${tripId}`);
+  const storageKey = `roamjelly_itinerary_${tripId}`;
+  const sessionCached = window.sessionStorage.getItem(storageKey);
+  const legacyCached = window.localStorage.getItem(storageKey);
+  const raw = sessionCached ?? legacyCached;
+  if (!sessionCached && legacyCached) {
+    window.sessionStorage.setItem(storageKey, legacyCached);
+    window.localStorage.removeItem(storageKey);
+  }
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as ItineraryNode[];
@@ -6408,10 +6415,9 @@ function writeCachedItineraryForLoadedDays(
     ...cached.filter((node) => !loadedDaySet.has(Number(node.day ?? 1))),
     ...nodes.filter((node) => loadedDaySet.has(Number(node.day ?? 1))),
   ];
-  window.localStorage.setItem(
-    `roamjelly_itinerary_${tripId}`,
-    JSON.stringify(merged),
-  );
+  const storageKey = `roamjelly_itinerary_${tripId}`;
+  window.sessionStorage.setItem(storageKey, JSON.stringify(merged));
+  window.localStorage.removeItem(storageKey);
 }
 
 function summarizeItineraryDiff(

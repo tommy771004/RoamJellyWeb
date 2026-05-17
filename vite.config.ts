@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig, loadEnv} from 'vite';
+import {defineConfig} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const FEATURE_CHUNK_RULES: Array<{name: string; patterns: string[]}> = [
@@ -107,8 +107,7 @@ function pickManualChunk(id: string) {
   return undefined;
 }
 
-export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, '.', '');
+export default defineConfig(() => {
   return {
     plugins: [
       react(),
@@ -143,9 +142,6 @@ export default defineConfig(({mode}) => {
         }
       }),
     ],
-    define: {
-      'import.meta.env.VITE_OPENROUTER_API_KEY': JSON.stringify(env.VITE_OPENROUTER_API_KEY || env.OPENROUTER_API_KEY),
-    },
     resolve: {
       alias: [
         {
