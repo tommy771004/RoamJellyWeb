@@ -83,9 +83,9 @@ export default function PwaInstallPrompt() {
             ✨
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-fuchsia-200">加入主畫面</p>
-            <p className="mt-1 text-[14px] font-black leading-[1.45] tracking-[-0.02em] text-white">把 RoamJelly 裝成全螢幕旅遊小工具，飛機上也能更快打開。</p>
-            <p className="mt-2 text-[12px] leading-[1.6] text-slate-300">
+            <p className="fluid-kicker font-black uppercase text-fuchsia-200">加入主畫面</p>
+            <p className="fluid-copy mt-1 font-black tracking-[-0.02em] text-white">把 RoamJelly 裝成全螢幕旅遊小工具，飛機上也能更快打開。</p>
+            <p className="fluid-body mt-2 text-slate-300">
               {deferredPrompt
                 ? '安裝後會以接近原生 App 的模式執行，保留離線快取與更沉浸的全螢幕體驗。'
                 : '在 Safari 點一下分享，再選「加入主畫面」，就能像 App 一樣從桌面直接打開。'}
@@ -95,19 +95,19 @@ export default function PwaInstallPrompt() {
                 <button
                   type="button"
                   onClick={() => void handleInstall()}
-                  className="rounded-full bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-900 transition-all hover:-translate-y-0.5"
+                  className="fluid-kicker rounded-full bg-white px-4 py-2 font-black uppercase text-slate-900 transition-all hover:-translate-y-0.5"
                 >
                   立即安裝
                 </button>
               ) : (
-                <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2 text-[11px] font-black tracking-[0.08em] text-white">
+                <span className="fluid-kicker rounded-full border border-white/15 bg-white/8 px-4 py-2 font-black text-white">
                   Safari 分享 → 加入主畫面
                 </span>
               )}
               <button
                 type="button"
                 onClick={dismiss}
-                className="rounded-full border border-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-300 transition-colors hover:border-white/20 hover:text-white"
+                className="fluid-kicker rounded-full border border-white/10 px-4 py-2 font-black uppercase text-slate-300 transition-colors hover:border-white/20 hover:text-white"
               >
                 稍後
               </button>

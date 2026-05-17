@@ -43,7 +43,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
 
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-4">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -55,14 +55,14 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
-          className="relative w-full max-w-2xl h-[70vh] bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl z-modal-above flex flex-col overflow-hidden"
+          className="relative z-modal-above flex h-[72vh] w-full max-w-2xl flex-col overflow-hidden rounded-[30px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] shadow-[0_24px_56px_rgba(15,23,42,0.16)] sm:rounded-[36px]"
         >
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
+          <div className="absolute top-0 left-0 z-10 h-1.5 w-full bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-300" />
           
-          <div className="flex items-center justify-between p-5 sm:p-6 pb-4 shrink-0 shadow-sm z-10 bg-white">
+          <div className="z-10 flex shrink-0 items-center justify-between bg-white/84 p-4 pb-3.5 shadow-sm backdrop-blur-xl sm:p-5">
             <div className="flex flex-col">
-              <h3 className="text-[18px] sm:text-xl font-black text-slate-800 tracking-tight">在地圖選取地點</h3>
-              <p className="text-[12px] sm:text-[13px] font-bold text-slate-500 mt-1">
+              <h3 className="fluid-title font-black text-slate-800">在地圖選取地點</h3>
+              <p className="fluid-body mt-1 font-medium text-slate-500">
                 點擊地圖標記地標，再按下確認
               </p>
             </div>
@@ -92,7 +92,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
             </MapContainer>
           </div>
 
-          <div className="p-5 sm:p-6 shrink-0 bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-10">
+          <div className="z-10 shrink-0 bg-white/86 p-4 shadow-[0_-10px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl sm:p-5">
             <button
               onClick={() => {
                 if (selectedPos) {
@@ -101,7 +101,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
                 }
               }}
               disabled={!selectedPos}
-              className="w-full h-14 rounded-full bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-white font-black text-[15px] uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(217,70,239,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(217,70,239,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2 whitespace-nowrap"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 text-[14px] font-black uppercase tracking-[0.16em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.36)] active:scale-[0.92] disabled:cursor-not-allowed disabled:opacity-40 disabled:scale-100 disabled:hover:translate-y-0 whitespace-nowrap"
             >
               <Check size={20} className="shrink-0" />
               <span>確認選取座標</span>

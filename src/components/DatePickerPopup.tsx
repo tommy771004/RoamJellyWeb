@@ -51,7 +51,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
 
   const content = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-popup flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-popup flex items-center justify-center p-3.5 sm:p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -65,12 +65,12 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative w-[90vw] md:w-[480px] max-w-[480px] min-w-[300px] shrink-0 bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.35)] border border-white z-popup-above overflow-hidden p-6 md:p-8"
+          className="relative z-popup-above w-[92vw] max-w-[480px] min-w-[300px] shrink-0 overflow-hidden rounded-[28px] border border-white/86 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] p-4 shadow-[0_24px_56px_rgba(15,23,42,0.18)] md:w-[480px] md:p-6"
         >
-          <div className="flex flex-row justify-between items-center mb-8">
+          <div className="mb-6 flex flex-row items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-2xl font-black text-slate-800 tracking-tight">{year}年 {monthNames[month]}</span>
-              <span className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Select Date</span>
+              <span className="fluid-title font-black text-slate-800">{year}年 {monthNames[month]}</span>
+              <span className="fluid-kicker mt-0.5 font-black uppercase text-slate-500">Select Date</span>
             </div>
             <div className="flex gap-x-3">
               <button onClick={() => changeMonth(-1)} aria-label="上個月" className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
@@ -82,9 +82,9 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="mb-2 grid grid-cols-7 gap-1">
             {['日', '一', '二', '三', '四', '五', '六'].map(d => (
-              <div key={d} className="text-center text-[11px] font-black text-slate-500 uppercase tracking-widest pb-2">{d}</div>
+              <div key={d} className="fluid-kicker pb-2 text-center font-black uppercase text-slate-500">{d}</div>
             ))}
           </div>
 
@@ -103,11 +103,11 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
                   disabled={disabled}
                   onClick={() => { if (!disabled) { onSelect(dateStr); onClose(); } }}
                   className={`
-                    relative py-2.5 rounded-xl text-sm font-bold transition-all
+                    relative rounded-[16px] py-2.5 text-[13px] font-bold transition-all
                     ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'}
                     ${isSelected
-                      ? 'bg-pink-500 text-white shadow-md shadow-pink-500/20 z-10'
-                      : disabled ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700 hover:bg-pink-50 hover:text-pink-600'}
+                      ? 'z-10 bg-gradient-to-r from-sky-500 to-orange-400 text-white shadow-[0_10px_22px_rgba(14,165,233,0.20)]'
+                      : disabled ? 'cursor-not-allowed text-slate-400' : 'text-slate-700 hover:bg-pink-50 hover:text-pink-600'}
                   `}
                 >
                   {date.getDate()}
@@ -122,7 +122,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
           <div className="mt-6 flex justify-center">
             <button
               onClick={onClose}
-              className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-500 hover:text-pink-500 transition-colors"
+              className="fluid-kicker font-black uppercase text-slate-500 transition-colors hover:text-pink-500"
             >
               關閉
             </button>
