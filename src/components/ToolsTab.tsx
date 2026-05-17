@@ -21,6 +21,7 @@ import {
 import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
 import ExpandableText from "./ExpandableText";
+import HorizontalScrollRail from "./HorizontalScrollRail";
 import InfoPeekModal, { type InfoPeekContent } from "./InfoPeekModal";
 import IconImg from "./ui/IconImg";
 import { Input } from "./ui/input";
@@ -729,7 +730,12 @@ function WeatherCard() {
             <span className="text-[11px] uppercase text-sky-700 font-bold mb-1">
               14-Day Forecast
             </span>
-            <div className="flex overflow-x-auto pb-4 -mx-2 px-2 gap-3 snap-x hide-scrollbar">
+            <HorizontalScrollRail
+              label="天氣預報"
+              viewportClassName="pb-4 -mx-2 px-2"
+              contentClassName="gap-3"
+              controlsVisibilityClass="flex"
+            >
               {weather.daily.map((day: any, idx: number) => {
                 const date = new Date(day.date);
                 const dayName = new Intl.DateTimeFormat("en-US", {
@@ -760,7 +766,7 @@ function WeatherCard() {
                   </div>
                 );
               })}
-            </div>
+            </HorizontalScrollRail>
           </div>
         )}
       </div>
@@ -787,7 +793,7 @@ function ChecklistSection() {
         </span>
       </div>
 
-      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6">
+      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(240,249,255,0.90),rgba(255,247,237,0.84))]">
         {checklist.length === 0 && (
           <span className="text-sm text-slate-500 italic">
             目前沒有行李項目
@@ -816,7 +822,7 @@ function ChecklistSection() {
             ),
           })).filter((g) => g.items.length > 0);
           return grouped.map(({ cat, meta, items: catItems }) => (
-            <div key={cat} className="mb-4 last:mb-0">
+            <div key={cat} className="editorial-card-soft mb-4 rounded-[24px] p-3.5 last:mb-0">
               <div className="flex items-center gap-2 mb-2">
                 <IconImg value={meta.emoji} size={18} />
                 <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
@@ -827,7 +833,7 @@ function ChecklistSection() {
                 {catItems.map((item: any) => (
                   <label
                     key={item.id}
-                    className={`flex items-center gap-4 group p-3 min-h-[52px] rounded-2xl transition-colors ${isOffline ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-fuchsia-50/50"}`}
+                    className={`flex items-center gap-4 group p-3 min-h-[52px] rounded-2xl transition-colors ${isOffline ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-white/80"}`}
                     onClick={(e) => {
                       e.preventDefault();
                       if (!isOffline) actions.toggleCheck(item);
@@ -1185,16 +1191,17 @@ function SettlementsSection() {
         </div>
       </div>
 
+      <GlassCard className="!p-4 sm:!p-6 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(254,242,248,0.92),rgba(240,249,255,0.88))]">
       <div className="flex flex-col gap-4 w-full">
         {settlements.length === 0 && (
-          <GlassCard className="!p-10 flex items-center justify-center">
+          <div className="editorial-card-soft flex items-center justify-center rounded-[24px] p-10">
             <span className="text-slate-500 font-medium italic">
               都算清囉！ ✨
             </span>
-          </GlassCard>
+          </div>
         )}
         {settlements.length > 0 && (
-          <div className="table-wrapper mt-2">
+          <div className="editorial-card-soft table-wrapper mt-2 overflow-hidden rounded-[24px] p-2 sm:p-3">
             <table className="responsive-table">
               <caption className="sr-only">結算清單</caption>
               <thead>
@@ -1280,6 +1287,7 @@ function SettlementsSection() {
           </div>
         )}
       </div>
+      </GlassCard>
     </section>
   );
 }
@@ -1301,7 +1309,7 @@ function SettlementHistorySection() {
         {settlementHistory.map((entry) => (
           <GlassCard
             key={entry.clearedAt}
-            className="!p-4 flex items-center gap-4"
+            className="!p-4 flex items-center gap-4 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(240,253,250,0.90),rgba(255,255,255,0.90))]"
           >
             <div className="w-10 h-10 rounded-full bg-green-50 border border-green-100 flex items-center justify-center shrink-0">
               <CheckCircle2 size={18} className="text-green-500" />
@@ -1351,8 +1359,13 @@ function TripSelectorBar() {
   if (trips.length <= 1) return null;
 
   return (
-    <div className="mb-8 w-full overflow-x-auto scrollbar-hide py-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-      <div className="flex flex-row gap-3 min-w-max">
+    <HorizontalScrollRail
+      label="旅程切換"
+      className="mb-8"
+      viewportClassName="w-full py-1 -mx-4 px-4 sm:mx-0 sm:px-0"
+      contentClassName="flex flex-row gap-3"
+      controlsVisibilityClass="hidden sm:flex"
+    >
         {trips.map((trip) => {
           const active = activeTripId === trip.tripId;
           return (
@@ -1385,8 +1398,7 @@ function TripSelectorBar() {
             </button>
           );
         })}
-      </div>
-    </div>
+    </HorizontalScrollRail>
   );
 }
 

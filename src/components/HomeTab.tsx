@@ -24,6 +24,7 @@ import {
 import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
 import ExpandableText from "./ExpandableText";
+import HorizontalScrollRail from "./HorizontalScrollRail";
 import { Input } from "./ui/input";
 import { FlightSkeletonCard } from "./SkeletonCard";
 import {
@@ -2471,7 +2472,66 @@ export default function HomeTab({
                             免登入、免等待，直接預覽完整節奏與景點安排。
                           </p>
                         </div>
-                        <div className="grid gap-3 md:grid-cols-3">
+                        <HorizontalScrollRail
+                          label="Demo 卡片"
+                          className="md:hidden"
+                          viewportClassName="-mx-1 px-1 pb-2"
+                          contentClassName="gap-3"
+                          controlsVisibilityClass="flex"
+                        >
+                          {demoTemplates.map((handbook) => (
+                            <button
+                              key={handbook.id}
+                              type="button"
+                              onClick={() => {
+                                triggerHapticFeedback([16]);
+                                setActiveHandbook(handbook);
+                              }}
+                              className={`group/demo editorial-card-soft w-[286px] shrink-0 overflow-hidden rounded-[28px] text-left dark:border-white/10 dark:bg-slate-900/80 dark:shadow-black/30 hover:shadow-xl ${cardSurfaceClass}`}
+                            >
+                              <div className="relative h-36 overflow-hidden">
+                                <img
+                                  src={handbook.image}
+                                  alt={handbook.title}
+                                  className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-105"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                                <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-slate-950/45 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                                  Instant Demo
+                                </div>
+                                <div className="absolute bottom-3 left-3 right-3 text-white">
+                                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-white/75">
+                                    {handbook.days} Days
+                                  </div>
+                                  <div className="mt-1 text-lg font-black leading-tight">
+                                    {handbook.title}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="px-4 py-4">
+                                <div className="mb-3 rounded-[18px] border border-white/90 bg-white/80 px-3 py-2 text-[12px] font-bold leading-[1.65] text-slate-600">
+                                  先借這份旅程節奏暖身，再決定要不要複製成自己的起跑版本。
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {handbook.tags.slice(0, 3).map((tag) => (
+                                    <span
+                                      key={tag}
+                                      className="rounded-full bg-slate-100 dark:bg-white/8 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-600 dark:text-slate-200"
+                                    >
+                                      #{tag}
+                                    </span>
+                                  ))}
+                                </div>
+                                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-800 dark:text-white">
+                                  點我預覽
+                                  <ArrowRight size={14} />
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </HorizontalScrollRail>
+                        <div className="hidden gap-3 md:grid md:grid-cols-3">
                           {demoTemplates.map((handbook) => (
                             <button
                               key={handbook.id}
@@ -2503,6 +2563,9 @@ export default function HomeTab({
                                 </div>
                               </div>
                               <div className="px-4 py-4">
+                                <div className="mb-3 rounded-[18px] border border-white/90 bg-white/80 px-3 py-2 text-[12px] font-bold leading-[1.65] text-slate-600">
+                                  先借這份旅程節奏暖身，再決定要不要複製成自己的起跑版本。
+                                </div>
                                 <div className="flex flex-wrap gap-2">
                                   {handbook.tags.slice(0, 3).map((tag) => (
                                     <span
@@ -2584,8 +2647,10 @@ export default function HomeTab({
                 </span>
               </div>
 
-              <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
-                <div className="flex gap-6 min-w-max">
+              <HorizontalScrollRail
+                label="分享行程卡片"
+                viewportClassName="w-full pb-6 -mx-6 px-6"
+              >
                   {communityTrips.map((trip) => (
                     <motion.div
                       key={trip.id}
@@ -2627,7 +2692,7 @@ export default function HomeTab({
                             旅伴明信片
                           </div>
 
-                          <div className="relative mb-3 rounded-[20px] border border-white/90 bg-white/78 px-3.5 py-2.5 text-[12px] font-bold leading-5 text-slate-600 shadow-sm">
+                          <div className="editorial-card-soft relative mb-3 rounded-[20px] px-3.5 py-2.5 text-[12px] font-bold leading-[1.7] text-slate-600">
                             先把別人的旅程節奏當成一張明信片，喜歡再複製成自己的出發草稿。
                           </div>
 
@@ -2656,8 +2721,7 @@ export default function HomeTab({
                       </GlassCard>
                     </motion.div>
                   ))}
-                </div>
-              </div>
+              </HorizontalScrollRail>
             </div>
           )}
 
@@ -2675,8 +2739,10 @@ export default function HomeTab({
               </span>
             </div>
 
-            <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
-              <div className="flex gap-6 min-w-max">
+            <HorizontalScrollRail
+              label="精選目的地指南"
+              viewportClassName="w-full pb-6 -mx-6 px-6"
+            >
                 {FEATURED_DESTINATIONS.map((dest, index) => {
                   const decor = FEATURED_CARD_DECOR[index % FEATURED_CARD_DECOR.length];
                   return (
@@ -2782,8 +2848,7 @@ export default function HomeTab({
                   </motion.div>
                   );
                 })}
-              </div>
-            </div>
+            </HorizontalScrollRail>
           </div>
 
           {/* Expert Handbooks Section */}
@@ -2795,8 +2860,10 @@ export default function HomeTab({
               </h2>
             </div>
 
-            <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
-              <div className="flex gap-6 min-w-max">
+            <HorizontalScrollRail
+              label="熱門達人手帳"
+              viewportClassName="w-full pb-6 -mx-6 px-6"
+            >
                 {EXPERT_HANDBOOKS.map((handbook, index) => {
                   const decor = HANDBOOK_CARD_DECOR[index % HANDBOOK_CARD_DECOR.length];
                   return (
@@ -2835,16 +2902,23 @@ export default function HomeTab({
 
                       <div className={`relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 ${decor.body}`}>
                         <div className={`absolute -right-8 top-0 size-24 rounded-full blur-2xl ${decor.glow}`} />
-                        <div className="relative mb-2.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
-                          <Sparkles size={12} strokeWidth={2.6} />
-                          旅伴草稿
+                        <div className="relative mb-3 flex items-start justify-between gap-3">
+                          <div>
+                            <div className="mb-2.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                              <Sparkles size={12} strokeWidth={2.6} />
+                              旅伴草稿
+                            </div>
+                            <h3 className="text-[18px] sm:text-xl font-black text-slate-800 mb-1 leading-tight">
+                              {handbook.title}
+                            </h3>
+                            <p className="text-[13px] sm:text-sm font-bold text-slate-500">
+                              {handbook.author}
+                            </p>
+                          </div>
+                          <div className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${decor.badge}`}>
+                            editor's pick
+                          </div>
                         </div>
-                        <h3 className="text-[18px] sm:text-xl font-black text-slate-800 mb-1 leading-tight">
-                          {handbook.title}
-                        </h3>
-                        <p className="text-[13px] sm:text-sm font-bold text-slate-500 mb-2.5">
-                          {handbook.author}
-                        </p>
 
                         <div className="editorial-card-soft mb-3.5 rounded-[20px] px-3.5 py-2.5 text-[12px] font-bold leading-[1.7] text-slate-600">
                           先把這份達人手帳當成旅伴寄來的明信片，再複製成你的出發版本。
@@ -2878,8 +2952,7 @@ export default function HomeTab({
                   </motion.div>
                   );
                 })}
-              </div>
-            </div>
+            </HorizontalScrollRail>
           </div>
         </div>
       </div>
