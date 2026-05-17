@@ -9,6 +9,7 @@ export interface SearchItem {
   bookingUrl?: string;
   type?: 'flight' | 'ticket' | 'other';
   tripType?: 'oneway' | 'roundtrip';
+  legType?: 'outbound' | 'return';
   details?: {
     airline?: string;
     departure?: string;

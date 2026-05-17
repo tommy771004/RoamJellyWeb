@@ -62,6 +62,16 @@ import {
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
+type RoundTripLegView = "outbound" | "return";
+
+function extractAirportCode(value?: string) {
+  const normalized = value?.trim().toUpperCase() ?? "";
+  if (!normalized) return "";
+  const matches = normalized.match(/[A-Z]{3}/g);
+  if (matches?.length) return matches[matches.length - 1];
+  return normalized.replace(/[^A-Z0-9]/g, "").slice(0, 3);
+}
+
 const HERO_STORY_PILLARS = [
   {
     icon: PlaneTakeoff,
@@ -1245,14 +1255,89 @@ export default function HomeTab({
 
   const [communityTrips, setCommunityTrips] = useState<any[]>([]);
   const [viewType, setViewType] = useState<"grid" | "table">("table");
+  const [roundTripLegView, setRoundTripLegView] =
+    useState<RoundTripLegView>("outbound");
   const [filterType, setFilterType] = useState<
     "all" | "flight" | "ticket" | "other"
   >("all");
 
+  const normalizedResults = useMemo(
+    () =>
+      results.map((item) => {
+        if (item.type !== "flight") return item;
+
+        const isReturnLeg = item.legType === "return";
+        const fallbackDepCode = extractAirportCode(
+          isReturnLeg ? searchForm.to : searchForm.from,
+        );
+        const fallbackArrCode = extractAirportCode(
+          isReturnLeg ? searchForm.from : searchForm.to,
+        );
+
+        return {
+          ...item,
+          details: {
+            ...(item.details ?? {}),
+            depCode: item.details?.depCode || fallbackDepCode,
+            arrCode: item.details?.arrCode || fallbackArrCode,
+          },
+        };
+      }),
+    [results, searchForm.from, searchForm.to],
+  );
+
+  const typeFilteredResults = useMemo(() => {
+    if (filterType === "all") return normalizedResults;
+    return normalizedResults.filter((result) => result.type === filterType);
+  }, [normalizedResults, filterType]);
+
+  const hasRoundTripLegMenu = useMemo(
+    () =>
+      searchForm.tripType === "roundtrip" &&
+      typeFilteredResults.some(
+        (result) =>
+          result.legType === "outbound" || result.legType === "return",
+      ),
+    [searchForm.tripType, typeFilteredResults],
+  );
+
+  const roundTripLegCounts = useMemo(
+    () => ({
+      outbound: typeFilteredResults.filter(
+        (result) => result.legType === "outbound",
+      ).length,
+      return: typeFilteredResults.filter(
+        (result) => result.legType === "return",
+      ).length,
+    }),
+    [typeFilteredResults],
+  );
+
   const filteredResults = useMemo(() => {
-    if (filterType === "all") return results;
-    return results.filter((r) => r.type === filterType);
-  }, [results, filterType]);
+    if (!hasRoundTripLegMenu) return typeFilteredResults;
+    return typeFilteredResults.filter(
+      (result) => result.legType === roundTripLegView,
+    );
+  }, [hasRoundTripLegMenu, roundTripLegView, typeFilteredResults]);
+
+  useEffect(() => {
+    if (!hasRoundTripLegMenu) {
+      setRoundTripLegView("outbound");
+      return;
+    }
+
+    if (
+      typeFilteredResults.some((result) => result.legType === roundTripLegView)
+    ) {
+      return;
+    }
+
+    setRoundTripLegView(
+      typeFilteredResults.some((result) => result.legType === "outbound")
+        ? "outbound"
+        : "return",
+    );
+  }, [hasRoundTripLegMenu, roundTripLegView, typeFilteredResults]);
 
   const demoTemplates = useMemo(() => EXPERT_HANDBOOKS.slice(0, 3), []);
 
@@ -1432,13 +1517,21 @@ export default function HomeTab({
     }
 
     try {
+      const isReturnLeg = flight.legType === "return";
       const depCode =
-        searchForm.from?.trim() || flight.details?.depCode || "TPE";
-      const arrCode = searchForm.to?.trim() || flight.details?.arrCode || "NRT";
+        flight.details?.depCode ||
+        (isReturnLeg ? searchForm.to?.trim() : searchForm.from?.trim()) ||
+        "TPE";
+      const arrCode =
+        flight.details?.arrCode ||
+        (isReturnLeg ? searchForm.from?.trim() : searchForm.to?.trim()) ||
+        "NRT";
       const factDate =
-        searchForm.date?.trim() || new Date().toISOString().slice(0, 10);
+        (isReturnLeg ? searchForm.returnDate?.trim() : searchForm.date?.trim()) ||
+        searchForm.date?.trim() ||
+        new Date().toISOString().slice(0, 10);
       const newFact = await createTripFact(tripId, {
-        factType: "flight_outbound",
+        factType: isReturnLeg ? "flight_inbound" : "flight_outbound",
         source: "imported_search",
         title: `${flight.details?.airline || flight.provider} ${depCode} → ${arrCode}`,
         startAt: `${factDate}T${toHHMM(flight.details?.departure)}:00.000Z`,
@@ -1461,8 +1554,10 @@ export default function HomeTab({
         trip_id: tripId,
         action: "add_node",
         payload: {
-          node_id: `node_flight_${Date.now()}`,
-          day: 1,
+          node_id: isReturnLeg
+            ? `node_flight_return_${Date.now()}`
+            : `node_flight_${Date.now()}`,
+          day: isReturnLeg ? 2 : 1,
           date: factDate,
           time: toHHMM(flight.details?.departure),
           title: `${flight.details?.airline || flight.provider} 航班`,
@@ -1484,10 +1579,10 @@ export default function HomeTab({
       }
 
       // If roundtrip and return leg exists, create a second trip fact + node
-      if (flight.tripType === "roundtrip" && flight.returnLeg) {
+      if (!isReturnLeg && flight.tripType === "roundtrip" && flight.returnLeg) {
         const retDate = searchForm.returnDate?.trim() || factDate;
         const retFact = await createTripFact(tripId, {
-          factType: "flight_return",
+          factType: "flight_inbound",
           source: "imported_search",
           title: `${flight.returnLeg.airline || flight.provider} ${arrCode} → ${depCode}`,
           startAt: `${retDate}T${toHHMM(flight.returnLeg.departure)}:00.000Z`,
@@ -2027,6 +2122,65 @@ export default function HomeTab({
                         : type === "ticket"
                           ? "票券"
                           : "其他"}
+                  </button>
+                ))}
+              </div>
+            )}
+            {hasRoundTripLegMenu && (
+              <div className="flex items-center bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 w-full overflow-x-auto hide-scrollbar">
+                {(
+                  [
+                    {
+                      key: "outbound" as const,
+                      label: "去程",
+                      route: `${searchForm.from || "—"} → ${searchForm.to || "—"}`,
+                      date: searchForm.date || "未選日期",
+                      count: roundTripLegCounts.outbound,
+                    },
+                    {
+                      key: "return" as const,
+                      label: "回程",
+                      route: `${searchForm.to || "—"} → ${searchForm.from || "—"}`,
+                      date: searchForm.returnDate || "未選日期",
+                      count: roundTripLegCounts.return,
+                    },
+                  ] satisfies Array<{
+                    key: RoundTripLegView;
+                    label: string;
+                    route: string;
+                    date: string;
+                    count: number;
+                  }>
+                ).map((leg) => (
+                  <button
+                    key={leg.key}
+                    onClick={() => setRoundTripLegView(leg.key)}
+                    className={`relative flex-1 min-w-[164px] rounded-[8px] px-3 py-2.5 text-left ${subtlePressableClass} ${roundTripLegView === leg.key ? "text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+                    aria-pressed={roundTripLegView === leg.key}
+                  >
+                    {roundTripLegView === leg.key && (
+                      <motion.div
+                        layoutId="roundTripLegIndicator"
+                        className="absolute inset-0 rounded-[8px] bg-white shadow-sm border border-slate-200"
+                        transition={layoutIndicatorTransition}
+                      />
+                    )}
+                    <div className="relative z-10 flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-black uppercase tracking-[0.18em]">
+                          {leg.label}
+                        </div>
+                        <div className="mt-1 truncate text-[12px] font-bold">
+                          {leg.route}
+                        </div>
+                        <div className="mt-0.5 text-[10px] font-bold text-slate-400">
+                          {leg.date}
+                        </div>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-slate-600">
+                        {leg.count}
+                      </span>
+                    </div>
                   </button>
                 ))}
               </div>
