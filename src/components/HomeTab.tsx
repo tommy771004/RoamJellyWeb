@@ -278,10 +278,10 @@ function FlightCard({
       }}
     >
       <GlassCard
-        className={`!p-0 bg-white dark:bg-slate-800 border border-slate-100/80 dark:border-slate-700 shadow-[0_2px_12px_rgba(134,77,97,0.07),0_1px_3px_rgba(134,77,97,0.04)] hover:shadow-[0_8px_32px_rgba(134,77,97,0.14),0_2px_8px_rgba(134,77,97,0.07)] hover:-translate-y-0.5 flex-1 flex flex-col overflow-hidden rounded-2xl transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}
+        className={`!p-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,249,252,0.94))] dark:bg-slate-800 border border-white/90 dark:border-slate-700 shadow-[0_8px_24px_rgba(240,138,173,0.08),0_2px_8px_rgba(15,23,42,0.04)] hover:shadow-[0_14px_34px_rgba(240,138,173,0.14),0_4px_12px_rgba(15,23,42,0.06)] flex-1 flex flex-col overflow-hidden rounded-[24px] transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}
       >
         {/* Top Section: Airline & Route */}
-        <div className="p-4 flex flex-col gap-3">
+        <div className="p-3.5 sm:p-4 flex flex-col gap-2.5">
           {/* Header: Airline + stop/duration badge */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -293,7 +293,7 @@ function FlightCard({
                 <span className="text-xs font-semibold text-slate-900 dark:text-white">
                   {flight.details?.airline || flight.provider}
                 </span>
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.22em]">
                   {flight.provider}
                 </span>
               </div>
@@ -310,7 +310,7 @@ function FlightCard({
                   ? "DIRECT"
                   : `${flight.details?.stops} STOP`}
               </span>
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight whitespace-nowrap">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight whitespace-nowrap">
                 {flight.details?.duration || "3h 15m"}
               </span>
               <button
@@ -348,7 +348,7 @@ function FlightCard({
               <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
                 {flight.details?.departure}
               </span>
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-none">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">
                 Depart
               </span>
             </div>
@@ -356,7 +356,7 @@ function FlightCard({
               <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
                 {flight.details?.arrival}
               </span>
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-none">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">
                 Arrive
               </span>
             </div>
@@ -375,7 +375,7 @@ function FlightCard({
                   <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">
                     {flight.returnLeg.departure}
                   </span>
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                     Depart
                   </span>
                 </div>
@@ -386,7 +386,7 @@ function FlightCard({
                   <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">
                     {flight.returnLeg.arrival}
                   </span>
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                     Arrive
                   </span>
                 </div>
@@ -400,7 +400,7 @@ function FlightCard({
                     : `${flight.returnLeg.stops} 轉 STOP`}
                 </span>
                 {flight.returnLeg.duration && (
-                  <span className="text-[11px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-500 whitespace-nowrap">
+                  <span className="text-[10px] font-bold uppercase tracking-tight text-slate-400 dark:text-slate-500 whitespace-nowrap">
                     {flight.returnLeg.duration}
                   </span>
                 )}
@@ -417,13 +417,13 @@ function FlightCard({
         </div>
 
         {/* Bottom: Price & CTAs */}
-        <div className="p-4 pt-2 flex items-end justify-between mt-auto">
+        <div className="p-3.5 pt-1.5 sm:p-4 sm:pt-2 flex items-end justify-between mt-auto">
           <div className="flex flex-col">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-0.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.22em] mb-0.5">
               Estimated Price
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-xs font-bold text-slate-500">
+              <span className="text-xs font-bold text-slate-400">
                 {flight.currency}
               </span>
               <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
@@ -468,8 +468,8 @@ function FlightCard({
                 e.stopPropagation();
                 onPress();
               }}
-              className={`h-11 px-5 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-md ${subtlePressableClass} ${raisedHoverClass}`}
-            >
+                className={`h-11 px-5 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_10px_20px_rgba(244,114,182,0.16)] ${subtlePressableClass} ${raisedHoverClass}`}
+              >
               <span className="text-[11px] uppercase tracking-widest leading-none">
                 購買
               </span>
@@ -511,7 +511,7 @@ function FlightTable({
             role="button"
             tabIndex={0}
             aria-label={`查看 ${providerName} 航班 ${flight.details?.depCode || ""} → ${flight.details?.arrCode || ""} ${flight.currency} ${flight.price}`}
-            className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md rounded-2xl overflow-hidden cursor-pointer transition-shadow duration-200"
+            className="bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,249,252,0.94))] dark:bg-slate-800 border border-white/90 dark:border-slate-700 shadow-[0_8px_24px_rgba(240,138,173,0.08),0_2px_8px_rgba(15,23,42,0.04)] hover:shadow-[0_14px_34px_rgba(240,138,173,0.14),0_4px_12px_rgba(15,23,42,0.06)] rounded-[24px] overflow-hidden cursor-pointer transition-shadow duration-200"
             onClick={() => onPress(flight)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -520,7 +520,7 @@ function FlightTable({
               }
             }}
           >
-            <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3.5">
               {/* Left: Airline + Route */}
               <div className="flex-1 flex flex-col gap-3">
                 {/* Airline header */}
@@ -530,7 +530,7 @@ function FlightTable({
                       providerName={providerName}
                       className="w-6 h-6 rounded-md text-xs"
                     />
-                    <span className="text-sm font-semibold text-slate-700 dark:text-white">
+                    <span className="text-sm font-semibold text-slate-800 dark:text-white">
                       {providerName}
                     </span>
                   </div>
@@ -553,14 +553,14 @@ function FlightTable({
                     <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                       {flight.details?.departure || "--:--"}
                     </span>
-                    <span className="text-xs text-slate-500 font-bold tracking-widest mt-0.5">
+                    <span className="text-[11px] text-slate-400 font-bold tracking-[0.18em] mt-0.5">
                       {(flight.details?.depCode || "TPE")
                         .toUpperCase()
                         .substring(0, 3)}
                     </span>
                   </div>
                   <div className="flex flex-col items-center justify-center flex-1 px-4 sm:px-8">
-                    <span className="text-xs text-slate-500 font-medium mb-1">
+                    <span className="text-[11px] text-slate-400 font-medium mb-1">
                       {flight.details?.duration || "3h 15m"}
                     </span>
                     <div className="w-full relative flex items-center justify-center h-[2px] bg-slate-200 dark:bg-slate-600 rounded-full">
@@ -571,7 +571,7 @@ function FlightTable({
                     <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                       {flight.details?.arrival || "--:--"}
                     </span>
-                    <span className="text-xs text-slate-500 font-bold tracking-widest mt-0.5">
+                    <span className="text-[11px] text-slate-400 font-bold tracking-[0.18em] mt-0.5">
                       {(flight.details?.arrCode || "TYO")
                         .toUpperCase()
                         .substring(0, 3)}
@@ -583,11 +583,11 @@ function FlightTable({
               {/* Right: Price + Actions */}
               <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center sm:min-w-[160px] gap-3 border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-700 pt-3 sm:pt-0 sm:pl-5">
                 <div className="flex flex-col items-start sm:items-end">
-                  <span className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mb-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-1">
                     總價
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-sm font-bold text-slate-500">
+                    <span className="text-sm font-bold text-slate-400">
                       {flight.currency}
                     </span>
                     <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
@@ -1550,11 +1550,11 @@ export default function HomeTab({
       <div
         className={`relative z-10 w-full pt-10 sm:pt-[72px] ${!isHeroExpanded ? "pb-3" : "pb-10 sm:pb-14"} px-3 sm:px-6 overflow-visible`}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-100/95 via-cyan-50/95 to-orange-50/95 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-white/45 via-transparent to-white/10 pointer-events-none" />
-        <div className="absolute -top-12 right-6 h-72 w-72 rounded-full bg-sky-300/25 blur-[88px] pointer-events-none" />
-        <div className="absolute top-8 left-[-2rem] h-64 w-64 rounded-full bg-cyan-200/30 blur-[86px] pointer-events-none" />
-        <div className="absolute -bottom-16 right-[18%] h-72 w-72 rounded-full bg-orange-200/35 blur-[90px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(240,249,255,0.94),rgba(255,250,252,0.98),rgba(255,247,237,0.9))] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/55 via-white/10 to-transparent pointer-events-none" />
+        <div className="absolute -top-10 right-6 h-72 w-72 rounded-full bg-sky-200/20 blur-[96px] pointer-events-none" />
+        <div className="absolute top-10 left-[-1rem] h-60 w-60 rounded-full bg-pink-200/18 blur-[90px] pointer-events-none" />
+        <div className="absolute -bottom-12 right-[18%] h-64 w-64 rounded-full bg-orange-200/24 blur-[92px] pointer-events-none" />
 
         <div className="relative z-20 mx-auto w-full max-w-[1120px]">
           {/* Hero title */}
@@ -1562,23 +1562,36 @@ export default function HomeTab({
             initial={prefersReducedMotion ? undefined : { opacity: 0, y: 18 }}
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
-            className={`mb-5 space-y-4 text-center sm:mb-6${!isHeroExpanded ? " hidden sm:block" : ""}`}
+            className={`relative mx-auto mb-4 max-w-[960px] space-y-3 overflow-hidden rounded-[34px] border border-white/84 bg-[linear-gradient(180deg,rgba(255,255,255,0.64),rgba(255,250,252,0.54),rgba(248,251,255,0.44))] px-4 py-4.5 text-center shadow-[0_16px_34px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-[18px] sm:mb-5 sm:space-y-4 sm:px-6 sm:py-6.5${!isHeroExpanded ? " hidden sm:block" : ""}`}
           >
+            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+            <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-sky-200/18 blur-3xl" />
+            <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-orange-200/16 blur-3xl" />
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-              <span className="inline-flex items-center rounded-full border border-sky-200/80 bg-white/75 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-sky-700 shadow-[0_4px_14px_rgba(14,165,233,0.12)] backdrop-blur-md">
+              <span className="inline-flex items-center rounded-full border border-white/92 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-sky-700 shadow-[0_6px_14px_rgba(14,165,233,0.07)] backdrop-blur-md">
                 Collaborative Trip Planner
               </span>
-              <span className="hidden items-center rounded-full border border-orange-200/80 bg-white/80 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-orange-600 shadow-[0_4px_14px_rgba(249,115,22,0.12)] backdrop-blur-md sm:inline-flex">
+              <span className="hidden items-center rounded-full border border-white/92 bg-white/84 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-orange-500 shadow-[0_6px_14px_rgba(249,115,22,0.07)] backdrop-blur-md sm:inline-flex">
                 Beta
               </span>
             </div>
-            <div className="space-y-2.5 sm:space-y-3">
-              <h1 className="mx-auto max-w-4xl text-balance text-[26px] font-black tracking-tight text-slate-900 sm:text-4xl md:text-5xl md:leading-[1.05]">
+            <div className="relative space-y-2 sm:space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">
+                Premium Jelly Journey Desk
+              </p>
+              <h1 className="mx-auto max-w-4xl text-balance text-[28px] font-black tracking-[-0.045em] text-slate-900 sm:text-[42px] md:text-[54px] md:leading-[1.01]">
                 把航班、地圖與旅伴分工，收進同一份旅程
               </h1>
-              <p className="mx-auto max-w-2xl text-pretty text-[13px] leading-relaxed text-slate-600 sm:text-base sm:leading-7">
+              <p className="mx-auto max-w-[40rem] text-pretty text-[14px] leading-[1.75] text-slate-600 sm:text-[15px] sm:leading-[1.82]">
                 RoamJelly 先幫你鎖定出發節奏，再把靈感、共編清單和旅途工具串成可執行的旅程，不必在多個 App 之間切換。
               </p>
+            </div>
+            <div className="mx-auto flex max-w-[620px] flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/70 pt-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 sm:gap-x-5">
+              <span>先比價</span>
+              <span className="h-1 w-1 rounded-full bg-slate-300" />
+              <span>再共編</span>
+              <span className="h-1 w-1 rounded-full bg-slate-300" />
+              <span>最後接工具包</span>
             </div>
 
             {isHeroExpanded && (
@@ -1586,7 +1599,7 @@ export default function HomeTab({
                 initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
                 animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.24, delay: prefersReducedMotion ? 0 : 0.05, ease: "easeOut" }}
-                className="flex snap-x gap-2.5 overflow-x-auto pb-1 text-left sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:pb-0"
+                className="flex snap-x gap-2 overflow-x-auto pb-1 text-left sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:pb-0"
               >
                 {HERO_STORY_PILLARS.map((pillar, index) => {
                   const Icon = pillar.icon;
@@ -1597,7 +1610,7 @@ export default function HomeTab({
                       initial={prefersReducedMotion ? undefined : { opacity: 0, y: 16 }}
                       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
                       transition={{ duration: prefersReducedMotion ? 0 : 0.22, delay: prefersReducedMotion ? 0 : 0.08 + index * 0.04, ease: "easeOut" }}
-                      className={`group/pillar relative min-w-[264px] snap-start overflow-hidden rounded-[28px] border p-4 shadow-[0_16px_42px_rgba(14,165,233,0.08)] backdrop-blur-xl sm:min-w-0 ${decor.shell}`}
+                      className={`group/pillar relative min-w-[248px] snap-start overflow-hidden rounded-[26px] border px-3.5 py-3 shadow-[0_12px_26px_rgba(14,165,233,0.06)] backdrop-blur-xl sm:min-w-0 ${decor.shell}`}
                     >
                       <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
                       <div className="absolute inset-x-4 bottom-3 h-px bg-gradient-to-r from-white via-slate-200/70 to-transparent" />
@@ -1610,15 +1623,18 @@ export default function HomeTab({
                           <ArrowRight size={14} strokeWidth={2.5} />
                         </span>
                       </div>
-                      <h2 className="relative text-balance text-base font-black tracking-tight text-slate-900 sm:text-[17px]">
+                      <h2 className="relative text-balance text-[15px] font-black tracking-[-0.02em] text-slate-900 sm:text-[17px]">
                         {pillar.title}
                       </h2>
-                      <div className="relative mt-4 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                      <p className="relative mt-1.5 text-[13px] font-medium leading-[1.55] text-slate-600 line-clamp-3">
+                        {pillar.description}
+                      </p>
+                      <div className="relative mt-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
                           <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/85 text-[10px] font-black shadow-sm ${decor.badge}`}>
                             0{index + 1}
                           </span>
-                          <span className="text-pretty">{decor.note}</span>
+                          <span className="text-pretty line-clamp-2">{decor.note}</span>
                         </div>
                         <button
                           type="button"
@@ -1632,7 +1648,7 @@ export default function HomeTab({
                               icon: Icon,
                             })
                           }
-                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/92 bg-white/94 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.96] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
                         >
                           查看說明
                           <ArrowRight size={12} strokeWidth={2.6} />
@@ -1673,12 +1689,12 @@ export default function HomeTab({
             {/* Unified search form */}
             {isHeroExpanded && (
               <div className="relative z-20">
-                <div className="mb-3 flex flex-col items-start gap-2 px-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+                <div className="mb-2.5 flex flex-col items-start gap-1.5 px-1 sm:mb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
                   <div>
                     <p className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-700/80">
                       第一站
                     </p>
-                    <p className="text-pretty text-sm font-bold leading-6 text-slate-700 sm:text-[15px]">
+                    <p className="text-pretty text-[14px] font-bold leading-6 text-slate-700 sm:text-[15px]">
                       先鎖定這趟旅行的時間骨架，之後再補地圖、景點與共編細節。
                     </p>
                   </div>
@@ -1689,7 +1705,7 @@ export default function HomeTab({
                   )}
                 </div>
                 {/* Trip type toggle */}
-                <div className="mb-3 flex w-fit items-center gap-1 rounded-full border border-white/70 bg-white/55 p-1">
+                <div className="mb-2.5 flex w-fit items-center gap-1 rounded-full border border-white/75 bg-white/62 p-1">
                   <button
                     onClick={() => updateField("tripType", "oneway")}
                     aria-pressed={searchForm.tripType !== "roundtrip"}
@@ -1715,7 +1731,7 @@ export default function HomeTab({
                 </div>
 
                 {/* Search card */}
-                <div className="flex flex-col gap-2 rounded-[28px] border border-white/95 bg-white/92 p-2.5 shadow-[0_12px_48px_rgba(14,165,233,0.12),0_3px_12px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,1)] backdrop-blur-2xl sm:gap-2.5 sm:rounded-3xl sm:p-4 dark:border-slate-700 dark:bg-slate-800/90">
+                <div className="flex flex-col gap-2 rounded-[28px] border border-white/96 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,249,252,0.9),rgba(248,251,255,0.86))] p-2.5 shadow-[0_12px_40px_rgba(14,165,233,0.10),0_3px_12px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,1)] backdrop-blur-2xl sm:gap-2 sm:rounded-3xl sm:p-3.5 dark:border-slate-700 dark:bg-slate-800/90">
                   {/* FROM / TO row */}
                   <div className="relative grid grid-cols-2">
                     {/* FROM cell */}
@@ -2405,9 +2421,9 @@ export default function HomeTab({
                       className="w-[280px] sm:w-[320px] group/trip"
                     >
                       <GlassCard
-                        className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] flex flex-col ${cardSurfaceClass}`}
+                        className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/86 shadow-[0_12px_34px_-8px_rgba(255,160,200,0.14),inset_0_1px_0_rgba(255,255,255,0.96)] hover:shadow-[0_20px_44px_-14px_rgba(255,160,200,0.24)] flex flex-col ${cardSurfaceClass}`}
                       >
-                        <div className="relative h-44 overflow-hidden flex-shrink-0">
+                        <div className="relative h-40 overflow-hidden flex-shrink-0 sm:h-44">
                           <img
                             src={trip.cover}
                             alt={trip.title}
@@ -2433,14 +2449,14 @@ export default function HomeTab({
                           </div>
                         </div>
 
-                        <div className="relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(254,242,248,0.94),rgba(240,249,255,0.92))]">
+                        <div className="relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(255,247,251,0.95),rgba(244,249,255,0.92))]">
                           <div className="absolute -right-10 -top-10 size-24 rounded-full bg-pink-200/35 blur-3xl" />
-                          <div className="relative mb-3 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/88 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                          <div className="relative mb-2.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
                             <Sparkles size={12} strokeWidth={2.6} />
                             旅伴明信片
                           </div>
 
-                          <div className="relative mb-3 sm:mb-4 rounded-[20px] border border-white/90 bg-white/76 px-3.5 py-2.5 sm:px-4 sm:py-3 text-[12px] font-bold leading-5 text-slate-600 shadow-sm">
+                          <div className="relative mb-3 rounded-[20px] border border-white/90 bg-white/78 px-3.5 py-2.5 text-[12px] font-bold leading-5 text-slate-600 shadow-sm">
                             先把別人的旅程節奏當成一張明信片，喜歡再複製成自己的出發草稿。
                           </div>
 
@@ -2457,7 +2473,7 @@ export default function HomeTab({
 
                           <button
                             onClick={(event) => handleCloneTrip(event, trip)}
-                            className={`mt-auto w-full py-3 sm:py-4 rounded-full bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 text-white font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_10px_20px_rgba(244,114,182,0.25)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_14px_28px_rgba(244,114,182,0.35)] group/btn`}
+                            className={`mt-auto w-full py-3 sm:py-3.5 rounded-full bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 text-white font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.34),0_10px_20px_rgba(244,114,182,0.18)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_14px_24px_rgba(244,114,182,0.24)] group/btn`}
                           >
                             <Copy
                               size={14}
@@ -2495,13 +2511,13 @@ export default function HomeTab({
                   return (
                   <motion.div
                     key={dest.id}
-                    className="w-[260px] sm:w-[300px] group/dest"
+                    className="w-[272px] sm:w-[304px] group/dest"
                   >
                     <GlassCard
-                      className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] flex flex-col ${cardSurfaceClass}`}
+                      className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/86 shadow-[0_12px_34px_-8px_rgba(255,160,200,0.14),inset_0_1px_0_rgba(255,255,255,0.96)] hover:shadow-[0_20px_44px_-14px_rgba(255,160,200,0.24)] flex flex-col ${cardSurfaceClass}`}
                     >
                       {/* Cover Image */}
-                      <div className="relative h-44 overflow-hidden flex-shrink-0">
+                      <div className="relative h-40 overflow-hidden flex-shrink-0 sm:h-44">
                         <img
                           src={dest.image}
                           alt={dest.name}
@@ -2514,7 +2530,7 @@ export default function HomeTab({
                             Postcard Pick
                           </span>
                           {dest.tags[0] ? (
-                            <span className="rounded-full border border-white/30 bg-slate-950/35 px-2.5 py-1 text-[10px] font-black tracking-[0.16em] text-white/90 backdrop-blur-md">
+                            <span className="hidden rounded-full border border-white/30 bg-slate-950/35 px-2.5 py-1 text-[10px] font-black tracking-[0.16em] text-white/90 backdrop-blur-md sm:inline-flex">
                               {dest.tags[0]}
                             </span>
                           ) : null}
@@ -2528,8 +2544,8 @@ export default function HomeTab({
                           </h3>
                         </div>
                         {/* Tag pills on top-right */}
-                        <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
-                          {dest.tags.slice(1).map((tag) => (
+                        <div className="absolute top-3 right-3 hidden flex-col gap-1 items-end sm:flex">
+                          {dest.tags.slice(1, 3).map((tag) => (
                             <span
                               key={tag}
                               className="text-[11px] font-black text-white bg-white/20 backdrop-blur-md border border-white/30 px-2 py-0.5 rounded-full uppercase tracking-wider"
@@ -2543,8 +2559,8 @@ export default function HomeTab({
                       {/* Card Body */}
                       <div className={`relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 ${decor.body}`}>
                         <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
-                        <div className="relative mb-3 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/88 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                        <div className="relative mb-2.5 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
                             <Sparkles size={12} strokeWidth={2.6} />
                             Travel Mood
                           </span>
@@ -2555,12 +2571,12 @@ export default function HomeTab({
                           ) : null}
                         </div>
 
-                        <p className="relative text-pretty text-[12px] sm:text-[13px] text-slate-600 font-medium mb-3 sm:mb-4 leading-relaxed line-clamp-3 sm:line-clamp-4">
+                        <p className="relative text-pretty text-[13px] text-slate-600 font-medium mb-3 leading-5 sm:text-[13px] sm:leading-relaxed line-clamp-4 sm:line-clamp-4">
                           {dest.description}
                         </p>
 
-                        <div className="relative flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-5">
-                          {dest.highlights.map((h, highlightIndex) => (
+                        <div className="relative flex flex-wrap gap-1.5 sm:gap-2 mb-4">
+                          {dest.highlights.slice(0, 3).map((h, highlightIndex) => (
                             <span
                               key={h}
                               className={`text-[11px] font-bold border px-2.5 py-1 rounded-full ${CARD_STICKER_TONES[(index + highlightIndex) % CARD_STICKER_TONES.length]}`}
@@ -2571,7 +2587,7 @@ export default function HomeTab({
                         </div>
 
                         <button
-                          className={`mt-auto w-full py-3 sm:py-3.5 rounded-full bg-gradient-to-r text-white font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_10px_20px_rgba(14,165,233,0.16)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 group/btn ${decor.cta}`}
+                          className={`mt-auto w-full py-3 sm:py-3.5 rounded-full bg-gradient-to-r text-white font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.34),0_10px_20px_rgba(14,165,233,0.14)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 group/btn ${decor.cta}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             const g = getCountryGuide(dest.id);
@@ -2609,13 +2625,13 @@ export default function HomeTab({
                   return (
                   <motion.div
                     key={handbook.id}
-                    className="w-[280px] sm:w-[320px] group/handbook"
+                    className="w-[286px] sm:w-[320px] group/handbook"
                   >
                     <GlassCard
                       onClick={() => setActiveHandbook(handbook)}
-                      className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/80 shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] cursor-pointer ${cardSurfaceClass}`}
+                      className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/86 shadow-[0_12px_34px_-8px_rgba(255,160,200,0.14),inset_0_1px_0_rgba(255,255,255,0.96)] hover:shadow-[0_20px_44px_-14px_rgba(255,160,200,0.24)] cursor-pointer ${cardSurfaceClass}`}
                     >
-                      <div className="relative h-44 overflow-hidden">
+                      <div className="relative h-40 overflow-hidden sm:h-44">
                         <img
                           src={handbook.image}
                           alt={handbook.title}
@@ -2627,7 +2643,7 @@ export default function HomeTab({
                           <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[11px] font-black text-white uppercase tracking-wider border border-white/30">
                             {handbook.days} Days
                           </span>
-                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${decor.badge}`}>
+                          <span className={`hidden rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] sm:inline-flex ${decor.badge}`}>
                             editor's pick
                           </span>
                         </div>
@@ -2642,23 +2658,23 @@ export default function HomeTab({
 
                       <div className={`relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 ${decor.body}`}>
                         <div className={`absolute -right-8 top-0 size-24 rounded-full blur-2xl ${decor.glow}`} />
-                        <div className="relative mb-3 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/88 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                        <div className="relative mb-2.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
                           <Sparkles size={12} strokeWidth={2.6} />
                           旅伴草稿
                         </div>
                         <h3 className="text-[18px] sm:text-xl font-black text-slate-800 mb-1 leading-tight">
                           {handbook.title}
                         </h3>
-                        <p className="text-[13px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4">
+                        <p className="text-[13px] sm:text-sm font-bold text-slate-500 mb-2.5">
                           {handbook.author}
                         </p>
 
-                        <div className="mb-4 sm:mb-5 rounded-[20px] border border-white/90 bg-white/78 px-3.5 py-2.5 sm:px-4 sm:py-3 text-[12px] font-bold leading-5 text-slate-600 shadow-sm">
+                        <div className="mb-3.5 rounded-[20px] border border-white/90 bg-white/78 px-3.5 py-2.5 text-[12px] font-bold leading-5 text-slate-600 shadow-sm">
                           先把這份達人手帳當成旅伴寄來的明信片，再複製成你的出發版本。
                         </div>
 
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-5">
-                          {handbook.tags.map((tag, tagIndex) => (
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
+                          {handbook.tags.slice(0, 3).map((tag, tagIndex) => (
                             <span
                               key={tag}
                               className={`text-[11px] font-bold border px-2.5 py-1 rounded-full ${CARD_STICKER_TONES[(index + tagIndex) % CARD_STICKER_TONES.length]}`}
@@ -2672,7 +2688,7 @@ export default function HomeTab({
                           onClick={(e) =>
                             handleCopyExpertItinerary(e, handbook)
                           }
-                          className={`mt-auto w-full py-3 sm:py-4 rounded-full bg-gradient-to-r text-white font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_10px_20px_rgba(244,114,182,0.18)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 group/btn ${decor.cta}`}
+                          className={`mt-auto w-full py-3 sm:py-3.5 rounded-full bg-gradient-to-r text-white font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.34),0_10px_20px_rgba(244,114,182,0.14)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 group/btn ${decor.cta}`}
                         >
                           <Copy
                             size={14}

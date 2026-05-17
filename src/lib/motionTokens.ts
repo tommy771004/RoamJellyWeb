@@ -1,7 +1,7 @@
 import type { Transition } from 'motion/react';
 
 export const IOS_EASE = [0.22, 1, 0.36, 1] as const;
-export const JELLY_EASE = [0.34, 1.56, 0.64, 1] as const;
+export const JELLY_EASE = [0.28, 1.08, 0.38, 1] as const;
 
 export const bottomBarTransition: Transition = {
   type: 'spring',
@@ -65,6 +65,6 @@ export function getListEntranceTransition(index = 0, reduced = false): Transitio
   };
 }
 
-export const pressableSurfaceClass = 'transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.94]';
-export const subtlePressableClass = 'transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]';
-export const raisedHoverClass = 'hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]';
+export const pressableSurfaceClass = 'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97]';
+export const subtlePressableClass = 'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.985]';
+export const raisedHoverClass = 'hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]';

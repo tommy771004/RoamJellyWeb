@@ -2675,9 +2675,9 @@ export default function ItineraryTab() {
             )}
 
             {/* Mobile Day Selector — SGD pill toggle style */}
-            <div className="lg:hidden mb-6 overflow-hidden -mx-1">
+            <div className="lg:hidden mb-5 overflow-hidden -mx-1">
               <div className="overflow-x-auto py-2 px-1 no-scrollbar snap-x">
-                <div className="inline-flex bg-slate-100 dark:bg-slate-800 rounded-full p-1 gap-0.5 min-w-max">
+                <div className="inline-flex min-w-max gap-1 rounded-full border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(248,250,252,0.84))] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-800/90">
                   {Array.from({ length: totalDays }, (_, i) => i + 1).map(
                     (day) => {
                       const isActive = safeSelectedDay === day;
@@ -2694,17 +2694,17 @@ export default function ItineraryTab() {
                         <motion.button
                           key={day}
                           onClick={() => setSelectedDay(day)}
-                          whileTap={{ scale: 0.97 }}
-                          className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-sm transition-all shrink-0 snap-center ${
+                          whileTap={{ scale: 0.985 }}
+                          className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-sm transition-all shrink-0 snap-center ${
                             isActive
-                              ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                              : "text-slate-500 dark:text-slate-500 hover:text-slate-600"
+                              ? "bg-white/96 dark:bg-slate-700 text-slate-900 dark:text-white shadow-[0_8px_18px_rgba(15,23,42,0.08)]"
+                              : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
                           }`}
                         >
-                          <span>Day {day}</span>
+                          <span className="tracking-[-0.01em]">Day {day}</span>
                           {displayDate && (
                             <span
-                              className={`text-[11px] font-medium hidden sm:inline ${isActive ? "text-slate-500" : "text-slate-400"}`}
+                              className={`text-[10px] font-medium hidden sm:inline ${isActive ? "text-slate-500" : "text-slate-400"}`}
                             >
                               {displayDate}
                             </span>
@@ -4067,7 +4067,7 @@ function ItineraryListItem({
         <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
       <div
-        className={`flex-1 p-2.5 sm:p-3.5 md:p-4 rounded-[24px] sm:rounded-[28px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-1 active:scale-[0.98]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900/80 backdrop-blur-xl text-white border border-slate-700 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.15)] hover:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.25)]" : isHotelCard ? "bg-indigo-950/80 backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-[0_8px_32px_-6px_rgba(79,70,229,0.15)] hover:shadow-[0_16px_48px_-12px_rgba(79,70,229,0.25)]" : "bg-white/60 backdrop-blur-[24px] dark:bg-slate-900/60 border-[1.5px] border-white/90 dark:border-white/10 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.06),inset_0_2px_12px_rgba(255,255,255,0.8)] hover:shadow-[0_16px_48px_-12px_rgba(255,160,200,0.25)]"}`}
+        className={`flex-1 p-2.5 sm:p-3 md:p-3.5 rounded-[22px] sm:rounded-[26px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-0.5 active:scale-[0.985]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(30,41,59,0.86))] backdrop-blur-xl text-white border border-slate-700 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.18)] hover:shadow-[0_16px_34px_-14px_rgba(0,0,0,0.24)]" : isHotelCard ? "bg-[linear-gradient(180deg,rgba(49,46,129,0.92),rgba(49,46,129,0.82))] backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-[0_10px_24px_-10px_rgba(79,70,229,0.18)] hover:shadow-[0_16px_34px_-14px_rgba(79,70,229,0.22)]" : "bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,249,252,0.88),rgba(248,251,255,0.84))] backdrop-blur-[22px] dark:bg-slate-900/70 border-[1.5px] border-white/94 dark:border-white/10 shadow-[0_8px_20px_-10px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.92)] hover:shadow-[0_16px_30px_-16px_rgba(255,160,200,0.16)]"}`}
         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
           if (
             (e.target as HTMLElement).closest(
@@ -4083,27 +4083,32 @@ function ItineraryListItem({
             <Link size={10} strokeWidth={3} />
           </div>
         )}
-        <div className="flex flex-col gap-2 sm:gap-2 w-full">
+        <div className="flex flex-col gap-1.5 sm:gap-2 w-full">
           {!isEditing && (
-            <div className="flex items-center mb-1">
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border ${
+            <div className="flex items-center justify-between gap-2 mb-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-400">
+                  {isFlightCard ? "Transit" : isHotelCard ? "Stay" : "Day Note"}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border shadow-sm ${
                   // ` is added for syntax highlight fix
                   item.source === "remote"
                     ? "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
                     : "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full inline-block ${item.source === "remote" ? "bg-emerald-500" : "bg-amber-500"}`}
-                />
-                {item.source === "remote" ? "CONFIRMED" : "LOCAL"}
-              </span>
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full inline-block ${item.source === "remote" ? "bg-emerald-500" : "bg-amber-500"}`}
+                  />
+                  {item.source === "remote" ? "CONFIRMED" : "LOCAL"}
+                </span>
+              </div>
             </div>
           )}
-          <div className="flex flex-row items-center sm:items-start gap-2 sm:gap-2.5">
+          <div className="flex flex-row items-start gap-2 sm:gap-2.5">
             <div
-              className={`relative w-6 h-6 sm:w-8 sm:h-8 shrink-0 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-sm sm:text-base shadow-inner border border-slate-100/50 transition-all group-hover:scale-110 group-hover:rotate-3 duration-700 ${item.category === "flight" ? "bg-gradient-to-br from-indigo-50 to-blue-50" : "bg-white"}`}
+              className={`relative w-6 h-6 sm:w-8 sm:h-8 mt-0.5 shrink-0 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-sm sm:text-base shadow-inner border border-slate-100/50 transition-all group-hover:scale-105 group-hover:rotate-3 duration-700 ${item.category === "flight" ? "bg-gradient-to-br from-indigo-50 to-blue-50" : "bg-white/95"}`}
             >
               {isEditing ? (
                 <button
@@ -4142,7 +4147,7 @@ function ItineraryListItem({
 
             <div className="flex-1 min-w-0">
               {!isEditing && isFlightCard && flightRoute && (
-                <div className="mb-2 w-full">
+                <div className="mb-1.5 w-full">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
@@ -4181,7 +4186,7 @@ function ItineraryListItem({
                 </div>
               )}
               {!isEditing && isHotelCard && (
-                <div className="mb-2 w-full">
+                <div className="mb-1.5 w-full">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-400">
@@ -4202,7 +4207,7 @@ function ItineraryListItem({
               {!isEditing && !isAnchorCard && (
                 <h3
                   title={item.title}
-                  className={`text-[14px] sm:text-[15px] font-black tracking-tight text-slate-900 leading-tight mb-0.5 font-sans ${isExpanded ? "" : "line-clamp-2"}`}
+                  className={`text-[15px] sm:text-[16px] font-black tracking-[-0.025em] text-slate-900 leading-[1.24] mb-0.5 font-sans ${isExpanded ? "" : "line-clamp-3"}`}
                 >
                   {item.title}
                 </h3>
@@ -4214,7 +4219,7 @@ function ItineraryListItem({
                   {isFlightCard ? "跨區交通錨點" : "今晚住宿錨點"}
                 </p>
               )}
-              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-1">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-0">
                 {item.date && (
                   <span
                     className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-widest flex items-center gap-0.5 border ${isFlightCard ? "bg-slate-800 text-slate-400 border-slate-700" : isHotelCard ? "bg-indigo-900 border-indigo-800 text-indigo-200" : "bg-white/95 text-slate-600 border-slate-200"}`}
@@ -4586,15 +4591,25 @@ function ItineraryListItem({
                 )}
 
                 {detailCopy ? (
-                  <p
-                    className={`text-[14px] font-medium text-slate-700 whitespace-pre-line tracking-tight leading-relaxed transition-all duration-500 font-sans ${isExpanded ? "" : "line-clamp-3"}`}
-                  >
-                    {detailCopy}
-                  </p>
+                  <div className="mt-2 border-t border-slate-100/90 pt-2">
+                    <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                      Notes
+                    </p>
+                    <p
+                      className={`text-[13px] sm:text-[14px] font-medium text-slate-700 whitespace-pre-line tracking-tight leading-[1.7] transition-all duration-500 font-sans ${isExpanded ? "" : "line-clamp-4"}`}
+                    >
+                      {detailCopy}
+                    </p>
+                  </div>
                 ) : (
-                  <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity">
-                    點擊卡片編輯手帳內容、細節或照片...
-                  </p>
+                  <div className="mt-2 border-t border-slate-100/90 pt-2">
+                    <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                      Notes
+                    </p>
+                    <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity leading-5">
+                      點擊卡片編輯手帳內容、細節或照片...
+                    </p>
+                  </div>
                 )}
 
                 {canExpandCopy && (
