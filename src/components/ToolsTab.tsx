@@ -1704,42 +1704,42 @@ function ToolsTabContent() {
           initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
-          className="relative overflow-hidden rounded-[30px] border border-white/90 bg-white/86 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-6"
+          className="relative overflow-hidden rounded-[30px] border border-white/94 bg-[linear-gradient(180deg,rgba(255,255,255,0.90),rgba(255,249,252,0.86),rgba(248,251,255,0.82))] p-4 shadow-[0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-5"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.14),transparent_46%)]" />
-          <div className="relative flex flex-col gap-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-3">
-                <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.14),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.10),transparent_46%)]" />
+          <div className="relative flex flex-col gap-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-2">
+                <span className="inline-flex items-center rounded-full border border-white/92 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-sky-700 shadow-sm">
                   Trip Utility Layer
                 </span>
-                <div className="space-y-2">
-                  <h1 className="max-w-3xl text-balance text-[28px] font-black leading-tight text-slate-900 sm:text-[34px]">
+                <div className="space-y-1.5">
+                  <h1 className="max-w-3xl text-balance text-[25px] font-black leading-tight tracking-[-0.035em] text-slate-900 sm:text-[31px]">
                     把天氣、清單與分帳，綁回{destination ? ` ${destination} ` : "這趟"}旅程
                   </h1>
-                  <p className="max-w-2xl text-pretty text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                  <p className="max-w-2xl text-pretty text-[14px] leading-[1.72] text-slate-600 sm:text-[15px] sm:leading-[1.8]">
                     工具頁不是額外任務區，而是沿著目前旅程延伸出的執行層。你可以先看現場會遇到的提醒，再回到手帳補完安排。
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveTab("itinerary")}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/92 bg-white/90 px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
               >
                 回到旅程手帳
                 <ArrowRight size={16} strokeWidth={2.6} />
               </button>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-2.5 sm:grid-cols-3">
               {toolHighlights.map(({ icon: Icon, label, value, description }, index) => {
                 const decor = TOOLS_CARD_DECOR[index % TOOLS_CARD_DECOR.length];
                 return (
                 <div
                   key={label}
-                  className={`relative overflow-hidden rounded-[26px] border p-4 shadow-[0_16px_28px_rgba(15,23,42,0.08)] ${decor.shell}`}
+                  className={`relative overflow-hidden rounded-[22px] border px-3.5 py-3 shadow-[0_8px_14px_rgba(15,23,42,0.05)] ${decor.shell}`}
                 >
-                  <div className={`absolute -right-6 -top-6 size-20 rounded-full blur-2xl ${decor.glow}`} />
+                  <div className={`absolute -right-8 -top-8 size-16 rounded-full opacity-70 blur-2xl ${decor.glow}`} />
                   <div className="relative flex items-center justify-between gap-3">
                     <span className={`inline-flex items-center gap-2 rounded-full border bg-white/92 px-2.5 py-1 text-[11px] font-black shadow-sm ${decor.badge}`}>
                       <Icon size={14} strokeWidth={2.5} />
@@ -1751,13 +1751,10 @@ function ToolsTabContent() {
                       </span>
                     ) : null}
                   </div>
-                  <p className="relative mt-3 text-balance text-sm font-black text-slate-900">{value}</p>
-                  <p className="relative mt-1 text-pretty text-[13px] leading-5 text-slate-600">{description}</p>
-                  <div className="relative mt-4 flex items-center gap-2 text-[11px] font-bold text-slate-500">
-                    <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/90 shadow-sm ${decor.badge}`}>
-                      <Icon size={12} strokeWidth={2.6} />
-                    </span>
-                    <span className="text-pretty">{decor.note}</span>
+                  <p className="relative mt-1.5 text-balance text-[14px] font-black tracking-[-0.01em] text-slate-900">{value}</p>
+                  <p className="relative mt-1 text-pretty text-[13px] leading-[1.58] text-slate-600 line-clamp-3">{description}</p>
+                  <div className="relative mt-2 border-t border-white/70 pt-1.5 text-[10px] font-bold text-slate-500">
+                    <span className="text-pretty line-clamp-2">{decor.note}</span>
                   </div>
                 </div>
                 );
@@ -1766,12 +1763,12 @@ function ToolsTabContent() {
           </div>
         </motion.section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          <div className="flex flex-col gap-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
+          <div className="flex flex-col gap-y-6">
             <WeatherCard />
             <ChecklistSection />
           </div>
-          <div className="flex flex-col gap-y-8">
+          <div className="flex flex-col gap-y-6">
             <LedgerSection />
             <SettlementsSection />
             <SettlementHistorySection />
@@ -1839,7 +1836,7 @@ function ToolsTabContent() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+          <div className="grid grid-cols-1 gap-5 pb-6 md:grid-cols-2">
             {isLoadingOffers ? (
               <>
                 <GlassCard className="!p-6 flex flex-col h-[280px] animate-pulse">
@@ -1875,11 +1872,11 @@ function ToolsTabContent() {
                 {displayedFlights.map((flight, idx) => (
                   <GlassCard
                     key={idx}
-                    className="!p-6 flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group"
+                    className="!p-4 sm:!p-4.5 flex flex-col border border-white/92 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group"
                   >
-                    <div className="flex justify-between items-start mb-8">
+                    <div className="flex justify-between items-start mb-4.5">
                       <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-fuchsia-50 text-fuchsia-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <div className="w-10 h-10 sm:w-11 sm:h-11 bg-fuchsia-50 text-fuchsia-500 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform">
                           <Plane className="w-6 h-6 transform -rotate-45" />
                         </div>
                         <div className="flex flex-col">
@@ -1892,7 +1889,7 @@ function ToolsTabContent() {
                               className="text-slate-400"
                             />
                           </div>
-                          <span className="text-[13px] text-slate-500 font-bold tracking-wide">
+                          <span className="text-[12px] text-slate-400 font-bold tracking-[0.14em] uppercase">
                             Direct • {flight.duration}
                           </span>
                         </div>
@@ -1904,13 +1901,13 @@ function ToolsTabContent() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col mb-6 sm:mb-8">
+                    <div className="flex flex-col mb-4 sm:mb-4.5">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex flex-col">
                           <span className="text-[22px] sm:text-[26px] font-black text-[#2C302E] tracking-tight">
                             {flight.depTime}
                           </span>
-                          <span className="text-[12px] sm:text-[14px] font-black text-slate-400 uppercase tracking-widest">
+                          <span className="text-[11px] sm:text-[12px] font-black text-slate-400 uppercase tracking-[0.18em]">
                             {flight.depCode}
                           </span>
                         </div>
@@ -1922,14 +1919,14 @@ function ToolsTabContent() {
                           <span className="text-[22px] sm:text-[26px] font-black text-[#2C302E] tracking-tight">
                             {flight.arrTime}
                           </span>
-                          <span className="text-[12px] sm:text-[14px] font-black text-slate-400 uppercase tracking-widest">
+                          <span className="text-[11px] sm:text-[12px] font-black text-slate-400 uppercase tracking-[0.18em]">
                             {flight.arrCode}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <button className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_16px_rgba(217,70,239,0.25)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_24px_rgba(217,70,239,0.35)]">
+                    <button className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_8px_16px_rgba(217,70,239,0.20)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_12px_24px_rgba(217,70,239,0.26)]">
                       查看航班詳情
                     </button>
                   </GlassCard>
@@ -1939,9 +1936,9 @@ function ToolsTabContent() {
                 {activities.map((item, idx) => (
                   <GlassCard
                     key={`klook-${idx}`}
-                    className="!p-4 sm:!p-5 flex flex-row gap-4 sm:gap-5 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group"
+                    className="!p-3.5 sm:!p-4 flex flex-row gap-3 sm:gap-3 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group border border-white/92"
                   >
-                    <div className="relative w-[100px] sm:w-[130px] h-full shrink-0 overflow-hidden rounded-[20px] sm:rounded-[24px]">
+                    <div className="relative w-[98px] sm:w-[118px] h-full shrink-0 overflow-hidden rounded-[18px] sm:rounded-[22px]">
                       <img
                         src={item.img}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
@@ -1950,12 +1947,11 @@ function ToolsTabContent() {
                     </div>
                     <div className="flex flex-col flex-1 py-1">
                       <div className="flex items-center gap-1.5 mb-1.5 sm:mb-2">
-                        <span className="text-base sm:text-lg leading-none">🎡</span>
                         <span className="font-black text-fuchsia-500 text-[10px] sm:text-[11px] uppercase tracking-widest bg-fuchsia-50 px-2 py-0.5 sm:py-1 rounded-md">
                           Klook 精選
                         </span>
                       </div>
-                      <h3 className="font-bold text-[#2C302E] leading-snug text-[15px] sm:text-[17px] mb-auto line-clamp-2">
+                      <h3 className="font-bold text-[#2C302E] leading-snug text-[15px] sm:text-[17px] mb-auto line-clamp-3">
                         {item.title}
                       </h3>
 
