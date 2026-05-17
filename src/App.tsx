@@ -40,7 +40,7 @@ import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, getNativeMapUrl, createGuestSession } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, getNativeMapUrl, createGuestSession, clearClientSession } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
 import { JellyToast } from './components/JellyToast';
 type LoginPromptMode = 'default' | 'guest-first';
@@ -166,29 +166,27 @@ export default function App() {
     // Initial check on load
     const storedUserId = localStorage.getItem('user_id');
     const storedLastActivity = localStorage.getItem('last_activity');
+    const storedToken = getStoredToken();
     
-    if (storedUserId && storedLastActivity) {
+    if (storedUserId && storedLastActivity && storedToken) {
       const now = Date.now();
       if (now - parseInt(storedLastActivity, 10) < SESSION_TIMEOUT) {
         setAuthenticated(storedUserId);
       } else {
-        localStorage.removeItem('user_id');
-        localStorage.removeItem('last_activity');
+        clearClientSession();
       }
+    } else if (storedUserId || storedLastActivity || storedToken) {
+      clearClientSession();
     }
     setAuthReady(true);
   }, [setAuthenticated]);
 
   useEffect(() => {
     const bootstrap = async () => {
-      let token = getStoredToken();
-      // Auto-fetch token for dev API access
-      if (!token) {
-        const autoLogin =
-          (import.meta as any).env?.VITE_DEV_AUTO_LOGIN ?? 'true';
-        if (autoLogin.trim().toLowerCase() !== 'false' && (import.meta as any).env.MODE !== 'production') {
-          token = await ensureClientAccessToken().catch(() => '');
-        }
+      const token = getStoredToken();
+      const autoLogin = ((import.meta as any).env?.VITE_DEV_AUTO_LOGIN ?? 'false').trim().toLowerCase();
+      if (!token && (import.meta as any).env?.DEV && autoLogin === 'true') {
+        await ensureClientAccessToken().catch(() => '');
       }
       
       // Load user preferences only if authenticated
@@ -225,8 +223,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('last_activity');
+    clearClientSession();
     setAuthenticated(null);
     setShowLogoutModal(false);
     if (activeTab !== 'home') {
