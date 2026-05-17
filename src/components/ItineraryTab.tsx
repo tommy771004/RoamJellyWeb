@@ -18,6 +18,7 @@ import {
 import MapSelectorModal from "./MapSelectorModal";
 import EditorialSectionIntro from "./EditorialSectionIntro";
 import ExpandableText from "./ExpandableText";
+import HorizontalScrollRail from "./HorizontalScrollRail";
 
 import {
   List as ListIcon,
@@ -2458,7 +2459,13 @@ export default function ItineraryTab() {
             </div>
           </div>
 
-          <div className="flex gap-2 p-1.5 md:p-2 rounded-full w-[calc(100%-2rem)] mx-auto md:w-auto md:mx-0 overflow-x-auto no-scrollbar shadow-lg shadow-pink-100/30 md:shadow-xl border border-white bg-white/70 backdrop-blur-xl sticky top-4 z-40 md:relative md:top-0 md:mt-8">
+          <HorizontalScrollRail
+            label="行程檢視模式"
+            className="sticky top-4 z-40 md:relative md:top-0 md:mt-8"
+            viewportClassName="w-[calc(100%-2rem)] mx-auto md:w-auto md:mx-0"
+            contentClassName="gap-2 rounded-full border border-white bg-white/70 p-1.5 md:p-2 shadow-lg shadow-pink-100/30 md:shadow-xl backdrop-blur-xl"
+            controlsVisibilityClass="hidden md:flex"
+          >
             <button
               onClick={() => setViewMode("list")}
               className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "list" ? "bg-slate-800 text-white shadow-xl scale-95 md:scale-100" : "text-slate-500 hover:text-slate-700 hover:bg-white border sm:border-transparent"}`}
@@ -2477,7 +2484,7 @@ export default function ItineraryTab() {
             >
               日程
             </button>
-          </div>
+          </HorizontalScrollRail>
         </div>
 
         <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-10">
@@ -2699,8 +2706,12 @@ export default function ItineraryTab() {
 
             {/* Mobile Day Selector — SGD pill toggle style */}
             <div className="lg:hidden mb-5 overflow-hidden -mx-1">
-              <div className="overflow-x-auto py-2 px-1 no-scrollbar snap-x">
-                <div className="inline-flex min-w-max gap-1 rounded-full border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(248,250,252,0.84))] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-800/90">
+              <HorizontalScrollRail
+                label="Day 切換"
+                viewportClassName="py-2 px-1"
+                contentClassName="inline-flex min-w-max gap-1 rounded-full border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(248,250,252,0.84))] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-800/90"
+                controlsVisibilityClass="flex"
+              >
                   {Array.from({ length: totalDays }, (_, i) => i + 1).map(
                     (day) => {
                       const isActive = safeSelectedDay === day;
@@ -2742,8 +2753,7 @@ export default function ItineraryTab() {
                       );
                     },
                   )}
-                </div>
-              </div>
+              </HorizontalScrollRail>
             </div>
 
             <AnimatePresence mode="wait">
@@ -4086,7 +4096,7 @@ function ItineraryListItem({
         <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
       <div
-        className={`flex-1 p-2.5 sm:p-3 md:p-3.5 rounded-[22px] sm:rounded-[26px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-0.5 active:scale-[0.985]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(30,41,59,0.86))] backdrop-blur-xl text-white border border-slate-700 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.18)] hover:shadow-[0_16px_34px_-14px_rgba(0,0,0,0.24)]" : isHotelCard ? "bg-[linear-gradient(180deg,rgba(49,46,129,0.92),rgba(49,46,129,0.82))] backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-[0_10px_24px_-10px_rgba(79,70,229,0.18)] hover:shadow-[0_16px_34px_-14px_rgba(79,70,229,0.22)]" : "bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,249,252,0.88),rgba(248,251,255,0.84))] backdrop-blur-[22px] dark:bg-slate-900/70 border-[1.5px] border-white/94 dark:border-white/10 shadow-[0_8px_20px_-10px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.92)] hover:shadow-[0_16px_30px_-16px_rgba(255,160,200,0.16)]"}`}
+        className={`flex-1 p-3 sm:p-4 rounded-[24px] sm:rounded-[28px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-0.5 active:scale-[0.985]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(30,41,59,0.86))] backdrop-blur-xl text-white border border-slate-700 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.18)] hover:shadow-[0_16px_34px_-14px_rgba(0,0,0,0.24)]" : isHotelCard ? "bg-[linear-gradient(180deg,rgba(49,46,129,0.92),rgba(49,46,129,0.82))] backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-[0_10px_24px_-10px_rgba(79,70,229,0.18)] hover:shadow-[0_16px_34px_-14px_rgba(79,70,229,0.22)]" : "bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,249,252,0.90),rgba(248,251,255,0.86))] backdrop-blur-[22px] dark:bg-slate-900/70 border-[1.5px] border-white/94 dark:border-white/10 shadow-[0_10px_26px_-12px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] hover:shadow-[0_18px_34px_-18px_rgba(255,160,200,0.18)]"}`}
         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
           if (
             (e.target as HTMLElement).closest(
@@ -4232,7 +4242,7 @@ function ItineraryListItem({
                   {isFlightCard ? "跨區交通錨點" : "今晚住宿錨點"}
                 </p>
               )}
-              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-0">
+              <div className={`mt-1.5 flex flex-wrap items-center gap-1.5 rounded-[18px] px-2.5 py-2 ${isFlightCard || isHotelCard ? "bg-white/6" : "bg-white/76 border border-white/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]"}`}>
                 {item.date && (
                   <span
                     className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-widest flex items-center gap-0.5 border ${isFlightCard ? "bg-slate-800 text-slate-400 border-slate-700" : isHotelCard ? "bg-indigo-900 border-indigo-800 text-indigo-200" : "bg-white/95 text-slate-600 border-slate-200"}`}
@@ -4519,7 +4529,7 @@ function ItineraryListItem({
                     title={`導航至 ${item.title}`}
                     onClick={handleNavigate}
                     disabled={isNavigating}
-                    className="inline-flex items-center gap-1 text-[9px] sm:text-xs font-black text-emerald-700 bg-emerald-50/95 border border-emerald-200 px-2 sm:px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all disabled:opacity-50"
+                    className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-black text-emerald-700 bg-emerald-50/95 border border-emerald-200 px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all disabled:opacity-50"
                   >
                     {isNavigating ? (
                       <Loader2 size={8} className="animate-spin" />
@@ -4604,6 +4614,7 @@ function ItineraryListItem({
                 )}
 
                 {detailCopy ? (
+                  <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
                   <ExpandableText
                     text={detailCopy}
                     label="Notes"
@@ -4612,15 +4623,16 @@ function ItineraryListItem({
                     minLineBreaks={1}
                     preserveWhitespace
                     stopPropagation
-                    className="editorial-divider mt-2 pt-2"
+                    className="gap-2"
                     labelClassName="mb-0"
                     textClassName="text-[13px] sm:text-[14px] font-medium text-slate-700 tracking-tight leading-[1.78] font-sans"
                     buttonClassName="mt-0"
                     collapsedLabel="查看全文"
                     expandedLabel="收起全文"
                   />
+                  </div>
                 ) : (
-                  <div className="editorial-divider mt-2 pt-2">
+                  <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
                     <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
                       Notes
                     </p>
