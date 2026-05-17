@@ -73,19 +73,19 @@ export default function PwaInstallPrompt() {
   };
 
   const content = (
-    <div className="fixed left-0 right-0 bottom-24 z-prompt w-full px-4 md:px-6 pointer-events-none">
+    <div className="pointer-events-none fixed bottom-24 left-0 right-0 z-prompt w-full px-3.5 md:px-6">
       <div
-        className="mx-auto max-w-xl rounded-[28px] border border-white/20 bg-slate-950/90 px-5 py-4 text-white shadow-2xl shadow-slate-950/40 pointer-events-auto dark:border-white/10 dark:bg-slate-950/90"
+        className="pointer-events-auto mx-auto max-w-xl rounded-[28px] border border-white/74 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(30,41,59,0.84),rgba(15,23,42,0.82))] px-4 py-4 text-white shadow-[0_20px_42px_rgba(15,23,42,0.34)]"
         style={{ backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)' }}
       >
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-cyan-400 text-xl shadow-lg shadow-fuchsia-500/20">
+          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-fuchsia-500 to-cyan-400 text-lg shadow-[0_10px_22px_rgba(217,70,239,0.24)]">
             ✨
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-fuchsia-200">加入主畫面</p>
-            <p className="mt-1 text-sm font-bold text-white">把 RoamJelly 裝成全螢幕旅遊小工具，飛機上也能更快打開。</p>
-            <p className="mt-2 text-[12px] leading-relaxed text-slate-400">
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-fuchsia-200">加入主畫面</p>
+            <p className="mt-1 text-[14px] font-black leading-[1.45] tracking-[-0.02em] text-white">把 RoamJelly 裝成全螢幕旅遊小工具，飛機上也能更快打開。</p>
+            <p className="mt-2 text-[12px] leading-[1.6] text-slate-300">
               {deferredPrompt
                 ? '安裝後會以接近原生 App 的模式執行，保留離線快取與更沉浸的全螢幕體驗。'
                 : '在 Safari 點一下分享，再選「加入主畫面」，就能像 App 一樣從桌面直接打開。'}
@@ -95,19 +95,19 @@ export default function PwaInstallPrompt() {
                 <button
                   type="button"
                   onClick={() => void handleInstall()}
-                  className="rounded-full bg-white px-4 py-2 text-[12px] font-black uppercase tracking-[0.16em] text-slate-900 transition-all hover:-translate-y-0.5"
+                  className="rounded-full bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-900 transition-all hover:-translate-y-0.5"
                 >
                   立即安裝
                 </button>
               ) : (
-                <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2 text-[12px] font-black tracking-[0.08em] text-white">
+                <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2 text-[11px] font-black tracking-[0.08em] text-white">
                   Safari 分享 → 加入主畫面
                 </span>
               )}
               <button
                 type="button"
                 onClick={dismiss}
-                className="rounded-full border border-white/10 px-4 py-2 text-[12px] font-black uppercase tracking-[0.16em] text-slate-400 transition-colors hover:border-white/20 hover:text-white"
+                className="rounded-full border border-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-300 transition-colors hover:border-white/20 hover:text-white"
               >
                 稍後
               </button>

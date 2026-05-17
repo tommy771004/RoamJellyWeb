@@ -65,10 +65,10 @@ export const MultiSelectPill: React.FC<{
   return (
     <button
       onClick={onClick}
-      className={`min-h-[44px] px-3.5 sm:px-5 py-2.5 rounded-[24px] text-[13px] sm:text-[15px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] relative overflow-hidden flex items-center justify-center gap-2 border ${
+      className={`min-h-[42px] px-3.5 sm:px-4.5 py-2.5 rounded-[22px] text-[12px] sm:text-[14px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] relative overflow-hidden flex items-center justify-center gap-2 border ${
         selected 
           ? `${selectedClasses[accentColor]} ring-2 ${ringClasses[accentColor]} ring-offset-1 -translate-y-0.5` 
-          : 'bg-white/70 backdrop-blur-md text-slate-600 hover:bg-white hover:text-slate-900 border-slate-200/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300'
+          : 'bg-white/78 backdrop-blur-md text-slate-600 hover:bg-white hover:text-slate-900 border-white/80 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:shadow-[0_10px_20px_rgba(15,23,42,0.07)] hover:-translate-y-0.5 hover:border-slate-200'
       }`}
     >
       {selected && <Check size={16} strokeWidth={3} className="shrink-0" />}
@@ -167,30 +167,30 @@ export default function AiForm({
         <div className="absolute bottom-[-12%] left-[-10%] h-[72%] w-[72%] rounded-full bg-orange-100/45 blur-[120px]" />
       </div>
 
-      <div className="relative z-10 flex flex-col h-full w-full px-4 sm:px-8 py-4 sm:py-10 pb-tab-safe max-w-4xl mx-auto">
-        <div className="flex justify-between items-start mb-4 sm:mb-10">
-          <div className="space-y-3">
+      <div className="relative z-10 flex flex-col h-full w-full px-3.5 sm:px-8 py-4 sm:py-10 pb-tab-safe max-w-4xl mx-auto">
+        <div className="mb-4 flex items-start justify-between gap-3 sm:mb-9">
+          <div className="space-y-2.5">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">
+              <span className="inline-flex items-center rounded-full border border-sky-200/80 bg-sky-50/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-sky-700">
                 AI Trip Draft
               </span>
-              <span className="inline-flex items-center rounded-full border border-orange-200 bg-white/85 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-orange-600">
+              <span className="inline-flex items-center rounded-full border border-orange-200/80 bg-white/88 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-orange-600">
                 2 Steps
               </span>
             </div>
             <div>
-              <h2 className="text-balance text-[22px] sm:text-[34px] font-black text-slate-900 leading-tight tracking-tight mb-1 sm:mb-2">
+              <h2 className="mb-1 text-balance text-[21px] sm:text-[33px] font-black leading-[1.08] tracking-[-0.045em] text-slate-900 sm:mb-2">
                 先讓 AI 起草一版旅程，再回到手帳慢慢補完
               </h2>
-              <p className="max-w-2xl text-pretty text-[13px] sm:text-base font-bold leading-6 text-slate-600">
+              <p className="max-w-[40rem] text-pretty text-[13px] sm:text-[15px] font-semibold leading-[1.68] text-slate-600">
                 這裡先收斂目的地、天數與偏好，產出可編輯的第一版安排，而不是一次性的靜態結果。
               </p>
             </div>
-            <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2 pb-2 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+            <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2 pb-1 -mx-3.5 px-3.5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
               {AI_FORM_ENTRY_PILLS.map((pill) => (
                 <span
                   key={pill}
-                  className="shrink-0 inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-black text-slate-600 shadow-sm"
+                  className="shrink-0 inline-flex items-center rounded-full border border-white/84 bg-white/84 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-600 shadow-[0_8px_16px_rgba(15,23,42,0.05)]"
                 >
                   {pill}
                 </span>
@@ -200,7 +200,7 @@ export default function AiForm({
           {onCancel && (
             <button 
               onClick={onCancel}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-sky-700 hover:bg-sky-50 hover:border-sky-200 shadow-sm transition-colors active:scale-95 shrink-0"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/84 bg-white/88 text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors active:scale-95 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 sm:h-11 sm:w-11"
               aria-label="取消"
             >
               <ArrowLeft size={20} className="sm:hidden" />
@@ -217,23 +217,22 @@ export default function AiForm({
             animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1, y: 0 }}
             exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: -8 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
-            className="flex flex-col gap-6 sm:gap-8"
+            className="flex flex-col gap-5 sm:gap-7"
           >
-            {/* Bento Grid Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 sm:gap-5">
               
               {/* Left Column: Route & Dates */}
-              <div className="flex flex-col gap-4 sm:gap-6 bg-white/80 backdrop-blur-xl border border-white/90 p-4 sm:p-8 rounded-[2rem] shadow-sm">
+              <div className="flex flex-col gap-4 rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-5 sm:p-6">
                 
                 {/* Departure */}
                 <div className="flex flex-col gap-2.5">
-                  <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <MapPin size={16} className="text-sky-500" />
                     出發地
                   </label>
                   <button 
                     onClick={() => setShowDepDropdown(true)}
-                    className="w-full text-left bg-white border border-slate-200 hover:border-sky-300 rounded-2xl py-4 px-5 text-base sm:text-lg text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-sky-100 shadow-sm transition-colors group flex items-center justify-between min-h-[60px]"
+                    className="group flex min-h-[56px] w-full items-center justify-between rounded-[22px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-100 sm:text-base"
                   >
                     <span className={formData.departure ? "text-slate-800" : "text-slate-500 font-medium"}>
                       {formData.departure || "請選擇出發城市"}
@@ -244,13 +243,13 @@ export default function AiForm({
 
                 {/* Destination */}
                 <div className="flex flex-col gap-2.5">
-                  <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <MapPin size={16} className="text-orange-500" />
                     目的地
                   </label>
                   <button 
                     onClick={() => setShowDestDropdown(true)}
-                    className="w-full text-left bg-white border border-slate-200 hover:border-orange-300 rounded-2xl py-4 px-5 text-base sm:text-lg text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-orange-100 shadow-sm transition-colors group flex items-center justify-between min-h-[60px]"
+                    className="group flex min-h-[56px] w-full items-center justify-between rounded-[22px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-orange-300 focus:outline-none focus:ring-4 focus:ring-orange-100 sm:text-base"
                   >
                     <span className={formData.destination ? "text-slate-800" : "text-slate-500 font-medium"}>
                       {formData.destination || "想去哪裡探索？"}
@@ -260,27 +259,27 @@ export default function AiForm({
                 </div>
 
                 {/* Days */}
-                <div className="flex flex-col gap-2.5 pt-2">
-                  <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                <div className="flex flex-col gap-2.5 pt-1">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <Calendar size={16} className="text-sky-500" />
                     預計天數
                   </label>
-                  <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl p-2 shadow-sm min-h-[60px]">
+                  <div className="flex min-h-[56px] items-center justify-between rounded-[22px] border border-white/84 bg-white/86 p-2 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
                     <button 
                       onClick={() => setFormData(p => ({ ...p, days: Math.max(1, p.days - 1) }))}
-                      className="w-12 h-12 shrink-0 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition-all"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-95 hover:bg-slate-100"
                     >
                       <Minus size={20} strokeWidth={2.5} />
                     </button>
                     <div className="flex-1 flex items-baseline justify-center gap-1.5">
-                      <span className="text-3xl sm:text-4xl font-black text-slate-800 tabular-nums leading-none tracking-tight">
+                      <span className="text-[30px] sm:text-[38px] font-black text-slate-800 tabular-nums leading-none tracking-[-0.05em]">
                         {formData.days}
                       </span>
                       <span className="text-slate-500 font-bold text-sm">天</span>
                     </div>
                     <button 
                       onClick={() => setFormData(p => ({ ...p, days: Math.min(30, p.days + 1) }))}
-                      className="w-12 h-12 shrink-0 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition-all"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-95 hover:bg-slate-100"
                     >
                       <Plus size={20} strokeWidth={2.5} />
                     </button>
@@ -290,12 +289,12 @@ export default function AiForm({
               </div>
 
               {/* Right Column: Companions */}
-              <div className="flex flex-col gap-4 sm:gap-6 bg-white/80 backdrop-blur-xl border border-white/90 p-4 sm:p-8 rounded-[2rem] shadow-sm">
-                <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+              <div className="flex flex-col gap-4 rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-5 sm:p-6">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                   <Users size={16} className="text-orange-500" />
                   與誰同行？
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 h-full content-start">
+                <div className="grid h-full grid-cols-2 content-start gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
                   {COMPANION_OPTIONS.map(opt => {
                     const isSelected = formData.companions === opt.id;
                     const Icon = opt.icon;
@@ -303,14 +302,14 @@ export default function AiForm({
                       <button
                         key={opt.id}
                         onClick={() => setFormData(p => ({ ...p, companions: opt.id }))}
-                        className={`flex flex-col items-center justify-center gap-2 p-2.5 sm:p-5 rounded-[24px] sm:rounded-[28px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] min-h-[88px] sm:min-h-[100px] border-2 group relative overflow-hidden ${
+                        className={`group relative flex min-h-[84px] flex-col items-center justify-center gap-2 overflow-hidden rounded-[22px] border p-2.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] sm:min-h-[96px] sm:rounded-[26px] sm:p-4 ${
                           isSelected 
-                            ? 'bg-slate-900 shadow-md border-slate-900 -translate-y-1 z-10' 
-                            : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-sm hover:-translate-y-0.5'
+                            ? 'z-10 -translate-y-0.5 border-slate-900 bg-slate-900 shadow-[0_14px_28px_rgba(15,23,42,0.14)]' 
+                            : 'border-white/84 bg-white/86 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 hover:border-slate-200 hover:bg-slate-50'
                         }`}
                       >
                         <span
-                          className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-2xl border transition-transform duration-300 group-hover:scale-110 ${
+                          className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-[16px] border transition-transform duration-300 group-hover:scale-110 sm:h-11 sm:w-11 ${
                             isSelected
                               ? 'border-white/15 bg-white/10 text-white'
                               : opt.tone
@@ -318,7 +317,7 @@ export default function AiForm({
                         >
                           <Icon size={20} strokeWidth={2.2} />
                         </span>
-                        <span className={`text-[13px] font-bold tracking-wide relative z-10 ${isSelected ? 'text-white' : 'text-slate-600'}`}>
+                        <span className={`relative z-10 text-[12px] font-bold tracking-[0.04em] ${isSelected ? 'text-white' : 'text-slate-600'}`}>
                           {opt.label}
                         </span>
                       </button>
@@ -340,20 +339,20 @@ export default function AiForm({
                   : 'max(16px, env(safe-area-inset-bottom, 16px))'
               }}
             >
-              <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-0 sm:pb-0">
+              <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-0 sm:pb-0">
                 <button
                   onClick={handleNext}
                   disabled={!formData.departure || !formData.destination || !formData.companions}
-                  className={`w-full h-14 sm:h-16 rounded-full font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-lg sm:shadow-md ${
+                  className={`flex h-14 w-full items-center justify-center gap-3 rounded-full text-[13px] font-black uppercase tracking-[0.16em] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:h-[3.8rem] sm:text-[14px] sm:shadow-md ${
                     !formData.departure || !formData.destination || !formData.companions
                       ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none'
-                      : 'bg-gradient-to-r from-sky-500 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)] hover:from-sky-600 hover:to-orange-500 active:scale-[0.92] hover:-translate-y-1 border border-transparent'
+                      : 'border border-transparent bg-gradient-to-r from-sky-500 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] hover:-translate-y-0.5 hover:from-sky-600 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)] active:scale-[0.92]'
                   }`}
                 >
                   下一步，設定偏好細節
                   <ArrowLeft className="rotate-180" size={18} />
                 </button>
-                <p className="mt-2 text-center text-[12px] font-medium leading-5 text-slate-500">
+                <p className="mt-2 text-center text-[12px] font-medium leading-[1.55] text-slate-500">
                   {stepOneHint}
                 </p>
               </div>
@@ -368,30 +367,30 @@ export default function AiForm({
             animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1, y: 0 }}
             exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: -8 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
-            className="flex flex-col gap-6 sm:gap-8"
+            className="flex flex-col gap-5 sm:gap-7"
           >
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+            <div className="mb-1 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
               <div>
-                <h3 className="text-xl font-black text-slate-900">補充偏好細節</h3>
-                <p className="text-sm text-slate-500 font-medium mt-1">這些是選填項目，用來把草稿調得更貼近你的旅程節奏。</p>
+                <h3 className="text-[22px] font-black tracking-[-0.04em] text-slate-900">補充偏好細節</h3>
+                <p className="mt-1 text-[13px] font-medium leading-[1.6] text-slate-500">這些是選填項目，用來把草稿調得更貼近你的旅程節奏。</p>
               </div>
               <button
                  onClick={handleSubmit}
-                 className="text-sky-700 font-bold text-sm tracking-wide hover:text-sky-800 transition-colors bg-sky-50 px-5 py-2.5 rounded-full border border-sky-100 hover:bg-sky-100 active:scale-95 shrink-0 flex items-center gap-2"
+                 className="flex shrink-0 items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.12em] text-sky-700 transition-colors hover:bg-sky-100 hover:text-sky-800 active:scale-95"
                >
                  跳過直接生成
                  <Sparkles size={16} />
                </button>
             </div>
 
-            <div className="flex flex-col gap-6 sm:gap-8 bg-white/80 backdrop-blur-xl border border-white/90 p-5 sm:p-8 rounded-[2rem] shadow-sm relative overflow-hidden">
+            <div className="relative flex flex-col gap-5 overflow-hidden rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-6 sm:p-6">
               
               <div className="flex flex-col gap-3.5">
-                <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                   <Coffee size={16} className="text-amber-600" />
                   旅遊節奏
                 </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {VIBE_OPTIONS.map(vibe => (
                     <div className="shrink-0" key={vibe}>
                       <MultiSelectPill
@@ -406,11 +405,11 @@ export default function AiForm({
               </div>
 
               <div className="flex flex-col gap-3.5">
-                <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                   <Heart size={16} className="text-rose-500" />
                   興趣偏好
                 </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {INTEREST_OPTIONS.map(interest => (
                     <div className="shrink-0" key={interest}>
                       <MultiSelectPill
@@ -425,11 +424,11 @@ export default function AiForm({
               </div>
 
               <div className="flex flex-col gap-3.5">
-                <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                   <Settings2 size={16} className="text-emerald-600" />
                   飲食禁忌
                 </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {DIETARY_OPTIONS.map(diet => (
                     <div className="shrink-0" key={diet}>
                       <MultiSelectPill
@@ -444,11 +443,11 @@ export default function AiForm({
               </div>
 
               <div className="flex flex-col gap-3.5">
-                <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                   <Car size={16} className="text-blue-500" />
                   交通方式
                 </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {TRANSPORT_OPTIONS.map(trans => (
                     <div className="shrink-0" key={trans}>
                       <MultiSelectPill
@@ -463,11 +462,11 @@ export default function AiForm({
               </div>
 
               <div className="flex flex-col gap-3.5">
-                <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                   <DollarSign size={16} className="text-teal-600" />
                   預算等級 (單選)
                 </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {BUDGET_OPTIONS.map(budget => (
                     <div className="shrink-0" key={budget}>
                       <MultiSelectPill
@@ -494,17 +493,17 @@ export default function AiForm({
                   : 'max(16px, env(safe-area-inset-bottom, 16px))'
               }}
             >
-              <div className="max-w-4xl mx-auto px-4 sm:px-0 pt-3 pb-2 sm:pt-2 sm:pb-0">
+              <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-2 sm:pb-0">
                 <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                   <button
                     onClick={handleBack}
-                    className="w-full sm:w-auto px-6 h-14 sm:h-16 rounded-full font-bold text-[15px] bg-white border border-slate-200 text-slate-600 hover:text-sky-700 hover:bg-sky-50 hover:border-sky-200 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 shrink-0"
+                    className="h-14 w-full shrink-0 rounded-full border border-white/84 bg-white/86 px-6 text-[14px] font-bold text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 active:scale-[0.92] sm:h-[3.8rem] sm:w-auto"
                   >
                     返回
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 w-full h-14 sm:h-16 rounded-full font-black text-[15px] sm:text-base text-white flex items-center justify-center gap-3 bg-gradient-to-r from-sky-500 to-orange-400 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)] hover:from-sky-600 hover:to-orange-500 active:scale-[0.92] hover:-translate-y-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] tracking-wide border border-transparent"
+                    className="flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-sky-500 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-sky-600 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)] active:scale-[0.92] sm:h-[3.8rem] sm:text-[15px]"
                   >
                     生成行程
                     <Sparkles size={20} />

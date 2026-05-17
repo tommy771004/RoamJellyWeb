@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
 import { Home, Sparkles, CalendarDays, Luggage, Menu, X } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
-import type { TabName } from '../types/workflow';
-import { bottomBarTransition, layoutIndicatorTransition, subtlePressableClass } from '../lib/motionTokens';
+import { bottomBarTransition, subtlePressableClass } from '../lib/motionTokens';
 
 const TAB_ICONS = {
   home: Home,
@@ -39,8 +38,8 @@ export default function BottomTabs() {
 
   return (
     <motion.nav
-      className="md:hidden fixed w-full z-50 flex justify-center items-center px-4 pointer-events-none"
-      style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
+      className="md:hidden fixed w-full z-50 flex justify-center items-center px-3.5 pointer-events-none"
+      style={{ bottom: 'calc(0.6rem + env(safe-area-inset-bottom, 0px))' }}
       initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
       animate={{ 
         y: isNavVisible ? 0 : 100, 
@@ -52,10 +51,10 @@ export default function BottomTabs() {
     >
       <motion.div 
         layout
-        className="bg-[linear-gradient(180deg,rgba(255,255,255,0.90),rgba(255,246,250,0.76),rgba(240,249,255,0.78))] backdrop-blur-[40px] backdrop-saturate-[200%] rounded-[40px] shadow-[0_24px_44px_-14px_rgba(236,72,153,0.30),0_20px_34px_-18px_rgba(56,189,248,0.28),inset_0_2px_4px_rgba(255,255,255,1)] border border-white/80 p-1.5 pointer-events-auto flex items-center overflow-hidden"
+        className="bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,249,251,0.82),rgba(241,248,255,0.82))] backdrop-blur-[36px] backdrop-saturate-[190%] rounded-[36px] shadow-[0_18px_34px_-16px_rgba(236,72,153,0.24),0_16px_28px_-18px_rgba(56,189,248,0.20),inset_0_1px_2px_rgba(255,255,255,0.96)] border border-white/86 p-1.5 pointer-events-auto flex items-center overflow-hidden"
         style={{
            width: isExpanded ? '100%' : 'auto',
-           maxWidth: isExpanded ? '380px' : 'fit-content'
+           maxWidth: isExpanded ? '372px' : 'fit-content'
         }}
         transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
       >
@@ -69,10 +68,10 @@ export default function BottomTabs() {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
               onClick={() => setIsExpanded(true)}
-              className="flex items-center justify-center w-14 h-14 rounded-full text-pink-500 hover:text-pink-600 shadow-[0_10px_24px_rgba(236,72,153,0.14)] bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(254,242,248,0.94),rgba(240,249,255,0.90))] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1"
+              className="flex items-center justify-center w-[3.25rem] h-[3.25rem] rounded-full text-pink-500 hover:text-pink-600 shadow-[0_8px_18px_rgba(236,72,153,0.10)] bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,244,248,0.94),rgba(241,248,255,0.90))] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-0.5"
               aria-label="展開選單"
             >
-              <ActiveIcon size={26} strokeWidth={3} />
+              <ActiveIcon size={24} strokeWidth={2.8} />
             </motion.button>
           ) : (
             <motion.div 
@@ -105,7 +104,7 @@ export default function BottomTabs() {
                            setIsExpanded(false);
                         }
                     }}
-                    className={`flex flex-col items-center justify-center flex-1 min-w-0 pt-3 pb-2 rounded-[32px] relative ${subtlePressableClass} ${
+                    className={`flex flex-col items-center justify-center flex-1 min-w-0 pt-2.5 pb-1.5 rounded-[30px] relative ${subtlePressableClass} ${
                       isActive
                         ? 'scale-[1.05] text-pink-500'
                         : 'opacity-80 hover:opacity-100 text-slate-500 hover:text-sky-500'
@@ -115,7 +114,7 @@ export default function BottomTabs() {
                     {isActive && (
                       <motion.div
                         layoutId="tab-pill"
-                        className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(254,242,248,0.92),rgba(240,249,255,0.88))] shadow-[0_8px_18px_rgba(236,72,153,0.14),0_6px_14px_rgba(56,189,248,0.10),inset_0_1px_1px_rgba(255,255,255,1)] border border-white/90 rounded-[32px] -z-10"
+                        className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,244,248,0.90),rgba(242,248,255,0.88))] shadow-[0_7px_16px_rgba(236,72,153,0.10),0_4px_12px_rgba(56,189,248,0.08),inset_0_1px_1px_rgba(255,255,255,0.98)] border border-white/92 rounded-[30px] -z-10"
                         transition={{type: "spring", stiffness: 300, damping: 24}}
                       />
                     )}
@@ -124,10 +123,10 @@ export default function BottomTabs() {
                         animate={isActive ? { y: -2, scale: 1.1 } : { y: 0, scale: 1 }}
                         transition={{ type: "spring", stiffness: 400 }}
                       >
-                         <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.5 : 2} className={`mb-1 transition-all drop-shadow-sm ${isActive ? 'text-pink-500 fill-pink-500/20' : 'text-slate-500/90'}`} />
+                         <Icon size={isActive ? 21 : 19} strokeWidth={isActive ? 2.4 : 2} className={`mb-1 transition-all drop-shadow-sm ${isActive ? 'text-pink-500 fill-pink-500/20' : 'text-slate-500/90'}`} />
                       </motion.div>
                     ) : null}
-                    <span className={`text-[11px] font-black tracking-[0.06em] whitespace-nowrap px-1 z-10 transition-colors ${isActive ? 'text-pink-600' : ''}`}>
+                    <span className={`text-[10px] font-black tracking-[0.1em] whitespace-nowrap px-1 z-10 transition-colors ${isActive ? 'text-pink-600' : ''}`}>
                       {tab.label}
                     </span>
                   </button>
