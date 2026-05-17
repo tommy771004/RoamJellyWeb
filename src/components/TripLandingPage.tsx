@@ -108,7 +108,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
           initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
-          className="relative z-10 flex w-full max-w-sm flex-col items-center gap-4 rounded-[28px] border border-white/90 bg-white/88 px-6 py-7 text-center shadow-lg backdrop-blur-xl"
+          className="relative z-10 flex w-full max-w-sm flex-col items-center gap-4 rounded-[28px] border border-white/90 bg-white/88 px-5 py-6 sm:px-6 sm:py-7 text-center shadow-[0_12px_40px_rgba(14,165,233,0.12)] backdrop-blur-xl"
           aria-live="polite"
         >
           <div className="flex size-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-700 shadow-sm">
@@ -127,7 +127,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
           initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
-          className="relative z-10 flex w-full max-w-md flex-col items-center rounded-[30px] border border-white/90 bg-white/90 px-6 py-8 text-center shadow-lg backdrop-blur-xl"
+          className="relative z-10 flex w-full max-w-md flex-col items-center rounded-[30px] border border-white/90 bg-white/90 px-5 py-6 sm:px-6 sm:py-8 text-center shadow-[0_12px_40px_rgba(15,23,42,0.1)] backdrop-blur-xl"
         >
           <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
             {notFound ? <CircleHelp size={28} /> : <AlertTriangle size={28} />}
@@ -152,7 +152,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
           transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: 'easeOut' }}
           className="relative z-10 w-full max-w-[440px]"
         >
-          <div className="overflow-hidden rounded-[32px] border border-white/90 bg-white/88 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-7">
+          <div className="overflow-hidden rounded-[32px] border border-white/90 bg-white/88 p-4 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
@@ -168,7 +168,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
             {tripInfo && (
               <div className="mt-5 space-y-4">
                 <div className="space-y-2">
-                  <h1 className="text-balance text-3xl font-black text-slate-900 sm:text-[34px]">
+                  <h1 className="text-balance text-[24px] font-black text-slate-900 sm:text-[34px]">
                     {tripInfo.name}
                   </h1>
                   <p className="text-pretty text-sm leading-6 text-slate-600">
@@ -245,10 +245,10 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
               onClick={() => void handleJoin()}
               disabled={joining}
               className={cn(
-                'mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300',
+                'mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black text-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92]',
                 joining
                   ? 'cursor-not-allowed bg-sky-300 shadow-none'
-                  : 'bg-gradient-to-r from-sky-500 to-orange-400 hover:from-sky-600 hover:to-orange-500',
+                  : 'bg-gradient-to-r from-sky-500 to-orange-400 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] hover:-translate-y-1 hover:from-sky-600 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]',
               )}
             >
               {joining ? (
@@ -270,7 +270,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
 
             <a
               href="/"
-              className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+              className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-2 border-slate-200/60 bg-white/70 px-5 py-3 text-sm font-black text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)]"
             >
               先回首頁看看
             </a>

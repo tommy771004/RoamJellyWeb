@@ -42,7 +42,7 @@ function PillButton({ label, selected, onClick, accentColor = 'indigo' }: { labe
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className={`relative px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 border overflow-hidden ${
+      className={`relative px-3.5 sm:px-4 py-2.5 rounded-[20px] sm:rounded-[24px] text-[13px] sm:text-[14px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-1 active:scale-[0.92] flex items-center justify-center gap-2 border overflow-hidden ${
         selected 
           ? `${selectedClasses[accentColor] || selectedClasses.indigo} ring-2 ${ringClasses[accentColor] || ringClasses.indigo} ring-offset-1`
           : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300'
@@ -218,15 +218,16 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                       </h3>
                       <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
                     </div>
-                    <div className="flex flex-wrap gap-2.5 pt-1">
+                    <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                       {VIBE_OPTIONS.map(vibe => (
-                        <PillButton
-                          key={vibe}
-                          label={vibe}
-                          accentColor="amber"
-                          selected={profile.vibes.includes(vibe)}
-                          onClick={() => toggleArrayItem('vibes', vibe)}
-                        />
+                        <div className="shrink-0" key={vibe}>
+                          <PillButton
+                            label={vibe}
+                            accentColor="amber"
+                            selected={profile.vibes.includes(vibe)}
+                            onClick={() => toggleArrayItem('vibes', vibe)}
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -242,15 +243,16 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                       </h3>
                       <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
                     </div>
-                    <div className="flex flex-wrap gap-2.5 pt-1">
+                    <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                       {INTEREST_OPTIONS.map(opt => (
-                        <PillButton
-                          key={opt}
-                          label={opt}
-                          accentColor="rose"
-                          selected={profile.interests.includes(opt)}
-                          onClick={() => toggleArrayItem('interests', opt)}
-                        />
+                        <div className="shrink-0" key={opt}>
+                          <PillButton
+                            label={opt}
+                            accentColor="rose"
+                            selected={profile.interests.includes(opt)}
+                            onClick={() => toggleArrayItem('interests', opt)}
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -266,15 +268,16 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                       </h3>
                       <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
                     </div>
-                    <div className="flex flex-wrap gap-2.5 pt-1">
+                    <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                       {TRANSPORT_OPTIONS.map(opt => (
-                        <PillButton
-                          key={opt}
-                          label={opt}
-                          accentColor="blue"
-                          selected={profile.transport.includes(opt)}
-                          onClick={() => toggleArrayItem('transport', opt)}
-                        />
+                        <div className="shrink-0" key={opt}>
+                          <PillButton
+                            label={opt}
+                            accentColor="blue"
+                            selected={profile.transport.includes(opt)}
+                            onClick={() => toggleArrayItem('transport', opt)}
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -316,15 +319,16 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         </h3>
                         <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">複選</span>
                       </div>
-                      <div className="flex flex-wrap gap-2.5 pt-1">
+                      <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                         {DIETARY_OPTIONS.map(opt => (
-                          <PillButton
-                            key={opt}
-                            label={opt}
-                            accentColor="indigo"
-                            selected={profile.dietary.includes(opt)}
-                            onClick={() => toggleArrayItem('dietary', opt)}
-                          />
+                          <div className="shrink-0" key={opt}>
+                            <PillButton
+                              label={opt}
+                              accentColor="indigo"
+                              selected={profile.dietary.includes(opt)}
+                              onClick={() => toggleArrayItem('dietary', opt)}
+                            />
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -340,7 +344,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             <div className="p-4 sm:p-5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] sm:pb-5 border-t border-slate-100 bg-white md:rounded-b-[32px] shrink-0 z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] px-6">
               <Button 
                 onClick={handleSave} 
-                className="w-full h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl py-4 font-bold shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.98] flex items-center justify-center gap-2 text-[15px] sm:text-base tracking-wide transition-all overflow-hidden relative group whitespace-nowrap"
+                className="w-full h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-full py-4 font-bold shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 active:scale-[0.92] hover:-translate-y-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex items-center justify-center gap-2 text-[15px] sm:text-base tracking-wide overflow-hidden relative group whitespace-nowrap"
                 disabled={saving || loading}
               >
                 <div className="absolute inset-0 bg-white/20 -translate-x-[150%] skew-x-[-15deg] group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></div>

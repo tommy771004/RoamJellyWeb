@@ -65,7 +65,7 @@ export const MultiSelectPill: React.FC<{
   return (
     <button
       onClick={onClick}
-      className={`min-h-[44px] px-4 sm:px-5 py-2.5 rounded-2xl text-[14px] sm:text-[15px] font-bold transition-all active:scale-[0.98] duration-200 relative overflow-hidden flex items-center justify-center gap-2 border ${
+      className={`min-h-[44px] px-3.5 sm:px-5 py-2.5 rounded-[24px] text-[13px] sm:text-[15px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] relative overflow-hidden flex items-center justify-center gap-2 border ${
         selected 
           ? `${selectedClasses[accentColor]} ring-2 ${ringClasses[accentColor]} ring-offset-1 -translate-y-0.5` 
           : 'bg-white/70 backdrop-blur-md text-slate-600 hover:bg-white hover:text-slate-900 border-slate-200/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300'
@@ -179,18 +179,18 @@ export default function AiForm({
               </span>
             </div>
             <div>
-              <h2 className="text-balance text-2xl sm:text-4xl font-black text-slate-900 leading-tight tracking-tight mb-1 sm:mb-2">
+              <h2 className="text-balance text-[22px] sm:text-[34px] font-black text-slate-900 leading-tight tracking-tight mb-1 sm:mb-2">
                 先讓 AI 起草一版旅程，再回到手帳慢慢補完
               </h2>
-              <p className="max-w-2xl text-pretty text-sm sm:text-base font-bold leading-6 text-slate-600">
+              <p className="max-w-2xl text-pretty text-[13px] sm:text-base font-bold leading-6 text-slate-600">
                 這裡先收斂目的地、天數與偏好，產出可編輯的第一版安排，而不是一次性的靜態結果。
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2 pb-2 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
               {AI_FORM_ENTRY_PILLS.map((pill) => (
                 <span
                   key={pill}
-                  className="inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-black text-slate-600 shadow-sm"
+                  className="shrink-0 inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-black text-slate-600 shadow-sm"
                 >
                   {pill}
                 </span>
@@ -303,10 +303,10 @@ export default function AiForm({
                       <button
                         key={opt.id}
                         onClick={() => setFormData(p => ({ ...p, companions: opt.id }))}
-                        className={`flex flex-col items-center justify-center gap-2 p-3.5 sm:p-5 rounded-2xl transition-all duration-200 min-h-[88px] sm:min-h-[100px] border-2 group relative overflow-hidden ${
+                        className={`flex flex-col items-center justify-center gap-2 p-2.5 sm:p-5 rounded-[24px] sm:rounded-[28px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] min-h-[88px] sm:min-h-[100px] border-2 group relative overflow-hidden ${
                           isSelected 
-                            ? 'bg-slate-900 shadow-md border-slate-900 scale-[1.02] z-10' 
-                            : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-sm active:scale-[0.98]'
+                            ? 'bg-slate-900 shadow-md border-slate-900 -translate-y-1 z-10' 
+                            : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-sm hover:-translate-y-0.5'
                         }`}
                       >
                         <span
@@ -344,10 +344,10 @@ export default function AiForm({
                 <button
                   onClick={handleNext}
                   disabled={!formData.departure || !formData.destination || !formData.companions}
-                  className={`w-full h-14 sm:h-16 rounded-2xl font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-200 shadow-lg sm:shadow-md ${
+                  className={`w-full h-14 sm:h-16 rounded-full font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-lg sm:shadow-md ${
                     !formData.departure || !formData.destination || !formData.companions
                       ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none'
-                      : 'bg-gradient-to-r from-sky-500 to-orange-400 text-white hover:from-sky-600 hover:to-orange-500 active:scale-[0.98] border border-transparent'
+                      : 'bg-gradient-to-r from-sky-500 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)] hover:from-sky-600 hover:to-orange-500 active:scale-[0.92] hover:-translate-y-1 border border-transparent'
                   }`}
                 >
                   下一步，設定偏好細節
@@ -391,15 +391,16 @@ export default function AiForm({
                   <Coffee size={16} className="text-amber-600" />
                   旅遊節奏
                 </label>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {VIBE_OPTIONS.map(vibe => (
-                    <MultiSelectPill
-                      key={vibe}
-                      label={vibe}
-                      accentColor="amber"
-                      selected={formData.vibes.includes(vibe)}
-                      onClick={() => toggleArrayItem('vibes', vibe)}
-                    />
+                    <div className="shrink-0" key={vibe}>
+                      <MultiSelectPill
+                        label={vibe}
+                        accentColor="amber"
+                        selected={formData.vibes.includes(vibe)}
+                        onClick={() => toggleArrayItem('vibes', vibe)}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -409,15 +410,16 @@ export default function AiForm({
                   <Heart size={16} className="text-rose-500" />
                   興趣偏好
                 </label>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {INTEREST_OPTIONS.map(interest => (
-                    <MultiSelectPill
-                      key={interest}
-                      label={interest}
-                      accentColor="rose"
-                      selected={formData.interests.includes(interest)}
-                      onClick={() => toggleArrayItem('interests', interest)}
-                    />
+                    <div className="shrink-0" key={interest}>
+                      <MultiSelectPill
+                        label={interest}
+                        accentColor="rose"
+                        selected={formData.interests.includes(interest)}
+                        onClick={() => toggleArrayItem('interests', interest)}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -427,15 +429,16 @@ export default function AiForm({
                   <Settings2 size={16} className="text-emerald-600" />
                   飲食禁忌
                 </label>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {DIETARY_OPTIONS.map(diet => (
-                    <MultiSelectPill
-                      key={diet}
-                      label={diet}
-                      accentColor="indigo"
-                      selected={formData.dietary.includes(diet)}
-                      onClick={() => toggleArrayItem('dietary', diet)}
-                    />
+                    <div className="shrink-0" key={diet}>
+                      <MultiSelectPill
+                        label={diet}
+                        accentColor="indigo"
+                        selected={formData.dietary.includes(diet)}
+                        onClick={() => toggleArrayItem('dietary', diet)}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -445,15 +448,16 @@ export default function AiForm({
                   <Car size={16} className="text-blue-500" />
                   交通方式
                 </label>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {TRANSPORT_OPTIONS.map(trans => (
-                    <MultiSelectPill
-                      key={trans}
-                      label={trans}
-                      accentColor="blue"
-                      selected={formData.transport.includes(trans)}
-                      onClick={() => toggleArrayItem('transport', trans)}
-                    />
+                    <div className="shrink-0" key={trans}>
+                      <MultiSelectPill
+                        label={trans}
+                        accentColor="blue"
+                        selected={formData.transport.includes(trans)}
+                        onClick={() => toggleArrayItem('transport', trans)}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -463,15 +467,16 @@ export default function AiForm({
                   <DollarSign size={16} className="text-teal-600" />
                   預算等級 (單選)
                 </label>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-2 -mx-5 px-5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                   {BUDGET_OPTIONS.map(budget => (
-                    <MultiSelectPill
-                      key={budget}
-                      label={budget}
-                      accentColor="emerald"
-                      selected={formData.budget === budget}
-                      onClick={() => setFormData(p => ({ ...p, budget: p.budget === budget ? '' : budget }))}
-                    />
+                    <div className="shrink-0" key={budget}>
+                      <MultiSelectPill
+                        label={budget}
+                        accentColor="emerald"
+                        selected={formData.budget === budget}
+                        onClick={() => setFormData(p => ({ ...p, budget: p.budget === budget ? '' : budget }))}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -493,13 +498,13 @@ export default function AiForm({
                 <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                   <button
                     onClick={handleBack}
-                    className="w-full sm:w-auto px-6 h-14 sm:h-16 rounded-2xl font-bold text-[15px] bg-white border border-slate-200 text-slate-600 hover:text-sky-700 hover:bg-sky-50 hover:border-sky-200 shadow-sm transition-colors active:scale-95 shrink-0"
+                    className="w-full sm:w-auto px-6 h-14 sm:h-16 rounded-full font-bold text-[15px] bg-white border border-slate-200 text-slate-600 hover:text-sky-700 hover:bg-sky-50 hover:border-sky-200 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 shrink-0"
                   >
                     返回
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 w-full h-14 sm:h-16 rounded-2xl font-black text-[15px] sm:text-base text-white flex items-center justify-center gap-3 bg-gradient-to-r from-sky-500 to-orange-400 hover:from-sky-600 hover:to-orange-500 shadow-md hover:shadow-lg active:scale-[0.98] transition-all tracking-wide border border-transparent"
+                    className="flex-1 w-full h-14 sm:h-16 rounded-full font-black text-[15px] sm:text-base text-white flex items-center justify-center gap-3 bg-gradient-to-r from-sky-500 to-orange-400 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)] hover:from-sky-600 hover:to-orange-500 active:scale-[0.92] hover:-translate-y-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] tracking-wide border border-transparent"
                   >
                     生成行程
                     <Sparkles size={20} />

@@ -69,7 +69,7 @@ export default function BottomTabs() {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
               onClick={() => setIsExpanded(true)}
-              className="flex items-center justify-center w-14 h-14 rounded-full text-pink-500 hover:text-pink-600 shadow-[0_10px_24px_rgba(236,72,153,0.14)] bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(254,242,248,0.94),rgba(240,249,255,0.90))] transition-colors"
+              className="flex items-center justify-center w-14 h-14 rounded-full text-pink-500 hover:text-pink-600 shadow-[0_10px_24px_rgba(236,72,153,0.14)] bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(254,242,248,0.94),rgba(240,249,255,0.90))] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1"
               aria-label="展開選單"
             >
               <ActiveIcon size={26} strokeWidth={3} />

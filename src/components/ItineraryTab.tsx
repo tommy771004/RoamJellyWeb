@@ -2032,19 +2032,19 @@ export default function ItineraryTab() {
               ))}
             </div>
           ) : userTrips.length === 0 ? (
-            <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-[28px] border border-slate-200 bg-white/70 px-6 py-10 text-center shadow-sm">
-              <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 shadow-sm">
+            <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-[32px] border border-slate-200/80 bg-white/70 px-5 py-8 text-center shadow-sm backdrop-blur-sm sm:px-6 sm:py-10">
+              <div className="mb-4 flex size-16 items-center justify-center rounded-[24px] bg-gradient-to-br from-sky-50 to-indigo-50 text-sky-600 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(14,165,233,0.1)]">
                 <Navigation2 size={28} />
               </div>
-              <h3 className="text-balance text-2xl font-black text-slate-900">
+              <h3 className="text-balance text-[22px] sm:text-2xl font-black text-slate-900">
                 目前還沒有行程專案
               </h3>
-              <p className="mt-2 max-w-md text-pretty text-sm font-bold leading-6 text-slate-600">
+              <p className="mt-2 max-w-md text-pretty text-[13px] sm:text-sm font-bold leading-6 text-slate-500">
                 先用 AI 建立第一份草稿，之後再慢慢補上景點、航班與旅伴協作內容。
               </p>
               <button
                 onClick={() => setIsPlanningNew(true)}
-                className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors hover:bg-slate-800"
+                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:from-sky-400 hover:to-indigo-400 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)]"
               >
                 <Sparkles size={18} />
                 建立第一趟旅程
@@ -4055,11 +4055,11 @@ function ItineraryListItem({
   const meta = getCategoryMeta(item.category);
 
   return (
-    <div className="relative flex items-stretch group w-full px-1 pl-5 sm:px-0 sm:pl-10 lg:pl-12">
+    <div className="relative flex items-stretch group w-full pl-[18px] sm:pl-10 lg:pl-12">
       {/* Timeline Thread */}
-      <div className="absolute left-2.5 sm:left-4 lg:left-5 top-0 bottom-0 w-[3px] bg-gradient-to-b from-slate-200 via-slate-200 to-transparent rounded-full group-last:bottom-auto group-last:h-12" />
+      <div className="absolute left-2 sm:left-4 lg:left-5 top-0 bottom-0 w-[3px] bg-gradient-to-b from-slate-200 via-slate-200 to-transparent rounded-full group-last:bottom-auto group-last:h-12" />
       <div
-        className={`absolute left-1 sm:left-2 lg:left-3 top-5 sm:top-6 w-[14px] h-[14px] sm:w-[18px] sm:h-[18px] lg:w-[20px] lg:h-[20px] rounded-full border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? "bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]" : "bg-slate-300 group-hover:bg-fuchsia-400"}`}
+        className={`absolute left-[3px] sm:left-2 lg:left-3 top-5 sm:top-6 w-[10px] h-[10px] sm:w-[18px] sm:h-[18px] lg:w-[20px] lg:h-[20px] rounded-full border-2 sm:border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? "bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]" : "bg-slate-300 group-hover:bg-fuchsia-400"}`}
       />
 
       {/* Content Card */}
@@ -4067,7 +4067,7 @@ function ItineraryListItem({
         <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
       <div
-        className={`flex-1 p-2 sm:p-3.5 md:p-4 rounded-[20px] sm:rounded-[24px] hover:-translate-y-0.5 transition-all duration-300 relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900/80 backdrop-blur-xl text-white border border-slate-700 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.15)] hover:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.25)]" : isHotelCard ? "bg-indigo-950/80 backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-[0_8px_32px_-6px_rgba(79,70,229,0.15)] hover:shadow-[0_16px_48px_-12px_rgba(79,70,229,0.25)]" : "bg-white/60 backdrop-blur-[24px] dark:bg-slate-900/60 border-[1.5px] border-white/90 dark:border-white/10 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.06),inset_0_2px_12px_rgba(255,255,255,0.8)] hover:shadow-[0_16px_48px_-12px_rgba(255,160,200,0.25)]"}`}
+        className={`flex-1 p-2.5 sm:p-3.5 md:p-4 rounded-[24px] sm:rounded-[28px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-1 active:scale-[0.98]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900/80 backdrop-blur-xl text-white border border-slate-700 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.15)] hover:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.25)]" : isHotelCard ? "bg-indigo-950/80 backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-[0_8px_32px_-6px_rgba(79,70,229,0.15)] hover:shadow-[0_16px_48px_-12px_rgba(79,70,229,0.25)]" : "bg-white/60 backdrop-blur-[24px] dark:bg-slate-900/60 border-[1.5px] border-white/90 dark:border-white/10 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.06),inset_0_2px_12px_rgba(255,255,255,0.8)] hover:shadow-[0_16px_48px_-12px_rgba(255,160,200,0.25)]"}`}
         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
           if (
             (e.target as HTMLElement).closest(
@@ -4202,7 +4202,7 @@ function ItineraryListItem({
               {!isEditing && !isAnchorCard && (
                 <h3
                   title={item.title}
-                  className={`text-[12px] sm:text-[14px] font-black tracking-tight text-slate-900 leading-tight mb-0.5 font-sans ${isExpanded ? "" : "line-clamp-2"}`}
+                  className={`text-[14px] sm:text-[15px] font-black tracking-tight text-slate-900 leading-tight mb-0.5 font-sans ${isExpanded ? "" : "line-clamp-2"}`}
                 >
                   {item.title}
                 </h3>
@@ -4475,7 +4475,7 @@ function ItineraryListItem({
                   <button
                     type="button"
                     onClick={handleSave}
-                    className="px-6 py-2 rounded-full bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+                    className="px-6 py-2 rounded-full bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(14,165,233,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(14,165,233,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
                   >
                     保存
                   </button>
@@ -4486,7 +4486,7 @@ function ItineraryListItem({
                       setIsEditing(false);
                       onEditingChange?.(item.node_id, item.day, false);
                     }}
-                    className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all"
+                    className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
                   >
                     取消
                   </button>
