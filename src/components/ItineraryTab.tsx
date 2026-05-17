@@ -16,6 +16,8 @@ import {
 } from "motion/react";
 
 import MapSelectorModal from "./MapSelectorModal";
+import EditorialSectionIntro from "./EditorialSectionIntro";
+import ExpandableText from "./ExpandableText";
 
 import {
   List as ListIcon,
@@ -1948,19 +1950,19 @@ export default function ItineraryTab() {
         className="flex-1 w-full overflow-y-auto scroll-smooth bg-slate-50 selection:bg-sky-100"
       >
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-tab-safe animate-in fade-in duration-700">
-          <div className="mb-6 space-y-3 md:mb-10">
-            <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
-              Trip Notebook
-            </span>
-            <div className="space-y-2">
-              <h1 className="text-2xl md:text-5xl font-black text-slate-900 tracking-tight text-balance">
-                先選一趟旅程，再把 AI 草稿與共編安排接回手帳
-              </h1>
-              <p className="max-w-3xl text-pretty text-sm font-bold leading-6 text-slate-600 sm:text-base sm:leading-7">
-                行程手帳不是孤立頁面，它是整個旅程的主線。先建立一趟旅程，你就能從 AI 起草、景點調整到後續分享，都維持在同一個上下文裡。
-              </p>
-            </div>
-          </div>
+          <EditorialSectionIntro
+            eyebrow="Trip Notebook"
+            title="先選一趟旅程，再把 AI 草稿與共編安排接回手帳"
+            description="行程手帳不是孤立頁面，它是整個旅程的主線。先建立一趟旅程，你就能從 AI 起草、景點調整到後續分享，都維持在同一個上下文裡。"
+            highlights={[
+              { label: "旅程主線", value: "日期與節奏" },
+              { label: "AI 起草", value: "先有第一版" },
+              { label: "旅伴共編", value: "後續一起補完" },
+            ]}
+            className="mb-6 md:mb-10"
+            titleClassName="text-2xl md:text-5xl tracking-tight"
+            descriptionClassName="max-w-3xl text-sm font-bold leading-6 sm:text-base sm:leading-7"
+          />
 
           {/* AI Planning Entry Hero */}
           <div className="mb-8 md:mb-16">
@@ -1969,39 +1971,60 @@ export default function ItineraryTab() {
               whileTap={prefersReducedMotion ? undefined : { scale: 0.99 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
               onClick={() => setIsPlanningNew(true)}
-              className="cursor-pointer group relative overflow-hidden rounded-[36px] border border-white/90 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-7"
+              className="editorial-card cursor-pointer group relative overflow-hidden rounded-[36px] p-5 backdrop-blur-xl sm:p-7"
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.16),transparent_42%)]" />
               <div className="relative flex h-full flex-col gap-6 md:flex-row md:items-end md:justify-between">
                 <div className="max-w-3xl">
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
-                      AI Planning Entry
-                    </span>
-                  </div>
-                  <h2 className="text-xl sm:text-3xl md:text-5xl font-black text-slate-900 mb-3 sm:mb-5 leading-tight text-balance">
-                    讓 AI 先起草第一版旅程，再回到手帳慢慢補完
-                  </h2>
-                  <p className="max-w-2xl text-pretty text-sm sm:text-lg font-bold leading-6 sm:leading-8 text-slate-600 mb-5 sm:mb-7">
-                    從目的地、天數與偏好開始，先生成可討論的草稿；接著你就能在手帳裡調整排序、補航班和邀請旅伴一起共編。
-                  </p>
+                  <EditorialSectionIntro
+                    eyebrow="AI Planning Entry"
+                    title="讓 AI 先起草第一版旅程，再回到手帳慢慢補完"
+                    description="從目的地、天數與偏好開始，先生成可討論的草稿；接著你就能在手帳裡調整排序、補航班和邀請旅伴一起共編。"
+                    highlights={[
+                      { label: "起點", value: "目的地與天數" },
+                      { label: "中段", value: "調整排序與備註" },
+                      { label: "後續", value: "分享給旅伴" },
+                    ]}
+                    className="mb-5 sm:mb-7"
+                    titleClassName="text-xl sm:text-3xl md:text-5xl"
+                    descriptionClassName="text-sm sm:text-lg font-bold leading-6 sm:leading-8"
+                  />
                   <div className="grid gap-3 sm:grid-cols-3">
                     {NO_TRIP_ENTRY_PILLARS.map(({ icon: Icon, eyebrow, title, description }) => (
                       <div
                         key={title}
-                        className="rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-sm"
+                        className="editorial-card rounded-[24px] px-4 py-4"
                       >
                         <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-sky-700">
                           <Icon size={14} strokeWidth={2.5} />
                           {eyebrow}
                         </span>
                         <h3 className="mt-3 text-sm font-black text-slate-900">{title}</h3>
-                        <p className="mt-2 text-pretty text-[13px] leading-5 text-slate-600">{description}</p>
+                        <ExpandableText
+                          text={description}
+                          previewLines={3}
+                          minCharacters={72}
+                          className="mt-2"
+                          textClassName="text-pretty text-[13px] leading-[1.62] text-slate-600"
+                          collapsedLabel="看更多內容"
+                          expandedLabel="收起重點"
+                        />
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="flex flex-col items-stretch gap-3 md:min-w-[220px]">
+                <div className="flex flex-col items-stretch gap-3 md:min-w-[260px]">
+                  <div className="editorial-card-soft rounded-[26px] px-4 py-4 text-left">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-700">
+                      Planning Flow
+                    </p>
+                    <p className="mt-2 text-[14px] font-black leading-6 text-slate-800">
+                      先生成可討論的旅程骨架，再慢慢補上每天的節奏與細節。
+                    </p>
+                    <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                      這樣手機上會先看到主線，而不是一開始就被整份長內容壓住。
+                    </p>
+                  </div>
                   <button className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors group-hover:from-sky-600 group-hover:to-orange-500">
                     <Sparkles size={18} />
                     開始用 AI 起草旅程
@@ -3822,7 +3845,6 @@ function ItineraryListItem({
   );
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const facts = useTripFactsStore((s) => s.facts);
   const linkedFact = item.linkedFactId
@@ -3838,8 +3860,6 @@ function ItineraryListItem({
   const flightRoute = isFlightCard
     ? getFlightRouteSummary(item, linkedFact)
     : null;
-  const canExpandCopy =
-    item.title.trim().length > 28 || detailCopy.length > 110;
 
   useEffect(() => {
     setEditTitle(item.title);
@@ -3851,7 +3871,6 @@ function ItineraryListItem({
     setEditImageUrl(item.image_url || "");
     setEditAttachments(item.attachments || []);
     setEditLinkedFactId(item.linkedFactId || "");
-    setIsExpanded(false);
   }, [item, tripStartDate]);
 
   const handleAttachmentUpload = async (
@@ -4153,9 +4172,7 @@ function ItineraryListItem({
                       <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
                         Departure
                       </div>
-                      <div
-                        className={`text-lg sm:text-xl font-black leading-none ${isExpanded ? "whitespace-normal" : "truncate"}`}
-                      >
+                      <div className="truncate text-lg font-black leading-none sm:text-xl">
                         {flightRoute.from}
                       </div>
                     </div>
@@ -4176,9 +4193,7 @@ function ItineraryListItem({
                       <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
                         Arrival
                       </div>
-                      <div
-                        className={`text-lg sm:text-xl font-black leading-none ${isExpanded ? "whitespace-normal" : "truncate"}`}
-                      >
+                      <div className="truncate text-lg font-black leading-none sm:text-xl">
                         {flightRoute.to}
                       </div>
                     </div>
@@ -4192,9 +4207,7 @@ function ItineraryListItem({
                       <div className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-400">
                         Tonight's Stay
                       </div>
-                      <div
-                        className={`text-lg sm:text-xl font-black leading-tight ${isExpanded ? "whitespace-normal" : "truncate"}`}
-                      >
+                      <div className="truncate text-lg font-black leading-tight sm:text-xl">
                         {item.title}
                       </div>
                     </div>
@@ -4207,7 +4220,7 @@ function ItineraryListItem({
               {!isEditing && !isAnchorCard && (
                 <h3
                   title={item.title}
-                  className={`text-[15px] sm:text-[16px] font-black tracking-[-0.025em] text-slate-900 leading-[1.24] mb-0.5 font-sans ${isExpanded ? "" : "line-clamp-3"}`}
+                  className="mb-0.5 line-clamp-3 text-[15px] font-black leading-[1.24] tracking-[-0.025em] text-slate-900 font-sans sm:text-[16px]"
                 >
                   {item.title}
                 </h3>
@@ -4591,18 +4604,23 @@ function ItineraryListItem({
                 )}
 
                 {detailCopy ? (
-                  <div className="mt-2 border-t border-slate-100/90 pt-2">
-                    <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
-                      Notes
-                    </p>
-                    <p
-                      className={`text-[13px] sm:text-[14px] font-medium text-slate-700 whitespace-pre-line tracking-tight leading-[1.7] transition-all duration-500 font-sans ${isExpanded ? "" : "line-clamp-4"}`}
-                    >
-                      {detailCopy}
-                    </p>
-                  </div>
+                  <ExpandableText
+                    text={detailCopy}
+                    label="Notes"
+                    previewLines={4}
+                    minCharacters={110}
+                    minLineBreaks={1}
+                    preserveWhitespace
+                    stopPropagation
+                    className="editorial-divider mt-2 pt-2"
+                    labelClassName="mb-0"
+                    textClassName="text-[13px] sm:text-[14px] font-medium text-slate-700 tracking-tight leading-[1.78] font-sans"
+                    buttonClassName="mt-0"
+                    collapsedLabel="查看全文"
+                    expandedLabel="收起全文"
+                  />
                 ) : (
-                  <div className="mt-2 border-t border-slate-100/90 pt-2">
+                  <div className="editorial-divider mt-2 pt-2">
                     <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
                       Notes
                     </p>
@@ -4610,19 +4628,6 @@ function ItineraryListItem({
                       點擊卡片編輯手帳內容、細節或照片...
                     </p>
                   </div>
-                )}
-
-                {canExpandCopy && (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setIsExpanded((prev) => !prev);
-                    }}
-                    className="mt-2 inline-flex w-fit items-center gap-1 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-600 transition-all hover:border-slate-300 hover:bg-white"
-                  >
-                    {isExpanded ? "收起全文" : "查看全文"}
-                  </button>
                 )}
 
                 {item.title.includes("Cebu") && (

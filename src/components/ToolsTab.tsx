@@ -19,6 +19,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
+import EditorialSectionIntro from "./EditorialSectionIntro";
+import ExpandableText from "./ExpandableText";
 import InfoPeekModal, { type InfoPeekContent } from "./InfoPeekModal";
 import IconImg from "./ui/IconImg";
 import { Input } from "./ui/input";
@@ -1528,7 +1530,7 @@ function ToolsTabContent() {
                     return (
                     <div
                       key={title}
-                      className={`relative overflow-hidden rounded-[28px] border p-4 text-left shadow-[0_16px_32px_rgba(15,23,42,0.08)] ${decor.shell}`}
+                      className={`editorial-card relative overflow-hidden rounded-[28px] p-4 text-left ${decor.shell}`}
                     >
                       <div className={`absolute -right-5 -top-5 size-20 rounded-full blur-2xl ${decor.glow}`} />
                       <div className="relative flex items-center justify-between gap-3">
@@ -1541,7 +1543,16 @@ function ToolsTabContent() {
                         </span>
                       </div>
                       <h3 className="relative mt-3 text-balance text-sm font-black text-slate-900">{title}</h3>
-                      <div className="relative mt-4 flex items-center justify-between gap-3">
+                      <ExpandableText
+                        text={description}
+                        previewLines={3}
+                        minCharacters={72}
+                        className="relative mt-2.5"
+                        textClassName="text-pretty text-[13px] leading-[1.65] text-slate-600"
+                        collapsedLabel="看更多內容"
+                        expandedLabel="收起重點"
+                      />
+                      <div className="editorial-divider relative mt-4 flex items-center justify-between gap-3 pt-3">
                         <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
                           <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/90 text-[10px] font-black shadow-sm ${decor.badge}`}>
                             <Icon size={12} strokeWidth={2.6} />
@@ -1709,19 +1720,25 @@ function ToolsTabContent() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.14),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.10),transparent_46%)]" />
           <div className="relative flex flex-col gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-2">
-                <span className="inline-flex items-center rounded-full border border-white/92 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-sky-700 shadow-sm">
-                  Trip Utility Layer
-                </span>
-                <div className="space-y-1.5">
-                  <h1 className="max-w-3xl text-balance text-[25px] font-black leading-tight tracking-[-0.035em] text-slate-900 sm:text-[31px]">
-                    把天氣、清單與分帳，綁回{destination ? ` ${destination} ` : "這趟"}旅程
-                  </h1>
-                  <p className="max-w-2xl text-pretty text-[14px] leading-[1.72] text-slate-600 sm:text-[15px] sm:leading-[1.8]">
-                    工具頁不是額外任務區，而是沿著目前旅程延伸出的執行層。你可以先看現場會遇到的提醒，再回到手帳補完安排。
-                  </p>
-                </div>
-              </div>
+              <EditorialSectionIntro
+                eyebrow="Trip Utility Layer"
+                title={`把天氣、清單與分帳，綁回${destination ? ` ${destination} ` : "這趟"}旅程`}
+                description="工具頁不是額外任務區，而是沿著目前旅程延伸出的執行層。你可以先看現場會遇到的提醒，再回到手帳補完安排。"
+                highlights={[
+                  {
+                    label: "目的地",
+                    value: destination || "等待同步",
+                  },
+                  {
+                    label: "清單進度",
+                    value: `${checklist.filter((item) => item.checked).length}/${checklist.length || 0}`,
+                  },
+                  {
+                    label: "待結清",
+                    value: `${settlements.length} 筆`,
+                  },
+                ]}
+              />
               <button
                 onClick={() => setActiveTab("itinerary")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/92 bg-white/90 px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
@@ -1737,7 +1754,7 @@ function ToolsTabContent() {
                 return (
                 <div
                   key={label}
-                  className={`relative overflow-hidden rounded-[22px] border px-3.5 py-3 shadow-[0_8px_14px_rgba(15,23,42,0.05)] ${decor.shell}`}
+                  className={`editorial-card-soft relative overflow-hidden rounded-[22px] px-3.5 py-3 ${decor.shell}`}
                 >
                   <div className={`absolute -right-8 -top-8 size-16 rounded-full opacity-70 blur-2xl ${decor.glow}`} />
                   <div className="relative flex items-center justify-between gap-3">
@@ -1752,8 +1769,16 @@ function ToolsTabContent() {
                     ) : null}
                   </div>
                   <p className="relative mt-1.5 text-balance text-[14px] font-black tracking-[-0.01em] text-slate-900">{value}</p>
-                  <p className="relative mt-1 text-pretty text-[13px] leading-[1.58] text-slate-600 line-clamp-3">{description}</p>
-                  <div className="relative mt-2 border-t border-white/70 pt-1.5 text-[10px] font-bold text-slate-500">
+                  <ExpandableText
+                    text={description}
+                    previewLines={3}
+                    minCharacters={72}
+                    className="relative mt-1"
+                    textClassName="text-pretty text-[13px] leading-[1.64] text-slate-600"
+                    collapsedLabel="看更多"
+                    expandedLabel="收起"
+                  />
+                  <div className="editorial-divider relative mt-2 pt-2 text-[10px] font-bold text-slate-500">
                     <span className="text-pretty line-clamp-2">{decor.note}</span>
                   </div>
                 </div>
@@ -1778,17 +1803,19 @@ function ToolsTabContent() {
         <div className="h-px bg-slate-200/50 my-4" />
 
         <div className="flex flex-col gap-y-6">
-          <div className="flex flex-col gap-2 mb-2 mt-4">
-            <span className="inline-flex w-fit items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
-              For This Trip
-            </span>
-            <h2 className="text-balance text-[24px] sm:text-[32px] md:text-4xl font-black text-slate-900 leading-tight">
-              把延伸選項接回這趟旅程
-            </h2>
-            <p className="max-w-2xl text-pretty text-[14px] sm:text-[16px] leading-6 text-slate-600">
-              這裡的航班與活動建議不是獨立推薦牆，而是幫你把目前旅程還缺的移動與體驗補齊。
-            </p>
-          </div>
+          <EditorialSectionIntro
+            eyebrow="For This Trip"
+            title="把延伸選項接回這趟旅程"
+            description="這裡的航班與活動建議不是獨立推薦牆，而是幫你把目前旅程還缺的移動與體驗補齊。"
+            highlights={[
+              { label: "航班", value: "補齊移動節奏" },
+              { label: "活動", value: "接回每日安排" },
+              { label: "工具", value: "維持同一上下文" },
+            ]}
+            className="mb-2 mt-4"
+            titleClassName="text-[24px] sm:text-[32px] md:text-4xl"
+            descriptionClassName="text-[14px] sm:text-[16px] leading-6"
+          />
 
           {/* Filters */}
           <div className="flex flex-row overflow-x-auto scrollbar-hide gap-3 mb-2 -mx-5 px-5 sm:mx-0 sm:px-0 py-2">

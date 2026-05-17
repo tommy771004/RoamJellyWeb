@@ -22,6 +22,8 @@ import {
   CarFront,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
+import EditorialSectionIntro from "./EditorialSectionIntro";
+import ExpandableText from "./ExpandableText";
 import { Input } from "./ui/input";
 import { FlightSkeletonCard } from "./SkeletonCard";
 import {
@@ -1705,7 +1707,7 @@ export default function HomeTab({
                       initial={prefersReducedMotion ? undefined : { opacity: 0, y: 16 }}
                       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
                       transition={{ duration: prefersReducedMotion ? 0 : 0.22, delay: prefersReducedMotion ? 0 : 0.08 + index * 0.04, ease: "easeOut" }}
-                      className={`group/pillar relative min-w-[248px] snap-start overflow-hidden rounded-[26px] border px-3.5 py-3 shadow-[0_12px_26px_rgba(14,165,233,0.06)] backdrop-blur-xl sm:min-w-0 ${decor.shell}`}
+                      className={`group/pillar editorial-card-soft relative min-w-[248px] snap-start overflow-hidden rounded-[26px] px-3.5 py-3 backdrop-blur-xl sm:min-w-0 ${decor.shell}`}
                     >
                       <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
                       <div className="absolute inset-x-4 bottom-3 h-px bg-gradient-to-r from-white via-slate-200/70 to-transparent" />
@@ -1721,10 +1723,15 @@ export default function HomeTab({
                       <h2 className="relative text-balance text-[15px] font-black tracking-[-0.02em] text-slate-900 sm:text-[17px]">
                         {pillar.title}
                       </h2>
-                      <p className="relative mt-1.5 text-[13px] font-medium leading-[1.55] text-slate-600 line-clamp-3">
-                        {pillar.description}
-                      </p>
-                      <div className="relative mt-3 flex items-center justify-between gap-3">
+                      <ExpandableText
+                        text={pillar.description}
+                        previewLines={3}
+                        minCharacters={88}
+                        className="relative mt-1.5"
+                        textClassName="text-[13px] font-medium leading-[1.62] text-slate-600"
+                        buttonClassName="mt-0"
+                      />
+                      <div className="editorial-divider relative mt-3 flex items-center justify-between gap-3 pt-3">
                         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
                           <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/85 text-[10px] font-black shadow-sm ${decor.badge}`}>
                             0{index + 1}
@@ -2055,27 +2062,37 @@ export default function HomeTab({
 
         <div className="pt-5 sm:pt-7 pb-16 md:pb-32 flex flex-col flex-1 min-w-0">
           <div className="flex flex-col gap-3 mb-5 sm:mb-6 md:mb-7">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-col items-start gap-1.5 md:gap-1">
-                <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter leading-none flex items-baseline gap-2 sm:gap-3">
-                    先找航班，再把旅程帶進手帳
-                    {searchForm.date && (
-                      <span className="text-lg sm:text-xl text-slate-500 font-bold tracking-tight">
-                        {searchForm.date.replace(/-/g, "/")}
-                      </span>
-                    )}
-                  </h2>
-                  {filteredResults.length > 0 && (
-                    <span className="px-2 py-0.5 bg-slate-900 text-white rounded-[6px] text-[11px] font-black tracking-widest uppercase shadow-sm">
-                      {filteredResults.length} 個結果
-                    </span>
-                  )}
-                </div>
-                <p className="max-w-2xl text-[12px] font-bold leading-5 text-slate-500 sm:text-[13px]">
-                  航班比價只是旅程起點。後續可以把結果、模板行程與靈感素材逐步收進同一份規劃。
-                </p>
-              </div>
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <EditorialSectionIntro
+                eyebrow="Search To Notebook"
+                title="先找航班，再把旅程帶進手帳"
+                description="航班比價只是旅程起點。後續可以把結果、模板行程與靈感素材逐步收進同一份規劃。"
+                highlights={[
+                  {
+                    label: "出發",
+                    value: searchForm.from || "未設定",
+                  },
+                  {
+                    label: "目的地",
+                    value: searchForm.to || "待挑選",
+                  },
+                  {
+                    label: "日期",
+                    value: searchForm.date
+                      ? searchForm.date.replace(/-/g, "/")
+                      : "未選日期",
+                  },
+                  {
+                    label: "結果",
+                    value:
+                      filteredResults.length > 0
+                        ? `${filteredResults.length} 個`
+                        : "等待搜尋",
+                  },
+                ]}
+                titleClassName="text-2xl sm:text-3xl tracking-tighter"
+                descriptionClassName="text-[12px] font-bold leading-5 text-slate-500 sm:text-[13px]"
+              />
               {results.length > 0 && (
                 <div className="flex items-center gap-1 bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 shrink-0">
                   <button
@@ -2725,9 +2742,15 @@ export default function HomeTab({
                           ) : null}
                         </div>
 
-                        <p className="relative text-pretty text-[13px] text-slate-600 font-medium mb-3 leading-5 sm:text-[13px] sm:leading-relaxed line-clamp-4 sm:line-clamp-4">
-                          {dest.description}
-                        </p>
+                        <ExpandableText
+                          text={dest.description}
+                          previewLines={3}
+                          minCharacters={84}
+                          className="relative mb-3"
+                          textClassName="text-pretty text-[13px] font-medium leading-[1.68] text-slate-600 sm:text-[13px]"
+                          collapsedLabel="看更多靈感"
+                          expandedLabel="收起介紹"
+                        />
 
                         <div className="relative flex flex-wrap gap-1.5 sm:gap-2 mb-4">
                           {dest.highlights.slice(0, 3).map((h, highlightIndex) => (
@@ -2823,7 +2846,7 @@ export default function HomeTab({
                           {handbook.author}
                         </p>
 
-                        <div className="mb-3.5 rounded-[20px] border border-white/90 bg-white/78 px-3.5 py-2.5 text-[12px] font-bold leading-5 text-slate-600 shadow-sm">
+                        <div className="editorial-card-soft mb-3.5 rounded-[20px] px-3.5 py-2.5 text-[12px] font-bold leading-[1.7] text-slate-600">
                           先把這份達人手帳當成旅伴寄來的明信片，再複製成你的出發版本。
                         </div>
 
