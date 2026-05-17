@@ -198,9 +198,9 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
       <div className="pointer-events-none absolute right-[-8%] top-[8%] h-[26rem] w-[26rem] rounded-full bg-orange-200/35 blur-[90px]" />
       <div className="pointer-events-none absolute bottom-[-10%] left-[18%] h-[24rem] w-[24rem] rounded-full bg-slate-200/50 blur-[84px]" />
 
-      <div className={`relative z-10 mx-auto flex min-h-full w-full max-w-[1040px] flex-col justify-center px-5 pt-8 pb-10 sm:px-6 sm:py-10 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
+      <div className={`relative z-10 mx-auto flex min-h-full w-full max-w-[1040px] flex-col justify-center px-3 pt-6 pb-8 sm:px-6 sm:py-10 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
         {shouldShowGuestHero && (
-          <section className="mb-4 rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.80),rgba(255,255,255,0.62))] p-5 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-[18px] sm:p-6 lg:mb-0">
+          <section className="mb-4 rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.80),rgba(255,255,255,0.62))] p-4 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-[18px] sm:p-6 lg:mb-0">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
@@ -216,16 +216,16 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               </div>
             </div>
 
-            <div className="relative mt-5 overflow-hidden rounded-[28px] border border-slate-900/5 bg-[linear-gradient(135deg,#082f49_0%,#0f172a_54%,#7c2d12_100%)] p-5 text-white shadow-[0_18px_44px_rgba(15,23,42,0.20)]">
+            <div className="relative mt-4 sm:mt-5 overflow-hidden rounded-[28px] border border-slate-900/5 bg-[linear-gradient(135deg,#082f49_0%,#0f172a_54%,#7c2d12_100%)] p-4 sm:p-5 text-white shadow-[0_18px_44px_rgba(15,23,42,0.20)]">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(251,146,60,0.16),transparent_40%)]" />
               <div className="relative">
                 <div className="text-[11px] font-black uppercase tracking-[0.24em] text-sky-200">
                   {previewContent.eyebrow}
                 </div>
-                <h1 className="mt-2 text-[28px] leading-tight font-black tracking-tight text-balance">
+                <h1 className="mt-2 text-[24px] sm:text-[28px] leading-tight font-black tracking-tight text-balance">
                   {title || '先用訪客身分開始，喜歡再註冊也不遲'}
                 </h1>
-                <p className="mt-3 max-w-[48ch] text-[13px] font-semibold leading-relaxed text-slate-300">
+                <p className="mt-2 sm:mt-3 max-w-[48ch] text-[13px] font-medium leading-relaxed text-slate-300">
                   {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
                 </p>
 
@@ -267,7 +267,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                                   icon: HeroIcon,
                                 })
                               }
-                              className={`mt-3 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[11px] font-black text-slate-200 transition-colors hover:bg-white/[0.14] ${subtlePressableClass}`}
+                              className={`mt-3 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[11px] font-black text-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:bg-white/[0.14]`}
                             >
                               查看說明
                               <ArrowRight size={12} strokeWidth={2.6} />
@@ -287,7 +287,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     <button
                       onClick={() => void handleGuestLogin()}
                       disabled={loading}
-                      className={`flex w-full items-center justify-center gap-2 rounded-[22px] border-none bg-white px-5 py-4 text-slate-900 hover:bg-sky-50 disabled:opacity-70 sm:flex-1 ${subtlePressableClass}`}
+                      className={`flex w-full items-center justify-center gap-2 rounded-[22px] border-none bg-white px-5 py-4 text-slate-900 shadow-[0_8px_20px_rgba(255,255,255,0.12)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,255,255,0.16)] disabled:opacity-70 sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.94]`}
                     >
                       <span className="text-[14px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
                       <ArrowRight size={16} strokeWidth={2.5} />
@@ -295,7 +295,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     <button
                       type="button"
                       onClick={() => setIsAuthCardExpanded(true)}
-                      className={`flex items-center justify-center rounded-[22px] border border-white/12 bg-white/[0.06] px-5 py-4 text-white hover:bg-white/[0.12] sm:flex-1 ${subtlePressableClass}`}
+                      className={`flex items-center justify-center rounded-[22px] border border-white/12 bg-white/[0.06] px-5 py-4 text-white hover:-translate-y-0.5 hover:bg-white/[0.12] sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.94]`}
                     >
                       <span className="text-[13px] font-black tracking-[0.04em]">改用帳號同步</span>
                     </button>

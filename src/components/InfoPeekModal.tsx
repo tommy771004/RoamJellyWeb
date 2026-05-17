@@ -133,7 +133,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
                 type="button"
                 onClick={onClose}
                 aria-label="關閉說明"
-                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-700"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-500 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:border-slate-300 hover:text-slate-700"
               >
                 <X size={18} strokeWidth={2.6} />
               </button>
@@ -163,7 +163,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700"
               >
                 關閉說明
               </button>

@@ -1358,16 +1358,16 @@ function TripSelectorBar() {
               key={trip.tripId}
               onClick={() => setActiveTripId(trip.tripId)}
               className={cn(
-                "px-5 py-4 flex flex-col rounded-[24px] border transition-colors text-left shadow-sm shrink-0 min-w-[120px] max-w-[240px] overflow-hidden",
+                "px-5 py-4 flex flex-col rounded-[24px] border transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] text-left shadow-sm shrink-0 min-w-[120px] max-w-[240px] overflow-hidden group",
                 active
-                  ? "bg-sky-600 border-sky-600 text-white"
-                  : "bg-white/80 backdrop-blur-md border-slate-200 text-slate-500 hover:border-sky-200 hover:text-sky-700",
+                  ? "bg-gradient-to-r from-sky-500 to-indigo-500 border-transparent text-white shadow-md shadow-sky-500/20"
+                  : "bg-white/80 backdrop-blur-md border-slate-200 text-slate-500 hover:border-sky-300 hover:bg-sky-50/50 hover:shadow-md",
               )}
             >
               <span
                 className={cn(
-                  "text-[16px] font-bold whitespace-nowrap overflow-hidden text-ellipsis w-full block",
-                  active ? "text-white" : "text-slate-900",
+                  "text-[16px] font-bold whitespace-nowrap overflow-hidden text-ellipsis w-full block transition-colors",
+                  active ? "text-white" : "text-slate-800 group-hover:text-sky-700",
                 )}
               >
                 {trip.name}
@@ -1484,12 +1484,12 @@ function ToolsTabContent() {
 
   if (!activeTripId) {
     return (
-      <div className="flex-1 overflow-y-auto bg-slate-50 px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] scroll-smooth sm:px-6">
+      <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] scroll-smooth sm:px-6 sm:py-6">
         <motion.div
           initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: "easeOut" }}
-          className="mx-auto my-auto w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,250,251,0.88),rgba(240,249,255,0.88))] p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:rounded-[40px] sm:p-8 md:p-10"
+          className="mx-auto my-auto w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,250,251,0.88),rgba(240,249,255,0.88))] p-4 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:rounded-[40px] sm:p-8 md:p-10"
         >
           <div className="absolute -left-12 top-8 size-36 rounded-full bg-pink-200/35 blur-3xl" />
           <div className="absolute right-6 top-10 size-32 rounded-full bg-sky-200/30 blur-3xl" />
@@ -1498,11 +1498,11 @@ function ToolsTabContent() {
               <div className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
                 旅程工具包
               </div>
-              <div className="space-y-3">
-                <h2 className="text-balance text-[28px] font-black leading-tight text-slate-900 sm:text-[34px] md:text-[40px]">
+              <div className="space-y-2.5 sm:space-y-3">
+                <h2 className="text-balance text-2xl font-black leading-tight text-slate-900 sm:text-[34px] md:text-[40px]">
                   先選一趟旅程，工具包才知道該替你同步哪裡
                 </h2>
-                <p className="text-pretty text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                <p className="text-pretty text-[13px] leading-relaxed text-slate-600 sm:text-base sm:leading-7">
                   RoamJelly 的工具頁不是獨立功能清單，而是緊貼在特定旅程旁邊的提醒層。先建立或選擇一趟旅程，天氣、清單與分帳才會有真正的上下文。
                 </p>
               </div>
@@ -1560,7 +1560,7 @@ function ToolsTabContent() {
                               icon: Icon,
                             })
                           }
-                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
                         >
                           查看說明
                           <ArrowRight size={12} strokeWidth={2.6} />
@@ -1575,14 +1575,14 @@ function ToolsTabContent() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setActiveTab("ai_form")}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 px-6 py-3 text-sm font-black text-white shadow-sm transition-colors hover:from-sky-600 hover:to-orange-500"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-sky-400 to-sky-600 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
                 >
                   <Sparkles size={18} strokeWidth={2.5} />
                   直接交給 AI 開始規劃
                 </button>
                 <button
                   onClick={() => setActiveTab("home")}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-slate-200/60 bg-white/70 px-6 py-3 text-[14px] font-black text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)]"
                 >
                   先回首頁看流程
                 </button>
@@ -1878,13 +1878,13 @@ function ToolsTabContent() {
                     className="!p-6 flex flex-col hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group"
                   >
                     <div className="flex justify-between items-start mb-8">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-fuchsia-50 text-fuchsia-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-fuchsia-50 text-fuchsia-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                           <Plane className="w-6 h-6 transform -rotate-45" />
                         </div>
                         <div className="flex flex-col">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-[18px] text-[#2C302E]">
+                            <span className="font-bold text-[16px] sm:text-[18px] text-[#2C302E]">
                               {flight.airline}
                             </span>
                             <ExternalLink
@@ -1898,38 +1898,38 @@ function ToolsTabContent() {
                         </div>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-[32px] font-black text-fuchsia-500 leading-none group-hover:scale-105 transition-transform">
+                        <span className="text-[26px] sm:text-[32px] font-black text-fuchsia-500 leading-none group-hover:scale-105 transition-transform">
                           ${flight.price}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col mb-8">
+                    <div className="flex flex-col mb-6 sm:mb-8">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex flex-col">
-                          <span className="text-[26px] font-black text-[#2C302E] tracking-tight">
+                          <span className="text-[22px] sm:text-[26px] font-black text-[#2C302E] tracking-tight">
                             {flight.depTime}
                           </span>
-                          <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">
+                          <span className="text-[12px] sm:text-[14px] font-black text-slate-400 uppercase tracking-widest">
                             {flight.depCode}
                           </span>
                         </div>
-                        <div className="flex-1 mx-6 flex items-center relative">
+                        <div className="flex-1 mx-4 sm:mx-6 flex items-center relative">
                           <div className="h-[2px] bg-slate-100 flex-1"></div>
                           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-fuchsia-400 shadow-sm" />
                         </div>
                         <div className="flex flex-col items-end">
-                          <span className="text-[26px] font-black text-[#2C302E] tracking-tight">
+                          <span className="text-[22px] sm:text-[26px] font-black text-[#2C302E] tracking-tight">
                             {flight.arrTime}
                           </span>
-                          <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">
+                          <span className="text-[12px] sm:text-[14px] font-black text-slate-400 uppercase tracking-widest">
                             {flight.arrCode}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <button className="w-full py-4 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[15px] transition-all active:scale-95 shadow-lg shadow-fuchsia-200">
+                    <button className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_16px_rgba(217,70,239,0.25)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_24px_rgba(217,70,239,0.35)]">
                       查看航班詳情
                     </button>
                   </GlassCard>
@@ -1939,9 +1939,9 @@ function ToolsTabContent() {
                 {activities.map((item, idx) => (
                   <GlassCard
                     key={`klook-${idx}`}
-                    className="!p-5 flex flex-row gap-5 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group"
+                    className="!p-4 sm:!p-5 flex flex-row gap-4 sm:gap-5 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group"
                   >
-                    <div className="relative w-[130px] h-full shrink-0 overflow-hidden rounded-[24px]">
+                    <div className="relative w-[100px] sm:w-[130px] h-full shrink-0 overflow-hidden rounded-[20px] sm:rounded-[24px]">
                       <img
                         src={item.img}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
@@ -1949,29 +1949,29 @@ function ToolsTabContent() {
                       />
                     </div>
                     <div className="flex flex-col flex-1 py-1">
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <span className="text-lg leading-none">🎡</span>
-                        <span className="font-black text-fuchsia-500 text-[11px] uppercase tracking-widest bg-fuchsia-50 px-2 py-1 rounded-md">
+                      <div className="flex items-center gap-1.5 mb-1.5 sm:mb-2">
+                        <span className="text-base sm:text-lg leading-none">🎡</span>
+                        <span className="font-black text-fuchsia-500 text-[10px] sm:text-[11px] uppercase tracking-widest bg-fuchsia-50 px-2 py-0.5 sm:py-1 rounded-md">
                           Klook 精選
                         </span>
                       </div>
-                      <h3 className="font-bold text-[#2C302E] leading-snug text-[17px] mb-auto line-clamp-2">
+                      <h3 className="font-bold text-[#2C302E] leading-snug text-[15px] sm:text-[17px] mb-auto line-clamp-2">
                         {item.title}
                       </h3>
 
-                      <div className="flex items-end justify-between mt-3">
-                        <div className="flex items-center gap-1.5 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
+                      <div className="flex items-end justify-between mt-2 sm:mt-3">
+                        <div className="flex items-center gap-1 sm:gap-1.5 bg-amber-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg border border-amber-100">
                           <Star
-                            size={14}
-                            className="text-amber-500"
+                            size={12}
+                            className="text-amber-500 sm:w-3.5 sm:h-3.5"
                             fill="currentColor"
                           />
-                          <span className="text-[13px] font-black text-amber-700">
+                          <span className="text-[12px] sm:text-[13px] font-black text-amber-700">
                             {item.rating}
                           </span>
                         </div>
                         <div className="flex flex-col items-end">
-                          <span className="text-[24px] font-black text-fuchsia-500 leading-none">
+                          <span className="text-[20px] sm:text-[24px] font-black text-fuchsia-500 leading-none">
                             ${item.price}
                           </span>
                         </div>

@@ -87,14 +87,14 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                     <h1 className="font-extrabold text-slate-900 text-xl sm:text-3xl tracking-tight leading-tight line-clamp-2">
                       {handbook.title}
                     </h1>
-                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2">
-                       <span className="text-slate-500 font-bold text-sm tracking-wide bg-slate-100 px-2 py-0.5 rounded-md">
+                    <div className="flex items-center overflow-x-auto scrollbar-hide snap-x gap-x-3 gap-y-1 mt-2">
+                       <span className="flex-shrink-0 snap-start text-slate-500 font-bold text-sm tracking-wide bg-slate-100 px-2 py-0.5 rounded-md">
                          {handbook.author}
                        </span>
-                       <span className="text-slate-500 font-medium text-xs tracking-wide flex items-center gap-1">
+                       <span className="flex-shrink-0 snap-start text-slate-500 font-medium text-xs tracking-wide flex items-center gap-1">
                          <Calendar size={14}/> {handbook.days} 天旅程
                        </span>
-                       <span className="text-slate-500 font-medium text-xs tracking-wide flex items-center gap-1">
+                       <span className="flex-shrink-0 snap-start text-slate-500 font-medium text-xs tracking-wide flex items-center gap-1">
                          <MapPin size={14}/> {handbook.nodes.length} 個行程點
                        </span>
                     </div>
@@ -108,9 +108,9 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                   <X size={18} />
                 </button>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 flex overflow-x-auto scrollbar-hide snap-x gap-2">
                 {handbook.tags.map(tag => (
-                   <span key={tag} className="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-1 rounded-md shadow-sm">
+                   <span key={tag} className="flex-shrink-0 snap-start text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-1 rounded-md shadow-sm">
                      #{tag}
                    </span>
                 ))}

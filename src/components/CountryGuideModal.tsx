@@ -37,7 +37,7 @@ function AreaTabs({ areas, active, onChange }: { areas: string[]; active: string
           <button
             key={area}
             onClick={() => onChange(area)}
-            className={`relative flex-shrink-0 text-[13px] font-bold px-5 py-2 rounded-full transition-all duration-300 snap-start ${
+            className={`relative flex-shrink-0 text-[13px] font-bold px-5 py-2 rounded-full transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] snap-start ${
               active === area
                 ? 'text-white shadow-md shadow-slate-900/20'
                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100 bg-slate-50/50 border border-slate-200/80 shadow-sm'
@@ -92,9 +92,9 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
 
         {/* Preview chips */}
         {previewItems.length > 0 && (
-          <div className="px-5 pb-4 flex flex-wrap gap-2">
+          <div className="px-5 pb-4 flex overflow-x-auto scrollbar-hide gap-2 snap-x">
             {previewItems.map((item) => (
-              <span key={item} className="text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-[10px] max-w-[180px] truncate transition-colors group-hover:bg-slate-100/50">
+              <span key={item} className="flex-shrink-0 snap-start text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-[10px] max-w-[180px] truncate transition-colors group-hover:bg-slate-100/50">
                 {item}
               </span>
             ))}
@@ -106,9 +106,9 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
 
         {/* Footer: tags + buttons */}
         <div className="flex items-center justify-between px-5 py-3.5 gap-3 bg-slate-50/50">
-          <div className="flex gap-2 flex-wrap min-w-0 flex-1">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide min-w-0 flex-1 snap-x">
             {place.tags.slice(0, 3).map((tag) => (
-              <span key={tag} className={`text-[11px] font-bold ${colors.text} bg-white px-2 py-0.5 rounded-md border ${colors.badge.split(' ').find(c => c.startsWith('border-'))} shadow-sm`}>#{tag}</span>
+              <span key={tag} className={`flex-shrink-0 snap-start text-[11px] font-bold ${colors.text} bg-white px-2 py-0.5 rounded-md border ${colors.badge.split(' ').find(c => c.startsWith('border-'))} shadow-sm`}>#{tag}</span>
             ))}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -124,7 +124,7 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
             )}
             <button
               onClick={() => setOpen((v) => !v)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm active:scale-95 whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] shadow-sm whitespace-nowrap ${
                 open
                   ? 'bg-slate-200/80 text-slate-800 hover:bg-slate-300'
                   : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-md'
@@ -187,9 +187,9 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
                 </div>
 
                 {/* Tags */}
-                <div className="flex flex-wrap gap-2 pt-4 mt-2 border-t border-slate-200/60">
+                <div className="flex overflow-x-auto scrollbar-hide snap-x gap-2 pt-4 mt-2 border-t border-slate-200/60">
                   {place.tags.map((tag) => (
-                    <span key={tag} className="text-[11px] font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-sm">
+                    <span key={tag} className="flex-shrink-0 snap-start text-[11px] font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-sm">
                       #{tag}
                     </span>
                   ))}
