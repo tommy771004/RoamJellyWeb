@@ -18,7 +18,7 @@ import { signAccessToken, type AuthUser, verifyAccessToken } from './src/server/
 import { hashPassword, verifyPassword } from './src/server/auth/password';
 import * as schema from './src/server/db/schema';
 
-import { scrapeTripFlights, scrapeTripRoundTrip } from './src/server/services/tripParser';
+import { scrapeTripFlights } from './src/server/services/tripParser';
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
 import { createSeoRouter } from './src/server/seo/router';
 
@@ -54,6 +54,18 @@ type SearchItem = {
   currency: string;
   emoji: string;
   affiliate_url: string;
+  tripType?: 'oneway' | 'roundtrip';
+  legType?: 'outbound' | 'return';
+  details?: {
+    airline?: string;
+    departure?: string;
+    arrival?: string;
+    duration?: string;
+    stops?: number;
+    depCode?: string;
+    arrCode?: string;
+    flightNumber?: string;
+  };
 };
 
 type SearchCacheEntry = {
@@ -602,6 +614,14 @@ async function fetchFromOtaProvider(from: string, to: string, date: string): Pro
   }
   
   return null;
+}
+
+function annotateRoundTripLeg(items: SearchItem[] | null, legType: 'outbound' | 'return'): SearchItem[] {
+  return (items ?? []).map((item) => ({
+    ...item,
+    tripType: 'roundtrip',
+    legType,
+  }));
 }
 
 async function appendSearchHistory(record: SearchHistoryRecord): Promise<void> {
@@ -1574,7 +1594,8 @@ async function startServer() {
       return;
     }
 
-    const cacheKey = `${from.toUpperCase()}_${to.toUpperCase()}_${date}_${tripType}_${returnDate}`;
+    const cacheVersion = tripType === 'roundtrip' ? 'rt-legs-v1' : 'default-v1';
+    const cacheKey = `${from.toUpperCase()}_${to.toUpperCase()}_${date}_${tripType}_${returnDate}_${cacheVersion}`;
     const cached = await getSearchCacheData(cacheKey);
     if (cached) {
       await appendSearchHistory({
@@ -1592,16 +1613,14 @@ async function startServer() {
     // Try OTA provider first; if no data, return empty array to keep it real
     let otaData: SearchItem[] | null = null;
     if (tripType === 'roundtrip' && returnDate) {
-      try {
-        otaData = await scrapeTripRoundTrip(from, to, date, returnDate);
-      } catch (err) {
-        console.error('scrapeTripRoundTrip threw, falling back to oneway:', err);
-      }
-      // scrapeTripRoundTrip catches its own errors and returns [] — check empty too
-      if (!otaData || otaData.length === 0) {
-        console.log('[search] roundtrip scraper returned empty, falling back to oneway');
-        otaData = await fetchFromOtaProvider(from, to, date);
-      }
+      const [outboundData, returnData] = await Promise.all([
+        fetchFromOtaProvider(from, to, date),
+        fetchFromOtaProvider(to, from, returnDate),
+      ]);
+      otaData = [
+        ...annotateRoundTripLeg(outboundData, 'outbound'),
+        ...annotateRoundTripLeg(returnData, 'return'),
+      ];
     } else {
       otaData = await fetchFromOtaProvider(from, to, date);
     }

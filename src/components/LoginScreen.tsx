@@ -198,49 +198,49 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
       <div className="pointer-events-none absolute right-[-8%] top-[8%] h-[26rem] w-[26rem] rounded-full bg-orange-200/35 blur-[90px]" />
       <div className="pointer-events-none absolute bottom-[-10%] left-[18%] h-[24rem] w-[24rem] rounded-full bg-slate-200/50 blur-[84px]" />
 
-      <div className={`relative z-10 mx-auto flex min-h-full w-full max-w-[1040px] flex-col justify-center px-3 pt-6 pb-8 sm:px-6 sm:py-10 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
+      <div className={`relative z-10 mx-auto flex min-h-full w-full max-w-[1040px] flex-col justify-center px-3 pt-5 pb-7 sm:px-6 sm:py-9 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
         {shouldShowGuestHero && (
-          <section className="mb-4 rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.80),rgba(255,255,255,0.62))] p-4 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-[18px] sm:p-6 lg:mb-0">
+          <section className="mb-4 rounded-[32px] border border-white/84 bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,250,251,0.70),rgba(241,248,255,0.68))] p-3.5 shadow-[0_18px_44px_rgba(15,23,42,0.09)] backdrop-blur-[18px] sm:p-5 lg:mb-0">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
-                  <HeroIcon size={22} strokeWidth={2.4} />
+                <div className="flex h-11 w-11 items-center justify-center rounded-[17px] bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)]">
+                  <HeroIcon size={20} strokeWidth={2.35} />
                 </div>
                 <div>
-                  <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">RoamJelly</div>
-                  <div className="mt-1 text-[18px] font-black tracking-tight text-slate-900">{contextLabel || '快速體驗'}</div>
+                  <div className="text-[10px] font-black uppercase tracking-[0.26em] text-slate-500">RoamJelly</div>
+                  <div className="mt-1 text-[17px] font-black tracking-[-0.03em] text-slate-900">{contextLabel || '快速體驗'}</div>
                 </div>
               </div>
-              <div className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-sky-700">
+              <div className="rounded-full border border-sky-200/80 bg-sky-50/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-sky-700">
                 Guest First
               </div>
             </div>
 
-            <div className="relative mt-4 sm:mt-5 overflow-hidden rounded-[28px] border border-slate-900/5 bg-[linear-gradient(135deg,#082f49_0%,#0f172a_54%,#7c2d12_100%)] p-4 sm:p-5 text-white shadow-[0_18px_44px_rgba(15,23,42,0.20)]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(251,146,60,0.16),transparent_40%)]" />
+            <div className="relative mt-4 overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,#0b2940_0%,#101827_54%,#5b2c24_100%)] p-4 sm:p-4.5 text-white shadow-[0_15px_34px_rgba(15,23,42,0.18)]">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.16),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(251,191,36,0.12),transparent_38%)]" />
               <div className="relative">
-                <div className="text-[11px] font-black uppercase tracking-[0.24em] text-sky-200">
+                <div className="text-[10px] font-black uppercase tracking-[0.26em] text-sky-200/90">
                   {previewContent.eyebrow}
                 </div>
-                <h1 className="mt-2 text-[24px] sm:text-[28px] leading-tight font-black tracking-tight text-balance">
+                <h1 className="mt-2 text-[23px] sm:text-[27px] leading-[1.08] font-black tracking-[-0.04em] text-balance">
                   {title || '先用訪客身分開始，喜歡再註冊也不遲'}
                 </h1>
-                <p className="mt-2 sm:mt-3 max-w-[48ch] text-[13px] font-medium leading-relaxed text-slate-300">
+                <p className="mt-2.5 max-w-[44ch] text-[13px] font-medium leading-[1.68] text-slate-300">
                   {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
                 </p>
 
-                <div className="mt-5 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04]">
+                <div className="mt-4 overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.045]">
                   <button
                     type="button"
                     onClick={() => setIsPreviewItemsExpanded(v => !v)}
-                    className="flex w-full items-center justify-between gap-2 border-b border-white/8 px-4 py-3 text-left"
+                    className="flex w-full items-center justify-between gap-2 border-b border-white/8 px-3.5 py-2.5 text-left"
                     aria-expanded={isPreviewItemsExpanded}
                   >
                     <div className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full bg-sky-300" />
                       <span className="h-2.5 w-2.5 rounded-full bg-orange-300" />
                       <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
-                      <span className="ml-1 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">{previewContent.panelLabel}</span>
+                      <span className="ml-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">{previewContent.panelLabel}</span>
                     </div>
                     <ChevronDown
                       size={15}
@@ -248,13 +248,13 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                       className={`text-slate-400 transition-transform duration-200 ${isPreviewItemsExpanded ? 'rotate-180' : ''}`}
                     />
                   </button>
-                  <div className={`space-y-3 ${isPreviewItemsExpanded ? 'p-4' : 'hidden'}`}>
+                  <div className={`space-y-2.5 ${isPreviewItemsExpanded ? 'p-3.5' : 'hidden'}`}>
                     {previewContent.items.map((item) => (
-                      <div key={`${item.label}-${item.title}`} className="rounded-[22px] border border-white/10 bg-white/[0.05] px-4 py-3.5">
+                      <div key={`${item.label}-${item.title}`} className="rounded-[20px] border border-white/10 bg-white/[0.05] px-3.5 py-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">{item.label}</div>
-                            <div className="mt-1 text-[15px] font-black tracking-tight text-white">{item.title}</div>
+                            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">{item.label}</div>
+                            <div className="mt-1 text-[14px] font-black tracking-[-0.03em] text-white">{item.title}</div>
                             <button
                               type="button"
                               onClick={() =>
@@ -267,13 +267,13 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                                   icon: HeroIcon,
                                 })
                               }
-                              className={`mt-3 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[11px] font-black text-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:bg-white/[0.14]`}
+                              className={`mt-2.5 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:bg-white/[0.14]`}
                             >
                               查看說明
                               <ArrowRight size={12} strokeWidth={2.6} />
                             </button>
                           </div>
-                          <div className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${item.toneClass}`}>
+                          <div className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${item.toneClass}`}>
                             {item.value}
                           </div>
                         </div>
@@ -283,26 +283,26 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 </div>
 
                 {guestFirst && (
-                  <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
                     <button
                       onClick={() => void handleGuestLogin()}
                       disabled={loading}
-                      className={`flex w-full items-center justify-center gap-2 rounded-[22px] border-none bg-white px-5 py-4 text-slate-900 shadow-[0_8px_20px_rgba(255,255,255,0.12)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,255,255,0.16)] disabled:opacity-70 sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.94]`}
+                      className={`flex w-full items-center justify-center gap-2 rounded-[20px] border-none bg-white px-5 py-3.5 text-slate-900 shadow-[0_8px_20px_rgba(255,255,255,0.10)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,255,255,0.14)] disabled:opacity-70 sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.94]`}
                     >
-                      <span className="text-[14px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
+                      <span className="text-[13px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
                       <ArrowRight size={16} strokeWidth={2.5} />
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsAuthCardExpanded(true)}
-                      className={`flex items-center justify-center rounded-[22px] border border-white/12 bg-white/[0.06] px-5 py-4 text-white hover:-translate-y-0.5 hover:bg-white/[0.12] sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.94]`}
+                      className={`flex items-center justify-center rounded-[20px] border border-white/12 bg-white/[0.06] px-5 py-3.5 text-white hover:-translate-y-0.5 hover:bg-white/[0.12] sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.94]`}
                     >
-                      <span className="text-[13px] font-black tracking-[0.04em]">改用帳號同步</span>
+                      <span className="text-[12px] font-black tracking-[0.06em]">改用帳號同步</span>
                     </button>
                   </div>
                 )}
 
-                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-slate-400">
+                <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold text-slate-400">
                   <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">不用密碼就能先試</span>
                   <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">喜歡再綁正式帳號</span>
                   <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">同步與保存留到下一步</span>
@@ -313,22 +313,22 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
         )}
 
         <div
-          className={`rounded-[32px] border border-white/60 bg-white/70 p-6 shadow-[0_16px_40px_rgba(15,23,42,0.10)] backdrop-blur-[18px] flex flex-col relative overflow-hidden ${shouldShowGuestHero ? '' : 'mt-0'} ${pressableSurfaceClass}`}
+          className={`rounded-[30px] border border-white/68 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,250,251,0.72),rgba(241,248,255,0.70))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.10)] backdrop-blur-[18px] flex flex-col relative overflow-hidden ${shouldShowGuestHero ? '' : 'mt-0'} ${pressableSurfaceClass}`}
         >
           <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[linear-gradient(180deg,rgba(255,255,255,0.5),transparent)]" />
           <div className="relative z-10 mb-5 flex items-start justify-between gap-4">
             <div>
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
+              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
                 {shouldShowGuestHero ? '同步帳號' : '登入 / 註冊'}
               </div>
-              <div className="mt-2 text-[26px] font-black tracking-tight text-slate-900">
+              <div className="mt-2 text-[24px] font-black tracking-[-0.04em] text-slate-900">
                 {shouldShowGuestHero ? '保存進度與跨裝置同步' : '登入果凍漫遊'}
               </div>
-              <div className="mt-2 text-[13px] font-semibold leading-relaxed text-slate-500">
+              <div className="mt-2 text-[13px] font-semibold leading-[1.62] text-slate-500">
                 {shouldShowGuestHero ? '需要保存、同步或共編時再登入即可，前面的體驗不用重跑。' : '建立帳號後即可保存旅程、同步裝置與多人共編。'}
               </div>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-slate-200 bg-slate-50 text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[17px] border border-slate-200/90 bg-slate-50/95 text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.06)]">
               <LockKeyhole size={20} strokeWidth={2.3} />
             </div>
           </div>
@@ -337,21 +337,21 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
             <button
               type="button"
               onClick={() => setIsAuthCardExpanded((current) => !current)}
-              className={`mb-1 flex items-center justify-between rounded-[24px] border border-white/70 bg-white/75 px-4 py-4 text-left hover:bg-white/90 ${subtlePressableClass}`}
+              className={`mb-1 flex items-center justify-between rounded-[22px] border border-white/74 bg-white/78 px-4 py-3.5 text-left hover:bg-white/90 ${subtlePressableClass}`}
             >
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                   已有帳號或想同步進度
                 </div>
-                <div className="mt-1 text-[15px] font-black tracking-tight text-slate-800">
+                <div className="mt-1 text-[14px] font-black tracking-[-0.03em] text-slate-800">
                   {isAuthCardExpanded ? '收起登入 / 註冊' : '展開登入 / 註冊'}
                 </div>
-                <div className="mt-1 text-[12px] font-semibold text-slate-500">
+                <div className="mt-1 text-[12px] font-semibold leading-[1.55] text-slate-500">
                   先逛流程也可以，需要保存再展開登入。
                 </div>
               </div>
               <span
-                className="ml-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-white transition-transform shrink-0"
+                className="ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white transition-transform shrink-0 shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
                 style={{ transform: isAuthCardExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
               >
                 <ArrowRight size={16} strokeWidth={2.8} />
@@ -367,8 +367,8 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
 
               {/* Mode tabs */}
               <div
-                className="flex flex-row mb-8 rounded-full p-1.5 shadow-inner"
-                style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
+                className="mb-6 flex flex-row rounded-full border border-white/70 p-1 shadow-[inset_0_1px_2px_rgba(255,255,255,0.78)]"
+                style={{ backgroundColor: 'rgba(255,255,255,0.54)' }}
               >
                 {(['login', 'register'] as Mode[]).map((m) => (
                   <button
@@ -376,10 +376,10 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     onClick={() => switchMode(m)}
                     style={{
                       flex: 1,
-                      paddingTop: 10, paddingBottom: 10,
+                      paddingTop: 9, paddingBottom: 9,
                       borderRadius: 9999,
                       backgroundColor: mode === m ? '#ffffff' : 'transparent',
-                      boxShadow: mode === m ? '0 4px 12px rgba(0, 0, 0, 0.05), border 1px solid rgba(255,255,255,0.8)' : 'none',
+                      boxShadow: mode === m ? '0 5px 12px rgba(15, 23, 42, 0.06)' : 'none',
                       alignItems: 'center',
                       outline: 'none',
                       border: 'none',
@@ -392,8 +392,8 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                       style={{
                         fontWeight: mode === m ? '800' : '600',
                         color: mode === m ? '#0369a1' : '#94a3b8',
-                        fontSize: 14,
-                        letterSpacing: '0.05em'
+                        fontSize: 13,
+                        letterSpacing: '0.08em'
                       }}
                     >
                       {m === 'login' ? '登入' : '註冊'}
@@ -404,17 +404,17 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
 
               {/* Username */}
               <div className="mb-4 flex flex-col">
-                <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">使用者名稱</span>
+                <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">使用者名稱</span>
                 <input
                   style={{
                     backgroundColor: 'rgba(255,255,255,0.8)',
                     borderWidth: 1,
                     borderColor: 'rgba(255,255,255,0.9)',
                     borderRadius: 20,
-                    paddingInline: 20,
-                    paddingBlock: 14,
+                    paddingInline: 18,
+                    paddingBlock: 13,
                     color: '#1e293b',
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: '700'
                   }}
                   className="outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/40 transition-all shadow-sm"
@@ -431,8 +431,8 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               {mode === 'register' && (
                 <div className="flex flex-col">
                   <div className="mb-4 flex flex-col">
-                    <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">選擇旅伴頭像</span>
-                    <div className="flex gap-2 flex-wrap p-2 rounded-[20px] bg-white/50 border border-white/60">
+                    <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">選擇旅伴頭像</span>
+                    <div className="flex flex-wrap gap-2 rounded-[18px] border border-white/60 bg-white/50 p-2">
                       {['🐶', '🐱', '🦊', '🐰', '🐼', '🐨', '🐻', '🐯'].map(emoji => (
                         <button
                           key={emoji}
@@ -446,17 +446,17 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     </div>
                   </div>
                   <div className="mb-4 flex flex-col">
-                    <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">暱稱（選填）</span>
+                    <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">暱稱（選填）</span>
                     <input
                       style={{
                         backgroundColor: 'rgba(255,255,255,0.8)',
                         borderWidth: 1,
                         borderColor: 'rgba(255,255,255,0.9)',
                         borderRadius: 20,
-                        paddingInline: 20,
-                        paddingBlock: 14,
+                        paddingInline: 18,
+                        paddingBlock: 13,
                         color: '#1e293b',
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: '700'
                       }}
                       className="outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/40 transition-all shadow-sm"
@@ -472,7 +472,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
 
               {/* Password */}
               <div className="mb-4 flex flex-col">
-                <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">密碼</span>
+                <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">密碼</span>
                 <input
                   type="password"
                   style={{
@@ -480,10 +480,10 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     borderWidth: 1,
                     borderColor: 'rgba(255,255,255,0.9)',
                     borderRadius: 20,
-                    paddingInline: 20,
-                    paddingBlock: 14,
+                    paddingInline: 18,
+                    paddingBlock: 13,
                     color: '#1e293b',
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: '700'
                   }}
                   className="outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/40 transition-all shadow-sm"
@@ -497,7 +497,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               {/* Confirm password – register only */}
               {mode === 'register' && (
                 <div className="mb-4 flex flex-col">
-                  <span className="text-[13px] font-black tracking-widest text-slate-500 mb-1.5 ml-1 uppercase">確認密碼</span>
+                  <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">確認密碼</span>
                   <input
                     type="password"
                     style={{
@@ -505,10 +505,10 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                       borderWidth: 1,
                       borderColor: 'rgba(255,255,255,0.9)',
                       borderRadius: 20,
-                      paddingInline: 20,
-                      paddingBlock: 14,
+                      paddingInline: 18,
+                      paddingBlock: 13,
                       color: '#1e293b',
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: '700'
                     }}
                     className="outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/40 transition-all shadow-sm"
@@ -523,7 +523,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               {/* Error message */}
               {error ? (
                 <div
-                  className="mb-4 px-4 py-3 rounded-xl flex items-center bg-rose-50/80 border border-rose-200"
+                  className="mb-4 flex items-center rounded-[18px] border border-rose-200 bg-rose-50/80 px-4 py-3"
                 >
                   <span className="text-rose-600 text-[13px] font-bold">{error}</span>
                 </div>
@@ -535,16 +535,16 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 disabled={loading}
                 className={`flex justify-center border-none appearance-none cursor-pointer transition-all active:scale-95 shadow-[0_12px_24px_rgba(14,165,233,0.24)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? 'bg-sky-300 shadow-none' : 'bg-gradient-to-r from-sky-500 to-orange-400 hover:opacity-90'}`}
                 style={{
-                  paddingTop: 16, paddingBottom: 16,
-                  borderRadius: 24,
+                  paddingTop: 15, paddingBottom: 15,
+                  borderRadius: 22,
                   alignItems: 'center',
-                  marginTop: 8
+                  marginTop: 6
                 }}
               >
                 {loading ? (
                   <span style={{ color: 'white', fontWeight: '800' }}>處理中…</span>
                 ) : (
-                  <span style={{ color: 'white', fontWeight: '900', fontSize: 16, letterSpacing: '0.05em' }}>
+                  <span style={{ color: 'white', fontWeight: '900', fontSize: 15, letterSpacing: '0.06em' }}>
                     {mode === 'login' ? '登入' : '建立帳號'}
                   </span>
                 )}
@@ -554,15 +554,15 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 <button
                   onClick={() => void handleGuestLogin()}
                   disabled={loading}
-                  className="flex justify-center border appearance-none cursor-pointer transition-all active:scale-95 w-full bg-white/70 border-slate-200 hover:bg-sky-50 mt-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45"
+                  className="mt-3 flex w-full justify-center border appearance-none cursor-pointer transition-all active:scale-95 bg-white/70 border-slate-200 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45"
                   style={{
-                    paddingTop: 14,
-                    paddingBottom: 14,
-                    borderRadius: 24,
+                    paddingTop: 13,
+                    paddingBottom: 13,
+                    borderRadius: 22,
                     alignItems: 'center',
                   }}
                 >
-                  <span style={{ color: '#475569', fontWeight: '900', fontSize: 14, letterSpacing: '0.04em' }}>
+                  <span style={{ color: '#475569', fontWeight: '900', fontSize: 13, letterSpacing: '0.05em' }}>
                     {resolvedGuestCtaLabel}
                   </span>
                 </button>
@@ -573,9 +573,9 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   onClick={onCancel}
                   disabled={loading}
                   style={{
-                    marginTop: 12,
-                    paddingTop: 14, paddingBottom: 14,
-                    borderRadius: 24,
+                    marginTop: 10,
+                    paddingTop: 13, paddingBottom: 13,
+                    borderRadius: 22,
                     alignItems: 'center',
                     backgroundColor: 'transparent',
                   }}

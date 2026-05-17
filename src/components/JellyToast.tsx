@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
@@ -15,7 +15,7 @@ export interface ToastProps {
 
 export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], removeToast: (id: string) => void }) {
   const content = (
-    <div aria-live="polite" aria-atomic="false" className="fixed left-0 right-0 w-full z-sheet flex flex-col items-center gap-3 pointer-events-none px-4" style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}>
+    <div aria-live="polite" aria-atomic="false" className="pointer-events-none fixed left-0 right-0 z-sheet flex w-full flex-col items-center gap-3 px-3.5 sm:px-4" style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}>
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
@@ -25,23 +25,23 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
             transition={{ type: 'spring', bounce: 0.6, duration: 0.7 }}
-            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-[28px] shadow-[0_16px_40px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.2)] border backdrop-blur-2xl shrink-0 max-w-sm w-full mx-auto ${
-              toast.type === 'success' ? 'bg-emerald-500/85 border-emerald-400/40 text-white shadow-emerald-500/25' :
-              toast.type === 'warning' ? 'bg-orange-500/85 border-orange-400/40 text-white shadow-orange-500/25' :
-              'bg-slate-800/85 border-slate-600/50 text-white shadow-slate-900/30'
+            className={`pointer-events-auto mx-auto flex w-full max-w-sm shrink-0 items-center gap-3 rounded-[24px] border px-3.5 py-3 shadow-[0_14px_28px_rgba(15,23,42,0.14),inset_0_1px_1px_rgba(255,255,255,0.16)] backdrop-blur-2xl ${
+              toast.type === 'success' ? 'border-emerald-300/36 bg-[linear-gradient(180deg,rgba(16,185,129,0.92),rgba(5,150,105,0.88))] text-white' :
+              toast.type === 'warning' ? 'border-orange-300/36 bg-[linear-gradient(180deg,rgba(249,115,22,0.92),rgba(234,88,12,0.88))] text-white' :
+              'border-slate-500/40 bg-[linear-gradient(180deg,rgba(30,41,59,0.92),rgba(15,23,42,0.88))] text-white'
             }`}
           >
             {toast.type === 'success' && <CheckCircle2 size={20} className="shrink-0 text-emerald-100" />}
             {toast.type === 'warning' && <AlertCircle size={20} className="shrink-0 text-amber-100" />}
             {toast.type === 'info' && <Info size={20} className="shrink-0 text-slate-400" />}
-            <span className="font-bold text-[14px] tracking-wide flex-1">{toast.message}</span>
+            <span className="fluid-copy flex-1 font-bold tracking-[0.02em]">{toast.message}</span>
             {toast.actionLabel && toast.onAction && (
               <button
                 onClick={() => {
                   toast.onAction?.();
                   removeToast(toast.id);
                 }}
-                className="px-3 py-1 rounded-full border border-white/20 bg-black/10 text-[12px] font-black tracking-widest uppercase hover:bg-black/20 transition-colors shrink-0"
+                className="fluid-kicker shrink-0 rounded-full border border-white/20 bg-black/10 px-3 py-1 font-black uppercase transition-colors hover:bg-black/20"
               >
                 {toast.actionLabel}
               </button>

@@ -49,32 +49,32 @@ export const LocationPickerPopup = ({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.95 }}
           transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-          className="relative z-popup-above flex h-82dvh w-full flex-col overflow-hidden rounded-t-[40px] bg-white shadow-[0_-12px_40px_rgba(217,70,239,0.15)] border border-white md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-[40px] md:shadow-[0_32px_80px_rgba(217,70,239,0.25)]"
+          className="relative z-popup-above flex h-82dvh w-full flex-col overflow-hidden rounded-t-[30px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-[34px] md:shadow-[0_28px_60px_rgba(15,23,42,0.16)]"
           style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : {}}
         >
-          <div className="sticky top-0 z-20 bg-white/95 px-5 pb-4 pt-4 backdrop-blur-xl md:px-7 md:pb-5 md:pt-7">
-            <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-slate-200 md:hidden" />
-            <div className="flex flex-row justify-between items-center mb-5 pl-1">
+          <div className="sticky top-0 z-20 bg-white/90 px-4 pb-3.5 pt-4 backdrop-blur-xl md:px-6 md:pb-4 md:pt-6">
+            <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200 md:hidden" />
+            <div className="mb-4 flex flex-row items-center justify-between pl-1">
               <div className="flex flex-col">
-                <span className="font-black tracking-tight text-slate-800 text-xl">{title}</span>
-                <span className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Select Destination</span>
+                <span className="fluid-title font-black text-slate-800">{title}</span>
+                <span className="fluid-kicker mt-0.5 font-black uppercase text-slate-500">Select Destination</span>
               </div>
               <button 
                 onClick={onClose}
-                className="w-10 h-10 flex items-center justify-center bg-slate-100/80 hover:bg-slate-200 rounded-full transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92]"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100/80 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:bg-slate-200"
               >
                 <span className="text-xl text-slate-500 font-bold">✕</span>
               </button>
             </div>
 
             {/* Region Tabs */}
-            <div className="flex flex-row gap-x-2 mb-4 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+            <div className="-mx-1 mb-4 flex flex-row gap-x-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
               <button
                 onClick={() => setSelectedRegion('全部地區')}
-                className={`px-4 py-2.5 rounded-[16px] text-sm font-black transition-all whitespace-nowrap active:scale-95 ${
+                className={`fluid-caption rounded-[16px] px-4 py-2 font-black transition-all whitespace-nowrap active:scale-95 ${
                   selectedRegion === '全部地區' 
-                    ? 'bg-gradient-to-br from-purple-500 to-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' 
-                    : 'bg-white/80 text-slate-500 hover:bg-white border border-slate-100'
+                    ? 'bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_10px_22px_rgba(14,165,233,0.20)]' 
+                    : 'border border-white/84 bg-white/84 text-slate-500 hover:bg-white'
                 }`}
               >
                 全部
@@ -83,10 +83,10 @@ export const LocationPickerPopup = ({
                 <button
                   key={region}
                   onClick={() => setSelectedRegion(region)}
-                  className={`px-4 py-2.5 rounded-[16px] text-sm font-black transition-all whitespace-nowrap active:scale-95 ${
+                  className={`fluid-caption rounded-[16px] px-4 py-2 font-black transition-all whitespace-nowrap active:scale-95 ${
                     selectedRegion === region 
-                      ? 'bg-gradient-to-br from-purple-500 to-fuchsia-500 text-white shadow-md shadow-fuchsia-500/20' 
-                      : 'bg-white/80 text-slate-500 hover:bg-white border border-slate-100'
+                      ? 'bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_10px_22px_rgba(14,165,233,0.20)]' 
+                      : 'border border-white/84 bg-white/84 text-slate-500 hover:bg-white'
                   }`}
                 >
                   {region}
@@ -100,7 +100,7 @@ export const LocationPickerPopup = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="搜尋國家、城市或景點別名"
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50/80 py-3.5 pl-11 pr-4 text-[14px] font-bold text-slate-700 outline-none transition-[border-color,background-color,box-shadow] focus:border-fuchsia-200 focus:bg-white focus:ring-4 focus:ring-fuchsia-100"
+                className="fluid-copy w-full rounded-[20px] border border-white/84 bg-white/84 py-3.5 pl-11 pr-4 font-bold text-slate-700 outline-none shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-[border-color,background-color,box-shadow] focus:border-fuchsia-200 focus:bg-white focus:ring-4 focus:ring-fuchsia-100"
                 autoCapitalize="none"
                 autoCorrect="off"
               />
@@ -108,27 +108,27 @@ export const LocationPickerPopup = ({
           </div>
 
             {/* Cities Grid */}
-            <div className="grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-4 sm:grid-cols-3 md:px-7 md:pb-5 md:pt-0">
+            <div className="grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1.1rem)] pt-3 sm:grid-cols-3 md:px-6 md:pb-5 md:pt-0">
               {filteredDestinations.length > 0 ? (
                 filteredDestinations.map((dest) => (
                   <button
                     key={dest.id}
                     onClick={() => onSelect(dest)}
-                    className="flex w-full min-w-0 flex-col items-start p-4 rounded-[24px] bg-white/60 border-2 border-slate-100/60 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 hover:shadow-[0_8px_20px_rgba(217,70,239,0.12)] hover:-translate-y-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group active:scale-[0.94] shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+                    className="group flex w-full min-w-0 flex-col items-start rounded-[22px] border border-white/86 bg-white/80 p-3.5 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 hover:shadow-[0_10px_22px_rgba(217,70,239,0.10)] active:scale-[0.94]"
                   >
-                    <span className="text-[11px] font-black tracking-widest uppercase text-slate-500 group-hover:text-fuchsia-400 mb-0.5">{dest.country}</span>
-                    <span className="w-full break-words text-base font-extrabold text-slate-700 group-hover:text-fuchsia-700">{dest.place}</span>
+                    <span className="fluid-kicker mb-0.5 font-black uppercase text-slate-500 group-hover:text-fuchsia-400">{dest.country}</span>
+                    <span className="w-full break-words text-[15px] font-extrabold tracking-[-0.03em] text-slate-700 group-hover:text-fuchsia-700 sm:text-base">{dest.place}</span>
                   </button>
                 ))
               ) : (
                 <div className="col-span-full py-10 flex flex-col items-center">
                   <span className="text-[40px] mb-3 grayscale opacity-30">🏔️</span>
-                  <span className="text-sm text-slate-500 font-bold">找不到符合條件的地點</span>
+                  <span className="fluid-copy font-bold text-slate-500">找不到符合條件的地點</span>
                 </div>
               )}
             </div>
-          <div className="bg-slate-50/50 p-4 border-t border-slate-100/50 flex justify-center shrink-0">
-            <span className="text-[11px] font-black tracking-[0.2em] uppercase text-slate-500/80">
+          <div className="flex shrink-0 justify-center border-t border-white/78 bg-slate-50/46 p-4">
+            <span className="fluid-kicker font-black uppercase text-slate-500/80">
               {TRAVEL_GUIDE_SOURCE_REPO}
             </span>
           </div>

@@ -232,6 +232,33 @@
   color: transparent;
 }
 
+@utility fluid-kicker {
+  font-size: clamp(0.625rem, 0.595rem + 0.18vw, 0.72rem);
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+}
+
+@utility fluid-caption {
+  font-size: clamp(0.75rem, 0.72rem + 0.2vw, 0.86rem);
+  line-height: 1.5;
+}
+
+@utility fluid-copy {
+  font-size: clamp(0.875rem, 0.84rem + 0.34vw, 1rem);
+  line-height: 1.68;
+}
+
+@utility fluid-body {
+  font-size: clamp(0.8125rem, 0.785rem + 0.28vw, 0.95rem);
+  line-height: 1.62;
+}
+
+@utility fluid-title {
+  font-size: clamp(1.125rem, 1rem + 0.74vw, 1.55rem);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+
 @utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

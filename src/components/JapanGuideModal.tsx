@@ -82,11 +82,11 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
-            className="relative w-full sm:max-w-2xl max-h-[90vh] sm:max-h-[85vh] bg-[#0d0d14] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-white/10"
+            className="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,18,30,0.98),rgba(17,20,36,0.96),rgba(12,14,24,0.96))] shadow-[0_28px_64px_rgba(0,0,0,0.32)] sm:max-h-[85vh] sm:max-w-2xl sm:rounded-[30px]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="relative flex-shrink-0 px-6 pt-6 pb-4 border-b border-white/8">
+            <div className="relative flex-shrink-0 border-b border-white/8 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
               {/* Sakura gradient bar */}
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-rose-500/0 via-rose-400 to-rose-500/0" />
 
@@ -94,10 +94,10 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">🇯🇵</span>
                   <div>
-                    <h2 className="text-white font-black text-lg leading-tight tracking-tight">
+                    <h2 className="fluid-title font-black text-white">
                       日本完整攻略
                     </h2>
-                    <p className="text-white/60 text-xs font-medium mt-0.5 flex items-center gap-1">
+                    <p className="fluid-kicker mt-0.5 flex items-center gap-1 font-medium uppercase text-white/60">
                       <MapPin size={10} />
                       travel-guide-tw · 34 個地區指南
                     </p>
@@ -113,10 +113,10 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
             </div>
 
             {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-6 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 space-y-5 scrollbar-hide sm:px-6">
               {/* Info section */}
               <section>
-                <p className="text-white/50 text-[11px] font-black uppercase tracking-[0.15em] mb-3">
+                <p className="fluid-kicker mb-3 font-black uppercase text-white/50">
                   基本資訊
                 </p>
                 <div className="grid grid-cols-3 gap-2.5">
@@ -129,11 +129,11 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.04 }}
-                      className="group flex flex-col items-center gap-1.5 py-3.5 px-2 rounded-2xl bg-white/5 border border-white/8 hover:bg-rose-500/10 hover:border-rose-400/30 transition-all cursor-pointer"
+                      className="group flex cursor-pointer flex-col items-center gap-1.5 rounded-[20px] border border-white/10 bg-white/[0.06] px-2 py-3 hover:border-rose-400/30 hover:bg-rose-500/10 transition-all"
                     >
                       <span className="text-xl">{card.emoji}</span>
-                      <span className="text-white font-bold text-xs text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.name}</span>
-                      <span className="text-white/35 text-[11px] text-center whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.desc}</span>
+                      <span className="fluid-caption w-full flex-shrink-0 overflow-hidden text-ellipsis whitespace-nowrap px-1 text-center font-black text-white">{card.name}</span>
+                      <span className="fluid-kicker w-full flex-shrink-0 overflow-hidden text-ellipsis whitespace-nowrap px-1 text-center text-white/35">{card.desc}</span>
                     </motion.a>
                   ))}
                 </div>
@@ -141,7 +141,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
 
               {/* Regions grid */}
               <section>
-                <p className="text-white/50 text-[11px] font-black uppercase tracking-[0.15em] mb-3">
+                <p className="fluid-kicker mb-3 font-black uppercase text-white/50">
                   各都道府縣
                 </p>
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
@@ -154,11 +154,11 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.12 + i * 0.025, type: 'spring', stiffness: 400, damping: 25 }}
-                      className="group flex flex-col items-center gap-1 py-3 px-1.5 rounded-2xl bg-white/4 border border-white/6 hover:bg-white/10 hover:border-white/20 active:scale-95 transition-all cursor-pointer"
+                      className="group flex cursor-pointer flex-col items-center gap-1 rounded-[18px] border border-white/8 bg-white/[0.05] px-1.5 py-3 transition-all hover:border-white/20 hover:bg-white/10 active:scale-95"
                     >
                       <span className="text-lg leading-none">{card.emoji}</span>
-                      <span className="text-white/90 font-bold text-[11px] text-center leading-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.name}</span>
-                      <span className="text-white/50 text-[9px] text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0">{card.desc}</span>
+                      <span className="fluid-kicker mt-0.5 w-full flex-shrink-0 overflow-hidden text-ellipsis whitespace-nowrap px-1 text-center font-black text-white/90">{card.name}</span>
+                      <span className="text-[8.5px] leading-tight text-center whitespace-nowrap overflow-hidden text-ellipsis px-1 w-full flex-shrink-0 text-white/50">{card.desc}</span>
                     </motion.a>
                   ))}
                 </div>
@@ -166,15 +166,15 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
             </div>
 
             {/* Footer */}
-            <div className="flex-shrink-0 px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] sm:py-4 border-t border-white/8 flex items-center justify-between">
-              <span className="text-white/25 text-[11px] font-medium">
+            <div className="flex flex-shrink-0 items-center justify-between border-t border-white/8 px-5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] pt-4 sm:px-6 sm:py-4">
+              <span className="fluid-kicker font-medium uppercase text-white/25">
                 內容來源：travel-guide-tw.github.io
               </span>
               <a
                 href={BASE}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-rose-400 hover:text-rose-300 text-xs font-bold transition-colors"
+                className="fluid-kicker flex items-center gap-1.5 font-black uppercase text-rose-400 transition-colors hover:text-rose-300"
               >
                 <ExternalLink size={11} />
                 查看全站

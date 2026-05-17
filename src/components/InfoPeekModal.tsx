@@ -107,7 +107,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
             animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
             exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }}
             transition={prefersReducedMotion ? { duration: 0.14 } : { duration: 0.22, ease: "easeOut" }}
-            className="relative z-10 w-full max-w-[560px] overflow-hidden rounded-[30px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(240,249,255,0.92))] p-5 shadow-[0_24px_60px_rgba(15,23,42,0.18)] sm:p-6"
+            className="relative z-10 w-full max-w-[560px] overflow-hidden rounded-[30px] border border-white/92 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(240,249,255,0.92))] p-4 shadow-[0_20px_46px_rgba(15,23,42,0.14)] sm:p-5"
             onClick={(event) => event.stopPropagation()}
           >
             <div className={`absolute -right-10 -top-10 size-28 rounded-full blur-3xl ${tone.glow}`} />
@@ -120,10 +120,10 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
                   </div>
                 ) : null}
                 <div className="min-w-0">
-                  <p className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${tone.badge}`}>
+                  <p className={`fluid-kicker inline-flex rounded-full border px-3 py-1 font-black uppercase ${tone.badge}`}>
                     {content.eyebrow}
                   </p>
-                  <h2 id="info-peek-title" className="mt-3 text-balance text-[24px] font-black leading-tight text-slate-900 sm:text-[28px]">
+                  <h2 id="info-peek-title" className="fluid-title mt-3 text-balance font-black text-slate-900 sm:text-[28px]">
                     {content.title}
                   </h2>
                 </div>
@@ -139,20 +139,20 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
               </button>
             </div>
 
-            <p className="relative mt-4 text-pretty text-[14px] leading-7 text-slate-600 sm:text-[15px]">
+            <p className="fluid-copy relative mt-4 text-pretty text-slate-600">
               {content.description}
             </p>
 
-            <div className="relative mt-5 grid gap-3">
+            <div className="relative mt-5 grid gap-2.5">
               {content.details.map((detail, index) => (
                 <div
                   key={`${content.title}-${index}`}
-                  className="flex items-start gap-3 rounded-[22px] border border-white/90 bg-white/78 px-4 py-3 shadow-sm"
+                  className="flex items-start gap-3 rounded-[20px] border border-white/90 bg-white/80 px-3.5 py-3 shadow-[0_8px_18px_rgba(15,23,42,0.05)]"
                 >
-                  <span className={`mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-black ${tone.chip}`}>
+                  <span className={`fluid-kicker mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full border font-black ${tone.chip}`}>
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <p className="text-pretty text-[13px] font-medium leading-6 text-slate-600 sm:text-[14px]">
+                  <p className="fluid-body text-pretty font-medium text-slate-600">
                     {detail}
                   </p>
                 </div>
