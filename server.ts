@@ -2470,7 +2470,9 @@ async function startServer() {
     await repo.addLedgerExpense(trip_id, {
       payer_id: payer,
       amount: safeAmount,
+      currency,
       description: title,
+      members,
     });
 
     const settlementRows = await repo.getAggregatedSettlements(trip_id);

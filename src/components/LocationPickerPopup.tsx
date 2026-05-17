@@ -45,10 +45,11 @@ export const LocationPickerPopup = ({
           onClick={onClose}
         />
         <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.98 }}
+          initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 30, scale: 0.98 }}
-          className="relative z-popup-above flex h-82dvh w-full flex-col overflow-hidden rounded-t-[32px] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.25)] border border-white md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-3xl md:shadow-[0_32px_80px_rgba(0,0,0,0.35)]"
+          exit={{ opacity: 0, y: 30, scale: 0.95 }}
+          transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
+          className="relative z-popup-above flex h-82dvh w-full flex-col overflow-hidden rounded-t-[40px] bg-white shadow-[0_-12px_40px_rgba(217,70,239,0.15)] border border-white md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-[40px] md:shadow-[0_32px_80px_rgba(217,70,239,0.25)]"
           style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : {}}
         >
           <div className="sticky top-0 z-20 bg-white/95 px-5 pb-4 pt-4 backdrop-blur-xl md:px-7 md:pb-5 md:pt-7">
@@ -60,9 +61,9 @@ export const LocationPickerPopup = ({
               </div>
               <button 
                 onClick={onClose}
-                className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-full transition-all active:scale-90"
+                className="w-10 h-10 flex items-center justify-center bg-slate-100/80 hover:bg-slate-200 rounded-full transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92]"
               >
-                <span className="text-xl">✕</span>
+                <span className="text-xl text-slate-500 font-bold">✕</span>
               </button>
             </div>
 
@@ -113,7 +114,7 @@ export const LocationPickerPopup = ({
                   <button
                     key={dest.id}
                     onClick={() => onSelect(dest)}
-                    className="flex w-full min-w-0 flex-col items-start p-4 rounded-[20px] bg-white/60 border border-slate-100/50 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 transition-all group active:scale-95 shadow-sm"
+                    className="flex w-full min-w-0 flex-col items-start p-4 rounded-[24px] bg-white/60 border-2 border-slate-100/60 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 hover:shadow-[0_8px_20px_rgba(217,70,239,0.12)] hover:-translate-y-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group active:scale-[0.94] shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
                   >
                     <span className="text-[11px] font-black tracking-widest uppercase text-slate-500 group-hover:text-fuchsia-400 mb-0.5">{dest.country}</span>
                     <span className="w-full break-words text-base font-extrabold text-slate-700 group-hover:text-fuchsia-700">{dest.place}</span>

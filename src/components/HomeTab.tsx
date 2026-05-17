@@ -47,6 +47,7 @@ import {
 import { LocationPickerPopup } from "./LocationPickerPopup";
 import CountryGuideModal from "./CountryGuideModal";
 import ExpertHandbookModal from "./ExpertHandbookModal";
+import InfoPeekModal, { type InfoPeekContent } from "./InfoPeekModal";
 import { getCountryGuide } from "../data/countryGuideData";
 import type { CountryGuide } from "../data/countryGuideData";
 import { EXPERT_HANDBOOKS } from "../data/expertHandbooks";
@@ -60,6 +61,121 @@ import {
 } from "../lib/motionTokens";
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+const HERO_STORY_PILLARS = [
+  {
+    icon: PlaneTakeoff,
+    eyebrow: "航班節奏",
+    title: "先鎖定出發與回程",
+    description: "從班機與日期起跑，讓整趟旅程先有穩定的時間骨架。",
+    details: [
+      "先把出發地、目的地與日期定下來，旅程的時間骨架就會比較穩。",
+      "還沒決定住宿或景點也沒關係，先把出發與回程節奏固定就好。",
+      "後面接 AI 草稿、手帳與工具頁時，都能沿用這個旅程節奏。",
+    ],
+    tone: "sky",
+  },
+  {
+    icon: Globe,
+    eyebrow: "地圖動線",
+    title: "把住宿、景點與接送接回同一路線",
+    description: "不只看票價，也把後續會用到的旅途資訊收進同一份規劃。",
+    details: [
+      "先確認住宿會落在哪一區，後續景點與移動線比較不會互相打架。",
+      "把機場、住宿、景點與接送當成同一段旅程，而不是分散的待辦。",
+      "之後交給旅伴共編時，也比較容易理解整趟路線。",
+    ],
+    tone: "cyan",
+  },
+  {
+    icon: Sparkles,
+    eyebrow: "AI 共編",
+    title: "先用 AI 起草，再交給旅伴一起補完",
+    description: "先開一趟旅程，再慢慢補上清單、預算與分工，不必一次做完。",
+    details: [
+      "先請 AI 拉出一版旅程節奏，確認方向對了再慢慢補細節。",
+      "旅伴不必一開始就同步上線，等草稿成形後再一起修更有效率。",
+      "清單、預算與分工都能後補，主線先成立比較重要。",
+    ],
+    tone: "orange",
+  },
+] as const;
+
+const HERO_PILLAR_DECOR = [
+  {
+    shell:
+      "border-sky-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(239,246,255,0.92))]",
+    badge: "border-sky-100 bg-sky-100/90 text-sky-700",
+    glow: "bg-sky-200/55",
+    note: "先拿到出發節奏，再慢慢補細節。",
+  },
+  {
+    shell:
+      "border-cyan-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(236,254,255,0.92))]",
+    badge: "border-cyan-100 bg-cyan-50/95 text-cyan-700",
+    glow: "bg-cyan-200/50",
+    note: "把景點、住宿與移動線串成一張圖。",
+  },
+  {
+    shell:
+      "border-orange-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,247,237,0.92))]",
+    badge: "border-orange-100 bg-orange-50/95 text-orange-700",
+    glow: "bg-orange-200/55",
+    note: "先起草一版，再交給旅伴一起玩。",
+  },
+] as const;
+
+const CARD_STICKER_TONES = [
+  "border-sky-100 bg-sky-50/95 text-sky-700",
+  "border-orange-100 bg-orange-50/95 text-orange-700",
+  "border-emerald-100 bg-emerald-50/95 text-emerald-700",
+  "border-pink-100 bg-pink-50/95 text-pink-700",
+] as const;
+
+const FEATURED_CARD_DECOR = [
+  {
+    body:
+      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(240,249,255,0.94),rgba(255,247,237,0.92))]",
+    glow: "bg-sky-200/45",
+    cta: "from-sky-500 via-cyan-500 to-orange-400 hover:from-sky-600 hover:via-cyan-500 hover:to-orange-500",
+  },
+  {
+    body:
+      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,237,0.94),rgba(240,253,250,0.92))]",
+    glow: "bg-orange-200/45",
+    cta: "from-orange-400 via-amber-400 to-emerald-400 hover:from-orange-500 hover:via-amber-400 hover:to-emerald-500",
+  },
+  {
+    body:
+      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,254,255,0.94),rgba(240,249,255,0.92))]",
+    glow: "bg-cyan-200/45",
+    cta: "from-cyan-500 via-sky-500 to-indigo-500 hover:from-cyan-600 hover:via-sky-500 hover:to-indigo-500",
+  },
+] as const;
+
+const HANDBOOK_CARD_DECOR = [
+  {
+    body:
+      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(254,242,248,0.94),rgba(240,249,255,0.92))]",
+    glow: "bg-pink-200/45",
+    badge: "border-pink-100 bg-pink-50/95 text-pink-700",
+    cta: "from-pink-500 via-orange-400 to-sky-500 hover:from-pink-600 hover:via-orange-400 hover:to-sky-500",
+  },
+  {
+    body:
+      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,237,0.94),rgba(254,249,195,0.88))]",
+    glow: "bg-orange-200/45",
+    badge: "border-orange-100 bg-orange-50/95 text-orange-700",
+    cta: "from-orange-400 via-amber-400 to-rose-400 hover:from-orange-500 hover:via-amber-400 hover:to-rose-500",
+  },
+  {
+    body:
+      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,254,255,0.94),rgba(240,253,250,0.9))]",
+    glow: "bg-cyan-200/45",
+    badge: "border-cyan-100 bg-cyan-50/95 text-cyan-700",
+    cta: "from-cyan-500 via-sky-500 to-emerald-400 hover:from-cyan-600 hover:via-sky-500 hover:to-emerald-500",
+  },
+] as const;
 
 const AIRLINE_CODES: Record<string, string> = {
   "EVA Air": "BR",
@@ -968,11 +1084,14 @@ export default function HomeTab({
   const [activeHandbook, setActiveHandbook] = useState<
     (typeof EXPERT_HANDBOOKS)[0] | null
   >(null);
+  const [activeStoryInfo, setActiveStoryInfo] = useState<InfoPeekContent | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
-  const [isHeroExpanded, setIsHeroExpanded] = useState<boolean>(true);
+  const [isHeroExpanded, setIsHeroExpanded] = useState<boolean>(
+    () => typeof window !== "undefined" && window.innerWidth >= 768
+  );
   const [searchProgress, setSearchProgress] = useState(0);
   const [progressMsgIdx, setProgressMsgIdx] = useState(0);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const { onScroll } = useHideNavOnScroll();
 
   const SEARCH_LOADING_MESSAGES = [
@@ -1431,29 +1550,100 @@ export default function HomeTab({
       <div
         className={`relative z-10 w-full pt-14 sm:pt-[72px] ${!isHeroExpanded ? "pb-3" : "pb-12 sm:pb-14"} px-4 sm:px-6 overflow-visible`}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-200/95 via-pink-100/90 to-sky-200/85 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute -top-16 right-8 w-80 h-80 bg-rose-300/30 rounded-full blur-[80px] pointer-events-none" />
-        <div className="absolute -bottom-16 left-0 w-80 h-80 bg-sky-300/30 rounded-full blur-[80px] pointer-events-none" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-64 h-64 bg-fuchsia-200/20 rounded-full blur-[60px] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-100/95 via-cyan-50/95 to-orange-50/95 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/45 via-transparent to-white/10 pointer-events-none" />
+        <div className="absolute -top-12 right-6 h-72 w-72 rounded-full bg-sky-300/25 blur-[88px] pointer-events-none" />
+        <div className="absolute top-8 left-[-2rem] h-64 w-64 rounded-full bg-cyan-200/30 blur-[86px] pointer-events-none" />
+        <div className="absolute -bottom-16 right-[18%] h-72 w-72 rounded-full bg-orange-200/35 blur-[90px] pointer-events-none" />
 
-        <div className="relative z-20 max-w-[980px] mx-auto w-full">
+        <div className="relative z-20 mx-auto w-full max-w-[1120px]">
           {/* Hero title */}
-          <div
-            className={`text-center mb-5 sm:mb-6${!isHeroExpanded ? " hidden sm:block" : ""}`}
+          <motion.div
+            initial={prefersReducedMotion ? undefined : { opacity: 0, y: 18 }}
+            animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
+            className={`mb-5 space-y-4 text-center sm:mb-6${!isHeroExpanded ? " hidden sm:block" : ""}`}
           >
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-2.5">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight drop-shadow-[0_1px_2px_rgba(134,77,97,0.15)]">
-                AI 智慧行程規劃
-              </h1>
-              <span className="px-2.5 py-1 rounded-full bg-white/75 border border-pink-200/80 text-pink-600 text-[11px] sm:text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-[0_2px_8px_rgba(236,72,153,0.15)]">
-                BETA
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+              <span className="inline-flex items-center rounded-full border border-sky-200/80 bg-white/75 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-sky-700 shadow-[0_4px_14px_rgba(14,165,233,0.12)] backdrop-blur-md">
+                Collaborative Trip Planner
+              </span>
+              <span className="hidden items-center rounded-full border border-orange-200/80 bg-white/80 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-orange-600 shadow-[0_4px_14px_rgba(249,115,22,0.12)] backdrop-blur-md sm:inline-flex">
+                Beta
               </span>
             </div>
-            <p className="text-slate-600/90 text-sm sm:text-base">
-              輸入目的地，秒速生成專屬客製化旅航計畫
-            </p>
-          </div>
+            <div className="space-y-3">
+              <h1 className="mx-auto max-w-4xl text-balance text-3xl font-black tracking-tight text-slate-900 sm:text-4xl md:text-5xl md:leading-[1.05]">
+                把航班、地圖與旅伴分工，收進同一份旅程
+              </h1>
+              <p className="mx-auto max-w-2xl text-pretty text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                RoamJelly 先幫你鎖定出發節奏，再把靈感、共編清單和旅途工具串成可執行的旅程，不必在多個 App 之間切換。
+              </p>
+            </div>
+
+            {isHeroExpanded && (
+              <motion.div
+                initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
+                animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.24, delay: prefersReducedMotion ? 0 : 0.05, ease: "easeOut" }}
+                className="flex snap-x gap-3 overflow-x-auto pb-1 text-left sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0"
+              >
+                {HERO_STORY_PILLARS.map((pillar, index) => {
+                  const Icon = pillar.icon;
+                  const decor = HERO_PILLAR_DECOR[index % HERO_PILLAR_DECOR.length];
+                  return (
+                    <motion.div
+                      key={pillar.title}
+                      initial={prefersReducedMotion ? undefined : { opacity: 0, y: 16 }}
+                      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+                      transition={{ duration: prefersReducedMotion ? 0 : 0.22, delay: prefersReducedMotion ? 0 : 0.08 + index * 0.04, ease: "easeOut" }}
+                      className={`group/pillar relative min-w-[264px] snap-start overflow-hidden rounded-[28px] border p-4 shadow-[0_16px_42px_rgba(14,165,233,0.08)] backdrop-blur-xl sm:min-w-0 ${decor.shell}`}
+                    >
+                      <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
+                      <div className="absolute inset-x-4 bottom-3 h-px bg-gradient-to-r from-white via-slate-200/70 to-transparent" />
+                      <div className="relative mb-3 flex items-center justify-between gap-3">
+                        <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${decor.badge}`}>
+                          <Icon size={13} strokeWidth={2.6} />
+                          {pillar.eyebrow}
+                        </span>
+                        <span className="inline-flex size-7 items-center justify-center rounded-full border border-white/80 bg-white/85 text-slate-300 shadow-sm">
+                          <ArrowRight size={14} strokeWidth={2.5} />
+                        </span>
+                      </div>
+                      <h2 className="relative text-balance text-base font-black tracking-tight text-slate-900 sm:text-[17px]">
+                        {pillar.title}
+                      </h2>
+                      <div className="relative mt-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                          <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/85 text-[10px] font-black shadow-sm ${decor.badge}`}>
+                            0{index + 1}
+                          </span>
+                          <span className="text-pretty">{decor.note}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveStoryInfo({
+                              eyebrow: pillar.eyebrow,
+                              title: pillar.title,
+                              description: pillar.description,
+                              details: pillar.details,
+                              tone: pillar.tone,
+                              icon: Icon,
+                            })
+                          }
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                        >
+                          查看說明
+                          <ArrowRight size={12} strokeWidth={2.6} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
+          </motion.div>
 
           {/* === SEARCH FORM === */}
           <div
@@ -1463,19 +1653,19 @@ export default function HomeTab({
             {!isHeroExpanded && (
               <button
                 onClick={() => setIsHeroExpanded(true)}
-                className="relative z-20 md:hidden w-full flex items-center gap-2.5 rounded-[28px] border border-white/80 bg-[rgba(255,255,255,0.72)] px-4 py-3 shadow-[0_8px_24px_rgba(156,63,89,0.12)] backdrop-blur-[20px]"
+                className="relative z-20 md:hidden w-full flex items-center gap-2.5 rounded-[28px] border border-white/85 bg-[rgba(255,255,255,0.82)] px-4 py-3 shadow-[0_12px_30px_rgba(14,165,233,0.12)] backdrop-blur-[20px]"
               >
-                <PlaneTakeoff size={16} className="text-[#b35f76] shrink-0" />
+                <PlaneTakeoff size={16} className="shrink-0 text-sky-600" />
                 <span className="flex-1 text-left text-[15px] font-black text-slate-900 truncate">
                   {searchForm.from || "—"} → {searchForm.to || "—"}
                 </span>
-                <span className="text-[11px] font-bold text-slate-500 shrink-0 truncate max-w-[150px]">
+                <span className="text-[11px] font-bold text-slate-500 shrink-0 truncate max-w-[120px] sm:max-w-[150px]">
                   {searchForm.date}
                   {searchForm.tripType === "roundtrip" && searchForm.returnDate
                     ? ` · ↩ ${searchForm.returnDate}`
                     : ""}
                 </span>
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-orange-400 text-white shadow-md">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-md">
                   <SearchIcon size={13} strokeWidth={3} />
                 </div>
               </button>
@@ -1483,8 +1673,23 @@ export default function HomeTab({
             {/* Unified search form */}
             {isHeroExpanded && (
               <div className="relative z-20">
+                <div className="mb-3 flex flex-col items-start gap-2 px-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-700/80">
+                      第一站
+                    </p>
+                    <p className="text-pretty text-sm font-bold leading-6 text-slate-700 sm:text-[15px]">
+                      先鎖定這趟旅行的時間骨架，之後再補地圖、景點與共編細節。
+                    </p>
+                  </div>
+                  {!isLoggedIn && (
+                    <span className="inline-flex items-center rounded-full border border-slate-200/80 bg-white/75 px-3 py-1 text-[11px] font-black tracking-[0.18em] text-slate-600 uppercase backdrop-blur-md">
+                      訪客也能先建立旅程
+                    </span>
+                  )}
+                </div>
                 {/* Trip type toggle */}
-                <div className="flex items-center gap-1 mb-3 p-1 rounded-full bg-white/50 border border-white/70 w-fit">
+                <div className="mb-3 flex w-fit items-center gap-1 rounded-full border border-white/70 bg-white/55 p-1">
                   <button
                     onClick={() => updateField("tripType", "oneway")}
                     aria-pressed={searchForm.tripType !== "roundtrip"}
@@ -1510,7 +1715,7 @@ export default function HomeTab({
                 </div>
 
                 {/* Search card */}
-                <div className="bg-white/92 dark:bg-slate-800/90 rounded-[28px] sm:rounded-3xl border border-white/95 dark:border-slate-700 shadow-[0_8px_40px_rgba(134,77,97,0.12),0_2px_8px_rgba(134,77,97,0.06),inset_0_1px_0_rgba(255,255,255,1)] backdrop-blur-2xl p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
+                <div className="flex flex-col gap-2 rounded-[28px] border border-white/95 bg-white/92 p-2.5 shadow-[0_12px_48px_rgba(14,165,233,0.12),0_3px_12px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,1)] backdrop-blur-2xl sm:gap-2.5 sm:rounded-3xl sm:p-4 dark:border-slate-700 dark:bg-slate-800/90">
                   {/* FROM / TO row */}
                   <div className="relative grid grid-cols-2">
                     {/* FROM cell */}
@@ -1542,10 +1747,10 @@ export default function HomeTab({
                     </div>
 
                     {/* Center airplane divider */}
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center">
+                    <div className="absolute left-1/2 top-1/2 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-700">
                       <PlaneTakeoff
                         size={14}
-                        className="text-pink-500"
+                        className="text-sky-500"
                         strokeWidth={2.5}
                       />
                     </div>
@@ -1649,20 +1854,23 @@ export default function HomeTab({
                     onClick={() => void handleSearch()}
                     disabled={isSearchDisabled || loading || isOffline}
                     title={isOffline ? "請連線網路以進行機票比價" : ""}
-                    className={`w-full py-4 rounded-2xl font-black text-[15px] tracking-wide flex items-center justify-center gap-2 transition-colors shadow-sm ${
+                    className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[15px] font-black tracking-wide shadow-sm transition-colors ${
                       isSearchDisabled || loading || isOffline
                         ? "bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
-                        : "bg-pink-500 hover:bg-pink-600 text-white shadow-pink-200"
+                        : "bg-gradient-to-r from-sky-500 via-sky-500 to-orange-400 text-white shadow-[0_10px_24px_rgba(14,165,233,0.22)] hover:from-sky-600 hover:to-orange-500"
                     }`}
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <SearchIcon size={17} strokeWidth={3} /> 搜尋航班 →
+                        <SearchIcon size={17} strokeWidth={3} /> 開始規劃這趟旅程
                       </>
                     )}
                   </button>
+                  <p className="px-1 pt-1 text-center text-[12px] font-bold leading-5 text-slate-500">
+                    先找班機，之後可以再把住宿、接送與分帳慢慢補進來。
+                  </p>
                 </div>
               </div>
             )}
@@ -1674,9 +1882,14 @@ export default function HomeTab({
       <div className="relative z-0 flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60">
         {/* Quick External Links */}
         <div className="max-w-3xl mx-auto w-full pt-3 sm:pt-4 pb-1 sm:pb-2">
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 mb-3 sm:mb-3.5">
-            旅途中也常用
-          </p>
+          <div className="mb-3 space-y-1 sm:mb-3.5">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
+              把旅程補完整
+            </p>
+            <p className="text-sm text-slate-600">
+              住宿、票券與接送放在同一個研究流程裡，比較不容易漏掉真正會影響行程節奏的細節。
+            </p>
+          </div>
           <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-1">
             <a
               href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw"
@@ -1735,7 +1948,7 @@ export default function HomeTab({
               <div className="flex flex-col items-start gap-1.5 md:gap-1">
                 <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                   <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tighter leading-none flex items-baseline gap-2 sm:gap-3">
-                    探索航班與活動
+                    先找航班，再把旅程帶進手帳
                     {searchForm.date && (
                       <span className="text-lg sm:text-xl text-slate-500 font-bold tracking-tight">
                         {searchForm.date.replace(/-/g, "/")}
@@ -1748,8 +1961,8 @@ export default function HomeTab({
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] font-bold text-slate-500 tracking-[0.2em] uppercase">
-                  Explore Travels
+                <p className="max-w-2xl text-[12px] font-bold leading-5 text-slate-500 sm:text-[13px]">
+                  航班比價只是旅程起點。後續可以把結果、模板行程與靈感素材逐步收進同一份規劃。
                 </p>
               </div>
               {results.length > 0 && (
@@ -2205,6 +2418,9 @@ export default function HomeTab({
                           <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[11px] font-black tracking-widest uppercase text-white">
                             Public Template
                           </div>
+                          <div className="absolute top-3 right-3 rounded-full border border-white/30 bg-slate-950/35 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/90 backdrop-blur-md">
+                            fork & remix
+                          </div>
                           <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
                             <div>
                               <p className="text-white text-[11px] font-black uppercase tracking-[0.15em] opacity-80">
@@ -2217,21 +2433,31 @@ export default function HomeTab({
                           </div>
                         </div>
 
-                        <div className="p-5 flex flex-col flex-1">
-                          <div className="flex items-center gap-2 mb-5 flex-wrap">
+                        <div className="relative overflow-hidden p-5 flex flex-col flex-1 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(254,242,248,0.94),rgba(240,249,255,0.92))]">
+                          <div className="absolute -right-10 -top-10 size-24 rounded-full bg-pink-200/35 blur-3xl" />
+                          <div className="relative mb-3 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/88 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                            <Sparkles size={12} strokeWidth={2.6} />
+                            旅伴明信片
+                          </div>
+
+                          <div className="relative mb-4 rounded-[20px] border border-white/90 bg-white/76 px-4 py-3 text-[12px] font-bold leading-5 text-slate-600 shadow-sm">
+                            先把別人的旅程節奏當成一張明信片，喜歡再複製成自己的出發草稿。
+                          </div>
+
+                          <div className="relative flex items-center gap-2 mb-5 flex-wrap">
                             {trip.destination && (
-                              <span className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl">
+                              <span className="text-[11px] font-bold text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-1 rounded-full">
                                 #{trip.destination}
                               </span>
                             )}
-                            <span className="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-xl">
+                            <span className="text-[11px] font-bold text-orange-700 bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-full">
                               已被複製 {trip.forkCount ?? trip.likes ?? 0} 次
                             </span>
                           </div>
 
                           <button
                             onClick={(event) => handleCloneTrip(event, trip)}
-                            className={`mt-auto w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-sky-600 group/btn ${cardActionClass}`}
+                            className={`mt-auto w-full py-4 rounded-2xl bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_14px_28px_rgba(244,114,182,0.18)] group/btn ${cardActionClass}`}
                           >
                             <Copy
                               size={14}
@@ -2264,7 +2490,9 @@ export default function HomeTab({
 
             <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
               <div className="flex gap-6 min-w-max">
-                {FEATURED_DESTINATIONS.map((dest) => (
+                {FEATURED_DESTINATIONS.map((dest, index) => {
+                  const decor = FEATURED_CARD_DECOR[index % FEATURED_CARD_DECOR.length];
+                  return (
                   <motion.div
                     key={dest.id}
                     className="w-[260px] sm:w-[300px] group/dest"
@@ -2281,6 +2509,16 @@ export default function HomeTab({
                           className="w-full h-full object-cover transition-transform duration-700 group-hover/dest:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        <div className="absolute left-3 top-3 flex items-center gap-2">
+                          <span className="rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                            Postcard Pick
+                          </span>
+                          {dest.tags[0] ? (
+                            <span className="rounded-full border border-white/30 bg-slate-950/35 px-2.5 py-1 text-[10px] font-black tracking-[0.16em] text-white/90 backdrop-blur-md">
+                              {dest.tags[0]}
+                            </span>
+                          ) : null}
+                        </div>
                         <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end gap-2">
                           <span className="text-3xl drop-shadow-lg">
                             {dest.flag}
@@ -2291,7 +2529,7 @@ export default function HomeTab({
                         </div>
                         {/* Tag pills on top-right */}
                         <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
-                          {dest.tags.map((tag) => (
+                          {dest.tags.slice(1).map((tag) => (
                             <span
                               key={tag}
                               className="text-[11px] font-black text-white bg-white/20 backdrop-blur-md border border-white/30 px-2 py-0.5 rounded-full uppercase tracking-wider"
@@ -2303,16 +2541,29 @@ export default function HomeTab({
                       </div>
 
                       {/* Card Body */}
-                      <div className="p-5 flex flex-col flex-1">
-                        <p className="text-[13px] text-slate-600 font-medium mb-4 leading-relaxed line-clamp-3">
+                      <div className={`relative overflow-hidden p-5 flex flex-col flex-1 ${decor.body}`}>
+                        <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
+                        <div className="relative mb-3 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/88 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                            <Sparkles size={12} strokeWidth={2.6} />
+                            Travel Mood
+                          </span>
+                          {dest.highlights[0] ? (
+                            <span className="text-[11px] font-bold text-slate-500 line-clamp-1">
+                              {dest.highlights[0]}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="relative text-pretty text-[13px] text-slate-600 font-medium mb-4 leading-relaxed line-clamp-3">
                           {dest.description}
                         </p>
 
-                        <div className="flex flex-wrap gap-1.5 mb-5">
-                          {dest.highlights.map((h) => (
+                        <div className="relative flex flex-wrap gap-2 mb-5">
+                          {dest.highlights.map((h, highlightIndex) => (
                             <span
                               key={h}
-                              className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl"
+                              className={`text-[11px] font-bold border px-2.5 py-1 rounded-full ${CARD_STICKER_TONES[(index + highlightIndex) % CARD_STICKER_TONES.length]}`}
                             >
                               {h}
                             </span>
@@ -2320,7 +2571,7 @@ export default function HomeTab({
                         </div>
 
                         <button
-                          className={`mt-auto w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-600 group/btn ${cardActionClass}`}
+                          className={`mt-auto w-full py-3.5 rounded-2xl bg-gradient-to-r text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_14px_28px_rgba(14,165,233,0.16)] group/btn ${decor.cta} ${cardActionClass}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             const g = getCountryGuide(dest.id);
@@ -2336,7 +2587,8 @@ export default function HomeTab({
                       </div>
                     </GlassCard>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -2352,7 +2604,9 @@ export default function HomeTab({
 
             <div className="w-full overflow-x-auto pb-6 -mx-6 px-6 scrollbar-hide">
               <div className="flex gap-6 min-w-max">
-                {EXPERT_HANDBOOKS.map((handbook) => (
+                {EXPERT_HANDBOOKS.map((handbook, index) => {
+                  const decor = HANDBOOK_CARD_DECOR[index % HANDBOOK_CARD_DECOR.length];
+                  return (
                   <motion.div
                     key={handbook.id}
                     className="w-[280px] sm:w-[320px] group/handbook"
@@ -2369,6 +2623,14 @@ export default function HomeTab({
                           className="w-full h-full object-cover transition-transform duration-700 group-hover/handbook:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                        <div className="absolute left-4 top-4 flex items-center gap-2">
+                          <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[11px] font-black text-white uppercase tracking-wider border border-white/30">
+                            {handbook.days} Days
+                          </span>
+                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${decor.badge}`}>
+                            editor's pick
+                          </span>
+                        </div>
                         <div className="absolute bottom-4 left-4 right-4">
                           <div className="flex items-center gap-2">
                             <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[11px] font-black text-white uppercase tracking-wider border border-white/30">
@@ -2378,7 +2640,12 @@ export default function HomeTab({
                         </div>
                       </div>
 
-                      <div className="p-6">
+                      <div className={`relative overflow-hidden p-6 ${decor.body}`}>
+                        <div className={`absolute -right-8 top-0 size-24 rounded-full blur-2xl ${decor.glow}`} />
+                        <div className="relative mb-3 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/88 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                          <Sparkles size={12} strokeWidth={2.6} />
+                          旅伴草稿
+                        </div>
                         <h3 className="text-xl font-black text-slate-800 mb-1 leading-tight">
                           {handbook.title}
                         </h3>
@@ -2386,11 +2653,15 @@ export default function HomeTab({
                           {handbook.author}
                         </p>
 
+                        <div className="mb-5 rounded-[20px] border border-white/90 bg-white/78 px-4 py-3 text-[12px] font-bold leading-5 text-slate-600 shadow-sm">
+                          先把這份達人手帳當成旅伴寄來的明信片，再複製成你的出發版本。
+                        </div>
+
                         <div className="flex flex-wrap gap-2 mb-6">
-                          {handbook.tags.map((tag) => (
+                          {handbook.tags.map((tag, tagIndex) => (
                             <span
                               key={tag}
-                              className="text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg"
+                              className={`text-[11px] font-bold border px-2.5 py-1 rounded-full ${CARD_STICKER_TONES[(index + tagIndex) % CARD_STICKER_TONES.length]}`}
                             >
                               #{tag}
                             </span>
@@ -2401,7 +2672,7 @@ export default function HomeTab({
                           onClick={(e) =>
                             handleCopyExpertItinerary(e, handbook)
                           }
-                          className={`w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 group/btn ${cardActionClass}`}
+                          className={`w-full py-4 rounded-2xl bg-gradient-to-r text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_14px_28px_rgba(244,114,182,0.18)] group/btn ${decor.cta} ${cardActionClass}`}
                         >
                           <Copy
                             size={14}
@@ -2412,7 +2683,8 @@ export default function HomeTab({
                       </div>
                     </GlassCard>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -2426,6 +2698,12 @@ export default function HomeTab({
           onClose={() => setActiveGuide(null)}
         />
       )}
+
+      <InfoPeekModal
+        open={!!activeStoryInfo}
+        content={activeStoryInfo}
+        onClose={() => setActiveStoryInfo(null)}
+      />
 
       {activeHandbook && (
         <ExpertHandbookModal

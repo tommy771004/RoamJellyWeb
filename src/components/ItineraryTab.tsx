@@ -260,6 +260,26 @@ const AI_LOADING_QUOTES = [
   "正在請教在地老饕，看看哪一站最值得停久一點...",
   "正在替你把交通、景點與休息點排成順手的旅途節拍...",
 ];
+const NO_TRIP_ENTRY_PILLARS = [
+  {
+    icon: Sparkles,
+    eyebrow: "AI 起草",
+    title: "先快速起一版旅程骨架",
+    description: "從目的地、天數與偏好開始，讓 AI 先把第一版節奏拉出來。",
+  },
+  {
+    icon: Users,
+    eyebrow: "共編手帳",
+    title: "再和旅伴一起補完安排",
+    description: "航班、景點與待辦會留在同一份手帳裡，不必重新搬資料。",
+  },
+  {
+    icon: Plane,
+    eyebrow: "旅程銜接",
+    title: "後續直接接到工具與地圖",
+    description: "行程一旦建立，工具包與分享流程就能順著這趟旅程接下去。",
+  },
+] as const;
 const DELETE_UNDO_WINDOW_MS = 3600;
 
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
@@ -453,7 +473,7 @@ function buildNodePatchChanges(
 }
 
 export default function ItineraryTab() {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const [viewMode, setViewMode] = useState<"list" | "map" | "calendar">("list");
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
@@ -1902,15 +1922,15 @@ export default function ItineraryTab() {
       return (
         <div
           onScroll={onScroll}
-          className="flex-1 flex flex-col pt-4 sm:pt-10 bg-[#fcfdff] min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth"
+          className="flex-1 flex flex-col pt-4 sm:pt-10 bg-slate-50 min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth"
         >
           <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
             <button
               onClick={() => setIsPlanningNew(false)}
-              className="mb-4 sm:mb-8 px-4 py-2 rounded-xl bg-slate-100 text-slate-500 font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-slate-200 w-max transition-all"
+              className="mb-4 sm:mb-8 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-600 font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:border-sky-200 hover:text-sky-700 w-max transition-colors"
             >
               <ArrowLeft size={14} />
-              返回清單
+              返回旅程入口
             </button>
             <div className="flex-1">
               <AiForm onSubmit={handleAiFormSubmit} />
@@ -1925,16 +1945,19 @@ export default function ItineraryTab() {
     return (
       <div
         onScroll={onScroll}
-        className="flex-1 w-full overflow-y-auto scroll-smooth bg-[#fcfdff] selection:bg-pink-100"
+        className="flex-1 w-full overflow-y-auto scroll-smooth bg-slate-50 selection:bg-sky-100"
       >
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-tab-safe animate-in fade-in duration-700">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-12">
-            <div>
-              <h1 className="text-2xl md:text-5xl font-black text-slate-800 mb-2 tracking-tight text-balance">
-                您的行程手帳
+          <div className="mb-6 space-y-3 md:mb-10">
+            <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
+              Trip Notebook
+            </span>
+            <div className="space-y-2">
+              <h1 className="text-2xl md:text-5xl font-black text-slate-900 tracking-tight text-balance">
+                先選一趟旅程，再把 AI 草稿與共編安排接回手帳
               </h1>
-              <p className="text-slate-500 font-bold">
-                請選擇一個現有行程專案，或由 AI 啟動規劃 🌍
+              <p className="max-w-3xl text-pretty text-sm font-bold leading-6 text-slate-600 sm:text-base sm:leading-7">
+                行程手帳不是孤立頁面，它是整個旅程的主線。先建立一趟旅程，你就能從 AI 起草、景點調整到後續分享，都維持在同一個上下文裡。
               </p>
             </div>
           </div>
@@ -1942,38 +1965,50 @@ export default function ItineraryTab() {
           {/* AI Planning Entry Hero */}
           <div className="mb-8 md:mb-16">
             <motion.div
-              whileHover={{ scale: 1.02, y: -8 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              whileHover={prefersReducedMotion ? undefined : { y: -4 }}
+              whileTap={prefersReducedMotion ? undefined : { scale: 0.99 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
               onClick={() => setIsPlanningNew(true)}
-              className="cursor-pointer group relative overflow-hidden rounded-[40px] p-1 shadow-2xl bg-gradient-to-r from-pink-500 via-fuchsia-500 to-indigo-500"
+              className="cursor-pointer group relative overflow-hidden rounded-[36px] border border-white/90 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-7"
             >
-              <div className="bg-white rounded-[38px] p-5 sm:p-8 md:p-12 h-full flex flex-col md:flex-row items-center gap-5 md:gap-10">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="bg-fuchsia-100 text-fuchsia-600 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest">
-                      Powered by AI
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.16),transparent_42%)]" />
+              <div className="relative flex h-full flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                <div className="max-w-3xl">
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
+                      AI Planning Entry
                     </span>
                   </div>
-                  <h2 className="text-xl sm:text-3xl md:text-5xl font-black text-slate-800 mb-3 sm:mb-6 leading-tight tracking-tight text-balance">
-                    準備好下一個目的地了嗎？
+                  <h2 className="text-xl sm:text-3xl md:text-5xl font-black text-slate-900 mb-3 sm:mb-5 leading-tight text-balance">
+                    讓 AI 先起草第一版旅程，再回到手帳慢慢補完
                   </h2>
-                  <p className="text-slate-500 font-bold text-sm sm:text-xl mb-4 sm:mb-10 leading-relaxed max-w-2xl">
-                    輸入想去的地方與偏好，讓 AI
-                    為您量身打造專屬行程，並立即啟動即時共編。
+                  <p className="max-w-2xl text-pretty text-sm sm:text-lg font-bold leading-6 sm:leading-8 text-slate-600 mb-5 sm:mb-7">
+                    從目的地、天數與偏好開始，先生成可討論的草稿；接著你就能在手帳裡調整排序、補航班和邀請旅伴一起共編。
                   </p>
-                  <button className="px-5 py-3 sm:px-10 sm:py-5 rounded-2xl bg-slate-900 text-white font-black text-sm uppercase tracking-widest flex items-center gap-3 group-hover:bg-slate-800 transition-all shadow-xl">
-                    <Sparkles size={20} />
-                    開始智慧 AI 規劃
-                  </button>
-                </div>
-                <div className="hidden md:flex md:w-1/3 justify-center">
-                  <div className="relative">
-                    <div className="w-48 h-48 bg-fuchsia-100 rounded-[48px] rotate-12 absolute -inset-2 opacity-50 blur-2xl animate-pulse" />
-                    <div className="w-48 h-48 bg-white border-4 border-slate-50 rounded-[48px] shadow-xl flex items-center justify-center text-6xl relative z-10">
-                      🧗
-                    </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {NO_TRIP_ENTRY_PILLARS.map(({ icon: Icon, eyebrow, title, description }) => (
+                      <div
+                        key={title}
+                        className="rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-sm"
+                      >
+                        <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-sky-700">
+                          <Icon size={14} strokeWidth={2.5} />
+                          {eyebrow}
+                        </span>
+                        <h3 className="mt-3 text-sm font-black text-slate-900">{title}</h3>
+                        <p className="mt-2 text-pretty text-[13px] leading-5 text-slate-600">{description}</p>
+                      </div>
+                    ))}
                   </div>
+                </div>
+                <div className="flex flex-col items-stretch gap-3 md:min-w-[220px]">
+                  <button className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors group-hover:from-sky-600 group-hover:to-orange-500">
+                    <Sparkles size={18} />
+                    開始用 AI 起草旅程
+                  </button>
+                  <p className="text-pretty text-[12px] font-bold leading-5 text-slate-500 md:text-right">
+                    生成後會直接帶你進入可編輯的行程流程，而不是停在單次輸出。
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -1997,20 +2032,32 @@ export default function ItineraryTab() {
               ))}
             </div>
           ) : userTrips.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-[30vh] group">
-              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-                <Navigation2 className="text-slate-200" size={32} />
+            <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-[28px] border border-slate-200 bg-white/70 px-6 py-10 text-center shadow-sm">
+              <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 shadow-sm">
+                <Navigation2 size={28} />
               </div>
-              <p className="text-slate-500 font-bold">目前還沒有行程專案</p>
+              <h3 className="text-balance text-2xl font-black text-slate-900">
+                目前還沒有行程專案
+              </h3>
+              <p className="mt-2 max-w-md text-pretty text-sm font-bold leading-6 text-slate-600">
+                先用 AI 建立第一份草稿，之後再慢慢補上景點、航班與旅伴協作內容。
+              </p>
+              <button
+                onClick={() => setIsPlanningNew(true)}
+                className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors hover:bg-slate-800"
+              >
+                <Sparkles size={18} />
+                建立第一趟旅程
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {userTrips.map((trip) => (
                 <motion.div
                   key={trip.tripId ?? trip.id}
-                  whileHover={{ scale: 1.05, y: -12 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  whileHover={prefersReducedMotion ? undefined : { y: -6 }}
+                  whileTap={prefersReducedMotion ? undefined : { scale: 0.99 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
                   onClick={(e) => {
                     if ((e.target as HTMLElement).closest(".delete-trip-btn"))
                       return;
@@ -2088,7 +2135,7 @@ export default function ItineraryTab() {
                       )}
                     </div>
                     <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="text-2xl font-black text-slate-800 mb-1 group-hover:text-pink-500 transition-colors uppercase tracking-tight">
+                      <h3 className="text-2xl font-black text-slate-800 mb-1 group-hover:text-sky-600 transition-colors uppercase tracking-tight">
                         {trip.name}
                       </h3>
                       <p className="text-slate-500 font-bold text-sm mb-4 flex items-center gap-1">
@@ -2102,7 +2149,7 @@ export default function ItineraryTab() {
                           </div>
                         </div>
                         <ArrowRight
-                          className="text-slate-400 group-hover:text-pink-500 group-hover:translate-x-1 transition-all"
+                          className="text-slate-400 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"
                           size={20}
                         />
                       </div>
@@ -2210,7 +2257,7 @@ export default function ItineraryTab() {
   return (
     <main
       onScroll={onScroll}
-      className="flex-1 w-full overflow-y-auto selection:bg-pink-100 animate-in fade-in duration-700 scroll-smooth bg-[#fafafb]/30"
+      className="flex-1 w-full overflow-y-auto selection:bg-sky-100 animate-in fade-in duration-700 scroll-smooth bg-[#fafafb]/30"
     >
       <div className="max-w-[1440px] mx-auto w-full pb-tab-safe md:px-4 lg:px-8 mt-0 sm:mt-4 md:mt-6">
         {isOffline && (

@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { createGuestSession, loginUser, registerUser, setClientAccessToken } from '../lib/workflowApi';
-import { pressableSurfaceClass, raisedHoverClass, subtlePressableClass } from '../lib/motionTokens';
+import { pressableSurfaceClass, subtlePressableClass } from '../lib/motionTokens';
+import { ArrowRight, ChevronDown, Compass, LockKeyhole, Luggage, NotebookText, Sparkles } from 'lucide-react';
+import InfoPeekModal, { type InfoPeekContent, type InfoPeekTone } from './InfoPeekModal';
 
 interface Props {
   onLogin: (userId: string) => void;
@@ -24,43 +26,82 @@ type GuestPreviewItem = {
   toneClass: string;
 };
 
-const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string; items: GuestPreviewItem[] }> = {
+type PreviewIcon = ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+
+const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string; icon: PreviewIcon; items: GuestPreviewItem[] }> = {
   'AI 旅程規劃': {
-    eyebrow: '先試排旅程，再決定是否同步帳號',
+    eyebrow: '先起草旅程，再決定何時同步帳號',
     panelLabel: 'AI Draft Preview',
+    icon: Sparkles,
     items: [
-      { label: 'Prompt', title: '東京 5 天，偏城市散步與咖啡店', meta: 'AI 會先幫你抓節奏、分區與動線。', value: 'Draft', toneClass: 'bg-fuchsia-400/18 text-fuchsia-100 border-fuchsia-300/30' },
-      { label: 'Style', title: '慢節奏 / 雨備 / 一人旅行', meta: '先確認方向，再登入保存和微調。', value: '3 tags', toneClass: 'bg-cyan-400/18 text-cyan-100 border-cyan-300/30' },
-      { label: 'Output', title: 'Day 1 到 Day 5 的初版行程', meta: '生成後可直接帶去手帳繼續編修。', value: '5 days', toneClass: 'bg-amber-300/18 text-amber-50 border-amber-200/30' },
+      { label: 'Draft', title: '東京 5 天・城市散步與咖啡店', meta: '先把節奏、分區與每日密度拉出第一版，之後再慢慢補細節。', value: 'AI First', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
+      { label: 'Focus', title: '慢節奏 / 雨備 / 一人旅行', meta: '先確認方向對不對，再決定要不要保存與同步。', value: '3 tags', toneClass: 'border-white/15 bg-white/10 text-slate-100' },
+      { label: 'Output', title: '生成後直接回手帳繼續編修', meta: '不是單次輸出，而是可接著調整排序、補航班與共編的草稿。', value: 'Editable', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
     ],
   },
   '行程手帳': {
-    eyebrow: '先開一份旅程，再決定要不要綁正式帳號',
+    eyebrow: '先接回旅程主線，再決定何時保存同步',
     panelLabel: 'Trip Notebook Preview',
+    icon: NotebookText,
     items: [
-      { label: 'Today', title: 'Day 2 ・ 淺草 -> 上野 -> 神保町', meta: '先試排與拖拉順序，喜歡再保存同步。', value: '3 stops', toneClass: 'bg-sky-400/18 text-sky-100 border-sky-300/30' },
-      { label: 'Pocket List', title: '口袋名單 / 旅遊事實 / 航班帶入', meta: '收藏、帶入與 AI 草稿可以先直接試。', value: 'Ready', toneClass: 'bg-emerald-400/18 text-emerald-100 border-emerald-300/30' },
-      { label: 'Collab', title: '之後登入即可接手共編與同步', meta: '現在先確認手帳編排是不是順手。', value: 'Sync later', toneClass: 'bg-fuchsia-400/18 text-fuchsia-100 border-fuchsia-300/30' },
+      { label: 'Notebook', title: 'Day 2 ・ 淺草 -> 上野 -> 神保町', meta: '先試排節奏與拖拉順序，確認手帳編排是不是順手。', value: '3 stops', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
+      { label: 'Pocket List', title: '口袋名單 / 旅遊事實 / 航班帶入', meta: '收藏、帶入與 AI 草稿可以先直接接到同一份旅程。', value: 'Ready', toneClass: 'border-emerald-300/30 bg-emerald-400/16 text-emerald-100' },
+      { label: 'Collab', title: '之後再接手共編與跨裝置同步', meta: '現在先把旅程主線確認好，需要保存時再登入。', value: 'Sync later', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
     ],
   },
   '旅途工具包': {
-    eyebrow: '工具頁先跟旅程綁定，再決定是否登入',
+    eyebrow: '先綁一趟旅程，工具包才有完整上下文',
     panelLabel: 'Tools Preview',
+    icon: Luggage,
     items: [
-      { label: 'Weather', title: '東京 24°C ・ 降雨機率 20%', meta: '先看即時天氣與出門條件。', value: 'Live', toneClass: 'bg-sky-400/18 text-sky-100 border-sky-300/30' },
-      { label: 'Checklist', title: '行李清單 6 / 9 完成', meta: '打包、提醒與分享可以先試流程。', value: '6/9', toneClass: 'bg-emerald-400/18 text-emerald-100 border-emerald-300/30' },
-      { label: 'Split', title: '晚餐與車資已拆帳', meta: '登入後再接手成員與歷史紀錄即可。', value: 'TWD 1,250', toneClass: 'bg-amber-300/18 text-amber-50 border-amber-200/30' },
+      { label: 'Weather', title: '東京 24°C ・ 降雨機率 20%', meta: '先看即時天氣與出門條件，再決定清單優先順序。', value: 'Live', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
+      { label: 'Checklist', title: '行李清單 6 / 9 完成', meta: '打包、提醒與待辦可以先用訪客旅程跑過一次。', value: '6/9', toneClass: 'border-emerald-300/30 bg-emerald-400/16 text-emerald-100' },
+      { label: 'Split', title: '晚餐與車資已拆帳', meta: '登入後再接手成員與歷史記錄即可，不必一開始就設帳號。', value: 'TWD 1,250', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
     ],
   },
   '快速體驗': {
-    eyebrow: '不用先註冊，先跑過整個流程',
+    eyebrow: '不用先註冊，先把整條旅程流程跑順',
     panelLabel: 'Quick Preview',
+    icon: Compass,
     items: [
-      { label: 'Explore', title: '先看首頁搜尋、Demo 與攻略', meta: '確認整體產品方向是不是你要的。', value: 'Start', toneClass: 'bg-fuchsia-400/18 text-fuchsia-100 border-fuchsia-300/30' },
-      { label: 'Draft', title: '喜歡再開旅程或請 AI 排行程', meta: '訪客模式先讓你摸到主要功能。', value: 'Flow', toneClass: 'bg-cyan-400/18 text-cyan-100 border-cyan-300/30' },
-      { label: 'Save', title: '之後再登入綁定與同步', meta: '不用一開始就進入註冊流程。', value: 'Later', toneClass: 'bg-emerald-400/18 text-emerald-100 border-emerald-300/30' },
+      { label: 'Explore', title: '先看首頁搜尋、Demo 與攻略', meta: '先確認這個產品方向和你的旅程規劃方式合不合。', value: 'Start', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
+      { label: 'Draft', title: '喜歡再開旅程或請 AI 起草', meta: '訪客模式先讓你直接摸到 AI、手帳與工具的主線。', value: 'Flow', toneClass: 'border-white/15 bg-white/10 text-slate-100' },
+      { label: 'Save', title: '之後再登入綁定與同步', meta: '不用一開始就進入註冊流程，先確定這趟旅程走得順。', value: 'Later', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
     ],
   },
+};
+
+const getPreviewTone = (toneClass: string): InfoPeekTone => {
+  if (toneClass.includes('emerald')) return 'emerald';
+  if (toneClass.includes('orange')) return 'orange';
+  if (toneClass.includes('pink')) return 'pink';
+  if (toneClass.includes('cyan')) return 'cyan';
+  return 'sky';
+};
+
+const buildPreviewDetails = (context: string, item: GuestPreviewItem): string[] => {
+  if (context === '旅途工具包') {
+    return [
+      item.meta,
+      '先用訪客旅程把流程跑順，真的要保存歷史或同步時再接上帳號。',
+    ];
+  }
+  if (context === '行程手帳') {
+    return [
+      item.meta,
+      '主線順手之後，再決定要不要同步裝置與保留編修紀錄。',
+    ];
+  }
+  if (context === 'AI 旅程規劃') {
+    return [
+      item.meta,
+      '先讓 AI 起草一版，再看要不要把這份草稿正式保存下來。',
+    ];
+  }
+  return [
+    item.meta,
+    '先把整條旅程流程摸順，再決定要不要進入註冊與同步。',
+  ];
 };
 
 export default function LoginScreen({ onLogin, onCancel, guestFirst = false, contextLabel, title, description, guestCtaLabel }: Props) {
@@ -74,6 +115,10 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAuthCardExpanded, setIsAuthCardExpanded] = useState(!shouldShowGuestHero);
+  const [isPreviewItemsExpanded, setIsPreviewItemsExpanded] = useState<boolean>(
+    () => typeof window !== 'undefined' && window.innerWidth >= 768
+  );
+  const [activePreviewInfo, setActivePreviewInfo] = useState<InfoPeekContent | null>(null);
 
   useEffect(() => {
     setIsAuthCardExpanded(!shouldShowGuestHero);
@@ -143,92 +188,125 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
 
   const resolvedGuestCtaLabel = guestCtaLabel || '先用訪客身分體驗';
   const previewContent = GUEST_PREVIEW_LOOKUP[contextLabel || '快速體驗'] || GUEST_PREVIEW_LOOKUP['快速體驗'];
+  const HeroIcon = previewContent.icon;
 
   return (
     <div
-      className="flex-1 w-full jelly-bg dark:bg-gradient-to-br dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900 relative overflow-y-auto overflow-x-hidden transition-colors duration-500"
+      className="relative flex-1 w-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(251,146,60,0.18),transparent_36%),#f8fafc] transition-colors duration-500"
     >
-      <div className="absolute top-[-8%] left-[-10%] h-[32rem] w-[32rem] rounded-full bg-fuchsia-300/18 blur-[96px] pointer-events-none" />
-      <div className="absolute right-[-8%] top-[8%] h-[26rem] w-[26rem] rounded-full bg-cyan-300/18 blur-[90px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[18%] h-[24rem] w-[24rem] rounded-full bg-purple-300/14 blur-[84px] pointer-events-none" />
+      <div className="pointer-events-none absolute top-[-8%] left-[-10%] h-[32rem] w-[32rem] rounded-full bg-sky-200/40 blur-[96px]" />
+      <div className="pointer-events-none absolute right-[-8%] top-[8%] h-[26rem] w-[26rem] rounded-full bg-orange-200/35 blur-[90px]" />
+      <div className="pointer-events-none absolute bottom-[-10%] left-[18%] h-[24rem] w-[24rem] rounded-full bg-slate-200/50 blur-[84px]" />
 
       <div className={`relative z-10 mx-auto flex min-h-full w-full max-w-[1040px] flex-col justify-center px-5 pt-8 pb-10 sm:px-6 sm:py-10 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
         {shouldShowGuestHero && (
-          <section className="mb-4 rounded-[34px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.52))] p-5 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-[18px] sm:p-6 lg:mb-0">
+          <section className="mb-4 rounded-[34px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.80),rgba(255,255,255,0.62))] p-5 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-[18px] sm:p-6 lg:mb-0">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-slate-900 text-xl text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
-                  ✈️
+                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
+                  <HeroIcon size={22} strokeWidth={2.4} />
                 </div>
                 <div>
                   <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">RoamJelly</div>
                   <div className="mt-1 text-[18px] font-black tracking-tight text-slate-900">{contextLabel || '快速體驗'}</div>
                 </div>
               </div>
-              <div className="rounded-full border border-slate-200/70 bg-white/75 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
-                Guest Preview
+              <div className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-sky-700">
+                Guest First
               </div>
             </div>
 
-            <div className="mt-5 rounded-[28px] bg-slate-950/90 p-5 text-white shadow-[0_18px_44px_rgba(15,23,42,0.20)] border border-white/10">
-              <div className="text-[11px] font-black uppercase tracking-[0.24em] text-fuchsia-300">
-                {previewContent.eyebrow}
-              </div>
-              <h1 className="mt-2 text-[28px] leading-tight font-black tracking-tight">
-                {title || '先用訪客身分開始，喜歡再註冊也不遲'}
-              </h1>
-              <p className="mt-3 max-w-[48ch] text-[13px] font-semibold leading-relaxed text-slate-400">
-                {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
-              </p>
-
-              <div className="mt-5 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04]">
-                <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3">
-                  <span className="h-2.5 w-2.5 rounded-full bg-rose-300" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
-                  <span className="ml-auto text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{previewContent.panelLabel}</span>
+            <div className="relative mt-5 overflow-hidden rounded-[28px] border border-slate-900/5 bg-[linear-gradient(135deg,#082f49_0%,#0f172a_54%,#7c2d12_100%)] p-5 text-white shadow-[0_18px_44px_rgba(15,23,42,0.20)]">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(251,146,60,0.16),transparent_40%)]" />
+              <div className="relative">
+                <div className="text-[11px] font-black uppercase tracking-[0.24em] text-sky-200">
+                  {previewContent.eyebrow}
                 </div>
-                <div className="space-y-3 p-4">
-                  {previewContent.items.map((item) => (
-                    <div key={`${item.label}-${item.title}`} className="rounded-[22px] border border-white/10 bg-white/[0.05] px-4 py-3.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{item.label}</div>
-                          <div className="mt-1 text-[15px] font-black tracking-tight text-white">{item.title}</div>
-                          <div className="mt-1 text-[12px] font-semibold leading-relaxed text-slate-400">{item.meta}</div>
-                        </div>
-                        <div className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${item.toneClass}`}>
-                          {item.value}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                <h1 className="mt-2 text-[28px] leading-tight font-black tracking-tight text-balance">
+                  {title || '先用訪客身分開始，喜歡再註冊也不遲'}
+                </h1>
+                <p className="mt-3 max-w-[48ch] text-[13px] font-semibold leading-relaxed text-slate-300">
+                  {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
+                </p>
 
-              {guestFirst && (
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                  <button
-                    onClick={() => void handleGuestLogin()}
-                    disabled={loading}
-                    className={`flex w-full items-center justify-center rounded-[22px] border-none bg-white px-5 py-4 text-slate-900 hover:bg-fuchsia-50 disabled:opacity-70 sm:flex-1 ${subtlePressableClass}`}
-                  >
-                    <span className="text-[14px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
-                  </button>
+                <div className="mt-5 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04]">
                   <button
                     type="button"
-                    onClick={() => setIsAuthCardExpanded(true)}
-                    className={`flex items-center justify-center rounded-[22px] border border-white/12 bg-white/[0.06] px-5 py-4 text-white hover:bg-white/[0.11] sm:flex-1 ${subtlePressableClass}`}
+                    onClick={() => setIsPreviewItemsExpanded(v => !v)}
+                    className="flex w-full items-center justify-between gap-2 border-b border-white/8 px-4 py-3 text-left"
+                    aria-expanded={isPreviewItemsExpanded}
                   >
-                    <span className="text-[13px] font-black tracking-[0.04em]">改用帳號同步</span>
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-sky-300" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-orange-300" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
+                      <span className="ml-1 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">{previewContent.panelLabel}</span>
+                    </div>
+                    <ChevronDown
+                      size={15}
+                      strokeWidth={2.5}
+                      className={`text-slate-400 transition-transform duration-200 ${isPreviewItemsExpanded ? 'rotate-180' : ''}`}
+                    />
                   </button>
+                  <div className={`space-y-3 ${isPreviewItemsExpanded ? 'p-4' : 'hidden'}`}>
+                    {previewContent.items.map((item) => (
+                      <div key={`${item.label}-${item.title}`} className="rounded-[22px] border border-white/10 bg-white/[0.05] px-4 py-3.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">{item.label}</div>
+                            <div className="mt-1 text-[15px] font-black tracking-tight text-white">{item.title}</div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setActivePreviewInfo({
+                                  eyebrow: `${previewContent.panelLabel} · ${item.label}`,
+                                  title: item.title,
+                                  description: item.meta,
+                                  details: buildPreviewDetails(contextLabel || '快速體驗', item),
+                                  tone: getPreviewTone(item.toneClass),
+                                  icon: HeroIcon,
+                                })
+                              }
+                              className={`mt-3 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[11px] font-black text-slate-200 transition-colors hover:bg-white/[0.14] ${subtlePressableClass}`}
+                            >
+                              查看說明
+                              <ArrowRight size={12} strokeWidth={2.6} />
+                            </button>
+                          </div>
+                          <div className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${item.toneClass}`}>
+                            {item.value}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )}
 
-              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-slate-500">
-                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">不用密碼就能先試</span>
-                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">喜歡再綁正式帳號</span>
-                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">同步與保存留到下一步</span>
+                {guestFirst && (
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                    <button
+                      onClick={() => void handleGuestLogin()}
+                      disabled={loading}
+                      className={`flex w-full items-center justify-center gap-2 rounded-[22px] border-none bg-white px-5 py-4 text-slate-900 hover:bg-sky-50 disabled:opacity-70 sm:flex-1 ${subtlePressableClass}`}
+                    >
+                      <span className="text-[14px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
+                      <ArrowRight size={16} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsAuthCardExpanded(true)}
+                      className={`flex items-center justify-center rounded-[22px] border border-white/12 bg-white/[0.06] px-5 py-4 text-white hover:bg-white/[0.12] sm:flex-1 ${subtlePressableClass}`}
+                    >
+                      <span className="text-[13px] font-black tracking-[0.04em]">改用帳號同步</span>
+                    </button>
+                  </div>
+                )}
+
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold text-slate-400">
+                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">不用密碼就能先試</span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">喜歡再綁正式帳號</span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">同步與保存留到下一步</span>
+                </div>
               </div>
             </div>
           </section>
@@ -250,8 +328,8 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 {shouldShowGuestHero ? '需要保存、同步或共編時再登入即可，前面的體驗不用重跑。' : '建立帳號後即可保存旅程、同步裝置與多人共編。'}
               </div>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/70 bg-white/80 text-xl shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
-              🔐
+            <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-slate-200 bg-slate-50 text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
+              <LockKeyhole size={20} strokeWidth={2.3} />
             </div>
           </div>
 
@@ -273,10 +351,10 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 </div>
               </div>
               <span
-                className="ml-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-sm font-black text-white transition-transform shrink-0"
-                style={{ transform: isAuthCardExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                className="ml-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-white transition-transform shrink-0"
+                style={{ transform: isAuthCardExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
               >
-                v
+                <ArrowRight size={16} strokeWidth={2.8} />
               </span>
             </button>
           ) : null}
@@ -313,7 +391,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     <span
                       style={{
                         fontWeight: mode === m ? '800' : '600',
-                        color: mode === m ? '#d946ef' : '#94a3b8',
+                        color: mode === m ? '#0369a1' : '#94a3b8',
                         fontSize: 14,
                         letterSpacing: '0.05em'
                       }}
@@ -339,7 +417,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     fontSize: 15,
                     fontWeight: '700'
                   }}
-                  className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
+                  className="outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/40 transition-all shadow-sm"
                   placeholder="3–30 個英數字或底線"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -360,7 +438,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                           key={emoji}
                           type="button"
                           onClick={() => setAvatar(emoji)}
-                          className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all ${avatar === emoji ? 'bg-fuchsia-100 ring-2 ring-fuchsia-400 scale-110' : 'hover:bg-black/5 hover:scale-105'}`}
+                          className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all ${avatar === emoji ? 'bg-sky-100 ring-2 ring-sky-400 scale-110' : 'hover:bg-black/5 hover:scale-105'}`}
                         >
                           {emoji}
                         </button>
@@ -381,7 +459,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                         fontSize: 15,
                         fontWeight: '700'
                       }}
-                      className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
+                      className="outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/40 transition-all shadow-sm"
                       placeholder="顯示給其他成員的名稱"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
@@ -408,7 +486,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     fontSize: 15,
                     fontWeight: '700'
                   }}
-                  className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
+                  className="outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/40 transition-all shadow-sm"
                   placeholder="至少 8 個字元"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -433,7 +511,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                       fontSize: 15,
                       fontWeight: '700'
                     }}
-                    className="outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50 transition-all shadow-sm"
+                    className="outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/40 transition-all shadow-sm"
                     placeholder="再次輸入密碼"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -455,7 +533,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               <button
                 onClick={() => void handleSubmit()}
                 disabled={loading}
-                className={`flex justify-center border-none appearance-none cursor-pointer transition-all active:scale-95 shadow-[0_8px_16px_rgb(217,70,239,0.25)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60 ${loading ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:opacity-90'}`}
+                className={`flex justify-center border-none appearance-none cursor-pointer transition-all active:scale-95 shadow-[0_12px_24px_rgba(14,165,233,0.24)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? 'bg-sky-300 shadow-none' : 'bg-gradient-to-r from-sky-500 to-orange-400 hover:opacity-90'}`}
                 style={{
                   paddingTop: 16, paddingBottom: 16,
                   borderRadius: 24,
@@ -476,7 +554,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 <button
                   onClick={() => void handleGuestLogin()}
                   disabled={loading}
-                  className="flex justify-center border appearance-none cursor-pointer transition-all active:scale-95 w-full bg-white/70 border-slate-200 hover:bg-white mt-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60"
+                  className="flex justify-center border appearance-none cursor-pointer transition-all active:scale-95 w-full bg-white/70 border-slate-200 hover:bg-sky-50 mt-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45"
                   style={{
                     paddingTop: 14,
                     paddingBottom: 14,
@@ -509,6 +587,12 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
             </>
           )}
         </div>
+
+        <InfoPeekModal
+          open={!!activePreviewInfo}
+          content={activePreviewInfo}
+          onClose={() => setActivePreviewInfo(null)}
+        />
       </div>
     </div>
   );

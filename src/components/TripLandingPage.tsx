@@ -1,5 +1,23 @@
 import { useState, useEffect } from 'react';
-import { createGuestSession, fetchTripPreview, getStoredToken, joinTrip } from '../lib/workflowApi';
+import { motion, useReducedMotion } from 'motion/react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarDays,
+  CircleHelp,
+  Loader2,
+  MapPin,
+  PlaneTakeoff,
+  Users,
+} from 'lucide-react';
+import { Input } from './ui/input';
+import {
+  createGuestSession,
+  fetchTripPreview,
+  getStoredToken,
+  joinTrip,
+} from '../lib/workflowApi';
+import { cn } from '../lib/utils';
 
 interface TripPreview {
   trip_id: string;
@@ -13,6 +31,24 @@ interface Props {
   onJoined: () => void;
 }
 
+const JOIN_HIGHLIGHTS = [
+  {
+    icon: PlaneTakeoff,
+    label: '行程加入',
+    description: '一鍵加入後，直接接上這趟旅程的共編節奏。',
+  },
+  {
+    icon: CalendarDays,
+    label: '共同編輯',
+    description: '後續可以一起補完日期、景點與待辦安排。',
+  },
+  {
+    icon: Users,
+    label: '旅伴同步',
+    description: '天氣、清單與分帳工具都會跟著這趟旅程同步。',
+  },
+] as const;
+
 export default function TripLandingPage({ tripId, onJoined }: Props) {
   const [tripInfo, setTripInfo] = useState<TripPreview | null>(null);
   const [fetchError, setFetchError] = useState('');
@@ -21,6 +57,8 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
   const [nickname, setNickname] = useState('');
+  const prefersReducedMotion = useReducedMotion() ?? false;
+  const requiresNickname = !getStoredToken();
 
   useEffect(() => {
     void (async () => {
@@ -60,81 +98,144 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
   };
 
   return (
-    <div
-      className="flex-1 justify-center items-center p-6 flex flex-col h-screen-dvh w-screen bg-[#f8fafc] relative overflow-hidden"
-    >
-      <div className="absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] rounded-full bg-fuchsia-300/20 blur-[120px] pointer-events-none" />
-      <div className="absolute top-[20%] right-[-20%] w-[70vw] h-[70vw] rounded-full bg-cyan-300/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-purple-300/20 blur-[120px] pointer-events-none" />
+    <div className="relative flex min-h-dvh w-full flex-1 items-center justify-center overflow-hidden bg-slate-50 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.24),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.2),transparent_45%)]" />
+      <div className="absolute -top-12 right-[-10%] h-64 w-64 rounded-full bg-sky-200/35 blur-3xl" />
+      <div className="absolute bottom-[-12%] left-[-8%] h-72 w-72 rounded-full bg-orange-200/30 blur-3xl" />
 
       {fetching ? (
-        <div className="text-fuchsia-600 text-lg font-bold relative z-10 flex items-center gap-2">
-          <span className="animate-pulse">✈️</span>
-          <span>載入旅程中…</span>
-        </div>
+        <motion.div
+          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
+          animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
+          className="relative z-10 flex w-full max-w-sm flex-col items-center gap-4 rounded-[28px] border border-white/90 bg-white/88 px-6 py-7 text-center shadow-lg backdrop-blur-xl"
+          aria-live="polite"
+        >
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-700 shadow-sm">
+            <Loader2 size={24} className="animate-spin" />
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-black uppercase text-sky-700">Shared Trip Invite</p>
+            <h1 className="text-balance text-2xl font-black text-slate-900">正在同步旅程邀請</h1>
+            <p className="text-pretty text-sm leading-6 text-slate-600">
+              RoamJelly 正在確認這份旅程的目的地、日期與共編權限。
+            </p>
+          </div>
+        </motion.div>
       ) : notFound || fetchError ? (
-        <div className="items-center flex flex-col relative z-10">
-          <span style={{ fontSize: 56, marginBottom: 16 }}>{notFound ? '🤔' : '⚠️'}</span>
-          <span className="text-xl font-bold text-slate-700 mb-2">
-            {notFound ? '找不到這個旅程' : '載入失敗'}
-          </span>
-          <span className="text-slate-500 text-center mb-6">
-            {notFound ? '邀請連結可能已失效或旅程不存在' : fetchError}
-          </span>
+        <motion.div
+          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
+          animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
+          className="relative z-10 flex w-full max-w-md flex-col items-center rounded-[30px] border border-white/90 bg-white/90 px-6 py-8 text-center shadow-lg backdrop-blur-xl"
+        >
+          <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+            {notFound ? <CircleHelp size={28} /> : <AlertTriangle size={28} />}
+          </div>
+          <h1 className="text-balance text-2xl font-black text-slate-900">
+            {notFound ? '找不到這份旅程邀請' : '旅程邀請暫時無法載入'}
+          </h1>
+          <p className="mt-3 max-w-sm text-pretty text-sm leading-6 text-slate-600">
+            {notFound ? '邀請連結可能已失效，或這趟旅程已停止分享。' : fetchError}
+          </p>
           <a
             href="/"
-            className="px-8 py-3 rounded-2xl bg-[#d946ef] flex justify-center border-none appearance-none cursor-pointer hover:bg-[#c026d3] transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60"
+            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
           >
-            <span className="text-white font-bold">返回首頁</span>
+            返回首頁
           </a>
-        </div>
+        </motion.div>
       ) : (
-        <div style={{ width: '100%', maxWidth: 360 }} className="relative z-10">
-          <div
-            className="rounded-[32px] p-6 shadow-[0_8px_40px_rgb(0,0,0,0.08)] ring-1 ring-white/50 items-center flex flex-col relative overflow-hidden"
-            style={{ backgroundColor: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)', border: '1px solid rgba(255,255,255,0.6)' }}
-          >
-            <span style={{ fontSize: 48, marginBottom: 16 }}>✈️</span>
-            <span className="text-slate-500 mb-2 font-bold tracking-widest text-[13px] uppercase">
-              你被邀請加入旅程
-            </span>
+        <motion.div
+          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 16 }}
+          animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: 'easeOut' }}
+          className="relative z-10 w-full max-w-[440px]"
+        >
+          <div className="overflow-hidden rounded-[32px] border border-white/90 bg-white/88 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
+                  Shared Trip Invite
+                </span>
+                <p className="mt-3 text-sm font-bold text-slate-500">有人邀請你一起補完這趟旅程</p>
+              </div>
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-500 shadow-sm">
+                <PlaneTakeoff size={20} strokeWidth={2.4} />
+              </div>
+            </div>
 
             {tripInfo && (
-              <>
-                <span
-                  className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-cyan-500 mb-3 text-center flex tracking-tight"
-                  style={{ fontSize: 26 }}
-                >
-                  {tripInfo.name}
-                </span>
-                <div className="flex flex-row items-center gap-x-2 mb-6 bg-white/50 border border-white/60 shadow-inner px-4 py-1.5 rounded-full">
-                  <span className="text-slate-600 font-bold text-sm">📍 {tripInfo.destination}</span>
-                  <span className="text-slate-400">|</span>
-                  <span className="text-slate-600 font-bold text-sm">{tripInfo.days} 天行程</span>
+              <div className="mt-5 space-y-4">
+                <div className="space-y-2">
+                  <h1 className="text-balance text-3xl font-black text-slate-900 sm:text-[34px]">
+                    {tripInfo.name}
+                  </h1>
+                  <p className="text-pretty text-sm leading-6 text-slate-600">
+                    先加入這份旅程，你就可以直接查看目前的行程內容，接著再和旅伴一起補完清單、分帳與地圖動線。
+                  </p>
                 </div>
-              </>
+
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-white text-sky-600 shadow-sm">
+                      <MapPin size={18} strokeWidth={2.4} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black uppercase text-slate-500">目的地</p>
+                      <p className="truncate text-sm font-bold text-slate-900">{tripInfo.destination}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-white text-orange-500 shadow-sm">
+                      <CalendarDays size={18} strokeWidth={2.4} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black uppercase text-slate-500">旅程天數</p>
+                      <p className="text-sm font-bold text-slate-900">{tripInfo.days} 天行程</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
+            <div className="mt-5 grid gap-2.5">
+              {JOIN_HIGHLIGHTS.map(({ icon: Icon, label, description }) => (
+                <div
+                  key={label}
+                  className="flex items-start gap-3 rounded-2xl border border-white bg-white/70 px-4 py-3 shadow-sm"
+                >
+                  <div className="mt-0.5 flex size-9 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+                    <Icon size={16} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-slate-900">{label}</p>
+                    <p className="mt-1 text-pretty text-[13px] leading-5 text-slate-600">{description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {joinError ? (
-              <div
-                className="mb-4 px-4 py-3 rounded-xl w-full flex items-center bg-rose-50/80 border border-rose-200"
-              >
-                <span className="text-rose-600 text-[13px] font-bold w-full text-center">{joinError}</span>
+              <div className="mt-5 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/90 px-4 py-3" aria-live="polite">
+                <AlertTriangle size={16} className="mt-0.5 shrink-0 text-rose-500" />
+                <p className="text-pretty text-[13px] font-bold leading-5 text-rose-700">{joinError}</p>
               </div>
             ) : null}
 
-            {!getStoredToken() && (
-              <div className="w-full mb-4">
-                <label className="block text-[12px] font-black tracking-wider text-slate-500 mb-1.5 pl-1 uppercase">
-                  請先輸入您的暱稱加入
+            {requiresNickname && (
+              <div className="mt-5 space-y-2.5">
+                <label htmlFor="trip-guest-nickname" className="block text-[12px] font-black uppercase text-slate-500">
+                  先輸入暱稱，再加入這趟旅程
                 </label>
-                <input
+                <Input
+                  id="trip-guest-nickname"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                   placeholder="例如：小美"
                   name="nickname"
                   autoComplete="nickname"
-                  className="w-full rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-[14px] font-bold text-slate-700 outline-none focus:ring-4 focus:ring-fuchsia-100"
+                  className="h-12 rounded-2xl border-slate-200 bg-white text-[14px] font-bold text-slate-900 shadow-sm focus-visible:ring-sky-300"
                   maxLength={32}
                 />
               </div>
@@ -143,23 +244,38 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
             <button
               onClick={() => void handleJoin()}
               disabled={joining}
-              style={{
-                width: '100%',
-                paddingTop: 16,
-                paddingBottom: 16,
-                borderRadius: 24,
-                alignItems: 'center',
-              }}
-              className={`flex justify-center border-none appearance-none cursor-pointer transition-all active:scale-95 shadow-[0_8px_16px_rgb(217,70,239,0.25)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60 ${joining ? 'bg-fuchsia-300 shadow-none' : 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:opacity-90'}`}
+              className={cn(
+                'mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300',
+                joining
+                  ? 'cursor-not-allowed bg-sky-300 shadow-none'
+                  : 'bg-gradient-to-r from-sky-500 to-orange-400 hover:from-sky-600 hover:to-orange-500',
+              )}
             >
               {joining ? (
-                <span style={{ color: 'white', fontWeight: '800' }}>處理中…</span>
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  處理中…
+                </>
               ) : (
-                <span style={{ color: 'white', fontWeight: '900', fontSize: 16, letterSpacing: '0.05em' }}>加入旅程</span>
+                <>
+                  加入這趟旅程
+                  <ArrowRight size={16} strokeWidth={2.6} />
+                </>
               )}
             </button>
+
+            <p className="mt-3 text-pretty text-xs leading-5 text-slate-500">
+              加入後即可接上這份旅程的共編內容；如果你是訪客，也不需要先完成完整註冊流程。
+            </p>
+
+            <a
+              href="/"
+              className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+            >
+              先回首頁看看
+            </a>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

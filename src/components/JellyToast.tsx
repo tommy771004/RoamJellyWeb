@@ -24,11 +24,11 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
-            transition={{ type: 'spring', bounce: 0.4, duration: 0.6 }}
-            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-full shadow-xl shadow-black/5 border backdrop-blur-xl shrink-0 max-w-sm w-full mx-auto ${
-              toast.type === 'success' ? 'bg-emerald-500/90 border-emerald-400 text-white shadow-emerald-500/20' :
-              toast.type === 'warning' ? 'bg-amber-500/90 border-amber-400 text-white shadow-amber-500/20' :
-              'bg-slate-800/90 border-slate-700 text-white shadow-slate-900/20'
+            transition={{ type: 'spring', bounce: 0.6, duration: 0.7 }}
+            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-[28px] shadow-[0_16px_40px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.2)] border backdrop-blur-2xl shrink-0 max-w-sm w-full mx-auto ${
+              toast.type === 'success' ? 'bg-emerald-500/85 border-emerald-400/40 text-white shadow-emerald-500/25' :
+              toast.type === 'warning' ? 'bg-orange-500/85 border-orange-400/40 text-white shadow-orange-500/25' :
+              'bg-slate-800/85 border-slate-600/50 text-white shadow-slate-900/30'
             }`}
           >
             {toast.type === 'success' && <CheckCircle2 size={20} className="shrink-0 text-emerald-100" />}

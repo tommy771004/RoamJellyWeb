@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search, Calendar, Users, Heart, Coffee, Car, DollarSign, Check } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search, Calendar, Users, Heart, Coffee, Car, DollarSign, Check, Footprints, Baby, Accessibility, PawPrint, UsersRound } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import GlassCard from './GlassCard';
-import IconImg from './ui/IconImg';
 import { LocationPickerPopup } from './LocationPickerPopup';
 import { useSearchStore } from '../store/useSearchStore';
 import { useKeyboardHeight } from '../lib/useKeyboardHeight';
 
 const COMPANION_OPTIONS = [
-  { id: 'solo', label: '獨自行走', emoji: 'hiking-boot' },
-  { id: 'couple', label: '浪漫雙人', emoji: 'heart' },
-  { id: 'family', label: '親子育兒', emoji: 'tent' },
-  { id: 'elderly', label: '帶長輩', emoji: 'hat' },
-  { id: 'friends', label: '三五好友', emoji: 'cocktail' },
-  { id: 'pets', label: '毛小孩', emoji: 'backpack' },
+  { id: 'solo', label: '獨自行走', icon: Footprints, tone: 'border-sky-100 bg-sky-50 text-sky-600' },
+  { id: 'couple', label: '浪漫雙人', icon: Heart, tone: 'border-rose-100 bg-rose-50 text-rose-600' },
+  { id: 'family', label: '親子育兒', icon: Baby, tone: 'border-orange-100 bg-orange-50 text-orange-600' },
+  { id: 'elderly', label: '帶長輩', icon: Accessibility, tone: 'border-amber-100 bg-amber-50 text-amber-700' },
+  { id: 'friends', label: '三五好友', icon: UsersRound, tone: 'border-sky-100 bg-sky-50 text-sky-600' },
+  { id: 'pets', label: '毛小孩', icon: PawPrint, tone: 'border-emerald-100 bg-emerald-50 text-emerald-600' },
 ];
 
 const VIBE_OPTIONS = ['特種兵急行軍', '睡到自然醒', '隨興漫遊', '在地深度文化', '網美打卡秘境', '奢華極致享受', '文青慢活步調', '夜生活狂歡'];
@@ -21,6 +20,7 @@ const INTEREST_OPTIONS = ['大自然與絕景', '歷史文化遺產', '購物血
 const DIETARY_OPTIONS = ['無限制', '純素食', '蛋奶素', '海鮮素', '無麩質', '不吃牛', '不吃海鮮', '清真認證'];
 const TRANSPORT_OPTIONS = ['大眾運輸', '自駕租車', '包車導覽', '徒步與腳踏車'];
 const BUDGET_OPTIONS = ['背包窮遊', '精打細算小資', '舒適無虞', '奢華尊榮'];
+const AI_FORM_ENTRY_PILLS = ['先起草旅程', '再補偏好', '最後回手帳調整'];
 
 export interface AiFormData {
   departure: string;
@@ -86,6 +86,7 @@ export default function AiForm({
 }) {
   const { aiProfile, saveAiProfile } = useSearchStore();
   const keyboardHeight = useKeyboardHeight();
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const [step, setStep] = useState(1);
   const [showDestDropdown, setShowDestDropdown] = useState(false);
   const [showDepDropdown, setShowDepDropdown] = useState(false);
@@ -161,26 +162,45 @@ export default function AiForm({
   return (
     <div className="relative flex flex-col h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* Refined Immersive Background for AI Form */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#fafbfc]">
-        <div className="absolute top-[-10%] right-[-10%] w-[80%] h-[80%] bg-pink-100/40 blur-[120px] rounded-full mix-blend-multiply" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[80%] h-[80%] bg-indigo-100/40 blur-[120px] rounded-full mix-blend-multiply" />
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-slate-50">
+        <div className="absolute top-[-12%] right-[-8%] h-[72%] w-[72%] rounded-full bg-sky-100/50 blur-[120px]" />
+        <div className="absolute bottom-[-12%] left-[-10%] h-[72%] w-[72%] rounded-full bg-orange-100/45 blur-[120px]" />
       </div>
 
       <div className="relative z-10 flex flex-col h-full w-full px-4 sm:px-8 py-4 sm:py-10 pb-tab-safe max-w-4xl mx-auto">
         <div className="flex justify-between items-start mb-4 sm:mb-10">
-          <div>
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-800 leading-tight tracking-tight mb-1 sm:mb-2">
-              為您量身打造行程
-            </h2>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">AI Itinerary Planner</p>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">
+                AI Trip Draft
+              </span>
+              <span className="inline-flex items-center rounded-full border border-orange-200 bg-white/85 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-orange-600">
+                2 Steps
+              </span>
+            </div>
+            <div>
+              <h2 className="text-balance text-2xl sm:text-4xl font-black text-slate-900 leading-tight tracking-tight mb-1 sm:mb-2">
+                先讓 AI 起草一版旅程，再回到手帳慢慢補完
+              </h2>
+              <p className="max-w-2xl text-pretty text-sm sm:text-base font-bold leading-6 text-slate-600">
+                這裡先收斂目的地、天數與偏好，產出可編輯的第一版安排，而不是一次性的靜態結果。
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {AI_FORM_ENTRY_PILLS.map((pill) => (
+                <span
+                  key={pill}
+                  className="inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-black text-slate-600 shadow-sm"
+                >
+                  {pill}
+                </span>
+              ))}
             </div>
           </div>
           {onCancel && (
             <button 
               onClick={onCancel}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all hover:scale-105 active:scale-95 shrink-0"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-sky-700 hover:bg-sky-50 hover:border-sky-200 shadow-sm transition-colors active:scale-95 shrink-0"
               aria-label="取消"
             >
               <ArrowLeft size={20} className="sm:hidden" />
@@ -193,56 +213,56 @@ export default function AiForm({
         {step === 1 && (
           <motion.div 
             key="step1"
-            initial={{ opacity: 0, scale: 0.98, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: -10 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: 8 }}
+            animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1, y: 0 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: -8 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
             className="flex flex-col gap-6 sm:gap-8"
           >
             {/* Bento Grid Layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               
               {/* Left Column: Route & Dates */}
-              <div className="flex flex-col gap-4 sm:gap-6 bg-white/60 backdrop-blur-xl border border-slate-200/60 p-5 sm:p-8 rounded-[2rem] shadow-sm">
+              <div className="flex flex-col gap-4 sm:gap-6 bg-white/80 backdrop-blur-xl border border-white/90 p-4 sm:p-8 rounded-[2rem] shadow-sm">
                 
                 {/* Departure */}
                 <div className="flex flex-col gap-2.5">
                   <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
-                    <MapPin size={16} className="text-blue-500" />
+                    <MapPin size={16} className="text-sky-500" />
                     出發地
                   </label>
                   <button 
                     onClick={() => setShowDepDropdown(true)}
-                    className="w-full text-left bg-white border border-slate-200 hover:border-blue-300 rounded-2xl py-4 px-5 text-base sm:text-lg text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-blue-100 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between min-h-[60px]"
+                    className="w-full text-left bg-white border border-slate-200 hover:border-sky-300 rounded-2xl py-4 px-5 text-base sm:text-lg text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-sky-100 shadow-sm transition-colors group flex items-center justify-between min-h-[60px]"
                   >
                     <span className={formData.departure ? "text-slate-800" : "text-slate-500 font-medium"}>
                       {formData.departure || "請選擇出發城市"}
                     </span>
-                    {!formData.departure && <Search size={18} className="text-slate-400 group-hover:text-blue-400 transition-colors" />}
+                    {!formData.departure && <Search size={18} className="text-slate-400 group-hover:text-sky-400 transition-colors" />}
                   </button>
                 </div>
 
                 {/* Destination */}
                 <div className="flex flex-col gap-2.5">
                   <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
-                    <MapPin size={16} className="text-pink-500" />
+                    <MapPin size={16} className="text-orange-500" />
                     目的地
                   </label>
                   <button 
                     onClick={() => setShowDestDropdown(true)}
-                    className="w-full text-left bg-white border border-slate-200 hover:border-pink-300 rounded-2xl py-4 px-5 text-base sm:text-lg text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-pink-100 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between min-h-[60px]"
+                    className="w-full text-left bg-white border border-slate-200 hover:border-orange-300 rounded-2xl py-4 px-5 text-base sm:text-lg text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-orange-100 shadow-sm transition-colors group flex items-center justify-between min-h-[60px]"
                   >
                     <span className={formData.destination ? "text-slate-800" : "text-slate-500 font-medium"}>
                       {formData.destination || "想去哪裡探索？"}
                     </span>
-                    {!formData.destination && <Search size={18} className="text-slate-400 group-hover:text-pink-400 transition-colors" />}
+                    {!formData.destination && <Search size={18} className="text-slate-400 group-hover:text-orange-400 transition-colors" />}
                   </button>
                 </div>
 
                 {/* Days */}
                 <div className="flex flex-col gap-2.5 pt-2">
                   <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
-                    <Calendar size={16} className="text-indigo-500" />
+                    <Calendar size={16} className="text-sky-500" />
                     預計天數
                   </label>
                   <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl p-2 shadow-sm min-h-[60px]">
@@ -270,7 +290,7 @@ export default function AiForm({
               </div>
 
               {/* Right Column: Companions */}
-              <div className="flex flex-col gap-4 sm:gap-6 bg-white/60 backdrop-blur-xl border border-slate-200/60 p-5 sm:p-8 rounded-[2rem] shadow-sm">
+              <div className="flex flex-col gap-4 sm:gap-6 bg-white/80 backdrop-blur-xl border border-white/90 p-4 sm:p-8 rounded-[2rem] shadow-sm">
                 <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
                   <Users size={16} className="text-orange-500" />
                   與誰同行？
@@ -278,17 +298,26 @@ export default function AiForm({
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 h-full content-start">
                   {COMPANION_OPTIONS.map(opt => {
                     const isSelected = formData.companions === opt.id;
+                    const Icon = opt.icon;
                     return (
                       <button
                         key={opt.id}
                         onClick={() => setFormData(p => ({ ...p, companions: opt.id }))}
-                        className={`flex flex-col items-center justify-center gap-2 p-4 sm:p-5 rounded-2xl transition-all duration-200 min-h-[100px] border-2 group relative overflow-hidden ${
+                        className={`flex flex-col items-center justify-center gap-2 p-3.5 sm:p-5 rounded-2xl transition-all duration-200 min-h-[88px] sm:min-h-[100px] border-2 group relative overflow-hidden ${
                           isSelected 
                             ? 'bg-slate-900 shadow-md border-slate-900 scale-[1.02] z-10' 
                             : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-sm active:scale-[0.98]'
                         }`}
                       >
-                        <IconImg value={opt.emoji} size={32} className={`filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300 origin-bottom ${isSelected ? 'opacity-100' : 'opacity-90'}`} />
+                        <span
+                          className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-2xl border transition-transform duration-300 group-hover:scale-110 ${
+                            isSelected
+                              ? 'border-white/15 bg-white/10 text-white'
+                              : opt.tone
+                          }`}
+                        >
+                          <Icon size={20} strokeWidth={2.2} />
+                        </span>
                         <span className={`text-[13px] font-bold tracking-wide relative z-10 ${isSelected ? 'text-white' : 'text-slate-600'}`}>
                           {opt.label}
                         </span>
@@ -318,13 +347,13 @@ export default function AiForm({
                   className={`w-full h-14 sm:h-16 rounded-2xl font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-200 shadow-lg sm:shadow-md ${
                     !formData.departure || !formData.destination || !formData.companions
                       ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none'
-                      : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98] border border-transparent'
+                      : 'bg-gradient-to-r from-sky-500 to-orange-400 text-white hover:from-sky-600 hover:to-orange-500 active:scale-[0.98] border border-transparent'
                   }`}
                 >
                   下一步，設定偏好細節
                   <ArrowLeft className="rotate-180" size={18} />
                 </button>
-                <p className="mt-2 text-center text-[12px] font-medium text-slate-500 tracking-wide">
+                <p className="mt-2 text-center text-[12px] font-medium leading-5 text-slate-500">
                   {stepOneHint}
                 </p>
               </div>
@@ -335,27 +364,27 @@ export default function AiForm({
         {step === 2 && (
           <motion.div 
             key="step2"
-            initial={{ opacity: 0, scale: 0.98, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: -10 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: 8 }}
+            animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1, y: 0 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: -8 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
             className="flex flex-col gap-6 sm:gap-8"
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
               <div>
-                <h3 className="text-xl font-black text-slate-800">偏好細節</h3>
-                <p className="text-sm text-slate-500 font-medium mt-1">選填項目，讓 AI 更懂你的心</p>
+                <h3 className="text-xl font-black text-slate-900">補充偏好細節</h3>
+                <p className="text-sm text-slate-500 font-medium mt-1">這些是選填項目，用來把草稿調得更貼近你的旅程節奏。</p>
               </div>
               <button
                  onClick={handleSubmit}
-                 className="text-indigo-600 font-bold text-sm tracking-wide hover:text-indigo-700 transition-colors bg-indigo-50 px-5 py-2.5 rounded-full border border-indigo-100 hover:bg-indigo-100 active:scale-95 shrink-0 flex items-center gap-2"
+                 className="text-sky-700 font-bold text-sm tracking-wide hover:text-sky-800 transition-colors bg-sky-50 px-5 py-2.5 rounded-full border border-sky-100 hover:bg-sky-100 active:scale-95 shrink-0 flex items-center gap-2"
                >
                  跳過直接生成
                  <Sparkles size={16} />
                </button>
             </div>
 
-            <div className="flex flex-col gap-6 sm:gap-8 bg-white/60 backdrop-blur-xl border border-slate-200/60 p-5 sm:p-8 rounded-[2rem] shadow-sm relative overflow-hidden">
+            <div className="flex flex-col gap-6 sm:gap-8 bg-white/80 backdrop-blur-xl border border-white/90 p-5 sm:p-8 rounded-[2rem] shadow-sm relative overflow-hidden">
               
               <div className="flex flex-col gap-3.5">
                 <label className="text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
@@ -464,13 +493,13 @@ export default function AiForm({
                 <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                   <button
                     onClick={handleBack}
-                    className="w-full sm:w-auto px-6 h-14 sm:h-16 rounded-2xl font-bold text-[15px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-sm hover:shadow-md transition-all active:scale-95 shrink-0"
+                    className="w-full sm:w-auto px-6 h-14 sm:h-16 rounded-2xl font-bold text-[15px] bg-white border border-slate-200 text-slate-600 hover:text-sky-700 hover:bg-sky-50 hover:border-sky-200 shadow-sm transition-colors active:scale-95 shrink-0"
                   >
                     返回
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 w-full h-14 sm:h-16 rounded-2xl font-black text-[15px] sm:text-base text-white flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg active:scale-[0.98] transition-all tracking-wider border border-transparent"
+                    className="flex-1 w-full h-14 sm:h-16 rounded-2xl font-black text-[15px] sm:text-base text-white flex items-center justify-center gap-3 bg-gradient-to-r from-sky-500 to-orange-400 hover:from-sky-600 hover:to-orange-500 shadow-md hover:shadow-lg active:scale-[0.98] transition-all tracking-wide border border-transparent"
                   >
                     生成行程
                     <Sparkles size={20} />
