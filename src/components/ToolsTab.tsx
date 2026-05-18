@@ -110,7 +110,7 @@ const TOOLS_ENTRY_PILLARS = [
       "之後要補歷史紀錄或同步成員，也比較不容易弄亂上下文。",
       "先把旅程主線建立好，再讓分帳自然接上，比一開始做表格更順。",
     ],
-    tone: "teal",
+    tone: "emerald",
   },
 ] as const;
 
@@ -673,7 +673,7 @@ function WeatherCard() {
           )}
         </div>
 
-        <div className="flex items-center sm:items-end justify-between mb-5 sm:mb-6 glass-panel p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-white/70 shadow-sm">
+        <div className="flex items-center sm:items-end justify-between mb-5 sm:mb-6 glass-panel p-4 sm:p-5 rounded-[28px] sm:rounded-[36px] border border-white/70 shadow-[0_8px_20px_rgba(244,114,182,0.1)]">
           <div className="flex flex-col gap-3">
             <div className="flex bg-white/80 backdrop-blur-md rounded-full px-3.5 py-1.5 sm:px-4 sm:py-2 items-center gap-2 border border-slate-100 shadow-sm w-fit">
               <Icon
@@ -695,7 +695,7 @@ function WeatherCard() {
               </span>
             )}
           </div>
-          <div className="flex flex-col items-end rounded-[20px] border border-white/80 bg-white/78 px-4 py-3 shadow-sm">
+          <div className="flex flex-col items-end rounded-[28px] border border-white/80 bg-white/78 px-4 py-3 shadow-[0_4px_16px_rgba(244,114,182,0.08)]">
             <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
               today vibe
             </span>
@@ -708,7 +708,7 @@ function WeatherCard() {
           </div>
         </div>
 
-        <div className="glass-panel backdrop-blur-md rounded-[20px] sm:rounded-[24px] p-4 flex items-center gap-4 border border-white/70 shadow-sm mb-5 sm:mb-6">
+        <div className="glass-panel backdrop-blur-md rounded-[28px] sm:rounded-[36px] p-4 flex items-center gap-4 border border-white/70 shadow-[0_8px_20px_rgba(14,165,233,0.12)] mb-5 sm:mb-6">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-white/86 flex items-center justify-center text-sky-600 shadow-inner border border-white shrink-0 group-hover:-translate-y-0.5 transition-transform duration-200">
             <Sparkles size={18} strokeWidth={2.5} />
           </div>
@@ -819,7 +819,7 @@ function ChecklistSection() {
             ),
           })).filter((g) => g.items.length > 0);
           return grouped.map(({ cat, meta, items: catItems }) => (
-            <div key={cat} className="editorial-card-soft mb-4 rounded-[24px] p-3.5 last:mb-0">
+            <div key={cat} className="editorial-card-soft mb-4 rounded-[32px] p-3.5 sm:p-5 last:mb-0 shadow-[0_8px_24px_rgba(244,114,182,0.06)] hover:shadow-[0_12px_28px_rgba(244,114,182,0.12)] transition-shadow">
               <div className="flex items-center gap-2 mb-2">
                 <IconImg value={meta.emoji} size={18} />
                 <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
@@ -932,7 +932,7 @@ function LedgerSection() {
             先記錄最新花費，再讓結算跟著這趟旅程慢慢收斂。
           </span>
         </div>
-        <div className="shrink-0 rounded-[20px] border border-white/80 bg-white/82 px-4 py-3 text-right shadow-sm">
+        <div className="shrink-0 rounded-[28px] border border-white/80 bg-white/82 px-4 py-3 text-right shadow-[0_4px_16px_rgba(244,114,182,0.08)]">
           <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">本趟摘要</div>
           <div className="mt-1 text-lg font-black text-slate-900">{expenses.length} 筆</div>
           <div className="text-[12px] font-bold text-slate-500">{members.length || 0} 位旅伴</div>
@@ -942,7 +942,7 @@ function LedgerSection() {
       <div className="flex flex-col gap-y-5 relative z-10">
         {/* Recent Expenses List */}
         {expenses && expenses.length > 0 && (
-          <div className="flex flex-col gap-3 mb-4 w-full rounded-[24px] border border-white/90 bg-white/78 p-4 shadow-sm">
+          <div className="flex flex-col gap-3 mb-4 w-full rounded-[32px] border border-white/90 bg-white/78 p-4 shadow-[0_8px_24px_rgba(244,114,182,0.08)] hover:shadow-[0_12px_28px_rgba(244,114,182,0.12)] transition-shadow">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-2">
               最新花費紀錄
             </span>
@@ -1191,14 +1191,14 @@ function SettlementsSection() {
       <GlassCard className="!p-4 sm:!p-6 glass-panel">
       <div className="flex flex-col gap-4 w-full">
         {settlements.length === 0 && (
-          <div className="editorial-card-soft flex items-center justify-center rounded-[24px] p-10">
+          <div className="editorial-card-soft flex items-center justify-center rounded-[32px] p-10">
             <span className="text-slate-500 font-medium italic">
               都算清囉！ ✨
             </span>
           </div>
         )}
         {settlements.length > 0 && (
-          <div className="editorial-card-soft table-wrapper mt-2 overflow-hidden rounded-[24px] p-2 sm:p-3">
+          <div className="editorial-card-soft table-wrapper mt-2 overflow-hidden rounded-[32px] sm:rounded-[36px] p-2 sm:p-3 shadow-[0_8px_24px_rgba(244,114,182,0.06)] hover:shadow-[0_12px_28px_rgba(244,114,182,0.1)] transition-shadow">
             <table className="responsive-table">
               <caption className="sr-only">結算清單</caption>
               <thead>

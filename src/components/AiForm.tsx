@@ -20,6 +20,8 @@ const INTEREST_OPTIONS = ['大自然與絕景', '歷史文化遺產', '購物血
 const DIETARY_OPTIONS = ['無限制', '純素食', '蛋奶素', '海鮮素', '無麩質', '不吃牛', '不吃海鮮', '清真認證'];
 const TRANSPORT_OPTIONS = ['大眾運輸', '自駕租車', '包車導覽', '徒步與腳踏車'];
 const BUDGET_OPTIONS = ['背包窮遊', '精打細算小資', '舒適無虞', '奢華尊榮'];
+const PACE_OPTIONS = ['緊湊特種兵', '適中', '悠閒慢活'];
+const ACCOMMODATION_OPTIONS = ['青旅', '商務旅館', '星級飯店', '特色民宿'];
 const AI_FORM_ENTRY_PILLS = ['先起草旅程', '再補偏好', '最後回手帳調整'];
 
 export interface AiFormData {
@@ -32,6 +34,8 @@ export interface AiFormData {
   dietary: string[];
   transport: string[];
   budget: string;
+  pace: string;
+  accommodation: string[];
 }
 
 function normalizeProfileList(values?: string[]) {
@@ -100,6 +104,8 @@ export default function AiForm({
     dietary: [],
     transport: [],
     budget: '',
+    pace: '',
+    accommodation: [],
   });
 
   useEffect(() => {
@@ -114,6 +120,8 @@ export default function AiForm({
       dietary: prev.dietary.length ? prev.dietary : normalizeProfileList(aiProfile.dietary),
       transport: prev.transport.length ? prev.transport : normalizeProfileList(aiProfile.transport),
       budget: prev.budget || aiProfile.budget || '',
+      pace: prev.pace || aiProfile.pace || '',
+      accommodation: prev.accommodation.length ? prev.accommodation : normalizeProfileList(aiProfile.accommodation),
     }));
   }, [aiProfile]);
 
@@ -127,7 +135,7 @@ export default function AiForm({
     setStep(1);
   };
 
-  const toggleArrayItem = (field: 'vibes' | 'interests' | 'dietary' | 'transport', item: string) => {
+  const toggleArrayItem = (field: 'vibes' | 'interests' | 'dietary' | 'transport' | 'accommodation', item: string) => {
     setFormData(prev => {
       const arr = prev[field];
       if (arr.includes(item)) {
@@ -147,6 +155,8 @@ export default function AiForm({
       dietary: formData.dietary,
       transport: formData.transport,
       budget: formData.budget,
+      pace: formData.pace,
+      accommodation: formData.accommodation,
     });
     onSubmit(formData);
   };
@@ -229,7 +239,7 @@ export default function AiForm({
                   </label>
                   <button 
                     onClick={() => setShowDepDropdown(true)}
-                    className="group flex min-h-[56px] w-full items-center justify-between rounded-[22px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-100 sm:text-base"
+                    className="group flex min-h-[56px] w-full items-center justify-between rounded-[32px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-100 sm:text-base"
                   >
                     <span className={formData.departure ? "text-slate-800" : "text-slate-500 font-medium"}>
                       {formData.departure || "請選擇出發城市"}
@@ -246,7 +256,7 @@ export default function AiForm({
                   </label>
                   <button 
                     onClick={() => setShowDestDropdown(true)}
-                    className="group flex min-h-[56px] w-full items-center justify-between rounded-[22px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-orange-300 focus:outline-none focus:ring-4 focus:ring-orange-100 sm:text-base"
+                    className="group flex min-h-[56px] w-full items-center justify-between rounded-[32px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-orange-300 focus:outline-none focus:ring-4 focus:ring-orange-100 sm:text-base"
                   >
                     <span className={formData.destination ? "text-slate-800" : "text-slate-500 font-medium"}>
                       {formData.destination || "想去哪裡探索？"}
@@ -261,7 +271,7 @@ export default function AiForm({
                     <Calendar size={16} className="text-sky-500" />
                     預計天數
                   </label>
-                  <div className="flex min-h-[56px] items-center justify-between rounded-[22px] border border-white/84 bg-white/86 p-2 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+                  <div className="flex min-h-[56px] items-center justify-between rounded-[32px] border border-white/84 bg-white/86 p-2 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
                     <button 
                       onClick={() => setFormData(p => ({ ...p, days: Math.max(1, p.days - 1) }))}
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-95 hover:bg-slate-100"
@@ -299,7 +309,7 @@ export default function AiForm({
                       <button
                         key={opt.id}
                         onClick={() => setFormData(p => ({ ...p, companions: opt.id }))}
-                        className={`group relative flex min-h-[84px] flex-col items-center justify-center gap-2 overflow-hidden rounded-[22px] border p-2.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] sm:min-h-[96px] sm:rounded-[26px] sm:p-4 ${
+                        className={`group relative flex min-h-[84px] flex-col items-center justify-center gap-2 overflow-hidden rounded-[32px] border p-2.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] sm:min-h-[96px] sm:rounded-[36px] sm:p-4 ${
                           isSelected 
                             ? 'z-10 -translate-y-0.5 border-slate-900 bg-slate-900 shadow-[0_14px_28px_rgba(15,23,42,0.14)]' 
                             : 'border-white/84 bg-white/86 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 hover:border-slate-200 hover:bg-slate-50'
@@ -349,9 +359,7 @@ export default function AiForm({
                   下一步，設定偏好細節
                   <ArrowLeft className="rotate-180" size={18} />
                 </button>
-                <p className="mt-2 text-center text-[12px] font-medium leading-[1.55] text-slate-500">
-                  {stepOneHint}
-                </p>
+
               </div>
             </div>
           </motion.div>
@@ -380,7 +388,7 @@ export default function AiForm({
                </button>
             </div>
 
-            <div className="relative flex flex-col gap-5 overflow-hidden rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-6 sm:p-6">
+            <div className="relative flex flex-col gap-5 overflow-hidden rounded-[40px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-6 sm:p-6">
               
               <div className="flex flex-col gap-3.5">
                 <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
@@ -476,6 +484,44 @@ export default function AiForm({
                   ))}
                 </div>
               </div>
+
+              <div className="flex flex-col gap-3.5">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <Footprints size={16} className="text-sky-600" />
+                  行程步調 (單選)
+                </label>
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                  {PACE_OPTIONS.map(pace => (
+                    <div className="shrink-0" key={pace}>
+                      <MultiSelectPill
+                        label={pace}
+                        accentColor="blue"
+                        selected={formData.pace === pace}
+                        onClick={() => setFormData(p => ({ ...p, pace: p.pace === pace ? '' : pace }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3.5">
+                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <MapPin size={16} className="text-rose-600" />
+                  住宿偏好
+                </label>
+                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                  {ACCOMMODATION_OPTIONS.map(accommodation => (
+                    <div className="shrink-0" key={accommodation}>
+                      <MultiSelectPill
+                        label={accommodation}
+                        accentColor="rose"
+                        selected={formData.accommodation.includes(accommodation)}
+                        onClick={() => toggleArrayItem('accommodation', accommodation)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Spacer so last field isn't hidden under fixed button on mobile */}
@@ -500,10 +546,10 @@ export default function AiForm({
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] active:scale-[0.92] sm:h-[3.8rem] sm:text-[15px]"
+                    className="group flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)] active:scale-[0.92] sm:h-[3.8rem] sm:text-[15px]"
                   >
                     生成行程
-                    <Sparkles size={20} />
+                    <Sparkles size={20} className="group-hover:animate-cute-bounce" />
                   </button>
                 </div>
               </div>

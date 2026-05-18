@@ -39,7 +39,15 @@ export function useWikiSearch() {
         return null;
       }
       
-      const bestTitle = searchResults[0].title;
+      // Filter out weird unrelated matches for strictness
+      // Wikipedia sometimes returns completely unrelated phonetic matches at index 0.
+      let bestTitle = searchResults[0].title;
+      const queryMatches = searchResults.filter((r: any) => 
+        r.title.includes(query) || query.includes(r.title)
+      );
+      if (queryMatches.length > 0) {
+        bestTitle = queryMatches[0].title;
+      }
 
       // Step 2: Fetch the page summary
       const summaryRes = await fetch(

@@ -49,14 +49,23 @@ export function FlightSkeletonCard() {
 
 export function ItinerarySkeletonCard() {
   return (
-    <div className="relative mb-6 flex flex-col">
-      <div className="absolute -left-9 top-6 w-5 h-5 rounded-full bg-slate-200/80" />
-      <div className="ml-2 bg-white/40 border border-white/60 rounded-3xl p-5 flex flex-col" style={{ gap: 8 }}>
-        <div className="flex flex-row items-center" style={{ gap: 16 }}>
-          <motion.div className="w-14 h-14 rounded-full bg-slate-200/80 shrink-0" {...pulse} />
-          <div className="flex flex-col flex-1" style={{ gap: 8 }}>
-            <SkeletonLine height="h-3" width="w-1/4" />
-            <SkeletonLine height="h-5" width="w-3/4" />
+    <div className="relative flex items-stretch group w-full pl-[22px] sm:pl-10 lg:pl-12 my-2">
+      <div className="absolute left-[10px] sm:left-4 lg:left-5 top-0 bottom-0 w-[4px] bg-slate-100 rounded-full" />
+      <div className="absolute left-[5px] sm:left-2 lg:left-3 top-6 sm:top-7 w-[14px] h-[14px] sm:w-[18px] sm:h-[18px] lg:w-[20px] lg:h-[20px] rounded-full border-2 sm:border-[3px] lg:border-4 border-white bg-slate-200 shadow-sm z-20" />
+      
+      <div className="flex-1 p-4 sm:p-5 rounded-[24px] sm:rounded-[32px] relative z-10 w-full bg-white/60 backdrop-blur-xl border border-slate-100/50 shadow-[0_8px_20px_rgba(15,23,42,0.02)]">
+        <div className="flex flex-col gap-2 sm:gap-3 w-full">
+          <div className="flex flex-row items-start gap-2 sm:gap-2.5">
+            <motion.div className="relative w-6 h-6 sm:w-8 sm:h-8 mt-0.5 shrink-0 rounded-[10px] sm:rounded-[12px] bg-slate-200/50" {...pulse} />
+            <div className="flex flex-col flex-1 gap-2.5 pt-1">
+              <SkeletonLine height="h-3" width="w-24" className="rounded-full" />
+              <SkeletonLine height="h-5" width="w-3/4" className="rounded-full" />
+              <div className="mt-1 flex gap-2">
+                 <SkeletonLine height="h-6" width="w-16" className="rounded-full" />
+                 <SkeletonLine height="h-6" width="w-20" className="rounded-full" />
+                 <SkeletonLine height="h-6" width="w-14" className="rounded-full" />
+              </div>
+            </div>
           </div>
         </div>
       </div>

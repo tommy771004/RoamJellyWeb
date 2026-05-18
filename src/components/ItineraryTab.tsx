@@ -263,6 +263,9 @@ const AI_LOADING_QUOTES = [
   "正在幫你喬靠窗座位，也順便避開太硬的移動路線...",
   "正在請教在地老饕，看看哪一站最值得停久一點...",
   "正在替你把交通、景點與休息點排成順手的旅途節拍...",
+  "正在翻閱地圖，尋找那些不該被錯過的私房秘境...",
+  "正在衡量步調，確保每天都有足夠的發呆時間...",
+  "再等一下，完美的假期即將躍然紙上...",
 ];
 const NO_TRIP_ENTRY_PILLARS = [
   {
@@ -286,7 +289,12 @@ const NO_TRIP_ENTRY_PILLARS = [
 ] as const;
 const DELETE_UNDO_WINDOW_MS = 3600;
 
-import { CATEGORY_META, CATEGORY_OPTIONS, getCategoryMeta, getNodeEmoji } from "../lib/itineraryUtils";
+import {
+  CATEGORY_META,
+  CATEGORY_OPTIONS,
+  getCategoryMeta,
+  getNodeEmoji,
+} from "../lib/itineraryUtils";
 
 function withAutoCategoryIcon(node: ItineraryNode): ItineraryNode {
   return {
@@ -325,6 +333,10 @@ function buildDefaultPlannerForm(
       : ([] as string[]),
     transport: Array.isArray(profile?.transport)
       ? [...profile.transport]
+      : ([] as string[]),
+    pace: profile?.pace || "",
+    accommodation: Array.isArray(profile?.accommodation)
+      ? [...profile.accommodation]
       : ([] as string[]),
   } as any;
 }
@@ -634,6 +646,8 @@ export default function ItineraryTab() {
           budget: formData.budget,
           dietary: formData.dietary,
           transport: formData.transport,
+          pace: formData.pace,
+          accommodation: formData.accommodation,
         },
       });
 
@@ -1937,7 +1951,7 @@ export default function ItineraryTab() {
           <EditorialSectionIntro
             eyebrow="Trip Notebook"
             title="先選一趟旅程，再把 AI 草稿與共編安排接回手帳"
-            description="行程手帳不是孤立頁面，它是整個旅程的主線。先建立一趟旅程，你就能從 AI 起草、景點調整到後續分享，都維持在同一個上下文裡。"
+            description="你的行程不是孤立頁面，它是整個旅程的主線。先建立一趟旅程，你就能從 AI 起草、景點調整到後續分享，都維持在同一個上下文裡。"
             highlights={[
               { label: "旅程主線", value: "日期與節奏" },
               { label: "AI 起草", value: "先有第一版" },
@@ -1953,7 +1967,10 @@ export default function ItineraryTab() {
             <motion.div
               whileHover={prefersReducedMotion ? undefined : { y: -4 }}
               whileTap={prefersReducedMotion ? undefined : { scale: 0.99 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.2,
+                ease: "easeOut",
+              }}
               onClick={() => setIsPlanningNew(true)}
               className="editorial-card cursor-pointer group relative overflow-hidden rounded-[32px] sm:rounded-[36px] p-4 sm:p-7 backdrop-blur-xl"
             >
@@ -1974,27 +1991,31 @@ export default function ItineraryTab() {
                     descriptionClassName="text-sm sm:text-lg font-bold leading-6 sm:leading-8"
                   />
                   <div className="grid gap-3 sm:grid-cols-3">
-                    {NO_TRIP_ENTRY_PILLARS.map(({ icon: Icon, eyebrow, title, description }) => (
-                      <div
-                        key={title}
-                        className="editorial-card rounded-[24px] px-4 py-4"
-                      >
-                        <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-sky-700">
-                          <Icon size={14} strokeWidth={2.5} />
-                          {eyebrow}
-                        </span>
-                        <h3 className="mt-3 text-sm font-black text-slate-900">{title}</h3>
-                        <ExpandableText
-                          text={description}
-                          previewLines={3}
-                          minCharacters={72}
-                          className="mt-2"
-                          textClassName="text-pretty text-[13px] leading-[1.62] text-slate-600"
-                          collapsedLabel="看更多內容"
-                          expandedLabel="收起重點"
-                        />
-                      </div>
-                    ))}
+                    {NO_TRIP_ENTRY_PILLARS.map(
+                      ({ icon: Icon, eyebrow, title, description }) => (
+                        <div
+                          key={title}
+                          className="editorial-card rounded-[24px] px-4 py-4"
+                        >
+                          <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-sky-700">
+                            <Icon size={14} strokeWidth={2.5} />
+                            {eyebrow}
+                          </span>
+                          <h3 className="mt-3 text-sm font-black text-slate-900">
+                            {title}
+                          </h3>
+                          <ExpandableText
+                            text={description}
+                            previewLines={2}
+                            minCharacters={60}
+                            className="mt-2"
+                            textClassName="text-pretty text-[13px] leading-[1.62] text-slate-600"
+                            collapsedLabel="展開完整內容"
+                            expandedLabel="收起內容"
+                          />
+                        </div>
+                      ),
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col items-stretch gap-3 md:min-w-[260px]">
@@ -2040,7 +2061,7 @@ export default function ItineraryTab() {
             </div>
           ) : userTrips.length === 0 ? (
             <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-[32px] border border-slate-200/80 bg-white/70 px-5 py-8 text-center shadow-sm backdrop-blur-sm sm:px-6 sm:py-10">
-              <div className="mb-4 flex size-16 items-center justify-center rounded-[24px] bg-gradient-to-br from-pink-50 to-rose-50 text-pink-600 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(244,63,94,0.1)]">
+              <div className="mb-4 flex size-16 items-center justify-center rounded-[32px] bg-gradient-to-br from-pink-50 to-rose-50 text-pink-600 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(244,63,94,0.1)]">
                 <Navigation2 size={28} />
               </div>
               <h3 className="text-balance text-[22px] sm:text-2xl font-black text-slate-900">
@@ -2064,7 +2085,10 @@ export default function ItineraryTab() {
                   key={trip.tripId ?? trip.id}
                   whileHover={prefersReducedMotion ? undefined : { y: -6 }}
                   whileTap={prefersReducedMotion ? undefined : { scale: 0.99 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
+                  transition={{
+                    duration: prefersReducedMotion ? 0 : 0.2,
+                    ease: "easeOut",
+                  }}
                   onClick={(e) => {
                     if ((e.target as HTMLElement).closest(".delete-trip-btn"))
                       return;
@@ -2333,7 +2357,7 @@ export default function ItineraryTab() {
         </div>
 
         {/* Header Section (Desktop) */}
-        <div className="px-5 md:px-8 mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div className="px-5 md:px-8 mb-0 md:mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-6">
           <div className="group w-full md:w-auto">
             <div className="hidden lg:flex items-center gap-2 mb-4 flex-wrap">
               <button
@@ -2435,45 +2459,49 @@ export default function ItineraryTab() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 sticky top-4 z-40 md:relative md:top-0 md:mt-8">
+          <div className="flex flex-col gap-2 md:gap-4 sticky top-2 md:top-4 z-[45] md:relative md:top-0 md:mt-8">
             <div className="lg:hidden px-4 md:px-0">
               <button
                 onClick={handleBackToTrips}
-                className="px-4 py-2.5 bg-white/90 backdrop-blur-md hover:bg-slate-50 border border-slate-100/50 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm shadow-slate-200/50 active:scale-95 w-max"
+                className="pl-3.5 pr-4 py-2.5 md:py-2 bg-white/80 backdrop-blur-xl hover:bg-white border-2 border-white rounded-full text-[12.5px] font-black text-slate-600 transition-all uppercase tracking-widest flex items-center gap-1.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] active:scale-95 w-max"
               >
-                <ArrowLeft size={16} strokeWidth={3} />
+                <ArrowLeft
+                  size={16}
+                  strokeWidth={3}
+                  className="text-slate-400"
+                />
                 返回行程總覽
               </button>
             </div>
             <HorizontalScrollRail
               label="行程檢視模式"
               viewportClassName="w-[calc(100%-2rem)] mx-auto md:w-auto md:mx-0"
-              contentClassName="gap-2 rounded-full border border-white bg-white/70 p-1.5 md:p-2 shadow-lg shadow-pink-100/30 md:shadow-xl backdrop-blur-xl"
+              contentClassName="gap-1.5 md:gap-2 rounded-[24px] md:rounded-full border-2 border-white/90 md:border-white bg-white/60 md:bg-white/70 p-1.5 md:p-2 shadow-[0_8px_24px_rgba(244,114,182,0.08)] md:shadow-xl backdrop-blur-xl"
               controlsVisibilityClass="hidden md:flex"
             >
-            <button
-              onClick={() => setViewMode("list")}
-              className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "list" ? "bg-slate-800 text-white shadow-xl scale-95 md:scale-100" : "text-slate-500 hover:text-slate-700 hover:bg-white border sm:border-transparent"}`}
-            >
-              行程列表
-            </button>
-            <button
-              onClick={() => setViewMode("map")}
-              className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "map" ? "bg-slate-800 text-white shadow-xl scale-95 md:scale-100" : "text-slate-500 hover:text-slate-700 hover:bg-white border sm:border-transparent"}`}
-            >
-              景點地圖
-            </button>
-            <button
-              onClick={() => setViewMode("calendar")}
-              className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "calendar" ? "bg-slate-800 text-white shadow-xl scale-95 md:scale-100" : "text-slate-500 hover:text-slate-700 hover:bg-white border sm:border-transparent"}`}
-            >
-              日程
-            </button>
-          </HorizontalScrollRail>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "list" ? "bg-slate-800 text-white shadow-md scale-[0.98] md:scale-100 border border-slate-800" : "text-slate-500 hover:text-slate-700 hover:bg-white/80 border border-transparent"}`}
+              >
+                行程列表
+              </button>
+              <button
+                onClick={() => setViewMode("map")}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "map" ? "bg-slate-800 text-white shadow-md scale-[0.98] md:scale-100 border border-slate-800" : "text-slate-500 hover:text-slate-700 hover:bg-white/80 border border-transparent"}`}
+              >
+                景點地圖
+              </button>
+              <button
+                onClick={() => setViewMode("calendar")}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "calendar" ? "bg-slate-800 text-white shadow-md scale-[0.98] md:scale-100 border border-slate-800" : "text-slate-500 hover:text-slate-700 hover:bg-white/80 border border-transparent"}`}
+              >
+                日程
+              </button>
+            </HorizontalScrollRail>
           </div>
         </div>
 
-        <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-10">
+        <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
           {/* Left Column: Filters & Info */}
           <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit max-h-sidebar-dvh overflow-y-auto pr-2 no-scrollbar">
             <GlassCard className="!p-6 shadow-xl shadow-slate-200/40 ring-1 ring-white/60 bg-white/70 backdrop-blur-3xl overflow-hidden rounded-[32px] border border-white">
@@ -2653,7 +2681,7 @@ export default function ItineraryTab() {
           </aside>
 
           {/* Right Column: Content */}
-          <div className="lg:col-span-3 flex flex-col gap-6">
+          <div className="lg:col-span-3 flex flex-col gap-5">
             {/* Memory Album — Trip Recap Banner */}
             {tripInfo?.endDate && new Date(tripInfo.endDate) < new Date() && (
               <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-fuchsia-50 via-pink-50 to-rose-50 border border-pink-100 p-6 print:hidden">
@@ -2690,55 +2718,59 @@ export default function ItineraryTab() {
               </div>
             )}
 
-            {/* Mobile Day Selector — SGD pill toggle style */}
-            <div className="lg:hidden mb-5 overflow-hidden -mx-1">
+            {/* Mobile Day Selector — Cuter segmented toggle style */}
+            <div className="lg:hidden mb-2 md:mb-5 overflow-hidden -mx-1 -mt-3">
               <HorizontalScrollRail
                 label="Day 切換"
                 viewportClassName="py-2 px-1"
-                contentClassName="inline-flex min-w-max gap-1 rounded-full border border-white/85 bg-white/90 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-800/90"
+                contentClassName="inline-flex min-w-max gap-1.5 rounded-full border-2 border-white/80 bg-white/50 backdrop-blur-xl p-1.5 shadow-[0_4px_16px_rgba(15,23,42,0.03)] dark:border-white/10 dark:bg-slate-800/90"
                 controlsVisibilityClass="flex"
               >
-                  {Array.from({ length: totalDays }, (_, i) => i + 1).map(
-                    (day) => {
-                      const isActive = safeSelectedDay === day;
-                      const dateStr =
-                        getDateForDay(day, tripInfo?.startDate) || "";
-                      const displayDate = dateStr
-                        ? new Date(dateStr).toLocaleDateString("zh-TW", {
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "";
+                {Array.from({ length: totalDays }, (_, i) => i + 1).map(
+                  (day) => {
+                    const isActive = safeSelectedDay === day;
+                    const dateStr =
+                      getDateForDay(day, tripInfo?.startDate) || "";
+                    const displayDate = dateStr
+                      ? new Date(dateStr).toLocaleDateString("zh-TW", {
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "";
 
-                      return (
-                        <motion.button
-                          key={day}
-                          onClick={() => setSelectedDay(day)}
-                          whileTap={{ scale: 0.985 }}
-                          className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-sm transition-all shrink-0 snap-center ${
-                            isActive
-                              ? "bg-white/96 dark:bg-slate-700 text-slate-900 dark:text-white shadow-[0_8px_18px_rgba(15,23,42,0.08)]"
-                              : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
-                          }`}
+                    return (
+                      <motion.button
+                        key={day}
+                        onClick={() => setSelectedDay(day)}
+                        whileTap={{ scale: 0.96 }}
+                        className={`relative flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-2 rounded-full font-black text-[13px] sm:text-sm tracking-tight transition-all shrink-0 snap-center ${
+                          isActive
+                            ? "bg-gradient-to-br from-pink-400 via-rose-400 to-rose-400 text-white shadow-[0_8px_16px_rgba(244,114,182,0.25)] border border-transparent"
+                            : "text-slate-500 hover:text-slate-700 hover:bg-white/80 border border-transparent"
+                        }`}
+                      >
+                        <span
+                          className={`drop-shadow-sm ${isActive ? "text-white" : ""}`}
                         >
-                          <span className="tracking-[-0.01em]">Day {day}</span>
-                          {displayDate && (
-                            <span
-                              className={`text-[10px] font-medium hidden sm:inline ${isActive ? "text-slate-500" : "text-slate-400"}`}
-                            >
-                              {displayDate}
-                            </span>
-                          )}
-                          {loadingDay === day && (
-                            <Loader2
-                              size={11}
-                              className="animate-spin ml-0.5"
-                            />
-                          )}
-                        </motion.button>
-                      );
-                    },
-                  )}
+                          Day {day}
+                        </span>
+                        {displayDate && (
+                          <span
+                            className={`text-[10px] sm:text-[11px] font-bold hidden sm:inline ${isActive ? "text-pink-50" : "text-slate-400"}`}
+                          >
+                            {displayDate}
+                          </span>
+                        )}
+                        {loadingDay === day && (
+                          <Loader2
+                            size={12}
+                            className={`animate-spin ml-0.5 ${isActive ? "text-white" : "text-slate-400"}`}
+                          />
+                        )}
+                      </motion.button>
+                    );
+                  },
+                )}
               </HorizontalScrollRail>
             </div>
 
@@ -2749,7 +2781,7 @@ export default function ItineraryTab() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="relative pl-6 mt-4 flex flex-col gap-8"
+                  className="relative pl-6 mt-4 flex flex-col gap-6"
                 >
                   {[0, 1, 2].map((i) => (
                     <motion.div
@@ -2773,7 +2805,7 @@ export default function ItineraryTab() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
-                  className="flex-1 flex flex-col gap-8"
+                  className="flex-1 flex flex-col gap-6"
                 >
                   {Object.values(nodeEditingLocks).some(
                     (lock) => lock.day === safeSelectedDay,
@@ -3058,6 +3090,73 @@ export default function ItineraryTab() {
                                             )
                                           }
                                           className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-teal-100 text-teal-600 border-teal-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                        >
+                                          {opt}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* 行程步調 */}
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
+                                    行程步調
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {["緊湊特種兵", "適中", "悠閒慢活"].map(
+                                      (opt) => (
+                                        <button
+                                          key={opt}
+                                          type="button"
+                                          onClick={() =>
+                                            setPlannerField(
+                                              "pace",
+                                              plannerForm.pace === opt
+                                                ? ""
+                                                : opt,
+                                            )
+                                          }
+                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${plannerForm.pace === opt ? "bg-amber-100 text-amber-600 border-amber-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                        >
+                                          {opt}
+                                        </button>
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* 住宿偏好 */}
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
+                                    住宿偏好
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {[
+                                      "青旅",
+                                      "商務旅館",
+                                      "星級飯店",
+                                      "特色民宿",
+                                    ].map((opt) => {
+                                      const accommodation =
+                                        plannerForm.accommodation || [];
+                                      const selected =
+                                        accommodation.includes(opt);
+                                      return (
+                                        <button
+                                          key={opt}
+                                          type="button"
+                                          onClick={() =>
+                                            setPlannerField(
+                                              "accommodation",
+                                              selected
+                                                ? accommodation.filter(
+                                                    (v: string) => v !== opt,
+                                                  )
+                                                : [...accommodation, opt],
+                                            )
+                                          }
+                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-indigo-100 text-indigo-600 border-indigo-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                         >
                                           {opt}
                                         </button>
@@ -3784,322 +3883,325 @@ function TransportGapIndicator({
 
 // ─── Itinerary List ───────────────────────────────────────────────────────────
 
-const ItineraryListItem = React.memo(function ItineraryListItemBase({
-  item,
-  idx,
-  onDelete,
-  onUpdate,
-  isOffline,
-  tripId,
-  destination,
-  tripStartDate,
-  previousItem,
-  nextItem,
-  isRecentlySynced,
-  onQuickExpense,
-  onEditingChange,
-  collaboratingLock,
-  onPreviewImage,
-}: {
-  item: ItineraryNode;
-  idx: number;
-  onDelete: (node_id: string) => void;
-  onUpdate: (node: ItineraryNode) => void;
-  isOffline: boolean;
-  tripId: string;
-  destination: string;
-  tripStartDate?: string | null;
-  previousItem?: ItineraryNode;
-  nextItem?: ItineraryNode;
-  isRecentlySynced?: boolean;
-  onQuickExpense?: (node: ItineraryNode) => void;
-  onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
-  collaboratingLock?: { userName: string; day: number };
-  onPreviewImage?: (url: string) => void;
-  key?: string;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
-  const [editTitle, setEditTitle] = useState(item.title);
-  const [editDate, setEditDate] = useState(
-    item.date || getDateForDay(item.day, tripStartDate) || "",
-  );
-  const [editTime, setEditTime] = useState(item.time);
-  const [editEmoji, setEditEmoji] = useState(getNodeEmoji(item));
-  const [editDescription, setEditDescription] = useState(
-    item.description || item.notes || "",
-  );
-  const [editTransport, setEditTransport] = useState(
-    item.transport_to_next || "",
-  );
-  const [editImageUrl, setEditImageUrl] = useState(item.image_url || "");
-  const [editAttachments, setEditAttachments] = useState<ItineraryAttachment[]>(
-    item.attachments || [],
-  );
-  const [editLinkedFactId, setEditLinkedFactId] = useState(
-    item.linkedFactId || "",
-  );
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const facts = useTripFactsStore((s) => s.facts);
-  const linkedFact = item.linkedFactId
-    ? facts.find((fact) => fact.id === item.linkedFactId)
-    : undefined;
-  const linkedFactRedirect = getTravelFactRedirectPayload(linkedFact);
-  const linkedFactBookingLabel = getTravelFactBookingLabel(linkedFact);
-  const detailCopy = item.description || item.notes || "";
-  const isFlightCard = item.category === "flight";
-  const isHotelCard =
-    item.category === "hotel" || item.category === "accommodation";
-  const isAnchorCard = isFlightCard || isHotelCard;
-  const flightRoute = isFlightCard
-    ? getFlightRouteSummary(item, linkedFact)
-    : null;
-
-  useEffect(() => {
-    setEditTitle(item.title);
-    setEditDate(item.date || getDateForDay(item.day, tripStartDate) || "");
-    setEditTime(item.time);
-    setEditEmoji(getNodeEmoji(item));
-    setEditDescription(item.description || item.notes || "");
-    setEditTransport(item.transport_to_next || "");
-    setEditImageUrl(item.image_url || "");
-    setEditAttachments(item.attachments || []);
-    setEditLinkedFactId(item.linkedFactId || "");
-  }, [item, tripStartDate]);
-
-  const handleAttachmentUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const files = Array.from(event.target.files || []);
-    if (files.length === 0) return;
-
-    const uploaded = await Promise.all(
-      files.map(async (file) => ({
-        id: `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        name: file.name,
-        type: file.type || "application/octet-stream",
-        url: await readFileAsDataUrl(file),
-      })),
+const ItineraryListItem = React.memo(
+  function ItineraryListItemBase({
+    item,
+    idx,
+    onDelete,
+    onUpdate,
+    isOffline,
+    tripId,
+    destination,
+    tripStartDate,
+    previousItem,
+    nextItem,
+    isRecentlySynced,
+    onQuickExpense,
+    onEditingChange,
+    collaboratingLock,
+    onPreviewImage,
+  }: {
+    item: ItineraryNode;
+    idx: number;
+    onDelete: (node_id: string) => void;
+    onUpdate: (node: ItineraryNode) => void;
+    isOffline: boolean;
+    tripId: string;
+    destination: string;
+    tripStartDate?: string | null;
+    previousItem?: ItineraryNode;
+    nextItem?: ItineraryNode;
+    isRecentlySynced?: boolean;
+    onQuickExpense?: (node: ItineraryNode) => void;
+    onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
+    collaboratingLock?: { userName: string; day: number };
+    onPreviewImage?: (url: string) => void;
+    key?: string;
+  }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [regenerating, setRegenerating] = useState(false);
+    const [editTitle, setEditTitle] = useState(item.title);
+    const [editDate, setEditDate] = useState(
+      item.date || getDateForDay(item.day, tripStartDate) || "",
     );
-
-    setEditAttachments((prev) => [...prev, ...uploaded]);
-    event.target.value = "";
-  };
-
-  const removeAttachment = (attachmentId: string) => {
-    setEditAttachments((prev) =>
-      prev.filter((attachment) => attachment.id !== attachmentId),
+    const [editTime, setEditTime] = useState(item.time);
+    const [editEmoji, setEditEmoji] = useState(getNodeEmoji(item));
+    const [editDescription, setEditDescription] = useState(
+      item.description || item.notes || "",
     );
-  };
-
-  const handleSave = () => {
-    onUpdate({
-      ...item,
-      day: getDayForDate(editDate, tripStartDate, item.day),
-      date: editDate || undefined,
-      time: normalizeClockInput(editTime),
-      title: editTitle,
-      emoji: editEmoji,
-      description: editDescription,
-      transport_to_next: editTransport || undefined,
-      image_url: editImageUrl,
-      attachments: editAttachments,
-      linkedFactId: editLinkedFactId || undefined,
-      timestamp:
-        buildTimestampFromDateTime(editDate, normalizeClockInput(editTime)) ??
-        item.timestamp,
-    });
-    setIsEditing(false);
-    onEditingChange?.(
-      item.node_id,
-      getDayForDate(editDate, tripStartDate, item.day),
-      false,
+    const [editTransport, setEditTransport] = useState(
+      item.transport_to_next || "",
     );
-  };
+    const [editImageUrl, setEditImageUrl] = useState(item.image_url || "");
+    const [editAttachments, setEditAttachments] = useState<
+      ItineraryAttachment[]
+    >(item.attachments || []);
+    const [editLinkedFactId, setEditLinkedFactId] = useState(
+      item.linkedFactId || "",
+    );
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const openEditor = () => {
-    if (collaboratingLock && !isEditing) {
-      useAppStore
-        .getState()
-        .showToast(
-          `${collaboratingLock.userName} 正在編輯這個景點。`,
-          "warning",
-        );
-      return;
-    }
-    if (!isOffline && !isEditing) {
-      setIsEditing(true);
-      onEditingChange?.(item.node_id, item.day, true);
-    }
-  };
+    const facts = useTripFactsStore((s) => s.facts);
+    const linkedFact = item.linkedFactId
+      ? facts.find((fact) => fact.id === item.linkedFactId)
+      : undefined;
+    const linkedFactRedirect = getTravelFactRedirectPayload(linkedFact);
+    const linkedFactBookingLabel = getTravelFactBookingLabel(linkedFact);
+    const detailCopy = item.description || item.notes || "";
+    const isFlightCard = item.category === "flight";
+    const isHotelCard =
+      item.category === "hotel" || item.category === "accommodation";
+    const isAnchorCard = isFlightCard || isHotelCard;
+    const flightRoute = isFlightCard
+      ? getFlightRouteSummary(item, linkedFact)
+      : null;
 
-  const [isNavigating, setIsNavigating] = useState(false);
+    useEffect(() => {
+      setEditTitle(item.title);
+      setEditDate(item.date || getDateForDay(item.day, tripStartDate) || "");
+      setEditTime(item.time);
+      setEditEmoji(getNodeEmoji(item));
+      setEditDescription(item.description || item.notes || "");
+      setEditTransport(item.transport_to_next || "");
+      setEditImageUrl(item.image_url || "");
+      setEditAttachments(item.attachments || []);
+      setEditLinkedFactId(item.linkedFactId || "");
+    }, [item, tripStartDate]);
 
-  const handleNavigate = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    let lat = item.lat;
-    let lng = item.lng;
+    const handleAttachmentUpload = async (
+      event: React.ChangeEvent<HTMLInputElement>,
+    ) => {
+      const files = Array.from(event.target.files || []);
+      if (files.length === 0) return;
 
-    if (!lat || !lng) {
-      setIsNavigating(true);
-      try {
-        const coords = await geocodeSpot(item.title, destination);
-        if (coords) {
-          lat = coords.lat;
-          lng = coords.lng;
-          // Optimistically update
-          onUpdate({ ...item, lat, lng });
-        }
-      } finally {
-        setIsNavigating(false);
-      }
-    }
+      const uploaded = await Promise.all(
+        files.map(async (file) => ({
+          id: `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          name: file.name,
+          type: file.type || "application/octet-stream",
+          url: await readFileAsDataUrl(file),
+        })),
+      );
 
-    if (!lat || !lng) {
-      useAppStore.getState().showToast("無法取得景點座標", "warning");
-      return;
-    }
+      setEditAttachments((prev) => [...prev, ...uploaded]);
+      event.target.value = "";
+    };
 
-    const destinationCoords = encodeURIComponent(`${lat},${lng}`);
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
-    triggerHapticFeedback([18]);
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
+    const removeAttachment = (attachmentId: string) => {
+      setEditAttachments((prev) =>
+        prev.filter((attachment) => attachment.id !== attachmentId),
+      );
+    };
 
-  const handleShareToIGStory = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (collaboratingLock) return;
-
-    const shortDest = destination ? destination.split(",")[0].trim() : "旅行";
-    const safeTitle = item.title.trim().replace(/\s+/g, "");
-    const tags = `#${shortDest} #${safeTitle} #旅遊日記`;
-    const text = `剛踩點了 ${item.title}！🤩\n${item.image_url ? `\n查看美照：\n${item.image_url}\n` : ""}\n${tags}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${item.title} - ${shortDest}`,
-          text: text,
-        });
-      } catch (err) {
-        console.error("Share failed:", err);
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(text);
+    useEffect(() => {
+      if (collaboratingLock && isEditing) {
+        setIsEditing(false);
         useAppStore
           .getState()
-          .showToast?.(
-            "分享文案已複製到剪貼簿，可直接貼上字體到 Instagram！",
-            "success",
+          .showToast(
+            `${collaboratingLock.userName} 取得了編輯權限。`,
+            "warning",
           );
-      } catch (err) {
-        useAppStore.getState().showToast?.("不支援分享且複製失敗", "warning");
       }
-    }
-  };
+    }, [collaboratingLock, isEditing]);
 
-  const handleRegenerate = async () => {
-    if (!tripId || !destination) return;
-    setRegenerating(true);
-    try {
-      const travelFactsContext = facts
-        .map((fact) => `[ID: ${fact.id}] ${fact.factType} - ${fact.title}`)
-        .join("\n");
-      const newNode = await regenerateItinerarySpot({
-        trip_id: tripId,
-        node_id: item.node_id,
-        destination: destination,
-        day: item.day,
-        current_date: item.date || getDateForDay(item.day, tripStartDate),
-        current_time: item.time,
-        current_title: item.title,
-        current_category: item.category,
-        notes: item.description || item.notes,
-        preserve_time_window: true,
-        previous_node: previousItem
-          ? {
-              time: previousItem.time,
-              title: previousItem.title,
-              category: previousItem.category,
-            }
-          : undefined,
-        next_node: nextItem
-          ? {
-              time: nextItem.time,
-              title: nextItem.title,
-              category: nextItem.category,
-            }
-          : undefined,
-        travel_facts_context: travelFactsContext,
-      });
-      const { ai_note, intensity, ...restNode } = newNode as any;
-
-      let finalImageUrl = restNode.image_url;
-      if (!finalImageUrl && restNode.title) {
-        try {
-          const enrich = await fetchSpotEnrichment(restNode.title);
-          if (enrich?.thumbnail) finalImageUrl = enrich.thumbnail;
-        } catch (e) {}
-      }
-
+    const handleSave = () => {
       onUpdate({
         ...item,
-        ...restNode,
-        image_url: finalImageUrl,
-        time: restNode.time || item.time,
-        date: item.date,
-        day: item.day,
-        sort_order: item.sort_order,
-        ai_note: ai_note || undefined,
-        intensity: intensity || undefined,
-        description: ai_note || restNode.description,
+        day: getDayForDate(editDate, tripStartDate, item.day),
+        date: editDate || undefined,
+        time: normalizeClockInput(editTime),
+        title: editTitle,
+        emoji: editEmoji,
+        description: editDescription,
+        transport_to_next: editTransport || undefined,
+        image_url: editImageUrl,
+        attachments: editAttachments,
+        linkedFactId: editLinkedFactId || undefined,
         timestamp:
-          buildTimestampFromDateTime(item.date, restNode.time || item.time) ??
+          buildTimestampFromDateTime(editDate, normalizeClockInput(editTime)) ??
           item.timestamp,
       });
-    } catch (err) {
-      console.error("Regenerate failed:", err);
-    } finally {
-      setRegenerating(false);
-    }
-  };
+      setIsEditing(false);
+      onEditingChange?.(
+        item.node_id,
+        getDayForDate(editDate, tripStartDate, item.day),
+        false,
+      );
+    };
 
-  const meta = getCategoryMeta(item.category);
+    const openEditor = () => {
+      if (collaboratingLock && !isEditing) {
+        useAppStore
+          .getState()
+          .showToast(
+            `${collaboratingLock.userName} 正在編輯這個景點。`,
+            "warning",
+          );
+        return;
+      }
+      if (!isOffline && !isEditing) {
+        setIsEditing(true);
+        onEditingChange?.(item.node_id, item.day, true);
+      }
+    };
 
-  return (
-    <div className="relative flex items-stretch group w-full pl-[18px] sm:pl-10 lg:pl-12">
-      {/* Timeline Thread */}
-      <div className="absolute left-2 sm:left-4 lg:left-5 top-0 bottom-0 w-[3px] bg-gradient-to-b from-slate-200 via-slate-200 to-transparent rounded-full group-last:bottom-auto group-last:h-12" />
-      <div
-        className={`absolute left-[3px] sm:left-2 lg:left-3 top-5 sm:top-6 w-[10px] h-[10px] sm:w-[18px] sm:h-[18px] lg:w-[20px] lg:h-[20px] rounded-full border-2 sm:border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? "bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]" : "bg-slate-300 group-hover:bg-fuchsia-400"}`}
-      />
+    const [isNavigating, setIsNavigating] = useState(false);
 
-      {/* Content Card */}
-      {collaboratingLock && (
-        <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
-      )}
-      <div
-        className={`flex-1 p-4 sm:p-5 rounded-[24px] sm:rounded-[32px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:bg-white/90 active:scale-[0.985]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900 backdrop-blur-xl text-white border border-slate-700 shadow-md hover:shadow-lg" : isHotelCard ? "bg-indigo-900 backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-md hover:shadow-lg" : "glass-card shadow-sm hover:shadow-md"}`}
-        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
-          if (
-            (e.target as HTMLElement).closest(
-              "button, a, input, select, textarea",
-            )
-          )
-            return;
-          openEditor();
-        }}
-      >
-        {item.linkedFactId && !isEditing && (
-          <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-sky-500 text-white shadow-sm ring-2 ring-white z-20">
-            <Link size={10} strokeWidth={3} />
-          </div>
+    const handleNavigate = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      let lat = item.lat;
+      let lng = item.lng;
+
+      if (!lat || !lng) {
+        setIsNavigating(true);
+        try {
+          const coords = await geocodeSpot(item.title, destination);
+          if (coords) {
+            lat = coords.lat;
+            lng = coords.lng;
+            // Optimistically update
+            onUpdate({ ...item, lat, lng });
+          }
+        } finally {
+          setIsNavigating(false);
+        }
+      }
+
+      if (!lat || !lng) {
+        useAppStore.getState().showToast("無法取得景點座標", "warning");
+        return;
+      }
+
+      const destinationCoords = encodeURIComponent(`${lat},${lng}`);
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
+      triggerHapticFeedback([18]);
+      window.open(url, "_blank", "noopener,noreferrer");
+    };
+
+    const handleShareToIGStory = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (collaboratingLock) return;
+
+      const shortDest = destination ? destination.split(",")[0].trim() : "旅行";
+      const safeTitle = item.title.trim().replace(/\s+/g, "");
+      const tags = `#${shortDest} #${safeTitle} #旅遊日記`;
+      const text = `剛踩點了 ${item.title}！🤩\n${item.image_url ? `\n查看美照：\n${item.image_url}\n` : ""}\n${tags}`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `${item.title} - ${shortDest}`,
+            text: text,
+          });
+        } catch (err) {
+          console.error("Share failed:", err);
+        }
+      } else {
+        try {
+          await navigator.clipboard.writeText(text);
+          useAppStore
+            .getState()
+            .showToast?.(
+              "分享文案已複製到剪貼簿，可直接貼上字體到 Instagram！",
+              "success",
+            );
+        } catch (err) {
+          useAppStore.getState().showToast?.("不支援分享且複製失敗", "warning");
+        }
+      }
+    };
+
+    const handleRegenerate = async () => {
+      if (!tripId || !destination) return;
+      setRegenerating(true);
+      try {
+        const travelFactsContext = facts
+          .map((fact) => `[ID: ${fact.id}] ${fact.factType} - ${fact.title}`)
+          .join("\n");
+        const newNode = await regenerateItinerarySpot({
+          trip_id: tripId,
+          node_id: item.node_id,
+          destination: destination,
+          day: item.day,
+          current_date: item.date || getDateForDay(item.day, tripStartDate),
+          current_time: item.time,
+          current_title: item.title,
+          current_category: item.category,
+          notes: item.description || item.notes,
+          preserve_time_window: true,
+          previous_node: previousItem
+            ? {
+                time: previousItem.time,
+                title: previousItem.title,
+                category: previousItem.category,
+              }
+            : undefined,
+          next_node: nextItem
+            ? {
+                time: nextItem.time,
+                title: nextItem.title,
+                category: nextItem.category,
+              }
+            : undefined,
+          travel_facts_context: travelFactsContext,
+        });
+        const { ai_note, intensity, ...restNode } = newNode as any;
+
+        let finalImageUrl = restNode.image_url;
+        if (!finalImageUrl && restNode.title) {
+          try {
+            const enrich = await fetchSpotEnrichment(restNode.title);
+            if (enrich?.thumbnail) finalImageUrl = enrich.thumbnail;
+          } catch (e) {}
+        }
+
+        onUpdate({
+          ...item,
+          ...restNode,
+          image_url: finalImageUrl,
+          time: restNode.time || item.time,
+          date: item.date,
+          day: item.day,
+          sort_order: item.sort_order,
+          ai_note: ai_note || undefined,
+          intensity: intensity || undefined,
+          description: ai_note || restNode.description,
+          timestamp:
+            buildTimestampFromDateTime(item.date, restNode.time || item.time) ??
+            item.timestamp,
+        });
+      } catch (err) {
+        console.error("Regenerate failed:", err);
+      } finally {
+        setRegenerating(false);
+      }
+    };
+
+    const meta = getCategoryMeta(item.category);
+
+    return (
+      <div className="relative flex items-stretch group w-full pl-[22px] sm:pl-10 lg:pl-12">
+        {/* Timeline Thread */}
+        <div className="absolute left-[10px] sm:left-4 lg:left-5 top-0 bottom-0 w-[4px] bg-gradient-to-b from-pink-100/70 via-fuchsia-100/50 to-transparent rounded-full group-last:bottom-auto group-last:h-12" />
+        <div
+          className={`absolute left-[5px] sm:left-2 lg:left-3 top-6 sm:top-7 w-[14px] h-[14px] sm:w-[18px] sm:h-[18px] lg:w-[20px] lg:h-[20px] rounded-full border-2 sm:border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? "bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]" : "bg-pink-300 group-hover:bg-fuchsia-400"}`}
+        />
+
+        {/* Content Card */}
+        {collaboratingLock && (
+          <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
         )}
-        <div className="flex flex-col gap-1.5 sm:gap-2 w-full">
-          {!isEditing && (
+        <div
+          className={`flex-1 p-4 sm:p-5 rounded-[32px] sm:rounded-[40px] transition-[transform,shadow,background] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full transform-gpu ${collaboratingLock ? "ring-2 ring-fuchsia-400/60 scale-[0.98]" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-[0_0_12px_rgba(16,185,129,0.2)]" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900/95 backdrop-blur-2xl text-white border border-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.4)]" : isHotelCard ? "bg-gradient-to-br from-indigo-900/95 to-indigo-800/95 backdrop-blur-2xl text-indigo-50 border border-indigo-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(49,46,129,0.25)] hover:shadow-[0_12px_30px_rgba(49,46,129,0.35)]" : "bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.05),0_2px_8px_rgba(15,23,42,0.02)] hover:border-sky-100 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_12px_34px_rgba(15,23,42,0.08),0_4px_12px_rgba(14,165,233,0.08)]"}`}
+        >
+          {item.linkedFactId && (
+            <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-sky-500 text-white shadow-sm ring-2 ring-white z-20">
+              <Link size={10} strokeWidth={3} />
+            </div>
+          )}
+          <div className="flex flex-col gap-2 sm:gap-3 w-full">
             <div className="flex items-center justify-between gap-2 mb-0.5">
               <div className="flex items-center gap-1.5">
                 <span className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-400">
@@ -4107,10 +4209,10 @@ const ItineraryListItem = React.memo(function ItineraryListItemBase({
                 </span>
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border shadow-sm ${
-                  // ` is added for syntax highlight fix
-                  item.source === "remote"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
-                    : "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+                    // ` is added for syntax highlight fix
+                    item.source === "remote"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
+                      : "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
                   }`}
                 >
                   <span
@@ -4120,198 +4222,168 @@ const ItineraryListItem = React.memo(function ItineraryListItemBase({
                 </span>
               </div>
             </div>
-          )}
-          <div className="flex flex-row items-start gap-2 sm:gap-2.5">
-            <div
-              className={`relative w-6 h-6 sm:w-8 sm:h-8 mt-0.5 shrink-0 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-sm sm:text-base shadow-inner border border-slate-100/50 transition-all group-hover:scale-105 group-hover:rotate-3 duration-700 ${item.category === "flight" ? "bg-gradient-to-br from-indigo-50 to-blue-50" : "bg-white/95"}`}
-            >
-              {isEditing ? (
-                <button
-                  type="button"
-                  aria-label="選擇景點表情"
-                  title="選擇景點表情"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="animate-pulse active:scale-95 transition-transform w-full h-full flex items-center justify-center"
-                >
-                  <IconImg value={editEmoji} size={16} />
-                </button>
-              ) : (
+            <div className="flex flex-row items-start gap-2 sm:gap-2.5">
+              <div
+                className={`relative w-6 h-6 sm:w-8 sm:h-8 mt-0.5 shrink-0 rounded-[10px] sm:rounded-[12px] flex items-center justify-center text-sm sm:text-base shadow-inner border border-slate-100/50 transition-all group-hover:scale-105 group-hover:rotate-3 duration-700 ${item.category === "flight" ? "bg-gradient-to-br from-indigo-50 to-blue-50" : "bg-white/95"}`}
+              >
                 <span className="filter drop-shadow-sm select-none transition-transform group-hover:scale-110">
                   <IconImg value={getNodeEmoji(item)} size={16} />
                 </span>
-              )}
-              {isEditing && showEmojiPicker && (
-                <div className="absolute top-full left-0 mt-2 p-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white z-overlay flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
-                  {EMOJI_OPTIONS.map((e) => (
-                    <button
-                      key={e}
-                      type="button"
-                      title={`使用 ${e}`}
-                      onClick={() => {
-                        setEditEmoji(e);
-                        setShowEmojiPicker(false);
-                      }}
-                      className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-xl transition-colors"
-                    >
-                      <IconImg value={e} size={24} />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+              </div>
 
-            <div className="flex-1 min-w-0">
-              {!isEditing && isFlightCard && flightRoute && (
-                <div className="mb-1.5 w-full">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
-                        Departure
+              <div className="flex-1 min-w-0">
+                {isFlightCard && flightRoute && (
+                  <div className="mb-1.5 w-full">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
+                          Departure
+                        </div>
+                        <div className="truncate text-lg font-black leading-none sm:text-xl">
+                          {flightRoute.from}
+                        </div>
                       </div>
-                      <div className="truncate text-lg font-black leading-none sm:text-xl">
-                        {flightRoute.from}
+                      <div className="flex-1 min-w-[72px] px-2">
+                        <div className="flex items-center gap-2 text-slate-500">
+                          <div className="h-px flex-1 border-t border-dashed border-slate-600" />
+                          <Plane
+                            size={14}
+                            className="shrink-0 text-fuchsia-400"
+                          />
+                          <div className="h-px flex-1 border-t border-dashed border-slate-600" />
+                        </div>
+                        <div className="mt-1 text-center text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 truncate">
+                          {flightRoute.flightNumber}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex-1 min-w-[72px] px-2">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <div className="h-px flex-1 border-t border-dashed border-slate-600" />
-                        <Plane
-                          size={14}
-                          className="shrink-0 text-fuchsia-400"
-                        />
-                        <div className="h-px flex-1 border-t border-dashed border-slate-600" />
-                      </div>
-                      <div className="mt-1 text-center text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 truncate">
-                        {flightRoute.flightNumber}
-                      </div>
-                    </div>
-                    <div className="min-w-0 text-right">
-                      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
-                        Arrival
-                      </div>
-                      <div className="truncate text-lg font-black leading-none sm:text-xl">
-                        {flightRoute.to}
+                      <div className="min-w-0 text-right">
+                        <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
+                          Arrival
+                        </div>
+                        <div className="truncate text-lg font-black leading-none sm:text-xl">
+                          {flightRoute.to}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-              {!isEditing && isHotelCard && (
-                <div className="mb-1.5 w-full">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-400">
-                        Tonight's Stay
-                      </div>
-                      <div className="truncate text-lg font-black leading-tight sm:text-xl">
-                        {item.title}
-                      </div>
-                    </div>
-                    <span className="shrink-0 rounded-full border border-indigo-400/30 bg-indigo-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-100">
-                      休息錨點
-                    </span>
-                  </div>
-                </div>
-              )}
-              {!isEditing && !isAnchorCard && (
-                <h3
-                  title={item.title}
-                  className="mb-0.5 line-clamp-3 text-[15px] font-black leading-[1.24] tracking-[-0.025em] text-slate-900 font-sans sm:text-[16px]"
-                >
-                  {item.title}
-                </h3>
-              )}
-              {!isEditing && isAnchorCard && (
-                <p
-                  className={`mb-1 text-[11px] sm:text-xs font-black uppercase tracking-[0.18em] ${isFlightCard ? "text-slate-500" : "text-indigo-400/80"}`}
-                >
-                  {isFlightCard ? "跨區交通錨點" : "今晚住宿錨點"}
-                </p>
-              )}
-              <div className={`mt-1.5 flex flex-wrap items-center gap-1.5 rounded-[18px] px-2.5 py-2 ${isFlightCard || isHotelCard ? "bg-white/6" : "bg-white/76 border border-white/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]"}`}>
-                {item.date && (
-                  <span
-                    className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-widest flex items-center gap-0.5 border ${isFlightCard ? "bg-slate-800 text-slate-400 border-slate-700" : isHotelCard ? "bg-indigo-900 border-indigo-800 text-indigo-200" : "bg-white/95 text-slate-600 border-slate-200"}`}
-                  >
-                    <Calendar size={11} className="sm:w-[13px] sm:h-[13px]" />
-                    {item.date}
-                  </span>
                 )}
-                <div className="relative">
-                  <div className="relative flex">
-                    <div
-                      className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-widest flex items-center gap-0.5 transition-colors border ${isFlightCard ? "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white" : isHotelCard ? "bg-indigo-800 hover:bg-indigo-700 border-indigo-700 text-white" : "bg-slate-800 hover:bg-slate-700 text-white border-slate-900"} relative z-0`}
+                {isHotelCard && (
+                  <div className="mb-1.5 w-full">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-400">
+                          Tonight's Stay
+                        </div>
+                        <div className="truncate text-lg font-black leading-tight sm:text-xl">
+                          {item.title}
+                        </div>
+                      </div>
+                      <span className="shrink-0 rounded-full border border-indigo-400/30 bg-indigo-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-100">
+                        休息錨點
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {!isAnchorCard && (
+                  <h3
+                    title={item.title}
+                    className="mb-0.5 line-clamp-3 text-[15px] font-black leading-[1.24] tracking-[-0.025em] text-slate-900 font-sans sm:text-[16px]"
+                  >
+                    {item.title}
+                  </h3>
+                )}
+                {isAnchorCard && (
+                  <p
+                    className={`mb-1 text-[11px] sm:text-xs font-black uppercase tracking-[0.18em] ${isFlightCard ? "text-slate-500" : "text-indigo-400/80"}`}
+                  >
+                    {isFlightCard ? "跨區交通錨點" : "今晚住宿錨點"}
+                  </p>
+                )}
+                <div
+                  className={`mt-1.5 flex flex-wrap items-center gap-1.5 rounded-[18px] px-2.5 py-2 ${isFlightCard || isHotelCard ? "bg-white/6" : "bg-slate-50/80 border border-slate-100 shadow-inner"}`}
+                >
+                  {item.date && (
+                    <span
+                      className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-widest flex items-center gap-0.5 border ${isFlightCard ? "bg-slate-800 text-slate-400 border-slate-700" : isHotelCard ? "bg-indigo-900 border-indigo-800 text-indigo-200" : "bg-white/95 text-slate-600 border-slate-200"}`}
                     >
-                      <Clock size={11} className="sm:w-[13px] sm:h-[13px]" />
-                      {item.time || "設定時間"}
+                      <Calendar size={11} className="sm:w-[13px] sm:h-[13px]" />
+                      {item.date}
+                    </span>
+                  )}
+                  <div className="relative">
+                    <div className="relative flex">
+                      <div
+                        className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-widest flex items-center gap-0.5 transition-colors border ${isFlightCard ? "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white" : isHotelCard ? "bg-indigo-800 hover:bg-indigo-700 border-indigo-700 text-white" : "bg-slate-800 hover:bg-slate-700 text-white border-slate-900"} relative z-0`}
+                      >
+                        <Clock size={11} className="sm:w-[13px] sm:h-[13px]" />
+                        {item.time || "設定時間"}
+                      </div>
+                      {!isOffline && !collaboratingLock && (
+                        <input
+                          type="time"
+                          value={item.time || ""}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            onUpdate({
+                              ...item,
+                              time: val,
+                              timestamp:
+                                buildTimestampFromDateTime(item.date, val) ??
+                                item.timestamp,
+                            });
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 block"
+                        />
+                      )}
                     </div>
-                    {!isOffline && !collaboratingLock && (
-                      <input
-                        type="time"
-                        value={item.time || ""}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          onUpdate({
-                            ...item,
-                            time: val,
-                            timestamp:
-                              buildTimestampFromDateTime(item.date, val) ??
-                              item.timestamp,
-                          });
-                        }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 block"
-                      />
-                    )}
                   </div>
-                </div>
-                <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-700 border border-pink-100/70">
-                  {meta.label}
-                </span>
-                {item.intensity && (
-                  <span
-                    className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] border ${item.intensity === "hardcore" ? "bg-rose-50 text-rose-600 border-rose-100" : item.intensity === "chill" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"}`}
-                  >
-                    {item.intensity === "hardcore"
-                      ? "高強度"
-                      : item.intensity === "chill"
-                        ? "輕鬆"
-                        : "適中"}
+                  <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-700 border border-pink-100/70">
+                    {meta.label}
                   </span>
-                )}
-                {linkedFact && (
-                  <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-0.5">
-                    <Link size={11} className="sm:w-[13px] sm:h-[13px]" />
-                    已綁定: {linkedFact.title}
-                  </span>
-                )}
-                {collaboratingLock && (
-                  <motion.span
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-fuchsia-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-fuchsia-700 border border-fuchsia-200 shadow-sm shadow-fuchsia-200/50"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 animate-ping inline-block" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 absolute" />
-                    {collaboratingLock.userName} 編輯中
-                  </motion.span>
-                )}
-                {isRecentlySynced && (
-                  <motion.span
-                    initial={{ scale: 0.85, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700 border border-emerald-200 shadow-sm"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                    剛同步
-                  </motion.span>
-                )}
-                {item.title.includes("Cebu") && (
-                  <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-rose-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-rose-600 border border-rose-100 flex items-center gap-0.5">
-                    📌 必去景點
-                  </span>
-                )}
-                {!isEditing && (
+                  {item.intensity && (
+                    <span
+                      className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] border ${item.intensity === "hardcore" ? "bg-rose-50 text-rose-600 border-rose-100" : item.intensity === "chill" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"}`}
+                    >
+                      {item.intensity === "hardcore"
+                        ? "高強度"
+                        : item.intensity === "chill"
+                          ? "輕鬆"
+                          : "適中"}
+                    </span>
+                  )}
+                  {linkedFact && (
+                    <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-0.5">
+                      <Link size={11} className="sm:w-[13px] sm:h-[13px]" />
+                      已綁定: {linkedFact.title}
+                    </span>
+                  )}
+                  {collaboratingLock && (
+                    <motion.span
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-fuchsia-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-fuchsia-700 border border-fuchsia-200 shadow-sm shadow-fuchsia-200/50"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 animate-ping inline-block" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 absolute" />
+                      {collaboratingLock.userName} 編輯中
+                    </motion.span>
+                  )}
+                  {isRecentlySynced && (
+                    <motion.span
+                      initial={{ scale: 0.85, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700 border border-emerald-200 shadow-sm"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                      剛同步
+                    </motion.span>
+                  )}
+                  {item.title.includes("Cebu") && (
+                    <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-rose-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-rose-600 border border-rose-100 flex items-center gap-0.5">
+                      📌 必去景點
+                    </span>
+                  )}
                   <button
                     type="button"
                     aria-label={
@@ -4329,284 +4401,214 @@ const ItineraryListItem = React.memo(function ItineraryListItemBase({
                     )}
                     {item.is_visited ? "已打卡" : "未打卡"}
                   </button>
-                )}
-                {item.category === "flight" && (
-                  <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-indigo-500 flex items-center gap-1 animate-pulse">
-                    <div className="w-1 h-1 rounded-full bg-indigo-500" />
-                    CONFIRMED
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="w-full">
-            {isEditing ? (
-              <div className="flex flex-col gap-3 pb-32">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
-                    地點名稱 (Place)
-                  </label>
-                  <input
-                    autoFocus
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    placeholder="修改地點名稱"
-                    className="text-lg font-black text-slate-900 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
-                      日期 (Date)
-                    </label>
-                    <input
-                      type="date"
-                      value={editDate}
-                      onChange={(e) => setEditDate(e.target.value)}
-                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
-                      時間 (Time)
-                    </label>
-                    <input
-                      type="time"
-                      inputMode="numeric"
-                      step={300}
-                      value={editTime}
-                      onChange={(e) => setEditTime(e.target.value)}
-                      className="text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
-                    詳細說明 / 備註 (Description)
-                  </label>
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    placeholder="寫下你的旅行手帳日記，或是更詳細的行程說明..."
-                    className="text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
-                  />
-                </div>
-                <input
-                  value={editTransport}
-                  onChange={(e) => setEditTransport(e.target.value)}
-                  placeholder="前往下一站交通資訊，例如：地鐵約 20 分鐘"
-                  className="text-xs font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                />
-                <input
-                  value={editImageUrl}
-                  onChange={(e) => setEditImageUrl(e.target.value)}
-                  placeholder="貼上照片網址 (例如: https://...jpg)"
-                  className="text-xs font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                />
-                <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4">
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
-                      附件 / 票券
-                    </label>
-                    <label className="px-3 py-2 rounded-full bg-slate-900 text-white text-[11px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors">
-                      上傳圖片或 PDF
-                      <input
-                        type="file"
-                        accept="image/*,.pdf,application/pdf"
-                        multiple
-                        className="hidden"
-                        onChange={handleAttachmentUpload}
-                      />
-                    </label>
-                  </div>
-                  {editAttachments.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {editAttachments.map((attachment) => {
-                        const isImage = attachment.type.startsWith("image/");
-                        return (
-                          <div
-                            key={attachment.id}
-                            className="relative group/attachment rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden"
-                          >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                window.open(
-                                  attachment.url,
-                                  "_blank",
-                                  "noopener,noreferrer",
-                                )
-                              }
-                              className={`flex items-center gap-2 ${isImage ? "p-1" : "px-3 py-2"} text-left`}
-                            >
-                              {isImage ? (
-                                <img
-                                  src={attachment.url}
-                                  alt={attachment.name}
-                                  className="w-20 h-20 object-cover rounded-[12px]"
-                                />
-                              ) : (
-                                <span className="text-xs font-black text-slate-700">
-                                  📄 {attachment.name}
-                                </span>
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              aria-label={`移除附件 ${attachment.name}`}
-                              title={`移除附件 ${attachment.name}`}
-                              onClick={() => removeAttachment(attachment.id)}
-                              className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 text-slate-500 hover:text-rose-500 shadow-sm opacity-0 group-hover/attachment:opacity-100 transition-opacity"
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-xs font-bold text-slate-500">
-                      可放電子票、QR code 截圖或 PDF 憑證。
-                    </p>
+                  {item.category === "flight" && (
+                    <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-indigo-500 flex items-center gap-1 animate-pulse">
+                      <div className="w-1 h-1 rounded-full bg-indigo-500" />
+                      CONFIRMED
+                    </span>
                   )}
                 </div>
-                {facts && facts.length > 0 && (
-                  <select
-                    value={editLinkedFactId}
-                    onChange={(e) => setEditLinkedFactId(e.target.value)}
-                    className="text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                  >
-                    <option value="">無關聯 Travel Fact (未選擇)</option>
-                    {facts.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.title} ({f.factType})
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <div className="flex items-center gap-3 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
-                  >
-                    保存
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsEditing(false);
-                      onEditingChange?.(item.node_id, item.day, false);
-                    }}
-                    className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
-                  >
-                    取消
-                  </button>
-                </div>
               </div>
-            ) : (
-              <>
-                <div className="mb-1.5">
-                  <button
-                    type="button"
-                    aria-label={`導航至 ${item.title}`}
-                    title={`導航至 ${item.title}`}
-                    onClick={handleNavigate}
-                    disabled={isNavigating}
-                    className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-black text-emerald-700 bg-emerald-50/95 border border-emerald-200 px-2.5 py-1 rounded-full hover:bg-emerald-100 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    {isNavigating ? (
-                      <Loader2 size={8} className="animate-spin" />
-                    ) : (
-                      <MapPin size={8} strokeWidth={3} />
-                    )}
-                    開始導航
-                  </button>
-                </div>
+            </div>
 
-                {item.image_url && (
-                  <button
-                    type="button"
-                    aria-label={`放大查看 ${item.title} 圖片`}
-                    className="p-0 w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onPreviewImage && onPreviewImage(item.image_url!);
-                    }}
-                  >
-                    <img
-                      src={item.image_url}
-                      alt={item.title}
-                      className="w-full h-full object-cover rounded-[12px] sm:rounded-[16px] group-hover:scale-105 transition-transform duration-1000 transform-gpu"
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
+            <div className="w-full">
+              <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-200/70 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <button
+                  type="button"
+                  aria-label={`導航至 ${item.title}`}
+                  title={`導航至 ${item.title}`}
+                  onClick={handleNavigate}
+                  disabled={isNavigating}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 hover:bg-sky-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-50"
+                >
+                  {isNavigating ? (
+                    <Loader2
+                      size={14}
+                      className="animate-spin sm:w-4 sm:h-4 w-3.5 h-3.5"
                     />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <ZoomIn
-                        className="text-white drop-shadow-md"
-                        size={32}
-                        strokeWidth={1.5}
+                  ) : (
+                    <span className="text-sm sm:text-lg">🧭</span>
+                  )}
+                </button>
+
+                {!isOffline && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (collaboratingLock) return;
+                        openEditor();
+                      }}
+                      disabled={Boolean(collaboratingLock)}
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:border-slate-300 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="編輯此節點"
+                      aria-label="編輯此節點"
+                    >
+                      <Pencil
+                        size={14}
+                        strokeWidth={2.75}
+                        className="sm:w-4 sm:h-4 w-3.5 h-3.5"
                       />
-                    </div>
-                  </button>
+                    </button>
+                    {item.category === "food" && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (collaboratingLock) return;
+                          onQuickExpense?.(item);
+                        }}
+                        disabled={Boolean(collaboratingLock)}
+                        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="快速記一筆"
+                        aria-label="快速記一筆"
+                      >
+                        <span className="text-sm sm:text-lg">💸</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (collaboratingLock) return;
+                        void handleRegenerate();
+                      }}
+                      disabled={Boolean(collaboratingLock) || regenerating}
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-fuchsia-200 flex items-center justify-center text-fuchsia-700 hover:bg-fuchsia-50 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="AI 換一個建議"
+                      aria-label="AI 換一個建議"
+                    >
+                      {regenerating ? (
+                        <Loader2
+                          size={14}
+                          className="animate-spin sm:w-4 sm:h-4 w-3.5 h-3.5"
+                        />
+                      ) : (
+                        <RefreshCw
+                          size={14}
+                          strokeWidth={2.75}
+                          className="sm:w-4 sm:h-4 w-3.5 h-3.5"
+                        />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleShareToIGStory}
+                      disabled={Boolean(collaboratingLock)}
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-pink-50 border border-orange-200 flex items-center justify-center text-pink-600 hover:opacity-80 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="分享至 IG Story"
+                      aria-label="分享至 IG Story"
+                    >
+                      <Instagram
+                        size={14}
+                        strokeWidth={2.75}
+                        className="sm:w-4 sm:h-4 w-3.5 h-3.5"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (collaboratingLock) return;
+                        onDelete(item.node_id);
+                      }}
+                      disabled={Boolean(collaboratingLock)}
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 hover:bg-rose-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="刪除此節點"
+                      aria-label="刪除此節點"
+                    >
+                      <Trash2
+                        size={14}
+                        strokeWidth={2.75}
+                        className="sm:w-4 sm:h-4 w-3.5 h-3.5"
+                      />
+                    </button>
+                  </>
                 )}
+              </div>
 
-                {item.attachments && item.attachments.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2 sm:mb-2.5">
-                    {item.attachments.map((attachment) => {
-                      const isImage = attachment.type.startsWith("image/");
-                      return (
-                        <button
-                          key={attachment.id}
-                          type="button"
-                          onClick={() =>
-                            window.open(
-                              attachment.url,
-                              "_blank",
-                              "noopener,noreferrer",
-                            )
-                          }
-                          className={`rounded-[14px] border border-slate-100 bg-white shadow-sm overflow-hidden hover:shadow-md transition-all ${isImage ? "p-1" : "px-3 py-2 text-left"}`}
-                        >
-                          {isImage ? (
-                            <img
-                              src={attachment.url}
-                              alt={attachment.name}
-                              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-[10px]"
-                            />
-                          ) : (
-                            <span className="text-[11px] font-black text-slate-700 whitespace-nowrap">
-                              📄 {attachment.name}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {item.transport_to_next && (
-                  <div className="inline-flex items-center gap-1 mb-2 sm:mb-2.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-800 text-[11px] sm:text-xs font-black text-white uppercase tracking-widest shadow-sm shadow-slate-200">
-                    <Navigation2
-                      size={10}
-                      strokeWidth={3}
-                      className="text-indigo-400"
+              {item.image_url && (
+                <button
+                  type="button"
+                  aria-label={`放大查看 ${item.title} 圖片`}
+                  className="p-0 w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPreviewImage && onPreviewImage(item.image_url!);
+                  }}
+                >
+                  <img
+                    src={item.image_url}
+                    alt={item.title}
+                    className="w-full h-full object-cover rounded-[12px] sm:rounded-[16px] group-hover:scale-105 transition-transform duration-1000 transform-gpu"
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <ZoomIn
+                      className="text-white drop-shadow-md"
+                      size={32}
+                      strokeWidth={1.5}
                     />
-                    <span className="opacity-60 mr-1">MOVE:</span>
-                    {item.transport_to_next}
                   </div>
-                )}
+                </button>
+              )}
 
-                {detailCopy ? (
-                  <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
+              {item.attachments && item.attachments.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2 sm:mb-2.5">
+                  {item.attachments.map((attachment) => {
+                    const isImage = attachment.type.startsWith("image/");
+                    return (
+                      <button
+                        key={attachment.id}
+                        type="button"
+                        onClick={() =>
+                          window.open(
+                            attachment.url,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                        className={`rounded-[14px] border border-slate-100 bg-white shadow-sm overflow-hidden hover:shadow-md transition-all ${isImage ? "p-1" : "px-3 py-2 text-left"}`}
+                      >
+                        {isImage ? (
+                          <img
+                            src={attachment.url}
+                            alt={attachment.name}
+                            className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-[10px]"
+                          />
+                        ) : (
+                          <span className="text-[11px] font-black text-slate-700 whitespace-nowrap">
+                            📄 {attachment.name}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {item.transport_to_next && (
+                <div className="inline-flex items-center gap-1 mb-2 sm:mb-2.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-800 text-[11px] sm:text-xs font-black text-white uppercase tracking-widest shadow-sm shadow-slate-200">
+                  <Navigation2
+                    size={10}
+                    strokeWidth={3}
+                    className="text-indigo-400"
+                  />
+                  <span className="opacity-60 mr-1">MOVE:</span>
+                  {item.transport_to_next}
+                </div>
+              )}
+
+              {detailCopy ? (
+                <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
                   <ExpandableText
                     text={detailCopy}
                     label="Notes"
-                    previewLines={4}
-                    minCharacters={110}
+                    previewLines={2}
+                    minCharacters={60}
                     minLineBreaks={1}
                     preserveWhitespace
                     stopPropagation
@@ -4614,214 +4616,361 @@ const ItineraryListItem = React.memo(function ItineraryListItemBase({
                     labelClassName="mb-0"
                     textClassName="text-[13px] sm:text-[14px] font-medium text-slate-700 tracking-tight leading-[1.78] font-sans"
                     buttonClassName="mt-0"
-                    collapsedLabel="查看全文"
-                    expandedLabel="收起全文"
+                    collapsedLabel="展開完整內容"
+                    expandedLabel="收起內容"
                   />
-                  </div>
-                ) : (
-                  <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
-                    <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
-                      Notes
-                    </p>
-                    <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity leading-5">
-                      點擊卡片編輯手帳內容、細節或照片...
-                    </p>
-                  </div>
-                )}
+                </div>
+              ) : (
+                <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
+                  <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    Notes
+                  </p>
+                  <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity leading-5">
+                    點擊卡片編輯手帳內容、細節或照片...
+                  </p>
+                </div>
+              )}
 
-                {/* Wikipedia Preview */}
-                {!isEditing && !isFlightCard && (
-                  <WikiPreviewCard query={item.title} />
-                )}
+              {/* Wikipedia Preview */}
+              {["landmark", "nature", "activity"].includes(
+                item.category || "",
+              ) && <WikiPreviewCard query={item.title} />}
 
-                {item.title.includes("Cebu") && (
-                  <div className="mt-3 p-3 rounded-xl bg-orange-50/60 border border-orange-100/80 flex flex-col gap-2">
-                    <div className="flex items-center gap-1.5 text-[11px] font-black tracking-widest text-orange-700 uppercase">
-                      <MapPin size={12} />
-                      Cebu 必去景點
-                    </div>
-                    <div className="text-[12px] font-bold text-slate-700 leading-relaxed pl-1">
-                      1. 麥哲倫十字架 Magellan's Cross
-                      <br />
-                      2. 聖嬰大教堂 Basilica Minore del Santo Niño
-                      <br />
-                      3. 宿霧道觀 Cebu Taoist Temple
-                      <br />
-                      4. 莉亞神殿 Temple of Leah
-                      <br />
-                      5. 聖佩德羅堡 Fort San Pedro
-                    </div>
+              {item.title.includes("Cebu") && (
+                <div className="mt-3 p-3 rounded-xl bg-orange-50/60 border border-orange-100/80 flex flex-col gap-2">
+                  <div className="flex items-center gap-1.5 text-[11px] font-black tracking-widest text-orange-700 uppercase">
+                    <MapPin size={12} />
+                    Cebu 必去景點
                   </div>
-                )}
+                  <div className="text-[12px] font-bold text-slate-700 leading-relaxed pl-1">
+                    1. 麥哲倫十字架 Magellan's Cross
+                    <br />
+                    2. 聖嬰大教堂 Basilica Minore del Santo Niño
+                    <br />
+                    3. 宿霧道觀 Cebu Taoist Temple
+                    <br />
+                    4. 莉亞神殿 Temple of Leah
+                    <br />
+                    5. 聖佩德羅堡 Fort San Pedro
+                  </div>
+                </div>
+              )}
 
-                {linkedFact && (
-                  <div className="mt-2 p-2 rounded-xl bg-sky-50/50 border border-sky-100 flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-1 duration-500">
-                    <div className="flex items-center gap-1.5 text-[11px] font-black text-sky-700 uppercase tracking-widest">
-                      <Link size={10} />
-                      <span>ASSOCIATED TRAVEL FACT</span>
-                    </div>
-                    <div className="text-[11px] font-bold text-slate-700">
-                      {linkedFact.title}
-                    </div>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1">
-                      {linkedFact.factType.includes("flight") && (
-                        <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                          <Plane size={10} className="text-slate-500" />
-                          <span>
-                            {linkedFact.metadata?.flightNumber || "FLIGHT"}
-                          </span>
-                        </div>
-                      )}
-                      {linkedFact.metadata?.address && (
-                        <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                          <MapPin size={10} className="text-slate-500" />
-                          <span
-                            title={String(linkedFact.metadata?.address)}
-                            className="max-w-[210px] break-words"
-                          >
-                            {linkedFact.metadata?.address}
-                          </span>
-                        </div>
-                      )}
-                      {linkedFact.startAt && (
-                        <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                          <Clock size={10} className="text-slate-500" />
-                          <span>{linkedFact.startAt}</span>
-                        </div>
-                      )}
-                    </div>
-                    {linkedFactRedirect && linkedFactBookingLabel && (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          useAppStore
-                            .getState()
-                            .openRedirectModal(linkedFactRedirect);
-                        }}
-                        className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-sky-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md"
-                      >
-                        <ExternalLink size={11} strokeWidth={3} />
-                        <span>{linkedFactBookingLabel}</span>
-                      </button>
+              {linkedFact && (
+                <div className="mt-2 p-2 rounded-xl bg-sky-50/50 border border-sky-100 flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-1 duration-500">
+                  <div className="flex items-center gap-1.5 text-[11px] font-black text-sky-700 uppercase tracking-widest">
+                    <Link size={10} />
+                    <span>ASSOCIATED TRAVEL FACT</span>
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-700">
+                    {linkedFact.title}
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1">
+                    {linkedFact.factType.includes("flight") && (
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                        <Plane size={10} className="text-slate-500" />
+                        <span>
+                          {linkedFact.metadata?.flightNumber || "FLIGHT"}
+                        </span>
+                      </div>
+                    )}
+                    {linkedFact.metadata?.address && (
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                        <MapPin size={10} className="text-slate-500" />
+                        <span
+                          title={String(linkedFact.metadata?.address)}
+                          className="max-w-[210px] break-words"
+                        >
+                          {linkedFact.metadata?.address}
+                        </span>
+                      </div>
+                    )}
+                    {linkedFact.startAt && (
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                        <Clock size={10} className="text-slate-500" />
+                        <span>{linkedFact.startAt}</span>
+                      </div>
                     )}
                   </div>
-                )}
-
-                <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-200/70 flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  {linkedFactRedirect && linkedFactBookingLabel && (
                     <button
                       type="button"
-                      onClick={() =>
-                        onUpdate({ ...item, is_visited: !item.is_visited })
-                      }
-                      className={`sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-widest transition-all border ${item.is_visited ? "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-inner" : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        useAppStore
+                          .getState()
+                          .openRedirectModal(linkedFactRedirect);
+                      }}
+                      className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-sky-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md"
                     >
-                      <Check
-                        size={12}
-                        strokeWidth={3}
-                        className={
-                          item.is_visited ? "scale-110" : "scale-90 opacity-40"
-                        }
-                      />
-                      {item.is_visited ? "已打卡" : "未打卡"}
+                      <ExternalLink size={11} strokeWidth={3} />
+                      <span>{linkedFactBookingLabel}</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {!isOffline && (
+              <div className="hidden">
+                {/* Elements moved into the card footer */}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {isEditing &&
+          createPortal(
+            <AnimatePresence>
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                {/* Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+                  onClick={() => {
+                    setIsEditing(false);
+                    onEditingChange?.(item.node_id, item.day, false);
+                  }}
+                />
+                {/* Modal Content */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/90 backdrop-blur-2xl rounded-[28px] sm:rounded-[32px] shadow-2xl border border-white flex flex-col pointer-events-auto"
+                >
+                  {/* Header */}
+                  <div className="sticky top-0 z-20 bg-white/60 backdrop-blur-xl border-b border-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+                    <h2 className="text-lg sm:text-xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                      <div className="relative">
+                        <button
+                          type="button"
+                          aria-label="選擇景點表情"
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                          className="w-10 h-10 flex items-center justify-center bg-white shadow-sm border border-slate-100 hover:bg-pink-50 rounded-[12px] transition-colors"
+                        >
+                          <IconImg value={editEmoji} size={20} />
+                        </button>
+                        {showEmojiPicker && (
+                          <div className="absolute top-12 left-0 p-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
+                            {EMOJI_OPTIONS.map((e) => (
+                              <button
+                                key={e}
+                                type="button"
+                                title={`使用 ${e}`}
+                                onClick={() => {
+                                  setEditEmoji(e);
+                                  setShowEmojiPicker(false);
+                                }}
+                                className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-[8px] transition-colors"
+                              >
+                                <IconImg value={e} size={24} />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      編輯行程節點
+                    </h2>
+                    <button
+                      onClick={() => {
+                        setIsEditing(false);
+                        onEditingChange?.(item.node_id, item.day, false);
+                      }}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/80 hover:text-rose-500 text-slate-400 hover:bg-rose-50 transition-colors"
+                    >
+                      <X size={16} />
                     </button>
                   </div>
-                  {!isOffline && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (collaboratingLock) return;
-                          openEditor();
-                        }}
-                        disabled={Boolean(collaboratingLock)}
-                        className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:border-slate-300 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                        title="編輯此節點"
-                        aria-label="編輯此節點"
-                      >
-                        <Pencil size={16} strokeWidth={2.75} />
-                      </button>
-                      {item.category === "food" && (
+
+                  {/* Body (Form) */}
+                  <div className="p-4 sm:p-6 pb-6 sm:pb-8 w-full flex-shrink-0 min-w-0">
+                    <div className="flex flex-col gap-3 w-full">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
+                          地點名稱 (Place)
+                        </label>
+                        <input
+                          autoFocus
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          placeholder="修改地點名稱"
+                          className="w-full text-lg font-black text-slate-900 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
+                            日期 (Date)
+                          </label>
+                          <input
+                            type="date"
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
+                            className="w-full text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
+                            時間 (Time)
+                          </label>
+                          <input
+                            type="time"
+                            inputMode="numeric"
+                            step={300}
+                            value={editTime}
+                            onChange={(e) => setEditTime(e.target.value)}
+                            className="w-full text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
+                          詳細說明 / 備註 (Description)
+                        </label>
+                        <textarea
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          placeholder="寫下你的旅行手帳日記，或是更詳細的行程說明..."
+                          className="w-full text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
+                        />
+                      </div>
+                      <input
+                        value={editTransport}
+                        onChange={(e) => setEditTransport(e.target.value)}
+                        placeholder="前往下一站交通資訊，例如：地鐵約 20 分鐘"
+                        className="w-full text-xs font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                      />
+                      <input
+                        value={editImageUrl}
+                        onChange={(e) => setEditImageUrl(e.target.value)}
+                        placeholder="貼上照片網址 (例如: https://...jpg)"
+                        className="w-full text-xs font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                      />
+                      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
+                            附件 / 票券
+                          </label>
+                          <label className="px-3 py-2 rounded-full bg-slate-900 text-white text-[11px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors">
+                            上傳圖片或 PDF
+                            <input
+                              type="file"
+                              accept="image/*,.pdf,application/pdf"
+                              multiple
+                              className="hidden"
+                              onChange={handleAttachmentUpload}
+                            />
+                          </label>
+                        </div>
+                        {editAttachments.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {editAttachments.map((attachment) => {
+                              const isImage =
+                                attachment.type.startsWith("image/");
+                              return (
+                                <div
+                                  key={attachment.id}
+                                  className="relative group/attachment rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      window.open(
+                                        attachment.url,
+                                        "_blank",
+                                        "noopener,noreferrer",
+                                      )
+                                    }
+                                    className={`flex items-center gap-2 ${isImage ? "p-1" : "px-3 py-2"} text-left`}
+                                  >
+                                    {isImage ? (
+                                      <img
+                                        src={attachment.url}
+                                        alt={attachment.name}
+                                        className="w-20 h-20 object-cover rounded-[12px]"
+                                      />
+                                    ) : (
+                                      <span className="text-xs font-black text-slate-700">
+                                        📄 {attachment.name}
+                                      </span>
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label={`移除附件 ${attachment.name}`}
+                                    title={`移除附件 ${attachment.name}`}
+                                    onClick={() =>
+                                      removeAttachment(attachment.id)
+                                    }
+                                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 text-slate-500 hover:text-rose-500 shadow-sm opacity-0 group-hover/attachment:opacity-100 transition-opacity"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-xs font-bold text-slate-500">
+                            可放電子票、QR code 截圖或 PDF 憑證。
+                          </p>
+                        )}
+                      </div>
+                      {facts && facts.length > 0 && (
+                        <select
+                          value={editLinkedFactId}
+                          onChange={(e) => setEditLinkedFactId(e.target.value)}
+                          className="text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                        >
+                          <option value="">無關聯 Travel Fact (未選擇)</option>
+                          {facts.map((f) => (
+                            <option key={f.id} value={f.id}>
+                              {f.title} ({f.factType})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={handleSave}
+                          className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
+                        >
+                          保存
+                        </button>
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (collaboratingLock) return;
-                            onQuickExpense?.(item);
+                            setIsEditing(false);
+                            onEditingChange?.(item.node_id, item.day, false);
                           }}
-                          disabled={Boolean(collaboratingLock)}
-                          className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                          title="快速記一筆"
-                          aria-label="快速記一筆"
+                          className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
                         >
-                          <span className="text-lg">💸</span>
+                          取消
                         </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (collaboratingLock) return;
-                          void handleRegenerate();
-                        }}
-                        disabled={Boolean(collaboratingLock) || regenerating}
-                        className="w-10 h-10 rounded-full bg-white border border-fuchsia-200 flex items-center justify-center text-fuchsia-700 hover:bg-fuchsia-50 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                        title="AI 換一個建議"
-                        aria-label="AI 換一個建議"
-                      >
-                        {regenerating ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <RefreshCw size={16} strokeWidth={2.75} />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleShareToIGStory}
-                        disabled={Boolean(collaboratingLock)}
-                        className="w-10 h-10 rounded-full bg-pink-50 border border-orange-200 flex items-center justify-center text-pink-600 hover:opacity-80 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                        title="分享至 IG Story"
-                        aria-label="分享至 IG Story"
-                      >
-                        <Instagram size={16} strokeWidth={2.75} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (collaboratingLock) return;
-                          onDelete(item.node_id);
-                        }}
-                        disabled={Boolean(collaboratingLock)}
-                        className="w-10 h-10 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 hover:bg-rose-100 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                        title="刪除此節點"
-                        aria-label="刪除此節點"
-                      >
-                        <Trash2 size={16} strokeWidth={2.75} />
-                      </button>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-          {!isOffline && !isEditing && (
-            <div className="hidden">
-              {/* Elements moved into the card footer */}
-            </div>
+                  </div>
+                </motion.div>
+              </div>
+            </AnimatePresence>,
+            document.body,
           )}
-        </div>
       </div>
-    </div>
-  );
-}, (prev, next) => {
-  return prev.item === next.item && 
-         prev.collaboratingLock === next.collaboratingLock && 
-         prev.isRecentlySynced === next.isRecentlySynced;
-});
+    );
+  },
+  (prev, next) => {
+    return (
+      prev.item === next.item &&
+      prev.collaboratingLock === next.collaboratingLock &&
+      prev.isRecentlySynced === next.isRecentlySynced
+    );
+  },
+);
 
 function ItineraryList({
   items,
@@ -4916,7 +5065,7 @@ function ItineraryList({
 
   return (
     <div
-      className={`flex flex-col gap-6 sm:gap-10 sm:mt-6 mt-2 min-h-[400px] rounded-[36px] transition-all ${isFavoriteDragOver ? "bg-fuchsia-50/30 ring-2 ring-fuchsia-300/60 ring-offset-4 ring-offset-transparent" : ""}`}
+      className={`flex flex-col gap-4 sm:gap-6 sm:mt-6 mt-2 min-h-[400px] rounded-[36px] transition-all ${isFavoriteDragOver ? "bg-fuchsia-50/30 ring-2 ring-fuchsia-300/60 ring-offset-4 ring-offset-transparent" : ""}`}
       onDragOver={(event) => {
         if (!canDropFavorite) return;
         event.preventDefault();
@@ -5015,12 +5164,12 @@ function ItineraryList({
           <p className="text-slate-600 font-bold max-w-[360px] leading-relaxed text-[12px] tracking-[0.06em] px-4 text-center">
             現在不是提醒你空白，而是直接幫你補上第一步。
           </p>
-          <div className="mt-8 flex w-full max-w-[340px] flex-col gap-3.5">
+          <div className="mt-8 flex w-full max-w-[340px] flex-col gap-3.5 sm:gap-4">
             <button
               type="button"
               onClick={() => onAskAiForDay?.()}
               disabled={isOffline}
-              className="w-full rounded-[24px] bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-4 text-[15px] font-black tracking-widest text-white shadow-lg shadow-fuchsia-200/60 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap"
+              className="w-full rounded-[32px] bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(192,38,211,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(192,38,211,0.35)] active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               ✨ AI 助手幫我填滿
             </button>
@@ -5028,7 +5177,7 @@ function ItineraryList({
               type="button"
               onClick={() => onRandomizeFromFavorites?.()}
               disabled={isOffline || !favoriteSuggestions?.length}
-              className="w-full rounded-[24px] bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 text-[15px] font-black tracking-widest text-white shadow-lg shadow-sky-200/60 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap"
+              className="w-full rounded-[32px] bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(14,165,233,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(14,165,233,0.35)] active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               📌 從口袋名單挑選
             </button>
@@ -5036,7 +5185,7 @@ function ItineraryList({
               type="button"
               onClick={() => setManualAddTrigger((prev) => prev + 1)}
               disabled={isOffline}
-              className="w-full rounded-[24px] bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 text-[15px] font-black tracking-widest text-white shadow-lg shadow-emerald-200/60 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap"
+              className="w-full rounded-[32px] bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(16,185,129,0.35)] active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               ➕ 手動新增
             </button>
@@ -5049,7 +5198,7 @@ function ItineraryList({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="flex flex-col gap-5"
+          className="flex flex-col gap-4"
         >
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -5090,7 +5239,7 @@ function ItineraryList({
         axis="y"
         values={items}
         onReorder={onReorder}
-        className="flex flex-col gap-3 sm:gap-4"
+        className="flex flex-col gap-4 sm:gap-5"
       >
         <AnimatePresence initial={false} mode="popLayout">
           {items.map((item: ItineraryNode, idx: number) => {
@@ -6168,9 +6317,12 @@ function CalendarView({
                           selectedNode.title,
                         )
                       }
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-black uppercase tracking-[0.1em] border border-blue-100 shadow-sm transition-colors cursor-pointer whitespace-nowrap"
+                      title="開始導航"
+                      aria-label="開始導航"
+                      className="inline-flex items-center justify-center p-[24px] bg-[#3b82f6] hover:bg-blue-600 rounded-[12px] shadow-[0_4px_6px_rgba(0,0,0,0.1)] transition-colors cursor-pointer text-xl"
+                      style={{ fontFamily: "Inter, sans-serif" }}
                     >
-                      <MapPin size={12} strokeWidth={3} /> 導航
+                      🧭
                     </button>
                   )}
                 </div>

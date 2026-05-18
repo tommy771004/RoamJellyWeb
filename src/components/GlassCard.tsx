@@ -4,8 +4,9 @@ import { isLowPerformanceDevice } from '../lib/performance';
 function useGlassClass() {
   const lowPerf = isLowPerformanceDevice();
   return lowPerf
-    ? 'bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,248,251,0.96))] border border-white/90 shadow-[0_12px_24px_rgba(240,138,173,0.08),0_2px_8px_rgba(15,23,42,0.03)] rounded-[32px] p-5 relative overflow-hidden transition-colors duration-300 dark:bg-slate-900/90 dark:border-white/10 dark:text-slate-100 dark:shadow-[0_18px_45px_rgba(0,0,0,0.35)]'
-    : 'bg-[linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,250,252,0.75),rgba(250,252,255,0.70))] backdrop-blur-[32px] backdrop-saturate-[150%] border-[1.5px] border-white/92 shadow-[0_14px_32px_-8px_rgba(240,138,173,0.15),0_6px_18px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.98),inset_0_8px_20px_rgba(255,255,255,0.3)] ring-1 ring-white/55 rounded-[32px] p-5 relative overflow-hidden transition-colors duration-300 dark:bg-slate-900/62 dark:border-white/10 dark:ring-white/10 dark:text-slate-100 dark:shadow-[0_20px_64px_rgba(0,0,0,0.45)]';
+    ? 'bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,248,251,0.96))] border border-white/90 shadow-[0_12px_24px_rgba(240,138,173,0.08),0_2px_8px_rgba(15,23,42,0.03)] rounded-[32px] p-5 relative overflow-hidden transition-all duration-500 dark:bg-black/60 dark:border-white/20 dark:text-white dark:shadow-black/50'
+    : 'bg-[linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,250,252,0.75),rgba(250,252,255,0.70))] backdrop-blur-[32px] backdrop-saturate-[150%] border-[1.5px] border-white/92 shadow-[0_14px_32px_-8px_rgba(240,138,173,0.15),0_6px_18px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.98),inset_0_8px_20px_rgba(255,255,255,0.3)] ring-1 ring-white/55 rounded-[32px] p-5 relative overflow-hidden transition-all duration-500 dark:bg-black/40 dark:backdrop-blur-xl dark:border-white/20 dark:ring-white/10 dark:text-white dark:shadow-black/50';
+
 }
 
 import React from 'react';

@@ -289,9 +289,9 @@ export default function App() {
         };
       case 'itinerary':
         return {
-          contextLabel: '行程手帳',
+          contextLabel: '你的行程',
           title: '先選一趟旅程，再把 AI 草稿與共編安排接回手帳',
-          description: '先用訪客身分體驗行程手帳的主線，確認排序、收藏與共編節奏順手後，再決定是否正式註冊。',
+          description: '先用訪客身分體驗行程的主線，再決定是否正式註冊。',
           guestCtaLabel: '先用訪客身分開始規劃',
         };
       case 'ai_form':
@@ -661,7 +661,8 @@ export default function App() {
 
   return (
     <div className="flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
-      <div className="noise-overlay absolute inset-0 z-0 pointer-events-none" />
+      <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-500 bg-gradient-to-br from-indigo-950 via-purple-900 to-slate-900 ${isDarkMode ? 'opacity-100' : 'opacity-0'}`} />
+      <div className="noise-overlay absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20 transition-opacity duration-500" />
       {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
       {(import.meta as any).env.MODE !== 'production' && (
         <div className="fixed top-2 left-2 z-floating flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
@@ -675,8 +676,11 @@ export default function App() {
       {/* TopAppBar */}
       <header className={`fixed top-0 w-full z-50 px-3 sm:px-6 pt-[calc(0.5rem+env(safe-area-inset-top,0px))] sm:pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-2 sm:pb-4 flex justify-between items-center jelly-surface !rounded-none !border-x-0 !border-t-0 !shadow-sm transition-transform duration-500 transform-gpu ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Left: Logo */}
-        <div className="flex items-center gap-2 z-20">
-          <h1 className="text-gradient text-[20px] sm:text-2xl font-black italic tracking-tight font-plus-jakarta pr-2 drop-shadow-[0_4px_12px_rgba(251,146,60,0.2)]">RoamJelly</h1>
+        <div className="flex items-center gap-2 z-20 hover:animate-none">
+          <div className="flex items-center justify-center bg-white/80 dark:bg-slate-800/80 shadow-[0_4px_12px_rgba(236,72,153,0.15)] rounded-[18px] w-9 h-9 sm:w-11 sm:h-11 rotate-[-8deg] hover:rotate-[8deg] transition-transform duration-300 animate-cute-bounce">
+            <span className="text-[20px] sm:text-[24px] drop-shadow-sm">🍓</span>
+          </div>
+          <h1 className="text-gradient text-[22px] sm:text-3xl font-black italic tracking-tighter font-plus-jakarta pr-2 drop-shadow-[0_4px_12px_rgba(244,114,182,0.3)]">RoamJelly</h1>
         </div>
         
         {/* Desktop Navigation (Center, hidden on mobile) */}
@@ -879,7 +883,7 @@ export default function App() {
             exit="exit"
             transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-            className="pt-[calc(56px+env(safe-area-inset-top,0px))] sm:pt-[calc(80px+env(safe-area-inset-top,0px))]"
+            className="pt-[calc(56px+env(safe-area-inset-top,0px))] sm:pt-[calc(80px+env(safe-area-inset-top,0px))] pb-[calc(90px+env(safe-area-inset-bottom,0px))] sm:pb-0"
           >
             <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80"><PlaneTakeoff size={22} className="text-pink-500 animate-spin" strokeWidth={2.5} /></div></div>}>
               {renderContent()}

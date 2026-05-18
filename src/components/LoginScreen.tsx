@@ -39,7 +39,7 @@ const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string
       { label: 'Output', title: '生成後直接回手帳繼續編修', meta: '不是單次輸出，而是可接著調整排序、補航班與共編的草稿。', value: 'Editable', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
     ],
   },
-  '行程手帳': {
+  '你的行程': {
     eyebrow: '先接回旅程主線，再決定何時保存同步',
     panelLabel: 'Trip Notebook Preview',
     icon: NotebookText,
@@ -86,7 +86,7 @@ const buildPreviewDetails = (context: string, item: GuestPreviewItem): string[] 
       '先用訪客旅程把流程跑順，真的要保存歷史或同步時再接上帳號。',
     ];
   }
-  if (context === '行程手帳') {
+  if (context === '你的行程') {
     return [
       item.meta,
       '主線順手之後，再決定要不要同步裝置與保留編修紀錄。',

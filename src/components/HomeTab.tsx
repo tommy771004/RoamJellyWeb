@@ -282,7 +282,7 @@ function FlightCard({
       }}
     >
       <GlassCard
-        className={`!p-0 glass-card dark:bg-slate-800 flex-1 flex flex-col overflow-hidden rounded-[24px] transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}
+        className={`!p-0 glass-card dark:bg-slate-800 flex-1 flex flex-col overflow-hidden rounded-[32px] sm:rounded-[36px] transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}
       >
         {/* Top Section: Airline & Route */}
         <div className="p-3.5 sm:p-4 flex flex-col gap-2.5">
@@ -515,7 +515,7 @@ function FlightTable({
             role="button"
             tabIndex={0}
             aria-label={`查看 ${providerName} 航班 ${flight.details?.depCode || ""} → ${flight.details?.arrCode || ""} ${flight.currency} ${flight.price}`}
-            className="glass-card dark:bg-slate-800 rounded-[24px] overflow-hidden cursor-pointer transition-shadow duration-200"
+            className="glass-card dark:bg-slate-800 rounded-[32px] sm:rounded-[36px] overflow-hidden cursor-pointer transition-shadow duration-200"
             onClick={() => onPress(flight)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -1343,23 +1343,11 @@ export default function HomeTab({
       : "");
 
   useEffect(() => {
-    // Initial fetch for recommendations and handbooks
+    // Initial fetch for handbooks
     const loadInitialData = async () => {
       try {
-        const seedDate = new Date();
-        seedDate.setDate(seedDate.getDate() + 30);
-        const seedDateStr = seedDate.toISOString().slice(0, 10);
-
-        const [handbooks, recommendations] = await Promise.all([
-          fetchHandbooks(),
-          searchOffers({
-            from: searchForm.from || "TPE",
-            to: searchForm.to || "TYO",
-            date: seedDateStr,
-          }).catch(() => []),
-        ]);
+        const handbooks = await fetchHandbooks();
         setCommunityTrips(handbooks);
-        if (results.length === 0) setResults(recommendations);
       } catch (e) {
         console.error("Failed to load initial data", e);
       }
@@ -1731,8 +1719,8 @@ export default function HomeTab({
                               </h2>
                               <ExpandableText
                                 text={pillar.description}
-                                previewLines={3}
-                                minCharacters={88}
+                                previewLines={2}
+                                minCharacters={60}
                                 className="relative mt-1.5"
                                 textClassName="text-[13px] font-medium leading-[1.62] text-slate-600"
                                 buttonClassName="mt-0"
@@ -1844,12 +1832,12 @@ export default function HomeTab({
                 </div>
 
                 {/* Search card */}
-                <div className="flex flex-col gap-2 rounded-[28px] jelly-surface p-2.5 sm:gap-2 sm:rounded-3xl sm:p-3.5">
+                <div className="flex flex-col gap-2 rounded-[32px] sm:rounded-[40px] jelly-surface p-2.5 sm:gap-2 sm:p-3.5">
                   {/* FROM / TO row */}
                   <div className="relative grid grid-cols-2">
                     {/* FROM cell */}
                     <div
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-text ${searchFieldSurfaceClass}`}
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[24px] sm:rounded-[28px] cursor-text ${searchFieldSurfaceClass}`}
                       onClick={() => {
                         setShowDeparturePicker(true);
                         setShowDestinationPicker(false);
@@ -1886,7 +1874,7 @@ export default function HomeTab({
 
                     {/* TO cell */}
                     <div
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-text ${searchFieldSurfaceClass}`}
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[24px] sm:rounded-[28px] cursor-text ${searchFieldSurfaceClass}`}
                       onClick={() => {
                         setShowDestinationPicker(true);
                         setShowDeparturePicker(false);
@@ -1919,7 +1907,7 @@ export default function HomeTab({
                     <button
                       type="button"
                       aria-label={`去程日期：${searchForm.date || "尚未選擇"}`}
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-left w-full ${searchFieldSurfaceClass}`}
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[24px] sm:rounded-[28px] cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-left w-full ${searchFieldSurfaceClass}`}
                       onClick={() => {
                         setShowDatePicker(!showDatePicker);
                         setShowDeparturePicker(false);
@@ -1942,7 +1930,7 @@ export default function HomeTab({
                     <button
                       type="button"
                       aria-label={`回程日期：${searchForm.returnDate || (searchForm.tripType === "oneway" ? "單程（點擊切換來回）" : "尚未選擇")}`}
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[18px] sm:rounded-2xl cursor-pointer border text-left w-full ${
+                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[24px] sm:rounded-[28px] cursor-pointer border text-left w-full ${
                         searchForm.tripType === "oneway"
                           ? "bg-slate-50/30 border-dashed border-slate-200 dark:border-slate-600 opacity-60"
                           : "bg-slate-50/60 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700"
@@ -1983,17 +1971,18 @@ export default function HomeTab({
                     onClick={() => void handleSearch()}
                     disabled={isSearchDisabled || loading || isOffline}
                     title={isOffline ? "請連線網路以進行機票比價" : ""}
-                    className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[15px] font-black tracking-wide shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                    className={`group flex w-full items-center justify-center gap-2 rounded-[32px] py-4 sm:py-5 text-[16px] sm:text-[17px] font-black tracking-wide shadow-sm transition-[transform,shadow,background] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform-gpu ${
                       isSearchDisabled || loading || isOffline
                         ? "bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
-                        : "bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[0_10px_24px_rgba(244,63,94,0.22)] hover:from-pink-500 hover:to-orange-500 active:scale-[0.92] hover:-translate-y-1"
+                        : "bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[0_12px_28px_rgba(244,63,94,0.3)] hover:from-pink-500 hover:to-orange-500 active:scale-[0.92] hover:-translate-y-1.5 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)]"
                     }`}
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <SearchIcon size={17} strokeWidth={3} /> 開始規劃這趟旅程
+                        <SearchIcon size={18} strokeWidth={3} className="drop-shadow-sm group-hover:animate-cute-bounce" /> 
+                        <span className="drop-shadow-sm group-hover:text-pink-50 transition-colors">開始規劃這趟旅程 ✨</span>
                       </>
                     )}
                   </button>
@@ -2215,7 +2204,7 @@ export default function HomeTab({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-50 flex flex-col items-center pt-20 bg-white/50 backdrop-blur-sm rounded-[24px]"
+                  className="absolute inset-0 z-50 flex flex-col items-center pt-20 bg-white/50 backdrop-blur-sm rounded-[32px] sm:rounded-[36px]"
                 >
                   <div className="flex flex-col items-center gap-5 p-7 bg-white/97 shadow-2xl rounded-3xl border border-slate-200/80 w-[88%] max-w-sm">
                     {/* Animated plane */}
@@ -2812,12 +2801,12 @@ export default function HomeTab({
 
                         <ExpandableText
                           text={dest.description}
-                          previewLines={3}
-                          minCharacters={84}
+                          previewLines={2}
+                          minCharacters={60}
                           className="relative mb-3"
                           textClassName="text-pretty text-[13px] font-medium leading-[1.68] text-slate-600 sm:text-[13px]"
-                          collapsedLabel="看更多靈感"
-                          expandedLabel="收起介紹"
+                          collapsedLabel="展開完整內容"
+                          expandedLabel="收起內容"
                         />
 
                         <div className="relative flex flex-wrap gap-1.5 sm:gap-2 mb-4">

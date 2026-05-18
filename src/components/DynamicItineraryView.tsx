@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useMemo } from 'react';
 import { ArrowLeft, Clock, MapPin, Leaf, Flame, Navigation2, AlertTriangle } from 'lucide-react';
 import GlassCard from './GlassCard';
+import ExpandableText from './ExpandableText';
 import type { ItineraryNode } from '../types/workflow';
 
 const ItineraryMapView = lazy(() => import('./ItineraryMapView'));
@@ -18,7 +19,8 @@ export default function DynamicItineraryView({
   
   // Extracting UI configurations or fallback
   const uiConfig = aiResponse?.ui_config || {};
-  const gradient = uiConfig.bg_gradient || 'from-fuchsia-100 to-indigo-100';
+  const uiState = aiResponse?.ui_state || {};
+  const gradient = uiState.theme_gradient || uiConfig.bg_gradient || 'from-fuchsia-100 to-indigo-100';
   const isLargeFont = uiConfig.font_scale === 'large';
   const textScaleClass = isLargeFont ? 'text-lg' : 'text-base';
   const titleClass = isLargeFont ? 'text-5xl' : 'text-4xl';
@@ -100,7 +102,7 @@ export default function DynamicItineraryView({
             const dayGeoNodes = geoNodesByDay[dayNum] || [];
 
             return (
-              <div key={i} className="bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl p-6">
+              <div key={i} className="bg-[linear-gradient(135deg,rgba(255,255,255,0.7),rgba(255,250,251,0.6))] backdrop-blur-xl border-2 border-white/80 shadow-[0_16px_40px_rgba(244,114,182,0.1),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_rgba(244,114,182,0.15)] rounded-[48px] p-6 sm:p-8 transition-shadow duration-500 transform-gpu">
                 <h3 className="text-xl font-bold text-slate-800 mb-4 bg-white/60 w-fit px-5 py-2 rounded-full shadow-sm text-center whitespace-nowrap">
                   第 {dayData.day} 天
                 </h3>
@@ -181,7 +183,21 @@ export default function DynamicItineraryView({
                         {/* AI Note */}
                         {spot.ai_note && (
                           <div className="bg-white/50 backdrop-blur-sm text-sm text-slate-700 p-3 rounded-2xl border border-white/40 mt-3 shadow-inner">
-                            <span className="font-semibold opacity-60 mr-1">TIPS /</span> {spot.ai_note}
+                            <ExpandableText
+                              text={spot.ai_note}
+                              label="TIPS"
+                              previewLines={2}
+                              minCharacters={60}
+                              minLineBreaks={1}
+                              preserveWhitespace
+                              stopPropagation
+                              className="gap-1.5"
+                              labelClassName="mb-0 text-slate-500"
+                              textClassName="text-[13px] sm:text-[14px] font-medium text-slate-700 tracking-tight leading-[1.6] font-sans"
+                              buttonClassName="mt-0"
+                              collapsedLabel="展開完整內容"
+                              expandedLabel="收起內容"
+                            />
                           </div>
                         )}
 
@@ -219,8 +235,9 @@ export default function DynamicItineraryView({
         {onSave && (
           <button 
             onClick={() => onSave(result)}
-            className="w-full mt-10 py-5 rounded-full bg-slate-900 border border-white/20 text-white font-bold text-lg shadow-xl hover:bg-slate-800 transition-transform duration-200 active:scale-[0.98] flex items-center justify-center gap-2">
-            <span>💾 儲存此行程</span>
+            className="group w-full mt-10 py-5 sm:py-6 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 text-white font-black text-lg sm:text-xl shadow-[0_16px_32px_rgba(236,72,153,0.3),inset_0_2px_4px_rgba(255,255,255,0.4)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.4),inset_0_2px_4px_rgba(255,255,255,0.5)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3">
+            <span className="group-hover:animate-cute-bounce">💾</span>
+            <span className="drop-shadow-sm">儲存這份心動行程</span>
           </button>
         )}
       </div>

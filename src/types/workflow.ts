@@ -188,6 +188,8 @@ export interface ItineraryPlannerForm {
   budget?: string;            // 預算等級: 窮遊背包客/小資精打細算/舒適中等/奢華享受
   dietary?: string[];         // 飲食需求: 無限制/純素/蛋奶素/無麩質/不吃海鮮
   transport?: string[];       // 交通偏好: 大眾運輸/自駕租車/包車/徒步為主
+  pace?: string;              // 行程步調: 緊湊特種兵/適中/悠閒慢活
+  accommodation?: string[];   // 住宿偏好: 青旅/商務旅館/星級飯店/特色民宿
 }
 
 export interface AiPreferenceProfile {
@@ -198,6 +200,8 @@ export interface AiPreferenceProfile {
   dietary?: string[];
   transport?: string[];
   budget?: string;
+  pace?: string;
+  accommodation?: string[];
 }
 
 export interface UserPreferencesResponse {

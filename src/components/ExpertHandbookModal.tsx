@@ -73,18 +73,18 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
-            className="relative flex max-h-modal-dvh w-full flex-col overflow-hidden rounded-t-[30px] border border-white/72 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] shadow-[0_28px_64px_rgba(15,23,42,0.16)] sm:max-w-3xl sm:rounded-[36px] md:max-w-4xl"
+            className="relative flex max-h-modal-dvh w-full flex-col overflow-hidden rounded-t-[32px] sm:rounded-[40px] border border-white/72 dark:border-white/10 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(30,41,59,0.98),rgba(15,23,42,0.96),rgba(2,6,23,0.94))] shadow-[0_28px_64px_rgba(15,23,42,0.16)] dark:shadow-[0_28px_64px_rgba(0,0,0,0.6)] sm:max-w-3xl sm:rounded-[36px] md:max-w-4xl outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="z-20 flex-shrink-0 border-b border-white/78 bg-white/80 px-5 pb-4 pt-5 backdrop-blur-xl sm:px-7 sm:pt-6">
+            <div className="z-20 flex-shrink-0 border-b border-white/78 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 px-5 pb-4 pt-5 backdrop-blur-xl sm:px-7 sm:pt-6">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-[18px] border border-white/84 shadow-[0_8px_18px_rgba(15,23,42,0.06)] sm:h-[3.75rem] sm:w-[3.75rem]">
+                  <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-[18px] border border-white/84 dark:border-white/20 shadow-[0_8px_18px_rgba(15,23,42,0.06)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.5)] sm:h-[3.75rem] sm:w-[3.75rem]">
                     <img src={handbook.image} alt={handbook.title} width={64} height={64} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h1 className="fluid-title line-clamp-2 font-extrabold text-slate-900 sm:text-[30px]">
+                    <h1 className="fluid-title line-clamp-2 font-extrabold text-slate-900 dark:text-white sm:text-[30px]">
                       {handbook.title}
                     </h1>
                     <div className="flex items-center overflow-x-auto scrollbar-hide snap-x gap-x-3 gap-y-1 mt-2">
