@@ -62,6 +62,7 @@ import { io, type Socket } from "socket.io-client";
 import GlassCard from "./GlassCard";
 import IconImg from "./ui/IconImg";
 import { ItinerarySkeletonCard } from "./SkeletonCard";
+import { WikiPreviewCard } from "./WikiPreviewCard";
 import {
   searchOffers,
   ensureClientAccessToken,
@@ -285,32 +286,13 @@ const NO_TRIP_ENTRY_PILLARS = [
 ] as const;
 const DELETE_UNDO_WINDOW_MS = 3600;
 
-const CATEGORY_META: Record<string, { label: string; icon: string }> = {
-  flight: { label: "航班", icon: "airplane" },
-  transport: { label: "交通", icon: "train" },
-  landmark: { label: "景點", icon: "camera" },
-  food: { label: "美食", icon: "food-drink" },
-  shopping: { label: "購物", icon: "ticket" },
-  nature: { label: "自然", icon: "mountain" },
-  hotel: { label: "住宿", icon: "hotel" },
-  activity: { label: "活動", icon: "hot-air-balloon" },
-  nightlife: { label: "夜生活", icon: "cocktail" },
-  other: { label: "其他", icon: "compass" },
-};
-
-const CATEGORY_OPTIONS = Object.keys(CATEGORY_META);
-
-function getCategoryMeta(category?: string) {
-  const key = category && CATEGORY_META[category] ? category : "other";
-  return { key, ...CATEGORY_META[key] };
-}
+import { CATEGORY_META, CATEGORY_OPTIONS, getCategoryMeta, getNodeEmoji } from "../lib/itineraryUtils";
 
 function withAutoCategoryIcon(node: ItineraryNode): ItineraryNode {
-  const meta = getCategoryMeta(node.category);
   return {
     ...node,
-    category: meta.key,
-    emoji: node.emoji?.trim() ? node.emoji : meta.icon,
+    category: getCategoryMeta(node.category).key,
+    emoji: getNodeEmoji(node),
   };
 }
 
@@ -658,13 +640,14 @@ export default function ItineraryTab() {
       const rawNodes: ItineraryNode[] = [];
       suggestions.itinerary.forEach((dayData: any) => {
         dayData.spots.forEach((spot: any, i: number) => {
+          const cat = normalizeAiCategory(spot.category);
           rawNodes.push({
             node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${dayData.day}_${i}`,
             day: dayData.day || 1,
             time: normalizeClockInput(spot.time || "10:00"),
             title: spot.name || "景點",
-            emoji: spot.emoji || "📍",
-            category: normalizeAiCategory(spot.category),
+            emoji: getNodeEmoji({ emoji: spot.emoji, category: cat }),
+            category: cat,
             description: spot.ai_note || "",
             ai_note: spot.ai_note || "",
             intensity: spot.intensity,
@@ -816,8 +799,8 @@ export default function ItineraryTab() {
             getDateForDay(node.day ?? safeSelectedDay, tripInfo?.startDate),
           time: node.time || "10:00",
           title: node.title || "新行程",
-          emoji: node.emoji || "📍",
           category: node.category || "other",
+          emoji: getNodeEmoji(node),
           source: "local",
           lat: node.lat,
           lng: node.lng,
@@ -1714,8 +1697,8 @@ export default function ItineraryTab() {
                 day: dayData.day || 1,
                 time: spot.time || "10:00",
                 title: String(spot.name || spot.title || "景點"),
-                emoji: spot.emoji || "📍",
                 category: spot.category || "other",
+                emoji: getNodeEmoji(spot),
                 description: spot.ai_note || "",
                 ai_note: spot.ai_note || "",
                 intensity: spot.intensity,
@@ -1738,8 +1721,8 @@ export default function ItineraryTab() {
             day: spot.day || 1,
             time: spot.time || "10:00",
             title: String(spot.name || spot.title || "景點"),
-            emoji: spot.emoji || "📍",
             category: spot.category || "other",
+            emoji: getNodeEmoji(spot),
             description: spot.ai_note || "",
             ai_note: spot.ai_note || "",
             intensity: spot.intensity,
@@ -1925,7 +1908,7 @@ export default function ItineraryTab() {
       return (
         <div
           onScroll={onScroll}
-          className="flex-1 flex flex-col pt-4 sm:pt-10 bg-slate-50 min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth"
+          className="flex-1 flex flex-col pt-4 sm:pt-10 bg-transparent min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth"
         >
           <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
             <button
@@ -1948,7 +1931,7 @@ export default function ItineraryTab() {
     return (
       <div
         onScroll={onScroll}
-        className="flex-1 w-full overflow-y-auto scroll-smooth bg-slate-50 selection:bg-sky-100"
+        className="flex-1 w-full overflow-y-auto scroll-smooth bg-transparent selection:bg-sky-100"
       >
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-tab-safe animate-in fade-in duration-700">
           <EditorialSectionIntro
@@ -1972,7 +1955,7 @@ export default function ItineraryTab() {
               whileTap={prefersReducedMotion ? undefined : { scale: 0.99 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
               onClick={() => setIsPlanningNew(true)}
-              className="editorial-card cursor-pointer group relative overflow-hidden rounded-[36px] p-5 backdrop-blur-xl sm:p-7"
+              className="editorial-card cursor-pointer group relative overflow-hidden rounded-[32px] sm:rounded-[36px] p-4 sm:p-7 backdrop-blur-xl"
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.16),transparent_42%)]" />
               <div className="relative flex h-full flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -2026,7 +2009,7 @@ export default function ItineraryTab() {
                       這樣手機上會先看到主線，而不是一開始就被整份長內容壓住。
                     </p>
                   </div>
-                  <button className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors group-hover:from-sky-600 group-hover:to-orange-500">
+                  <button className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-400 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors group-hover:from-pink-500 group-hover:to-orange-500">
                     <Sparkles size={18} />
                     開始用 AI 起草旅程
                   </button>
@@ -2057,7 +2040,7 @@ export default function ItineraryTab() {
             </div>
           ) : userTrips.length === 0 ? (
             <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-[32px] border border-slate-200/80 bg-white/70 px-5 py-8 text-center shadow-sm backdrop-blur-sm sm:px-6 sm:py-10">
-              <div className="mb-4 flex size-16 items-center justify-center rounded-[24px] bg-gradient-to-br from-sky-50 to-indigo-50 text-sky-600 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(14,165,233,0.1)]">
+              <div className="mb-4 flex size-16 items-center justify-center rounded-[24px] bg-gradient-to-br from-pink-50 to-rose-50 text-pink-600 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(244,63,94,0.1)]">
                 <Navigation2 size={28} />
               </div>
               <h3 className="text-balance text-[22px] sm:text-2xl font-black text-slate-900">
@@ -2068,7 +2051,7 @@ export default function ItineraryTab() {
               </p>
               <button
                 onClick={() => setIsPlanningNew(true)}
-                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:from-sky-400 hover:to-indigo-400 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)]"
+                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:from-pink-500 hover:to-rose-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)]"
               >
                 <Sparkles size={18} />
                 建立第一趟旅程
@@ -2281,7 +2264,7 @@ export default function ItineraryTab() {
   return (
     <main
       onScroll={onScroll}
-      className="flex-1 w-full overflow-y-auto selection:bg-sky-100 animate-in fade-in duration-700 scroll-smooth bg-[#fafafb]/30"
+      className="flex-1 w-full overflow-y-auto selection:bg-sky-100 animate-in fade-in duration-700 scroll-smooth bg-transparent"
     >
       <div className="max-w-[1440px] mx-auto w-full pb-tab-safe md:px-4 lg:px-8 mt-0 sm:mt-4 md:mt-6">
         {isOffline && (
@@ -2307,7 +2290,7 @@ export default function ItineraryTab() {
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 animate-pulse" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#fafafb] via-[#fafafb]/30 to-black/60 md:to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#fdfafb] via-[#fdfafb]/30 to-black/60 md:to-black/20" />
 
           {/* Mobile Header Overlay Info - Adjusted for better immersion */}
           <div className="absolute top-8 left-5 right-5 flex justify-between items-start z-50 lg:hidden">
@@ -2682,14 +2665,14 @@ export default function ItineraryTab() {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {nodes
-                    .filter((n: ItineraryNode) => n.emoji && n.title)
+                    .filter((n: ItineraryNode) => n.title)
                     .slice(0, 12)
                     .map((n: ItineraryNode) => (
                       <span
                         key={n.node_id}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 rounded-full text-[12px] font-bold text-slate-700 border border-pink-100 shadow-sm"
                       >
-                        <IconImg value={n.emoji} size={14} />
+                        <IconImg value={getNodeEmoji(n)} size={14} />
                         <span className="line-clamp-1 max-w-[100px]">
                           {n.title}
                         </span>
@@ -2709,7 +2692,7 @@ export default function ItineraryTab() {
               <HorizontalScrollRail
                 label="Day 切換"
                 viewportClassName="py-2 px-1"
-                contentClassName="inline-flex min-w-max gap-1 rounded-full border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(248,250,252,0.84))] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-800/90"
+                contentClassName="inline-flex min-w-max gap-1 rounded-full border border-white/85 bg-white/90 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_20px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-800/90"
                 controlsVisibilityClass="flex"
               >
                   {Array.from({ length: totalDays }, (_, i) => i + 1).map(
@@ -3798,7 +3781,7 @@ function TransportGapIndicator({
 
 // ─── Itinerary List ───────────────────────────────────────────────────────────
 
-function ItineraryListItem({
+const ItineraryListItem = React.memo(function ItineraryListItemBase({
   item,
   idx,
   onDelete,
@@ -3839,7 +3822,7 @@ function ItineraryListItem({
     item.date || getDateForDay(item.day, tripStartDate) || "",
   );
   const [editTime, setEditTime] = useState(item.time);
-  const [editEmoji, setEditEmoji] = useState(item.emoji);
+  const [editEmoji, setEditEmoji] = useState(getNodeEmoji(item));
   const [editDescription, setEditDescription] = useState(
     item.description || item.notes || "",
   );
@@ -3875,7 +3858,7 @@ function ItineraryListItem({
     setEditTitle(item.title);
     setEditDate(item.date || getDateForDay(item.day, tripStartDate) || "");
     setEditTime(item.time);
-    setEditEmoji(item.emoji);
+    setEditEmoji(getNodeEmoji(item));
     setEditDescription(item.description || item.notes || "");
     setEditTransport(item.transport_to_next || "");
     setEditImageUrl(item.image_url || "");
@@ -4096,7 +4079,7 @@ function ItineraryListItem({
         <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
       <div
-        className={`flex-1 p-3 sm:p-4 rounded-[24px] sm:rounded-[28px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-0.5 active:scale-[0.985]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(30,41,59,0.86))] backdrop-blur-xl text-white border border-slate-700 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.18)] hover:shadow-[0_16px_34px_-14px_rgba(0,0,0,0.24)]" : isHotelCard ? "bg-[linear-gradient(180deg,rgba(49,46,129,0.92),rgba(49,46,129,0.82))] backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-[0_10px_24px_-10px_rgba(79,70,229,0.18)] hover:shadow-[0_16px_34px_-14px_rgba(79,70,229,0.22)]" : "bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,249,252,0.90),rgba(248,251,255,0.86))] backdrop-blur-[22px] dark:bg-slate-900/70 border-[1.5px] border-white/94 dark:border-white/10 shadow-[0_10px_26px_-12px_rgba(15,23,42,0.09),inset_0_1px_0_rgba(255,255,255,0.92)] hover:shadow-[0_18px_34px_-18px_rgba(255,160,200,0.18)]"}`}
+        className={`flex-1 p-3 sm:p-4 rounded-[24px] sm:rounded-[28px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-0.5 active:scale-[0.985]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900 backdrop-blur-xl text-white border border-slate-700 shadow-md hover:shadow-lg" : isHotelCard ? "bg-indigo-900 backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-md hover:shadow-lg" : "glass-node hover:shadow-lg"}`}
         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
           if (
             (e.target as HTMLElement).closest(
@@ -4151,7 +4134,7 @@ function ItineraryListItem({
                 </button>
               ) : (
                 <span className="filter drop-shadow-sm select-none transition-transform group-hover:scale-110">
-                  <IconImg value={item.emoji} size={16} />
+                  <IconImg value={getNodeEmoji(item)} size={16} />
                 </span>
               )}
               {isEditing && showEmojiPicker && (
@@ -4503,7 +4486,7 @@ function ItineraryListItem({
                   <button
                     type="button"
                     onClick={handleSave}
-                    className="px-6 py-2 rounded-full bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(14,165,233,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(14,165,233,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
+                    className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
                   >
                     保存
                   </button>
@@ -4553,8 +4536,9 @@ function ItineraryListItem({
                     <img
                       src={item.image_url}
                       alt={item.title}
-                      className="w-full h-full object-cover rounded-[12px] sm:rounded-[16px] group-hover:scale-105 transition-transform duration-1000"
+                      className="w-full h-full object-cover rounded-[12px] sm:rounded-[16px] group-hover:scale-105 transition-transform duration-1000 transform-gpu"
                       loading="lazy"
+                      decoding="async"
                       referrerPolicy="no-referrer"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -4640,6 +4624,11 @@ function ItineraryListItem({
                       點擊卡片編輯手帳內容、細節或照片...
                     </p>
                   </div>
+                )}
+
+                {/* Wikipedia Preview */}
+                {!isEditing && !isFlightCard && (
+                  <WikiPreviewCard query={item.title} />
                 )}
 
                 {item.title.includes("Cebu") && (
@@ -4745,12 +4734,11 @@ function ItineraryListItem({
                           openEditor();
                         }}
                         disabled={Boolean(collaboratingLock)}
-                        className="px-3 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center gap-1.5 text-slate-700 hover:border-slate-300 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest"
+                        className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:border-slate-300 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="編輯此節點"
                         aria-label="編輯此節點"
                       >
-                        <Pencil size={14} strokeWidth={2.75} />
-                        編輯
+                        <Pencil size={16} strokeWidth={2.75} />
                       </button>
                       {item.category === "food" && (
                         <button
@@ -4761,11 +4749,11 @@ function ItineraryListItem({
                             onQuickExpense?.(item);
                           }}
                           disabled={Boolean(collaboratingLock)}
-                          className="px-4 h-10 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center gap-1.5 text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest whitespace-nowrap"
-                          title="為這個景點快速記一筆"
-                          aria-label="為這個景點快速記一筆"
+                          className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="快速記一筆"
+                          aria-label="快速記一筆"
                         >
-                          <span className="text-sm">💸</span> 記一筆
+                          <span className="text-lg">💸</span>
                         </button>
                       )}
                       <button
@@ -4776,26 +4764,25 @@ function ItineraryListItem({
                           void handleRegenerate();
                         }}
                         disabled={Boolean(collaboratingLock) || regenerating}
-                        className="px-3 h-10 rounded-full bg-white border border-fuchsia-200 flex items-center justify-center gap-1.5 text-fuchsia-700 hover:bg-fuchsia-50 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest"
+                        className="w-10 h-10 rounded-full bg-white border border-fuchsia-200 flex items-center justify-center text-fuchsia-700 hover:bg-fuchsia-50 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="AI 換一個建議"
                         aria-label="AI 換一個建議"
                       >
                         {regenerating ? (
-                          <Loader2 size={14} className="animate-spin" />
+                          <Loader2 size={16} className="animate-spin" />
                         ) : (
-                          <RefreshCw size={14} strokeWidth={2.75} />
+                          <RefreshCw size={16} strokeWidth={2.75} />
                         )}
                       </button>
                       <button
                         type="button"
                         onClick={handleShareToIGStory}
                         disabled={Boolean(collaboratingLock)}
-                        className="px-3 h-10 rounded-full bg-gradient-to-tr from-pink-50 to-orange-50 border border-orange-200 flex items-center justify-center gap-1.5 text-pink-600 hover:opacity-80 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest"
+                        className="w-10 h-10 rounded-full bg-pink-50 border border-orange-200 flex items-center justify-center text-pink-600 hover:opacity-80 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="分享至 IG Story"
                         aria-label="分享至 IG Story"
                       >
-                        <Instagram size={14} strokeWidth={2.75} />
-                        分享
+                        <Instagram size={16} strokeWidth={2.75} />
                       </button>
                       <button
                         type="button"
@@ -4805,11 +4792,11 @@ function ItineraryListItem({
                           onDelete(item.node_id);
                         }}
                         disabled={Boolean(collaboratingLock)}
-                        className="px-3 h-10 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center gap-1.5 text-rose-700 hover:bg-rose-100 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-black tracking-widest"
+                        className="w-10 h-10 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 hover:bg-rose-100 hover:shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="刪除此節點"
                         aria-label="刪除此節點"
                       >
-                        <Trash2 size={14} strokeWidth={2.75} />
+                        <Trash2 size={16} strokeWidth={2.75} />
                       </button>
                     </div>
                   )}
@@ -4827,7 +4814,11 @@ function ItineraryListItem({
       </div>
     </div>
   );
-}
+}, (prev, next) => {
+  return prev.item === next.item && 
+         prev.collaboratingLock === next.collaboratingLock && 
+         prev.isRecentlySynced === next.isRecentlySynced;
+});
 
 function ItineraryList({
   items,
@@ -6095,7 +6086,7 @@ function CalendarView({
                       <div className="flex flex-col w-full min-w-0">
                         <div className="flex items-center gap-1 w-full min-w-0">
                           <IconImg
-                            value={node.emoji}
+                            value={getNodeEmoji(node)}
                             size={16}
                             className="shrink-0"
                           />
@@ -6153,7 +6144,7 @@ function CalendarView({
 
             <div className="flex items-start gap-4 mt-2">
               <div className="w-14 h-14 shrink-0 rounded-[1.5rem] bg-gradient-to-br from-pink-50 to-fuchsia-50 flex items-center justify-center border border-white shadow-md shadow-pink-100/50">
-                <IconImg value={selectedNode.emoji} size={32} />
+                <IconImg value={getNodeEmoji(selectedNode)} size={32} />
               </div>
               <div className="flex-1 pt-1">
                 <h3 className="font-black text-xl text-slate-800 leading-tight mb-2">

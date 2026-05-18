@@ -8,6 +8,7 @@ import {
   Search as SearchIcon,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Calendar,
   LayoutGrid,
   List,
@@ -25,7 +26,6 @@ import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
 import ExpandableText from "./ExpandableText";
 import HorizontalScrollRail from "./HorizontalScrollRail";
-import { Input } from "./ui/input";
 import { FlightSkeletonCard } from "./SkeletonCard";
 import {
   searchOffers,
@@ -116,77 +116,68 @@ const HERO_STORY_PILLARS = [
 
 const HERO_PILLAR_DECOR = [
   {
-    shell:
-      "border-sky-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(239,246,255,0.92))]",
-    badge: "border-sky-100 bg-sky-100/90 text-sky-700",
-    glow: "bg-sky-200/55",
+    shell: "glass-card",
+    badge: "border-pink-100 bg-pink-100/90 text-pink-700",
+    glow: "bg-pink-200/55",
     note: "先拿到出發節奏，再慢慢補細節。",
   },
   {
-    shell:
-      "border-cyan-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(236,254,255,0.92))]",
-    badge: "border-cyan-100 bg-cyan-50/95 text-cyan-700",
-    glow: "bg-cyan-200/50",
+    shell: "glass-card",
+    badge: "border-teal-100 bg-teal-50/95 text-teal-700",
+    glow: "bg-teal-200/50",
     note: "把景點、住宿與移動線串成一張圖。",
   },
   {
-    shell:
-      "border-orange-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,247,237,0.92))]",
-    badge: "border-orange-100 bg-orange-50/95 text-orange-700",
-    glow: "bg-orange-200/55",
+    shell: "glass-card",
+    badge: "border-sky-100 bg-sky-50/95 text-sky-700",
+    glow: "bg-sky-200/55",
     note: "先起草一版，再交給旅伴一起玩。",
   },
 ] as const;
 
 const CARD_STICKER_TONES = [
-  "border-sky-100 bg-sky-50/95 text-sky-700",
-  "border-orange-100 bg-orange-50/95 text-orange-700",
-  "border-emerald-100 bg-emerald-50/95 text-emerald-700",
   "border-pink-100 bg-pink-50/95 text-pink-700",
+  "border-sky-100 bg-sky-50/95 text-sky-700",
+  "border-teal-100 bg-teal-50/95 text-teal-700",
+  "border-purple-100 bg-purple-50/95 text-purple-700",
 ] as const;
 
 const FEATURED_CARD_DECOR = [
   {
-    body:
-      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(240,249,255,0.94),rgba(255,247,237,0.92))]",
+    body: "editorial-card",
+    glow: "bg-pink-200/45",
+    cta: "from-pink-400 via-rose-400 to-orange-400 hover:from-pink-500 hover:via-rose-400 hover:to-orange-500",
+  },
+  {
+    body: "editorial-card",
+    glow: "bg-teal-200/45",
+    cta: "from-teal-400 via-emerald-400 to-sky-400 hover:from-teal-500 hover:via-emerald-400 hover:to-sky-500",
+  },
+  {
+    body: "editorial-card",
     glow: "bg-sky-200/45",
-    cta: "from-sky-500 via-cyan-500 to-orange-400 hover:from-sky-600 hover:via-cyan-500 hover:to-orange-500",
-  },
-  {
-    body:
-      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,237,0.94),rgba(240,253,250,0.92))]",
-    glow: "bg-orange-200/45",
-    cta: "from-orange-400 via-amber-400 to-emerald-400 hover:from-orange-500 hover:via-amber-400 hover:to-emerald-500",
-  },
-  {
-    body:
-      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,254,255,0.94),rgba(240,249,255,0.92))]",
-    glow: "bg-cyan-200/45",
-    cta: "from-cyan-500 via-sky-500 to-indigo-500 hover:from-cyan-600 hover:via-sky-500 hover:to-indigo-500",
+    cta: "from-sky-400 via-blue-400 to-indigo-400 hover:from-sky-500 hover:via-blue-400 hover:to-indigo-500",
   },
 ] as const;
 
 const HANDBOOK_CARD_DECOR = [
   {
-    body:
-      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(254,242,248,0.94),rgba(240,249,255,0.92))]",
+    body: "editorial-card-soft",
     glow: "bg-pink-200/45",
     badge: "border-pink-100 bg-pink-50/95 text-pink-700",
-    cta: "from-pink-500 via-orange-400 to-sky-500 hover:from-pink-600 hover:via-orange-400 hover:to-sky-500",
+    cta: "from-pink-400 via-rose-300 to-orange-300 hover:from-pink-500 hover:via-rose-300 hover:to-orange-400",
   },
   {
-    body:
-      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,237,0.94),rgba(254,249,195,0.88))]",
-    glow: "bg-orange-200/45",
-    badge: "border-orange-100 bg-orange-50/95 text-orange-700",
-    cta: "from-orange-400 via-amber-400 to-rose-400 hover:from-orange-500 hover:via-amber-400 hover:to-rose-500",
+    body: "editorial-card-soft",
+    glow: "bg-teal-200/45",
+    badge: "border-teal-100 bg-teal-50/95 text-teal-700",
+    cta: "from-teal-400 via-emerald-300 to-sky-300 hover:from-teal-500 hover:via-emerald-300 hover:to-sky-400",
   },
   {
-    body:
-      "bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,254,255,0.94),rgba(240,253,250,0.9))]",
-    glow: "bg-cyan-200/45",
-    badge: "border-cyan-100 bg-cyan-50/95 text-cyan-700",
-    cta: "from-cyan-500 via-sky-500 to-emerald-400 hover:from-cyan-600 hover:via-sky-500 hover:to-emerald-500",
+    body: "editorial-card-soft",
+    glow: "bg-sky-200/45",
+    badge: "border-sky-100 bg-sky-50/95 text-sky-700",
+    cta: "from-sky-400 via-blue-300 to-indigo-300 hover:from-sky-500 hover:via-blue-300 hover:to-indigo-400",
   },
 ] as const;
 
@@ -291,7 +282,7 @@ function FlightCard({
       }}
     >
       <GlassCard
-        className={`!p-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,249,252,0.94))] dark:bg-slate-800 border border-white/90 dark:border-slate-700 shadow-[0_8px_24px_rgba(240,138,173,0.08),0_2px_8px_rgba(15,23,42,0.04)] hover:shadow-[0_14px_34px_rgba(240,138,173,0.14),0_4px_12px_rgba(15,23,42,0.06)] flex-1 flex flex-col overflow-hidden rounded-[24px] transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}
+        className={`!p-0 glass-card dark:bg-slate-800 flex-1 flex flex-col overflow-hidden rounded-[24px] transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}
       >
         {/* Top Section: Airline & Route */}
         <div className="p-3.5 sm:p-4 flex flex-col gap-2.5">
@@ -524,7 +515,7 @@ function FlightTable({
             role="button"
             tabIndex={0}
             aria-label={`查看 ${providerName} 航班 ${flight.details?.depCode || ""} → ${flight.details?.arrCode || ""} ${flight.currency} ${flight.price}`}
-            className="bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,249,252,0.94))] dark:bg-slate-800 border border-white/90 dark:border-slate-700 shadow-[0_8px_24px_rgba(240,138,173,0.08),0_2px_8px_rgba(15,23,42,0.04)] hover:shadow-[0_14px_34px_rgba(240,138,173,0.14),0_4px_12px_rgba(15,23,42,0.06)] rounded-[24px] overflow-hidden cursor-pointer transition-shadow duration-200"
+            className="glass-card dark:bg-slate-800 rounded-[24px] overflow-hidden cursor-pointer transition-shadow duration-200"
             onClick={() => onPress(flight)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -894,7 +885,7 @@ function DestinationCard({
 
   return (
     <div className="group/dest h-full min-w-[76vw] snap-center sm:min-w-0">
-      <div className="relative h-full min-h-[402px] overflow-hidden rounded-[34px] border border-white/72 bg-white/55 shadow-[0_12px_38px_rgba(15,23,42,0.10)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_64px_rgba(15,23,42,0.16)] sm:min-h-[418px]">
+      <div className="relative h-full min-h-[402px] overflow-hidden rounded-[34px] glass-panel transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl sm:min-h-[418px]">
         <img
           src={meta.image}
           alt={title}
@@ -908,7 +899,7 @@ function DestinationCard({
           aria-label={`查看 ${title} 航班詳情`}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-slate-950/58" />
-        <div className="absolute inset-x-3.5 bottom-3.5 z-10 rounded-[30px] border border-white/72 bg-[linear-gradient(180deg,rgba(255,255,255,0.8),rgba(255,255,255,0.58))] p-4 shadow-[0_20px_44px_rgba(15,23,42,0.18)] backdrop-blur-[18px] sm:inset-x-4 sm:bottom-4 sm:p-5">
+        <div className="absolute inset-x-3.5 bottom-3.5 z-10 rounded-[30px] glass-panel p-4 sm:inset-x-4 sm:bottom-4 sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <span className="mb-2 inline-flex items-center rounded-full bg-white/72 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 shadow-sm sm:text-xs">
@@ -1099,6 +1090,7 @@ export default function HomeTab({
   >(null);
   const [activeStoryInfo, setActiveStoryInfo] = useState<InfoPeekContent | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const [isHeroIntroCollapsed, setIsHeroIntroCollapsed] = useState<boolean>(true);
   const [isHeroExpanded, setIsHeroExpanded] = useState<boolean>(
     () => typeof window !== "undefined" && window.innerWidth >= 768
   );
@@ -1639,20 +1631,30 @@ export default function HomeTab({
   return (
     <motion.div
       onScroll={onScroll}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12, scale: 0.985 }}
+      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-tab-safe md:pb-14"
     >
       {/* === HERO SECTION with gradient background === */}
       <div
-        className={`relative z-10 w-full pt-10 sm:pt-[72px] ${!isHeroExpanded ? "pb-3" : "pb-10 sm:pb-14"} px-3 sm:px-6 overflow-visible`}
+        className={`relative z-10 w-full pt-8 sm:pt-[60px] ${!isHeroExpanded ? "pb-3" : "pb-8 sm:pb-12"} px-3 sm:px-6 overflow-visible`}
       >
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(240,249,255,0.94),rgba(255,250,252,0.98),rgba(255,247,237,0.9))] pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-white/55 via-white/10 to-transparent pointer-events-none" />
-        <div className="absolute -top-10 right-6 h-72 w-72 rounded-full bg-sky-200/20 blur-[96px] pointer-events-none" />
-        <div className="absolute top-10 left-[-1rem] h-60 w-60 rounded-full bg-pink-200/18 blur-[90px] pointer-events-none" />
-        <div className="absolute -bottom-12 right-[18%] h-64 w-64 rounded-full bg-orange-200/24 blur-[92px] pointer-events-none" />
+        <motion.div 
+          style={{ willChange: 'transform, opacity' }}
+          animate={{ scale: [1, 1.05, 1], opacity: [0.15, 0.2, 0.15] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-10 right-6 h-72 w-72 rounded-full bg-sky-200/30 blur-[100px] pointer-events-none transform-gpu" />
+        <motion.div 
+          style={{ willChange: 'transform, opacity' }}
+          animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.2, 0.15] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute top-10 left-[-1rem] h-60 w-60 rounded-full bg-pink-200/30 blur-[90px] pointer-events-none transform-gpu" />
+        <motion.div 
+          style={{ willChange: 'transform, opacity' }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.18, 0.22, 0.18] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute -bottom-12 right-[18%] h-64 w-64 rounded-full bg-orange-200/30 blur-[90px] pointer-events-none transform-gpu" />
 
         <div className="relative z-20 mx-auto w-full max-w-[1120px]">
           {/* Hero title */}
@@ -1660,11 +1662,12 @@ export default function HomeTab({
             initial={prefersReducedMotion ? undefined : { opacity: 0, y: 18 }}
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
-            className={`relative mx-auto mb-4 max-w-[960px] space-y-3 overflow-hidden rounded-[34px] border border-white/84 bg-[linear-gradient(180deg,rgba(255,255,255,0.64),rgba(255,250,252,0.54),rgba(248,251,255,0.44))] px-4 py-4.5 text-center shadow-[0_16px_34px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-[18px] sm:mb-5 sm:space-y-4 sm:px-6 sm:py-6.5${!isHeroExpanded ? " hidden sm:block" : ""}`}
+            onClick={() => setIsHeroIntroCollapsed((prev) => !prev)}
+            className={`group relative mx-auto mb-4 max-w-[960px] space-y-3 overflow-hidden rounded-[32px] glass-panel px-4 py-4 text-center sm:mb-5 sm:space-y-4 sm:px-6 sm:py-6${!isHeroExpanded ? " hidden sm:block" : ""} cursor-pointer transition-colors duration-300 hover:bg-white/40`}
           >
-            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
-            <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-sky-200/18 blur-3xl" />
-            <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-orange-200/16 blur-3xl" />
+            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+            <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-sky-200/30 blur-3xl group-hover:bg-sky-200/40 transition-colors duration-300" />
+            <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-orange-200/20 blur-3xl group-hover:bg-orange-200/30 transition-colors duration-300" />
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
               <span className="inline-flex items-center rounded-full border border-white/92 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-sky-700 shadow-[0_6px_14px_rgba(14,165,233,0.07)] backdrop-blur-md">
                 Collaborative Trip Planner
@@ -1672,96 +1675,103 @@ export default function HomeTab({
               <span className="hidden items-center rounded-full border border-white/92 bg-white/84 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-orange-500 shadow-[0_6px_14px_rgba(249,115,22,0.07)] backdrop-blur-md sm:inline-flex">
                 Beta
               </span>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${!isHeroIntroCollapsed ? "rotate-180" : ""}`} />
             </div>
             <div className="relative space-y-2 sm:space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">
+              <p className={`text-[10px] font-black uppercase tracking-[0.28em] text-slate-400 transition-all duration-300 ${isHeroIntroCollapsed ? "hidden" : "block"}`}>
                 Premium Jelly Journey Desk
               </p>
               <h1 className="mx-auto max-w-4xl text-balance text-[28px] font-black tracking-[-0.045em] text-slate-900 sm:text-[42px] md:text-[54px] md:leading-[1.01]">
                 把航班、地圖與旅伴分工，收進同一份旅程
               </h1>
-              <p className="mx-auto max-w-[40rem] text-pretty text-[14px] leading-[1.75] text-slate-600 sm:text-[15px] sm:leading-[1.82]">
-                RoamJelly 先幫你鎖定出發節奏，再把靈感、共編清單和旅途工具串成可執行的旅程，不必在多個 App 之間切換。
-              </p>
-            </div>
-            <div className="mx-auto flex max-w-[620px] flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/70 pt-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 sm:gap-x-5">
-              <span>先比價</span>
-              <span className="h-1 w-1 rounded-full bg-slate-300" />
-              <span>再共編</span>
-              <span className="h-1 w-1 rounded-full bg-slate-300" />
-              <span>最後接工具包</span>
-            </div>
+              
+              <AnimatePresence initial={false}>
+                {!isHeroIntroCollapsed && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden space-y-3"
+                  >
+                    <p className="mx-auto max-w-[40rem] text-pretty text-[14px] leading-[1.75] text-slate-600 sm:text-[15px] sm:leading-[1.82]">
+                      RoamJelly 先幫你鎖定出發節奏，再把靈感、共編清單和旅途工具串成可執行的旅程，不必在多個 App 之間切換。
+                    </p>
+                    <div className="mx-auto flex max-w-[620px] flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/70 pt-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 sm:gap-x-5">
+                      <span>先比價</span>
+                      <span className="h-1 w-1 rounded-full bg-slate-300" />
+                      <span>再共編</span>
+                      <span className="h-1 w-1 rounded-full bg-slate-300" />
+                      <span>最後接工具包</span>
+                    </div>
 
-            {isHeroExpanded && (
-              <motion.div
-                initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
-                animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                transition={{ duration: prefersReducedMotion ? 0 : 0.24, delay: prefersReducedMotion ? 0 : 0.05, ease: "easeOut" }}
-                className="flex snap-x gap-2 overflow-x-auto pb-1 text-left sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:pb-0"
-              >
-                {HERO_STORY_PILLARS.map((pillar, index) => {
-                  const Icon = pillar.icon;
-                  const decor = HERO_PILLAR_DECOR[index % HERO_PILLAR_DECOR.length];
-                  return (
-                    <motion.div
-                      key={pillar.title}
-                      initial={prefersReducedMotion ? undefined : { opacity: 0, y: 16 }}
-                      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                      transition={{ duration: prefersReducedMotion ? 0 : 0.22, delay: prefersReducedMotion ? 0 : 0.08 + index * 0.04, ease: "easeOut" }}
-                      className={`group/pillar editorial-card-soft relative min-w-[248px] snap-start overflow-hidden rounded-[26px] px-3.5 py-3 backdrop-blur-xl sm:min-w-0 ${decor.shell}`}
-                    >
-                      <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
-                      <div className="absolute inset-x-4 bottom-3 h-px bg-gradient-to-r from-white via-slate-200/70 to-transparent" />
-                      <div className="relative mb-3 flex items-center justify-between gap-3">
-                        <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${decor.badge}`}>
-                          <Icon size={13} strokeWidth={2.6} />
-                          {pillar.eyebrow}
-                        </span>
-                        <span className="inline-flex size-7 items-center justify-center rounded-full border border-white/80 bg-white/85 text-slate-300 shadow-sm">
-                          <ArrowRight size={14} strokeWidth={2.5} />
-                        </span>
+                    {isHeroExpanded && (
+                      <div className="flex snap-x gap-2 overflow-x-auto pb-1 text-left sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:pb-0 pt-2">
+                        {HERO_STORY_PILLARS.map((pillar, index) => {
+                          const Icon = pillar.icon;
+                          const decor = HERO_PILLAR_DECOR[index % HERO_PILLAR_DECOR.length];
+                          return (
+                            <div
+                              key={pillar.title}
+                              className={`group/pillar editorial-card-soft relative min-w-[248px] snap-start overflow-hidden rounded-[26px] px-3.5 py-3 backdrop-blur-xl sm:min-w-0 ${decor.shell}`}
+                            >
+                              <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
+                              <div className="absolute inset-x-4 bottom-3 h-px bg-gradient-to-r from-white via-slate-200/70 to-transparent" />
+                              <div className="relative mb-3 flex items-center justify-between gap-3">
+                                <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${decor.badge}`}>
+                                  <Icon size={13} strokeWidth={2.6} />
+                                  {pillar.eyebrow}
+                                </span>
+                                <span className="inline-flex size-7 items-center justify-center rounded-full border border-white/80 bg-white/85 text-slate-300 shadow-sm">
+                                  <ArrowRight size={14} strokeWidth={2.5} />
+                                </span>
+                              </div>
+                              <h2 className="relative text-balance text-[15px] font-black tracking-[-0.02em] text-slate-900 sm:text-[17px]">
+                                {pillar.title}
+                              </h2>
+                              <ExpandableText
+                                text={pillar.description}
+                                previewLines={3}
+                                minCharacters={88}
+                                className="relative mt-1.5"
+                                textClassName="text-[13px] font-medium leading-[1.62] text-slate-600"
+                                buttonClassName="mt-0"
+                              />
+                              <div className="editorial-divider relative mt-3 flex items-center justify-between gap-3 pt-3">
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                                  <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/85 text-[10px] font-black shadow-sm ${decor.badge}`}>
+                                    0{index + 1}
+                                  </span>
+                                  <span className="text-pretty line-clamp-2">{decor.note}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveStoryInfo({
+                                      eyebrow: pillar.eyebrow,
+                                      title: pillar.title,
+                                      description: pillar.description,
+                                      details: pillar.details,
+                                      tone: pillar.tone,
+                                      icon: Icon,
+                                    })
+                                  }}
+                                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/92 bg-white/94 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.96] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
+                                >
+                                  查看說明
+                                  <ArrowRight size={12} strokeWidth={2.6} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <h2 className="relative text-balance text-[15px] font-black tracking-[-0.02em] text-slate-900 sm:text-[17px]">
-                        {pillar.title}
-                      </h2>
-                      <ExpandableText
-                        text={pillar.description}
-                        previewLines={3}
-                        minCharacters={88}
-                        className="relative mt-1.5"
-                        textClassName="text-[13px] font-medium leading-[1.62] text-slate-600"
-                        buttonClassName="mt-0"
-                      />
-                      <div className="editorial-divider relative mt-3 flex items-center justify-between gap-3 pt-3">
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
-                          <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/85 text-[10px] font-black shadow-sm ${decor.badge}`}>
-                            0{index + 1}
-                          </span>
-                          <span className="text-pretty line-clamp-2">{decor.note}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActiveStoryInfo({
-                              eyebrow: pillar.eyebrow,
-                              title: pillar.title,
-                              description: pillar.description,
-                              details: pillar.details,
-                              tone: pillar.tone,
-                              icon: Icon,
-                            })
-                          }
-                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/92 bg-white/94 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.96] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
-                        >
-                          查看說明
-                          <ArrowRight size={12} strokeWidth={2.6} />
-                        </button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            )}
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
 
           {/* === SEARCH FORM === */}
@@ -1834,7 +1844,7 @@ export default function HomeTab({
                 </div>
 
                 {/* Search card */}
-                <div className="flex flex-col gap-2 rounded-[28px] border border-white/96 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,249,252,0.9),rgba(248,251,255,0.86))] p-2.5 shadow-[0_12px_40px_rgba(14,165,233,0.10),0_3px_12px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,1)] backdrop-blur-2xl sm:gap-2 sm:rounded-3xl sm:p-3.5 dark:border-slate-700 dark:bg-slate-800/90">
+                <div className="flex flex-col gap-2 rounded-[28px] jelly-surface p-2.5 sm:gap-2 sm:rounded-3xl sm:p-3.5">
                   {/* FROM / TO row */}
                   <div className="relative grid grid-cols-2">
                     {/* FROM cell */}
@@ -1976,7 +1986,7 @@ export default function HomeTab({
                     className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[15px] font-black tracking-wide shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                       isSearchDisabled || loading || isOffline
                         ? "bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
-                        : "bg-gradient-to-r from-sky-500 via-sky-500 to-orange-400 text-white shadow-[0_10px_24px_rgba(14,165,233,0.22)] hover:from-sky-600 hover:to-orange-500 active:scale-[0.92] hover:-translate-y-1"
+                        : "bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[0_10px_24px_rgba(244,63,94,0.22)] hover:from-pink-500 hover:to-orange-500 active:scale-[0.92] hover:-translate-y-1"
                     }`}
                   >
                     {loading ? (
@@ -2001,14 +2011,6 @@ export default function HomeTab({
       <div className="relative z-0 flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60">
         {/* Quick External Links */}
         <div className="max-w-3xl mx-auto w-full pt-3 sm:pt-4 pb-1 sm:pb-2">
-          <div className="mb-3 space-y-1 sm:mb-3.5">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
-              把旅程補完整
-            </p>
-            <p className="text-sm text-slate-600">
-              住宿、票券與接送放在同一個研究流程裡，比較不容易漏掉真正會影響行程節奏的細節。
-            </p>
-          </div>
           <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-1">
             <a
               href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw"
@@ -2065,9 +2067,9 @@ export default function HomeTab({
           <div className="flex flex-col gap-3 mb-5 sm:mb-6 md:mb-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <EditorialSectionIntro
-                eyebrow="Search To Notebook"
-                title="先找航班，再把旅程帶進手帳"
-                description="航班比價只是旅程起點。後續可以把結果、模板行程與靈感素材逐步收進同一份規劃。"
+                eyebrow="Search To Fight"
+                title=""
+                description=""
                 highlights={[
                   {
                     label: "出發",
@@ -2511,7 +2513,7 @@ export default function HomeTab({
                               </div>
                               <div className="px-4 py-4">
                                 <div className="mb-3 rounded-[18px] border border-white/90 bg-white/80 px-3 py-2 text-[12px] font-bold leading-[1.65] text-slate-600">
-                                  先借這份旅程節奏暖身，再決定要不要複製成自己的起跑版本。
+                                  參考旅程行程，再決定要不要加入。
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                   {handbook.tags.slice(0, 3).map((tag) => (
@@ -2540,7 +2542,7 @@ export default function HomeTab({
                                 triggerHapticFeedback([16]);
                                 setActiveHandbook(handbook);
                               }}
-                              className={`group/demo overflow-hidden rounded-[28px] border border-white/70 dark:border-white/10 bg-white/90 dark:bg-slate-900/80 text-left shadow-lg shadow-slate-200/40 dark:shadow-black/30 hover:shadow-xl ${cardSurfaceClass}`}
+                              className={`group/demo editorial-card-soft overflow-hidden rounded-[28px] text-left hover:shadow-xl ${cardSurfaceClass}`}
                             >
                               <div className="relative h-36 overflow-hidden">
                                 <img
@@ -2657,7 +2659,7 @@ export default function HomeTab({
                       className="w-[280px] sm:w-[320px] group/trip"
                     >
                       <GlassCard
-                        className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/86 shadow-[0_12px_34px_-8px_rgba(255,160,200,0.14),inset_0_1px_0_rgba(255,255,255,0.96)] hover:shadow-[0_20px_44px_-14px_rgba(255,160,200,0.24)] flex flex-col ${cardSurfaceClass}`}
+                        className={`!p-0 overflow-hidden h-full rounded-[30px] editorial-card-soft flex flex-col ${cardSurfaceClass}`}
                       >
                         <div className="relative h-40 overflow-hidden flex-shrink-0 sm:h-44">
                           <img
@@ -2685,7 +2687,7 @@ export default function HomeTab({
                           </div>
                         </div>
 
-                        <div className="relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(255,247,251,0.95),rgba(244,249,255,0.92))]">
+                        <div className="relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 jelly-surface rounded-b-[28px] border-t-0">
                           <div className="absolute -right-10 -top-10 size-24 rounded-full bg-pink-200/35 blur-3xl" />
                           <div className="relative mb-2.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
                             <Sparkles size={12} strokeWidth={2.6} />
@@ -2751,7 +2753,7 @@ export default function HomeTab({
                     className="w-[272px] sm:w-[304px] group/dest"
                   >
                     <GlassCard
-                      className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/86 shadow-[0_12px_34px_-8px_rgba(255,160,200,0.14),inset_0_1px_0_rgba(255,255,255,0.96)] hover:shadow-[0_20px_44px_-14px_rgba(255,160,200,0.24)] flex flex-col ${cardSurfaceClass}`}
+                      className={`!p-0 overflow-hidden h-full rounded-[30px] editorial-card flex flex-col ${cardSurfaceClass}`}
                     >
                       {/* Cover Image */}
                       <div className="relative h-40 overflow-hidden flex-shrink-0 sm:h-44">
@@ -2873,7 +2875,7 @@ export default function HomeTab({
                   >
                     <GlassCard
                       onClick={() => setActiveHandbook(handbook)}
-                      className={`!p-0 overflow-hidden h-full rounded-[30px] border border-white/86 shadow-[0_12px_34px_-8px_rgba(255,160,200,0.14),inset_0_1px_0_rgba(255,255,255,0.96)] hover:shadow-[0_20px_44px_-14px_rgba(255,160,200,0.24)] cursor-pointer ${cardSurfaceClass}`}
+                      className={`!p-0 overflow-hidden h-full rounded-[30px] editorial-card-soft cursor-pointer ${cardSurfaceClass}`}
                     >
                       <div className="relative h-40 overflow-hidden sm:h-44">
                         <img

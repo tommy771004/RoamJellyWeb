@@ -42,6 +42,7 @@ import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
 import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, getNativeMapUrl, createGuestSession, clearClientSession } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
+import { getCategoryMeta } from './lib/itineraryUtils';
 import { JellyToast } from './components/JellyToast';
 type LoginPromptMode = 'default' | 'guest-first';
 
@@ -63,6 +64,7 @@ export default function App() {
     isOffline, setOffline,
     isDarkMode, setDarkMode,
     notifications, clearNotifications,
+    isNavVisible,
   } = useAppStore();
   const { loadPreferences, toggleSave, savedItems } = useSearchStore();
 
@@ -86,6 +88,7 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [loginPromptMode, setLoginPromptMode] = useState<LoginPromptMode>('default');
@@ -476,7 +479,7 @@ export default function App() {
                      day: dayData.day || 1,
                      time: spot.time || "10:00",
                      title: String(spot.name || spot.title || '景點'),
-                     emoji: spot.emoji || '📍',
+                     emoji: spot.emoji || getCategoryMeta(spot.category).emoji,
                      category: spot.category || 'other',
                      description: spot.ai_note || '',
                      ai_note: spot.ai_note || '',
@@ -495,7 +498,7 @@ export default function App() {
                 day: spot.day || 1,
                 time: spot.time || "10:00",
                 title: String(spot.name || spot.title || '景點'),
-                emoji: spot.emoji || '📍',
+                emoji: spot.emoji || getCategoryMeta(spot.category).emoji,
                 category: spot.category || 'other',
                 description: spot.ai_note || '',
                 ai_note: spot.ai_note || '',
@@ -658,6 +661,7 @@ export default function App() {
 
   return (
     <div className="flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
+      <div className="noise-overlay absolute inset-0 z-0 pointer-events-none" />
       {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
       {(import.meta as any).env.MODE !== 'production' && (
         <div className="fixed top-2 left-2 z-floating flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
@@ -669,10 +673,10 @@ export default function App() {
       )}
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] sm:pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-3 sm:pb-4 flex justify-between items-center bg-[linear-gradient(135deg,rgba(255,255,255,0.84),rgba(255,247,251,0.76),rgba(240,249,255,0.82))] dark:bg-slate-950/75 backdrop-blur-[40px] backdrop-saturate-[220%] border-b border-white/95 dark:border-white/12 shadow-[0_1px_0_rgba(255,255,255,0.95)_inset,0_18px_42px_-18px_rgba(236,72,153,0.28),0_18px_42px_-16px_rgba(56,189,248,0.18)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] transition-all duration-500">
+      <header className={`fixed top-0 w-full z-50 px-3 sm:px-6 pt-[calc(0.5rem+env(safe-area-inset-top,0px))] sm:pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-2 sm:pb-4 flex justify-between items-center jelly-surface !rounded-none !border-x-0 !border-t-0 !shadow-sm transition-transform duration-500 transform-gpu ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20">
-          <h1 className="bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 bg-clip-text text-[22px] text-transparent sm:text-2xl font-black italic tracking-tight font-plus-jakarta pr-2 drop-shadow-[0_6px_18px_rgba(251,146,60,0.18)]">RoamJelly</h1>
+          <h1 className="text-gradient text-[20px] sm:text-2xl font-black italic tracking-tight font-plus-jakarta pr-2 drop-shadow-[0_4px_12px_rgba(251,146,60,0.2)]">RoamJelly</h1>
         </div>
         
         {/* Desktop Navigation (Center, hidden on mobile) */}
@@ -686,7 +690,7 @@ export default function App() {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex flex-row items-center gap-2 px-5 py-2.5 transition-all rounded-[24px] border ${
                   isActive 
-                    ? 'border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(254,242,248,0.90),rgba(240,249,255,0.92))] shadow-[0_12px_24px_rgba(236,72,153,0.14)] text-pink-600' 
+                    ? 'border-white/90 bg-white shadow-[0_12px_24px_rgba(236,72,153,0.14)] text-pink-600' 
                     : 'border-transparent text-slate-500 hover:bg-white/75 hover:border-white/80 hover:text-pink-500'
                 }`}
               >
@@ -778,26 +782,69 @@ export default function App() {
             )}
           </div>
           
-          <button
-            type="button"
-            aria-label={isLoggedIn ? '個人檔案' : '登入'}
-            onClick={() => {
-              if (!isLoggedIn) {
-                setLoginPromptMode('default');
-                setShowLogin(true);
-              } else {
-                setShowUserProfile(true);
-              }
-            }}
-            className={`flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'border-white/90 bg-[linear-gradient(135deg,rgba(254,242,248,0.95),rgba(240,249,255,0.88))] hover:bg-white/95' : 'border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88),rgba(254,242,248,0.76))] hover:bg-white/95'}`}
-          >
-            <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-pink-700' : 'text-slate-600'}`}>
-              {isLoggedIn ? `${userId} 您好` : '未登入'}
-            </span>
-            <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
-              {isLoggedIn ? <UserRound size={17} strokeWidth={2.4} /> : <SparklesIcon size={16} strokeWidth={2.4} />}
-            </div>
-          </button>
+          <div className="relative z-30">
+            <button
+              type="button"
+              aria-label={isLoggedIn ? '帳號選單' : '登入選單'}
+              onClick={() => setShowUserMenu(v => !v)}
+              className={`flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'border-white/90 bg-[linear-gradient(135deg,rgba(254,242,248,0.95),rgba(240,249,255,0.88))] hover:bg-white/95' : 'border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88),rgba(254,242,248,0.76))] hover:bg-white/95'}`}
+            >
+              <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-pink-700' : 'text-slate-600'}`}>
+                {isLoggedIn ? `${userId} 您好` : '未登入'}
+              </span>
+              <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
+                {isLoggedIn ? <UserRound size={17} strokeWidth={2.4} /> : <SparklesIcon size={16} strokeWidth={2.4} />}
+              </div>
+            </button>
+            {showUserMenu && (
+              <div className="absolute right-0 top-[calc(100%+8px)] w-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden flex flex-col py-1">
+                {!isLoggedIn ? (
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setLoginPromptMode('default');
+                      setShowLogin(true);
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left w-full"
+                  >
+                    <UserRound size={16} className="text-slate-400" />
+                    <span className="text-[14px] font-bold text-slate-700">登入帳號</span>
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setShowUserProfile(true);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left w-full"
+                    >
+                      <SparklesIcon size={16} className="text-orange-400" />
+                      <span className="text-[14px] font-bold text-slate-700">AI 偏好設定</span>
+                    </button>
+                    <div className="mx-3 h-px bg-slate-100" />
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setShowLogoutModal(true);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition-colors text-left w-full group"
+                    >
+                      <LogOut size={16} className="text-rose-400 group-hover:text-rose-500 transition-colors" />
+                      <span className="text-[13px] font-bold text-rose-600 group-hover:text-rose-700 transition-colors">登出帳號</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+            {showUserMenu && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowUserMenu(false)}
+                aria-hidden="true"
+              />
+            )}
+          </div>
         </div>
       </header>
 
@@ -832,7 +879,7 @@ export default function App() {
             exit="exit"
             transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-            className="pt-[calc(80px+env(safe-area-inset-top,0px))]"
+            className="pt-[calc(56px+env(safe-area-inset-top,0px))] sm:pt-[calc(80px+env(safe-area-inset-top,0px))]"
           >
             <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80"><PlaneTakeoff size={22} className="text-pink-500 animate-spin" strokeWidth={2.5} /></div></div>}>
               {renderContent()}

@@ -36,8 +36,8 @@ export default function AiLoadingState() {
 
   return (
     <div className="relative z-50 flex h-full w-full flex-1 flex-col items-center justify-center overflow-hidden bg-[linear-gradient(180deg,rgba(255,255,255,0.74),rgba(255,249,251,0.70),rgba(241,248,255,0.72))] px-4 py-8 backdrop-blur-3xl">
-      <div className="absolute left-1/2 top-1/2 h-[120vw] max-h-[760px] w-[120vw] max-w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-300/24 blur-[132px] animate-pulse" style={{ animationDuration: '4s' }} />
-      <div className="absolute left-1/3 top-1/3 h-[78vw] max-h-[560px] w-[78vw] max-w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-300/20 blur-[96px] animate-pulse" style={{ animationDuration: '3s', animationDelay: '1s' }} />
+      <div className="absolute left-1/2 top-1/2 h-[120vw] max-h-[760px] w-[120vw] max-w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-300/24 blur-[132px] animate-pulse transform-gpu" style={{ animationDuration: '4s', willChange: 'opacity' }} />
+      <div className="absolute left-1/3 top-1/3 h-[78vw] max-h-[560px] w-[78vw] max-w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-300/20 blur-[96px] animate-pulse transform-gpu" style={{ animationDuration: '3s', animationDelay: '1s', willChange: 'opacity' }} />
 
       <div className="relative z-10 flex w-full max-w-[460px] flex-col items-center gap-8 rounded-[30px] border border-white/88 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,250,251,0.72),rgba(241,248,255,0.72))] px-5 py-7 shadow-[0_18px_40px_rgba(15,23,42,0.10)] backdrop-blur-[24px] sm:px-7 sm:py-8">
         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -49,9 +49,10 @@ export default function AiLoadingState() {
           </span>
         </div>
         <div className="relative">
-          <div className="absolute inset-0 scale-[1.9] rounded-full bg-fuchsia-400/28 blur-[36px] animate-pulse" style={{ animationDuration: '2s' }} />
-          <div className="absolute inset-0 scale-[1.16] rounded-full border-[3px] border-fuchsia-200/70 opacity-50 animate-ping" style={{ animationDuration: '3s' }} />
+          <div className="absolute inset-0 scale-[1.9] rounded-full bg-fuchsia-400/28 blur-[36px] animate-pulse transform-gpu" style={{ animationDuration: '2s', willChange: 'opacity' }} />
+          <div className="absolute inset-0 scale-[1.16] rounded-full border-[3px] border-fuchsia-200/70 opacity-50 animate-ping transform-gpu" style={{ animationDuration: '3s', willChange: 'transform, opacity' }} />
           <motion.div
+            style={{ willChange: 'transform' }}
             animate={{ rotate: 360, scale: [1, 1.05, 1] }}
             transition={{ rotate: { duration: 8, repeat: Infinity, ease: "linear" }, scale: { duration: 2, repeat: Infinity, ease: "easeInOut" } }}
             className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full border border-fuchsia-100 bg-white text-fuchsia-500 shadow-[0_16px_34px_rgba(217,70,239,0.18)] sm:h-28 sm:w-28"

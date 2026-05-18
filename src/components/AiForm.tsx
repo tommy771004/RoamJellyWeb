@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Loader2, Search, Calendar, Users, Heart, Coffee, Car, DollarSign, Check, Footprints, Baby, Accessibility, PawPrint, UsersRound } from 'lucide-react';
+import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Search, Calendar, Users, Heart, Coffee, Car, DollarSign, Check, Footprints, Baby, Accessibility, PawPrint, UsersRound } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import GlassCard from './GlassCard';
+
 import { LocationPickerPopup } from './LocationPickerPopup';
 import { useSearchStore } from '../store/useSearchStore';
 import { useKeyboardHeight } from '../lib/useKeyboardHeight';
@@ -162,9 +162,9 @@ export default function AiForm({
   return (
     <div className="relative flex flex-col h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* Refined Immersive Background for AI Form */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-slate-50">
-        <div className="absolute top-[-12%] right-[-8%] h-[72%] w-[72%] rounded-full bg-sky-100/50 blur-[120px]" />
-        <div className="absolute bottom-[-12%] left-[-10%] h-[72%] w-[72%] rounded-full bg-orange-100/45 blur-[120px]" />
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-white">
+        <div className="absolute top-[-12%] right-[-8%] h-[72%] w-[72%] rounded-full bg-pink-100/50 blur-[120px]" />
+        <div className="absolute bottom-[-12%] left-[-10%] h-[72%] w-[72%] rounded-full bg-teal-100/45 blur-[120px]" />
       </div>
 
       <div className="relative z-10 flex flex-col h-full w-full px-3.5 sm:px-8 py-4 sm:py-10 pb-tab-safe max-w-4xl mx-auto">
@@ -180,11 +180,8 @@ export default function AiForm({
             </div>
             <div>
               <h2 className="mb-1 text-balance text-[21px] sm:text-[33px] font-black leading-[1.08] tracking-[-0.045em] text-slate-900 sm:mb-2">
-                先讓 AI 起草一版旅程，再回到手帳慢慢補完
+                先讓 AI 規劃旅程，再回到手帳慢慢補完
               </h2>
-              <p className="max-w-[40rem] text-pretty text-[13px] sm:text-[15px] font-semibold leading-[1.68] text-slate-600">
-                這裡先收斂目的地、天數與偏好，產出可編輯的第一版安排，而不是一次性的靜態結果。
-              </p>
             </div>
             <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2 pb-1 -mx-3.5 px-3.5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
               {AI_FORM_ENTRY_PILLS.map((pill) => (
@@ -334,9 +331,9 @@ export default function AiForm({
             <div
               className="fixed bottom-0 left-0 right-0 w-full z-50 sm:static sm:z-auto sm:pt-4 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
               style={{
-                paddingBottom: keyboardHeight > 0 
-                  ? `${keyboardHeight + 16}px` 
-                  : 'max(16px, env(safe-area-inset-bottom, 16px))'
+                transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
+                paddingBottom: keyboardHeight > 0 ? '16px' : 'max(16px, env(safe-area-inset-bottom, 16px))',
+                transition: 'transform 0.1s ease-out'
               }}
             >
               <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-0 sm:pb-0">
@@ -346,7 +343,7 @@ export default function AiForm({
                   className={`flex h-14 w-full items-center justify-center gap-3 rounded-full text-[13px] font-black uppercase tracking-[0.16em] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:h-[3.8rem] sm:text-[14px] sm:shadow-md ${
                     !formData.departure || !formData.destination || !formData.companions
                       ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none'
-                      : 'border border-transparent bg-gradient-to-r from-sky-500 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] hover:-translate-y-0.5 hover:from-sky-600 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)] active:scale-[0.92]'
+                      : 'border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] active:scale-[0.92]'
                   }`}
                 >
                   下一步，設定偏好細節
@@ -488,9 +485,9 @@ export default function AiForm({
             <div
               className="fixed bottom-0 left-0 right-0 w-full z-50 sm:static sm:z-auto bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
               style={{
-                paddingBottom: keyboardHeight > 0 
-                  ? `${keyboardHeight + 16}px`
-                  : 'max(16px, env(safe-area-inset-bottom, 16px))'
+                transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
+                paddingBottom: keyboardHeight > 0 ? '16px' : 'max(16px, env(safe-area-inset-bottom, 16px))',
+                transition: 'transform 0.1s ease-out'
               }}
             >
               <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-2 sm:pb-0">
@@ -503,7 +500,7 @@ export default function AiForm({
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-sky-500 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-sky-600 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.4)] active:scale-[0.92] sm:h-[3.8rem] sm:text-[15px]"
+                    className="flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] active:scale-[0.92] sm:h-[3.8rem] sm:text-[15px]"
                   >
                     生成行程
                     <Sparkles size={20} />

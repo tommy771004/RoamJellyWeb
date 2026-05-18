@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
-import { useKeyboardHeight } from '../lib/useKeyboardHeight';
+import { useVisualViewport } from '../lib/useKeyboardHeight';
 import { 
   TRAVEL_GUIDE_REGIONS, 
   TRAVEL_GUIDE_SOURCE_REPO, 
@@ -21,7 +21,7 @@ export const LocationPickerPopup = ({
   title: string;
   query: string;
 }) => {
-  const keyboardHeight = useKeyboardHeight();
+  const vv = useVisualViewport();
   const [selectedRegion, setSelectedRegion] = useState<string>('全部地區');
   const [searchQuery, setSearchQuery] = useState(query);
 
@@ -36,12 +36,12 @@ export const LocationPickerPopup = ({
 
   const content = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-popup flex items-end justify-center p-0 md:items-center md:p-4">
+      <div className="fixed inset-x-0 z-popup flex items-end justify-center p-0 md:items-center md:p-4 transition-all duration-100" style={{ top: vv.offsetTop, height: vv.height }}>
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" 
+          className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
           onClick={onClose}
         />
         <motion.div
@@ -49,8 +49,8 @@ export const LocationPickerPopup = ({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.95 }}
           transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
-          className="relative z-popup-above flex h-82dvh w-full flex-col overflow-hidden rounded-t-[30px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-[34px] md:shadow-[0_28px_60px_rgba(15,23,42,0.16)]"
-          style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : {}}
+          className="relative z-popup-above flex h-[82%] w-full flex-col overflow-hidden rounded-t-[30px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-[34px] md:shadow-[0_28px_60px_rgba(15,23,42,0.16)]"
+          
         >
           <div className="sticky top-0 z-20 bg-white/90 px-4 pb-3.5 pt-4 backdrop-blur-xl md:px-6 md:pb-4 md:pt-6">
             <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200 md:hidden" />

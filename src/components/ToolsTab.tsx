@@ -86,7 +86,7 @@ const TOOLS_ENTRY_PILLARS = [
       "你不需要再開另一個 App 查穿搭，先在這裡確認出門條件就好。",
       "先看天氣再排當天節奏，會比最後一刻補救更穩定。",
     ],
-    tone: "sky",
+    tone: "pink",
   },
   {
     icon: CheckCircle2,
@@ -98,7 +98,7 @@ const TOOLS_ENTRY_PILLARS = [
       "清單可以先自己補，等旅伴要加入時再一起整理也可以。",
       "這種收整方式特別適合手機上快速勾選，不用切來切去。",
     ],
-    tone: "orange",
+    tone: "sky",
   },
   {
     icon: ArrowDownUp,
@@ -110,30 +110,27 @@ const TOOLS_ENTRY_PILLARS = [
       "之後要補歷史紀錄或同步成員，也比較不容易弄亂上下文。",
       "先把旅程主線建立好，再讓分帳自然接上，比一開始做表格更順。",
     ],
-    tone: "cyan",
+    tone: "teal",
   },
 ] as const;
 
 const TOOLS_CARD_DECOR = [
   {
-    shell:
-      "border-sky-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(239,246,255,0.92))]",
-    badge: "border-sky-100 bg-sky-50/95 text-sky-700",
-    glow: "bg-sky-200/50",
+    shell: "glass-card",
+    badge: "border-pink-100 bg-pink-50/95 text-pink-700",
+    glow: "bg-pink-200/50",
     note: "旅程一同步，就先提醒今天要穿什麼。",
   },
   {
-    shell:
-      "border-orange-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,247,237,0.92))]",
-    badge: "border-orange-100 bg-orange-50/95 text-orange-700",
-    glow: "bg-orange-200/50",
+    shell: "glass-card",
+    badge: "border-sky-100 bg-sky-50/95 text-sky-700",
+    glow: "bg-sky-200/50",
     note: "待辦像貼紙一樣，一張張補回旅程裡。",
   },
   {
-    shell:
-      "border-cyan-100/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(236,254,255,0.92))]",
-    badge: "border-cyan-100 bg-cyan-50/95 text-cyan-700",
-    glow: "bg-cyan-200/50",
+    shell: "glass-card",
+    badge: "border-teal-100 bg-teal-50/95 text-teal-700",
+    glow: "bg-teal-200/50",
     note: "每筆代墊都留在同一趟旅程的上下文。",
   },
 ] as const;
@@ -642,7 +639,7 @@ function WeatherCard() {
       : "未能取得天氣資料";
 
   return (
-    <GlassCard className="!p-5 sm:!p-8 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-200 hover:shadow-lg group border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(239,246,255,0.90),rgba(255,247,237,0.84))]">
+    <GlassCard className="!p-5 sm:!p-8 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-200 hover:shadow-lg group glass-panel border-white/80">
       <div className="absolute -top-10 -right-10 w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-sky-200/35 blur-[36px] pointer-events-none group-hover:scale-105 transition-transform duration-200" />
       <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-orange-200/25 blur-[28px] pointer-events-none group-hover:scale-105 transition-transform duration-200" />
       <div className="absolute top-5 left-5 flex gap-2 opacity-90">
@@ -676,7 +673,7 @@ function WeatherCard() {
           )}
         </div>
 
-        <div className="flex items-center sm:items-end justify-between mb-5 sm:mb-6 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(240,249,255,0.80),rgba(255,247,237,0.76))] p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-white/70 shadow-sm">
+        <div className="flex items-center sm:items-end justify-between mb-5 sm:mb-6 glass-panel p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-white/70 shadow-sm">
           <div className="flex flex-col gap-3">
             <div className="flex bg-white/80 backdrop-blur-md rounded-full px-3.5 py-1.5 sm:px-4 sm:py-2 items-center gap-2 border border-slate-100 shadow-sm w-fit">
               <Icon
@@ -711,7 +708,7 @@ function WeatherCard() {
           </div>
         </div>
 
-        <div className="bg-[linear-gradient(135deg,rgba(255,255,255,0.84),rgba(224,242,254,0.76),rgba(255,247,237,0.72))] backdrop-blur-md rounded-[20px] sm:rounded-[24px] p-4 flex items-center gap-4 border border-white/70 shadow-sm mb-5 sm:mb-6">
+        <div className="glass-panel backdrop-blur-md rounded-[20px] sm:rounded-[24px] p-4 flex items-center gap-4 border border-white/70 shadow-sm mb-5 sm:mb-6">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-white/86 flex items-center justify-center text-sky-600 shadow-inner border border-white shrink-0 group-hover:-translate-y-0.5 transition-transform duration-200">
             <Sparkles size={18} strokeWidth={2.5} />
           </div>
@@ -746,7 +743,7 @@ function WeatherCard() {
                 return (
                   <div
                     key={idx}
-                    className="flex flex-col items-center flex-shrink-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(240,249,255,0.82))] border border-white/80 shadow-sm rounded-2xl w-[72px] py-3 snap-center"
+                    className="flex flex-col items-center flex-shrink-0 glass-panel shadow-sm rounded-2xl w-[72px] py-3 snap-center"
                   >
                     <span className="text-xs font-bold text-slate-500 mb-2">
                       {idx === 0 ? "Today" : dayName}
@@ -793,7 +790,7 @@ function ChecklistSection() {
         </span>
       </div>
 
-      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(240,249,255,0.90),rgba(255,247,237,0.84))]">
+      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6 glass-panel">
         {checklist.length === 0 && (
           <span className="text-sm text-slate-500 italic">
             目前沒有行李項目
@@ -920,7 +917,7 @@ function LedgerSection() {
   } = useToolsTabContext();
   const { isOffline } = useAppStore();
   return (
-    <GlassCard className="!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(254,242,248,0.92),rgba(240,249,255,0.90))]">
+    <GlassCard className="!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300 glass-panel">
       <div className="absolute -top-10 -left-10 w-32 h-32 bg-pink-100/45 rounded-full blur-[24px] pointer-events-none" />
       <div className="absolute -bottom-12 -right-8 w-36 h-36 bg-sky-100/35 rounded-full blur-[28px] pointer-events-none" />
       <div className="mb-6 flex items-start justify-between gap-4 relative z-10 px-2">
@@ -1191,7 +1188,7 @@ function SettlementsSection() {
         </div>
       </div>
 
-      <GlassCard className="!p-4 sm:!p-6 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(254,242,248,0.92),rgba(240,249,255,0.88))]">
+      <GlassCard className="!p-4 sm:!p-6 glass-panel">
       <div className="flex flex-col gap-4 w-full">
         {settlements.length === 0 && (
           <div className="editorial-card-soft flex items-center justify-center rounded-[24px] p-10">
@@ -1309,7 +1306,7 @@ function SettlementHistorySection() {
         {settlementHistory.map((entry) => (
           <GlassCard
             key={entry.clearedAt}
-            className="!p-4 flex items-center gap-4 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(240,253,250,0.90),rgba(255,255,255,0.90))]"
+            className="!p-4 flex items-center gap-4 glass-panel"
           >
             <div className="w-10 h-10 rounded-full bg-green-50 border border-green-100 flex items-center justify-center shrink-0">
               <CheckCircle2 size={18} className="text-green-500" />
@@ -1498,12 +1495,12 @@ function ToolsTabContent() {
 
   if (!activeTripId) {
     return (
-      <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] scroll-smooth sm:px-6 sm:py-6">
+      <div className="flex-1 overflow-y-auto bg-transparent px-3 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] scroll-smooth sm:px-6 sm:py-6">
         <motion.div
           initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: "easeOut" }}
-          className="mx-auto my-auto w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,250,251,0.88),rgba(240,249,255,0.88))] p-4 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:rounded-[40px] sm:p-8 md:p-10"
+          className="mx-auto my-auto w-full max-w-5xl overflow-hidden rounded-[32px] glass-panel sm:rounded-[40px] sm:p-8 md:p-10"
         >
           <div className="absolute -left-12 top-8 size-36 rounded-full bg-pink-200/35 blur-3xl" />
           <div className="absolute right-6 top-10 size-32 rounded-full bg-sky-200/30 blur-3xl" />
@@ -1718,16 +1715,16 @@ function ToolsTabContent() {
   return (
     <div
       onScroll={onScroll}
-      className="flex-1 w-full overflow-y-auto scroll-smooth bg-slate-50 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.24),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.18),transparent_45%)] text-slate-900 transition-colors"
+      className="flex-1 w-full overflow-y-auto scroll-smooth bg-transparent text-slate-900 transition-colors"
     >
       <div className="pt-4 sm:pt-8 pb-tab-safe px-3 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-6 sm:gap-y-10">
         <TripSelectorBar />
 
         <motion.section
-          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
-          animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
-          className="relative overflow-hidden rounded-[30px] border border-white/94 bg-[linear-gradient(180deg,rgba(255,255,255,0.90),rgba(255,249,252,0.86),rgba(248,251,255,0.82))] p-4 shadow-[0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-5"
+          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 16, scale: 0.985 }}
+          animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="relative overflow-hidden rounded-[30px] glass-panel sm:p-5"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.14),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.10),transparent_46%)]" />
           <div className="relative flex flex-col gap-4">
@@ -1735,7 +1732,7 @@ function ToolsTabContent() {
               <EditorialSectionIntro
                 eyebrow="Trip Utility Layer"
                 title={`把天氣、清單與分帳，綁回${destination ? ` ${destination} ` : "這趟"}旅程`}
-                description="工具頁不是額外任務區，而是沿著目前旅程延伸出的執行層。你可以先看現場會遇到的提醒，再回到手帳補完安排。"
+                description=""
                 highlights={[
                   {
                     label: "目的地",
@@ -1818,7 +1815,7 @@ function ToolsTabContent() {
           <EditorialSectionIntro
             eyebrow="For This Trip"
             title="把延伸選項接回這趟旅程"
-            description="這裡的航班與活動建議不是獨立推薦牆，而是幫你把目前旅程還缺的移動與體驗補齊。"
+            description=""
             highlights={[
               { label: "航班", value: "補齊移動節奏" },
               { label: "活動", value: "接回每日安排" },

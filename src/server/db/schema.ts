@@ -1,4 +1,4 @@
-import { pgTable, text, varchar, timestamp, uuid, integer, real, boolean, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, varchar, timestamp, uuid, integer, real, boolean, jsonb, index } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   userId: varchar('user_id', { length: 128 }).primaryKey(),
@@ -16,14 +16,20 @@ export const trips = pgTable('trips', {
   isPublic: boolean('is_public').default(false).notNull(),
   forkCount: integer('fork_count').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('trips_destination_idx').on(table.destination),
+  index('trips_public_dest_fork_idx').on(table.isPublic, table.destination, table.forkCount),
+]);
 
 export const tripMembers = pgTable('trip_members', {
   id: uuid('id').primaryKey().defaultRandom(),
   tripId: varchar('trip_id', { length: 128 }).notNull().references(() => trips.id),
   userId: varchar('user_id', { length: 128 }).notNull().references(() => users.userId),
   role: varchar('role', { length: 64 }).notNull(),
-});
+}, (table) => [
+  index('trip_members_trip_id_idx').on(table.tripId),
+  index('trip_members_user_id_idx').on(table.userId)
+]);
 
 export const itineraryNodes = pgTable('itinerary_nodes', {
   nodeId: varchar('node_id', { length: 128 }).primaryKey(),
@@ -47,26 +53,36 @@ export const itineraryNodes = pgTable('itinerary_nodes', {
   attachments: jsonb('attachments'),
   linkedFactId: text('linked_fact_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('itinerary_nodes_trip_id_idx').on(table.tripId),
+  index('itinerary_nodes_trip_day_idx').on(table.tripId, table.day),
+  index('itinerary_nodes_trip_sort_idx').on(table.tripId, table.sortOrder)
+]);
 
 export const flights = pgTable('flights', {
   id: varchar('id', { length: 128 }).primaryKey(),
   provider: varchar('provider', { length: 255 }).notNull(),
   time: varchar('time', { length: 64 }),
   price: integer('price').notNull(),
-});
+}, (table) => [
+  index('flights_provider_idx').on(table.provider)
+]);
 
 export const userSavedItems = pgTable('user_saved_items', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: varchar('user_id', { length: 128 }).notNull().references(() => users.userId),
   itemId: varchar('item_id', { length: 128 }).notNull(),
-});
+}, (table) => [
+  index('user_saved_items_user_id_idx').on(table.userId)
+]);
 
 export const userTrackedPrices = pgTable('user_tracked_prices', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: varchar('user_id', { length: 128 }).notNull().references(() => users.userId),
   itemId: varchar('item_id', { length: 128 }).notNull(),
-});
+}, (table) => [
+  index('user_tracked_prices_user_id_idx').on(table.userId)
+]);
 
 export const userAiProfiles = pgTable('user_ai_profiles', {
   userId: varchar('user_id', { length: 128 }).primaryKey().references(() => users.userId),
@@ -89,7 +105,9 @@ export const favorites = pgTable('favorites', {
   lat: real('lat'),
   lng: real('lng'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('favorites_trip_id_idx').on(table.tripId)
+]);
 
 export const tripTravelFacts = pgTable('trip_travel_facts', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -106,7 +124,9 @@ export const tripTravelFacts = pgTable('trip_travel_facts', {
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('trip_travel_facts_trip_id_idx').on(table.tripId)
+]);
 
 export const checklistItems = pgTable('checklist_items', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -114,7 +134,9 @@ export const checklistItems = pgTable('checklist_items', {
   content: text('content').notNull(),
   completed: boolean('completed').default(false).notNull(),
   category: varchar('category', { length: 64 }).default('other'),
-});
+}, (table) => [
+  index('checklist_items_trip_id_idx').on(table.tripId)
+]);
 
 export const expenses = pgTable('expenses', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -124,7 +146,10 @@ export const expenses = pgTable('expenses', {
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   clearedAt: timestamp('cleared_at'),
-});
+}, (table) => [
+  index('expenses_trip_id_idx').on(table.tripId),
+  index('expenses_payer_id_idx').on(table.payerId)
+]);
 
 export const searchHistory = pgTable('search_history', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -133,4 +158,7 @@ export const searchHistory = pgTable('search_history', {
   query_to: varchar('query_to', { length: 128 }),
   query_date: varchar('query_date', { length: 64 }),
   timestamp: timestamp('timestamp').defaultNow().notNull(),
-});
+}, (table) => [
+  index('search_history_user_id_idx').on(table.userId),
+  index('search_history_from_to_idx').on(table.query_from, table.query_to, table.timestamp),
+]);
