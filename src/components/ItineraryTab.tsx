@@ -2293,14 +2293,7 @@ export default function ItineraryTab() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#fdfafb] via-[#fdfafb]/30 to-black/60 md:to-black/20" />
 
           {/* Mobile Header Overlay Info - Adjusted for better immersion */}
-          <div className="absolute top-8 left-5 right-5 flex justify-between items-start z-50 lg:hidden">
-            <button
-              onClick={handleBackToTrips}
-              aria-label="返回"
-              className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
-            >
-              <ArrowLeft size={20} strokeWidth={3} />
-            </button>
+          <div className="absolute top-8 left-5 right-5 flex justify-end items-start z-50 lg:hidden">
             <div className="flex gap-2.5">
               <button
                 onClick={handleTogglePublicTemplate}
@@ -2442,13 +2435,22 @@ export default function ItineraryTab() {
             </div>
           </div>
 
-          <HorizontalScrollRail
-            label="行程檢視模式"
-            className="sticky top-4 z-40 md:relative md:top-0 md:mt-8"
-            viewportClassName="w-[calc(100%-2rem)] mx-auto md:w-auto md:mx-0"
-            contentClassName="gap-2 rounded-full border border-white bg-white/70 p-1.5 md:p-2 shadow-lg shadow-pink-100/30 md:shadow-xl backdrop-blur-xl"
-            controlsVisibilityClass="hidden md:flex"
-          >
+          <div className="flex flex-col gap-4 sticky top-4 z-40 md:relative md:top-0 md:mt-8">
+            <div className="lg:hidden px-4 md:px-0">
+              <button
+                onClick={handleBackToTrips}
+                className="px-4 py-2.5 bg-white/90 backdrop-blur-md hover:bg-slate-50 border border-slate-100/50 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm shadow-slate-200/50 active:scale-95 w-max"
+              >
+                <ArrowLeft size={16} strokeWidth={3} />
+                返回行程總覽
+              </button>
+            </div>
+            <HorizontalScrollRail
+              label="行程檢視模式"
+              viewportClassName="w-[calc(100%-2rem)] mx-auto md:w-auto md:mx-0"
+              contentClassName="gap-2 rounded-full border border-white bg-white/70 p-1.5 md:p-2 shadow-lg shadow-pink-100/30 md:shadow-xl backdrop-blur-xl"
+              controlsVisibilityClass="hidden md:flex"
+            >
             <button
               onClick={() => setViewMode("list")}
               className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-full font-black text-xs md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "list" ? "bg-slate-800 text-white shadow-xl scale-95 md:scale-100" : "text-slate-500 hover:text-slate-700 hover:bg-white border sm:border-transparent"}`}
@@ -2468,6 +2470,7 @@ export default function ItineraryTab() {
               日程
             </button>
           </HorizontalScrollRail>
+          </div>
         </div>
 
         <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8 md:gap-10">
@@ -4079,7 +4082,7 @@ const ItineraryListItem = React.memo(function ItineraryListItemBase({
         <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
       )}
       <div
-        className={`flex-1 p-3 sm:p-4 rounded-[24px] sm:rounded-[28px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-0.5 active:scale-[0.985]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900 backdrop-blur-xl text-white border border-slate-700 shadow-md hover:shadow-lg" : isHotelCard ? "bg-indigo-900 backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-md hover:shadow-lg" : "glass-node hover:shadow-lg"}`}
+        className={`flex-1 p-4 sm:p-5 rounded-[24px] sm:rounded-[32px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full ${!isOffline && !isEditing ? "cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:bg-white/90 active:scale-[0.985]" : ""} ${collaboratingLock ? "ring-2 ring-fuchsia-400/60" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-emerald-100" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900 backdrop-blur-xl text-white border border-slate-700 shadow-md hover:shadow-lg" : isHotelCard ? "bg-indigo-900 backdrop-blur-xl text-indigo-50 border border-indigo-800 shadow-md hover:shadow-lg" : "glass-card shadow-sm hover:shadow-md"}`}
         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
           if (
             (e.target as HTMLElement).closest(

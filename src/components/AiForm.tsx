@@ -329,10 +329,10 @@ export default function AiForm({
 
             {/* Next Button — fixed above keyboard on mobile, static on desktop */}
             <div
-              className="fixed bottom-0 left-0 right-0 w-full z-50 sm:static sm:z-auto sm:pt-4 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
+              className="fixed bottom-0 left-0 right-0 w-full z-40 sm:static sm:z-auto sm:pt-4 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
               style={{
                 transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
-                paddingBottom: keyboardHeight > 0 ? '16px' : 'max(16px, env(safe-area-inset-bottom, 16px))',
+                paddingBottom: keyboardHeight > 0 ? '16px' : 'calc(16px + env(safe-area-inset-bottom, 16px) + 72px)',
                 transition: 'transform 0.1s ease-out'
               }}
             >
@@ -483,10 +483,10 @@ export default function AiForm({
 
             {/* Submit buttons — fixed above keyboard on mobile, static on desktop */}
             <div
-              className="fixed bottom-0 left-0 right-0 w-full z-50 sm:static sm:z-auto bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
+              className="fixed bottom-0 left-0 right-0 w-full z-40 sm:static sm:z-auto bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
               style={{
                 transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
-                paddingBottom: keyboardHeight > 0 ? '16px' : 'max(16px, env(safe-area-inset-bottom, 16px))',
+                paddingBottom: keyboardHeight > 0 ? '16px' : 'calc(16px + env(safe-area-inset-bottom, 16px) + 72px)',
                 transition: 'transform 0.1s ease-out'
               }}
             >
