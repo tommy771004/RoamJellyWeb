@@ -400,7 +400,7 @@ function FlightCard({
                   className={`text-[11px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm whitespace-nowrap ${flight.returnLeg.stops === 0 ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"}`}
                 >
                   {flight.returnLeg.stops === 0
-                    ? "直飛 DIRECT"
+                    ? "直飛"
                     : `${flight.returnLeg.stops} 轉 STOP`}
                 </span>
                 {flight.returnLeg.duration && (
@@ -917,7 +917,7 @@ function DestinationCard({
                 e.stopPropagation();
                 onToggleSave(e);
               }}
-              aria-label={isSaved ? "取消收藏目的地" : "收藏目的地"}
+              aria-label={isSaved ? "取消收藏" : "收藏"}
               className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/65 backdrop-blur-md transition-all active:scale-90 shadow-sm ${isSaved ? "bg-pink-500 text-white" : "bg-white/85 text-slate-500 hover:bg-white hover:text-pink-500"}`}
             >
               <Heart
@@ -1683,14 +1683,14 @@ export default function HomeTab({
                     className="overflow-hidden space-y-3"
                   >
                     <p className="mx-auto max-w-[40rem] text-pretty text-[14px] leading-[1.75] text-slate-600 sm:text-[15px] sm:leading-[1.82]">
-                      RoamJelly 先幫你鎖定出發節奏，再把靈感、共編清單和旅途工具串成可執行的旅程，不必在多個 App 之間切換。
+                      RoamJelly 先幫你鎖定出發日期，再把靈感、共編清單和旅途工具串成可執行的旅程，不必在多個 App 之間切換。
                     </p>
                     <div className="mx-auto flex max-w-[620px] flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/70 pt-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 sm:gap-x-5">
                       <span>先比價</span>
                       <span className="h-1 w-1 rounded-full bg-slate-300" />
                       <span>再共編</span>
                       <span className="h-1 w-1 rounded-full bg-slate-300" />
-                      <span>最後接工具包</span>
+                      <span>最後檢查清單</span>
                     </div>
 
                     {isHeroExpanded && (
@@ -1796,7 +1796,7 @@ export default function HomeTab({
                       第一站
                     </p>
                     <p className="text-pretty text-[14px] font-bold leading-6 text-slate-700 sm:text-[15px]">
-                      先鎖定這趟旅行的時間骨架，之後再補地圖、景點與共編細節。
+                      先決定這趟旅行的時間，之後再補地圖、景點。
                     </p>
                   </div>
                   {!isLoggedIn && (
