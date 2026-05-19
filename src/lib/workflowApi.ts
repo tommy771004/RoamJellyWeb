@@ -9,6 +9,28 @@ import type {
 export class SearchTimeoutError extends Error {}
 export class SearchServiceUnavailableError extends Error {}
 
+const ACCESS_TOKEN_KEY = 'access_token';
+const USER_ID_KEY = 'user_id';
+const LAST_ACTIVITY_KEY = 'last_activity';
+
+function getSessionStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function getLocalStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 async function parseApiError(res: Response, fallback: string): Promise<Error> {
   try {
     const data = await res.json();
@@ -51,8 +73,34 @@ export async function fetchDirections(lng1: number, lat1: number, lng2: number, 
   return null;
 }
 
+export function getNativeMapUrl(lat: number, lng: number, title: string, isIOS: boolean): string {
+  const q = title ? encodeURIComponent(title) : `${lat},${lng}`;
+  if (isIOS) {
+    return `maps://?q=${q}&ll=${lat},${lng}`;
+  } else {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  }
+}
+
+export function openNativeMap(lat: number, lng: number, title?: string) {
+  window.dispatchEvent(new CustomEvent('open-map', { detail: { lat, lng, title: title || '' } }));
+}
+
 export function getStoredToken(): string | null {
-  return localStorage.getItem('access_token');
+  const sessionStorage = getSessionStorage();
+  const localStorage = getLocalStorage();
+
+  const sessionToken = sessionStorage?.getItem(ACCESS_TOKEN_KEY)?.trim();
+  if (sessionToken) return sessionToken;
+
+  const legacyToken = localStorage?.getItem(ACCESS_TOKEN_KEY)?.trim();
+  if (legacyToken) {
+    sessionStorage?.setItem(ACCESS_TOKEN_KEY, legacyToken);
+    localStorage?.removeItem(ACCESS_TOKEN_KEY);
+    return legacyToken;
+  }
+
+  return null;
 }
 
 export async function createGuestSession(displayName?: string): Promise<{ token: string; user_id: string }> {
@@ -75,26 +123,33 @@ export async function createGuestSession(displayName?: string): Promise<{ token:
   }
 
   setClientAccessToken(token);
-  localStorage.setItem('user_id', userId);
-  localStorage.setItem('last_activity', Date.now().toString());
+  getLocalStorage()?.setItem(USER_ID_KEY, userId);
+  getLocalStorage()?.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
   return { token, user_id: userId };
+}
+
+function shouldAttemptDevTokenBootstrap(): boolean {
+  const autoLogin = ((import.meta as any).env?.VITE_DEV_AUTO_LOGIN ?? 'false').trim().toLowerCase();
+  return Boolean((import.meta as any).env?.DEV) && autoLogin === 'true';
 }
 
 export async function ensureClientAccessToken(): Promise<string> {
   const token = getStoredToken();
   if (token) return token;
   
-  try {
-    const res = await fetch('/api/auth/dev-token', { method: 'POST' });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.token) {
-        setClientAccessToken(data.token);
-        return data.token;
+  if (shouldAttemptDevTokenBootstrap()) {
+    try {
+      const res = await fetch('/api/auth/dev-token', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.token) {
+          setClientAccessToken(data.token);
+          return data.token;
+        }
       }
+    } catch (error) {
+      console.error('Failed to get dev-token', error);
     }
-  } catch (error) {
-    console.error('Failed to get dev-token', error);
   }
 
   const guest = await createGuestSession().catch(() => null);
@@ -106,7 +161,23 @@ export async function ensureClientAccessToken(): Promise<string> {
 }
 
 export function setClientAccessToken(token: string) {
-  localStorage.setItem('access_token', token);
+  const sessionStorage = getSessionStorage();
+  const localStorage = getLocalStorage();
+  if (sessionStorage) {
+    sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+    localStorage?.removeItem(ACCESS_TOKEN_KEY);
+    return;
+  }
+  localStorage?.setItem(ACCESS_TOKEN_KEY, token);
+}
+
+export function clearClientSession() {
+  const sessionStorage = getSessionStorage();
+  const localStorage = getLocalStorage();
+  sessionStorage?.removeItem(ACCESS_TOKEN_KEY);
+  localStorage?.removeItem(ACCESS_TOKEN_KEY);
+  localStorage?.removeItem(USER_ID_KEY);
+  localStorage?.removeItem(LAST_ACTIVITY_KEY);
 }
 
 export async function loginUser(username: string, password: string): Promise<any> {
@@ -122,11 +193,11 @@ export async function loginUser(username: string, password: string): Promise<any
   return data;
 }
 
-export async function registerUser(username: string, password: string, display_name: string): Promise<any> {
+export async function registerUser(username: string, password: string, display_name: string, avatar?: string): Promise<any> {
   const res = await fetch('/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, display_name })
+    body: JSON.stringify({ username, password, display_name, avatar })
   });
   const data = await res.json();
   if (!res.ok) {
