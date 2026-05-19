@@ -1,3 +1,4 @@
+import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from '../lib/motionTokens';
 import React, {
   Fragment,
   Suspense,
@@ -165,7 +166,7 @@ function CollapsibleNotes({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            transition={SPRING_SMOOTH}
             className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3"
           >
             <div className="flex justify-between items-center mb-1">
@@ -2168,7 +2169,7 @@ export default function ItineraryTab() {
               </p>
               <button
                 onClick={() => setIsPlanningNew(true)}
-                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:from-pink-500 hover:to-rose-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)]"
+                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 hover:from-pink-500 hover:to-rose-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)]"
               >
                 <Sparkles size={18} />
                 建立第一趟旅程
@@ -2418,14 +2419,14 @@ export default function ItineraryTab() {
               <button
                 onClick={handleTogglePublicTemplate}
                 disabled={isUpdatingPublicState}
-                className="px-4 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg text-[11px] font-black uppercase tracking-widest disabled:opacity-60"
+                className="px-4 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-[0.97] shadow-lg text-[11px] font-black uppercase tracking-widest disabled:opacity-60"
               >
                 {tripInfo?.isPublic ? "公開中" : "發布"}
               </button>
               <button
                 onClick={handleShare}
                 aria-label="分享行程"
-                className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-95 shadow-lg"
+                className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-[0.97] shadow-lg"
               >
                 <Share2 size={18} strokeWidth={3} />
               </button>
@@ -2458,14 +2459,14 @@ export default function ItineraryTab() {
             <div className="hidden lg:flex items-center gap-2 mb-4 flex-wrap">
               <button
                 onClick={handleBackToTrips}
-                className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95"
+                className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97]"
               >
                 <ArrowLeft size={12} strokeWidth={3} />
                 返回
               </button>
               <button
                 onClick={handleShare}
-                className="px-4 py-2 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-xl text-[11px] font-black text-pink-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95"
+                className="px-4 py-2 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-xl text-[11px] font-black text-pink-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97]"
               >
                 <Share2 size={12} strokeWidth={3} />
                 分享
@@ -2473,21 +2474,21 @@ export default function ItineraryTab() {
               <button
                 onClick={handleTogglePublicTemplate}
                 disabled={isUpdatingPublicState}
-                className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95 disabled:opacity-60 ${tripInfo?.isPublic ? "bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-600" : "bg-white hover:bg-slate-50 border border-slate-100 text-slate-500"}`}
+                className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97] disabled:opacity-60 ${tripInfo?.isPublic ? "bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-600" : "bg-white hover:bg-slate-50 border border-slate-100 text-slate-500"}`}
               >
                 <Lock size={12} strokeWidth={3} />
                 {tripInfo?.isPublic ? "取消公開" : "分享行程"}
               </button>
               <button
                 onClick={handleExportIcs}
-                className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl text-[11px] font-black text-emerald-600 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95"
+                className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl text-[11px] font-black text-emerald-600 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97]"
               >
                 <Calendar size={12} strokeWidth={3} />
                 ICS
               </button>
               <button
                 onClick={() => window.print()}
-                className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-95 print:hidden"
+                className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97] print:hidden"
               >
                 <Printer size={14} className="shrink-0" />
                 PDF
@@ -2559,7 +2560,7 @@ export default function ItineraryTab() {
             <div className="lg:hidden px-4 md:px-0">
               <button
                 onClick={handleBackToTrips}
-                className="pl-3.5 pr-4 py-2.5 md:py-2 bg-white/80 backdrop-blur-xl hover:bg-white border-2 border-white rounded-full text-[12.5px] font-black text-slate-600 transition-all uppercase tracking-widest flex items-center gap-1.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] active:scale-95 w-max"
+                className="pl-3.5 pr-4 py-2.5 md:py-2 bg-white/80 backdrop-blur-xl hover:bg-white border-2 border-white rounded-full text-[12.5px] font-black text-slate-600 transition-all uppercase tracking-widest flex items-center gap-1.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] active:scale-[0.97] w-max"
               >
                 <ArrowLeft
                   size={16}
@@ -2639,7 +2640,7 @@ export default function ItineraryTab() {
                           <motion.div
                             layoutId="desktop_day_indicator"
                             className="absolute inset-0 bg-pink-50 rounded-[14px] shadow-inner"
-                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            transition={SPRING_SMOOTH}
                             style={{ zIndex: 0 }}
                           />
                         )}
@@ -2733,7 +2734,7 @@ export default function ItineraryTab() {
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                       aria-label="選擇圖示"
-                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center active:scale-90 transition-all"
+                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center active:scale-[0.97] transition-all"
                     >
                       <IconImg value={newSpotEmoji} size={20} />
                     </button>
@@ -2752,7 +2753,7 @@ export default function ItineraryTab() {
                       onClick={() => void handleAddFavorite()}
                       disabled={addingFavorite || !newSpotTitle.trim()}
                       aria-label="新增收藏"
-                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 text-white flex items-center justify-center disabled:opacity-30 active:scale-95 transition-all"
+                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 text-white flex items-center justify-center disabled:opacity-30 active:scale-[0.97] transition-all"
                     >
                       <Plus size={18} />
                     </button>
@@ -2785,7 +2786,7 @@ export default function ItineraryTab() {
             {/* New Trip Button */}
             <button
               onClick={() => setIsPlanningNew(true)}
-              className="w-full py-5 rounded-[28px] bg-white text-slate-700 font-bold text-sm shadow-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+              className="w-full py-5 rounded-[28px] bg-white text-slate-700 font-bold text-sm shadow-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center justify-center gap-3 active:scale-[0.97]"
             >
               <Plus size={20} className="text-pink-400" />
               重新規劃旅程
@@ -2865,7 +2866,7 @@ export default function ItineraryTab() {
                           <motion.div
                             layoutId="mobile_day_indicator"
                             className="absolute inset-0 bg-gradient-to-br from-pink-400 via-rose-400 to-rose-400 rounded-full"
-                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            transition={SPRING_SMOOTH}
                             style={{ zIndex: -1 }}
                           />
                         )}
@@ -2973,7 +2974,7 @@ export default function ItineraryTab() {
                           </div>
                           <button
                             onClick={() => setShowPlanner(!showPlanner)}
-                            className={`w-full sm:w-auto px-10 py-4 rounded-full font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${showPlanner ? "bg-slate-100 text-slate-500" : "bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 active:scale-95"}`}
+                            className={`w-full sm:w-auto px-10 py-4 rounded-full font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${showPlanner ? "bg-slate-100 text-slate-500" : "bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 active:scale-[0.97]"}`}
                           >
                             {showPlanner ? "收起助理" : "喚起 AI 助理"}
                             {showPlanner ? (
@@ -3375,7 +3376,7 @@ export default function ItineraryTab() {
                                 <button
                                   onClick={() => void handleAutoFetchFlights()}
                                   disabled={flightsLoading || aiLoading}
-                                  className="w-full py-3 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98] transition-all hover:bg-slate-100"
+                                  className="w-full py-3 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.97] transition-all hover:bg-slate-100"
                                 >
                                   {flightsLoading ? (
                                     <Loader2
@@ -3391,7 +3392,7 @@ export default function ItineraryTab() {
                                 <button
                                   onClick={() => void handleAiSuggest()}
                                   disabled={aiLoading}
-                                  className="w-full py-5 px-4 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98] transition-all whitespace-nowrap overflow-hidden text-ellipsis"
+                                  className="w-full py-5 px-4 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.97] transition-all whitespace-nowrap overflow-hidden text-ellipsis"
                                 >
                                   <span className="shrink-0">
                                     {aiLoading ? (
@@ -3544,7 +3545,7 @@ export default function ItineraryTab() {
             <button
               aria-label={`口袋名單 (${favorites.length} 個景點)`}
               onClick={() => setShowMobileFavorites(true)}
-              className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl active:scale-90 transition-all group overflow-hidden shadow-fuchsia-200/50 relative"
+              className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl active:scale-[0.97] transition-all group overflow-hidden shadow-fuchsia-200/50 relative"
             >
               <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center shadow-inner text-fuchsia-500 relative">
                 <div className="absolute inset-0 bg-fuchsia-500/10 rounded-full" />
@@ -3558,7 +3559,7 @@ export default function ItineraryTab() {
           <button
             aria-label="AI 行程規劃"
             onClick={() => setIsPlanningNew(true)}
-            className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl active:scale-90 transition-all group overflow-hidden shadow-pink-200/50"
+            className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl active:scale-[0.97] transition-all group overflow-hidden shadow-pink-200/50"
           >
             <div className="bg-gradient-to-tr from-pink-500 to-fuchsia-600 w-14 h-14 rounded-full flex items-center justify-center shadow-inner relative">
               <div className="absolute inset-0 bg-white/10 rounded-full" />
@@ -3851,7 +3852,7 @@ function DraggableFavoriteSpot({
           <button
             onClick={() => onAdd(spot, selectedDay)}
             disabled={isOffline}
-            className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all hover:bg-slate-900"
+            className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-[0.97] transition-all hover:bg-slate-900"
             title="加入今天"
             aria-label={`將 ${spot.title} 加入 Day ${selectedDay}`}
           >
@@ -4338,7 +4339,18 @@ const ItineraryListItem = React.memo(
           <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-fuchsia-400 to-purple-400 opacity-20 blur-md z-0 animate-pulse pointer-events-none" />
         )}
         <div
-          className={`flex-1 p-4 sm:p-5 rounded-[32px] sm:rounded-[40px] transition-[transform,shadow,background] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] relative z-10 w-full transform-gpu ${collaboratingLock ? "ring-2 ring-fuchsia-400/60 scale-[0.98]" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-[0_0_12px_rgba(16,185,129,0.2)]" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900/95 backdrop-blur-2xl text-white border border-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.4)]" : isHotelCard ? "bg-gradient-to-br from-indigo-900/95 to-indigo-800/95 backdrop-blur-2xl text-indigo-50 border border-indigo-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(49,46,129,0.25)] hover:shadow-[0_12px_30px_rgba(49,46,129,0.35)]" : "bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.05),0_2px_8px_rgba(15,23,42,0.02)] hover:border-sky-100 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_12px_34px_rgba(15,23,42,0.08),0_4px_12px_rgba(14,165,233,0.08)]"}`}
+          onClick={(e) => {
+            if (
+              !isOffline &&
+              !collaboratingLock &&
+              (e.target as HTMLElement).tagName !== "INPUT" &&
+              (e.target as HTMLElement).tagName !== "BUTTON" &&
+              (e.target as HTMLElement).tagName !== "A"
+            ) {
+              openEditor();
+            }
+          }}
+          className={`flex-1 p-4 sm:p-5 rounded-[32px] sm:rounded-[40px] cursor-pointer transition-[transform,shadow,background,colors] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:scale-[1.01] relative z-10 w-full transform-gpu ${collaboratingLock ? "ring-2 ring-fuchsia-400/60 scale-[0.98]" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-[0_0_12px_rgba(16,185,129,0.2)]" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900/95 backdrop-blur-2xl text-white border border-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.4)]" : isHotelCard ? "bg-gradient-to-br from-indigo-900/95 to-indigo-800/95 backdrop-blur-2xl text-indigo-50 border border-indigo-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(49,46,129,0.25)] hover:shadow-[0_12px_30px_rgba(49,46,129,0.35)]" : "bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.05),0_2px_8px_rgba(15,23,42,0.02)] hover:border-sky-100 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_12px_34px_rgba(15,23,42,0.08),0_4px_12px_rgba(14,165,233,0.08)]"}`}
         >
           {item.linkedFactId && (
             <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-sky-500 text-white shadow-sm ring-2 ring-white z-20">
@@ -4563,7 +4575,7 @@ const ItineraryListItem = React.memo(
                   title={`導航至 ${item.title}`}
                   onClick={handleNavigate}
                   disabled={isNavigating}
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 hover:bg-sky-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-50"
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 hover:bg-sky-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-50"
                 >
                   {isNavigating ? (
                     <Loader2
@@ -4585,7 +4597,7 @@ const ItineraryListItem = React.memo(
                         openEditor();
                       }}
                       disabled={Boolean(collaboratingLock)}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:border-slate-300 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:border-slate-300 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
                       title="編輯此節點"
                       aria-label="編輯此節點"
                     >
@@ -4604,7 +4616,7 @@ const ItineraryListItem = React.memo(
                           onQuickExpense?.(item);
                         }}
                         disabled={Boolean(collaboratingLock)}
-                        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
                         title="快速記一筆"
                         aria-label="快速記一筆"
                       >
@@ -4619,7 +4631,7 @@ const ItineraryListItem = React.memo(
                         void handleRegenerate();
                       }}
                       disabled={Boolean(collaboratingLock) || regenerating}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-fuchsia-200 flex items-center justify-center text-fuchsia-700 hover:bg-fuchsia-50 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-fuchsia-200 flex items-center justify-center text-fuchsia-700 hover:bg-fuchsia-50 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
                       title="AI 換一個建議"
                       aria-label="AI 換一個建議"
                     >
@@ -4640,7 +4652,7 @@ const ItineraryListItem = React.memo(
                       type="button"
                       onClick={handleShareToIGStory}
                       disabled={Boolean(collaboratingLock)}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-pink-50 border border-orange-200 flex items-center justify-center text-pink-600 hover:opacity-80 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-pink-50 border border-orange-200 flex items-center justify-center text-pink-600 hover:opacity-80 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
                       title="分享至 IG Story"
                       aria-label="分享至 IG Story"
                     >
@@ -4658,7 +4670,7 @@ const ItineraryListItem = React.memo(
                         onDelete(item.node_id);
                       }}
                       disabled={Boolean(collaboratingLock)}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 hover:bg-rose-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.88] disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 hover:bg-rose-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
                       title="刪除此節點"
                       aria-label="刪除此節點"
                     >
@@ -5063,7 +5075,7 @@ const ItineraryListItem = React.memo(
                         <button
                           type="button"
                           onClick={handleSave}
-                          className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
+                          className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]"
                         >
                           保存
                         </button>
@@ -5074,7 +5086,7 @@ const ItineraryListItem = React.memo(
                             setIsEditing(false);
                             onEditingChange?.(item.node_id, item.day, false);
                           }}
-                          className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
+                          className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]"
                         >
                           取消
                         </button>
@@ -5295,7 +5307,7 @@ function ItineraryList({
               type="button"
               onClick={() => onAskAiForDay?.()}
               disabled={isOffline}
-              className="w-full rounded-[32px] bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(192,38,211,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(192,38,211,0.35)] active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
+              className="w-full rounded-[32px] bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(192,38,211,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(192,38,211,0.35)] active:scale-[0.97] disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               ✨ AI 助手幫我填滿
             </button>
@@ -5303,7 +5315,7 @@ function ItineraryList({
               type="button"
               onClick={() => onRandomizeFromFavorites?.()}
               disabled={isOffline || !favoriteSuggestions?.length}
-              className="w-full rounded-[32px] bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(14,165,233,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(14,165,233,0.35)] active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
+              className="w-full rounded-[32px] bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(14,165,233,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(14,165,233,0.35)] active:scale-[0.97] disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               📌 從口袋名單挑選
             </button>
@@ -5311,7 +5323,7 @@ function ItineraryList({
               type="button"
               onClick={() => setManualAddTrigger((prev) => prev + 1)}
               disabled={isOffline}
-              className="w-full rounded-[32px] bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(16,185,129,0.35)] active:scale-95 disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
+              className="w-full rounded-[32px] bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(16,185,129,0.35)] active:scale-[0.97] disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               ➕ 手動新增
             </button>
@@ -5400,7 +5412,7 @@ function ItineraryList({
                 exit={{ opacity: 0, scale: 0.95, x: -30 }}
                 transition={{
                   type: "spring",
-                  bounce: 0.4,
+                  ...SPRING_BOUNCY,
                   duration: 0.5,
                   delay: idx * 0.05,
                 }}
@@ -5570,13 +5582,15 @@ function ManualAddNode({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={getOverlayTransition()}
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
           onClick={() => setIsAdding(false)}
         />
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 40, scale: 0.95 }}
+          initial={getModalMotion().initial}
+          animate={getModalMotion().animate}
+          exit={getModalMotion().exit}
+          transition={getModalMotion().transition}
           className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-sheet-above overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
@@ -5683,7 +5697,7 @@ function ManualAddNode({
                   <button
                     type="button"
                     onClick={() => setIsMapSelectorOpen(true)}
-                    className="shrink-0 px-4 py-4 rounded-2xl bg-white border border-fuchsia-200 text-fuchsia-600 font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-fuchsia-50 hover:shadow-sm active:scale-95 transition-all"
+                    className="shrink-0 px-4 py-4 rounded-2xl bg-white border border-fuchsia-200 text-fuchsia-600 font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-fuchsia-50 hover:shadow-sm active:scale-[0.97] transition-all"
                   >
                     <MapPin size={16} />
                     {coords ? "已選取座標" : "地圖選取"}
@@ -5737,7 +5751,7 @@ function ManualAddNode({
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="w-full py-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center justify-center shadow-sm hover:border-pink-200 transition-all active:scale-95"
+                      className="w-full py-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center justify-center shadow-sm hover:border-pink-200 transition-all active:scale-[0.97]"
                     >
                       <IconImg value={emoji} size={28} />
                     </button>
@@ -5820,7 +5834,7 @@ function ManualAddNode({
 
               <button
                 type="submit"
-                className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-[13px] uppercase tracking-[0.15em] shadow-lg hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
+                className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-[13px] uppercase tracking-[0.15em] shadow-lg hover:bg-slate-800 active:scale-[0.97] transition-all flex items-center justify-center gap-2 mt-2"
               >
                 <Plus size={18} strokeWidth={3} />
                 確認新增至 Day {getDayForDate(date, tripStartDate, day)}
@@ -6362,7 +6376,7 @@ function CalendarView({
                     <button
                       key={node.node_id}
                       onClick={() => setSelectedNodeId(node.node_id)}
-                      className={`text-left px-2 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent flex gap-1.5 shadow-sm active:scale-95 ${selectedNodeId === node.node_id ? "bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-pink-200/50 scale-105" : "bg-white text-slate-600 hover:border-pink-200 hover:shadow-md"}`}
+                      className={`text-left px-2 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent flex gap-1.5 shadow-sm active:scale-[0.97] ${selectedNodeId === node.node_id ? "bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-pink-200/50 scale-105" : "bg-white text-slate-600 hover:border-pink-200 hover:shadow-md"}`}
                     >
                       <div className="flex flex-col w-full min-w-0">
                         <div className="flex items-center gap-1 w-full min-w-0">
@@ -6870,15 +6884,16 @@ function ImagePreviewModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={getOverlayTransition()}
       className="fixed inset-0 z-max flex items-center justify-center p-4 sm:p-10"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ type: "spring", bounce: 0.4, duration: 0.6 }}
+        initial={getModalMotion().initial}
+        animate={getModalMotion().animate}
+        exit={getModalMotion().exit}
+        transition={getModalMotion().transition}
         className="relative max-w-5xl w-full max-h-[90vh] rounded-[32px] overflow-hidden shadow-2xl z-10 flex items-center justify-center"
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >

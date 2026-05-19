@@ -1,3 +1,4 @@
+import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from '../lib/motionTokens';
 import { useState, useEffect } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "motion/react";
 import { Home, Sparkles, CalendarDays, Luggage, Menu, X } from "lucide-react";
@@ -69,7 +70,7 @@ export default function BottomTabs() {
           height: isExpanded ? "3.5rem" : "48px",
           willChange: "transform, opacity, width, height",
         }}
-        transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+        transition={SPRING_SNAPPY}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           {!isExpanded ? (
@@ -80,7 +81,7 @@ export default function BottomTabs() {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
               onClick={() => setIsExpanded(true)}
-              className="flex items-center justify-center w-full h-full rounded-full text-pink-500 hover:text-pink-600 transition-all active:scale-90 bg-transparent border-transparent shadow-none"
+              className="flex items-center justify-center w-full h-full rounded-full text-pink-500 hover:text-pink-600 transition-all active:scale-[0.97] bg-transparent border-transparent shadow-none"
               aria-label="展開選單"
             >
               <ActiveIcon
@@ -101,7 +102,7 @@ export default function BottomTabs() {
               {isAiFlow && (
                 <button
                   onClick={() => setIsExpanded(false)}
-                  className="absolute -left-1 p-1 text-slate-400 hover:text-sky-500 rounded-full z-20 transition-colors active:scale-90"
+                  className="absolute -left-1 p-1 text-slate-400 hover:text-sky-500 rounded-full z-20 transition-colors active:scale-[0.97]"
                   aria-label="收起選單"
                 >
                   <X size={14} strokeWidth={3} />
@@ -121,7 +122,7 @@ export default function BottomTabs() {
                         setIsExpanded(false);
                       }
                     }}
-                    className={`flex flex-col items-center justify-center flex-1 min-w-0 h-full rounded-full relative transition-all duration-300 transform-gpu active:scale-[0.85] ${
+                    className={`flex flex-col items-center justify-center flex-1 min-w-0 h-full rounded-full relative transition-all duration-300 transform-gpu active:scale-[0.97] ${
                       isActive
                         ? "text-pink-500"
                         : "opacity-70 hover:opacity-100 text-slate-500 dark:text-slate-400"

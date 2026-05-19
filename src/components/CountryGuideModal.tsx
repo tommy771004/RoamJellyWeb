@@ -37,7 +37,7 @@ function AreaTabs({ areas, active, onChange }: { areas: string[]; active: string
           <button
             key={area}
             onClick={() => onChange(area)}
-            className={`fluid-caption relative snap-start flex-shrink-0 rounded-full px-4 py-2 font-black transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] ${
+            className={`fluid-caption relative snap-start flex-shrink-0 rounded-full px-4 py-2 font-black transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] ${
               active === area
                 ? 'text-white shadow-[0_10px_22px_rgba(15,23,42,0.16)]'
                 : 'border border-white/84 bg-white/74 text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:bg-slate-100 hover:text-slate-800'
@@ -124,7 +124,7 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
             )}
             <button
               onClick={() => setOpen((v) => !v)}
-              className={`fluid-caption flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-black transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] shadow-sm whitespace-nowrap ${
+              className={`fluid-caption flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-black transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] shadow-sm whitespace-nowrap ${
                 open
                   ? 'bg-slate-200/80 text-slate-800 hover:bg-slate-300'
                   : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-md'

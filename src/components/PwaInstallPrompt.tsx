@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
+import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { X } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -124,7 +125,7 @@ export default function PwaInstallPrompt() {
               <button
                 type="button"
                 onClick={() => void handleInstall()}
-                className="flex-1 rounded-2xl bg-white py-3 text-sm font-black uppercase tracking-wider text-slate-900 transition-all active:scale-95"
+                className="flex-1 rounded-2xl bg-white py-3 text-sm font-black uppercase tracking-wider text-slate-900 transition-all active:scale-[0.97]"
               >
                 立即安裝
               </button>

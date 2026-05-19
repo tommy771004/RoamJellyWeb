@@ -1,6 +1,7 @@
 import { useEffect, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { getModalMotion, getOverlayTransition } from "../lib/motionTokens";
 import { X } from "lucide-react";
 
 type PeekIcon = ComponentType<{
@@ -95,7 +96,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0.12 } : { duration: 0.18, ease: "easeOut" }}
+            transition={getOverlayTransition(prefersReducedMotion)}
             onClick={onClose}
           />
 
@@ -103,10 +104,10 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
             role="dialog"
             aria-modal="true"
             aria-labelledby="info-peek-title"
-            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.98 }}
-            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }}
-            transition={prefersReducedMotion ? { duration: 0.14 } : { duration: 0.22, ease: "easeOut" }}
+            initial={getModalMotion(prefersReducedMotion).initial}
+            animate={getModalMotion(prefersReducedMotion).animate}
+            exit={getModalMotion(prefersReducedMotion).exit}
+            transition={getModalMotion(prefersReducedMotion).transition}
             className="relative z-10 w-full max-w-[560px] overflow-hidden rounded-[32px] sm:rounded-[40px] border border-white/92 dark:border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(240,249,255,0.92))] dark:bg-[linear-gradient(180deg,rgba(30,41,59,0.86),rgba(15,23,42,0.9),rgba(2,6,23,0.92))] backdrop-blur-2xl p-4 shadow-[0_20px_46px_rgba(15,23,42,0.14)] dark:shadow-[0_20px_46px_rgba(0,0,0,0.6)] sm:p-5 outline-none mb-[env(safe-area-inset-bottom)] sm:mb-0"
             onClick={(event) => event.stopPropagation()}
           >
@@ -133,7 +134,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
                 type="button"
                 onClick={onClose}
                 aria-label="關閉說明"
-                className="flex size-10 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-white/10 text-slate-500 dark:text-slate-300 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-700 dark:hover:text-white"
+                className="flex size-10 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-white/10 text-slate-500 dark:text-slate-300 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={18} strokeWidth={2.6} />
               </button>
@@ -163,7 +164,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700"
               >
                 關閉說明
               </button>

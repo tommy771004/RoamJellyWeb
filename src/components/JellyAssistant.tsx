@@ -1,3 +1,4 @@
+import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from '../lib/motionTokens';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Sparkles, X, Send, PlusCircle } from 'lucide-react';
@@ -84,7 +85,7 @@ export default function JellyAssistant() {
             initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.8 }}
             animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
             exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.8 }}
-            transition={prefersReducedMotion ? { duration: 0.16 } : { type: 'spring', bounce: 0.6, duration: 0.7 }}
+            transition={prefersReducedMotion ? { duration: 0.16 } : SPRING_BOUNCY}
             onClick={() => setIsOpen(true)}
             className={`fixed bottom-24 right-5 z-40 flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-full border border-white/20 bg-gradient-to-tr from-sky-500 via-fuchsia-500 to-orange-400 shadow-[0_12px_28px_rgba(14,165,233,0.28)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60 sm:right-6 sm:h-14 sm:w-14 ${subtlePressableClass}`}
             aria-label="開啟 Jelly AI 行程顧問"
@@ -160,7 +161,7 @@ export default function JellyAssistant() {
                       <motion.div 
                         initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 15, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={prefersReducedMotion ? { duration: 0.16 } : { type: 'spring', bounce: 0.5, duration: 0.6 }}
+                        transition={prefersReducedMotion ? { duration: 0.16 } : { type: 'spring', damping: 25, stiffness: 300 }}
                         className="mt-2 w-full overflow-hidden rounded-[24px] border border-white/60 bg-white/95 shadow-[0_12px_32px_rgba(0,0,0,0.08)] dark:border-white/10 dark:bg-white/10"
                       >
                         <div className="relative flex h-24 items-center justify-center bg-gradient-to-tr from-sky-500 via-fuchsia-500 to-orange-400">
@@ -171,7 +172,7 @@ export default function JellyAssistant() {
                           <p className="fluid-body text-slate-600 dark:text-slate-400">精選機加酒與必去景點，馬上開啟您的專屬之旅！</p>
                           <button 
                             onClick={handleAddItinerary}
-                            className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-slate-900 py-2.5 text-[14px] font-black text-white transition-colors hover:bg-slate-800 active:scale-95 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600"
+                            className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-slate-900 py-2.5 text-[14px] font-black text-white transition-colors hover:bg-slate-800 active:scale-[0.97] dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600"
                           >
                             <PlusCircle size={16} />
                             一鍵加入行程
@@ -210,13 +211,13 @@ export default function JellyAssistant() {
               <div className="flex gap-2 overflow-x-auto px-3.5 pb-2 scrollbar-hide sm:px-4">
                 <button 
                   onClick={() => handleSend('規劃專屬五天四夜')}
-                  className="fluid-caption whitespace-nowrap rounded-full border border-fuchsia-200 bg-fuchsia-50 px-4 py-2 font-black text-fuchsia-600 transition-transform active:scale-95 dark:border-fuchsia-700/50 dark:bg-fuchsia-900/30 dark:text-fuchsia-300"
+                  className="fluid-caption whitespace-nowrap rounded-full border border-fuchsia-200 bg-fuchsia-50 px-4 py-2 font-black text-fuchsia-600 transition-transform active:scale-[0.97] dark:border-fuchsia-700/50 dark:bg-fuchsia-900/30 dark:text-fuchsia-300"
                 >
                   ✨ 規劃專屬行程
                 </button>
                 <button 
                   onClick={() => handleSend('附近有什麼好吃的？')}
-                  className="fluid-caption whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-4 py-2 font-black text-slate-600 transition-transform active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-slate-400"
+                  className="fluid-caption whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-4 py-2 font-black text-slate-600 transition-transform active:scale-[0.97] dark:border-white/10 dark:bg-white/5 dark:text-slate-400"
                 >
                   🍣 附近有什麼好吃的？
                 </button>
@@ -245,7 +246,7 @@ export default function JellyAssistant() {
                   onClick={() => handleSend()}
                   disabled={!inputValue.trim() || isTyping}
                   aria-label="送出"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-fuchsia-500 text-white transition-colors active:scale-95 disabled:bg-slate-300 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-fuchsia-500 text-white transition-colors active:scale-[0.97] disabled:bg-slate-300 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
                 >
                   <Send size={18} className="ml-1" />
                 </button>

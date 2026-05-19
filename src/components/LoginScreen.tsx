@@ -267,7 +267,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                                   icon: HeroIcon,
                                 })
                               }
-                              className={`mt-2.5 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:bg-white/[0.14]`}
+                              className={`mt-2.5 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:bg-white/[0.14]`}
                             >
                               查看說明
                               <ArrowRight size={12} strokeWidth={2.6} />
@@ -287,7 +287,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     <button
                       onClick={() => void handleGuestLogin()}
                       disabled={loading}
-                      className={`flex w-full items-center justify-center gap-2 rounded-[20px] border-none bg-white px-5 py-3.5 text-slate-900 shadow-[0_8px_20px_rgba(255,255,255,0.10)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,255,255,0.14)] disabled:opacity-70 sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.94]`}
+                      className={`flex w-full items-center justify-center gap-2 rounded-[20px] border-none bg-white px-5 py-3.5 text-slate-900 shadow-[0_8px_20px_rgba(255,255,255,0.10)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,255,255,0.14)] disabled:opacity-70 sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]`}
                     >
                       <span className="text-[13px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
                       <ArrowRight size={16} strokeWidth={2.5} />
@@ -295,7 +295,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     <button
                       type="button"
                       onClick={() => setIsAuthCardExpanded(true)}
-                      className={`flex items-center justify-center rounded-[20px] border border-white/12 bg-white/[0.06] px-5 py-3.5 text-white hover:-translate-y-0.5 hover:bg-white/[0.12] sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.94]`}
+                      className={`flex items-center justify-center rounded-[20px] border border-white/12 bg-white/[0.06] px-5 py-3.5 text-white hover:-translate-y-0.5 hover:bg-white/[0.12] sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]`}
                     >
                       <span className="text-[12px] font-black tracking-[0.06em]">改用帳號同步</span>
                     </button>
@@ -533,7 +533,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               <button
                 onClick={() => void handleSubmit()}
                 disabled={loading}
-                className={`flex justify-center border-none appearance-none cursor-pointer transition-all active:scale-95 shadow-[0_12px_24px_rgba(14,165,233,0.24)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? 'bg-sky-300 shadow-none' : 'bg-gradient-to-r from-sky-500 to-orange-400 hover:opacity-90'}`}
+                className={`flex justify-center border-none appearance-none cursor-pointer transition-all active:scale-[0.97] shadow-[0_12px_24px_rgba(14,165,233,0.24)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? 'bg-sky-300 shadow-none' : 'bg-gradient-to-r from-sky-500 to-orange-400 hover:opacity-90'}`}
                 style={{
                   paddingTop: 15, paddingBottom: 15,
                   borderRadius: 22,
@@ -554,7 +554,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 <button
                   onClick={() => void handleGuestLogin()}
                   disabled={loading}
-                  className="mt-3 flex w-full justify-center border appearance-none cursor-pointer transition-all active:scale-95 bg-white/70 border-slate-200 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45"
+                  className="mt-3 flex w-full justify-center border appearance-none cursor-pointer transition-all active:scale-[0.97] bg-white/70 border-slate-200 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45"
                   style={{
                     paddingTop: 13,
                     paddingBottom: 13,
@@ -579,7 +579,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     alignItems: 'center',
                     backgroundColor: 'transparent',
                   }}
-                  className="flex justify-center border-none appearance-none cursor-pointer hover:bg-black/5 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/60"
+                  className="flex justify-center border-none appearance-none cursor-pointer hover:bg-black/5 transition-all active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/60"
                 >
                   <span style={{ color: '#64748b', fontWeight: '800', fontSize: 14, letterSpacing: '0.05em' }}>取消</span>
                 </button>

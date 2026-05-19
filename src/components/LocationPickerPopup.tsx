@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 import { useVisualViewport } from '../lib/useKeyboardHeight';
@@ -41,6 +42,7 @@ export const LocationPickerPopup = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={getOverlayTransition()}
           className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
           onClick={onClose}
         />
@@ -48,7 +50,7 @@ export const LocationPickerPopup = ({
           initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.95 }}
-          transition={{ type: 'spring', bounce: 0.5, duration: 0.6 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="relative z-popup-above flex h-[calc(100%-1.5rem)] sm:h-[82%] w-full flex-col overflow-hidden rounded-t-[30px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-[34px] md:shadow-[0_28px_60px_rgba(15,23,42,0.16)]"
           
         >
@@ -61,7 +63,7 @@ export const LocationPickerPopup = ({
               </div>
               <button 
                 onClick={onClose}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100/80 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:bg-slate-200"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100/80 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:bg-slate-200"
               >
                 <span className="text-xl text-slate-500 font-bold">✕</span>
               </button>
@@ -71,7 +73,7 @@ export const LocationPickerPopup = ({
             <div className="-mx-1 mb-4 flex flex-row gap-x-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
               <button
                 onClick={() => setSelectedRegion('全部地區')}
-                className={`fluid-caption rounded-[16px] px-4 py-2 font-black transition-all whitespace-nowrap active:scale-95 ${
+                className={`fluid-caption rounded-[16px] px-4 py-2 font-black transition-all whitespace-nowrap active:scale-[0.97] ${
                   selectedRegion === '全部地區' 
                     ? 'bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_10px_22px_rgba(14,165,233,0.20)]' 
                     : 'border border-white/84 bg-white/84 text-slate-500 hover:bg-white'
@@ -83,7 +85,7 @@ export const LocationPickerPopup = ({
                 <button
                   key={region}
                   onClick={() => setSelectedRegion(region)}
-                  className={`fluid-caption rounded-[16px] px-4 py-2 font-black transition-all whitespace-nowrap active:scale-95 ${
+                  className={`fluid-caption rounded-[16px] px-4 py-2 font-black transition-all whitespace-nowrap active:scale-[0.97] ${
                     selectedRegion === region 
                       ? 'bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_10px_22px_rgba(14,165,233,0.20)]' 
                       : 'border border-white/84 bg-white/84 text-slate-500 hover:bg-white'
@@ -114,7 +116,7 @@ export const LocationPickerPopup = ({
                   <button
                     key={dest.id}
                     onClick={() => onSelect(dest)}
-                    className="group flex w-full min-w-0 flex-col items-start rounded-[22px] border border-white/86 bg-white/80 p-3.5 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 hover:shadow-[0_10px_22px_rgba(217,70,239,0.10)] active:scale-[0.94]"
+                    className="group flex w-full min-w-0 flex-col items-start rounded-[22px] border border-white/86 bg-white/80 p-3.5 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 hover:shadow-[0_10px_22px_rgba(217,70,239,0.10)] active:scale-[0.97]"
                   >
                     <span className="fluid-kicker mb-0.5 font-black uppercase text-slate-500 group-hover:text-fuchsia-400">{dest.country}</span>
                     <span className="w-full break-words text-[15px] font-extrabold tracking-[-0.03em] text-slate-700 group-hover:text-fuchsia-700 sm:text-base">{dest.place}</span>

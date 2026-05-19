@@ -606,7 +606,7 @@ function FlightTable({
                       onToggleSave(e, flight.id);
                     }}
                     aria-label={isSaved ? "取消收藏" : "收藏航班"}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-[0.97] border ${
                       isSaved
                         ? "bg-pink-50 border-pink-100 text-pink-500"
                         : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-400 hover:text-pink-400 hover:border-pink-200 shadow-sm"
@@ -624,7 +624,7 @@ function FlightTable({
                       onToggleTrack(e, flight);
                     }}
                     aria-label={isTracked ? "取消追蹤降價" : "追蹤降價"}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 border ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-[0.97] border ${
                       isTracked
                         ? "bg-slate-900 border-slate-900 text-white shadow-md"
                         : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-500 hover:text-slate-700 hover:border-slate-300 shadow-sm"
@@ -641,7 +641,7 @@ function FlightTable({
                       e.stopPropagation();
                       onImportToTrip(e, flight);
                     }}
-                    className="h-10 px-4 rounded-xl flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition-all active:scale-95 border border-transparent"
+                    className="h-10 px-4 rounded-xl flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition-all active:scale-[0.97] border border-transparent"
                   >
                     <PlaneTakeoff size={14} strokeWidth={2.5} />
                     <span className="text-sm font-bold">帶入</span>
@@ -918,7 +918,7 @@ function DestinationCard({
                 onToggleSave(e);
               }}
               aria-label={isSaved ? "取消收藏" : "收藏"}
-              className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/65 backdrop-blur-md transition-all active:scale-90 shadow-sm ${isSaved ? "bg-pink-500 text-white" : "bg-white/85 text-slate-500 hover:bg-white hover:text-pink-500"}`}
+              className={`mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/65 backdrop-blur-md transition-all active:scale-[0.97] shadow-sm ${isSaved ? "bg-pink-500 text-white" : "bg-white/85 text-slate-500 hover:bg-white hover:text-pink-500"}`}
             >
               <Heart
                 size={15}
@@ -965,7 +965,7 @@ function DestinationCard({
                   e.stopPropagation();
                   onImportToTrip(e);
                 }}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-slate-900/92 px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition-all active:scale-95 hover:bg-slate-800 sm:h-auto sm:px-3.5 sm:py-2.5 sm:text-xs sm:tracking-[0.16em]"
+                className="flex h-10 items-center gap-1.5 rounded-full bg-slate-900/92 px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition-all active:scale-[0.97] hover:bg-slate-800 sm:h-auto sm:px-3.5 sm:py-2.5 sm:text-xs sm:tracking-[0.16em]"
               >
                 <PlaneTakeoff size={12} strokeWidth={2.5} />
                 帶入
@@ -975,7 +975,7 @@ function DestinationCard({
                   e.stopPropagation();
                   onPress();
                 }}
-                className="h-10 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-500 px-4 py-2 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(236,72,153,0.28)] transition-all active:scale-95 hover:brightness-105 sm:h-auto sm:px-[18px] sm:py-2.5 sm:text-[12px]"
+                className="h-10 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-500 px-4 py-2 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(236,72,153,0.28)] transition-all active:scale-[0.97] hover:brightness-105 sm:h-auto sm:px-[18px] sm:py-2.5 sm:text-[12px]"
               >
                 Explore
               </button>
@@ -1745,7 +1745,7 @@ export default function HomeTab({
                                       icon: Icon,
                                     })
                                   }}
-                                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/92 bg-white/94 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.96] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
+                                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/92 bg-white/94 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
                                 >
                                   查看說明
                                   <ArrowRight size={12} strokeWidth={2.6} />
@@ -1974,7 +1974,7 @@ export default function HomeTab({
                     className={`group flex w-full items-center justify-center gap-2 rounded-[32px] py-4 sm:py-5 text-[16px] sm:text-[17px] font-black tracking-wide shadow-sm transition-[transform,shadow,background] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform-gpu ${
                       isSearchDisabled || loading || isOffline
                         ? "bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
-                        : "bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[0_12px_28px_rgba(244,63,94,0.3)] hover:from-pink-500 hover:to-orange-500 active:scale-[0.92] hover:-translate-y-1.5 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)]"
+                        : "bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[0_12px_28px_rgba(244,63,94,0.3)] hover:from-pink-500 hover:to-orange-500 active:scale-[0.97] hover:-translate-y-1.5 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)]"
                     }`}
                   >
                     {loading ? (
@@ -2005,7 +2005,7 @@ export default function HomeTab({
               href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw"
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 ${chipPressClass}`}
+              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
             >
               <Bed
                 size={17}
@@ -2020,7 +2020,7 @@ export default function HomeTab({
               href="https://www.kkday.com/zh-tw?cid=4480"
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 ${chipPressClass}`}
+              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
             >
               <Ticket
                 size={15}
@@ -2035,7 +2035,7 @@ export default function HomeTab({
               href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480"
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 ${chipPressClass}`}
+              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
             >
               <div className="relative text-[#EC4899] group-hover:scale-110 transition-transform">
                 <CarFront size={17} strokeWidth={2.5} />
@@ -2089,7 +2089,7 @@ export default function HomeTab({
                 <div className="flex items-center gap-1 bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 shrink-0">
                   <button
                     onClick={() => setViewType("grid")}
-                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] ${viewType === "grid" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
+                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] ${viewType === "grid" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
                     title="卡片檢視"
                     aria-label="卡片檢視"
                     aria-pressed={viewType === "grid"}
@@ -2098,7 +2098,7 @@ export default function HomeTab({
                   </button>
                   <button
                     onClick={() => setViewType("table")}
-                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] ${viewType === "table" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
+                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] ${viewType === "table" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
                     title="列表檢視"
                     aria-label="列表檢視"
                     aria-pressed={viewType === "table"}

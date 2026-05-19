@@ -245,7 +245,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
               onClick={() => void handleJoin()}
               disabled={joining}
               className={cn(
-                'mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-[14px] font-black tracking-[0.08em] text-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92]',
+                'mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-[14px] font-black tracking-[0.08em] text-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]',
                 joining
                   ? 'cursor-not-allowed bg-sky-300 shadow-none'
                   : 'bg-gradient-to-r from-sky-500 to-orange-400 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] hover:-translate-y-0.5 hover:from-sky-600 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]',
@@ -270,7 +270,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
 
             <a
               href="/"
-              className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-white/84 bg-white/74 px-5 py-3 text-[14px] font-black text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.05)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-0.5 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_10px_20px_rgba(14,165,233,0.10)]"
+              className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-white/84 bg-white/74 px-5 py-3 text-[14px] font-black text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.05)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-0.5 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_10px_20px_rgba(14,165,233,0.10)]"
             >
               先回首頁看看
             </a>

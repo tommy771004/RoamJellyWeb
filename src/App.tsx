@@ -1,3 +1,4 @@
+import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from './lib/motionTokens';
 import { useState, useEffect, useCallback, useRef, lazy, Suspense, type ComponentType } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import HomeTab from './components/HomeTab';
@@ -796,7 +797,7 @@ export default function App() {
               <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-pink-700' : 'text-slate-600'}`}>
                 {isLoggedIn ? `${userId} 您好` : '未登入'}
               </span>
-              <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
+              <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-[0.97] shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
                 {isLoggedIn ? <UserRound size={17} strokeWidth={2.4} /> : <SparklesIcon size={16} strokeWidth={2.4} />}
               </div>
             </button>
@@ -874,14 +875,14 @@ export default function App() {
             key={showLogin ? `login-${loginPromptMode}` : isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
-              enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, x: dir * 18 }),
-              center: { opacity: 1, x: 0 },
-              exit: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, x: -dir * 12 }),
+              enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.96, y: 8 }),
+              center: { opacity: 1, scale: 1, y: 0 },
+              exit: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.98, y: -4 }),
             }}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={prefersReducedMotion ? { duration: 0.16 } : SPRING_SMOOTH}
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             className="pt-[calc(56px+env(safe-area-inset-top,0px))] sm:pt-[calc(80px+env(safe-area-inset-top,0px))] pb-0"
           >

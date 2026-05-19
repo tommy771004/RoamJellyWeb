@@ -4,55 +4,32 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-primary: #ff8eaa;
-  --color-on-primary: #ffffff;
-  --color-primary-container: #ffe2e8;
-  --color-on-primary-container: #822744;
-  --color-primary-fixed: #ffedf1;
-  --color-on-primary-fixed: #4f0a20;
-  --color-primary-fixed-dim: #ffb5c6;
-  --color-on-primary-fixed-variant: #9b3d5b;
-  --color-secondary: #74cc94;
-  --color-on-secondary: #ffffff;
-  --color-secondary-container: #cbf9dc;
-  --color-on-secondary-container: #1b5333;
-  --color-secondary-fixed: #cbf9dc;
-  --color-on-secondary-fixed: #053b1b;
-  --color-secondary-fixed-dim: #97ebb7;
-  --color-on-secondary-fixed-variant: #2d7049;
-  --color-tertiary: #5cb0e4;
-  --color-on-tertiary: #ffffff;
-  --color-tertiary-container: #d9f0ff;
-  --color-on-tertiary-container: #104b72;
-  --color-tertiary-fixed: #d9f0ff;
-  --color-on-tertiary-fixed: #05304f;
-  --color-tertiary-fixed-dim: #a1d9fe;
-  --color-on-tertiary-fixed-variant: #286b96;
-  --color-error: #ff7474;
-  --color-on-error: #ffffff;
-  --color-error-container: #ffe9e9;
-  --color-on-error-container: #871919;
-  --color-background: #fffcfd;
-  --color-on-background: #231f20;
+  /* Color palette: Adventure & Trustworthiness */
+  --color-primary: #0284c7;
+  --color-secondary: #0ea5e9;
+  --color-accent: #f97316;
+  --color-cta: #fb923c;
+  --color-background: #f8fafc;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
   --color-surface: #ffffff;
-  --color-on-surface: #231f20;
-  --color-surface-variant: #f2edf0;
-  --color-on-surface-variant: #6b5f63;
-  --color-outline: #a4979b;
-  --color-outline-variant: #e0d6d9;
-  --color-inverse-surface: #3a3436;
-  --color-inverse-on-surface: #f9f5f6;
-  --color-inverse-primary: #ffb5c6;
-  --color-surface-dim: #ebe5e7;
-  --color-surface-bright: #ffffff;
+  
+  /* Retaining some original color mappings for compatibility */
+  --color-macaron-pink: #0284c7;
+  --color-macaron-orange: #f97316;
+  --color-on-surface: #1b1c1c;
 
-  --font-h1: "Nunito", "Noto Sans TC", sans-serif;
-  --font-h2: "Nunito", "Noto Sans TC", sans-serif;
-  --font-body-lg: "Nunito", "Noto Sans TC", sans-serif;
-  --font-body-md: "Nunito", "Noto Sans TC", sans-serif;
-  --font-label-caps: "Nunito", "Noto Sans TC", sans-serif;
-  --font-plus-jakarta: "Nunito", "Noto Sans TC", sans-serif;
-  --font-be-vietnam: "Nunito", "Noto Sans TC", sans-serif;
+  /* Typography */
+  --font-heading: 'Nunito', 'Noto Sans TC', sans-serif;
+  --font-body: 'Noto Sans TC', sans-serif;
+  --font-sans: 'Noto Sans TC', sans-serif;
+
+  /* Override original font tokens for compatibility */
+  --font-h1: 'Nunito', 'Noto Sans TC', sans-serif;
+  --font-h2: 'Nunito', 'Noto Sans TC', sans-serif;
+  --font-body-lg: 'Noto Sans TC', sans-serif;
+  --font-body-md: 'Noto Sans TC', sans-serif;
+  --font-label-caps: 'Noto Sans TC', sans-serif;
 
   /* Fluid type scale (design_exp.md Pattern 2): clamp(min, preferred, max)
    * Range: 320px (mobile) → 1280px (desktop) */
@@ -78,36 +55,24 @@
   --text-label-caps--letter-spacing: 0.05em;
   --text-label-caps--font-weight: 700;
 
-  --spacing-gutter: 16px;
-  --spacing-md: 20px;
-  --spacing-xl: 48px;
-  --spacing-container-padding: 24px;
-  --spacing-lg: 32px;
-  --spacing-sm: 12px;
-  --spacing-base: 8px;
-  --spacing-xs: 4px;
-  --spacing-5: 1.25rem;
-  --spacing-6: 1.5rem;
-  --spacing-8: 2rem;
-  --spacing-12: 3rem;
-  --spacing-16: 4rem;
-  --spacing-20: 5rem;
-  --spacing-24: 6rem;
-  --spacing-32: 8rem;
+  /* Spacing Variables */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
 
-  --color-fuchsia-300: #f0abfc;
-  --color-fuchsia-400: #e879f9;
-  --color-fuchsia-500: #d946ef;
-  --color-fuchsia-600: #c026d3;
-  --color-pink-500: #ec4899;
-  --color-orange-400: #fb923c;
-  --color-macaron-pink: #ff8eaa;
-  --color-macaron-orange: #ffa755;
-  --color-primary-fixed: #ffd9df;
-  --color-secondary-container: #aeedd5;
-  --color-surface-container: #efeded;
-  --color-on-surface: #1b1c1c;
-  --color-outline: #877275;
+  /* Shadow Depths */
+  --shadow-soft: 0 2px 4px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.12);
+  --shadow-modal: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
+
+  /* Border Radius */
+  --radius-default: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
   --motion-ios-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Z-index scale — always use named tokens, never arbitrary z-[N] */

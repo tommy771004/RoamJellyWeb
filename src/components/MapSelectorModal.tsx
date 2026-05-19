@@ -5,6 +5,7 @@ import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Check, X } from 'lucide-react';
+import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 
 const selectIcon = L.divIcon({
   html: `
@@ -48,13 +49,15 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={getOverlayTransition()}
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" 
           onClick={onClose}
         />
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 40, scale: 0.95 }}
+          initial={getModalMotion().initial}
+          animate={getModalMotion().animate}
+          exit={getModalMotion().exit}
+          transition={getModalMotion().transition}
           className="relative z-modal-above flex h-[72vh] w-full max-w-2xl flex-col overflow-hidden rounded-[30px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] shadow-[0_24px_56px_rgba(15,23,42,0.16)] sm:rounded-[36px]"
         >
           <div className="absolute top-0 left-0 z-10 h-1.5 w-full bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-300" />
@@ -70,7 +73,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
               type="button" 
               onClick={onClose}
               aria-label="關閉地圖選取"
-              className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60 active:scale-95"
+              className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60 active:scale-[0.97]"
             >
               <X size={20}/>
             </button>
@@ -101,7 +104,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
                 }
               }}
               disabled={!selectedPos}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 text-[14px] font-black uppercase tracking-[0.16em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.36)] active:scale-[0.92] disabled:cursor-not-allowed disabled:opacity-40 disabled:scale-100 disabled:hover:translate-y-0 whitespace-nowrap"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 text-[14px] font-black uppercase tracking-[0.16em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.36)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:scale-100 disabled:hover:translate-y-0 whitespace-nowrap"
             >
               <Check size={20} className="shrink-0" />
               <span>確認選取座標</span>

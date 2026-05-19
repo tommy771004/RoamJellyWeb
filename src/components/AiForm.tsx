@@ -160,7 +160,7 @@ export const MultiSelectPill: React.FC<{
   return (
     <button
       onClick={onClick}
-      className={`min-h-[42px] px-3.5 sm:px-4.5 py-2.5 rounded-[22px] text-[12px] sm:text-[14px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] relative overflow-hidden flex items-center justify-center gap-2 border ${
+      className={`min-h-[42px] px-3.5 sm:px-4.5 py-2.5 rounded-[22px] text-[12px] sm:text-[14px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] relative overflow-hidden flex items-center justify-center gap-2 border ${
         selected
           ? `${selectedClasses[accentColor]} ring-2 ${ringClasses[accentColor]} ring-offset-1 -translate-y-0.5`
           : "bg-white/78 backdrop-blur-md text-slate-600 hover:bg-white hover:text-slate-900 border-white/80 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:shadow-[0_10px_20px_rgba(15,23,42,0.07)] hover:-translate-y-0.5 hover:border-slate-200"
@@ -310,7 +310,7 @@ export default function AiForm({
           {onCancel && (
             <button
               onClick={onCancel}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/84 bg-white/88 text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors active:scale-95 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 sm:h-11 sm:w-11"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/84 bg-white/88 text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors active:scale-[0.97] hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 sm:h-11 sm:w-11"
               aria-label="取消"
             >
               <ArrowLeft size={20} className="sm:hidden" />
@@ -417,7 +417,7 @@ export default function AiForm({
                             days: Math.max(1, p.days - 1),
                           }))
                         }
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-95 hover:bg-slate-100"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-[0.97] hover:bg-slate-100"
                       >
                         <Minus size={20} strokeWidth={2.5} />
                       </button>
@@ -436,7 +436,7 @@ export default function AiForm({
                             days: Math.min(30, p.days + 1),
                           }))
                         }
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-95 hover:bg-slate-100"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-[0.97] hover:bg-slate-100"
                       >
                         <Plus size={20} strokeWidth={2.5} />
                       </button>
@@ -460,7 +460,7 @@ export default function AiForm({
                           onClick={() =>
                             setFormData((p) => ({ ...p, companions: opt.id }))
                           }
-                          className={`group relative flex min-h-[84px] flex-col items-center justify-center gap-2 overflow-hidden rounded-[32px] border p-2.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] sm:min-h-[96px] sm:rounded-[36px] sm:p-4 ${
+                          className={`group relative flex min-h-[84px] flex-col items-center justify-center gap-2 overflow-hidden rounded-[32px] border p-2.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] sm:min-h-[96px] sm:rounded-[36px] sm:p-4 ${
                             isSelected
                               ? "z-10 -translate-y-0.5 border-slate-900 bg-slate-900 shadow-[0_14px_28px_rgba(15,23,42,0.14)]"
                               : "border-white/84 bg-white/86 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 hover:border-slate-200 hover:bg-slate-50"
@@ -510,7 +510,7 @@ export default function AiForm({
                       !formData.destination ||
                       !formData.companions
                         ? "bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none"
-                        : "border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] active:scale-[0.92]"
+                        : "border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] active:scale-[0.97]"
                     }`}
                   >
                     下一步，設定偏好細節
@@ -556,7 +556,7 @@ export default function AiForm({
                 </div>
                 <button
                   onClick={handleSubmit}
-                  className="flex shrink-0 items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.12em] text-sky-700 transition-colors hover:bg-sky-100 hover:text-sky-800 active:scale-95"
+                  className="flex shrink-0 items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.12em] text-sky-700 transition-colors hover:bg-sky-100 hover:text-sky-800 active:scale-[0.97]"
                 >
                   跳過直接生成
                   <Sparkles size={16} />
@@ -726,13 +726,13 @@ export default function AiForm({
                   <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                     <button
                       onClick={handleBack}
-                      className="h-14 w-full shrink-0 rounded-full border border-white/84 bg-white/86 px-6 text-[14px] font-bold text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 active:scale-[0.92] sm:h-[3.8rem] sm:w-auto"
+                      className="h-14 w-full shrink-0 rounded-full border border-white/84 bg-white/86 px-6 text-[14px] font-bold text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 active:scale-[0.97] sm:h-[3.8rem] sm:w-auto"
                     >
                       返回
                     </button>
                     <button
                       onClick={handleSubmit}
-                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)] active:scale-[0.92] sm:h-[3.8rem] sm:text-[15px]"
+                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)] active:scale-[0.97] sm:h-[3.8rem] sm:text-[15px]"
                     >
                       生成行程
                       <Sparkles

@@ -1,3 +1,4 @@
+import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from '../lib/motionTokens';
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -24,7 +25,7 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
-            transition={{ type: 'spring', bounce: 0.6, duration: 0.7 }}
+            transition={SPRING_BOUNCY}
             className={`pointer-events-auto mx-auto flex w-fit justify-center max-w-sm shrink-0 items-center gap-3 rounded-[28px] border px-4 py-3.5 shadow-lg backdrop-blur-2xl ${
               toast.type === 'success' ? 'border-emerald-300/40 bg-[linear-gradient(180deg,rgba(16,185,129,0.95),rgba(5,150,105,0.92))] text-white' :
               toast.type === 'warning' ? 'border-orange-300/40 bg-[linear-gradient(180deg,rgba(249,115,22,0.95),rgba(234,88,12,0.92))] text-white' :

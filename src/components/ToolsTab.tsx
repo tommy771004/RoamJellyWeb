@@ -1371,7 +1371,7 @@ function TripSelectorBar() {
               key={trip.tripId}
               onClick={() => setActiveTripId(trip.tripId)}
               className={cn(
-                "px-5 py-4 flex flex-col rounded-[24px] border transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] text-left shadow-sm shrink-0 min-w-[120px] max-w-[240px] overflow-hidden group",
+                "px-5 py-4 flex flex-col rounded-[24px] border transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] text-left shadow-sm shrink-0 min-w-[120px] max-w-[240px] overflow-hidden group",
                 active
                   ? "bg-gradient-to-r from-sky-500 to-indigo-500 border-transparent text-white shadow-md shadow-sky-500/20"
                   : "bg-white/80 backdrop-blur-md border-slate-200 text-slate-500 hover:border-sky-300 hover:bg-sky-50/50 hover:shadow-md",
@@ -1582,7 +1582,7 @@ function ToolsTabContent() {
                               icon: Icon,
                             })
                           }
-                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
                         >
                           查看說明
                           <ArrowRight size={12} strokeWidth={2.6} />
@@ -1597,14 +1597,14 @@ function ToolsTabContent() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setActiveTab("ai_form")}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-sky-400 to-sky-600 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-sky-400 to-sky-600 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
                 >
                   <Sparkles size={18} strokeWidth={2.5} />
                   直接交給 AI 開始規劃
                 </button>
                 <button
                   onClick={() => setActiveTab("home")}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-slate-200/60 bg-white/70 px-6 py-3 text-[14px] font-black text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] hover:-translate-y-1 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)]"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-slate-200/60 bg-white/70 px-6 py-3 text-[14px] font-black text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)]"
                 >
                   先回首頁看流程
                 </button>
