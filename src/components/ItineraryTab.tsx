@@ -2003,62 +2003,63 @@ export default function ItineraryTab() {
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="flex flex-col gap-6 pt-6 border-t border-slate-100/50 mt-6 lg:mt-8">
-                        <div className="grid gap-3 sm:grid-cols-3">
-                          {NO_TRIP_ENTRY_PILLARS.map(
-                            ({ icon: Icon, eyebrow, title, description }) => (
-                              <div
-                                key={title}
-                                className="editorial-card rounded-[24px] px-4 py-4"
-                              >
-                                <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-sky-700">
-                                  <Icon size={14} strokeWidth={2.5} />
-                                  {eyebrow}
-                                </span>
-                                <h3 className="mt-3 text-sm font-black text-slate-900">
-                                  {title}
-                                </h3>
-                                <ExpandableText
-                                  text={description}
-                                  previewLines={2}
-                                  minCharacters={60}
-                                  className="mt-2"
-                                  textClassName="text-pretty text-[13px] leading-[1.62] text-slate-600"
-                                  collapsedLabel="展開完整內容"
-                                  expandedLabel="收起內容"
-                                />
-                              </div>
-                            ),
-                          )}
+                      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between pt-6 border-t border-slate-100/50 mt-6 lg:mt-8">
+                        <div className="max-w-3xl flex-1">
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            {NO_TRIP_ENTRY_PILLARS.map(
+                              ({ icon: Icon, eyebrow, title, description }) => (
+                                <div
+                                  key={title}
+                                  className="editorial-card rounded-[24px] px-4 py-4"
+                                >
+                                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-sky-700">
+                                    <Icon size={14} strokeWidth={2.5} />
+                                    {eyebrow}
+                                  </span>
+                                  <h3 className="mt-3 text-sm font-black text-slate-900">
+                                    {title}
+                                  </h3>
+                                  <ExpandableText
+                                    text={description}
+                                    previewLines={2}
+                                    minCharacters={60}
+                                    className="mt-2"
+                                    textClassName="text-pretty text-[13px] leading-[1.62] text-slate-600"
+                                    collapsedLabel="展開完整內容"
+                                    expandedLabel="收起內容"
+                                  />
+                                </div>
+                              ),
+                            )}
+                          </div>
                         </div>
-                        <div className="editorial-card-soft rounded-[26px] px-4 py-4 text-left">
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-700">
-                            Planning Flow
-                          </p>
-                          <p className="mt-2 text-[14px] font-black leading-6 text-slate-800">
-                            快速產生行程草稿，再依需求調整細節。
-                          </p>
-                          <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-                            先確立行程骨幹，方便在手機上快速瀏覽與編輯。
-                          </p>
+                        <div className="flex flex-col items-stretch justify-end gap-3 md:min-w-[260px] shrink-0">
+                          <div className="editorial-card-soft rounded-[26px] px-4 py-4 text-left">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-700">
+                              Planning Flow
+                            </p>
+                            <p className="mt-2 text-[14px] font-black leading-6 text-slate-800">
+                              快速產生行程草稿，再依需求調整細節。
+                            </p>
+                            <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                              先確立行程骨幹，方便在手機上快速瀏覽與編輯。
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsPlanningNew(true);
+                            }}
+                            className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-400 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors hover:from-pink-500 hover:to-orange-500"
+                          >
+                            <Sparkles size={18} />
+                            使用 AI 起草行程
+                          </button>
                         </div>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                <div className={`mt-6 flex ${isAiHeroExpanded ? 'justify-end' : 'justify-start'}`}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsPlanningNew(true);
-                    }}
-                    className="flex min-h-12 w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-400 to-orange-400 px-8 py-3 text-sm font-black text-white shadow-[0_8px_20px_rgba(244,114,182,0.2)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(244,114,182,0.3)] transition-all duration-300 active:scale-95 hover:from-pink-500 hover:to-orange-500"
-                  >
-                    <Sparkles size={18} />
-                    使用 AI 起草行程
-                  </button>
-                </div>
               </div>
             </motion.div>
           </div>
@@ -4206,7 +4207,7 @@ const ItineraryListItem = React.memo(
     return (
       <div className="relative flex items-stretch group w-full pl-[22px] sm:pl-10 lg:pl-12">
         {/* Timeline Thread */}
-        <div className="absolute left-[10px] sm:left-4 lg:left-5 top-0 bottom-0 w-[4px] bg-gradient-to-b from-pink-100/70 via-fuchsia-100/50 to-fuchsia-100/0 rounded-full group-last:bottom-auto group-last:h-12" />
+        <div className="absolute left-[10px] sm:left-4 lg:left-5 top-0 bottom-0 w-[4px] bg-gradient-to-b from-pink-100/70 via-fuchsia-100/50 to-transparent rounded-full group-last:bottom-auto group-last:h-12" />
         <div
           className={`absolute left-[5px] sm:left-2 lg:left-3 top-6 sm:top-7 w-[14px] h-[14px] sm:w-[18px] sm:h-[18px] lg:w-[20px] lg:h-[20px] rounded-full border-2 sm:border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? "bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]" : "bg-pink-300 group-hover:bg-fuchsia-400"}`}
         />

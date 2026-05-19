@@ -14,25 +14,21 @@ export interface ToastProps {
 }
 
 export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], removeToast: (id: string) => void }) {
-  if (!toasts || toasts.length === 0) return null;
-
   const content = (
-    <div 
-      aria-live="polite" 
-      aria-atomic="false" 
-      className="pointer-events-none fixed bottom-0 left-0 right-0 z-sheet flex w-full flex-col items-center justify-end gap-3 px-3.5 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:px-4"
-    >
-      <AnimatePresence initial={false}>
+    <div aria-live="polite" aria-atomic="false" className="pointer-events-none fixed left-0 right-0 z-sheet flex w-full flex-col items-center gap-3 px-3.5 sm:px-4" style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}>
+      <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
             key={toast.id}
-            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            layout
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.2 } }}
-            className={`pointer-events-auto mx-auto flex w-full max-w-sm shrink-0 items-center gap-3 rounded-[24px] border px-4 py-3.5 shadow-[0_14px_28px_rgba(15,23,42,0.14),inset_0_1px_1px_rgba(255,255,255,0.16)] backdrop-blur-2xl ${
-              toast.type === 'success' ? 'border-emerald-300/36 bg-[linear-gradient(180deg,rgba(16,185,129,0.92),rgba(5,150,105,0.88))] text-white' :
-              toast.type === 'warning' ? 'border-orange-300/36 bg-[linear-gradient(180deg,rgba(249,115,22,0.92),rgba(234,88,12,0.88))] text-white' :
-              'border-slate-500/40 bg-[linear-gradient(180deg,rgba(30,41,59,0.92),rgba(15,23,42,0.88))] text-white'
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            transition={{ type: 'spring', bounce: 0.6, duration: 0.7 }}
+            className={`pointer-events-auto mx-auto flex w-full max-w-sm shrink-0 items-center gap-3 rounded-[28px] border px-4 py-3.5 shadow-[0_16px_32px_rgba(15,23,42,0.18),inset_0_1px_1px_rgba(255,255,255,0.2)] backdrop-blur-2xl ${
+              toast.type === 'success' ? 'border-emerald-300/40 bg-[linear-gradient(180deg,rgba(16,185,129,0.95),rgba(5,150,105,0.92))] text-white' :
+              toast.type === 'warning' ? 'border-orange-300/40 bg-[linear-gradient(180deg,rgba(249,115,22,0.95),rgba(234,88,12,0.92))] text-white' :
+              'border-slate-400/40 bg-[linear-gradient(180deg,rgba(71,85,105,0.96),rgba(30,41,59,0.92))] text-white'
             }`}
           >
             {toast.type === 'success' && <CheckCircle2 size={20} className="shrink-0 text-emerald-100" />}
