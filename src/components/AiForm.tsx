@@ -108,7 +108,7 @@ const ACCOMMODATION_OPTIONS = [
   "特色民宿",
   "包棟/Villa",
 ];
-const AI_FORM_ENTRY_PILLS = ["先起草旅程", "再補偏好", "最後回手帳調整"];
+const AI_FORM_ENTRY_PILLS = ["先起草行程", "再補偏好", "最後回行程調整"];
 
 export interface AiFormData {
   departure: string;
@@ -295,7 +295,7 @@ export default function AiForm({
             </div>
             <div>
               <h2 className="mb-1 text-balance text-[21px] sm:text-[33px] font-black leading-[1.08] tracking-[-0.045em] text-slate-900 sm:mb-2">
-                先讓 AI 規劃旅程，再回到手帳慢慢補完
+                先讓 AI 規劃旅程，再隨時調整行程
               </h2>
             </div>
             <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2 pb-1 -mx-3.5 px-3.5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">

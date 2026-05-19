@@ -34,9 +34,9 @@ const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string
     panelLabel: 'AI Draft Preview',
     icon: Sparkles,
     items: [
-      { label: 'Draft', title: '東京 5 天・城市散步與咖啡店', meta: '先把節奏、分區與每日密度拉出第一版，之後再慢慢補細節。', value: 'AI First', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
-      { label: 'Focus', title: '慢節奏 / 雨備 / 一人旅行', meta: '先確認方向對不對，再決定要不要保存與同步。', value: '3 tags', toneClass: 'border-white/15 bg-white/10 text-slate-100' },
-      { label: 'Output', title: '生成後直接回手帳繼續編修', meta: '不是單次輸出，而是可接著調整排序、補航班與共編的草稿。', value: 'Editable', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
+      { label: 'Draft', title: '東京 5 天・城市散步與咖啡店', meta: '建立初步節奏與大綱，細節之後再慢慢補。', value: 'AI First', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
+      { label: 'Focus', title: '慢節奏 / 雨備 / 一人旅行', meta: '先確認大方向，隨時可以保存與同步。', value: '3 tags', toneClass: 'border-white/15 bg-white/10 text-slate-100' },
+      { label: 'Output', title: '自動生成草稿，彈性調整', meta: '後續能繼續拖拉排序、補上航班或與旅伴共編。', value: 'Editable', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
     ],
   },
   '你的行程': {
@@ -44,9 +44,9 @@ const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string
     panelLabel: 'Trip Notebook Preview',
     icon: NotebookText,
     items: [
-      { label: 'Notebook', title: 'Day 2 ・ 淺草 -> 上野 -> 神保町', meta: '先試排節奏與拖拉順序，確認手帳編排是不是順手。', value: '3 stops', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
-      { label: 'Pocket List', title: '口袋名單 / 旅遊事實 / 航班帶入', meta: '收藏、帶入與 AI 草稿可以先直接接到同一份旅程。', value: 'Ready', toneClass: 'border-emerald-300/30 bg-emerald-400/16 text-emerald-100' },
-      { label: 'Collab', title: '之後再接手共編與跨裝置同步', meta: '現在先把旅程主線確認好，需要保存時再登入。', value: 'Sync later', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
+      { label: 'Notebook', title: 'Day 2 ・ 淺草 -> 上野 -> 神保町', meta: '透過拖拉順序，輕鬆排定流暢的路線。', value: '3 stops', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
+      { label: 'Pocket List', title: '旅遊事實與口袋名單', meta: '收藏與 AI 建議，全都集中於同一份行程草稿。', value: 'Ready', toneClass: 'border-emerald-300/30 bg-emerald-400/16 text-emerald-100' },
+      { label: 'Collab', title: '跨裝置登入，隨時同步', meta: '先將主線確立，需要跨裝置或共編時再登入雲端。', value: 'Sync later', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
     ],
   },
   '旅途工具包': {
@@ -54,9 +54,9 @@ const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string
     panelLabel: 'Tools Preview',
     icon: Luggage,
     items: [
-      { label: 'Weather', title: '東京 24°C ・ 降雨機率 20%', meta: '先看即時天氣與出門條件，再決定清單優先順序。', value: 'Live', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
-      { label: 'Checklist', title: '行李清單 6 / 9 完成', meta: '打包、提醒與待辦可以先用訪客旅程跑過一次。', value: '6/9', toneClass: 'border-emerald-300/30 bg-emerald-400/16 text-emerald-100' },
-      { label: 'Split', title: '晚餐與車資已拆帳', meta: '登入後再接手成員與歷史記錄即可，不必一開始就設帳號。', value: 'TWD 1,250', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
+      { label: 'Weather', title: '東京 24°C ・ 降雨機率 20%', meta: '掌握即時天氣，輕鬆決定出門穿搭與裝備。', value: 'Live', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
+      { label: 'Checklist', title: '行李清單 6 / 9 完成', meta: '快速勾選待辦事項，確保不會遺漏任何物品。', value: '6/9', toneClass: 'border-emerald-300/30 bg-emerald-400/16 text-emerald-100' },
+      { label: 'Split', title: '晚餐與車資已拆帳', meta: '隨手紀錄旅伴花費與分帳，事後結算不遺漏。', value: 'TWD 1,250', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
     ],
   },
   '快速體驗': {
@@ -64,9 +64,9 @@ const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string
     panelLabel: 'Quick Preview',
     icon: Compass,
     items: [
-      { label: 'Explore', title: '先看首頁搜尋、Demo 與攻略', meta: '先確認這個產品方向和你的旅程規劃方式合不合。', value: 'Start', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
-      { label: 'Draft', title: '喜歡再開旅程或請 AI 起草', meta: '訪客模式先讓你直接摸到 AI、手帳與工具的主線。', value: 'Flow', toneClass: 'border-white/15 bg-white/10 text-slate-100' },
-      { label: 'Save', title: '之後再登入綁定與同步', meta: '不用一開始就進入註冊流程，先確定這趟旅程走得順。', value: 'Later', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
+      { label: 'Explore', title: '探索各項功能與示範行程', meta: '快速確認是否符合你的旅遊規劃習慣。', value: 'Start', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
+      { label: 'Draft', title: '免登入即刻起草', meta: '訪客模式直接體驗行程規劃與旅途工具。', value: 'Flow', toneClass: 'border-white/15 bg-white/10 text-slate-100' },
+      { label: 'Save', title: '覺得滿意再綁定保存', meta: '無需馬上註冊，確定好用再登入同步資料。', value: 'Later', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
     ],
   },
 };

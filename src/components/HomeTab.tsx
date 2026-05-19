@@ -80,35 +80,35 @@ const HERO_STORY_PILLARS = [
     icon: PlaneTakeoff,
     eyebrow: "航班節奏",
     title: "先鎖定出發與回程",
-    description: "從班機與日期起跑，讓整趟旅程先有穩定的時間骨架。",
+    description: "確定出發日期，建立旅行的時間骨架。",
     details: [
-      "先把出發地、目的地與日期定下來，旅程的時間骨架就會比較穩。",
-      "還沒決定住宿或景點也沒關係，先把出發與回程節奏固定就好。",
-      "後面接 AI 草稿、手帳與工具頁時，都能沿用這個旅程節奏。",
+      "日期定下來，時間就會變得具體。",
+      "先不用決定住宿與景點，將出發與回程先固定。",
+      "後續都可以順著這節奏安排。",
     ],
     tone: "sky",
   },
   {
     icon: Globe,
     eyebrow: "地圖動線",
-    title: "把住宿、景點與接送接回同一路線",
-    description: "不只看票價，也把後續會用到的旅途資訊收進同一份規劃。",
+    title: "住宿與景點一目瞭然",
+    description: "將所有旅途資訊，收攏在一個地圖上。",
     details: [
-      "先確認住宿會落在哪一區，後續景點與移動線比較不會互相打架。",
-      "把機場、住宿、景點與接送當成同一段旅程，而不是分散的待辦。",
-      "之後交給旅伴共編時，也比較容易理解整趟路線。",
+      "確認住宿後，景點分佈與動線更清晰。",
+      "機場、行程與住宿整合成為同一路線。",
+      "讓旅伴一看就懂整趟行程。",
     ],
     tone: "cyan",
   },
   {
     icon: Sparkles,
-    eyebrow: "AI 共編",
-    title: "先用 AI 起草，再交給旅伴一起補完",
-    description: "先開一趟旅程，再慢慢補上清單、預算與分工，不必一次做完。",
+    eyebrow: "AI 輔助",
+    title: "AI 起草，旅伴共編",
+    description: "先產生草稿，不需一次到位，保留彈性。",
     details: [
-      "先請 AI 拉出一版旅程節奏，確認方向對了再慢慢補細節。",
-      "旅伴不必一開始就同步上線，等草稿成形後再一起修更有效率。",
-      "清單、預算與分工都能後補，主線先成立比較重要。",
+      "AI 快速建立行程架構，再手動微調。",
+      "草稿完成後再邀請旅伴加入討論。",
+      "清單與分工隨時可補，先建立主線。",
     ],
     tone: "orange",
   },
@@ -119,19 +119,19 @@ const HERO_PILLAR_DECOR = [
     shell: "glass-card",
     badge: "border-pink-100 bg-pink-100/90 text-pink-700",
     glow: "bg-pink-200/55",
-    note: "先拿到出發節奏，再慢慢補細節。",
+    note: "確定出發節奏，再調整細節。",
   },
   {
     shell: "glass-card",
     badge: "border-teal-100 bg-teal-50/95 text-teal-700",
     glow: "bg-teal-200/50",
-    note: "把景點、住宿與移動線串成一張圖。",
+    note: "景點與動線，一圖搞定。",
   },
   {
     shell: "glass-card",
     badge: "border-sky-100 bg-sky-50/95 text-sky-700",
     glow: "bg-sky-200/55",
-    note: "先起草一版，再交給旅伴一起玩。",
+    note: "先起草一版，再邀旅伴。",
   },
 ] as const;
 
@@ -1683,7 +1683,7 @@ export default function HomeTab({
                     className="overflow-hidden space-y-3"
                   >
                     <p className="mx-auto max-w-[40rem] text-pretty text-[14px] leading-[1.75] text-slate-600 sm:text-[15px] sm:leading-[1.82]">
-                      RoamJelly 先幫你鎖定出發日期，再把靈感、共編清單和旅途工具串成可執行的旅程，不必在多個 App 之間切換。
+                      RoamJelly 幫你搞定出發日期、行程清單與旅途工具，免切換 App，一站完成體驗。
                     </p>
                     <div className="mx-auto flex max-w-[620px] flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/70 pt-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 sm:gap-x-5">
                       <span>先比價</span>
@@ -1796,7 +1796,7 @@ export default function HomeTab({
                       第一站
                     </p>
                     <p className="text-pretty text-[14px] font-bold leading-6 text-slate-700 sm:text-[15px]">
-                      先決定這趟旅行的時間，之後再補地圖、景點。
+                      先決定旅行的時間，後續再補上地圖與景點。
                     </p>
                   </div>
                   {!isLoggedIn && (
@@ -1987,7 +1987,7 @@ export default function HomeTab({
                     )}
                   </button>
                   <p className="px-1 pt-1 text-center text-[12px] font-bold leading-5 text-slate-500">
-                    先找班機，之後可以再把住宿、接送與分帳慢慢補進來。
+                    決定航班後，隨時再補上其他細節。
                   </p>
                 </div>
               </div>
@@ -2435,7 +2435,7 @@ export default function HomeTab({
                         找不到符合條件的航班
                       </h3>
                       <p className="text-slate-500 font-bold max-w-xs text-center leading-relaxed">
-                        請嘗試更換日期或是搜尋其他城市，果凍精靈會繼續為您守候。
+                        請嘗試更換出發日期或搜尋其他目的地。
                       </p>
                     </motion.div>
                   ) : !hasSearched && !loading ? (

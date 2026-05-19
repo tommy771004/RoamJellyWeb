@@ -72,7 +72,7 @@ export default function JellyAssistant() {
 
   const handleAddItinerary = () => {
     setIsOpen(false);
-    showToast('已成功將行程懶人包加入您的手帳！', 'success');
+    showToast('已成功加入您的行程！', 'success');
   };
 
   return (
@@ -174,7 +174,7 @@ export default function JellyAssistant() {
                             className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-slate-900 py-2.5 text-[14px] font-black text-white transition-colors hover:bg-slate-800 active:scale-95 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600"
                           >
                             <PlusCircle size={16} />
-                            一鍵加入手帳
+                            一鍵加入行程
                           </button>
                         </div>
                       </motion.div>

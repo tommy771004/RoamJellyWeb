@@ -276,9 +276,9 @@ const NO_TRIP_ENTRY_PILLARS = [
   },
   {
     icon: Users,
-    eyebrow: "共編手帳",
-    title: "再和旅伴一起補完安排",
-    description: "航班、景點與待辦會留在同一份手帳裡，不必重新搬資料。",
+    eyebrow: "行程共編",
+    title: "旅伴同步協作",
+    description: "航班、景點與待辦事項統一管理，不需來回複製資料。",
   },
   {
     icon: Plane,
@@ -504,6 +504,7 @@ export default function ItineraryTab() {
   const [rangeEndDay, setRangeEndDay] = useState<number>(3);
   const [showPlanner, setShowPlanner] = useState<boolean>(false);
   const [isPlanningNew, setIsPlanningNew] = useState<boolean>(false);
+  const [isAiHeroExpanded, setIsAiHeroExpanded] = useState<boolean>(false);
   const [showMobileFavorites, setShowMobileFavorites] =
     useState<boolean>(false);
   const [draggingFavorite, setDraggingFavorite] = useState<FavoriteSpot | null>(
@@ -1950,8 +1951,7 @@ export default function ItineraryTab() {
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-tab-safe animate-in fade-in duration-700">
           <EditorialSectionIntro
             eyebrow="Trip Notebook"
-            title="先選一趟旅程，再把 AI 草稿與共編安排接回手帳"
-            description="你的行程不是孤立頁面，它是整個旅程的主線。先建立一趟旅程，你就能從 AI 起草、景點調整到後續分享，都維持在同一個上下文裡。"
+            title="選擇行程專案，集中管理所有行程與協作內容"
             highlights={[
               { label: "旅程主線", value: "日期與節奏" },
               { label: "AI 起草", value: "先有第一版" },
@@ -1965,79 +1965,101 @@ export default function ItineraryTab() {
           {/* AI Planning Entry Hero */}
           <div className="mb-8 md:mb-16">
             <motion.div
-              whileHover={prefersReducedMotion ? undefined : { y: -4 }}
-              whileTap={prefersReducedMotion ? undefined : { scale: 0.99 }}
-              transition={{
-                duration: prefersReducedMotion ? 0 : 0.2,
-                ease: "easeOut",
-              }}
-              onClick={() => setIsPlanningNew(true)}
-              className="editorial-card cursor-pointer group relative overflow-hidden rounded-[32px] sm:rounded-[36px] p-4 sm:p-7 backdrop-blur-xl"
+              className={`editorial-card relative overflow-hidden rounded-[32px] sm:rounded-[36px] p-4 sm:p-7 backdrop-blur-xl transition-all duration-300`}
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.16),transparent_42%)]" />
-              <div className="relative flex h-full flex-col gap-6 md:flex-row md:items-end md:justify-between">
-                <div className="max-w-3xl">
+              <div className="relative flex flex-col">
+                <div
+                  className="flex items-start justify-between cursor-pointer group"
+                  onClick={() => setIsAiHeroExpanded(!isAiHeroExpanded)}
+                >
                   <EditorialSectionIntro
                     eyebrow="AI Planning Entry"
-                    title="讓 AI 先起草第一版旅程，再回到手帳慢慢補完"
-                    description="從目的地、天數與偏好開始，先生成可討論的草稿；接著你就能在手帳裡調整排序、補航班和邀請旅伴一起共編。"
+                    title="讓 AI 起草初步行程，隨時調整細節"
+                    description="輸入目的地與天數，快速產生行程草稿。隨後可自由調整排序、補上航班，或邀請旅伴共編。"
                     highlights={[
                       { label: "起點", value: "目的地與天數" },
                       { label: "中段", value: "調整排序與備註" },
                       { label: "後續", value: "分享給旅伴" },
                     ]}
-                    className="mb-5 sm:mb-7"
+                    className="mb-0 max-w-3xl flex-1 pr-4 sm:pr-8"
                     titleClassName="text-xl sm:text-3xl md:text-5xl"
-                    descriptionClassName="text-sm sm:text-lg font-bold leading-6 sm:leading-8"
+                    descriptionClassName={`text-sm sm:text-lg font-bold leading-6 sm:leading-8 transition-opacity duration-300 ${isAiHeroExpanded ? "opacity-100" : "opacity-70 group-hover:opacity-100"}`}
                   />
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    {NO_TRIP_ENTRY_PILLARS.map(
-                      ({ icon: Icon, eyebrow, title, description }) => (
-                        <div
-                          key={title}
-                          className="editorial-card rounded-[24px] px-4 py-4"
-                        >
-                          <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-sky-700">
-                            <Icon size={14} strokeWidth={2.5} />
-                            {eyebrow}
-                          </span>
-                          <h3 className="mt-3 text-sm font-black text-slate-900">
-                            {title}
-                          </h3>
-                          <ExpandableText
-                            text={description}
-                            previewLines={2}
-                            minCharacters={60}
-                            className="mt-2"
-                            textClassName="text-pretty text-[13px] leading-[1.62] text-slate-600"
-                            collapsedLabel="展開完整內容"
-                            expandedLabel="收起內容"
-                          />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600 transition-colors">
+                    <ChevronDown
+                      size={20}
+                      className={`transition-transform duration-300 ${isAiHeroExpanded ? "rotate-180" : "rotate-0"}`}
+                    />
+                  </div>
+                </div>
+
+                <AnimatePresence initial={false}>
+                  {isAiHeroExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between pt-6 border-t border-slate-100/50 mt-6 lg:mt-8">
+                        <div className="max-w-3xl flex-1">
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            {NO_TRIP_ENTRY_PILLARS.map(
+                              ({ icon: Icon, eyebrow, title, description }) => (
+                                <div
+                                  key={title}
+                                  className="editorial-card rounded-[24px] px-4 py-4"
+                                >
+                                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-sky-700">
+                                    <Icon size={14} strokeWidth={2.5} />
+                                    {eyebrow}
+                                  </span>
+                                  <h3 className="mt-3 text-sm font-black text-slate-900">
+                                    {title}
+                                  </h3>
+                                  <ExpandableText
+                                    text={description}
+                                    previewLines={2}
+                                    minCharacters={60}
+                                    className="mt-2"
+                                    textClassName="text-pretty text-[13px] leading-[1.62] text-slate-600"
+                                    collapsedLabel="展開完整內容"
+                                    expandedLabel="收起內容"
+                                  />
+                                </div>
+                              ),
+                            )}
+                          </div>
                         </div>
-                      ),
-                    )}
-                  </div>
-                </div>
-                <div className="flex flex-col items-stretch gap-3 md:min-w-[260px]">
-                  <div className="editorial-card-soft rounded-[26px] px-4 py-4 text-left">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-700">
-                      Planning Flow
-                    </p>
-                    <p className="mt-2 text-[14px] font-black leading-6 text-slate-800">
-                      先生成可討論的旅程骨架，再慢慢補上每天的節奏與細節。
-                    </p>
-                    <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-                      這樣手機上會先看到主線，而不是一開始就被整份長內容壓住。
-                    </p>
-                  </div>
-                  <button className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-400 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors group-hover:from-pink-500 group-hover:to-orange-500">
-                    <Sparkles size={18} />
-                    開始用 AI 起草旅程
-                  </button>
-                  <p className="text-pretty text-[12px] font-bold leading-5 text-slate-500 md:text-right">
-                    生成後會直接帶你進入可編輯的行程流程，而不是停在單次輸出。
-                  </p>
-                </div>
+                        <div className="flex flex-col items-stretch justify-end gap-3 md:min-w-[260px] shrink-0">
+                          <div className="editorial-card-soft rounded-[26px] px-4 py-4 text-left">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-700">
+                              Planning Flow
+                            </p>
+                            <p className="mt-2 text-[14px] font-black leading-6 text-slate-800">
+                              快速產生行程草稿，再依需求調整細節。
+                            </p>
+                            <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                              先確立行程骨幹，方便在手機上快速瀏覽與編輯。
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsPlanningNew(true);
+                            }}
+                            className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-400 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors hover:from-pink-500 hover:to-orange-500"
+                          >
+                            <Sparkles size={18} />
+                            使用 AI 起草行程
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           </div>
@@ -2065,10 +2087,10 @@ export default function ItineraryTab() {
                 <Navigation2 size={28} />
               </div>
               <h3 className="text-balance text-[22px] sm:text-2xl font-black text-slate-900">
-                目前還沒有行程專案
+                目前還沒有行程
               </h3>
               <p className="mt-2 max-w-md text-pretty text-[13px] sm:text-sm font-bold leading-6 text-slate-500">
-                先用 AI 建立第一份草稿，之後再慢慢補上景點、航班與旅伴協作內容。
+                先建立第一份草稿，再隨時補上景點與航班。
               </p>
               <button
                 onClick={() => setIsPlanningNew(true)}
@@ -4627,7 +4649,7 @@ const ItineraryListItem = React.memo(
                     Notes
                   </p>
                   <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity leading-5">
-                    點擊卡片編輯手帳內容、細節或照片...
+                    點擊卡片編輯行程細節或備註...
                   </p>
                 </div>
               )}
@@ -4834,7 +4856,7 @@ const ItineraryListItem = React.memo(
                         <textarea
                           value={editDescription}
                           onChange={(e) => setEditDescription(e.target.value)}
-                          placeholder="寫下你的旅行手帳日記，或是更詳細的行程說明..."
+                          placeholder="補充行程細節、提醒或預約資訊..."
                           className="w-full text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
                         />
                       </div>
@@ -5163,7 +5185,7 @@ function ItineraryList({
             新增行程
           </h3>
           <p className="text-slate-600 font-bold max-w-[360px] leading-relaxed text-[12px] tracking-[0.06em] px-4 text-center">
-            現在不是提醒你空白，而是直接幫你補上第一步。
+            不知道從哪開始？讓 AI 給你點靈感，或是從收藏隨機加入。
           </p>
           <div className="mt-8 flex w-full max-w-[340px] flex-col gap-3.5 sm:gap-4">
             <button
@@ -5566,14 +5588,14 @@ function ManualAddNode({
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-3">
                 <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
                   詳細說明 / 備註 (Description)
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="補充更詳細的行程說明、用餐提醒、預約資訊..."
+                  placeholder="補充行程細節、提醒或預約資訊..."
                   className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm min-h-[92px] resize-y"
                 />
               </div>

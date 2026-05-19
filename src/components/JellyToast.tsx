@@ -34,7 +34,7 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
             {toast.type === 'success' && <CheckCircle2 size={20} className="shrink-0 text-emerald-100" />}
             {toast.type === 'warning' && <AlertCircle size={20} className="shrink-0 text-amber-100" />}
             {toast.type === 'info' && <Info size={20} className="shrink-0 text-slate-400" />}
-            <span className="fluid-copy flex-1 font-bold tracking-[0.02em]">{toast.message}</span>
+            <span className="fluid-copy min-w-0 flex-1 break-words font-bold tracking-[0.02em]">{toast.message}</span>
             {toast.actionLabel && toast.onAction && (
               <button
                 onClick={() => {

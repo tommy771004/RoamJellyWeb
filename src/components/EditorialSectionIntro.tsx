@@ -8,7 +8,7 @@ interface EditorialHighlight {
 interface EditorialSectionIntroProps {
   eyebrow: string;
   title: string;
-  description: string;
+  description?: React.ReactNode;
   highlights?: EditorialHighlight[];
   className?: string;
   titleClassName?: string;
@@ -41,14 +41,16 @@ export default function EditorialSectionIntro({
         >
           {title}
         </h2>
-        <p
-          className={cn(
-            "max-w-2xl text-pretty text-[14px] leading-[1.72] text-slate-600 sm:text-[15px] sm:leading-[1.8]",
-            descriptionClassName,
-          )}
-        >
-          {description}
-        </p>
+        {description && (
+          <div
+            className={cn(
+              "max-w-2xl text-pretty text-[14px] leading-[1.72] text-slate-600 sm:text-[15px] sm:leading-[1.8]",
+              descriptionClassName,
+            )}
+          >
+            {description}
+          </div>
+        )}
       </div>
 
       {highlights.length > 0 ? (

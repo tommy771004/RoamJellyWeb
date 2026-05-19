@@ -5,6 +5,8 @@ import { shouldShowExpandableText } from "../lib/expandableText";
 import { cn } from "../lib/utils";
 
 const PREVIEW_LINE_CLASS: Record<number, string> = {
+  0: "hidden",
+  1: "line-clamp-1",
   2: "line-clamp-2",
   3: "line-clamp-3",
   4: "line-clamp-4",
@@ -15,7 +17,7 @@ const PREVIEW_LINE_CLASS: Record<number, string> = {
 interface ExpandableTextProps {
   text: string;
   label?: string;
-  previewLines?: 2 | 3 | 4 | 5 | 6;
+  previewLines?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   minCharacters?: number;
   minLineBreaks?: number;
   className?: string;

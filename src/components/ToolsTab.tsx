@@ -78,37 +78,37 @@ function getCurrencyFromDestination(destination: string): string {
 const TOOLS_ENTRY_PILLARS = [
   {
     icon: CloudRain,
-    eyebrow: "出發前",
-    title: "跟著旅程看天氣與穿搭",
-    description: "工具包會依據目的地與日期，補上最先影響行程節奏的提醒。",
+    eyebrow: "天氣",
+    title: "看天氣與穿搭",
+    description: "依據目的地與日期，即時提供天氣資訊。",
     details: [
-      "一旦旅程有目的地與日期，工具包就能自動帶出相對應的天氣提醒。",
-      "你不需要再開另一個 App 查穿搭，先在這裡確認出門條件就好。",
-      "先看天氣再排當天節奏，會比最後一刻補救更穩定。",
+      "確認目的地與日期，自動帶出當地天氣。",
+      "不需跳出 App，一鍵確認出門穿搭條件。",
+      "先看天氣再決定當天節奏，行程更順暢。",
     ],
     tone: "pink",
   },
   {
     icon: CheckCircle2,
-    eyebrow: "旅途中",
-    title: "把待辦與行李收回同一頁",
-    description: "清單不再散在聊天或備忘錄，旅伴可沿著同一趟旅程一起補完。",
+    eyebrow: "清單",
+    title: "待辦清單與行李",
+    description: "旅遊清單集中管理，不再四處散落。",
     details: [
-      "把行李、提醒與小待辦綁回旅程，才不會散在不同對話與備忘錄裡。",
-      "清單可以先自己補，等旅伴要加入時再一起整理也可以。",
-      "這種收整方式特別適合手機上快速勾選，不用切來切去。",
+      "行李與待辦集中於行程中，不再散落在各處。",
+      "可先自行建立，再邀請旅伴一起補充。",
+      "方便手機點選，隨時快速勾選確認。",
     ],
     tone: "sky",
   },
   {
     icon: ArrowDownUp,
-    eyebrow: "旅伴協作",
-    title: "分帳與提醒跟著旅程同步",
-    description: "每一筆代墊與結清狀態都留在這趟旅程裡，不用另外整理。",
+    eyebrow: "記帳",
+    title: "共同分帳與記帳",
+    description: "所有帳目與代墊紀錄，跟著行程隨時同步。",
     details: [
-      "代墊、提醒與結清紀錄會跟著旅程走，不會變成另一份獨立表單。",
-      "之後要補歷史紀錄或同步成員，也比較不容易弄亂上下文。",
-      "先把旅程主線建立好，再讓分帳自然接上，比一開始做表格更順。",
+      "消費明細與結清紀錄，統一保留在行程內。",
+      "所有同行旅伴皆可記帳與同步歷史資訊。",
+      "取代繁雜的 Excel 表格，記帳更輕鬆直覺。",
     ],
     tone: "emerald",
   },
@@ -119,19 +119,19 @@ const TOOLS_CARD_DECOR = [
     shell: "glass-card",
     badge: "border-pink-100 bg-pink-50/95 text-pink-700",
     glow: "bg-pink-200/50",
-    note: "旅程一同步，就先提醒今天要穿什麼。",
+    note: "提醒即時天氣與穿搭。",
   },
   {
     shell: "glass-card",
     badge: "border-sky-100 bg-sky-50/95 text-sky-700",
     glow: "bg-sky-200/50",
-    note: "待辦像貼紙一樣，一張張補回旅程裡。",
+    note: "待辦清單，一目瞭然。",
   },
   {
     shell: "glass-card",
     badge: "border-teal-100 bg-teal-50/95 text-teal-700",
     glow: "bg-teal-200/50",
-    note: "每筆代墊都留在同一趟旅程的上下文。",
+    note: "代墊與結清，統一管理。",
   },
 ] as const;
 
@@ -1511,10 +1511,10 @@ function ToolsTabContent() {
               </div>
               <div className="space-y-2.5 sm:space-y-3">
                 <h2 className="text-balance text-2xl font-black leading-tight text-slate-900 sm:text-[34px] md:text-[40px]">
-                  先選一趟旅程，工具包才知道該替你同步哪裡
+                  請先選擇或建立行程
                 </h2>
                 <p className="text-pretty text-[13px] leading-relaxed text-slate-600 sm:text-base sm:leading-7">
-                  RoamJelly 的工具頁不是獨立功能清單，而是緊貼在特定旅程旁邊的提醒層。先建立或選擇一趟旅程，天氣、清單與分帳才會有真正的上下文。
+                  工具包與特定行程綁定。選擇行程後即可查看天氣、管理清單與紀錄分帳。
                 </p>
               </div>
 
@@ -1637,10 +1637,10 @@ function ToolsTabContent() {
                     icon: MapPin,
                     title: "WEATHER",
                     subtitle: "LIVE",
-                    description: "東京 24°C・降雨機率 20%，先看天氣再決定穿搭順序。",
+                    description: "東京 24°C・降雨機率 20%，確認最新天氣與穿搭。",
                     details: [
-                      "工具包會沿用旅程中的日期與目的地，不用再重複設定。",
-                      "先看現場條件，再決定今天是排滿還是留一點彈性。",
+                      "自動同步行程日期與地點，免重複設定。",
+                      "掌握當地天氣，輕鬆決定行程節奏。",
                     ],
                     tone: "sky",
                   },
@@ -1648,10 +1648,10 @@ function ToolsTabContent() {
                     icon: CalendarDays,
                     title: "CHECKLIST",
                     subtitle: "6/9",
-                    description: "行李清單先補齊護照、充電器與轉接頭，再慢慢加零食。",
+                    description: "行李清單 6/9 完成，確保不遺漏重要物品。",
                     details: [
-                      "先把最關鍵的出發物件補齊，細節可以等旅伴一起補。",
-                      "這份清單會跟著旅程走，不需要另外開待辦工具。",
+                      "待辦清單集中管理，可隨時與旅伴協作。",
+                      "取代對話紀錄，進度一目瞭然。",
                     ],
                     tone: "emerald",
                   },
@@ -1659,10 +1659,10 @@ function ToolsTabContent() {
                     icon: ArrowDownUp,
                     title: "SPLIT BILL",
                     subtitle: "JPY",
-                    description: "每一筆代墊都會回到同一份旅程，不用再翻聊天紀錄。",
+                    description: "晚餐車資輕鬆拆帳，不需翻找聊天紀錄。",
                     details: [
-                      "分帳資料會留在這趟旅程裡，提醒與結清也能沿著同一條線往下走。",
-                      "等你真的要同步時，再把帳號接上也不遲。",
+                      "開銷隨行程記錄，事後結算清楚方便。",
+                      "可隨時同步保存，保留完整歷史。",
                     ],
                     tone: "orange",
                   },
@@ -1752,7 +1752,7 @@ function ToolsTabContent() {
                 onClick={() => setActiveTab("itinerary")}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/92 bg-white/90 px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
               >
-                回到旅程手帳
+                回到行程
                 <ArrowRight size={16} strokeWidth={2.6} />
               </button>
             </div>
