@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense, type ComponentType } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import HomeTab from './components/HomeTab';
 import RedirectModal from './components/RedirectModal';
@@ -26,16 +26,27 @@ import {
   CalendarDays as CalendarDaysIcon,
   Luggage as LuggageIcon,
   PlaneTakeoff,
+  UserRound,
 } from 'lucide-react';
 import BottomTabs, { TABS } from './components/BottomTabs';
+
+const TAB_ICON_MAP: Record<string, ComponentType<{ size?: number; strokeWidth?: number; className?: string }>> = {
+  home: HomeIcon,
+  ai_form: SparklesIcon,
+  itinerary: CalendarDaysIcon,
+  tools: LuggageIcon,
+};
 import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, getNativeMapUrl, createGuestSession, clearClientSession } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
+import { getCategoryMeta } from './lib/itineraryUtils';
 import { JellyToast } from './components/JellyToast';
 type LoginPromptMode = 'default' | 'guest-first';
+
+const AUTO_GUEST_TABS = new Set(['ai_form', 'itinerary', 'tools']);
 
 /** Extract /trip/:tripId from the current URL path, null if no match. */
 function getTripLandingId(): string | null {
@@ -53,8 +64,21 @@ export default function App() {
     isOffline, setOffline,
     isDarkMode, setDarkMode,
     notifications, clearNotifications,
+    isNavVisible,
   } = useAppStore();
   const { loadPreferences, toggleSave, savedItems } = useSearchStore();
+
+  useEffect(() => {
+    const handleMapOpen = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { lat, lng, title } = customEvent.detail;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const mapUrl = getNativeMapUrl(lat, lng, title, isIOS);
+      window.open(mapUrl, '_blank', 'noopener,noreferrer');
+    };
+    window.addEventListener('open-map', handleMapOpen);
+    return () => window.removeEventListener('open-map', handleMapOpen);
+  }, []);
 
   // Detect trip landing URL once on mount (before any auth check)
   const [tripLandingId] = useState<string | null>(getTripLandingId);
@@ -64,11 +88,18 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [loginPromptMode, setLoginPromptMode] = useState<LoginPromptMode>('default');
+  const [guestBootstrapState, setGuestBootstrapState] = useState<'idle' | 'loading' | 'error'>('idle');
 
   const isLoggedIn = !!userId;
+  const shouldAutoGuestBootstrap =
+    !isLoggedIn &&
+    !showLogin &&
+    AUTO_GUEST_TABS.has(activeTab) &&
+    !(activeTab === 'tools' && !activeTripId);
   const lastActivityRef = useRef<number>(Date.now());
   const lastPersistedActivityRef = useRef<number>(Date.now());
   const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
@@ -138,29 +169,27 @@ export default function App() {
     // Initial check on load
     const storedUserId = localStorage.getItem('user_id');
     const storedLastActivity = localStorage.getItem('last_activity');
+    const storedToken = getStoredToken();
     
-    if (storedUserId && storedLastActivity) {
+    if (storedUserId && storedLastActivity && storedToken) {
       const now = Date.now();
       if (now - parseInt(storedLastActivity, 10) < SESSION_TIMEOUT) {
         setAuthenticated(storedUserId);
       } else {
-        localStorage.removeItem('user_id');
-        localStorage.removeItem('last_activity');
+        clearClientSession();
       }
+    } else if (storedUserId || storedLastActivity || storedToken) {
+      clearClientSession();
     }
     setAuthReady(true);
   }, [setAuthenticated]);
 
   useEffect(() => {
     const bootstrap = async () => {
-      let token = getStoredToken();
-      // Auto-fetch token for dev API access
-      if (!token) {
-        const autoLogin =
-          (import.meta as any).env?.VITE_DEV_AUTO_LOGIN ?? 'true';
-        if (autoLogin.trim().toLowerCase() !== 'false' && (import.meta as any).env.MODE !== 'production') {
-          token = await ensureClientAccessToken().catch(() => '');
-        }
+      const token = getStoredToken();
+      const autoLogin = ((import.meta as any).env?.VITE_DEV_AUTO_LOGIN ?? 'false').trim().toLowerCase();
+      if (!token && (import.meta as any).env?.DEV && autoLogin === 'true') {
+        await ensureClientAccessToken().catch(() => '');
       }
       
       // Load user preferences only if authenticated
@@ -197,14 +226,38 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('last_activity');
+    clearClientSession();
     setAuthenticated(null);
     setShowLogoutModal(false);
     if (activeTab !== 'home') {
       setActiveTab('home');
     }
   };
+
+  useEffect(() => {
+    if (!shouldAutoGuestBootstrap) {
+      setGuestBootstrapState('idle');
+      return;
+    }
+
+    let cancelled = false;
+    setGuestBootstrapState('loading');
+
+    void createGuestSession()
+      .then((guest) => {
+        if (cancelled) return;
+        handleLogin(guest.user_id);
+        setGuestBootstrapState('idle');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setGuestBootstrapState('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shouldAutoGuestBootstrap]);
 
   const handleRedirectConfirm = async () => {
     const current = redirectModal;
@@ -230,29 +283,29 @@ export default function App() {
       case 'tools':
         return {
           contextLabel: '旅途工具包',
-          title: '先建一個訪客旅程，工具包就會立刻解鎖',
-          description: '不用先註冊，先用訪客身分建立或挑一份行程，就能開始看天氣、整理清單和分帳。',
+          title: '先開一趟訪客旅程，再把清單、天氣與分帳接上工具包',
+          description: '不用先註冊，先用訪客身分建立或挑一份行程，工具包就會立刻拿到這趟旅程的上下文。',
           guestCtaLabel: '先用訪客身分開一趟旅程',
         };
       case 'itinerary':
         return {
-          contextLabel: '行程手帳',
-          title: '先用訪客身分開一份旅程，喜歡再正式註冊',
-          description: 'AI 規劃、共編手帳、旅程收藏都可以先體驗，之後再把進度綁到正式帳號。',
+          contextLabel: '你的行程',
+          title: '先選一趟旅程，再把 AI 草稿與共編安排接回手帳',
+          description: '先用訪客身分體驗行程的主線，再決定是否正式註冊。',
           guestCtaLabel: '先用訪客身分開始規劃',
         };
       case 'ai_form':
         return {
           contextLabel: 'AI 旅程規劃',
-          title: '先讓 AI 幫你排一版，再決定要不要留下帳號',
-          description: '先用訪客身分生成旅程，確認方向對了，再登入同步與保存。',
+          title: '先讓 AI 起草一版旅程，再回到手帳慢慢補完',
+          description: '先用訪客身分生成可編輯的第一版旅程，確認方向對了，再登入同步與保存。',
           guestCtaLabel: '先用訪客身分交給 AI',
         };
       default:
         return {
           contextLabel: '快速體驗',
-          title: '先用訪客身分開始，喜歡再註冊也不遲',
-          description: '收藏、複製手帳、Demo 預覽都可以先玩，不必一開始就進入註冊流程。',
+          title: '先把旅程流程跑順，喜歡再註冊也不遲',
+          description: '首頁搜尋、AI 起草、手帳與工具包都可以先用訪客身分走過一遍，不必一開始就進入註冊流程。',
           guestCtaLabel: '先用訪客身分體驗',
         };
     }
@@ -272,8 +325,9 @@ export default function App() {
   };
 
   const prevActiveTabRef = useRef<string>(activeTab);
-    const isAuthSurfaceVisible = showLogin || (!isLoggedIn && activeTab !== 'home');
-    const shouldShowAssistant =
+  const canRenderPublicToolsEntry = !isLoggedIn && activeTab === 'tools' && !activeTripId;
+  const isAuthSurfaceVisible = showLogin || (!isLoggedIn && activeTab !== 'home' && !canRenderPublicToolsEntry);
+  const shouldShowAssistant =
       !isAuthSurfaceVisible &&
       activeTab !== 'ai_form' &&
       activeTab !== 'ai_result' &&
@@ -282,7 +336,7 @@ export default function App() {
   // Show nothing while checking localStorage (avoids flash)
   if (!authReady) {
     return (
-      <div className="flex-1 justify-center items-center bg-purple-50 flex h-screen w-screen">
+      <div className="flex-1 justify-center items-center bg-purple-50 flex h-full w-full">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80">
           <PlaneTakeoff size={22} className="text-pink-500 animate-pulse" strokeWidth={2.5} />
         </div>
@@ -337,6 +391,42 @@ export default function App() {
         setShowLogin(true);
       }} isLoggedIn={isLoggedIn} />;
     }
+    if (shouldAutoGuestBootstrap && guestBootstrapState === 'loading') {
+      const bootstrapCopy = getGuestLoginCopy(activeTab);
+      return (
+        <div className="flex min-h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.2),transparent_34%),radial-gradient(circle_at_bottom,rgba(251,146,60,0.16),transparent_36%),#f8fafc] px-5 py-10">
+          <div className="w-full max-w-[560px] rounded-[32px] border border-white/80 bg-white/85 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-8">
+            <div className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-sky-700">
+              Guest Access
+            </div>
+            <h2 className="mt-4 text-balance text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+              正在幫你開一個訪客旅程入口
+            </h2>
+            <p className="mt-3 text-pretty text-sm font-bold leading-6 text-slate-600 sm:text-base sm:leading-7">
+              {bootstrapCopy.description}
+            </p>
+            <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
+                  <PlaneTakeoff size={18} strokeWidth={2.5} className="animate-pulse" />
+                </div>
+                <div>
+                  <p className="text-[12px] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {bootstrapCopy.contextLabel}
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-slate-700">
+                    建立訪客身分後，會直接帶你進入新的入口畫面。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (canRenderPublicToolsEntry) {
+      return <ToolsTab />;
+    }
     if (!isLoggedIn) {
       return <LoginScreen
         onLogin={handleLogin}
@@ -385,11 +475,11 @@ export default function App() {
               if (dayData.spots) {
                  dayData.spots.forEach((spot: any, i: number) => {
                    nodes.push({
-                     node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+                     node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${dayData.day}_${i}`,
                      day: dayData.day || 1,
                      time: spot.time || "10:00",
                      title: String(spot.name || spot.title || '景點'),
-                     emoji: spot.emoji || '📍',
+                     emoji: spot.emoji || getCategoryMeta(spot.category).emoji,
                      category: spot.category || 'other',
                      description: spot.ai_note || '',
                      ai_note: spot.ai_note || '',
@@ -404,11 +494,11 @@ export default function App() {
           } else if (Array.isArray(suggestions)) {
             suggestions.forEach((spot: any, i: number) => {
               nodes.push({
-                node_id: spot.node_id || `ai_${Date.now()}_${spot.day || 1}_${i}`,
+                node_id: spot.node_id || `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${spot.day || 1}_${i}`,
                 day: spot.day || 1,
                 time: spot.time || "10:00",
                 title: String(spot.name || spot.title || '景點'),
-                emoji: spot.emoji || '📍',
+                emoji: spot.emoji || getCategoryMeta(spot.category).emoji,
                 category: spot.category || 'other',
                 description: spot.ai_note || '',
                 ai_note: spot.ai_note || '',
@@ -443,7 +533,7 @@ export default function App() {
           if (maxGeneratedDay < requestedDays) {
             for (let d = maxGeneratedDay + 1; d <= requestedDays; d++) {
               finalNodes.push({
-                 node_id: `ai_${Date.now()}_empty_day_${d}`,
+                 node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_empty_day_${d}`,
                  day: d,
                  time: '10:00',
                  title: '自由活動',
@@ -570,10 +660,12 @@ export default function App() {
   };
 
   return (
-    <div className="flex-1 jelly-bg w-full h-full flex flex-col min-h-[100dvh] relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
+    <div className="flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
+      <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-500 bg-gradient-to-br from-indigo-950 via-purple-900 to-slate-900 ${isDarkMode ? 'opacity-100' : 'opacity-0'}`} />
+      <div className="noise-overlay absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20 transition-opacity duration-500" />
       {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
       {(import.meta as any).env.MODE !== 'production' && (
-        <div className="fixed top-2 left-2 z-[60] flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
+        <div className="fixed top-2 left-2 z-floating flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
           <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
             <input type="checkbox" checked={isOffline} onChange={e => setOffline(e.target.checked)} className="accent-red-500" />
             斷網
@@ -582,26 +674,39 @@ export default function App() {
       )}
 
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center bg-white/70 dark:bg-slate-950/72 backdrop-blur-xl border-b border-white/50 dark:border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.45)] transition-colors duration-500">
+      <header className={`fixed inset-x-0 top-0 z-50 px-3 sm:px-6 pt-[calc(0.45rem+env(safe-area-inset-top,0px))] sm:pt-[calc(0.85rem+env(safe-area-inset-top,0px))] pb-2 sm:pb-4 transition-transform duration-500 transform-gpu ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+        <div className="section-shell mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 rounded-[28px] px-3 py-2.5 shadow-[0_18px_36px_-24px_rgba(15,23,42,0.45),0_16px_30px_-26px_rgba(244,114,182,0.5)] sm:px-4 sm:py-3">
         {/* Left: Logo */}
-        <div className="flex items-center gap-2 z-20">
-          <h1 className="text-[22px] sm:text-2xl font-black text-pink-500 italic tracking-tight font-plus-jakarta pr-2">RoamJelly</h1>
+        <div className="flex min-w-0 items-center gap-2.5 z-20 hover:animate-none">
+          <div className="animate-jelly-drift flex items-center justify-center rounded-[20px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,246,250,0.9),rgba(240,249,255,0.78))] shadow-[0_12px_24px_-16px_rgba(236,72,153,0.45),0_8px_20px_-18px_rgba(56,189,248,0.3)] w-10 h-10 sm:w-11 sm:h-11 rotate-[-8deg] hover:rotate-[6deg] transition-transform duration-300">
+            <span className="text-[20px] sm:text-[24px] drop-shadow-sm">🍓</span>
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="candy-title text-gradient truncate pr-1 text-[23px] font-black sm:text-3xl drop-shadow-[0_4px_12px_rgba(244,114,182,0.26)]">RoamJelly</h1>
+              <span className="jelly-chip hidden items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-pink-600 sm:inline-flex">
+                Sweet Trip
+              </span>
+            </div>
+            <p className="hidden text-[11px] font-bold tracking-[0.16em] text-slate-500 sm:block">
+              甜甜地把旅程排順
+            </p>
+          </div>
         </div>
         
         {/* Desktop Navigation (Center, hidden on mobile) */}
         <nav className="hidden md:flex flex-row items-center justify-center gap-2 absolute left-1/2 -translate-x-1/2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
-            const iconMap: Record<string, any> = { home: HomeIcon, ai_form: SparklesIcon, itinerary: CalendarDaysIcon, tools: LuggageIcon };
-            const Icon = iconMap[tab.id];
+            const Icon = TAB_ICON_MAP[tab.id];
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex flex-row items-center gap-2 px-5 py-2.5 transition-all rounded-[20px] ${
+                className={`hover-float flex flex-row items-center gap-2 px-5 py-2.5 transition-all rounded-[24px] border ${
                   isActive 
-                    ? 'bg-white/80 shadow-[0_0_15px_rgba(255,183,206,0.6)] text-pink-600' 
-                    : 'text-pink-500/70 hover:bg-white/50 hover:text-pink-500'
+                    ? 'border-white/90 bg-white/95 shadow-[0_12px_24px_-18px_rgba(236,72,153,0.42)] text-pink-600' 
+                    : 'border-transparent text-slate-500 hover:bg-white/78 hover:border-white/80 hover:text-pink-500'
                 }`}
               >
                 {Icon && <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'opacity-100' : 'opacity-60'} />}
@@ -616,7 +721,7 @@ export default function App() {
           {isLoggedIn && (
             <button
               onClick={() => setShowUserProfile(true)}
-              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full jelly-button text-orange-400"
               aria-label="偏好設定"
             >
               <Settings2 size={20} />
@@ -624,7 +729,7 @@ export default function App() {
           )}
           <button
             onClick={() => setDarkMode(!isDarkMode)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400"
+            className="w-10 h-10 flex items-center justify-center rounded-full jelly-button text-sky-500"
             aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -632,7 +737,7 @@ export default function App() {
           <div className="relative hidden sm:block">
             <button
               onClick={() => setShowNotifications(v => !v)}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/40 jelly-button text-pink-400 relative"
+              className="w-10 h-10 flex items-center justify-center rounded-full jelly-button text-pink-400 relative"
               aria-label="通知"
               aria-expanded={showNotifications}
             >
@@ -692,26 +797,70 @@ export default function App() {
             )}
           </div>
           
-          <button
-            type="button"
-            aria-label={isLoggedIn ? '個人檔案' : '登入'}
-            onClick={() => {
-              if (!isLoggedIn) {
-                setLoginPromptMode('default');
-                setShowLogin(true);
-              } else {
-                setShowUserProfile(true);
-              }
-            }}
-            className={`flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'bg-fuchsia-50/80 border-fuchsia-200/50 hover:bg-fuchsia-100/80' : 'bg-slate-50/80 border-slate-200 hover:bg-white/90'}`}
-          >
-            <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-fuchsia-700' : 'text-slate-500'}`}>
-              {isLoggedIn ? `${userId} 您好` : '未登入'}
-            </span>
-            <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center pb-1 transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-pink-100' : 'bg-slate-200'}`}>
-              <span className="text-lg pt-1">{isLoggedIn ? '🐴' : '🤫'}</span>
-            </div>
-          </button>
+          <div className="relative z-30">
+            <button
+              type="button"
+              aria-label={isLoggedIn ? '帳號選單' : '登入選單'}
+              onClick={() => setShowUserMenu(v => !v)}
+              className={`hover-float flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'border-white/90 bg-[linear-gradient(135deg,rgba(254,242,248,0.96),rgba(240,249,255,0.92))] hover:bg-white/95' : 'border-white/82 bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(248,250,252,0.9),rgba(254,242,248,0.8))] hover:bg-white/95'}`}
+            >
+              <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-pink-700' : 'text-slate-600'}`}>
+                {isLoggedIn ? `${userId} 您好` : '未登入'}
+              </span>
+              <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-95 shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
+                {isLoggedIn ? <UserRound size={17} strokeWidth={2.4} /> : <SparklesIcon size={16} strokeWidth={2.4} />}
+              </div>
+            </button>
+            {showUserMenu && (
+              <div className="absolute right-0 top-[calc(100%+8px)] w-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden flex flex-col py-1">
+                {!isLoggedIn ? (
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setLoginPromptMode('default');
+                      setShowLogin(true);
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left w-full"
+                  >
+                    <UserRound size={16} className="text-slate-400" />
+                    <span className="text-[14px] font-bold text-slate-700">登入帳號</span>
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setShowUserProfile(true);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left w-full"
+                    >
+                      <SparklesIcon size={16} className="text-orange-400" />
+                      <span className="text-[14px] font-bold text-slate-700">AI 偏好設定</span>
+                    </button>
+                    <div className="mx-3 h-px bg-slate-100" />
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setShowLogoutModal(true);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition-colors text-left w-full group"
+                    >
+                      <LogOut size={16} className="text-rose-400 group-hover:text-rose-500 transition-colors" />
+                      <span className="text-[13px] font-bold text-rose-600 group-hover:text-rose-700 transition-colors">登出帳號</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+            {showUserMenu && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowUserMenu(false)}
+                aria-hidden="true"
+              />
+            )}
+          </div>
+        </div>
         </div>
       </header>
 
@@ -722,7 +871,7 @@ export default function App() {
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
-            className="fixed top-[72px] left-0 right-0 z-40 px-4 pt-2 pb-1 pointer-events-none"
+            className="fixed top-[72px] left-0 right-0 w-full z-40 px-4 pt-2 pb-1 pointer-events-none"
           >
             <div className="max-w-2xl mx-auto bg-red-500/80 dark:bg-red-900/80 backdrop-blur-md rounded-2xl p-2.5 shadow-lg border border-red-400/50 dark:border-red-500/30 flex items-center justify-center gap-2 pointer-events-auto">
               <span className="text-white text-[13px] font-bold tracking-wide">✈️ 目前處於離線狀態，已切換至本機快取模式。</span>
@@ -734,7 +883,7 @@ export default function App() {
       <div className="flex-1 relative z-10 w-full overflow-hidden flex flex-col">
         <AnimatePresence mode="wait" custom={tabSlideDir}>
           <motion.div
-            key={showLogin ? `login-${loginPromptMode}` : !isLoggedIn && activeTab !== 'home' ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
+            key={showLogin ? `login-${loginPromptMode}` : isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
               enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, x: dir * 18 }),
@@ -746,7 +895,7 @@ export default function App() {
             exit="exit"
             transition={prefersReducedMotion ? { duration: 0.16 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-            className="pt-[80px]"
+            className="pt-[calc(56px+env(safe-area-inset-top,0px))] sm:pt-[calc(80px+env(safe-area-inset-top,0px))] pb-0"
           >
             <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80"><PlaneTakeoff size={22} className="text-pink-500 animate-spin" strokeWidth={2.5} /></div></div>}>
               {renderContent()}
@@ -784,7 +933,7 @@ export default function App() {
           />
         )}
         {showLogoutModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -796,7 +945,7 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-[480px] bg-white/90 backdrop-blur-2xl border border-white rounded-[32px] p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center"
+              className="relative z-modal-above w-full max-w-[480px] bg-white/90 backdrop-blur-2xl border border-white rounded-[32px] p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center"
             >
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-3xl mb-4 border border-white shadow-inner animate-pulse shrink-0">
                 🐴
