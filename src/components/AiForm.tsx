@@ -1,28 +1,114 @@
-import React, { useEffect, useState } from 'react';
-import { MapPin, Minus, Plus, Settings2, Sparkles, ArrowLeft, Search, Calendar, Users, Heart, Coffee, Car, DollarSign, Check, Footprints, Baby, Accessibility, PawPrint, UsersRound } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import React, { useEffect, useState } from "react";
+import {
+  MapPin,
+  Minus,
+  Plus,
+  Settings2,
+  Sparkles,
+  ArrowLeft,
+  Search,
+  Calendar,
+  Users,
+  Heart,
+  Coffee,
+  Car,
+  DollarSign,
+  Check,
+  Footprints,
+  Baby,
+  Accessibility,
+  PawPrint,
+  UsersRound,
+} from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
-import { LocationPickerPopup } from './LocationPickerPopup';
-import { useSearchStore } from '../store/useSearchStore';
-import { useKeyboardHeight } from '../lib/useKeyboardHeight';
+import { LocationPickerPopup } from "./LocationPickerPopup";
+import { useSearchStore } from "../store/useSearchStore";
+import { useKeyboardHeight } from "../lib/useKeyboardHeight";
 
 const COMPANION_OPTIONS = [
-  { id: 'solo', label: '獨自行走', icon: Footprints, tone: 'border-sky-100 bg-sky-50 text-sky-600' },
-  { id: 'couple', label: '浪漫雙人', icon: Heart, tone: 'border-rose-100 bg-rose-50 text-rose-600' },
-  { id: 'family', label: '親子育兒', icon: Baby, tone: 'border-orange-100 bg-orange-50 text-orange-600' },
-  { id: 'elderly', label: '帶長輩', icon: Accessibility, tone: 'border-amber-100 bg-amber-50 text-amber-700' },
-  { id: 'friends', label: '三五好友', icon: UsersRound, tone: 'border-sky-100 bg-sky-50 text-sky-600' },
-  { id: 'pets', label: '毛小孩', icon: PawPrint, tone: 'border-emerald-100 bg-emerald-50 text-emerald-600' },
+  {
+    id: "solo",
+    label: "獨自行走",
+    icon: Footprints,
+    tone: "border-sky-100 bg-sky-50 text-sky-600",
+  },
+  {
+    id: "couple",
+    label: "浪漫雙人",
+    icon: Heart,
+    tone: "border-rose-100 bg-rose-50 text-rose-600",
+  },
+  {
+    id: "family",
+    label: "親子育兒",
+    icon: Baby,
+    tone: "border-orange-100 bg-orange-50 text-orange-600",
+  },
+  {
+    id: "elderly",
+    label: "帶長輩",
+    icon: Accessibility,
+    tone: "border-amber-100 bg-amber-50 text-amber-700",
+  },
+  {
+    id: "friends",
+    label: "三五好友",
+    icon: UsersRound,
+    tone: "border-sky-100 bg-sky-50 text-sky-600",
+  },
+  {
+    id: "pets",
+    label: "毛小孩",
+    icon: PawPrint,
+    tone: "border-emerald-100 bg-emerald-50 text-emerald-600",
+  },
 ];
 
-const VIBE_OPTIONS = ['特種兵急行軍', '睡到自然醒', '隨興漫遊', '在地深度文化', '網美打卡秘境', '奢華極致享受', '文青慢活步調', '夜生活狂歡'];
-const INTEREST_OPTIONS = ['大自然與絕景', '歷史文化遺產', '購物血拼逛街', '主題遊樂園', '在地特色美食', '戶外刺激冒險', '藝術與博物館', '溫泉桑拿放鬆', '海島水上活動', '特色網美咖啡', '尋訪動漫朝聖'];
-const DIETARY_OPTIONS = ['無限制', '純素食', '蛋奶素', '海鮮素', '無麩質', '不吃牛', '不吃海鮮', '清真認證'];
-const TRANSPORT_OPTIONS = ['大眾運輸', '自駕租車', '包車導覽', '徒步與腳踏車'];
-const BUDGET_OPTIONS = ['背包窮遊', '精打細算小資', '舒適無虞', '奢華尊榮'];
-const PACE_OPTIONS = ['緊湊特種兵', '適中', '悠閒慢活'];
-const ACCOMMODATION_OPTIONS = ['青旅', '商務旅館', '星級飯店', '特色民宿'];
-const AI_FORM_ENTRY_PILLS = ['先起草旅程', '再補偏好', '最後回手帳調整'];
+const VIBE_OPTIONS = [
+  "特種兵急行軍",
+  "睡到自然醒",
+  "隨興漫遊",
+  "在地深度文化",
+  "網美打卡秘境",
+  "奢華極致享受",
+  "文青慢活步調",
+  "夜生活狂歡",
+];
+const INTEREST_OPTIONS = [
+  "大自然與絕景",
+  "歷史文化遺產",
+  "購物血拼逛街",
+  "主題遊樂園",
+  "在地特色美食",
+  "戶外刺激冒險",
+  "藝術與博物館",
+  "溫泉桑拿放鬆",
+  "海島水上活動",
+  "特色網美咖啡",
+  "尋訪動漫朝聖",
+];
+const DIETARY_OPTIONS = [
+  "無限制",
+  "純素食",
+  "蛋奶素",
+  "海鮮素",
+  "無麩質",
+  "不吃牛",
+  "不吃海鮮",
+  "清真認證",
+];
+const TRANSPORT_OPTIONS = ["大眾運輸", "自駕租車", "包車導覽", "徒步與腳踏車"];
+const BUDGET_OPTIONS = ["背包窮遊", "精打細算小資", "舒適無虞", "奢華尊榮"];
+const PACE_OPTIONS = ["緊湊特種兵", "適中", "悠閒慢活"];
+const ACCOMMODATION_OPTIONS = [
+  "青旅",
+  "商務旅館",
+  "星級飯店",
+  "特色民宿",
+  "包棟/Villa",
+];
+const AI_FORM_ENTRY_PILLS = ["先起草旅程", "再補偏好", "最後回手帳調整"];
 
 export interface AiFormData {
   departure: string;
@@ -40,51 +126,57 @@ export interface AiFormData {
 
 function normalizeProfileList(values?: string[]) {
   return Array.isArray(values)
-    ? values.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    ? values.filter(
+        (value): value is string =>
+          typeof value === "string" && value.trim().length > 0,
+      )
     : [];
 }
 
-export const MultiSelectPill: React.FC<{ 
-  label: string; 
-  selected: boolean; 
+export const MultiSelectPill: React.FC<{
+  label: string;
+  selected: boolean;
   onClick: () => void;
-  accentColor?: 'indigo' | 'emerald' | 'rose' | 'blue' | 'amber';
-}> = ({ label, selected, onClick, accentColor = 'indigo' }) => {
+  accentColor?: "indigo" | "emerald" | "rose" | "blue" | "amber";
+}> = ({ label, selected, onClick, accentColor = "indigo" }) => {
   const selectedClasses: Record<string, string> = {
-    indigo: 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-[0_2px_10px_-3px_rgba(99,102,241,0.2)]',
-    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-[0_2px_10px_-3px_rgba(16,185,129,0.2)]',
-    rose: 'bg-rose-50 border-rose-200 text-rose-700 shadow-[0_2px_10px_-3px_rgba(244,63,94,0.2)]',
-    blue: 'bg-blue-50 border-blue-200 text-blue-700 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)]',
-    amber: 'bg-amber-50 border-amber-200 text-amber-900 shadow-[0_2px_10px_-3px_rgba(245,158,11,0.2)]',
+    indigo:
+      "bg-indigo-50 border-indigo-200 text-indigo-700 shadow-[0_2px_10px_-3px_rgba(99,102,241,0.2)]",
+    emerald:
+      "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-[0_2px_10px_-3px_rgba(16,185,129,0.2)]",
+    rose: "bg-rose-50 border-rose-200 text-rose-700 shadow-[0_2px_10px_-3px_rgba(244,63,94,0.2)]",
+    blue: "bg-blue-50 border-blue-200 text-blue-700 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)]",
+    amber:
+      "bg-amber-50 border-amber-200 text-amber-900 shadow-[0_2px_10px_-3px_rgba(245,158,11,0.2)]",
   };
 
   const ringClasses: Record<string, string> = {
-    indigo: 'ring-indigo-500/20',
-    emerald: 'ring-emerald-500/20',
-    rose: 'ring-rose-500/20',
-    blue: 'ring-blue-500/20',
-    amber: 'ring-amber-500/20',
+    indigo: "ring-indigo-500/20",
+    emerald: "ring-emerald-500/20",
+    rose: "ring-rose-500/20",
+    blue: "ring-blue-500/20",
+    amber: "ring-amber-500/20",
   };
 
   return (
     <button
       onClick={onClick}
       className={`min-h-[42px] px-3.5 sm:px-4.5 py-2.5 rounded-[22px] text-[12px] sm:text-[14px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] relative overflow-hidden flex items-center justify-center gap-2 border ${
-        selected 
-          ? `${selectedClasses[accentColor]} ring-2 ${ringClasses[accentColor]} ring-offset-1 -translate-y-0.5` 
-          : 'bg-white/78 backdrop-blur-md text-slate-600 hover:bg-white hover:text-slate-900 border-white/80 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:shadow-[0_10px_20px_rgba(15,23,42,0.07)] hover:-translate-y-0.5 hover:border-slate-200'
+        selected
+          ? `${selectedClasses[accentColor]} ring-2 ${ringClasses[accentColor]} ring-offset-1 -translate-y-0.5`
+          : "bg-white/78 backdrop-blur-md text-slate-600 hover:bg-white hover:text-slate-900 border-white/80 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:shadow-[0_10px_20px_rgba(15,23,42,0.07)] hover:-translate-y-0.5 hover:border-slate-200"
       }`}
     >
       {selected && <Check size={16} strokeWidth={3} className="shrink-0" />}
       <span className="relative z-10">{label}</span>
     </button>
   );
-}
+};
 
-export default function AiForm({ 
-  onSubmit, 
-  onCancel 
-}: { 
+export default function AiForm({
+  onSubmit,
+  onCancel,
+}: {
   onSubmit: (data: AiFormData) => void;
   onCancel?: () => void;
 }) {
@@ -95,16 +187,16 @@ export default function AiForm({
   const [showDestDropdown, setShowDestDropdown] = useState(false);
   const [showDepDropdown, setShowDepDropdown] = useState(false);
   const [formData, setFormData] = useState<AiFormData>({
-    departure: '',
-    destination: '',
+    departure: "",
+    destination: "",
     days: 5,
-    companions: '',
+    companions: "",
     vibes: [],
     interests: [],
     dietary: [],
     transport: [],
-    budget: '',
-    pace: '',
+    budget: "",
+    pace: "",
     accommodation: [],
   });
 
@@ -113,15 +205,25 @@ export default function AiForm({
 
     setFormData((prev) => ({
       ...prev,
-      departure: prev.departure || aiProfile.departure || '',
-      companions: prev.companions || aiProfile.companions || '',
-      vibes: prev.vibes.length ? prev.vibes : normalizeProfileList(aiProfile.vibes),
-      interests: prev.interests.length ? prev.interests : normalizeProfileList(aiProfile.interests),
-      dietary: prev.dietary.length ? prev.dietary : normalizeProfileList(aiProfile.dietary),
-      transport: prev.transport.length ? prev.transport : normalizeProfileList(aiProfile.transport),
-      budget: prev.budget || aiProfile.budget || '',
-      pace: prev.pace || aiProfile.pace || '',
-      accommodation: prev.accommodation.length ? prev.accommodation : normalizeProfileList(aiProfile.accommodation),
+      departure: prev.departure || aiProfile.departure || "",
+      companions: prev.companions || aiProfile.companions || "",
+      vibes: prev.vibes.length
+        ? prev.vibes
+        : normalizeProfileList(aiProfile.vibes),
+      interests: prev.interests.length
+        ? prev.interests
+        : normalizeProfileList(aiProfile.interests),
+      dietary: prev.dietary.length
+        ? prev.dietary
+        : normalizeProfileList(aiProfile.dietary),
+      transport: prev.transport.length
+        ? prev.transport
+        : normalizeProfileList(aiProfile.transport),
+      budget: prev.budget || aiProfile.budget || "",
+      pace: prev.pace || aiProfile.pace || "",
+      accommodation: prev.accommodation.length
+        ? prev.accommodation
+        : normalizeProfileList(aiProfile.accommodation),
     }));
   }, [aiProfile]);
 
@@ -135,11 +237,14 @@ export default function AiForm({
     setStep(1);
   };
 
-  const toggleArrayItem = (field: 'vibes' | 'interests' | 'dietary' | 'transport' | 'accommodation', item: string) => {
-    setFormData(prev => {
+  const toggleArrayItem = (
+    field: "vibes" | "interests" | "dietary" | "transport" | "accommodation",
+    item: string,
+  ) => {
+    setFormData((prev) => {
       const arr = prev[field];
       if (arr.includes(item)) {
-        return { ...prev, [field]: arr.filter(i => i !== item) };
+        return { ...prev, [field]: arr.filter((i) => i !== item) };
       } else {
         return { ...prev, [field]: [...arr, item] };
       }
@@ -162,12 +267,12 @@ export default function AiForm({
   };
 
   const stepOneHint = !formData.departure
-    ? '先選擇出發地。'
+    ? "先選擇出發地。"
     : !formData.destination
-      ? '再選擇目的地。'
+      ? "再選擇目的地。"
       : !formData.companions
-        ? '最後選擇同行者。'
-        : '已完成基本資料，下一步可微調節奏、飲食與預算。';
+        ? "最後選擇同行者。"
+        : "已完成基本資料，下一步可微調節奏、飲食與預算。";
 
   return (
     <div className="relative flex flex-col h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -205,7 +310,7 @@ export default function AiForm({
             </div>
           </div>
           {onCancel && (
-            <button 
+            <button
               onClick={onCancel}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/84 bg-white/88 text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors active:scale-95 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 sm:h-11 sm:w-11"
               aria-label="取消"
@@ -216,375 +321,486 @@ export default function AiForm({
           )}
         </div>
 
-      <AnimatePresence mode="wait">
-        {step === 1 && (
-          <motion.div 
-            key="step1"
-            initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: 8 }}
-            animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1, y: 0 }}
-            exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: -8 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
-            className="flex flex-col gap-5 sm:gap-7"
-          >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 sm:gap-5">
-              
-              {/* Left Column: Route & Dates */}
-              <div className="flex flex-col gap-4 rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-5 sm:p-6">
-                
-                {/* Departure */}
-                <div className="flex flex-col gap-2.5">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                    <MapPin size={16} className="text-sky-500" />
-                    出發地
-                  </label>
-                  <button 
-                    onClick={() => setShowDepDropdown(true)}
-                    className="group flex min-h-[56px] w-full items-center justify-between rounded-[32px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-100 sm:text-base"
-                  >
-                    <span className={formData.departure ? "text-slate-800" : "text-slate-500 font-medium"}>
-                      {formData.departure || "請選擇出發城市"}
-                    </span>
-                    {!formData.departure && <Search size={18} className="text-slate-400 group-hover:text-sky-400 transition-colors" />}
-                  </button>
-                </div>
-
-                {/* Destination */}
-                <div className="flex flex-col gap-2.5">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                    <MapPin size={16} className="text-orange-500" />
-                    目的地
-                  </label>
-                  <button 
-                    onClick={() => setShowDestDropdown(true)}
-                    className="group flex min-h-[56px] w-full items-center justify-between rounded-[32px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-orange-300 focus:outline-none focus:ring-4 focus:ring-orange-100 sm:text-base"
-                  >
-                    <span className={formData.destination ? "text-slate-800" : "text-slate-500 font-medium"}>
-                      {formData.destination || "想去哪裡探索？"}
-                    </span>
-                    {!formData.destination && <Search size={18} className="text-slate-400 group-hover:text-orange-400 transition-colors" />}
-                  </button>
-                </div>
-
-                {/* Days */}
-                <div className="flex flex-col gap-2.5 pt-1">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                    <Calendar size={16} className="text-sky-500" />
-                    預計天數
-                  </label>
-                  <div className="flex min-h-[56px] items-center justify-between rounded-[32px] border border-white/84 bg-white/86 p-2 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
-                    <button 
-                      onClick={() => setFormData(p => ({ ...p, days: Math.max(1, p.days - 1) }))}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-95 hover:bg-slate-100"
+        <AnimatePresence mode="wait">
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              initial={
+                prefersReducedMotion
+                  ? undefined
+                  : { opacity: 0, scale: 0.99, y: 8 }
+              }
+              animate={
+                prefersReducedMotion
+                  ? undefined
+                  : { opacity: 1, scale: 1, y: 0 }
+              }
+              exit={
+                prefersReducedMotion
+                  ? undefined
+                  : { opacity: 0, scale: 0.99, y: -8 }
+              }
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.22,
+                ease: "easeOut",
+              }}
+              className="flex flex-col gap-5 sm:gap-7"
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 sm:gap-5">
+                {/* Left Column: Route & Dates */}
+                <div className="flex flex-col gap-4 rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-5 sm:p-6">
+                  {/* Departure */}
+                  <div className="flex flex-col gap-2.5">
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                      <MapPin size={16} className="text-sky-500" />
+                      出發地
+                    </label>
+                    <button
+                      onClick={() => setShowDepDropdown(true)}
+                      className="group flex min-h-[56px] w-full items-center justify-between rounded-[32px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-100 sm:text-base"
                     >
-                      <Minus size={20} strokeWidth={2.5} />
-                    </button>
-                    <div className="flex-1 flex items-baseline justify-center gap-1.5">
-                      <span className="text-[30px] sm:text-[38px] font-black text-slate-800 tabular-nums leading-none tracking-[-0.05em]">
-                        {formData.days}
+                      <span
+                        className={
+                          formData.departure
+                            ? "text-slate-800"
+                            : "text-slate-500 font-medium"
+                        }
+                      >
+                        {formData.departure || "請選擇出發城市"}
                       </span>
-                      <span className="text-slate-500 font-bold text-sm">天</span>
-                    </div>
-                    <button 
-                      onClick={() => setFormData(p => ({ ...p, days: Math.min(30, p.days + 1) }))}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-95 hover:bg-slate-100"
-                    >
-                      <Plus size={20} strokeWidth={2.5} />
+                      {!formData.departure && (
+                        <Search
+                          size={18}
+                          className="text-slate-400 group-hover:text-sky-400 transition-colors"
+                        />
+                      )}
                     </button>
+                  </div>
+
+                  {/* Destination */}
+                  <div className="flex flex-col gap-2.5">
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                      <MapPin size={16} className="text-orange-500" />
+                      目的地
+                    </label>
+                    <button
+                      onClick={() => setShowDestDropdown(true)}
+                      className="group flex min-h-[56px] w-full items-center justify-between rounded-[32px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-orange-300 focus:outline-none focus:ring-4 focus:ring-orange-100 sm:text-base"
+                    >
+                      <span
+                        className={
+                          formData.destination
+                            ? "text-slate-800"
+                            : "text-slate-500 font-medium"
+                        }
+                      >
+                        {formData.destination || "想去哪裡探索？"}
+                      </span>
+                      {!formData.destination && (
+                        <Search
+                          size={18}
+                          className="text-slate-400 group-hover:text-orange-400 transition-colors"
+                        />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Days */}
+                  <div className="flex flex-col gap-2.5 pt-1">
+                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                      <Calendar size={16} className="text-sky-500" />
+                      預計天數
+                    </label>
+                    <div className="flex min-h-[56px] items-center justify-between rounded-[32px] border border-white/84 bg-white/86 p-2 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
+                      <button
+                        onClick={() =>
+                          setFormData((p) => ({
+                            ...p,
+                            days: Math.max(1, p.days - 1),
+                          }))
+                        }
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-95 hover:bg-slate-100"
+                      >
+                        <Minus size={20} strokeWidth={2.5} />
+                      </button>
+                      <div className="flex-1 flex items-baseline justify-center gap-1.5">
+                        <span className="text-[30px] sm:text-[38px] font-black text-slate-800 tabular-nums leading-none tracking-[-0.05em]">
+                          {formData.days}
+                        </span>
+                        <span className="text-slate-500 font-bold text-sm">
+                          天
+                        </span>
+                      </div>
+                      <button
+                        onClick={() =>
+                          setFormData((p) => ({
+                            ...p,
+                            days: Math.min(30, p.days + 1),
+                          }))
+                        }
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-slate-50 text-slate-600 transition-all active:scale-95 hover:bg-slate-100"
+                      >
+                        <Plus size={20} strokeWidth={2.5} />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-              </div>
-
-              {/* Right Column: Companions */}
-              <div className="flex flex-col gap-4 rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-5 sm:p-6">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  <Users size={16} className="text-orange-500" />
-                  與誰同行？
-                </label>
-                <div className="grid h-full grid-cols-2 content-start gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
-                  {COMPANION_OPTIONS.map(opt => {
-                    const isSelected = formData.companions === opt.id;
-                    const Icon = opt.icon;
-                    return (
-                      <button
-                        key={opt.id}
-                        onClick={() => setFormData(p => ({ ...p, companions: opt.id }))}
-                        className={`group relative flex min-h-[84px] flex-col items-center justify-center gap-2 overflow-hidden rounded-[32px] border p-2.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] sm:min-h-[96px] sm:rounded-[36px] sm:p-4 ${
-                          isSelected 
-                            ? 'z-10 -translate-y-0.5 border-slate-900 bg-slate-900 shadow-[0_14px_28px_rgba(15,23,42,0.14)]' 
-                            : 'border-white/84 bg-white/86 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 hover:border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span
-                          className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-[16px] border transition-transform duration-300 group-hover:scale-110 sm:h-11 sm:w-11 ${
+                {/* Right Column: Companions */}
+                <div className="flex flex-col gap-4 rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-5 sm:p-6">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <Users size={16} className="text-orange-500" />
+                    與誰同行？
+                  </label>
+                  <div className="grid h-full grid-cols-2 content-start gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+                    {COMPANION_OPTIONS.map((opt) => {
+                      const isSelected = formData.companions === opt.id;
+                      const Icon = opt.icon;
+                      return (
+                        <button
+                          key={opt.id}
+                          onClick={() =>
+                            setFormData((p) => ({ ...p, companions: opt.id }))
+                          }
+                          className={`group relative flex min-h-[84px] flex-col items-center justify-center gap-2 overflow-hidden rounded-[32px] border p-2.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] sm:min-h-[96px] sm:rounded-[36px] sm:p-4 ${
                             isSelected
-                              ? 'border-white/15 bg-white/10 text-white'
-                              : opt.tone
+                              ? "z-10 -translate-y-0.5 border-slate-900 bg-slate-900 shadow-[0_14px_28px_rgba(15,23,42,0.14)]"
+                              : "border-white/84 bg-white/86 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 hover:border-slate-200 hover:bg-slate-50"
                           }`}
                         >
-                          <Icon size={20} strokeWidth={2.2} />
-                        </span>
-                        <span className={`relative z-10 text-[12px] font-bold tracking-[0.04em] ${isSelected ? 'text-white' : 'text-slate-600'}`}>
-                          {opt.label}
-                        </span>
-                      </button>
-                    );
-                  })}
+                          <span
+                            className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-[16px] border transition-transform duration-300 group-hover:scale-110 sm:h-11 sm:w-11 ${
+                              isSelected
+                                ? "border-white/15 bg-white/10 text-white"
+                                : opt.tone
+                            }`}
+                          >
+                            <Icon size={20} strokeWidth={2.2} />
+                          </span>
+                          <span
+                            className={`relative z-10 text-[12px] font-bold tracking-[0.04em] ${isSelected ? "text-white" : "text-slate-600"}`}
+                          >
+                            {opt.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Spacer so last field isn't hidden under fixed button on mobile */}
-            <div className="sm:hidden w-full shrink-0" style={{ height: keyboardHeight > 0 ? "20px" : "120px" }} />
+              {/* Spacer so last field isn't hidden under fixed button */}
+              <div
+                className="w-full shrink-0"
+                style={{ height: keyboardHeight > 0 ? "20px" : "180px" }}
+              />
 
-            {/* Next Button — fixed above keyboard on mobile, static on desktop */}
-            <div
-              className="fixed bottom-0 left-0 right-0 w-full z-40 sm:static sm:z-auto sm:pt-4 bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
-              style={{
-                transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
-                paddingBottom: keyboardHeight > 0 ? '16px' : 'calc(16px + env(safe-area-inset-bottom, 16px) + 72px)',
-                transition: 'transform 0.1s ease-out'
+              {/* Next Button — fixed above keyboard on mobile, static on desktop */}
+              <div
+                className="fixed bottom-0 left-0 right-0 w-full z-40 sm:static sm:z-auto pointer-events-none"
+                style={{
+                  transform:
+                    keyboardHeight > 0
+                      ? `translateY(-${keyboardHeight}px)`
+                      : "none",
+                  paddingBottom:
+                    keyboardHeight > 0
+                      ? "16px"
+                      : "calc(16px + env(safe-area-inset-bottom, 16px) + 72px)",
+                  transition: "transform 0.1s ease-out",
+                }}
+              >
+                <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-0 sm:pb-0 pointer-events-auto flex justify-center">
+                  <button
+                    onClick={handleNext}
+                    disabled={
+                      !formData.departure ||
+                      !formData.destination ||
+                      !formData.companions
+                    }
+                    className={`flex h-14 w-full items-center justify-center gap-3 rounded-full text-[13px] font-black uppercase tracking-[0.16em] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:h-[3.8rem] sm:text-[14px] sm:shadow-md ${
+                      !formData.departure ||
+                      !formData.destination ||
+                      !formData.companions
+                        ? "bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none"
+                        : "border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] active:scale-[0.92]"
+                    }`}
+                  >
+                    下一步，設定偏好細節
+                    <ArrowLeft className="rotate-180" size={18} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={
+                prefersReducedMotion
+                  ? undefined
+                  : { opacity: 0, scale: 0.99, y: 8 }
+              }
+              animate={
+                prefersReducedMotion
+                  ? undefined
+                  : { opacity: 1, scale: 1, y: 0 }
+              }
+              exit={
+                prefersReducedMotion
+                  ? undefined
+                  : { opacity: 0, scale: 0.99, y: -8 }
+              }
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.22,
+                ease: "easeOut",
               }}
+              className="flex flex-col gap-5 sm:gap-7"
             >
-              <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-0 sm:pb-0">
+              <div className="mb-1 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+                <div>
+                  <h3 className="text-[22px] font-black tracking-[-0.04em] text-slate-900">
+                    補充偏好細節
+                  </h3>
+                  <p className="mt-1 text-[13px] font-medium leading-[1.6] text-slate-500">
+                    這些是選填項目，用來把草稿調得更貼近你的旅程節奏。
+                  </p>
+                </div>
                 <button
-                  onClick={handleNext}
-                  disabled={!formData.departure || !formData.destination || !formData.companions}
-                  className={`flex h-14 w-full items-center justify-center gap-3 rounded-full text-[13px] font-black uppercase tracking-[0.16em] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:h-[3.8rem] sm:text-[14px] sm:shadow-md ${
-                    !formData.departure || !formData.destination || !formData.companions
-                      ? 'bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none'
-                      : 'border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] active:scale-[0.92]'
-                  }`}
+                  onClick={handleSubmit}
+                  className="flex shrink-0 items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.12em] text-sky-700 transition-colors hover:bg-sky-100 hover:text-sky-800 active:scale-95"
                 >
-                  下一步，設定偏好細節
-                  <ArrowLeft className="rotate-180" size={18} />
+                  跳過直接生成
+                  <Sparkles size={16} />
                 </button>
-
               </div>
-            </div>
-          </motion.div>
+
+              <div className="relative flex flex-col gap-5 overflow-hidden rounded-[40px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-6 sm:p-6">
+                <div className="flex flex-col gap-3.5">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <Coffee size={16} className="text-amber-600" />
+                    旅遊節奏
+                  </label>
+                  <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                    {VIBE_OPTIONS.map((vibe) => (
+                      <div className="shrink-0" key={vibe}>
+                        <MultiSelectPill
+                          label={vibe}
+                          accentColor="amber"
+                          selected={formData.vibes.includes(vibe)}
+                          onClick={() => toggleArrayItem("vibes", vibe)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3.5">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <Heart size={16} className="text-rose-500" />
+                    興趣偏好
+                  </label>
+                  <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                    {INTEREST_OPTIONS.map((interest) => (
+                      <div className="shrink-0" key={interest}>
+                        <MultiSelectPill
+                          label={interest}
+                          accentColor="rose"
+                          selected={formData.interests.includes(interest)}
+                          onClick={() => toggleArrayItem("interests", interest)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3.5">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <Settings2 size={16} className="text-emerald-600" />
+                    飲食禁忌
+                  </label>
+                  <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                    {DIETARY_OPTIONS.map((diet) => (
+                      <div className="shrink-0" key={diet}>
+                        <MultiSelectPill
+                          label={diet}
+                          accentColor="indigo"
+                          selected={formData.dietary.includes(diet)}
+                          onClick={() => toggleArrayItem("dietary", diet)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3.5">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <Car size={16} className="text-blue-500" />
+                    交通方式
+                  </label>
+                  <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                    {TRANSPORT_OPTIONS.map((trans) => (
+                      <div className="shrink-0" key={trans}>
+                        <MultiSelectPill
+                          label={trans}
+                          accentColor="blue"
+                          selected={formData.transport.includes(trans)}
+                          onClick={() => toggleArrayItem("transport", trans)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3.5">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <DollarSign size={16} className="text-teal-600" />
+                    預算等級 (單選)
+                  </label>
+                  <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                    {BUDGET_OPTIONS.map((budget) => (
+                      <div className="shrink-0" key={budget}>
+                        <MultiSelectPill
+                          label={budget}
+                          accentColor="emerald"
+                          selected={formData.budget === budget}
+                          onClick={() =>
+                            setFormData((p) => ({
+                              ...p,
+                              budget: p.budget === budget ? "" : budget,
+                            }))
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3.5">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <Footprints size={16} className="text-sky-600" />
+                    行程步調 (單選)
+                  </label>
+                  <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                    {PACE_OPTIONS.map((pace) => (
+                      <div className="shrink-0" key={pace}>
+                        <MultiSelectPill
+                          label={pace}
+                          accentColor="blue"
+                          selected={formData.pace === pace}
+                          onClick={() =>
+                            setFormData((p) => ({
+                              ...p,
+                              pace: p.pace === pace ? "" : pace,
+                            }))
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3.5">
+                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <MapPin size={16} className="text-rose-600" />
+                    住宿偏好
+                  </label>
+                  <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
+                    {ACCOMMODATION_OPTIONS.map((accommodation) => (
+                      <div className="shrink-0" key={accommodation}>
+                        <MultiSelectPill
+                          label={accommodation}
+                          accentColor="rose"
+                          selected={formData.accommodation.includes(
+                            accommodation,
+                          )}
+                          onClick={() =>
+                            toggleArrayItem("accommodation", accommodation)
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Spacer so last field isn't hidden under fixed button */}
+              <div
+                className="w-full shrink-0"
+                style={{ height: keyboardHeight > 0 ? "20px" : "180px" }}
+              />
+
+              {/* Submit buttons — fixed above keyboard on mobile, static on desktop */}
+              <div
+                className="fixed bottom-0 left-0 right-0 w-full z-40 sm:static sm:z-auto pointer-events-none"
+                style={{
+                  transform:
+                    keyboardHeight > 0
+                      ? `translateY(-${keyboardHeight}px)`
+                      : "none",
+                  paddingBottom:
+                    keyboardHeight > 0
+                      ? "16px"
+                      : "calc(16px + env(safe-area-inset-bottom, 16px) + 72px)",
+                  transition: "transform 0.1s ease-out",
+                }}
+              >
+                <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-2 sm:pb-0 pointer-events-auto">
+                  <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
+                    <button
+                      onClick={handleBack}
+                      className="h-14 w-full shrink-0 rounded-full border border-white/84 bg-white/86 px-6 text-[14px] font-bold text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 active:scale-[0.92] sm:h-[3.8rem] sm:w-auto"
+                    >
+                      返回
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)] active:scale-[0.92] sm:h-[3.8rem] sm:text-[15px]"
+                    >
+                      生成行程
+                      <Sparkles
+                        size={20}
+                        className="group-hover:animate-cute-bounce"
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {showDepDropdown && (
+          <LocationPickerPopup
+            title="出發地"
+            query={formData.departure}
+            onClose={() => setShowDepDropdown(false)}
+            onSelect={(dest) => {
+              const displayValue = dest.searchAlias
+                ? `${dest.place} (${dest.searchAlias})`
+                : dest.place;
+              setFormData((p) => ({ ...p, departure: displayValue }));
+              setShowDepDropdown(false);
+            }}
+          />
         )}
 
-        {step === 2 && (
-          <motion.div 
-            key="step2"
-            initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: 8 }}
-            animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1, y: 0 }}
-            exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.99, y: -8 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeOut' }}
-            className="flex flex-col gap-5 sm:gap-7"
-          >
-            <div className="mb-1 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-              <div>
-                <h3 className="text-[22px] font-black tracking-[-0.04em] text-slate-900">補充偏好細節</h3>
-                <p className="mt-1 text-[13px] font-medium leading-[1.6] text-slate-500">這些是選填項目，用來把草稿調得更貼近你的旅程節奏。</p>
-              </div>
-              <button
-                 onClick={handleSubmit}
-                 className="flex shrink-0 items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.12em] text-sky-700 transition-colors hover:bg-sky-100 hover:text-sky-800 active:scale-95"
-               >
-                 跳過直接生成
-                 <Sparkles size={16} />
-               </button>
-            </div>
-
-            <div className="relative flex flex-col gap-5 overflow-hidden rounded-[40px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-6 sm:p-6">
-              
-              <div className="flex flex-col gap-3.5">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  <Coffee size={16} className="text-amber-600" />
-                  旅遊節奏
-                </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
-                  {VIBE_OPTIONS.map(vibe => (
-                    <div className="shrink-0" key={vibe}>
-                      <MultiSelectPill
-                        label={vibe}
-                        accentColor="amber"
-                        selected={formData.vibes.includes(vibe)}
-                        onClick={() => toggleArrayItem('vibes', vibe)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3.5">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  <Heart size={16} className="text-rose-500" />
-                  興趣偏好
-                </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
-                  {INTEREST_OPTIONS.map(interest => (
-                    <div className="shrink-0" key={interest}>
-                      <MultiSelectPill
-                        label={interest}
-                        accentColor="rose"
-                        selected={formData.interests.includes(interest)}
-                        onClick={() => toggleArrayItem('interests', interest)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3.5">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  <Settings2 size={16} className="text-emerald-600" />
-                  飲食禁忌
-                </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
-                  {DIETARY_OPTIONS.map(diet => (
-                    <div className="shrink-0" key={diet}>
-                      <MultiSelectPill
-                        label={diet}
-                        accentColor="indigo"
-                        selected={formData.dietary.includes(diet)}
-                        onClick={() => toggleArrayItem('dietary', diet)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3.5">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  <Car size={16} className="text-blue-500" />
-                  交通方式
-                </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
-                  {TRANSPORT_OPTIONS.map(trans => (
-                    <div className="shrink-0" key={trans}>
-                      <MultiSelectPill
-                        label={trans}
-                        accentColor="blue"
-                        selected={formData.transport.includes(trans)}
-                        onClick={() => toggleArrayItem('transport', trans)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3.5">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  <DollarSign size={16} className="text-teal-600" />
-                  預算等級 (單選)
-                </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
-                  {BUDGET_OPTIONS.map(budget => (
-                    <div className="shrink-0" key={budget}>
-                      <MultiSelectPill
-                        label={budget}
-                        accentColor="emerald"
-                        selected={formData.budget === budget}
-                        onClick={() => setFormData(p => ({ ...p, budget: p.budget === budget ? '' : budget }))}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3.5">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  <Footprints size={16} className="text-sky-600" />
-                  行程步調 (單選)
-                </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
-                  {PACE_OPTIONS.map(pace => (
-                    <div className="shrink-0" key={pace}>
-                      <MultiSelectPill
-                        label={pace}
-                        accentColor="blue"
-                        selected={formData.pace === pace}
-                        onClick={() => setFormData(p => ({ ...p, pace: p.pace === pace ? '' : pace }))}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3.5">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                  <MapPin size={16} className="text-rose-600" />
-                  住宿偏好
-                </label>
-                <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
-                  {ACCOMMODATION_OPTIONS.map(accommodation => (
-                    <div className="shrink-0" key={accommodation}>
-                      <MultiSelectPill
-                        label={accommodation}
-                        accentColor="rose"
-                        selected={formData.accommodation.includes(accommodation)}
-                        onClick={() => toggleArrayItem('accommodation', accommodation)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Spacer so last field isn't hidden under fixed button on mobile */}
-            <div className="sm:hidden w-full shrink-0" style={{ height: keyboardHeight > 0 ? "20px" : "120px" }} />
-
-            {/* Submit buttons — fixed above keyboard on mobile, static on desktop */}
-            <div
-              className="fixed bottom-0 left-0 right-0 w-full z-40 sm:static sm:z-auto bg-gradient-to-t from-white via-white/95 to-transparent sm:bg-none backdrop-blur-sm sm:backdrop-blur-none"
-              style={{
-                transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
-                paddingBottom: keyboardHeight > 0 ? '16px' : 'calc(16px + env(safe-area-inset-bottom, 16px) + 72px)',
-                transition: 'transform 0.1s ease-out'
-              }}
-            >
-              <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-2 sm:pb-0">
-                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
-                  <button
-                    onClick={handleBack}
-                    className="h-14 w-full shrink-0 rounded-full border border-white/84 bg-white/86 px-6 text-[14px] font-bold text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 active:scale-[0.92] sm:h-[3.8rem] sm:w-auto"
-                  >
-                    返回
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    className="group flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)] active:scale-[0.92] sm:h-[3.8rem] sm:text-[15px]"
-                  >
-                    生成行程
-                    <Sparkles size={20} className="group-hover:animate-cute-bounce" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+        {showDestDropdown && (
+          <LocationPickerPopup
+            title="目的地"
+            query={formData.destination}
+            onClose={() => setShowDestDropdown(false)}
+            onSelect={(dest) => {
+              const displayValue = dest.searchAlias
+                ? `${dest.place} (${dest.searchAlias})`
+                : dest.place;
+              setFormData((p) => ({ ...p, destination: displayValue }));
+              setShowDestDropdown(false);
+            }}
+          />
         )}
-      </AnimatePresence>
-
-      {showDepDropdown && (
-        <LocationPickerPopup 
-          title="出發地"
-          query={formData.departure}
-          onClose={() => setShowDepDropdown(false)}
-          onSelect={(dest) => {
-            const displayValue = dest.searchAlias ? `${dest.place} (${dest.searchAlias})` : dest.place;
-            setFormData(p => ({ ...p, departure: displayValue }));
-            setShowDepDropdown(false);
-          }}
-        />
-      )}
-
-      {showDestDropdown && (
-        <LocationPickerPopup 
-          title="目的地"
-          query={formData.destination}
-          onClose={() => setShowDestDropdown(false)}
-          onSelect={(dest) => {
-            const displayValue = dest.searchAlias ? `${dest.place} (${dest.searchAlias})` : dest.place;
-            setFormData(p => ({ ...p, destination: displayValue }));
-            setShowDestDropdown(false);
-          }}
-        />
-      )}
       </div>
     </div>
   );
 }
-

@@ -3137,6 +3137,7 @@ export default function ItineraryTab() {
                                       "商務旅館",
                                       "星級飯店",
                                       "特色民宿",
+                                      "包棟/Villa",
                                     ].map((opt) => {
                                       const accommodation =
                                         plannerForm.accommodation || [];
