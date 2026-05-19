@@ -1,5 +1,32 @@
 import type { ItineraryNode } from '../types/workflow';
 
+export const CATEGORY_META: Record<string, { label: string; icon: string; emoji: string }> = {
+  flight: { label: "航班", icon: "airplane", emoji: "✈️" },
+  transport: { label: "交通", icon: "train", emoji: "🚆" },
+  landmark: { label: "景點", icon: "camera", emoji: "🏛️" },
+  food: { label: "美食", icon: "food-drink", emoji: "🍽️" },
+  shopping: { label: "購物", icon: "ticket", emoji: "🛍️" },
+  nature: { label: "自然", icon: "mountain", emoji: "🌲" },
+  hotel: { label: "住宿", icon: "hotel", emoji: "🏨" },
+  activity: { label: "活動", icon: "hot-air-balloon", emoji: "🎟️" },
+  nightlife: { label: "夜生活", icon: "cocktail", emoji: "🍸" },
+  other: { label: "其他", icon: "compass", emoji: "📍" },
+};
+
+export const CATEGORY_OPTIONS = Object.keys(CATEGORY_META);
+
+export function getCategoryMeta(category?: string) {
+  const key = category && CATEGORY_META[category] ? category : "other";
+  return { key, ...CATEGORY_META[key] };
+}
+
+export function getNodeEmoji(node: Partial<ItineraryNode>): string {
+  if (node.emoji && node.emoji.trim() !== '') {
+    return node.emoji.trim();
+  }
+  return getCategoryMeta(node.category).emoji;
+}
+
 function padTwo(value: number) {
   return String(value).padStart(2, '0');
 }
@@ -89,7 +116,7 @@ export function assignDaysBasedOnTimeAndOrder(nodes: any[], startDateStr?: strin
       date: n.date,
       time: n.time || '10:00',
       title: n.title || n.location || '未命名行程',
-      emoji: n.emoji || n.icon || '📍',
+      emoji: n.emoji || n.icon || getCategoryMeta(n.category).emoji,
       category: n.category || 'other',
       description: n.description ?? n.ai_note ?? n.notes,
       ai_note: n.ai_note ?? n.aiNote ?? undefined,
