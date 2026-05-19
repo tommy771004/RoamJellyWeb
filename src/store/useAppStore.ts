@@ -34,6 +34,9 @@ interface AppStore {
 
   toastMessage: string | null;
 
+  isNavVisible: boolean;
+  setNavVisible: (visible: boolean) => void;
+
   activeTripId?: string;
   setActiveTripId: (id: string) => void;
 
@@ -71,6 +74,9 @@ export const useAppStore = create<AppStore>()(
 
       aiResult: null,
       setAiResult: (res) => set({ aiResult: res }),
+
+      isNavVisible: true,
+      setNavVisible: (visible) => set({ isNavVisible: visible }),
 
       notifications: [],
       addNotification: (text) => set((state) => ({
