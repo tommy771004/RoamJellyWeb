@@ -516,7 +516,7 @@ select {
 }
 
 .dark .jelly-bg {
-  background-color: transparent;
+  background-color: #0f172a;
 }
 .dark .jelly-bg::before, .dark .jelly-bg::after {
   display: none;

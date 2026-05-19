@@ -1653,7 +1653,7 @@ export default function HomeTab({
             onClick={() => setIsHeroIntroCollapsed((prev) => !prev)}
             className={`group relative mx-auto mb-4 max-w-[960px] space-y-3 overflow-hidden rounded-[32px] glass-panel px-4 py-4 text-center sm:mb-5 sm:space-y-4 sm:px-6 sm:py-6${!isHeroExpanded ? " hidden sm:block" : ""} cursor-pointer transition-colors duration-300 hover:bg-white/40`}
           >
-            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-white/0 via-white/80 to-white/0" />
             <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-sky-200/30 blur-3xl group-hover:bg-sky-200/40 transition-colors duration-300" />
             <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-orange-200/20 blur-3xl group-hover:bg-orange-200/30 transition-colors duration-300" />
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
@@ -1704,7 +1704,7 @@ export default function HomeTab({
                               className={`group/pillar editorial-card-soft relative min-w-[248px] snap-start overflow-hidden rounded-[26px] px-3.5 py-3 backdrop-blur-xl sm:min-w-0 ${decor.shell}`}
                             >
                               <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
-                              <div className="absolute inset-x-4 bottom-3 h-px bg-gradient-to-r from-white via-slate-200/70 to-transparent" />
+                              <div className="absolute inset-x-4 bottom-3 h-px bg-gradient-to-r from-white via-slate-200/70 to-slate-200/0" />
                               <div className="relative mb-3 flex items-center justify-between gap-3">
                                 <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${decor.badge}`}>
                                   <Icon size={13} strokeWidth={2.6} />
