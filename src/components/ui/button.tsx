@@ -4,16 +4,16 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-[2rem] text-sm font-black tracking-wide transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.93]',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-black tracking-wide transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.93]',
   {
     variants: {
       variant: {
-        default: 'bg-gradient-to-b from-fuchsia-400 to-fuchsia-600 text-white shadow-[0_8px_20px_rgba(217,70,239,0.3)] border border-fuchsia-400/50 hover:shadow-[0_12px_25px_rgba(217,70,239,0.4)] hover:-translate-y-0.5 inset-shadow-sm inset-shadow-white/30',
-        destructive: 'bg-gradient-to-b from-red-400 to-red-600 text-white shadow-[0_8px_20px_rgba(239,68,68,0.3)] border border-red-400/50 hover:shadow-[0_12px_25px_rgba(239,68,68,0.4)] hover:-translate-y-0.5',
-        outline: 'border-2 border-outline/30 bg-white/60 backdrop-blur-md text-primary shadow-sm hover:bg-white hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5',
-        secondary: 'bg-primary-container text-on-primary-container border border-primary-container hover:bg-primary-fixed-dim hover:shadow-md hover:-translate-y-0.5',
-        ghost: 'text-primary hover:bg-primary/10 hover:scale-105',
-        link: 'text-primary underline-offset-4 hover:underline',
+        default: 'bg-gradient-to-b from-sky-400 to-sky-600 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] border border-sky-400/50 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)] hover:-translate-y-1',
+        destructive: 'bg-gradient-to-b from-red-400 to-red-600 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(239,68,68,0.35)] border border-red-400/50 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(239,68,68,0.45)] hover:-translate-y-1',
+        outline: 'border-2 border-slate-200/60 bg-white/70 backdrop-blur-md text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:bg-white hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)] hover:-translate-y-1',
+        secondary: 'bg-gradient-to-b from-orange-50 to-orange-100/80 text-orange-700 border border-orange-200/50 shadow-[inset_0_2px_4px_rgba(255,255,255,0.5),0_6px_16px_rgba(249,115,22,0.12)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.6),0_10px_20px_rgba(249,115,22,0.18)] hover:-translate-y-1 hover:bg-orange-100',
+        ghost: 'text-slate-600 hover:bg-sky-50/80 hover:text-sky-700 hover:scale-105',
+        link: 'text-sky-600 underline-offset-4 hover:underline hover:text-sky-700 hover:scale-105',
       },
       size: {
         default: 'h-12 px-6 py-3 text-[15px]',
