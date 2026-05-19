@@ -1,4 +1,4 @@
-import { eq, and, inArray, asc, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, inArray, asc, isNull, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
 
@@ -155,11 +155,102 @@ function withNormalizedAttachments<T extends Record<string, any>>(row: T) {
   };
 }
 
+type MemoryUser = {
+  userId: string;
+  username: string;
+  displayName: string;
+  name: string;
+  avatar?: string | null;
+  passwordHash?: string;
+  createdAt: Date;
+};
+
+type MemoryTrip = {
+  id: string;
+  name: string;
+  destination?: string | null;
+  isPublic: boolean;
+  forkCount: number;
+  createdAt: Date;
+};
+
+type MemoryTripMember = {
+  tripId: string;
+  userId: string;
+  role: string;
+};
+
+type MemoryChecklistItem = {
+  id: string;
+  tripId: string;
+  content: string;
+  completed: boolean;
+  category: string;
+};
+
+type MemoryExpense = {
+  id: string;
+  tripId: string;
+  payerId: string;
+  amount: number;
+  currency: string;
+  description?: string | null;
+  members: string[];
+  createdAt: Date;
+  clearedAt: Date | null;
+};
+
 export class AppRepository {
 
   private db: any;
+  private memoryUsers = new Map<string, MemoryUser>();
+  private memoryTrips = new Map<string, MemoryTrip>();
+  private memoryTripMembers: MemoryTripMember[] = [];
+  private memoryChecklistItems: MemoryChecklistItem[] = [];
+  private memoryExpenses: MemoryExpense[] = [];
+
   constructor(dbClient: any) {
     this.db = dbClient;
+  }
+
+  private upsertMemoryUser(user: {
+    userId: string;
+    username?: string;
+    displayName?: string;
+    name?: string;
+    avatar?: string | null;
+    passwordHash?: string;
+  }) {
+    const existing = this.memoryUsers.get(user.userId);
+    const displayName = user.displayName ?? user.name ?? existing?.displayName ?? user.username ?? user.userId;
+    const next: MemoryUser = {
+      userId: user.userId,
+      username: user.username ?? existing?.username ?? user.userId,
+      displayName,
+      name: user.name ?? displayName,
+      avatar: user.avatar ?? existing?.avatar ?? null,
+      passwordHash: user.passwordHash ?? existing?.passwordHash,
+      createdAt: existing?.createdAt ?? new Date(),
+    };
+    this.memoryUsers.set(user.userId, next);
+    return next;
+  }
+
+  private ensureMemoryTripMember(tripId: string, userId: string, role: string) {
+    const existing = this.memoryTripMembers.find(
+      (member) => member.tripId === tripId && member.userId === userId,
+    );
+    if (existing) {
+      existing.role = role;
+      return existing;
+    }
+    const next = { tripId, userId, role };
+    this.memoryTripMembers.push(next);
+    return next;
+  }
+
+  private getMemoryTripMembers(tripId: string) {
+    return this.memoryTripMembers.filter((member) => member.tripId === tripId);
   }
 
   async healthCheck() {
@@ -169,29 +260,50 @@ export class AppRepository {
   }
 
   async getUserByUsername(username: string) {
-    if (!this.db) return null;
+    if (!this.db) {
+      return Array.from(this.memoryUsers.values()).find((user) => user.username === username) ?? null;
+    }
     const [user] = await this.db.select().from(schema.users).where(eq(schema.users.username, username));
     return user || null;
   }
 
   async getUserById(userId: string) {
-    if (!this.db) return null;
+    if (!this.db) return this.memoryUsers.get(userId) ?? null;
     const [user] = await this.db.select().from(schema.users).where(eq(schema.users.userId, userId));
     return user || null;
   }
 
-  async createUserWithPassword(username: string, displayName: string, passwordHash: string) {
-    if (!this.db) return;
+  async createUserWithPassword(username: string, displayName: string, passwordHash: string, avatar?: string) {
+    if (!this.db) {
+      this.upsertMemoryUser({
+        userId: username,
+        username,
+        displayName,
+        name: displayName,
+        avatar: avatar ?? null,
+        passwordHash,
+      });
+      return;
+    }
     await this.db.insert(schema.users).values({
       userId: username, // using username as ID for simplicity
       username,
       displayName,
       passwordHash,
+      avatar,
     }).onConflictDoNothing();
   }
 
   async ensureUser(userId: string, username: string, displayName?: string) {
-    if (!this.db) return;
+    if (!this.db) {
+      this.upsertMemoryUser({
+        userId,
+        username,
+        displayName: displayName || username,
+        name: displayName || username,
+      });
+      return;
+    }
     await this.db.insert(schema.users).values({
       userId,
       username,
@@ -200,7 +312,10 @@ export class AppRepository {
   }
 
   async ensureTripMember({ tripId, userId, role }: { tripId: string, userId: string, role: string }) {
-    if (!this.db) return;
+    if (!this.db) {
+      this.ensureMemoryTripMember(tripId, userId, role);
+      return;
+    }
     const [existing] = await this.db.select().from(schema.tripMembers)
       .where(and(eq(schema.tripMembers.tripId, tripId), eq(schema.tripMembers.userId, userId)));
     if (!existing) {
@@ -209,7 +324,12 @@ export class AppRepository {
   }
 
   async getTripMemberRole(tripId: string, userId: string) {
-    if (!this.db) return 'owner'; // fallback
+    if (!this.db) {
+      const member = this.memoryTripMembers.find(
+        (item) => item.tripId === tripId && item.userId === userId,
+      );
+      return member?.role || null;
+    }
     const [member] = await this.db.select().from(schema.tripMembers)
       .where(and(eq(schema.tripMembers.tripId, tripId), eq(schema.tripMembers.userId, userId)));
     return member?.role || null;
@@ -360,12 +480,30 @@ export class AppRepository {
   }
 
   async getCollaborators() {
-    if (!this.db) return [];
+    if (!this.db) return Array.from(this.memoryUsers.values()).slice(0, 10);
     return await this.db.select().from(schema.users).limit(10);
   }
 
   async getCollaboratorsByTrip(tripId: string) {
-    if (!this.db) return [];
+    if (!this.db) {
+      const collaborators = this.getMemoryTripMembers(tripId).map((member) => {
+        return (
+          this.memoryUsers.get(member.userId) ??
+          this.upsertMemoryUser({
+            userId: member.userId,
+            username: member.userId,
+            displayName: member.userId,
+            name: member.userId,
+          })
+        );
+      });
+
+      if (collaborators.some((user) => !user.userId.startsWith('guest_'))) {
+        return collaborators.filter((user) => !user.userId.startsWith('guest_'));
+      }
+
+      return collaborators;
+    }
     const members = await this.db.select().from(schema.tripMembers).where(eq(schema.tripMembers.tripId, tripId));
     const userIds = members.map((m: any) => m.userId);
     if (userIds.length === 0) return [];
@@ -420,7 +558,13 @@ export class AppRepository {
   }
 
   async deleteTrip(tripId: string) {
-    if (!this.db) return;
+    if (!this.db) {
+      this.memoryTrips.delete(tripId);
+      this.memoryTripMembers = this.memoryTripMembers.filter((member) => member.tripId !== tripId);
+      this.memoryChecklistItems = this.memoryChecklistItems.filter((item) => item.tripId !== tripId);
+      this.memoryExpenses = this.memoryExpenses.filter((expense) => expense.tripId !== tripId);
+      return;
+    }
     return await this.db.transaction(async (tx: any) => {
       // Delete all related records
       await tx.delete(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId)).catch(() => {});
@@ -434,7 +578,14 @@ export class AppRepository {
   }
 
   async getTripsByUser(userId: string) {
-    if (!this.db) return [];
+    if (!this.db) {
+      const tripIds = this.memoryTripMembers
+        .filter((member) => member.userId === userId)
+        .map((member) => member.tripId);
+      return tripIds
+        .map((tripId) => this.memoryTrips.get(tripId))
+        .filter(Boolean);
+    }
     const members = await this.db.select().from(schema.tripMembers).where(eq(schema.tripMembers.userId, userId));
     const tripIds = members.map((m: any) => m.tripId);
     if (tripIds.length === 0) return [];
@@ -442,18 +593,33 @@ export class AppRepository {
   }
 
   async getTripById(tripId: string) {
-    if (!this.db) return null;
+    if (!this.db) return this.memoryTrips.get(tripId) ?? null;
     const [trip] = await this.db.select().from(schema.trips).where(eq(schema.trips.id, tripId));
     return trip || null;
   }
 
   async createTrip(data: { id: string, name: string, destination?: string, isPublic?: boolean, forkCount?: number }) {
-    if (!this.db) return;
+    if (!this.db) {
+      this.memoryTrips.set(data.id, {
+        id: data.id,
+        name: data.name,
+        destination: data.destination ?? null,
+        isPublic: Boolean(data.isPublic),
+        forkCount: Number(data.forkCount ?? 0),
+        createdAt: new Date(),
+      });
+      return;
+    }
     await this.db.insert(schema.trips).values(data);
   }
 
   async updateTripPublicState(tripId: string, isPublic: boolean) {
-    if (!this.db) return null;
+    if (!this.db) {
+      const trip = this.memoryTrips.get(tripId);
+      if (!trip) return null;
+      trip.isPublic = isPublic;
+      return trip;
+    }
     const [row] = await this.db
       .update(schema.trips)
       .set({ isPublic })
@@ -463,7 +629,12 @@ export class AppRepository {
   }
 
   async incrementTripForkCount(tripId: string) {
-    if (!this.db) return null;
+    if (!this.db) {
+      const trip = this.memoryTrips.get(tripId);
+      if (!trip) return null;
+      trip.forkCount = Number(trip.forkCount ?? 0) + 1;
+      return trip;
+    }
     const trip = await this.getTripById(tripId);
     if (!trip) return null;
     const [row] = await this.db
@@ -475,7 +646,10 @@ export class AppRepository {
   }
 
   async addTripMember(tripId: string, userId: string, role: string) {
-    if (!this.db) return;
+    if (!this.db) {
+      this.ensureMemoryTripMember(tripId, userId, role);
+      return;
+    }
     await this.db.insert(schema.tripMembers).values({ tripId, userId, role });
   }
 
@@ -506,7 +680,17 @@ export class AppRepository {
   }
 
   async getChecklist(tripId: string) {
-    if (!this.db) return [];
+    if (!this.db) {
+      let rows = this.memoryChecklistItems.filter((row) => row.tripId === tripId);
+      if (rows.length === 0 && this.memoryTrips.has(tripId)) {
+        rows = [
+          { id: `default_${tripId}_1`, tripId, content: '護照 / 簽證', completed: false, category: 'documents' },
+          { id: `default_${tripId}_2`, tripId, content: '手機 / 充電線', completed: false, category: 'electronics' },
+        ];
+        this.memoryChecklistItems.push(...rows);
+      }
+      return rows;
+    }
     let rows = await this.db.select().from(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId));
     
     if (rows.length === 0) {
@@ -544,7 +728,19 @@ export class AppRepository {
   }
 
   async updateChecklist(tripId: string, items: any[]) {
-    if (!this.db) return false;
+    if (!this.db) {
+      this.memoryChecklistItems = this.memoryChecklistItems.filter((item) => item.tripId !== tripId);
+      this.memoryChecklistItems.push(
+        ...items.map((item) => ({
+          id: String(item.id ?? `check_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`),
+          tripId,
+          content: String(item.content || item.text || '').trim(),
+          completed: Boolean(item.completed ?? item.checked ?? false),
+          category: String(item.category ?? 'other'),
+        })),
+      );
+      return true;
+    }
     await this.db.delete(schema.checklistItems).where(eq(schema.checklistItems.tripId, tripId));
     if (items.length > 0) {
       await this.db.insert(schema.checklistItems).values(items.map(it => ({
@@ -558,7 +754,35 @@ export class AppRepository {
   }
 
   async addLedgerExpense(tripId: string, expense: any) {
-    if (!this.db) return false;
+    if (!this.db) {
+      const payerId = String(expense.payer_id ?? '').trim();
+      const members = Array.from(
+        new Set([...normalizeStringArray(expense.members), payerId].filter(Boolean)),
+      );
+
+      for (const memberId of members) {
+        this.upsertMemoryUser({
+          userId: memberId,
+          username: memberId,
+          displayName: memberId,
+          name: memberId,
+        });
+        this.ensureMemoryTripMember(tripId, memberId, memberId === payerId ? 'editor' : 'viewer');
+      }
+
+      this.memoryExpenses.push({
+        id: `exp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        tripId,
+        payerId,
+        amount: Number(expense.amount),
+        currency: String(expense.currency ?? 'TWD'),
+        description: expense.description ?? null,
+        members,
+        createdAt: new Date(),
+        clearedAt: null,
+      });
+      return true;
+    }
     await this.db.insert(schema.expenses).values({
       tripId,
       payerId: expense.payer_id,
@@ -569,7 +793,70 @@ export class AppRepository {
   }
 
   async getAggregatedSettlements(tripId: string) {
-    if (!this.db) return [];
+    if (!this.db) {
+      const rows = this.memoryExpenses.filter((expense) => expense.tripId === tripId && !expense.clearedAt);
+      if (rows.length === 0) return [];
+
+      const balancesByCurrency: Record<string, Record<string, number>> = {};
+
+      for (const row of rows) {
+        const currency = row.currency || 'TWD';
+        const participants = row.members.length > 0
+          ? row.members
+          : this.getMemoryTripMembers(tripId).map((member) => member.userId);
+        if (participants.length === 0) continue;
+        if (!balancesByCurrency[currency]) balancesByCurrency[currency] = {};
+        const balances = balancesByCurrency[currency];
+
+        for (const participant of participants) {
+          if (!(participant in balances)) balances[participant] = 0;
+        }
+
+        const splitAmount = row.amount / participants.length;
+        for (const participant of participants) {
+          if (participant === row.payerId) {
+            balances[participant] += row.amount - splitAmount;
+          } else {
+            balances[participant] -= splitAmount;
+          }
+        }
+      }
+
+      const settlements: { id: string, from: string, to: string, amount: number, currency: string }[] = [];
+
+      for (const [currency, balances] of Object.entries(balancesByCurrency)) {
+        const debtors = Object.entries(balances)
+          .filter(([, bal]) => bal < -0.01)
+          .map(([userId, bal]) => ({ userId, bal: -bal }))
+          .sort((a, b) => b.bal - a.bal);
+
+        const creditors = Object.entries(balances)
+          .filter(([, bal]) => bal > 0.01)
+          .map(([userId, bal]) => ({ userId, bal }))
+          .sort((a, b) => b.bal - a.bal);
+
+        let debtorIndex = 0;
+        let creditorIndex = 0;
+        while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+          const debtor = debtors[debtorIndex];
+          const creditor = creditors[creditorIndex];
+          const amount = Math.min(debtor.bal, creditor.bal);
+          settlements.push({
+            id: `stl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            from: debtor.userId,
+            to: creditor.userId,
+            amount: Math.round(amount),
+            currency,
+          });
+          debtor.bal -= amount;
+          creditor.bal -= amount;
+          if (debtor.bal < 0.01) debtorIndex += 1;
+          if (creditor.bal < 0.01) creditorIndex += 1;
+        }
+      }
+
+      return settlements;
+    }
     const rows = await this.db.select().from(schema.expenses).where(
       and(eq(schema.expenses.tripId, tripId), isNull(schema.expenses.clearedAt))
     );
@@ -627,7 +914,15 @@ export class AppRepository {
   }
 
   async clearSettlements(tripId: string) {
-    if (!this.db) return false;
+    if (!this.db) {
+      const clearedAt = new Date();
+      this.memoryExpenses = this.memoryExpenses.map((expense) =>
+        expense.tripId === tripId && !expense.clearedAt
+          ? { ...expense, clearedAt }
+          : expense,
+      );
+      return true;
+    }
     await this.db
       .update(schema.expenses)
       .set({ clearedAt: new Date() })
@@ -636,7 +931,30 @@ export class AppRepository {
   }
 
   async getSettlementHistory(tripId: string) {
-    if (!this.db) return [];
+    if (!this.db) {
+      const rows = this.memoryExpenses
+        .filter((expense) => expense.tripId === tripId && expense.clearedAt)
+        .sort((a, b) => (a.clearedAt?.getTime() ?? 0) - (b.clearedAt?.getTime() ?? 0));
+
+      const grouped: Record<string, { clearedAt: string; count: number; payers: string[]; currencyTotals: Record<string, number> }> = {};
+      for (const row of rows) {
+        if (!row.clearedAt) continue;
+        const key = row.clearedAt.toISOString().slice(0, 10);
+        if (!grouped[key]) {
+          grouped[key] = {
+            clearedAt: row.clearedAt.toISOString(),
+            count: 0,
+            payers: [],
+            currencyTotals: {},
+          };
+        }
+        grouped[key].count += 1;
+        if (!grouped[key].payers.includes(row.payerId)) grouped[key].payers.push(row.payerId);
+        grouped[key].currencyTotals[row.currency] = (grouped[key].currencyTotals[row.currency] ?? 0) + row.amount;
+      }
+
+      return Object.entries(grouped).map(([date, g]) => ({ date, ...g })).reverse();
+    }
     const rows = await this.db
       .select()
       .from(schema.expenses)
@@ -754,6 +1072,55 @@ export class AppRepository {
   async unsaveUserItem(userId: string, itemId: string) {
     if (!this.db) return;
     await this.db.delete(schema.userSavedItems).where(and(eq(schema.userSavedItems.userId, userId), eq(schema.userSavedItems.itemId, itemId)));
+  }
+
+  async getRouteSearchDemand(fromVariants: string[], toVariants: string[]): Promise<{ month: number; count: number }[]> {
+    if (!this.db) return [];
+    const rows = await this.db.execute(sql`
+      SELECT
+        EXTRACT(MONTH FROM timestamp)::int AS month,
+        COUNT(*)::int AS count
+      FROM search_history
+      WHERE query_from = ANY(${fromVariants}::text[])
+        AND query_to = ANY(${toVariants}::text[])
+        AND timestamp > NOW() - INTERVAL '12 months'
+      GROUP BY month
+      ORDER BY month
+    `);
+    return (rows.rows as { month: number; count: number }[]);
+  }
+
+  async getPublicTripsByDestination(dbVariants: string[]): Promise<{
+    id: string;
+    name: string;
+    fork_count: number;
+    day: number;
+    time: string | null;
+    title: string;
+    category: string | null;
+    description: string | null;
+    sort_order: number;
+  }[]> {
+    if (!this.db) return [];
+    const rows = await this.db.execute(sql`
+      SELECT
+        t.id,
+        t.name,
+        t.fork_count,
+        n.day,
+        n.time,
+        n.title,
+        n.category,
+        n.description,
+        n.sort_order
+      FROM trips t
+      JOIN itinerary_nodes n ON n.trip_id = t.id
+      WHERE t.is_public = true
+        AND t.destination = ANY(${dbVariants}::text[])
+      ORDER BY t.fork_count DESC, n.day ASC, n.sort_order ASC
+      LIMIT 200
+    `);
+    return rows.rows as any[];
   }
 
 }
