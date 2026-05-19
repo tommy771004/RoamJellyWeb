@@ -24,7 +24,6 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { LocationPickerPopup } from "./LocationPickerPopup";
 import { useSearchStore } from "../store/useSearchStore";
-import { useKeyboardHeight } from "../lib/useKeyboardHeight";
 
 const COMPANION_OPTIONS = [
   {
@@ -181,7 +180,6 @@ export default function AiForm({
   onCancel?: () => void;
 }) {
   const { aiProfile, saveAiProfile } = useSearchStore();
-  const keyboardHeight = useKeyboardHeight();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const [step, setStep] = useState(1);
   const [showDestDropdown, setShowDestDropdown] = useState(false);
@@ -489,25 +487,14 @@ export default function AiForm({
                 </div>
               </div>
 
-              {/* Spacer so last field isn't hidden under fixed button */}
-              <div
-                className="w-full shrink-0"
-                style={{ height: keyboardHeight > 0 ? "20px" : "180px" }}
-              />
+              {/* Spacer so last field isn't hidden under sticky button */}
+              <div className="w-full shrink-0 h-[40px] sm:h-[60px]" />
 
-              {/* Next Button — fixed above keyboard on mobile, static on desktop */}
+              {/* Next Button — sticky above keyboard on mobile, static on desktop */}
               <div
-                className="fixed bottom-0 left-0 right-0 w-full z-40 sm:static sm:z-auto pointer-events-none"
+                className="sticky bottom-0 left-0 right-0 w-full z-40 mt-auto pointer-events-none"
                 style={{
-                  transform:
-                    keyboardHeight > 0
-                      ? `translateY(-${keyboardHeight}px)`
-                      : "none",
-                  paddingBottom:
-                    keyboardHeight > 0
-                      ? "16px"
-                      : "calc(16px + env(safe-area-inset-bottom, 16px) + 72px)",
-                  transition: "transform 0.1s ease-out",
+                  paddingBottom: "calc(16px + env(safe-area-inset-bottom, 16px))",
                 }}
               >
                 <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-0 sm:pb-0 pointer-events-auto flex justify-center">
@@ -725,28 +712,17 @@ export default function AiForm({
                 </div>
               </div>
 
-              {/* Spacer so last field isn't hidden under fixed button */}
-              <div
-                className="w-full shrink-0"
-                style={{ height: keyboardHeight > 0 ? "20px" : "180px" }}
-              />
+              {/* Spacer so last field isn't hidden under sticky button */}
+              <div className="w-full shrink-0 h-[40px] sm:h-[60px]" />
 
-              {/* Submit buttons — fixed above keyboard on mobile, static on desktop */}
+              {/* Submit buttons — sticky above keyboard on mobile, static on desktop */}
               <div
-                className="fixed bottom-0 left-0 right-0 w-full z-40 sm:static sm:z-auto pointer-events-none"
+                className="sticky bottom-0 left-0 right-0 w-full z-40 mt-auto pointer-events-none"
                 style={{
-                  transform:
-                    keyboardHeight > 0
-                      ? `translateY(-${keyboardHeight}px)`
-                      : "none",
-                  paddingBottom:
-                    keyboardHeight > 0
-                      ? "16px"
-                      : "calc(16px + env(safe-area-inset-bottom, 16px) + 72px)",
-                  transition: "transform 0.1s ease-out",
+                  paddingBottom: "calc(16px + env(safe-area-inset-bottom, 16px))",
                 }}
               >
-                <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-2 sm:pb-0 pointer-events-auto">
+                <div className="mx-auto max-w-4xl px-1 pt-3 pb-2 sm:px-0 sm:pt-2 sm:pb-0 pointer-events-auto">
                   <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                     <button
                       onClick={handleBack}
