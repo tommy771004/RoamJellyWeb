@@ -28,19 +28,19 @@ const AREA_COLORS: Record<AreaColor, { badge: string; dot: string; text: string;
 
 function AreaTabs({ areas, active, onChange }: { areas: string[]; active: string; onChange: (a: string) => void }) {
   return (
-    <div className="relative -mx-6 sm:-mx-8">
-      <div className="absolute left-0 top-0 bottom-0 w-6 sm:w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-6 sm:w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+    <div className="relative -mx-5 sm:-mx-7">
+      <div className="absolute left-0 top-0 bottom-0 z-10 w-5 sm:w-7 bg-gradient-to-r from-white/90 to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 z-10 w-5 sm:w-7 bg-gradient-to-l from-white/90 to-transparent pointer-events-none" />
       
-      <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-2 pt-1 px-6 sm:px-8 touch-pan-x snap-x">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide px-5 pb-1 pt-1 sm:px-7 touch-pan-x snap-x">
         {areas.map((area) => (
           <button
             key={area}
             onClick={() => onChange(area)}
-            className={`relative flex-shrink-0 text-[13px] font-bold px-5 py-2 rounded-full transition-all duration-300 snap-start ${
+            className={`fluid-caption relative snap-start flex-shrink-0 rounded-full px-4 py-2 font-black transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] ${
               active === area
-                ? 'text-white shadow-md shadow-slate-900/20'
-                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100 bg-slate-50/50 border border-slate-200/80 shadow-sm'
+                ? 'text-white shadow-[0_10px_22px_rgba(15,23,42,0.16)]'
+                : 'border border-white/84 bg-white/74 text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:bg-slate-100 hover:text-slate-800'
             }`}
           >
             {active === area && (
@@ -50,7 +50,7 @@ function AreaTabs({ areas, active, onChange }: { areas: string[]; active: string
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
-            <span className="relative z-10 tracking-wide">{area}</span>
+            <span className="relative z-10 tracking-wide whitespace-nowrap">{area}</span>
           </button>
         ))}
       </div>
@@ -73,12 +73,12 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
     >
       {/* ── Card shell ── */}
       <div 
-        className={`bg-white rounded-[20px] border border-slate-100/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all duration-300 overflow-hidden group ${colors.cardHover}`}
+        className={`group overflow-hidden rounded-[22px] border border-white/88 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,250,251,0.84),rgba(241,248,255,0.80))] shadow-[0_10px_22px_rgba(15,23,42,0.06)] transition-all duration-300 hover:shadow-[0_14px_28px_rgba(15,23,42,0.09)] ${colors.cardHover}`}
       >
 
         {/* Top row: area badge + emoji */}
         <div className="flex items-start justify-between px-5 pt-5 pb-2">
-          <span className={`text-[10px] font-bold tracking-wide px-3 py-1 rounded-full border ${colors.badge} shadow-sm backdrop-blur-sm bg-white/50`}>
+          <span className={`fluid-kicker rounded-full border px-3 py-1 font-black uppercase ${colors.badge} shadow-sm backdrop-blur-sm bg-white/60`}>
             {place.areaLabel}
           </span>
           <span className="text-3xl transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">{place.emoji}</span>
@@ -86,15 +86,15 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
 
         {/* Region name + intro */}
         <div className="px-5 pb-3">
-          <h3 className="text-[22px] font-black text-slate-900 tracking-tight leading-tight group-hover:text-slate-800 transition-colors">{place.name}</h3>
-          <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed line-clamp-2 font-medium">{place.intro}</p>
+          <h3 className="fluid-title font-black text-slate-900 group-hover:text-slate-800 transition-colors">{place.name}</h3>
+          <p className="fluid-body mt-1.5 line-clamp-3 text-slate-500 font-medium">{place.intro}</p>
         </div>
 
         {/* Preview chips */}
         {previewItems.length > 0 && (
-          <div className="px-5 pb-4 flex flex-wrap gap-2">
+          <div className="px-5 pb-4 flex overflow-x-auto scrollbar-hide gap-2 snap-x">
             {previewItems.map((item) => (
-              <span key={item} className="text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-[10px] max-w-[180px] truncate transition-colors group-hover:bg-slate-100/50">
+              <span key={item} className="fluid-kicker flex-shrink-0 snap-start max-w-[180px] truncate rounded-[10px] border border-slate-100 bg-slate-50 px-2.5 py-1 font-medium uppercase tracking-[0.08em] text-slate-500 transition-colors group-hover:bg-slate-100/50">
                 {item}
               </span>
             ))}
@@ -106,9 +106,9 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
 
         {/* Footer: tags + buttons */}
         <div className="flex items-center justify-between px-5 py-3.5 gap-3 bg-slate-50/50">
-          <div className="flex gap-2 flex-wrap min-w-0 flex-1">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide min-w-0 flex-1 snap-x">
             {place.tags.slice(0, 3).map((tag) => (
-              <span key={tag} className={`text-[11px] font-bold ${colors.text} bg-white px-2 py-0.5 rounded-md border ${colors.badge.split(' ').find(c => c.startsWith('border-'))} shadow-sm`}>#{tag}</span>
+              <span key={tag} className={`fluid-kicker flex-shrink-0 snap-start rounded-md border bg-white px-2 py-0.5 font-black uppercase ${colors.text} ${colors.badge.split(' ').find(c => c.startsWith('border-'))} shadow-sm`}>#{tag}</span>
             ))}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -124,13 +124,13 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
             )}
             <button
               onClick={() => setOpen((v) => !v)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm active:scale-95 ${
+              className={`fluid-caption flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-black transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.92] shadow-sm whitespace-nowrap ${
                 open
                   ? 'bg-slate-200/80 text-slate-800 hover:bg-slate-300'
                   : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-md'
               }`}
             >
-              {open ? '收起' : '探索'}
+              <span className="whitespace-nowrap">{open ? '收起' : '探索'}</span>
               <motion.div
                 animate={{ rotate: open ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -150,7 +150,7 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-              className="overflow-hidden bg-slate-50/80"
+              className="overflow-hidden bg-slate-50/78"
             >
               <div className="border-t border-slate-100" />
               <div className="px-5 py-5 space-y-0">
@@ -163,7 +163,7 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
                     <div key={section.title} className="relative flex gap-4 mb-6 last:mb-0 group/section">
                       {/* Dot */}
                       <div className={`relative z-10 w-6 h-6 rounded-full ${colors.dot} flex-shrink-0 flex items-center justify-center mt-0.5 shadow-md ring-4 ring-white transition-transform group-hover/section:scale-110`}>
-                        <span className="text-[10px] leading-none">{section.emoji}</span>
+                        <span className="text-[11px] leading-none">{section.emoji}</span>
                       </div>
 
                       {/* Section content */}
@@ -187,9 +187,9 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
                 </div>
 
                 {/* Tags */}
-                <div className="flex flex-wrap gap-2 pt-4 mt-2 border-t border-slate-200/60">
+                <div className="mt-2 flex overflow-x-auto scrollbar-hide snap-x gap-2 border-t border-slate-200/60 pt-4">
                   {place.tags.map((tag) => (
-                    <span key={tag} className="text-[11px] font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-full shadow-sm">
+                    <span key={tag} className="fluid-kicker flex-shrink-0 snap-start rounded-full border border-slate-200 bg-white px-2.5 py-1 font-black uppercase text-slate-500 shadow-sm">
                       #{tag}
                     </span>
                   ))}
@@ -241,7 +241,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={overlayTransition}
-          className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6"
+          className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6"
           onClick={handleClose}
         >
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" />
@@ -253,25 +253,24 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
-            className="relative w-full sm:max-w-4xl md:max-w-5xl bg-[#f8fafc] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col overflow-hidden"
-            style={{ maxHeight: 'calc(100vh - 2rem)' }}
+            className="relative flex max-h-modal-dvh w-full flex-col overflow-hidden rounded-t-[32px] border border-white/72 dark:border-white/10 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(30,41,59,0.98),rgba(15,23,42,0.96),rgba(2,6,23,0.94))] shadow-[0_28px_64px_rgba(15,23,42,0.16)] dark:shadow-[0_28px_64px_rgba(0,0,0,0.6)] sm:max-w-4xl sm:rounded-[32px] md:max-w-5xl outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header — fixed */}
-            <div className="flex-shrink-0 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 sm:px-8 pt-6 sm:pt-8 pb-4 z-20">
+            <div className="z-20 flex-shrink-0 border-b border-white/78 bg-white/80 px-5 pb-4 pt-5 backdrop-blur-xl sm:px-7 sm:pt-7">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
                   <span className="text-5xl drop-shadow-sm">{guide.flag}</span>
                   <div>
-                    <h1 className="font-extrabold text-slate-900 text-2xl sm:text-3xl tracking-tight leading-tight">
+                    <h1 className="fluid-title font-extrabold text-slate-900 sm:text-3xl">
                       {guide.name}
-                      <span className="font-medium text-slate-400 ml-2 text-xl sm:text-2xl">攻略</span>
+                      <span className="ml-2 text-[0.82em] font-medium text-slate-500">攻略</span>
                     </h1>
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-500">
                          <MapPin size={11} strokeWidth={2.5}/>
                       </div>
-                      <p className="text-slate-500 font-medium text-xs tracking-wide">
+                      <p className="fluid-kicker font-medium uppercase text-slate-500">
                         travel-guide-tw · 共 {guide.places.length} 個地區
                       </p>
                     </div>
@@ -284,19 +283,19 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                   <X size={18} />
                 </button>
               </div>
-              <p className="mt-4 text-[13.5px] text-slate-600 leading-relaxed font-medium max-w-3xl">{guide.intro}</p>
+              <p className="fluid-copy mt-4 max-w-3xl font-medium text-slate-600">{guide.intro}</p>
               <div className="mt-5 border-t border-slate-100 pt-3">
                 <AreaTabs areas={areas} active={activeArea} onChange={setActiveArea} />
               </div>
             </div>
 
             {/* Scrollable card list */}
-            <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-8 py-6 z-10 scrollbar-hide">
+            <div className="z-10 flex-1 overflow-y-auto overscroll-contain px-3.5 py-5 scrollbar-hide sm:px-7 sm:py-6">
               {infoCards.length > 0 && (
                 <div className="mb-6">
                   {activeArea === '全部' && (
                     <div className="flex items-center gap-3 mb-4">
-                      <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest px-1">基本資訊</h2>
+                      <h2 className="fluid-kicker whitespace-nowrap px-1 font-black uppercase text-slate-800">基本資訊</h2>
                       <div className="flex-1 h-px bg-slate-200/60" />
                     </div>
                   )}
@@ -312,7 +311,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                 <div>
                   {activeArea === '全部' && infoCards.length > 0 && (
                     <div className="flex items-center gap-3 mt-4 mb-4">
-                      <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest px-1">各地區指南</h2>
+                      <h2 className="fluid-kicker whitespace-nowrap px-1 font-black uppercase text-slate-800">各地區指南</h2>
                       <div className="flex-1 h-px bg-slate-200/60" />
                     </div>
                   )}
@@ -326,15 +325,15 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
             </div>
 
             {/* Footer — fixed */}
-            <div className="flex-shrink-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/60 px-6 sm:px-8 py-4 flex items-center justify-between z-20">
-              <p className="text-slate-400 text-xs font-medium">
+            <div className="z-20 flex flex-shrink-0 items-center justify-between border-t border-white/78 bg-white/84 px-5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] pt-4 backdrop-blur-xl sm:px-7 sm:pb-4">
+              <p className="fluid-caption font-medium text-slate-500">
                 內容來源：travel-guide-tw.github.io · CC BY-NC 4.0
               </p>
               <a
                 href={guide.guideUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-slate-700 hover:text-slate-900 text-[13px] font-bold transition-colors bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full"
+                className="fluid-caption flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 font-black text-slate-700 transition-colors hover:bg-slate-200 hover:text-slate-900 whitespace-nowrap"
               >
                 <ExternalLink size={13} strokeWidth={2.5} />
                 查看全站
