@@ -59,7 +59,7 @@ export async function suggestItinerary(destination: string, days: number): Promi
       if (Array.isArray(dayData.spots)) {
         dayData.spots.forEach((spot: any, i: number) => {
           nodes.push({
-            node_id: `ai_${Date.now()}_${dayData.day}_${i}`,
+            node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${dayData.day}_${i}`,
             day: dayData.day || 1,
             time: normalizeTime(spot.time),
             title: String(spot.name || spot.title || '景點'),
@@ -174,6 +174,10 @@ function buildItineraryPrompt(input: SuggestItineraryInput): string {
     `- 旅遊節奏: ${planner.vibes?.length ? planner.vibes.join('、') : '未指定'}`,
     `- 興趣偏好: ${planner.interests?.length ? planner.interests.join('、') : '未指定'}`,
     `- 預算等級: ${planner.budget || '未指定'}`,
+    `- 飲食需求: ${planner.dietary?.length ? planner.dietary.join('、') : '未指定'}`,
+    `- 交通方式: ${planner.transport?.length ? planner.transport.join('、') : '未指定'}`,
+    `- 行程步調: ${planner.pace || '未指定'}`,
+    `- 住宿偏好: ${planner.accommodation?.length ? planner.accommodation.join('、') : '未指定'}`,
     '',
     '規劃規則：',
     '- 依天數輸出每天 3~5 個節點。',
