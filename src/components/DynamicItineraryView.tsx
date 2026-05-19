@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useMemo } from 'react';
-import { ArrowLeft, Clock, MapPin, Leaf, Flame, Navigation2 } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Leaf, Flame, Navigation2, AlertTriangle } from 'lucide-react';
 import GlassCard from './GlassCard';
+import ExpandableText from './ExpandableText';
 import type { ItineraryNode } from '../types/workflow';
 
 const ItineraryMapView = lazy(() => import('./ItineraryMapView'));
@@ -18,7 +19,8 @@ export default function DynamicItineraryView({
   
   // Extracting UI configurations or fallback
   const uiConfig = aiResponse?.ui_config || {};
-  const gradient = uiConfig.bg_gradient || 'from-fuchsia-100 to-indigo-100';
+  const uiState = aiResponse?.ui_state || {};
+  const gradient = uiState.theme_gradient || uiConfig.bg_gradient || 'from-fuchsia-100 to-indigo-100';
   const isLargeFont = uiConfig.font_scale === 'large';
   const textScaleClass = isLargeFont ? 'text-lg' : 'text-base';
   const titleClass = isLargeFont ? 'text-5xl' : 'text-4xl';
@@ -37,6 +39,16 @@ export default function DynamicItineraryView({
     return map;
   }, [result?.rawSuggestions]);
 
+  const geoNodesByDay = useMemo(() => {
+    const map: Record<number, ItineraryNode[]> = {};
+    Object.entries(rawByDay).forEach(([day, nodes]) => {
+      map[Number(day)] = (nodes as ItineraryNode[])
+        .filter(n => n.lat != null && n.lng != null)
+        .map(n => ({ ...n, lat: Number(n.lat), lng: Number(n.lng) }));
+    });
+    return map;
+  }, [rawByDay]);
+
   // All nodes with valid coordinates for a top-level overview map
   const allGeoNodes: ItineraryNode[] = useMemo(
     () => (result?.rawSuggestions || []).filter((n: ItineraryNode) => n.lat != null && n.lng != null).map((n: ItineraryNode) => ({ ...n, lat: Number(n.lat), lng: Number(n.lng) })),
@@ -51,10 +63,10 @@ export default function DynamicItineraryView({
         backgroundSize: '24px 24px'
       }} />
 
-      <div className="relative z-10 px-6 pt-16 pb-32">
-        <button 
+      <div className="relative z-10 px-4 sm:px-6 pt-6 sm:pt-16 pb-tab-safe">
+        <button
           onClick={onBack}
-          className="w-10 h-10 rounded-full bg-white/40 backdrop-blur-md border border-white/60 flex items-center justify-center shadow-sm text-slate-800 hover:bg-white/80 active:scale-[0.98] transition-all duration-200 mb-6"
+          className="w-11 h-11 rounded-full bg-white/40 backdrop-blur-md border border-white/60 flex items-center justify-center shadow-sm text-slate-800 hover:bg-white/80 active:scale-[0.98] transition-all duration-200 mb-4 sm:mb-6"
         >
           <ArrowLeft size={20} />
         </button>
@@ -76,8 +88,8 @@ export default function DynamicItineraryView({
 
         {/* Overview route map — shows all geocoded nodes */}
         {allGeoNodes.length >= 2 && (
-          <div className="mb-6 rounded-[2.5rem] overflow-hidden shadow-xl border-[6px] border-white/60 relative" style={{ height: '360px' }}>
-            <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-sm">載入地圖中...</div>}>
+          <div className="mb-6 rounded-[2.5rem] overflow-hidden shadow-xl border-[6px] border-white/60 relative h-[260px] sm:h-[360px]">
+            <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-500 text-sm">載入地圖中...</div>}>
               <ItineraryMapView items={allGeoNodes} />
             </Suspense>
           </div>
@@ -87,18 +99,18 @@ export default function DynamicItineraryView({
           {itinerary.map((dayData: any, i: number) => {
             const dayNum: number = dayData.day || i + 1;
             const dayRawNodes: ItineraryNode[] = rawByDay[dayNum] || [];
-            const dayGeoNodes = dayRawNodes.filter(n => n.lat != null && n.lng != null).map((n: ItineraryNode) => ({ ...n, lat: Number(n.lat), lng: Number(n.lng) }));
+            const dayGeoNodes = geoNodesByDay[dayNum] || [];
 
             return (
-              <div key={i} className="bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl p-6">
-                <h3 className="text-xl font-bold text-slate-800 mb-4 bg-white/60 w-fit px-5 py-2 rounded-full shadow-sm text-center">
+              <div key={i} className="bg-[linear-gradient(135deg,rgba(255,255,255,0.7),rgba(255,250,251,0.6))] backdrop-blur-xl border-2 border-white/80 shadow-[0_16px_40px_rgba(244,114,182,0.1),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_rgba(244,114,182,0.15)] rounded-[48px] p-6 sm:p-8 transition-shadow duration-500 transform-gpu">
+                <h3 className="text-xl font-bold text-slate-800 mb-4 bg-white/60 w-fit px-5 py-2 rounded-full shadow-sm text-center whitespace-nowrap">
                   第 {dayData.day} 天
                 </h3>
 
                 {/* Per-day mini route map */}
                 {dayGeoNodes.length >= 2 && (
-                  <div className="mb-5 rounded-[2.5rem] overflow-hidden border-[6px] border-white/60 shadow-md relative" style={{ height: '300px' }}>
-                    <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-400 text-xs">載入地圖中...</div>}>
+                  <div className="mb-5 rounded-[2.5rem] overflow-hidden border-[6px] border-white/60 shadow-md relative h-[200px] sm:h-[300px]">
+                    <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-500 text-xs">載入地圖中...</div>}>
                       <ItineraryMapView items={dayGeoNodes} />
                     </Suspense>
                   </div>
@@ -153,7 +165,7 @@ export default function DynamicItineraryView({
                             <div className="flex items-center gap-2 mt-0.5">
                               {spot.time && (
                                 <p className={`text-slate-600 font-medium ${textScaleClass} flex items-center gap-1`}>
-                                  <Clock size={12} className="text-slate-400" />{spot.time}
+                                  <Clock size={12} className="text-slate-500" />{spot.time}
                                 </p>
                               )}
                             </div>
@@ -171,16 +183,46 @@ export default function DynamicItineraryView({
                         {/* AI Note */}
                         {spot.ai_note && (
                           <div className="bg-white/50 backdrop-blur-sm text-sm text-slate-700 p-3 rounded-2xl border border-white/40 mt-3 shadow-inner">
-                            <span className="font-semibold opacity-60 mr-1">TIPS /</span> {spot.ai_note}
+                            <ExpandableText
+                              text={spot.ai_note}
+                              label="TIPS"
+                              previewLines={2}
+                              minCharacters={60}
+                              minLineBreaks={1}
+                              preserveWhitespace
+                              stopPropagation
+                              className="gap-1.5"
+                              labelClassName="mb-0 text-slate-500"
+                              textClassName="text-[13px] sm:text-[14px] font-medium text-slate-700 tracking-tight leading-[1.6] font-sans"
+                              buttonClassName="mt-0"
+                              collapsedLabel="展開完整內容"
+                              expandedLabel="收起內容"
+                            />
                           </div>
                         )}
 
                         {/* Transport to next */}
-                        {spot.transport_to_next && j !== (dayData.spots?.length || 0) - 1 && (
-                          <div className="mt-4 mb-2 flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 w-fit px-3 py-1.5 rounded-lg border border-slate-100">
-                            <Navigation2 size={12} className="text-slate-400" /> {spot.transport_to_next}
-                          </div>
-                        )}
+                        {spot.transport_to_next && j !== (dayData.spots?.length || 0) - 1 ? (() => {
+                          let minutes = 0;
+                          const hrMatch = spot.transport_to_next.match(/(\d+)\s*(h|hr|小時|時)/i);
+                          if (hrMatch) minutes += parseInt(hrMatch[1], 10) * 60;
+                          const minMatch = spot.transport_to_next.match(/(\d+)\s*(m|min|分鐘|分)/i);
+                          if (minMatch) minutes += parseInt(minMatch[1], 10);
+                          const isLong = minutes > 90;
+                          
+                          return (
+                            <div className={`mt-4 mb-2 flex items-center gap-2 text-xs font-bold w-fit px-3 py-2 rounded-xl border ${isLong ? 'bg-red-50 text-red-700 border-red-100 flex-wrap' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
+                              <Navigation2 size={14} className={isLong ? "text-red-500" : "text-slate-500"} /> 
+                              <span>{spot.transport_to_next}</span>
+                              {isLong && (
+                                <div className="flex items-center gap-1.5 ml-1 text-red-600 bg-white/60 px-2 py-0.5 rounded-md">
+                                  <AlertTriangle size={12} />
+                                  <span className="text-[11px] uppercase tracking-wider">車程較長</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })() : null}
                       </div>
                     );
                   })}
@@ -193,8 +235,9 @@ export default function DynamicItineraryView({
         {onSave && (
           <button 
             onClick={() => onSave(result)}
-            className="w-full mt-10 py-5 rounded-full bg-slate-900 border border-white/20 text-white font-bold text-lg shadow-xl hover:bg-slate-800 transition-transform duration-200 active:scale-[0.98] flex items-center justify-center gap-2">
-            <span>💾 Save to Trip</span>
+            className="group w-full mt-10 py-5 sm:py-6 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 text-white font-black text-lg sm:text-xl shadow-[0_16px_32px_rgba(236,72,153,0.3),inset_0_2px_4px_rgba(255,255,255,0.4)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.4),inset_0_2px_4px_rgba(255,255,255,0.5)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3">
+            <span className="group-hover:animate-cute-bounce">💾</span>
+            <span className="drop-shadow-sm">儲存這份心動行程</span>
           </button>
         )}
       </div>
