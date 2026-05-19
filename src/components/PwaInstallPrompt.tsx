@@ -61,7 +61,9 @@ export default function PwaInstallPrompt() {
   const showPrompt = useMemo(() => {
     if (dismissed || !isDelayedVisible || isStandaloneDisplayMode()) return false;
     if (typeof window === 'undefined' || window.innerWidth > 1024) return false;
-    return Boolean(deferredPrompt) || isIosMobileSafari();
+    // Do not automatically show the fake prompt on iOS Safari as it annoys users.
+    // We only rely on actual PWA deferred prompts now.
+    return Boolean(deferredPrompt);
   }, [deferredPrompt, dismissed, isDelayedVisible]);
 
   if (!showPrompt) return null;

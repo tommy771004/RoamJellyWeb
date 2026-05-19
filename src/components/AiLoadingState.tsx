@@ -71,7 +71,7 @@ export default function AiLoadingState() {
           </p>
         </div>
 
-        <div aria-live="polite" aria-atomic="true" className="flex min-h-[3.5rem] max-w-xs flex-col items-center justify-center px-3 text-center sm:max-w-sm">
+        <div aria-live="polite" aria-atomic="true" className="flex min-h-[3.5rem] w-full flex-col items-center justify-center px-1 sm:px-3 text-center overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.p
               key={msgIndex}
@@ -79,7 +79,7 @@ export default function AiLoadingState() {
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, y: -15, filter: 'blur(4px)' }}
               transition={{ duration: 0.35 }}
-              className="bg-gradient-to-r from-fuchsia-600 to-sky-600 bg-clip-text text-[18px] font-black leading-[1.35] tracking-[-0.04em] text-transparent drop-shadow-sm sm:text-[22px]"
+              className="bg-gradient-to-r from-fuchsia-600 to-sky-600 bg-clip-text text-[clamp(12px,3.8vw,20px)] sm:text-[clamp(16px,3vw,22px)] font-black leading-[1.35] tracking-[-0.02em] text-transparent drop-shadow-sm whitespace-nowrap break-keep"
             >
               <TypewriterMessage text={MESSAGES[msgIndex]} />
             </motion.p>

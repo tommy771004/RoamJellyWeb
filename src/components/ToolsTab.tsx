@@ -17,6 +17,7 @@ import {
   MapPin,
   ArrowRight,
   ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
@@ -1427,6 +1428,7 @@ function ToolsTabContent() {
   const [isPreviewExpanded, setIsPreviewExpanded] = useState<boolean>(
     () => typeof window !== "undefined" && window.innerWidth >= 768
   );
+  const [isUtilityLayerExpanded, setIsUtilityLayerExpanded] = useState<boolean>(false);
   const { onScroll } = useHideNavOnScroll();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const checkedChecklistCount = checklist.filter((item) => item.checked).length;
@@ -1727,73 +1729,108 @@ function ToolsTabContent() {
           className="relative overflow-hidden rounded-[30px] glass-panel sm:p-5"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.14),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(253,186,116,0.10),transparent_46%)]" />
-          <div className="relative flex flex-col gap-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <EditorialSectionIntro
-                eyebrow="Trip Utility Layer"
-                title={`把天氣、清單與分帳，綁回${destination ? ` ${destination} ` : "這趟"}旅程`}
-                description=""
-                highlights={[
-                  {
-                    label: "目的地",
-                    value: destination || "等待同步",
-                  },
-                  {
-                    label: "清單進度",
-                    value: `${checklist.filter((item) => item.checked).length}/${checklist.length || 0}`,
-                  },
-                  {
-                    label: "待結清",
-                    value: `${settlements.length} 筆`,
-                  },
-                ]}
-              />
+          <div className="relative flex flex-col gap-2 sm:gap-4">
+            <div className="flex items-center justify-between px-3 pt-3 pb-1 sm:px-0 sm:pt-0 sm:pb-0">
               <button
-                onClick={() => setActiveTab("itinerary")}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/92 bg-white/90 px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                onClick={() => setIsUtilityLayerExpanded(!isUtilityLayerExpanded)}
+                className="group flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-sky-600/70 hover:text-sky-700 transition-colors"
+                aria-expanded={isUtilityLayerExpanded}
               >
-                回到行程
-                <ArrowRight size={16} strokeWidth={2.6} />
+                Trip Utility Layer
+                <div className="flex size-5 items-center justify-center rounded-full bg-sky-500/10 group-hover:bg-sky-500/20 transition-colors text-sky-600">
+                  {isUtilityLayerExpanded ? <ChevronUp size={12} strokeWidth={3} /> : <ChevronDown size={12} strokeWidth={3} />}
+                </div>
               </button>
+              {!isUtilityLayerExpanded && (
+                <button
+                  onClick={() => setActiveTab("itinerary")}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white bg-white/70 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-white hover:text-sky-700"
+                >
+                  回到行程 <ArrowRight size={12} strokeWidth={2.6} />
+                </button>
+              )}
             </div>
 
-            <div className="grid gap-2.5 sm:grid-cols-3">
-              {toolHighlights.map(({ icon: Icon, label, value, description }, index) => {
-                const decor = TOOLS_CARD_DECOR[index % TOOLS_CARD_DECOR.length];
-                return (
-                <div
-                  key={label}
-                  className={`editorial-card-soft relative overflow-hidden rounded-[22px] px-3.5 py-3 ${decor.shell}`}
+            <AnimatePresence initial={false}>
+              {isUtilityLayerExpanded && (
+                <motion.div
+                  initial={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                  animate={prefersReducedMotion ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+                  exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: [0.19, 1, 0.22, 1] }}
+                  className="overflow-hidden"
                 >
-                  <div className={`absolute -right-8 -top-8 size-16 rounded-full opacity-70 blur-2xl ${decor.glow}`} />
-                  <div className="relative flex items-center justify-between gap-3">
-                    <span className={`inline-flex items-center gap-2 rounded-full border bg-white/92 px-2.5 py-1 text-[11px] font-black shadow-sm ${decor.badge}`}>
-                      <Icon size={14} strokeWidth={2.5} />
-                      {label}
-                    </span>
-                    {tripInfo?.name ? (
-                      <span className="truncate text-[11px] font-bold text-slate-400">
-                        {tripInfo.name}
-                      </span>
-                    ) : null}
+                  <div className="flex flex-col gap-4 px-3 pb-3 sm:px-0 sm:pb-0">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                      <EditorialSectionIntro
+                        eyebrow=""
+                        title={`把天氣、清單與分帳，綁回${destination ? ` ${destination} ` : "這趟"}旅程`}
+                        description=""
+                        highlights={[
+                          {
+                            label: "目的地",
+                            value: destination || "等待同步",
+                          },
+                          {
+                            label: "清單進度",
+                            value: `${checklist.filter((item) => item.checked).length}/${checklist.length || 0}`,
+                          },
+                          {
+                            label: "待結清",
+                            value: `${settlements.length} 筆`,
+                          },
+                        ]}
+                      />
+                      <button
+                        onClick={() => setActiveTab("itinerary")}
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/92 bg-white/90 px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                      >
+                        回到行程
+                        <ArrowRight size={16} strokeWidth={2.6} />
+                      </button>
+                    </div>
+
+                    <div className="grid gap-2.5 sm:grid-cols-3">
+                      {toolHighlights.map(({ icon: Icon, label, value, description }, index) => {
+                        const decor = TOOLS_CARD_DECOR[index % TOOLS_CARD_DECOR.length];
+                        return (
+                        <div
+                          key={label}
+                          className={`editorial-card-soft relative overflow-hidden rounded-[22px] px-3.5 py-3 ${decor.shell}`}
+                        >
+                          <div className={`absolute -right-8 -top-8 size-16 rounded-full opacity-70 blur-2xl ${decor.glow}`} />
+                          <div className="relative flex items-center justify-between gap-3">
+                            <span className={`inline-flex items-center gap-2 rounded-full border bg-white/92 px-2.5 py-1 text-[11px] font-black shadow-sm ${decor.badge}`}>
+                              <Icon size={14} strokeWidth={2.5} />
+                              {label}
+                            </span>
+                            {tripInfo?.name ? (
+                              <span className="truncate text-[11px] font-bold text-slate-400">
+                                {tripInfo.name}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="relative mt-1.5 text-balance text-[14px] font-black tracking-[-0.01em] text-slate-900">{value}</p>
+                          <ExpandableText
+                            text={description}
+                            previewLines={3}
+                            minCharacters={72}
+                            className="relative mt-1"
+                            textClassName="text-pretty text-[13px] leading-[1.64] text-slate-600"
+                            collapsedLabel="看更多"
+                            expandedLabel="收起"
+                          />
+                          <div className="editorial-divider relative mt-2 pt-2 text-[10px] font-bold text-slate-500">
+                            <span className="text-pretty line-clamp-2">{decor.note}</span>
+                          </div>
+                        </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <p className="relative mt-1.5 text-balance text-[14px] font-black tracking-[-0.01em] text-slate-900">{value}</p>
-                  <ExpandableText
-                    text={description}
-                    previewLines={3}
-                    minCharacters={72}
-                    className="relative mt-1"
-                    textClassName="text-pretty text-[13px] leading-[1.64] text-slate-600"
-                    collapsedLabel="看更多"
-                    expandedLabel="收起"
-                  />
-                  <div className="editorial-divider relative mt-2 pt-2 text-[10px] font-bold text-slate-500">
-                    <span className="text-pretty line-clamp-2">{decor.note}</span>
-                  </div>
-                </div>
-                );
-              })}
-            </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.section>
 

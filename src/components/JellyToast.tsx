@@ -25,7 +25,7 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
             transition={{ type: 'spring', bounce: 0.6, duration: 0.7 }}
-            className={`pointer-events-auto mx-auto flex w-full max-w-sm shrink-0 items-center gap-3 rounded-[28px] border px-4 py-3.5 shadow-[0_16px_32px_rgba(15,23,42,0.18),inset_0_1px_1px_rgba(255,255,255,0.2)] backdrop-blur-2xl ${
+            className={`pointer-events-auto mx-auto flex w-fit justify-center max-w-sm shrink-0 items-center gap-3 rounded-[28px] border px-4 py-3.5 shadow-lg backdrop-blur-2xl ${
               toast.type === 'success' ? 'border-emerald-300/40 bg-[linear-gradient(180deg,rgba(16,185,129,0.95),rgba(5,150,105,0.92))] text-white' :
               toast.type === 'warning' ? 'border-orange-300/40 bg-[linear-gradient(180deg,rgba(249,115,22,0.95),rgba(234,88,12,0.92))] text-white' :
               'border-slate-400/40 bg-[linear-gradient(180deg,rgba(71,85,105,0.96),rgba(30,41,59,0.92))] text-white'
@@ -34,7 +34,7 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
             {toast.type === 'success' && <CheckCircle2 size={20} className="shrink-0 text-emerald-100" />}
             {toast.type === 'warning' && <AlertCircle size={20} className="shrink-0 text-amber-100" />}
             {toast.type === 'info' && <Info size={20} className="shrink-0 text-slate-400" />}
-            <span className="fluid-copy min-w-0 flex-1 break-words font-bold tracking-[0.02em]">{toast.message}</span>
+            <span className="fluid-copy min-w-0 text-center whitespace-nowrap overflow-hidden text-ellipsis font-bold tracking-[0.02em]">{toast.message}</span>
             {toast.actionLabel && toast.onAction && (
               <button
                 onClick={() => {

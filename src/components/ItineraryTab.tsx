@@ -57,6 +57,8 @@ import {
   ZoomIn,
   Instagram,
   AlertTriangle,
+  FileText,
+  ChevronUp,
 } from "lucide-react";
 import { io, type Socket } from "socket.io-client";
 import GlassCard from "./GlassCard";
@@ -88,7 +90,7 @@ import {
   suggestItineraryWithForm,
   AiRateLimitedError,
 } from "../lib/openrouterApi";
-import { haversineKm, estimateTransport } from "../lib/geoUtils";
+import { haversineKm, estimateTransport, formatMinutes } from "../lib/geoUtils";
 import { useItineraryStore } from "../store/useItineraryStore";
 import { useSearchStore } from "../store/useSearchStore";
 import { useAppStore } from "../store/useAppStore";
@@ -125,6 +127,65 @@ import {
 import { useTypewriter } from "../lib/useTypewriter";
 
 const ItineraryMapView = lazy(() => import("./ItineraryMapView"));
+
+function CollapsibleNotes({ 
+  text, 
+  label, 
+  icon = <FileText size={12} className="opacity-70" /> 
+}: { 
+  text: string; 
+  label: string;
+  icon?: React.ReactNode;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <motion.div layout className="overflow-hidden">
+      <AnimatePresence mode="popLayout">
+        {!isExpanded ? (
+          <motion.button 
+            key="collapsed"
+            layout
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
+            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 w-fit rounded-full bg-slate-100/80 text-slate-500 text-[11px] font-black tracking-widest uppercase hover:bg-slate-200 transition-colors"
+          >
+            {icon}
+            <span className="translate-y-px">展開 {label}</span>
+            <ChevronDown size={12} className="opacity-70" />
+          </motion.button>
+        ) : (
+          <motion.div 
+            key="expanded"
+            layout
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3"
+          >
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</p>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
+                className="text-[10px] font-bold uppercase text-slate-400 hover:text-slate-600 px-2 py-1 -mr-2 bg-slate-100/50 hover:bg-slate-200/50 rounded-[10px] transition-colors"
+              >
+                收起 <ChevronUp size={10} className="inline opacity-70 mb-[1px]" />
+              </button>
+            </div>
+            <p className="text-[13px] sm:text-[14px] font-medium text-slate-700 tracking-tight leading-[1.78] font-sans whitespace-pre-line text-pretty mt-1.5">
+              {text}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
 
 const DESTINATION_IMAGES: Array<{ keywords: string[]; url: string }> = [
   {
@@ -518,6 +579,8 @@ export default function ItineraryTab() {
   const [isUpdatingPublicState, setIsUpdatingPublicState] = useState(false);
   const [loadedDays, setLoadedDays] = useState<number[]>([]);
   const [loadingDay, setLoadingDay] = useState<number | null>(null);
+  const [visibleNodeLimit, setVisibleNodeLimit] = useState<number>(20);
+  const [visibleDaysLimit, setVisibleDaysLimit] = useState<number>(14);
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const sheetMotion = getSheetMotion(prefersReducedMotion);
   const { onScroll } = useHideNavOnScroll();
@@ -751,7 +814,10 @@ export default function ItineraryTab() {
     }
   };
 
-  const handleReorder = (newOrder: ItineraryNode[]) => {
+  const handleReorder = (newOrderVisible: ItineraryNode[]) => {
+    const invisibleNodes = selectedDayNodes.slice(visibleNodeLimit);
+    const newOrder = [...newOrderVisible, ...invisibleNodes];
+
     const reorderedNodes = sortNodesForDisplay(
       newOrder.map((node, index) =>
         withAutoCategoryIcon(
@@ -1160,6 +1226,14 @@ export default function ItineraryTab() {
 
   // Clamp during render — avoids the extra render cycle from a setState-only effect
   const safeSelectedDay = Math.min(selectedDay, totalDays);
+
+  // When day changes, reset visible nodes limit
+  useEffect(() => {
+    setVisibleNodeLimit(20);
+  }, [safeSelectedDay]);
+
+  const actualDaysLimit = Math.max(visibleDaysLimit, safeSelectedDay);
+  const paginatedDaysArray = Array.from({ length: Math.min(totalDays, actualDaysLimit) }, (_, i) => i + 1);
 
   const selectedDayNodes = useMemo(
     () =>
@@ -1976,7 +2050,7 @@ export default function ItineraryTab() {
                   <EditorialSectionIntro
                     eyebrow="AI Planning Entry"
                     title="讓 AI 起草初步行程，隨時調整細節"
-                    description="輸入目的地與天數，快速產生行程草稿。隨後可自由調整排序、補上航班，或邀請旅伴共編。"
+                    description=""
                     highlights={[
                       { label: "起點", value: "目的地與天數" },
                       { label: "中段", value: "調整排序與備註" },
@@ -2536,7 +2610,7 @@ export default function ItineraryTab() {
                 </div>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2 xl:gap-3 relative z-10 w-full overflow-hidden">
-                {Array.from({ length: totalDays }, (_, i) => i + 1).map(
+                {paginatedDaysArray.map(
                   (day) => {
                     const isActive = safeSelectedDay === day;
                     const count = nodes.filter(
@@ -2555,27 +2629,35 @@ export default function ItineraryTab() {
                       <button
                         key={day}
                         onClick={() => setSelectedDay(day)}
-                        className={`px-1 py-3 xl:px-2 xl:py-3.5 rounded-2xl font-black text-xs xl:text-sm transition-all flex flex-col items-center justify-center gap-1 border min-w-0 ${
+                        className={`relative px-1 py-3 xl:px-2 xl:py-3.5 rounded-[14px] font-black text-xs xl:text-sm transition-colors flex flex-col items-center justify-center gap-1 border min-w-0 ${
                           isActive
-                            ? "bg-pink-50 text-pink-600 border-pink-200 shadow-inner"
+                            ? "text-pink-600 border-pink-200/50 shadow-sm"
                             : "bg-white/60 text-slate-500 border-white hover:bg-white hover:text-pink-400"
                         }`}
                       >
-                        <span className="flex items-center gap-1">
+                        {isActive && (
+                          <motion.div
+                            layoutId="desktop_day_indicator"
+                            className="absolute inset-0 bg-pink-50 rounded-[14px] shadow-inner"
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            style={{ zIndex: 0 }}
+                          />
+                        )}
+                        <span className="flex items-center gap-1 relative z-10 transition-colors">
                           <span className="truncate">DAY {day}</span>
                           {loadingDay === day && (
                             <Loader2
                               size={12}
-                              className="animate-spin shrink-0"
+                              className="animate-spin shrink-0 text-pink-500"
                             />
                           )}
                         </span>
                         {displayDate && (
-                          <span className="text-[9px] xl:text-[11px] opacity-70 tracking-tighter truncate w-full text-center px-1">
+                          <span className="text-[9px] xl:text-[11px] opacity-70 tracking-tighter truncate w-full text-center px-1 relative z-10 transition-colors">
                             {displayDate}
                           </span>
                         )}
-                        <span className="text-[9px] xl:text-[11px] font-bold opacity-60 uppercase tracking-tighter truncate">
+                        <span className="text-[9px] xl:text-[11px] font-bold opacity-60 uppercase tracking-tighter truncate relative z-10 transition-colors">
                           {count}{" "}
                           <span className="hidden xl:inline">SPOTS</span>
                           <span className="inline xl:hidden">站</span>
@@ -2585,6 +2667,14 @@ export default function ItineraryTab() {
                   },
                 )}
               </div>
+              {totalDays > actualDaysLimit && (
+                <button
+                  onClick={() => setVisibleDaysLimit((l) => l + 14)}
+                  className="w-full mt-4 py-2 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-black tracking-widest text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-colors uppercase"
+                >
+                  展開更多天數...
+                </button>
+              )}
             </GlassCard>
 
             {/* Collaborators with presence */}
@@ -2748,7 +2838,7 @@ export default function ItineraryTab() {
                 contentClassName="inline-flex min-w-max gap-1.5 rounded-full border-2 border-white/80 bg-white/50 backdrop-blur-xl p-1.5 shadow-[0_4px_16px_rgba(15,23,42,0.03)] dark:border-white/10 dark:bg-slate-800/90"
                 controlsVisibilityClass="flex"
               >
-                {Array.from({ length: totalDays }, (_, i) => i + 1).map(
+                {paginatedDaysArray.map(
                   (day) => {
                     const isActive = safeSelectedDay === day;
                     const dateStr =
@@ -2765,20 +2855,28 @@ export default function ItineraryTab() {
                         key={day}
                         onClick={() => setSelectedDay(day)}
                         whileTap={{ scale: 0.96 }}
-                        className={`relative flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-2 rounded-full font-black text-[13px] sm:text-sm tracking-tight transition-all shrink-0 snap-center ${
+                        className={`relative flex items-center gap-1.5 px-4 sm:px-5 py-2.5 sm:py-2 rounded-full font-black text-[13px] sm:text-sm tracking-tight transition-all shrink-0 snap-center min-w-[72px] sm:min-w-[80px] justify-center ${
                           isActive
-                            ? "bg-gradient-to-br from-pink-400 via-rose-400 to-rose-400 text-white shadow-[0_8px_16px_rgba(244,114,182,0.25)] border border-transparent"
-                            : "text-slate-500 hover:text-slate-700 hover:bg-white/80 border border-transparent"
+                            ? "text-white shadow-[0_8px_16px_rgba(244,114,182,0.25)]"
+                            : "text-slate-500 hover:text-slate-700 hover:bg-white/80"
                         }`}
                       >
+                        {isActive && (
+                          <motion.div
+                            layoutId="mobile_day_indicator"
+                            className="absolute inset-0 bg-gradient-to-br from-pink-400 via-rose-400 to-rose-400 rounded-full"
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            style={{ zIndex: -1 }}
+                          />
+                        )}
                         <span
-                          className={`drop-shadow-sm ${isActive ? "text-white" : ""}`}
+                          className={`drop-shadow-sm transition-colors z-10 ${isActive ? "text-white font-black" : ""}`}
                         >
                           Day {day}
                         </span>
                         {displayDate && (
                           <span
-                            className={`text-[10px] sm:text-[11px] font-bold hidden sm:inline ${isActive ? "text-pink-50" : "text-slate-400"}`}
+                            className={`text-[10px] sm:text-[11px] font-bold hidden sm:inline z-10 transition-colors ${isActive ? "text-pink-50" : "text-slate-400"}`}
                           >
                             {displayDate}
                           </span>
@@ -2786,12 +2884,21 @@ export default function ItineraryTab() {
                         {loadingDay === day && (
                           <Loader2
                             size={12}
-                            className={`animate-spin ml-0.5 ${isActive ? "text-white" : "text-slate-400"}`}
+                            className={`animate-spin ml-0.5 z-10 transition-colors ${isActive ? "text-white" : "text-slate-400"}`}
                           />
                         )}
                       </motion.button>
                     );
                   },
+                )}
+                {totalDays > actualDaysLimit && (
+                  <motion.button
+                    onClick={() => setVisibleDaysLimit((l) => l + 14)}
+                    whileTap={{ scale: 0.96 }}
+                    className="relative flex items-center justify-center px-4 py-2.5 sm:py-2 rounded-full font-black text-[13px] sm:text-sm text-slate-400 hover:text-slate-600 bg-white/40 hover:bg-white border border-dashed border-slate-300 transition-all shrink-0 snap-center"
+                  >
+                    + 載入更多
+                  </motion.button>
                 )}
               </HorizontalScrollRail>
             </div>
@@ -3308,7 +3415,7 @@ export default function ItineraryTab() {
                   )}
 
                   <ItineraryList
-                    items={selectedDayNodes}
+                    items={selectedDayNodes.slice(0, visibleNodeLimit)}
                     day={safeSelectedDay}
                     onDelete={handleDeleteNode}
                     onUpdate={handleUpdateNode}
@@ -3337,6 +3444,17 @@ export default function ItineraryTab() {
                     nodeEditingLocks={nodeEditingLocks}
                     onPreviewImage={setPreviewImageUrl}
                   />
+
+                  {selectedDayNodes.length > visibleNodeLimit && (
+                    <div className="flex justify-center mt-6 mb-8 relative z-10 w-full pl-[22px] sm:pl-10 lg:pl-12">
+                      <button
+                        onClick={() => setVisibleNodeLimit((l) => l + 20)}
+                        className="py-3 px-8 rounded-full border-2 border-dashed border-slate-300 text-sm font-black tracking-widest text-slate-500 hover:text-slate-700 hover:border-slate-400 hover:bg-white/50 transition-all uppercase"
+                      >
+                        展開更多景點...
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               ) : viewMode === "map" ? (
                 <motion.div
@@ -3800,6 +3918,7 @@ function TransportGapIndicator({
   useEffect(() => {
     if (
       km > 2 &&
+      km <= 300 &&
       !item.transport_to_next &&
       item.lng &&
       item.lat &&
@@ -3833,15 +3952,17 @@ function TransportGapIndicator({
         label: item.transport_to_next,
         minutes: extractMinutes(item.transport_to_next),
         isApi: false,
+        isFlight: false,
       };
     }
     if (autoTransport) {
-      if (apiDuration && km > 2) {
+      if (apiDuration && km > 2 && !autoTransport.isFlight) {
         return {
           emoji: "🚗",
-          label: `預計車程 ${apiDuration} 分鐘`,
+          label: `預計車程 ${formatMinutes(apiDuration)}`,
           minutes: apiDuration,
           isApi: true,
+          isFlight: false,
         };
       }
       return { ...autoTransport, isApi: false };
@@ -3854,7 +3975,7 @@ function TransportGapIndicator({
     timeGapMinutes > 0 &&
     displayTransport.minutes > timeGapMinutes,
   );
-  const isTooLong = Boolean(displayTransport && displayTransport.minutes > 90);
+  const isTooLong = Boolean(displayTransport && displayTransport.minutes > 90 && !displayTransport.isFlight);
   const hasWarning = hasTransitConflict || isTooLong;
   const showBadge = timeGapStr || displayTransport;
 
@@ -4626,23 +4747,7 @@ const ItineraryListItem = React.memo(
               )}
 
               {detailCopy ? (
-                <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
-                  <ExpandableText
-                    text={detailCopy}
-                    label="Notes"
-                    previewLines={2}
-                    minCharacters={60}
-                    minLineBreaks={1}
-                    preserveWhitespace
-                    stopPropagation
-                    className="gap-2"
-                    labelClassName="mb-0"
-                    textClassName="text-[13px] sm:text-[14px] font-medium text-slate-700 tracking-tight leading-[1.78] font-sans"
-                    buttonClassName="mt-0"
-                    collapsedLabel="展開完整內容"
-                    expandedLabel="收起內容"
-                  />
-                </div>
+                <CollapsibleNotes text={detailCopy} label="NOTES" />
               ) : (
                 <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
                   <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -4759,10 +4864,8 @@ const ItineraryListItem = React.memo(
                 />
                 {/* Modal Content */}
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/90 backdrop-blur-2xl rounded-[28px] sm:rounded-[32px] shadow-2xl border border-white flex flex-col pointer-events-auto"
+                  layoutId={`modal-${item.node_id}`}
+                  className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/95 backdrop-blur-3xl rounded-[32px] sm:rounded-[36px] shadow-2xl border border-white/50 flex flex-col pointer-events-auto"
                 >
                   {/* Header */}
                   <div className="sticky top-0 z-20 bg-white/60 backdrop-blur-xl border-b border-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
@@ -5999,6 +6102,7 @@ function SelectedNodeTransportDetails({
   useEffect(() => {
     if (
       km > 2 &&
+      km <= 300 &&
       selectedNode.lng &&
       selectedNode.lat &&
       nextItem?.lng &&
@@ -6027,15 +6131,17 @@ function SelectedNodeTransportDetails({
         label: selectedNode.transport_to_next,
         minutes: extractMinutes(selectedNode.transport_to_next),
         isApi: false,
+        isFlight: false,
       };
     }
     if (autoTransport) {
-      if (apiDuration && km > 2) {
+      if (apiDuration && km > 2 && !autoTransport.isFlight) {
         return {
           emoji: "🚗",
-          label: `預計車程 ${apiDuration} 分鐘`,
+          label: `預計車程 ${formatMinutes(apiDuration)}`,
           minutes: apiDuration,
           isApi: true,
+          isFlight: false,
         };
       }
       return { ...autoTransport, isApi: false };
@@ -6060,7 +6166,7 @@ function SelectedNodeTransportDetails({
     (displayTransport &&
       timeGapMinutes > 0 &&
       displayTransport.minutes > timeGapMinutes) ||
-    (displayTransport && displayTransport.minutes > 90),
+    (displayTransport && displayTransport.minutes > 90 && !displayTransport.isFlight),
   );
 
   if (!displayTransport) return null;
@@ -6103,8 +6209,8 @@ function SelectedNodeTransportDetails({
               />
               <span className="leading-relaxed">
                 {displayTransport.minutes > timeGapMinutes && timeGapMinutes > 0
-                  ? `預估需 ${displayTransport.minutes} 分鐘，但距離下一行程 (${nextItem?.time || ""}) 僅剩 ${timeGapMinutes} 分鐘，時間有衝突！`
-                  : `預估交通高達 ${displayTransport.minutes} 分鐘，車程較長，建議調整或留意休息。`}
+                  ? `預估需 ${formatMinutes(displayTransport.minutes)}，但距離下一行程 (${nextItem?.time || ""}) 僅剩 ${formatMinutes(timeGapMinutes)}，時間有衝突！`
+                  : `預估交通高達 ${formatMinutes(displayTransport.minutes)}，車程較長，建議調整或留意休息。`}
               </span>
             </div>
           )}
