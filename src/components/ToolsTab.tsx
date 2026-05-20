@@ -40,6 +40,7 @@ import {
   submitLedgerExpense,
   updateChecklist,
   fetchSettlementHistory,
+  fetchLedgerExpenses,
 } from "../lib/workflowApi";
 import type {
   TripInfo,
@@ -285,6 +286,7 @@ interface ToolsTabActions {
     currency: string;
   }) => void;
   sendReminder: () => void;
+  addCustomMember: (name: string) => void;
 }
 
 interface ToolsTabContextValue {
@@ -313,10 +315,11 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     members,
     setMembers,
     expenses,
+    setExpenses,
     addExpense,
     removeExpense,
   } = useToolsStore();
-  const { showToast, activeTripId: tripId } = useAppStore();
+  const { showToast, activeTripId: tripId, userId } = useAppStore();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -354,11 +357,15 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           collaboratorsData,
           tripInfoData,
           settlementHistoryData,
+          ledgerExpensesData,
+          settlementsData,
         ] = await Promise.all([
           fetchChecklist(tripId),
           fetchCollaborators(tripId),
           fetchTripInfo(tripId).catch(() => null),
           fetchSettlementHistory(tripId).catch(() => []),
+          fetchLedgerExpenses(tripId).catch(() => []),
+          fetchSettlements(tripId).catch(() => []),
         ]);
 
         let initialCurrency = "TWD";
@@ -381,6 +388,11 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           .filter(Boolean);
         setChecklist(checklistData);
         setSettlementHistory(settlementHistoryData);
+        setExpenses(ledgerExpensesData);
+        if (Array.isArray(settlementsData)) {
+          setSettlements(settlementsData);
+        }
+        
         if (memberNames.length > 0) {
           setMembers(memberNames);
           // Only update initial form state once when we get members
@@ -388,6 +400,17 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
             ...prev,
             payer: memberNames[0],
             splitWith: memberNames,
+            currency: initialCurrency,
+          }));
+        } else {
+          // Robust fallback if there are no registered online collaborators
+          const guestName = userId === "demo_user" ? "我" : (userId || "我");
+          const fallbackMembers = [guestName, "旅伴 A", "旅伴 B"];
+          setMembers(fallbackMembers);
+          setForm((prev) => ({
+            ...prev,
+            payer: fallbackMembers[0],
+            splitWith: fallbackMembers,
             currency: initialCurrency,
           }));
         }
@@ -398,7 +421,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       }
     };
     void init();
-  }, [tripId, setChecklist, setMembers]);
+  }, [tripId, userId, setChecklist, setMembers, setExpenses, setSettlements]);
 
   const expenseByCurrency = useMemo(
     () =>
@@ -582,6 +605,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           ]);
           setSettlementHistory(history);
           if (Array.isArray(fresh)) setSettlements(fresh);
+          setExpenses([]);
         }
         showToast(
           `${settlement.from} → ${settlement.to} 已標記結清。`,
@@ -592,6 +616,21 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       } finally {
         setClearingId(null);
       }
+    },
+
+    addCustomMember(name) {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      if (members.includes(trimmed)) {
+        showToast("該成員已存在分攤名單中囉！", "warning");
+        return;
+      }
+      setMembers([...members, trimmed]);
+      setForm((prev) => ({
+        ...prev,
+        splitWith: [...prev.splitWith, trimmed],
+      }));
+      showToast(`已新增自訂旅伴：${trimmed}！`, "success");
     },
   };
 
@@ -1350,6 +1389,14 @@ function LedgerSection() {
     actions,
   } = useToolsTabContext();
   const { isOffline } = useAppStore();
+  const [newMemberName, setNewMemberName] = useState("");
+
+  const handleAddMember = () => {
+    const name = newMemberName.trim();
+    if (!name) return;
+    actions.addCustomMember(name);
+    setNewMemberName("");
+  };
   return (
     <GlassCard className="!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300 glass-panel">
       <div className="absolute -top-10 -left-10 w-32 h-32 bg-pink-100/45 rounded-full blur-[24px] pointer-events-none" />
@@ -1571,6 +1618,38 @@ function LedgerSection() {
               {errors.splitWith}
             </span>
           )}
+        </div>
+
+        {/* 快速新增自訂伴侶 / 分攤成員 */}
+        <div className="border-t border-dashed border-slate-100 my-2 pt-3 flex flex-col gap-1.5">
+          <Label htmlFor="custom-member-input" className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-2">
+            ➕ 快速新增自訂旅伴 / 分攤人
+          </Label>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Input
+                id="custom-member-input"
+                placeholder="輸入姓名 (例如: 小明、媽媽)"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddMember();
+                  }
+                }}
+                className="h-10 text-[13px] rounded-full border-slate-200/80 px-4 bg-slate-50/50 focus:bg-white"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={handleAddMember}
+              variant="outline"
+              className="h-10 rounded-full px-4 text-[12px] font-black border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 shrink-0 text-slate-600 hover:text-slate-800"
+            >
+              <span>+ 新增成員</span>
+            </Button>
+          </div>
         </div>
 
         <Button

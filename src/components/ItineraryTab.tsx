@@ -2972,7 +2972,7 @@ export default function ItineraryTab() {
                             onClick={() => setShowPlanner(!showPlanner)}
                             className={`w-full sm:w-auto px-10 py-4 rounded-full font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${showPlanner ? "bg-slate-100 text-slate-500" : "bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 active:scale-[0.97]"}`}
                           >
-                            {showPlanner ? "收起助理" : "喚起 AI 助理"}
+                            {showPlanner ? "收起助理" : "召喚 AI"}
                             {showPlanner ? (
                               <X size={18} />
                             ) : (

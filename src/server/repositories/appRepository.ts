@@ -974,6 +974,42 @@ export class AppRepository {
     return Object.entries(grouped).map(([date, g]) => ({ date, ...g })).reverse();
   }
 
+  async getLedgerExpenses(tripId: string, cleared = false) {
+    if (!this.db) {
+      return this.memoryExpenses
+        .filter((expense) => expense.tripId === tripId && (cleared ? !!expense.clearedAt : !expense.clearedAt))
+        .map((exp) => ({
+          id: exp.id,
+          title: exp.description || '未命名項目',
+          amount: exp.amount,
+          currency: exp.currency || 'TWD',
+          payer: exp.payerId,
+          splitWith: exp.members || [],
+          date: exp.createdAt?.toISOString() || new Date().toISOString(),
+        }));
+    }
+    const rows = await this.db
+      .select()
+      .from(schema.expenses)
+      .where(
+        and(
+          eq(schema.expenses.tripId, tripId),
+          cleared ? isNotNull(schema.expenses.clearedAt) : isNull(schema.expenses.clearedAt)
+        )
+      );
+    const members = await this.db.select().from(schema.tripMembers).where(eq(schema.tripMembers.tripId, tripId));
+    const memberIds = members.map((m) => m.userId);
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.description || '未命名項目',
+      amount: r.amount,
+      currency: (r as any).currency || 'TWD',
+      payer: r.payerId,
+      splitWith: memberIds,
+      date: r.createdAt?.toISOString() || new Date().toISOString(),
+    }));
+  }
+
   async getFavoritesByTrip(tripId: string) {
     if (!this.db) return [];
     return await this.db.select().from(schema.favorites).where(eq(schema.favorites.tripId, tripId));

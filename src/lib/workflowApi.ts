@@ -416,8 +416,18 @@ export async function fetchHandbooks(): Promise<any[]> {
     return res.json();
   } catch (error) {
     console.error('fetchHandbooks failed', error);
-    return [];
   }
+}
+
+export async function fetchLedgerExpenses(tripId: string, cleared = false): Promise<any[]> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/ledger/expenses?trip_id=${tripId}&cleared=${cleared}`, {
+    headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+  });
+  if (!res.ok) {
+    throw await parseApiError(res, '取得花費紀錄失敗');
+  }
+  return await res.json();
 }
 export async function clearSettlement(tripId: string, from_name?: string, to_name?: string, currency?: string): Promise<any> { 
   const token = getStoredToken();

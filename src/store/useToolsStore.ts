@@ -81,6 +81,7 @@ export const useToolsStore = create<any>((set, get) => ({
     })),
     
   expenses: [],
+  setExpenses: (expenses: Expense[]) => set({ expenses, settlements: calculateSettlements(expenses) }),
   addExpense: (expense: Expense) => set((state: any) => {
     const newExpenses = [...state.expenses, expense];
     return { expenses: newExpenses, settlements: calculateSettlements(newExpenses) };

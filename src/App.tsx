@@ -1,7 +1,7 @@
 import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from './lib/motionTokens';
 import { useState, useEffect, useCallback, useRef, lazy, Suspense, type ComponentType } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import HomeTab from './components/HomeTab';
+const HomeTab = lazy(() => import('./components/HomeTab'));
 import RedirectModal from './components/RedirectModal';
 import { assignDaysBasedOnTimeAndOrder } from './lib/itineraryUtils';
 
@@ -874,9 +874,9 @@ export default function App() {
             key={showLogin ? `login-${loginPromptMode}` : isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
-              enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.96, y: 8 }),
-              center: { opacity: 1, scale: 1, y: 0 },
-              exit: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.98, y: -4 }),
+              enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.99, x: dir * 50 }),
+              center: { opacity: 1, scale: 1, x: 0 },
+              exit: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.99, x: dir * -50 }),
             }}
             initial="enter"
             animate="center"

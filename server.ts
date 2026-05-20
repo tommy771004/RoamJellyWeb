@@ -2507,6 +2507,20 @@ async function startServer() {
     res.json({ status: 'success', settlements: settlementRows });
   });
 
+  app.get('/api/ledger/expenses', async (req, res) => {
+    const tripId = String(req.query.trip_id ?? '').trim();
+    if (!tripId) {
+      res.status(400).json({ status: 'error', message: 'trip_id is required' });
+      return;
+    }
+    const allowed = await ensureTripRole(req, res, tripId, 'viewer');
+    if (!allowed) return;
+
+    const cleared = req.query.cleared === 'true';
+    const expensesList = await repo.getLedgerExpenses(tripId, cleared);
+    res.json(expensesList);
+  });
+
   app.get('/api/settlements', async (req, res) => {
     const tripId = String(req.query.trip_id ?? '').trim();
     if (!tripId) {
