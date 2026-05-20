@@ -81,6 +81,15 @@ export default function App() {
     return () => window.removeEventListener('open-map', handleMapOpen);
   }, []);
 
+  useEffect(() => {
+    const handleOpenLogin = () => {
+      setLoginPromptMode('default');
+      setShowLogin(true);
+    };
+    window.addEventListener('open-login', handleOpenLogin);
+    return () => window.removeEventListener('open-login', handleOpenLogin);
+  }, []);
+
   // Detect trip landing URL once on mount (before any auth check)
   const [tripLandingId] = useState<string | null>(getTripLandingId);
 

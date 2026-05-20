@@ -2030,7 +2030,7 @@ export default function ItineraryTab() {
                     titleClassName="text-xl sm:text-3xl md:text-5xl"
                     descriptionClassName={`text-sm sm:text-lg font-bold leading-6 sm:leading-8 transition-opacity duration-300 ${isAiHeroExpanded ? "opacity-100" : "opacity-70 group-hover:opacity-100"}`}
                   />
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600 transition-colors">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 dark:text-slate-350 group-hover:bg-slate-100 group-hover:text-slate-600 transition-colors">
                     <ChevronDown
                       size={20}
                       className={`transition-transform duration-300 ${isAiHeroExpanded ? "rotate-180" : "rotate-0"}`}
@@ -2110,7 +2110,7 @@ export default function ItineraryTab() {
 
           <div className="flex items-center gap-3 mb-8">
             <div className="h-px flex-1 bg-slate-100" />
-            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-4">
+            <span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest px-4">
               我的行程歷史
             </span>
             <div className="h-px flex-1 bg-slate-100" />
@@ -2246,7 +2246,7 @@ export default function ItineraryTab() {
                           </div>
                         </div>
                         <ArrowRight
-                          className="text-slate-400 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"
+                          className="text-slate-500 dark:text-slate-300 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"
                           size={20}
                         />
                       </div>
@@ -2642,7 +2642,7 @@ export default function ItineraryTab() {
               {totalDays > actualDaysLimit && (
                 <button
                   onClick={() => setVisibleDaysLimit((l) => l + 14)}
-                  className="w-full mt-4 py-2 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-black tracking-widest text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-colors uppercase"
+                  className="w-full mt-4 py-2 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-black tracking-widest text-slate-500 dark:text-slate-300 hover:text-slate-700 hover:border-slate-300 transition-colors uppercase"
                 >
                   展開更多天數...
                 </button>
@@ -2686,7 +2686,7 @@ export default function ItineraryTab() {
                   </span>
                   <ChevronDown
                     size={16}
-                    className={`text-slate-400 transition-transform duration-200 shrink-0 ${
+                    className={`text-slate-500 dark:text-slate-350 transition-transform duration-200 shrink-0 ${
                       isFavoritesCollapsed ? "-rotate-90" : ""
                     }`}
                   />
@@ -2874,7 +2874,7 @@ export default function ItineraryTab() {
                         </span>
                         {displayDate && (
                           <span
-                            className={`text-[10px] sm:text-[11px] font-bold hidden sm:inline z-10 transition-colors ${isActive ? "text-pink-50" : "text-slate-400"}`}
+                            className={`text-[10px] sm:text-[11px] font-bold hidden sm:inline z-10 transition-colors ${isActive ? "text-pink-50" : "text-slate-500 dark:text-slate-300"}`}
                           >
                             {displayDate}
                           </span>
@@ -2882,7 +2882,7 @@ export default function ItineraryTab() {
                         {loadingDay === day && (
                           <Loader2
                             size={12}
-                            className={`animate-spin ml-0.5 z-10 transition-colors ${isActive ? "text-white" : "text-slate-400"}`}
+                            className={`animate-spin ml-0.5 z-10 transition-colors ${isActive ? "text-white" : "text-slate-500 dark:text-slate-300"}`}
                           />
                         )}
                       </motion.button>
@@ -2893,7 +2893,7 @@ export default function ItineraryTab() {
                   <motion.button
                     onClick={() => setVisibleDaysLimit((l) => l + 14)}
                     whileTap={{ scale: 0.96 }}
-                    className="relative flex items-center justify-center px-4 py-2.5 sm:py-2 rounded-full font-black text-[13px] sm:text-sm text-slate-400 hover:text-slate-600 bg-white/40 hover:bg-white border border-dashed border-slate-300 transition-all shrink-0 snap-center"
+                    className="relative flex items-center justify-center px-4 py-2.5 sm:py-2 rounded-full font-black text-[13px] sm:text-sm text-slate-500 dark:text-slate-300 hover:text-slate-700 bg-white/40 hover:bg-white border border-dashed border-slate-350 transition-all shrink-0 snap-center"
                   >
                     + 載入更多
                   </motion.button>
@@ -3914,7 +3914,7 @@ function DraggableFavoriteSpot({
           <button
             onClick={() => onDelete(spot.id)}
             aria-label={`刪除收藏「${spot.title}」`}
-            className="w-8 h-8 rounded-full bg-white/50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
+            className="w-8 h-8 rounded-full bg-white/50 text-slate-500 dark:text-slate-300 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm"
           >
             <Trash2 size={14} />
           </button>
@@ -4418,7 +4418,7 @@ const ItineraryListItem = React.memo(
           <div className="flex flex-col gap-2 sm:gap-3 w-full">
             <div className="flex items-center justify-between gap-2 mb-0.5">
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-400">
+                <span className={`text-[9px] font-black uppercase tracking-[0.22em] ${isFlightCard ? "text-slate-300" : isHotelCard ? "text-indigo-200" : "text-slate-500 dark:text-slate-350"}`}>
                   {isFlightCard ? "Transit" : isHotelCard ? "Stay" : "Day Note"}
                 </span>
                   <span
@@ -4812,7 +4812,7 @@ const ItineraryListItem = React.memo(
                 <CollapsibleNotes text={detailCopy} label="NOTES" />
               ) : (
                 <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
-                  <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                  <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-350">
                     Notes
                   </p>
                   <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity leading-5">
@@ -4967,7 +4967,7 @@ const ItineraryListItem = React.memo(
                         setIsEditing(false);
                         onEditingChange?.(item.node_id, item.day, false);
                       }}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/80 hover:text-rose-500 text-slate-400 hover:bg-rose-50 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/80 hover:text-rose-500 text-slate-500 dark:text-slate-300 hover:bg-rose-50 transition-colors"
                     >
                       <X size={16} />
                     </button>
@@ -5406,7 +5406,7 @@ function ItineraryList({
                     >
                       <span>{emoji}</span>
                       <span className="font-bold">D{idx + 1}</span>
-                      <span className="text-slate-400 font-medium">|</span>
+                      <span className="text-slate-500 dark:text-slate-350 font-medium">|</span>
                       <span>{wVal.temp_min}°-{wVal.temp_max}°</span>
                       <span className="text-blue-400 font-bold ml-0.5">{rainProb}%</span>
                     </div>
@@ -5426,7 +5426,7 @@ function ItineraryList({
                     >
                       <span>{emoji}</span>
                       <span className="font-bold">D{idx + 1}</span>
-                      <span className="text-slate-400 font-medium">|</span>
+                      <span className="text-slate-500 dark:text-slate-355 font-medium">|</span>
                       <span>{wVal.temp_min}°-{wVal.temp_max}°</span>
                       <span className="text-blue-400 font-bold ml-0.5">{rainProb}%</span>
                     </div>
@@ -5706,7 +5706,7 @@ function ManualAddNode({
         disabled={isOffline}
         className="w-full py-8 rounded-[48px] border-2 border-dashed border-slate-200 text-slate-500 font-black text-[15px] uppercase tracking-[0.2em] flex items-center justify-center gap-4 hover:border-pink-300 hover:text-pink-400 hover:bg-pink-50/20 transition-all shadow-sm disabled:opacity-30"
       >
-        <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-pink-100 group-hover:text-pink-400 transition-colors">
+        <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-500 dark:text-slate-300 group-hover:bg-pink-100 group-hover:text-pink-400 transition-colors">
           <Plus size={20} />
         </div>
         新增行程節點
@@ -5765,7 +5765,7 @@ function ManualAddNode({
                 </label>
                 <div className="relative group">
                   <Pencil
-                    className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-pink-400 transition-colors"
+                    className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 group-focus-within:text-pink-400 transition-colors"
                     size={18}
                   />
                   <input
@@ -5787,7 +5787,7 @@ function ManualAddNode({
                   <div className="relative group">
                     <Calendar
                       size={18}
-                      className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-pink-400 transition-colors"
+                      className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 group-focus-within:text-pink-400 transition-colors"
                     />
                     <input
                       type="date"
@@ -5804,7 +5804,7 @@ function ManualAddNode({
                   <div className="relative group">
                     <Clock
                       size={18}
-                      className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-pink-400 transition-colors"
+                      className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 group-focus-within:text-pink-400 transition-colors"
                     />
                     <input
                       type="time"
@@ -5823,7 +5823,7 @@ function ManualAddNode({
                 <div className="flex gap-2">
                   <div className="relative group flex-1">
                     <MapPin
-                      className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-pink-400 transition-colors"
+                      className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 group-focus-within:text-pink-400 transition-colors"
                       size={18}
                     />
                     <input
@@ -5929,7 +5929,7 @@ function ManualAddNode({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-350">
                       <ChevronDown size={18} />
                     </div>
                   </div>
@@ -5954,7 +5954,7 @@ function ManualAddNode({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-350">
                       <ChevronDown size={18} />
                     </div>
                   </div>

@@ -866,7 +866,7 @@ function WeatherCard() {
             )}
           </div>
           <div className="flex flex-col items-end rounded-[28px] border border-white/80 bg-white/78 px-4 py-3 shadow-[0_4px_16px_rgba(244,114,182,0.08)]">
-            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-350">
               today vibe
             </span>
             <div className="text-[48px] sm:text-[56px] leading-none font-black tracking-tighter text-slate-800 drop-shadow-sm flex items-start gap-1 whitespace-nowrap">
@@ -1312,7 +1312,7 @@ function ChecklistSection() {
             >
               <div className="flex items-center justify-between border-b border-pink-50 pb-3">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">AI recommendations</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-350 font-mono">AI recommendations</span>
                   <span className="text-sm font-black text-slate-800">AI 推薦打包清單</span>
                 </div>
                 <span className="text-xs font-black text-pink-600 bg-pink-50 px-2.5 py-1 rounded-full border border-pink-100">
@@ -1430,7 +1430,7 @@ function LedgerSection() {
           </span>
         </div>
         <div className="shrink-0 rounded-[28px] border border-white/80 bg-white/82 px-4 py-3 text-right shadow-[0_4px_16px_rgba(244,114,182,0.08)]">
-          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">本趟摘要</div>
+          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-350">本趟摘要</div>
           <div className="mt-1 text-lg font-black text-slate-900">{expenses.length} 筆</div>
           <div className="text-[12px] font-bold text-slate-500">{members.length || 0} 位旅伴</div>
         </div>
@@ -1638,7 +1638,7 @@ function LedgerSection() {
 
         {/* 快速新增自訂伴侶 / 分攤成員 */}
         <div className="border-t border-dashed border-slate-100 my-2 pt-3 flex flex-col gap-1.5">
-          <Label htmlFor="custom-member-input" className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-2">
+          <Label htmlFor="custom-member-input" className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-350 ml-2">
             ➕ 快速新增自訂旅伴 / 分攤人
           </Label>
           <div className="flex gap-2">
@@ -1885,7 +1885,7 @@ function SettlementHistorySection() {
                     </span>
                   ))}
                 </div>
-                <div className="text-slate-400 pl-1">
+                <div className="text-slate-500 dark:text-slate-350 pl-1">
                   {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>
               </div>
@@ -1902,12 +1902,12 @@ function SettlementHistorySection() {
                     onClick={(e) => e.stopPropagation()} // Prevent toggling when clicking within details
                   >
                     <div className="border-t border-slate-100/80 mt-3 pt-3.5 flex flex-col gap-2">
-                      <div className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400 mb-1.5 pl-1">
+                      <div className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500 dark:text-slate-350 mb-1.5 pl-1">
                         此批結清花費項目 ({matchingExpenses.length} 筆)
                       </div>
                       
                       {matchingExpenses.length === 0 ? (
-                        <div className="text-slate-400 text-[12.5px] italic pl-1">
+                        <div className="text-slate-500 dark:text-slate-350 text-[12.5px] italic pl-1">
                           無對應花費明細紀錄。
                         </div>
                       ) : (
@@ -1916,7 +1916,7 @@ function SettlementHistorySection() {
                             <div key={exp.id} className="flex items-center justify-between text-[13px] py-1 border-b border-dashed border-slate-100 last:border-0">
                               <div className="flex flex-col">
                                 <span className="font-bold text-slate-700">{exp.title}</span>
-                                <span className="text-[11px] text-slate-400 mt-0.5">
+                                <span className="text-[11px] text-slate-500 dark:text-slate-350 mt-0.5 font-medium">
                                   由 {exp.payer} 支付
                                 </span>
                               </div>
@@ -2129,7 +2129,7 @@ function ToolsTabContent() {
                   <ChevronDown
                     size={18}
                     strokeWidth={2.5}
-                    className={`text-slate-400 transition-transform duration-200 ${isPillarsExpanded ? 'rotate-180' : ''}`}
+                    className={`text-slate-500 dark:text-slate-350 transition-transform duration-200 ${isPillarsExpanded ? 'rotate-180' : ''}`}
                   />
                 </button>
                 <div className={`grid gap-3 sm:grid-cols-3 ${isPillarsExpanded ? 'p-3 md:p-0' : 'hidden md:grid'}`}>
@@ -2146,7 +2146,7 @@ function ToolsTabContent() {
                           <Icon size={14} strokeWidth={2.5} />
                           {eyebrow}
                         </span>
-                        <span className="rounded-full border border-white/80 bg-white/88 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400 shadow-sm">
+                        <span className="rounded-full border border-white/80 bg-white/88 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-350 shadow-sm">
                           0{index + 1}
                         </span>
                       </div>
@@ -2402,7 +2402,7 @@ function ToolsTabContent() {
                               {label}
                             </span>
                             {tripInfo?.name ? (
-                              <span className="truncate text-[11px] font-bold text-slate-400">
+                              <span className="truncate text-[11px] font-bold text-slate-550 dark:text-slate-300">
                                 {tripInfo.name}
                               </span>
                             ) : null}
@@ -2556,10 +2556,10 @@ function ToolsTabContent() {
                             </span>
                             <ExternalLink
                               size={14}
-                              className="text-slate-400"
+                              className="text-slate-500 dark:text-slate-300"
                             />
                           </div>
-                          <span className="text-[12px] text-slate-400 font-bold tracking-[0.14em] uppercase">
+                          <span className="text-[12px] text-slate-500 dark:text-slate-350 font-bold tracking-[0.14em] uppercase">
                             Direct • {flight.duration}
                           </span>
                         </div>
@@ -2577,7 +2577,7 @@ function ToolsTabContent() {
                           <span className="text-[22px] sm:text-[26px] font-black text-[#2C302E] tracking-tight">
                             {flight.depTime}
                           </span>
-                          <span className="text-[11px] sm:text-[12px] font-black text-slate-400 uppercase tracking-[0.18em]">
+                          <span className="text-[11px] sm:text-[12px] font-black text-slate-500 dark:text-slate-320 uppercase tracking-[0.18em]">
                             {flight.depCode}
                           </span>
                         </div>
@@ -2589,7 +2589,7 @@ function ToolsTabContent() {
                           <span className="text-[22px] sm:text-[26px] font-black text-[#2C302E] tracking-tight">
                             {flight.arrTime}
                           </span>
-                          <span className="text-[11px] sm:text-[12px] font-black text-slate-400 uppercase tracking-[0.18em]">
+                          <span className="text-[11px] sm:text-[12px] font-black text-slate-500 dark:text-slate-320 uppercase tracking-[0.18em]">
                             {flight.arrCode}
                           </span>
                         </div>
