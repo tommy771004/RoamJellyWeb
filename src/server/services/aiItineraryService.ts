@@ -137,7 +137,11 @@ interface AiResponse {
       text = await fetchOpenRouterWithFallback(apiKey, [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
-      ]);
+      ], {
+        responseFormat: { type: 'json_object' },
+        temperature: 0.5,
+        maxTokens: 3500,
+      });
     }
 
     const match = text.match(/\{[\s\S]*\}/);
@@ -216,7 +220,11 @@ export async function regenerateSpot(params: {
     const text = await fetchOpenRouterWithFallback(apiKey, [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
-    ]);
+    ], {
+      responseFormat: { type: 'json_object' },
+      temperature: 0.5,
+      maxTokens: 1000,
+    });
     const jsonStart = text.indexOf("{");
     const jsonEnd = text.lastIndexOf("}");
     if (jsonStart === -1 || jsonEnd === -1 || jsonStart >= jsonEnd) {

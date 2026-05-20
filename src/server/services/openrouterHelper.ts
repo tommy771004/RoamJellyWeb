@@ -37,9 +37,20 @@ const FALLBACK_MODELS = process.env.ALLOW_PAID_FALLBACK === 'true'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+/** Options to tune LLM generation speed, cost, and output format. */
+export interface OpenRouterOptions {
+  /** Force structured JSON output (models that support it). */
+  responseFormat?: { type: 'json_object' | 'text' };
+  /** Lower = faster & more deterministic. Default 0.7. */
+  temperature?: number;
+  /** Token budget — smaller = faster response. Default 4000. */
+  maxTokens?: number;
+}
+
 export async function fetchOpenRouterWithFallback(
   apiKey: string,
-  promptOrMessages: string | Array<{ role: string; content: string }>
+  promptOrMessages: string | Array<{ role: string; content: string }>,
+  options?: OpenRouterOptions
 ) {
   let lastError: Error | null = null;
   let rateLimitedCount = 0;
@@ -49,8 +60,24 @@ export async function fetchOpenRouterWithFallback(
     ? [{ role: 'user', content: promptOrMessages }]
     : promptOrMessages;
 
+  const maxTokens = options?.maxTokens ?? 4000;
+  const temperature = options?.temperature ?? 0.7;
+
   for (const model of FALLBACK_MODELS) {
     try {
+      // Build request body with optional structured output and temperature
+      const requestBody: Record<string, unknown> = {
+        model,
+        messages,
+        max_tokens: maxTokens,
+        temperature,
+      };
+
+      // Attach JSON mode for models that support structured output
+      if (options?.responseFormat) {
+        requestBody.response_format = options.responseFormat;
+      }
+
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -59,11 +86,7 @@ export async function fetchOpenRouterWithFallback(
           'HTTP-Referer': 'https://roamjelly.app',
           'X-Title': 'RoamJelly'
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          max_tokens: 4000
-        })
+        body: JSON.stringify(requestBody)
       });
 
       // Auth failure — no point retrying any model.

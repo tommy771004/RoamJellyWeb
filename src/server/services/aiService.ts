@@ -25,7 +25,11 @@ Example: ["Passports & ID", "Light Jackets", "Adapter & Cables", "Toiletries", "
     const text = await fetchOpenRouterWithFallback(apiKey, [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
-    ]);
+    ], {
+      responseFormat: { type: 'json_object' },
+      temperature: 0.3,
+      maxTokens: 400,
+    });
     
     // try to parse JSON
     try {
@@ -142,7 +146,11 @@ Ensure:
 
       messages.push({ role: 'user', content: userQuery });
 
-      const text = await fetchOpenRouterWithFallback(apiKey, messages);
+      const text = await fetchOpenRouterWithFallback(apiKey, messages, {
+        responseFormat: { type: 'json_object' },
+        temperature: 0.6,
+        maxTokens: 1500,
+      });
 
       try {
         const match = text.match(/\{[\s\S]*\}/);
