@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { createPortal } from 'react-dom';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useVisualViewport } from '../lib/useKeyboardHeight';
 import { 
   TRAVEL_GUIDE_REGIONS, 
@@ -72,20 +72,21 @@ export const LocationPickerPopup = ({
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="relative z-popup-above flex h-[calc(100%-1.5rem)] sm:h-[85%] w-full flex-col overflow-hidden rounded-t-[24px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,1))] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] md:h-auto md:max-h-[85vh] md:w-[600px] md:max-w-2xl md:min-w-[600px] md:rounded-[30px] md:shadow-[0_28px_60px_rgba(15,23,42,0.16)]"
         >
-          <div className={`sticky top-0 z-20 bg-white/95 px-4 ${isKeyboardOpen ? 'pb-2 pt-2' : 'pb-3 mt-2 pt-4'} shadow-sm md:px-6 md:pb-4 md:pt-6`}>
+          <div className={`sticky top-0 z-20 bg-white/95 px-4 ${isKeyboardOpen ? 'pb-2 pt-2' : 'pb-3 mt-2 pt-4'} border-b border-slate-100 bg-white/80 backdrop-blur-lg md:px-6 md:pb-4 md:pt-6`}>
             <div className={`mx-auto rounded-full bg-slate-200 md:hidden ${isKeyboardOpen ? 'mb-1 h-1 w-10' : 'mb-4 h-1.5 w-12'}`} />
             <div className={`flex flex-row items-center justify-between pl-1 ${isKeyboardOpen ? 'mb-1.5' : 'mb-5'}`}>
               <div className="flex flex-col">
-                <span className="text-xl md:text-2xl font-black text-slate-800">{title}</span>
+                <span className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">{title}</span>
                 {!isKeyboardOpen && (
                   <span className="text-[10px] md:text-xs mt-0.5 font-bold uppercase tracking-wider text-slate-400">Select Destination</span>
                 )}
               </div>
               <button 
                 onClick={onClose}
+                aria-label="關閉"
                 className={`flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 active:scale-[0.95] transition-all ${isKeyboardOpen ? 'h-8 w-8' : 'h-9 w-9 md:h-10 md:w-10'}`}
               >
-                <span className={`${isKeyboardOpen ? 'text-sm' : 'text-lg md:text-xl'} text-slate-500 font-bold leading-none`}>✕</span>
+                <X size={isKeyboardOpen ? 18 : 20} className="text-slate-500" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -95,7 +96,7 @@ export const LocationPickerPopup = ({
                 value={searchQuery}
                 aria-label="搜尋世界旅遊目的地"
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜尋國家、城市或景點別名"
+                placeholder="搜尋國家、城市或機場代碼 (如 TPE)"
                 className="w-full rounded-[16px] border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-bold text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
                 autoCapitalize="none"
                 autoCorrect="off"
@@ -115,7 +116,7 @@ export const LocationPickerPopup = ({
                     onClick={() => setSelectedRegion('全部地區')}
                     className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap active:scale-[0.97] ${
                       selectedRegion === '全部地區' 
-                        ? 'bg-slate-800 text-white shadow-md' 
+                        ? 'bg-sky-500 text-white shadow-md shadow-sky-100' 
                         : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -127,7 +128,7 @@ export const LocationPickerPopup = ({
                       onClick={() => setSelectedRegion(region)}
                       className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap active:scale-[0.97] ${
                         selectedRegion === region 
-                          ? 'bg-slate-800 text-white shadow-md' 
+                          ? 'bg-sky-500 text-white shadow-md shadow-sky-100' 
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                       }`}
                     >
@@ -144,22 +145,45 @@ export const LocationPickerPopup = ({
               <div className="flex flex-col gap-5 md:gap-7">
                 {groupedDestinations.map(([country, dests]) => (
                   <div key={country} className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px] md:text-[15px] font-black tracking-wider text-slate-700 pl-1">{country}</span>
+                    <div className="flex items-center gap-2 border-l-2 border-sky-400 pl-2">
+                      <span className="text-[14px] md:text-[15px] font-black tracking-wider text-slate-700">{country}</span>
                     </div>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
-                      {dests.map((dest) => (
-                        <button
-                          key={dest.id}
-                          onClick={() => onSelect(dest)}
-                          className="group flex flex-col items-center justify-center gap-0.5 rounded-xl border border-slate-200/80 bg-white py-2.5 px-1 md:py-3 md:px-2 shadow-[0_2px_8px_rgba(15,23,42,0.04)] transition-all active:scale-[0.97] hover:border-sky-300 hover:shadow-md"
-                        >
-                          <span className="w-full text-center text-[13px] md:text-[14px] font-extrabold text-slate-800 group-hover:text-sky-600 truncate">{dest.place.split('/')[0]}</span>
-                          {dest.searchAlias && (
-                            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 group-hover:text-sky-500 font-mono tracking-wider">{dest.searchAlias}</span>
-                          )}
-                        </button>
-                      ))}
+                      {dests.map((dest) => {
+                        const hasSlash = dest.place.includes('/');
+                        const mainCity = hasSlash ? dest.place.split('/')[0] : dest.place;
+                        const subBranch = hasSlash ? dest.place.split('/')[1] : null;
+
+                        return (
+                          <button
+                            key={dest.id}
+                            onClick={() => onSelect(dest)}
+                            className="group relative flex flex-col items-center justify-center gap-1 rounded-2xl border border-slate-200/60 bg-white/80 backdrop-blur-sm py-3 px-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50/25 hover:shadow-md hover:shadow-sky-100/50 active:scale-[0.96] overflow-hidden"
+                          >
+                            {/* Subtle decorative dot for domestic Taiwan spots as visual feedback */}
+                            {dest.country === '台灣' && (
+                              <span className="absolute top-2 right-2 size-1 rounded-full bg-pink-400 animate-pulse" />
+                            )}
+                            <span className="w-full text-center text-[13px] sm:text-[14px] font-black text-slate-800 group-hover:text-sky-600 transition-colors truncate">
+                              {mainCity}
+                            </span>
+                            {subBranch ? (
+                              <span className="text-[10px] font-bold text-slate-400 group-hover:text-sky-500/80 transition-colors truncate max-w-full">
+                                {subBranch}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold text-transparent select-none leading-none">
+                                Placeholder
+                              </span>
+                            )}
+                            {dest.searchAlias && (
+                              <span className="mt-0.5 inline-flex items-center rounded-md bg-slate-50 border border-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 font-mono tracking-wider group-hover:bg-sky-100/80 group-hover:border-sky-200 group-hover:text-sky-700 transition-all">
+                                {dest.searchAlias}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
