@@ -66,8 +66,7 @@ export async function generateItinerary(body: any) {
     ];
   }
 
-  const detailedPrompt = `你是一個精通 UI 參數與旅遊規劃的 AI。請讀取使用者的偏好，並**強制**回傳符合以下 TypeScript 介面的 JSON，不准帶有 markdown 標記：
-\`\`\`typescript
+  const systemPrompt = `你是一個精通 UI 參數與旅遊規劃的 AI。請讀取使用者的偏好，並**強制**回傳符合以下 TypeScript 介面的 JSON，不准帶有 markdown 標記：
 interface AiResponse {
   ui_config: {
     bg_gradient: string; // Tailwind class, 例: "from-amber-100 to-orange-50" (若是帶長輩)
@@ -90,16 +89,16 @@ interface AiResponse {
       transport_to_next?: string; // 預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)
       lat: number; // 緯度(純數字的浮點數，例如 25.0339)，不可遺漏
       lng: number; // 經度(純數字的浮點數，例如 121.5644)，不可遺漏
-      image_url?: string; // (可選) 若能取得外部真實景點圖片的 url 則填入 (如 Wikimedia 等公開圖庫的圖片網址)
+      image_url?: string; // (可選) 若能取得外部真實景點圖片的 url 則填入 (如 Wikimedia 等公開圖庫 of the image url)
       linkedFactId?: string; // 如果該行程節點明確對應到 [Travel facts anchors] 中的某個已知項目，請填寫其 ID
     }>;
   }>;
 }
-\`\`\`
+
 【語言與格式要求】
 1. **請一律使用「繁體中文 (Traditional Chinese)」**：無論景點在世界上哪個地方，請將景點名稱（name）、提醒（ai_note）、摘要等全部翻譯或轉寫為繁體中文（專有名詞可加上括號註記外文）。
 2. **嚴格的 JSON 格式**：請務必且只能使用**標準雙引號 \`"\`** 來包覆 JSON 裡的屬性(Key)與字串值(Value)。字串內容若需要用到引號，請直接使用全形引號「」或是單引號，切勿使用會破壞 JSON 解析的不合法引號。
-3. **嚴格的地理一致性 (Geographic Consistency)**：規劃出的所有景點 **必須嚴格位於指定的目的地（${destination}）內**。絕對禁止將其他國家或不相關地區的景點放入行程中（例如：如果目的地是日本，絕對不准放入韓國、泰國等其他國家的景點）。
+3. **嚴格的地理一致性 (Geographic Consistency)**：規劃出的所有景點 **必須嚴格位於指定的目的地內**。絕對禁止將其他國家或不相關地區的景點放入行程中（例如：如果目的地是日本，絕對不准放入韓國、泰國等其他國家的景點）。
 
 【最新 AI 規劃必備要求】
 1. **韓國地區地圖特例**：如果是前往韓國地區（如首爾、釜山、濟州島等），請務必在交通或行前準備的 \`ai_note\` 中強制提醒使用者下載並使用 **Naver Maps**，因當地 Google Maps 支援度較差。
@@ -112,11 +111,11 @@ interface AiResponse {
 若使用者未提供飲食禁忌，請忽略該限制；若為情侶，請安排浪漫景點。
 根據旅伴類型、節奏偏好與興趣，客製化每日行程安排與景點選擇。如果節奏為「特種兵急行軍」，請增加每日景點數量並緊湊安排；如果是「悠閒漫遊」，請減少景點數量，拉長單一景點停留時間，並在 transport_to_next 中反映出適當的預估交通時間與交通方式。
 請務必完整考慮「食、衣、住、行」四個面向：每日行程必須包含確切的住宿點（hotel）、合適的餐飲安排（food），以及與當地氣候或場合相關的服裝提醒或購物點（例如在 ai_note 中給予穿著建議以滿足「衣」的需求）。
-請極度客製化，發揮創意，**不要給出制式的「抵達與放行李」、「在地必吃美食推薦」、「深度體驗行程」、「經典夜生活」這種通用名稱**，請務必給出真實的當地景點名稱或特色店家名稱，並依據使用者選取的 Travel Vibes 和 Interests 打造有靈魂的旅程。
+請極度客製化，發揮創意，**不要給出制式的「抵達與放行李」、「在地必吃美食推薦」、「深度體驗行程」、「經典夜生活」這種通用名稱**，請務必給出真實的當地景點名稱或特色店家名稱，並依據使用者選取的 Travel Vibes 和 Interests 打造有靈魂的旅程。`;
 
-Details: 
+  const userPrompt = `Details: 
 - Trip length: ${days} days
-- Destination: ${destination}
+- Destination: ${destination}${generationContext}
 - Departure: ${planner?.departureFrom || "unknown"}
 - Auto flight segments: ${planner?.autoFlightSegments?.join(" | ") || "Not specified"}
 - Travel facts anchors: ${planner?.travelFactsContext || "Not specified"}
@@ -129,15 +128,16 @@ Details:
 - Budget Level: ${planner?.budget || "Not specified"}
 - Extra notes: ${planner?.notes || "None"}
 
-注意：請直接輸出 JSON，不要有任何多餘的解釋文字或 markdown \`\`\` 包裝。
-`;
+注意：請直接輸出 JSON，不要有任何多餘的解釋文字或 markdown \`\`\` 包裝。`;
 
   try {
     let text = "";
 
-    // We strictly use OpenRouter apiKey per user request "拿掉gemini api 僅用 openrouter api"
     if (apiKey) {
-      text = await fetchOpenRouterWithFallback(apiKey, detailedPrompt);
+      text = await fetchOpenRouterWithFallback(apiKey, [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]);
     }
 
     const match = text.match(/\{[\s\S]*\}/);
@@ -163,6 +163,7 @@ Details:
     },
   ];
 }
+
 
 /**
  * Spot-level regeneration: replaces a single itinerary node with a fresh AI suggestion.
@@ -201,10 +202,21 @@ export async function regenerateSpot(params: {
 } | null> {
   if (!apiKey) return null;
 
-  const prompt = buildRegenerateSpotPrompt(params);
+  const systemPrompt = `你是一個精通 UI 參數與旅遊規劃的 AI。請替換使用者不滿意的景點。
+【格式與語言要求】
+1. 請一律使用繁體中文 (Traditional Chinese)。
+2. 嚴格的 JSON 格式：務必使用標準雙引號。
+3. 嚴格的地理一致性 (Geographic Consistency)。
+4. 如果是韓國地區，請在 ai_note 中強制提醒下載使用 Naver Maps。
+5. 必須包含營業時間、停車資訊、門票資訊、以及量化預估花費。`;
+
+  const userPrompt = buildRegenerateSpotPrompt(params);
 
   try {
-    const text = await fetchOpenRouterWithFallback(apiKey, prompt);
+    const text = await fetchOpenRouterWithFallback(apiKey, [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ]);
     const jsonStart = text.indexOf("{");
     const jsonEnd = text.lastIndexOf("}");
     if (jsonStart === -1 || jsonEnd === -1 || jsonStart >= jsonEnd) {

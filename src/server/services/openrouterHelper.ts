@@ -2,27 +2,24 @@
 // Last synced 2026-05-11. Ordered by expected capability for Chinese travel JSON generation.
 // Excluded: audio (lyria), OCR (qianfan-ocr), internal (openrouter/owl-alpha, openrouter/free), code-only (poolside/*), unknown (inclusionai/ring).
 const FREE_MODELS = [
-  // Large / high-capability
-  'openai/gpt-oss-120b:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  'qwen/qwen3-next-80b-a3b-instruct:free',
-  // Mid-tier — confirmed present
+  // Highly active, stable, lightning-fast models (highly recommended for Chinese travel JSON generation)
+  'google/gemini-2.5-flash:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwen-2.5-72b-instruct:free',
+  'google/gemini-2.5-pro:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'qwen/qwen-2.5-coder-32b-instruct:free',
+  
+  // Mid-tier backup
   'google/gemma-4-31b-it:free',
   'google/gemma-4-26b-a4b-it:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'openai/gpt-oss-20b:free',
-  'nvidia/nemotron-3-nano-30b-a3b:free',
-  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-  'nousresearch/hermes-3-llama-3.1-405b:free',
   'z-ai/glm-4.5-air:free',
-  'qwen/qwen3-coder:free',
   'minimax/minimax-m2.5:free',
-  // Small — confirmed present
+  
+  // Small / Tiny backups
   'meta-llama/llama-3.2-3b-instruct:free',
   'nvidia/nemotron-nano-12b-v2-vl:free',
   'nvidia/nemotron-nano-9b-v2:free',
-  'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
-  // Tiny — last resort
   'liquid/lfm-2.5-1.2b-thinking:free',
   'liquid/lfm-2.5-1.2b-instruct:free',
 ];
@@ -40,10 +37,17 @@ const FALLBACK_MODELS = process.env.ALLOW_PAID_FALLBACK === 'true'
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-export async function fetchOpenRouterWithFallback(apiKey: string, prompt: string) {
+export async function fetchOpenRouterWithFallback(
+  apiKey: string,
+  promptOrMessages: string | Array<{ role: string; content: string }>
+) {
   let lastError: Error | null = null;
   let rateLimitedCount = 0;
   let notFoundCount = 0;
+
+  const messages = typeof promptOrMessages === 'string'
+    ? [{ role: 'user', content: promptOrMessages }]
+    : promptOrMessages;
 
   for (const model of FALLBACK_MODELS) {
     try {
@@ -57,7 +61,7 @@ export async function fetchOpenRouterWithFallback(apiKey: string, prompt: string
         },
         body: JSON.stringify({
           model,
-          messages: [{ role: 'user', content: prompt }],
+          messages,
           max_tokens: 4000
         })
       });

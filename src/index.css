@@ -69,6 +69,8 @@
   --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   --shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.12);
   --shadow-modal: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
+  --shadow-premium-glow: 0 0 20px rgba(244, 114, 182, 0.15), 0 0 40px rgba(14, 165, 233, 0.1);
+  --shadow-jelly-inset: inset 0 2px 4px rgba(244, 114, 182, 0.06), inset 0 -2px 4px rgba(14, 165, 233, 0.06);
 
   /* Border Radius */
   --radius-default: 0.75rem;
@@ -945,4 +947,49 @@ select {
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(244, 114, 182, 0.15), 0 0 30px rgba(14, 165, 233, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(244, 114, 182, 0.3), 0 0 50px rgba(14, 165, 233, 0.2);
+  }
+}
+
+@utility animate-pulse-glow {
+  animation: pulse-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@utility bg-jelly-glowing {
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.08) 0%, rgba(14, 165, 233, 0.08) 100%);
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(244, 114, 182, 0.15) 0%, transparent 60%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  &:hover::after {
+    opacity: 1;
+  }
+}
+
+@utility bg-premium-gradient {
+  background: linear-gradient(135deg, #ec4899 0%, #06b6d4 100%);
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+
+@utility animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
 

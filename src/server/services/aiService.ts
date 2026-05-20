@@ -16,12 +16,16 @@ export async function generatePackingList(destination: string, days: number, wea
   }
 
   try {
-    const prompt = `You are an expert travel planner. The user is going to ${destination} for ${days} days. Expected weather/context: ${weatherContext}.
-Please generate a realistic, essential packing list with exactly 6 key categories/items.
+    const systemPrompt = `You are an expert travel planner. Please generate a realistic, essential packing list with exactly 6 key categories/items.
 Output ONLY a raw JSON array of strings. No markdown, no formatting, just the array.
 Example: ["Passports & ID", "Light Jackets", "Adapter & Cables", "Toiletries", "Comfortable Shoes", "Swimwear"]`;
 
-    const text = await fetchOpenRouterWithFallback(apiKey, prompt);
+    const userPrompt = `The user is going to ${destination} for ${days} days. Expected weather/context: ${weatherContext}.`;
+
+    const text = await fetchOpenRouterWithFallback(apiKey, [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ]);
     
     // try to parse JSON
     try {
@@ -88,14 +92,10 @@ export async function generateChatResponse(
   // Real API Call
   if (apiKey) {
     try {
-      const historyStr = history
-        .map((msg) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
-        .join('\n');
-
       const systemPrompt = `You are "Jelly AI 行程顧問", a delightful, knowledgeable, and highly helpful AI Travel Assistant.
 The user is planning a trip. Context: Current active destination is "${defaultDestination}" (${context?.activeDays ? `${context.activeDays} days` : 'undefined days'}).
 
-Your task is to answer the user's latest query: "${userQuery}"
+Your task is to answer the user's latest query.
 Please return a valid JSON object matching the following TypeScript schema:
 {
   "text": "friendly natural language explanation in Traditional Chinese (台湾正體中文)",
@@ -129,8 +129,20 @@ Ensure:
 - Keep the natural text friendly, concise, and helpful.
 - Return ONLY the JSON object, absolutely no markdown formatting, backticks, or other text outside of the JSON block. Let the opening curly brace be the first character.`;
 
-      const prompt = `Conversation history:\n${historyStr}\n\nLatest User Query: ${userQuery}`;
-      const text = await fetchOpenRouterWithFallback(apiKey, systemPrompt + '\n\n' + prompt);
+      const messages: Array<{ role: string; content: string }> = [
+        { role: 'system', content: systemPrompt }
+      ];
+
+      for (const msg of history) {
+        messages.push({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        });
+      }
+
+      messages.push({ role: 'user', content: userQuery });
+
+      const text = await fetchOpenRouterWithFallback(apiKey, messages);
 
       try {
         const match = text.match(/\{[\s\S]*\}/);

@@ -59,10 +59,10 @@ export default function BottomTabs() {
     >
       <motion.div
         layout
-        className={`p-1 pointer-events-auto flex items-center transform-gpu mx-auto rounded-full transition-all duration-300 ${
+        className={`p-1 pointer-events-auto flex items-center transform-gpu mx-auto rounded-full transition-all duration-500 ${
           isExpanded
-            ? "bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl backdrop-saturate-[150%] shadow-[0_8px_32px_-8px_rgba(244,114,182,0.15)] dark:shadow-[0_10px_20px_-8px_rgba(0,0,0,0.5)] border border-white/50 dark:border-white/10"
-            : "bg-transparent border-transparent shadow-none backdrop-blur-none"
+            ? "bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl backdrop-saturate-[160%] shadow-[0_8px_32px_-8px_rgba(244,114,182,0.25)] dark:shadow-[0_12px_28px_-8px_rgba(0,0,0,0.6)] border border-white/60 dark:border-white/10"
+            : "bg-white/80 dark:bg-slate-900/85 backdrop-blur-2xl border border-white/70 dark:border-white/15 shadow-[0_8px_24px_-4px_rgba(244,114,182,0.3)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)]"
         }`}
         style={{
           width: "100%",
@@ -132,11 +132,11 @@ export default function BottomTabs() {
                     {isActive && (
                       <motion.div
                         layoutId="tab-pill"
-                        className="absolute inset-0 bg-white dark:bg-slate-800 rounded-full -z-10 shadow-[0_2px_12px_-2px_rgba(244,114,182,0.15)] dark:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.2)] border border-pink-50 dark:border-pink-900/30"
+                        className="absolute inset-0 bg-white/90 dark:bg-slate-800/90 rounded-full -z-10 shadow-[inset_0_1px_2px_rgba(255,255,255,1),0_4px_14px_-2px_rgba(244,114,182,0.22)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.4)] border border-pink-100/50 dark:border-pink-900/30"
                         transition={{
                           type: "spring",
-                          stiffness: 400,
-                          damping: 25,
+                          stiffness: 350,
+                          damping: 24,
                           mass: 0.8,
                         }}
                       />
@@ -157,13 +157,13 @@ export default function BottomTabs() {
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            className="absolute -bottom-1 w-1 h-1 rounded-full bg-pink-400"
+                            className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-pink-400 shadow-[0_0_8px_#f472b6]"
                           />
                         )}
                       </motion.div>
                     ) : null}
                     <span
-                      className={`text-[9px] font-black tracking-widest whitespace-nowrap z-10 transition-colors ${isActive ? "text-pink-600 dark:text-pink-400" : "opacity-80"}`}
+                      className={`text-[8px] font-extrabold uppercase tracking-widest whitespace-nowrap z-10 transition-colors ${isActive ? "text-pink-600 dark:text-pink-400" : "opacity-80 text-slate-500 dark:text-slate-400"}`}
                     >
                       {tab.label}
                     </span>
