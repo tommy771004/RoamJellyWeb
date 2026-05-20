@@ -1841,13 +1841,10 @@ function SettlementHistorySection() {
   if (settlementHistory.length === 0) return null;
 
   return (
-    <section className="flex flex-col mb-12 transform-gpu">
+    <section className="flex flex-col mb-12">
       <div className="flex items-center justify-between px-4 mb-4">
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-4 bg-emerald-500 rounded-full"></span>
-          <h3 className="font-serif text-[18px] text-[#2C302E] font-bold">歷史結清明細</h3>
-        </div>
-        <span className="text-[11px] text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+        <h3 className="font-serif text-[18px] text-[#2C302E] font-bold">歷史結清明細</h3>
+        <span className="text-[11px] text-slate-500 font-medium">
           {settlementHistory.length} 次結清
         </span>
       </div>
@@ -1870,20 +1867,12 @@ function SettlementHistorySection() {
           return (
             <GlassCard
               key={entry.clearedAt}
-              className={`!p-5 flex flex-col gap-1.5 transition-all duration-300 cursor-pointer rounded-[24px] border ${
-                isExpanded 
-                  ? 'bg-white/95 border-emerald-200/60 shadow-[0_16px_32px_rgba(16,185,129,0.08)] ring-1 ring-emerald-500/10' 
-                  : 'bg-white/50 border-white/60 shadow-[0_8px_20px_rgba(0,0,0,0.02)] hover:bg-white/80 hover:shadow-[0_12px_24px_rgba(16,185,129,0.04)] hover:scale-[1.005]'
-              }`}
+              className="!p-4 flex flex-col gap-1.5 glass-panel transition-all duration-200 cursor-pointer hover:bg-white/90"
               onClick={() => setExpandedId(isExpanded ? null : entry.clearedAt)}
             >
               <div className="flex items-center gap-4 w-full">
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 transform-gpu ${
-                  isExpanded 
-                    ? 'bg-emerald-500 scale-110 rotate-[360deg] shadow-[0_4px_12px_rgba(16,185,129,0.3)] text-white' 
-                    : 'bg-emerald-50 border border-emerald-100 text-emerald-500'
-                }`}>
-                  <CheckCircle2 size={18} className={isExpanded ? 'text-white' : 'text-emerald-500'} />
+                <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={18} className="text-emerald-500" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13.5px] font-bold text-slate-800">
@@ -1910,11 +1899,8 @@ function SettlementHistorySection() {
                     </span>
                   ))}
                 </div>
-                <div className="text-slate-400 pl-1 shrink-0">
-                  <ChevronDown
-                    size={16}
-                    className={`transition-transform duration-300 ${isExpanded ? 'rotate-180 text-emerald-500 font-bold' : ''}`}
-                  />
+                <div className="text-slate-500 dark:text-slate-350 pl-1">
+                  {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>
               </div>
 
@@ -1925,37 +1911,30 @@ function SettlementHistorySection() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{
-                      type: "spring",
-                      damping: 28,
-                      stiffness: 200,
-                      mass: 0.8,
-                    }}
+                    transition={{ duration: 0.2 }}
                     className="overflow-hidden w-full"
                     onClick={(e) => e.stopPropagation()} // Prevent toggling when clicking within details
                   >
-                    <div className="border-t border-slate-100/80 mt-4 pt-4 flex flex-col gap-2">
-                      <div className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400 mb-2 pl-1">
+                    <div className="border-t border-slate-100/80 mt-3 pt-3.5 flex flex-col gap-2">
+                      <div className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500 dark:text-slate-350 mb-1.5 pl-1">
                         此批結清花費項目 ({matchingExpenses.length} 筆)
                       </div>
                       
                       {matchingExpenses.length === 0 ? (
-                        <div className="text-slate-400 text-[12.5px] italic pl-1">
+                        <div className="text-slate-500 dark:text-slate-350 text-[12.5px] italic pl-1">
                           無對應花費明細紀錄。
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-2.5 rounded-2xl bg-slate-50/70 border border-slate-100/80 p-4 shadow-inner">
+                        <div className="flex flex-col gap-2 rounded-2xl bg-slate-50/50 border border-slate-100 p-3">
                           {matchingExpenses.map((exp) => (
-                            <div key={exp.id} className="flex items-center justify-between text-[13px] py-2 px-3 rounded-xl bg-white/40 border border-white/50 shadow-[0_2px_6px_rgba(0,0,0,0.01)] hover:bg-white/60 transition-all duration-200">
-                              <div className="flex flex-col min-w-0">
-                                <span className="font-extrabold text-slate-700 truncate">{exp.title}</span>
-                                <span className="text-[11px] text-slate-400 mt-0.5 font-semibold flex items-center gap-1">
-                                  <span>由</span>
-                                  <span className="text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-md font-bold text-[10px]">{exp.payer}</span>
-                                  <span>支付</span>
+                            <div key={exp.id} className="flex items-center justify-between text-[13px] py-1 border-b border-dashed border-slate-100 last:border-0">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-slate-700">{exp.title}</span>
+                                <span className="text-[11px] text-slate-500 dark:text-slate-350 mt-0.5 font-medium">
+                                  由 {exp.payer} 支付
                                 </span>
                               </div>
-                              <span className="font-black text-slate-700 bg-white/80 border border-slate-100/60 px-2 py-0.5 rounded-lg text-xs tabular-nums">
+                              <span className="font-extrabold text-slate-600 tabular-nums">
                                 {exp.currency} {exp.amount.toLocaleString()}
                               </span>
                             </div>

@@ -87,8 +87,6 @@ import {
   submitLedgerExpense,
   deleteTripApi,
   openNativeMap,
-  getNativeDirectionsUrl,
-  getFallbackSearchUrl,
 } from "../lib/workflowApi";
 import {
   suggestItineraryWithForm,
@@ -4265,11 +4263,6 @@ const ItineraryListItem = React.memo(
       let lat = item.lat;
       let lng = item.lng;
 
-      const isIOS = typeof navigator !== 'undefined' && (
-        /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-      );
-
       if (!lat || !lng) {
         setIsNavigating(true);
         try {
@@ -4286,16 +4279,14 @@ const ItineraryListItem = React.memo(
       }
 
       if (!lat || !lng) {
-        const fallbackUrl = getFallbackSearchUrl(item.title, destination, isIOS);
-        triggerHapticFeedback([18]);
-        useAppStore.getState().showToast?.(`已在地圖中為您搜尋「${item.title}」！`, "success");
-        window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+        useAppStore.getState().showToast("無法取得景點座標", "warning");
         return;
       }
 
-      const directionsUrl = getNativeDirectionsUrl(lat, lng, item.title, isIOS);
+      const destinationCoords = encodeURIComponent(`${lat},${lng}`);
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
       triggerHapticFeedback([18]);
-      window.open(directionsUrl, "_blank", "noopener,noreferrer");
+      window.open(url, "_blank", "noopener,noreferrer");
     };
 
     const handleShareToIGStory = async (e: React.MouseEvent) => {

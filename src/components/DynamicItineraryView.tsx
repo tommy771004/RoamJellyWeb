@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import GlassCard from './GlassCard';
 import ExpandableText from './ExpandableText';
 import type { ItineraryNode } from '../types/workflow';
-import { getNativeMapUrl, getFallbackSearchUrl } from '../lib/workflowApi';
 
 function CollapsibleAiNote({ text, label }: { text: string; label: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -72,11 +71,6 @@ export default function DynamicItineraryView({
   onSave?: (result: any) => void;
 }) {
   const aiResponse = result?.fullResponse;
-  
-  const isIOS = useMemo(() => {
-    if (typeof navigator === 'undefined') return false;
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  }, []);
   
   // Extracting UI configurations or fallback
   const uiConfig = aiResponse?.ui_config || {};
@@ -147,6 +141,15 @@ export default function DynamicItineraryView({
           </div>
         )}
 
+        {/* Overview route map — shows all geocoded nodes */}
+        {allGeoNodes.length >= 2 && (
+          <div className="mb-6 rounded-[2.5rem] overflow-hidden shadow-xl border-[6px] border-white/60 relative h-[260px] sm:h-[360px]">
+            <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-500 text-sm">載入地圖中...</div>}>
+              <ItineraryMapView items={allGeoNodes} />
+            </Suspense>
+          </div>
+        )}
+
         <div className="flex flex-col gap-6 mt-4">
           {itinerary.map((dayData: any, i: number) => {
             const dayNum: number = dayData.day || i + 1;
@@ -172,10 +175,10 @@ export default function DynamicItineraryView({
                   {(dayData.spots || []).map((spot: any, j: number) => {
                     const rawNode: ItineraryNode | undefined = dayRawNodes[j];
                     const imageUrl: string | undefined = rawNode?.image_url;
-                    const hasCoords = rawNode?.lat != null && rawNode?.lng != null;
+                    const hasCoords = rawNode?.lat && rawNode?.lng;
                     const mapsUrl = hasCoords
-                      ? getNativeMapUrl(Number(rawNode.lat), Number(rawNode.lng), spot.name, isIOS)
-                      : getFallbackSearchUrl(spot.name, summary.destination || result?.title || '', isIOS);
+                      ? `https://www.google.com/maps/search/?api=1&query=${rawNode.lat},${rawNode.lng}`
+                      : undefined;
 
                     return (
                       <div key={j} className="relative pl-6 pb-2">
@@ -201,16 +204,18 @@ export default function DynamicItineraryView({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className={`font-bold text-slate-800 text-xl tracking-tight leading-snug`}>{spot.name}</h4>
-                              <a
-                                href={mapsUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-[11px] font-bold text-fuchsia-600 bg-fuchsia-50 border border-fuchsia-100 px-2.5 py-0.5 rounded-full hover:bg-fuchsia-100 hover:scale-105 active:scale-95 transition-all duration-200 shrink-0"
-                                title={hasCoords ? "在 native map 查看" : "在地圖中搜尋"}
-                              >
-                                <MapPin size={10} />
-                                {hasCoords ? "地圖" : "搜尋"}
-                              </a>
+                              {mapsUrl && (
+                                <a
+                                  href={mapsUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-[11px] font-bold text-fuchsia-600 bg-fuchsia-50 border border-fuchsia-100 px-2 py-0.5 rounded-full hover:bg-fuchsia-100 transition-colors shrink-0"
+                                  title="在 Google Maps 查看"
+                                >
+                                  <MapPin size={10} />
+                                  地圖
+                                </a>
+                              )}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
                               {spot.time && (
@@ -246,7 +251,7 @@ export default function DynamicItineraryView({
                           
                           return (
                             <div className={`mt-4 mb-2 flex items-center gap-2 text-xs font-bold w-fit px-3 py-2 rounded-xl border ${isLong ? 'bg-red-50 text-red-700 border-red-100 flex-wrap' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
-                              <Navigation2 size={14} className={isLong ? "text-red-500 animate-pulse" : "text-slate-500"} /> 
+                              <Navigation2 size={14} className={isLong ? "text-red-500" : "text-slate-500"} /> 
                               <span>{spot.transport_to_next}</span>
                               {isLong && (
                                 <div className="flex items-center gap-1.5 ml-1 text-red-600 bg-white/60 px-2 py-0.5 rounded-md">
@@ -265,7 +270,7 @@ export default function DynamicItineraryView({
             );
           })}
         </div>
-
+        
         {onSave && (
           <button 
             onClick={() => onSave(result)}
