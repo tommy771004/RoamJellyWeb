@@ -283,14 +283,7 @@ export default function AiForm({
       <div className="relative z-10 flex flex-col h-full w-full px-3.5 sm:px-8 py-4 sm:py-10 pb-tab-safe max-w-4xl mx-auto">
         <div className="mb-4 flex items-start justify-between gap-3 sm:mb-9">
           <div className="space-y-2.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-sky-200/80 bg-sky-50/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-sky-700">
-                AI Trip Draft
-              </span>
-              <span className="inline-flex items-center rounded-full border border-orange-200/80 bg-white/88 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-orange-600">
-                2 Steps
-              </span>
-            </div>
+
             <div>
               <h2 className="mb-1 text-balance text-[21px] sm:text-[33px] font-black leading-[1.08] tracking-[-0.045em] text-slate-900 sm:mb-2 font-heading">
                 先讓 <span className="text-macaron">AI 規劃</span>旅程，再隨時調整行程

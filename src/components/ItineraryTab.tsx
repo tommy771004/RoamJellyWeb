@@ -2417,14 +2417,6 @@ export default function ItineraryTab() {
               <span className="bg-white/95 backdrop-blur-xl px-3.5 py-1.5 rounded-full shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)]">
                 {totalDays} DAYS
               </span>
-              <span className="bg-white/95 backdrop-blur-xl px-3.5 py-1.5 rounded-full shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)]">
-                {collaborators.length} TRAVELERS
-              </span>
-              <span
-                className={`backdrop-blur-xl px-3.5 py-1.5 rounded-full shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] ${tripInfo?.isPublic ? "bg-emerald-100/95 text-emerald-700" : "bg-white/95 text-slate-500"}`}
-              >
-                {tripInfo?.isPublic ? "PUBLIC TEMPLATE" : "PRIVATE DRAFT"}
-              </span>
             </div>
           </div>
         </div>
@@ -5272,7 +5264,7 @@ function ItineraryList({
             {/* 右側漸變遮罩 */}
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white/90 to-transparent z-10 pointer-events-none" />
             
-            <div className="flex w-max-content overflow-hidden">
+            <div className="flex min-w-max overflow-hidden">
               {/* 跑馬燈主體 - 第一組 */}
               <div className="flex gap-4 px-4 animate-marquee shrink-0">
                 {weather.map((wVal: any, idx: number) => {

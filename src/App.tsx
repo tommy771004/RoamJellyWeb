@@ -96,11 +96,11 @@ export default function App() {
   const [guestBootstrapState, setGuestBootstrapState] = useState<'idle' | 'loading' | 'error'>('idle');
 
   const isLoggedIn = !!userId;
-  const shouldAutoGuestBootstrap =
-    !isLoggedIn &&
-    !showLogin &&
-    AUTO_GUEST_TABS.has(activeTab) &&
-    !(activeTab === 'tools' && !activeTripId);
+  const shouldAutoGuestBootstrap = false;
+    // !isLoggedIn &&
+    // !showLogin &&
+    // AUTO_GUEST_TABS.has(activeTab) &&
+    // !(activeTab === 'tools' && !activeTripId);
   const lastActivityRef = useRef<number>(Date.now());
   const lastPersistedActivityRef = useRef<number>(Date.now());
   const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
@@ -326,7 +326,7 @@ export default function App() {
   };
 
   const prevActiveTabRef = useRef<string>(activeTab);
-  const canRenderPublicToolsEntry = !isLoggedIn && activeTab === 'tools' && !activeTripId;
+  const canRenderPublicToolsEntry = false;
   const isAuthSurfaceVisible = showLogin || (!isLoggedIn && activeTab !== 'home' && !canRenderPublicToolsEntry);
   const shouldShowAssistant =
       !isAuthSurfaceVisible &&

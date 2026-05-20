@@ -2056,7 +2056,7 @@ export default function HomeTab({
           <div className="flex flex-col gap-3 mb-5 sm:mb-6 md:mb-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <EditorialSectionIntro
-                eyebrow="Search To Fight"
+                eyebrow="查詢航班"
                 title=""
                 description=""
                 highlights={[
