@@ -7,25 +7,42 @@ const CHUNK_SIZE = 3; // days per parallel AI call
 
 // ─── External API Helpers (Hybrid Architecture) ──────────────────────────────
 
-/** Geocode a spot name using Nominatim (OpenStreetMap). Returns null on failure. */
-async function geocodeByNominatim(
+/**
+ * Geocode a spot name.
+ * Primary: Photon (Komoot) — OSM-based, no strict per-second rate limit.
+ * Fallback: Nominatim — only used if Photon fails (1 req/s policy applies).
+ */
+async function geocodeSpot(
   name: string,
   city: string
 ): Promise<{ lat: number; lng: number } | null> {
+  // ── Photon (primary) ──────────────────────────────────────────────────────
+  try {
+    const q = encodeURIComponent(`${name} ${city}`);
+    const res = await fetch(
+      `https://photon.komoot.io/api/?q=${q}&limit=1`,
+      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+    );
+    if (res.ok) {
+      const data: any = await res.json();
+      const coords = data.features?.[0]?.geometry?.coordinates; // [lng, lat]
+      if (coords?.length === 2) return { lat: coords[1], lng: coords[0] };
+    }
+  } catch { /* fall through to Nominatim */ }
+
+  // ── Nominatim (fallback) ──────────────────────────────────────────────────
   try {
     const q = encodeURIComponent(`${name} ${city}`);
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja,zh`,
       { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
     );
-    if (!res.ok) return null;
-    const data: any[] = await res.json();
-    if (data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    if (res.ok) {
+      const data: any[] = await res.json();
+      if (data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     }
-  } catch {
-    /* swallow timeout / network errors */
-  }
+  } catch { /* swallow */ }
+
   return null;
 }
 
@@ -50,38 +67,52 @@ async function getWikiThumbnail(name: string): Promise<string | null> {
   return null;
 }
 
-/** Get driving duration (minutes) between two coordinates via OSRM. Returns null on failure. */
+/**
+ * Compute route duration (minutes) via OSRM.
+ * mode: 'driving' | 'walking' | 'cycling'
+ * Auto-selects walking when distance between two points is short (<3 km).
+ */
 async function getOSRMMinutes(
   lng1: number,
   lat1: number,
   lng2: number,
   lat2: number
-): Promise<number | null> {
+): Promise<{ minutes: number; mode: "driving" | "walking" } | null> {
+  // Haversine approximation to pick mode
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const mode: "driving" | "walking" = distKm < 2.5 ? "walking" : "driving";
+
   try {
     const res = await fetch(
-      `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`,
+      `https://router.project-osrm.org/route/v1/${mode}/${lng1},${lat1};${lng2},${lat2}?overview=false`,
       { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
     );
     if (!res.ok) return null;
     const data: any = await res.json();
-    if (data.routes?.length > 0) return Math.round(data.routes[0].duration / 60);
-  } catch {
-    /* swallow */
-  }
+    if (data.routes?.length > 0)
+      return { minutes: Math.round(data.routes[0].duration / 60), mode };
+  } catch { /* swallow */ }
   return null;
 }
 
 /**
  * Enrich itinerary spots after AI generation:
- *  1. Geocode each spot via Nominatim (lat/lng) — parallel across all spots
- *  2. Fetch Wikipedia thumbnail (image_url) — parallel with geocoding
- *  3. Compute transport_to_next via OSRM between consecutive same-day spots
- *     (sequential within day, but days run in parallel)
+ *  1. Geocode (Photon → Nominatim fallback) + Wikipedia thumbnail — parallel across all days
+ *  2. OSRM transport_to_next — days run in parallel; spots within a day are sequential
+ *     Auto-selects walking vs driving based on inter-spot distance.
  */
 async function enrichItinerary(parsed: any, destination: string): Promise<any> {
   if (!parsed?.itinerary || !Array.isArray(parsed.itinerary)) return parsed;
 
-  // Step 1 & 2: Geocode + wiki thumbnail in parallel for every spot in every day
+  // Step 1: Geocode + wiki thumbnail — all days in parallel, all spots within day in parallel
   const enrichedDays = await Promise.all(
     parsed.itinerary.map(async (dayData: any) => {
       if (!Array.isArray(dayData.spots)) return dayData;
@@ -89,7 +120,7 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
         dayData.spots.map(async (spot: any) => {
           const name: string = spot.name || spot.title || "";
           const [coords, thumbnail] = await Promise.all([
-            geocodeByNominatim(name, destination),
+            geocodeSpot(name, destination),
             getWikiThumbnail(name),
           ]);
           return {
@@ -104,7 +135,7 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
     })
   );
 
-  // Step 3: OSRM transport_to_next — days run in parallel; spots within a day are sequential
+  // Step 2: OSRM transport_to_next — days run in parallel; spots within a day are sequential
   const finalDays = await Promise.all(
     enrichedDays.map(async (dayData: any) => {
       if (!Array.isArray(dayData.spots)) return dayData;
@@ -113,9 +144,12 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
         const curr = spots[si];
         const next = spots[si + 1];
         if (curr?.lat != null && curr?.lng != null && next?.lat != null && next?.lng != null) {
-          const minutes = await getOSRMMinutes(curr.lng, curr.lat, next.lng, next.lat);
-          if (minutes !== null) {
-            spots[si] = { ...curr, transport_to_next: `車程約 ${minutes} 分鐘` };
+          const result = await getOSRMMinutes(curr.lng, curr.lat, next.lng, next.lat);
+          if (result !== null) {
+            const label = result.mode === "walking"
+              ? `步行約 ${result.minutes} 分鐘`
+              : `車程約 ${result.minutes} 分鐘`;
+            spots[si] = { ...curr, transport_to_next: label };
           }
         }
       }
@@ -126,12 +160,94 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
   return { ...parsed, itinerary: finalDays };
 }
 
+// ─── Weather Forecast Helper ─────────────────────────────────────────────────
+
+const WMO_LABEL: Record<number, string> = {
+  0: "晴天", 1: "大致晴朗", 2: "局部多雲", 3: "陰天",
+  45: "有霧", 48: "霧凇",
+  51: "毛毛雨", 61: "小雨", 63: "中雨", 65: "大雨",
+  71: "小雪", 73: "中雪", 75: "大雪",
+  80: "陣雨", 81: "中陣雨", 82: "強陣雨",
+  95: "雷雨", 96: "強雷雨",
+};
+
+/**
+ * Fetch daily weather forecast for the destination from Open-Meteo.
+ * Returns a short human-readable string for injection into the AI prompt,
+ * or an empty string if unavailable (non-blocking).
+ */
+async function fetchWeatherContext(
+  destination: string,
+  startDate: string | null | undefined,
+  days: number
+): Promise<string> {
+  try {
+    // Step 1: geocode destination (Photon)
+    const geoQ = encodeURIComponent(destination);
+    const geoRes = await fetch(
+      `https://photon.komoot.io/api/?q=${geoQ}&limit=1`,
+      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(4000) }
+    );
+    if (!geoRes.ok) return "";
+    const geoData: any = await geoRes.json();
+    const coords = geoData.features?.[0]?.geometry?.coordinates; // [lng, lat]
+    if (!coords?.length) return "";
+    const [lng, lat] = coords;
+
+    // Step 2: fetch forecast from Open-Meteo
+    const forecastDays = Math.min(days, 14);
+    const url =
+      `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${lat}&longitude=${lng}` +
+      `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code` +
+      `&timezone=auto&forecast_days=${forecastDays}`;
+    const wxRes = await fetch(url, {
+      headers: { "User-Agent": "RoamJellyApp/1.0" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!wxRes.ok) return "";
+    const wx: any = await wxRes.json();
+
+    const times: string[] = wx.daily?.time || [];
+    const maxTemps: number[] = wx.daily?.temperature_2m_max || [];
+    const minTemps: number[] = wx.daily?.temperature_2m_min || [];
+    const rainProbs: number[] = wx.daily?.precipitation_probability_max || [];
+    const codes: number[] = wx.daily?.weather_code || [];
+
+    // Align forecast days to startDate if provided
+    let startIdx = 0;
+    if (startDate && times.length > 0) {
+      const target = startDate.slice(0, 10);
+      const found = times.findIndex((t: string) => t === target);
+      if (found !== -1) startIdx = found;
+    }
+
+    const lines: string[] = [];
+    for (let i = 0; i < days && startIdx + i < times.length; i++) {
+      const idx = startIdx + i;
+      const label = WMO_LABEL[codes[idx]] ?? "未知天氣";
+      const rain = rainProbs[idx] != null ? `降雨機率 ${rainProbs[idx]}%` : "";
+      lines.push(
+        `Day ${i + 1} (${times[idx]}): ${label}, ` +
+          `${Math.round(minTemps[idx])}°C–${Math.round(maxTemps[idx])}°C${rain ? ", " + rain : ""}`
+      );
+    }
+
+    return lines.length > 0
+      ? `【出發地天氣預報（供規劃參考）】\n${lines.join("\n")}`
+      : "";
+  } catch {
+    return "";
+  }
+}
+
 // ─── Prompt builder (no lat/lng/image_url in schema) ─────────────────────────
 
 /**
  * Build the AI prompt for a chunk of days.
  * includeUiConfig = true for the first chunk (adds ui_config + summary to the schema).
  * startDay/endDay constrain which days the AI should output.
+ * weatherContext: optional forecast string injected into the prompt.
  */
 function buildChunkPrompt(
   destination: string,
@@ -140,7 +256,8 @@ function buildChunkPrompt(
   generationContext: string,
   includeUiConfig: boolean,
   startDay: number,
-  endDay: number
+  endDay: number,
+  weatherContext?: string
 ): string {
   const chunkDays = endDay - startDay + 1;
   const rangeInstruction =
@@ -225,6 +342,7 @@ Details:
 - Transport: ${planner?.transport?.length ? planner.transport.join(", ") : "Not specified"}
 - Budget Level: ${planner?.budget || "Not specified"}
 - Extra notes: ${planner?.notes || "None"}
+${weatherContext ? "\n" + weatherContext : ""}
 ${generationContext}${rangeInstruction}
 
 最終提醒：所有輸出內容（包含 summary.title）都必須是「${destination}」的行程，請直接輸出 JSON，不要任何多餘文字或 markdown 包裝。`;
@@ -284,6 +402,13 @@ export async function generateItinerary(body: any) {
 
   const fallback = [{ day: 1, time: "10:00", title: "系統繁忙: 這是一筆備用資料", category: "other", emoji: "📍" }];
 
+  // ── Pre-fetch weather forecast (non-blocking; injected into AI prompt) ──────
+  const weatherContext = await fetchWeatherContext(
+    destination,
+    planner?.startDate,
+    days
+  );
+
   // ── Decide: single call vs. parallel chunking ──────────────────────────────
   const useParallel = days > 4;
 
@@ -291,7 +416,7 @@ export async function generateItinerary(body: any) {
 
   if (!useParallel) {
     // ── Single call ──────────────────────────────────────────────────────────
-    const prompt = buildChunkPrompt(destination, days, planner, generationContext, true, 1, days);
+    const prompt = buildChunkPrompt(destination, days, planner, generationContext, true, 1, days, weatherContext);
     try {
       const text = await fetchOpenRouterWithFallback(apiKey, prompt);
       const match = text.match(/\{[\s\S]*\}/);
@@ -320,7 +445,8 @@ export async function generateItinerary(body: any) {
             generationContext,
             isFirst,
             startDay,
-            endDay
+            endDay,
+            weatherContext
           );
           return fetchOpenRouterWithFallback(apiKey!, prompt).then((text) =>
             parseChunkText(text, isFirst)
@@ -328,12 +454,21 @@ export async function generateItinerary(body: any) {
         })
       );
 
-      // Merge: chunk 0 carries ui_config + summary; remaining chunks are itinerary arrays
+      // Merge: chunk 0 carries ui_config + summary; remaining chunks are itinerary arrays.
+      // Also correct day numbers in case the AI reset its counter inside a non-first chunk.
       const [firstChunk, ...restChunks] = chunkResults;
-      const mergedItinerary = [
-        ...(Array.isArray(firstChunk?.itinerary) ? firstChunk.itinerary : []),
-        ...restChunks.flat(),
-      ];
+
+      const correctedChunks = chunks.map(([startDay, endDay], idx) => {
+        const raw: any[] = idx === 0
+          ? (Array.isArray(firstChunk?.itinerary) ? firstChunk.itinerary : [])
+          : (Array.isArray(restChunks[idx - 1]) ? restChunks[idx - 1] : []);
+        return raw.map((dayObj: any, i: number) => ({
+          ...dayObj,
+          day: startDay + i <= endDay ? startDay + i : endDay, // force correct day number
+        }));
+      });
+
+      const mergedItinerary = correctedChunks.flat();
       parsed = { ...firstChunk, itinerary: mergedItinerary };
     } catch (err) {
       console.error("Failed to generate parallel AI itinerary", err);
@@ -403,10 +538,10 @@ export async function regenerateSpot(params: {
 
     const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
     if (parsed && typeof parsed.title === "string") {
-      // Hybrid enrichment: geocode + wiki thumbnail (AI no longer provides coords)
+      // Hybrid enrichment: geocode (Photon→Nominatim) + wiki thumbnail
       const name: string = parsed.title || "";
       const [coords, thumbnail] = await Promise.all([
-        geocodeByNominatim(name, params.destination),
+        geocodeSpot(name, params.destination),
         getWikiThumbnail(name),
       ]);
       return {
