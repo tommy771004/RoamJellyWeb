@@ -1672,7 +1672,7 @@ export default function HomeTab({
                 Premium Jelly Journey Desk
               </p>
               <h1 className="mx-auto max-w-4xl text-balance text-[28px] font-black tracking-[-0.045em] text-slate-900 sm:text-[42px] md:text-[54px] md:leading-[1.01] font-heading">
-                把<span className="text-macaron">航班、地圖</span>與<span className="text-macaron">旅伴分工</span>，收進同一份旅程
+                把<span className="text-sky-600">航班、地圖</span>與<span className="text-sky-600">旅伴分工</span>，收進同一份旅程
               </h1>
               
               <AnimatePresence initial={false}>

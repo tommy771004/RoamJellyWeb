@@ -263,6 +263,7 @@ interface ToolsTabState {
   settlements: Settlement[];
   settlementHistory: SettlementHistoryEntry[];
   expenses: Expense[];
+  clearedExpenses: Expense[];
   members: string[];
   expenseByCurrency: Record<string, number>;
   form: ExpenseForm;
@@ -332,6 +333,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
   const [settlementHistory, setSettlementHistory] = useState<
     SettlementHistoryEntry[]
   >([]);
+  const [clearedExpenses, setClearedExpenses] = useState<Expense[]>([]);
   const [form, setForm] = useState<ExpenseForm>({
     title: "",
     amount: "",
@@ -346,6 +348,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       setTripInfo(null);
       setWeather(null);
       setSettlementHistory([]);
+      setClearedExpenses([]);
       return;
     }
 
@@ -358,13 +361,15 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           tripInfoData,
           settlementHistoryData,
           ledgerExpensesData,
+          clearedExpensesData,
           settlementsData,
         ] = await Promise.all([
           fetchChecklist(tripId),
           fetchCollaborators(tripId),
           fetchTripInfo(tripId).catch(() => null),
           fetchSettlementHistory(tripId).catch(() => []),
-          fetchLedgerExpenses(tripId).catch(() => []),
+          fetchLedgerExpenses(tripId, false).catch(() => []),
+          fetchLedgerExpenses(tripId, true).catch(() => []),
           fetchSettlements(tripId).catch(() => []),
         ]);
 
@@ -389,6 +394,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
         setChecklist(checklistData);
         setSettlementHistory(settlementHistoryData);
         setExpenses(ledgerExpensesData);
+        setClearedExpenses(clearedExpensesData);
         if (Array.isArray(settlementsData)) {
           setSettlements(settlementsData);
         }
@@ -421,7 +427,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       }
     };
     void init();
-  }, [tripId, userId, setChecklist, setMembers, setExpenses, setSettlements]);
+  }, [tripId, userId, setChecklist, setMembers, setExpenses, setSettlements, setClearedExpenses]);
 
   const expenseByCurrency = useMemo(
     () =>
@@ -555,6 +561,12 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           if (Array.isArray(result?.settlements)) {
             setSettlements(result.settlements);
           }
+          const [ledgerData, clearedData] = await Promise.all([
+            fetchLedgerExpenses(tripId, false).catch(() => []),
+            fetchLedgerExpenses(tripId, true).catch(() => []),
+          ]);
+          setExpenses(ledgerData);
+          setClearedExpenses(clearedData);
         }
 
         showToast("分帳已更新，已算出最新應付關係。", "success");
@@ -599,13 +611,16 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
             settlement.to,
             settlement.currency,
           );
-          const [history, fresh] = await Promise.all([
-            fetchSettlementHistory(tripId),
-            fetchSettlements(tripId),
+          const [history, fresh, ledgerData, clearedData] = await Promise.all([
+            fetchSettlementHistory(tripId).catch(() => []),
+            fetchSettlements(tripId).catch(() => []),
+            fetchLedgerExpenses(tripId, false).catch(() => []),
+            fetchLedgerExpenses(tripId, true).catch(() => []),
           ]);
           setSettlementHistory(history);
           if (Array.isArray(fresh)) setSettlements(fresh);
-          setExpenses([]);
+          setExpenses(ledgerData);
+          setClearedExpenses(clearedData);
         }
         showToast(
           `${settlement.from} → ${settlement.to} 已標記結清。`,
@@ -651,6 +666,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
     settlements,
     settlementHistory,
     expenses,
+    clearedExpenses,
     members,
     expenseByCurrency,
     form,
@@ -1804,51 +1820,120 @@ function SettlementsSection() {
 
 function SettlementHistorySection() {
   const {
-    state: { settlementHistory },
+    state: { settlementHistory, clearedExpenses },
   } = useToolsTabContext();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   if (settlementHistory.length === 0) return null;
+
   return (
     <section className="flex flex-col mb-12">
       <div className="flex items-center justify-between px-4 mb-4">
-        <h3 className="font-serif text-[20px] text-[#2C302E]">結清紀錄</h3>
+        <h3 className="font-serif text-[18px] text-[#2C302E] font-bold">歷史結清明細</h3>
         <span className="text-[11px] text-slate-500 font-medium">
-          {settlementHistory.length} 筆
+          {settlementHistory.length} 次結清
         </span>
       </div>
-      <div className="flex flex-col gap-3 w-full">
-        {settlementHistory.map((entry) => (
-          <GlassCard
-            key={entry.clearedAt}
-            className="!p-4 flex items-center gap-4 glass-panel"
-          >
-            <div className="w-10 h-10 rounded-full bg-green-50 border border-green-100 flex items-center justify-center shrink-0">
-              <CheckCircle2 size={18} className="text-green-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-bold text-slate-700">
-                {new Date(entry.clearedAt).toLocaleDateString("zh-TW", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}{" "}
-                結清
-              </p>
-              <p className="text-[12px] text-slate-500 mt-0.5">
-                {entry.count} 筆費用 ・ 涉及 {entry.payers.length} 位成員
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-0.5 shrink-0">
-              {Object.entries(entry.currencyTotals ?? {}).map(([cur, amt]) => (
-                <span
-                  key={cur}
-                  className="text-[13px] font-black text-green-600 tabular-nums"
-                >
-                  {cur} {Math.round(amt).toLocaleString()}
-                </span>
-              ))}
-            </div>
-          </GlassCard>
-        ))}
+      <div className="flex flex-col gap-3.5 w-full">
+        {settlementHistory.map((entry) => {
+          const isExpanded = expandedId === entry.clearedAt;
+          
+          // Match matching cleared expenses that belong to this settlement batch (by calendar date)
+          const matchingExpenses = clearedExpenses.filter((exp) => {
+            if (!exp.clearedAt) return false;
+            try {
+              const expKey = new Date(exp.clearedAt).toISOString().slice(0, 10);
+              const entryKey = new Date(entry.clearedAt).toISOString().slice(0, 10);
+              return expKey === entryKey;
+            } catch {
+              return false;
+            }
+          });
+
+          return (
+            <GlassCard
+              key={entry.clearedAt}
+              className="!p-4 flex flex-col gap-1.5 glass-panel transition-all duration-200 cursor-pointer hover:bg-white/90"
+              onClick={() => setExpandedId(isExpanded ? null : entry.clearedAt)}
+            >
+              <div className="flex items-center gap-4 w-full">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={18} className="text-emerald-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13.5px] font-bold text-slate-800">
+                    {new Date(entry.clearedAt).toLocaleDateString("zh-TW", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    結清
+                  </p>
+                  <p className="text-[12px] text-slate-500 mt-0.5 font-medium">
+                    {entry.count} 筆費用 ・ 涉及 {entry.payers.length} 位旅伴
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0 px-1">
+                  {Object.entries(entry.currencyTotals ?? {}).map(([cur, amt]) => (
+                    <span
+                      key={cur}
+                      className="text-[13.5px] font-black text-emerald-600 tabular-nums"
+                    >
+                      {cur} {Math.round(amt).toLocaleString()}
+                    </span>
+                  ))}
+                </div>
+                <div className="text-slate-400 pl-1">
+                  {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </div>
+              </div>
+
+              {/* Expansion block */}
+              <AnimatePresence initial={false}>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden w-full"
+                    onClick={(e) => e.stopPropagation()} // Prevent toggling when clicking within details
+                  >
+                    <div className="border-t border-slate-100/80 mt-3 pt-3.5 flex flex-col gap-2">
+                      <div className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400 mb-1.5 pl-1">
+                        此批結清花費項目 ({matchingExpenses.length} 筆)
+                      </div>
+                      
+                      {matchingExpenses.length === 0 ? (
+                        <div className="text-slate-400 text-[12.5px] italic pl-1">
+                          無對應花費明細紀錄。
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2 rounded-2xl bg-slate-50/50 border border-slate-100 p-3">
+                          {matchingExpenses.map((exp) => (
+                            <div key={exp.id} className="flex items-center justify-between text-[13px] py-1 border-b border-dashed border-slate-100 last:border-0">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-slate-700">{exp.title}</span>
+                                <span className="text-[11px] text-slate-400 mt-0.5">
+                                  由 {exp.payer} 支付
+                                </span>
+                              </div>
+                              <span className="font-extrabold text-slate-600 tabular-nums">
+                                {exp.currency} {exp.amount.toLocaleString()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </GlassCard>
+          );
+        })}
       </div>
     </section>
   );

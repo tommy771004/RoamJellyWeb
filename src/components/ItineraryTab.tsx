@@ -14,6 +14,7 @@ import {
   AnimatePresence,
   Reorder,
   useReducedMotion,
+  useDragControls,
 } from "motion/react";
 
 import MapSelectorModal from "./MapSelectorModal";
@@ -4369,8 +4370,11 @@ const ItineraryListItem = React.memo(
             buildTimestampFromDateTime(item.date, restNode.time || item.time) ??
             item.timestamp,
         });
+
+        useAppStore.getState().showToast?.(`✨ 已為您替換為 "${restNode.title || '新景點'}"！`, "success");
       } catch (err) {
         console.error("Regenerate failed:", err);
+        useAppStore.getState().showToast?.("AI 替換景點失敗，請確認網路連線或 OpenRouter 金鑰設定。", "warning");
       } finally {
         setRegenerating(false);
       }
@@ -5125,6 +5129,110 @@ const ItineraryListItem = React.memo(
   },
 );
 
+const ReorderableItineraryItem = ({
+  item,
+  idx,
+  items,
+  nextItem,
+  timeGapMinutes,
+  timeGapStr,
+  onDelete,
+  onUpdate,
+  onQuickExpense,
+  isOffline,
+  tripId,
+  destination,
+  tripStartDate,
+  recentlySyncedNodeIds,
+  onEditingChange,
+  nodeEditingLocks,
+  onPreviewImage,
+}: {
+  item: ItineraryNode;
+  idx: number;
+  items: ItineraryNode[];
+  nextItem?: ItineraryNode;
+  timeGapMinutes: number;
+  timeGapStr: string;
+  onDelete: (node_id: string) => void;
+  onUpdate: (node: ItineraryNode) => void;
+  onQuickExpense?: (node: ItineraryNode) => void;
+  isOffline: boolean;
+  tripId: string;
+  destination: string;
+  tripStartDate?: string | null;
+  recentlySyncedNodeIds?: string[];
+  onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
+  nodeEditingLocks?: Record<string, { userName: string; day: number }>;
+  onPreviewImage?: (url: string) => void;
+}) => {
+  const dragControls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={item}
+      dragControls={dragControls}
+      dragListener={false}
+      initial={{ opacity: 0, scale: 0.95, y: 30 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, x: -30 }}
+      transition={{
+        type: "spring",
+        ...SPRING_BOUNCY,
+        duration: 0.5,
+        delay: idx * 0.05,
+      }}
+      onDragStart={() => triggerHapticFeedback([14])}
+      onDragEnd={() => triggerHapticFeedback([10, 32, 12])}
+      className="flex flex-col w-full relative group/reorder"
+    >
+      <ItineraryListItem
+        item={item}
+        idx={idx}
+        previousItem={idx > 0 ? items[idx - 1] : undefined}
+        nextItem={nextItem}
+        onDelete={onDelete}
+        onUpdate={onUpdate}
+        onQuickExpense={onQuickExpense}
+        isOffline={isOffline}
+        tripId={tripId}
+        destination={destination}
+        tripStartDate={tripStartDate}
+        isRecentlySynced={recentlySyncedNodeIds?.includes(item.node_id)}
+        onEditingChange={onEditingChange}
+        collaboratingLock={nodeEditingLocks?.[item.node_id]}
+        onPreviewImage={onPreviewImage}
+      />
+
+      {/* Drag handle for mobile/explicit drag */}
+      <div
+        className="absolute left-[-24px] sm:left-[-35px] top-1/2 -translate-y-1/2 opacity-70 sm:opacity-0 group-hover/reorder:opacity-100 transition-opacity p-2 sm:p-2 cursor-grab active:cursor-grabbing text-slate-500/80 hover:text-slate-600 z-20 md:touch-none touch-pan-x"
+        style={{
+          minHeight: "44px",
+          minWidth: "44px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        onPointerDown={(event) => {
+          dragControls.start(event);
+        }}
+      >
+        <GripVertical size={20} className="sm:w-[20px] sm:h-[20px]" />
+      </div>
+
+      {nextItem && (
+        <TransportGapIndicator
+          item={item}
+          nextItem={nextItem}
+          timeGapMinutes={timeGapMinutes}
+          timeGapStr={timeGapStr}
+        />
+      )}
+    </Reorder.Item>
+  );
+};
+
 function ItineraryList({
   items,
   day,
@@ -5454,65 +5562,26 @@ function ItineraryList({
               }
             }
             return (
-              <Reorder.Item
+              <ReorderableItineraryItem
                 key={item.node_id}
-                value={item}
-                initial={{ opacity: 0, scale: 0.95, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, x: -30 }}
-                transition={{
-                  type: "spring",
-                  ...SPRING_BOUNCY,
-                  duration: 0.5,
-                  delay: idx * 0.05,
-                }}
-                onDragStart={() => triggerHapticFeedback([14])}
-                onDragEnd={() => triggerHapticFeedback([10, 32, 12])}
-                className="flex flex-col w-full relative group/reorder"
-              >
-                <ItineraryListItem
-                  item={item}
-                  idx={idx}
-                  previousItem={idx > 0 ? items[idx - 1] : undefined}
-                  nextItem={nextItem}
-                  onDelete={onDelete}
-                  onUpdate={onUpdate}
-                  onQuickExpense={onQuickExpense}
-                  isOffline={isOffline}
-                  tripId={tripId}
-                  destination={destination}
-                  tripStartDate={tripStartDate}
-                  isRecentlySynced={recentlySyncedNodeIds?.includes(
-                    item.node_id,
-                  )}
-                  onEditingChange={onEditingChange}
-                  collaboratingLock={nodeEditingLocks?.[item.node_id]}
-                  onPreviewImage={onPreviewImage}
-                />
-
-                {/* Drag handle for mobile/explicit drag */}
-                <div
-                  className="absolute left-[-24px] sm:left-[-35px] top-1/2 -translate-y-1/2 opacity-70 sm:opacity-0 group-hover/reorder:opacity-100 transition-opacity p-2 sm:p-2 cursor-grab active:cursor-grabbing text-slate-500/80 hover:text-slate-600 z-20 md:touch-none touch-pan-y"
-                  style={{
-                    minHeight: "44px",
-                    minWidth: "44px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <GripVertical size={20} className="sm:w-[20px] sm:h-[20px]" />
-                </div>
-
-                {nextItem && (
-                  <TransportGapIndicator
-                    item={item}
-                    nextItem={nextItem}
-                    timeGapMinutes={timeGapMinutes}
-                    timeGapStr={timeGapStr}
-                  />
-                )}
-              </Reorder.Item>
+                item={item}
+                idx={idx}
+                items={items}
+                nextItem={nextItem}
+                timeGapMinutes={timeGapMinutes}
+                timeGapStr={timeGapStr}
+                onDelete={onDelete}
+                onUpdate={onUpdate}
+                onQuickExpense={onQuickExpense}
+                isOffline={isOffline}
+                tripId={tripId}
+                destination={destination}
+                tripStartDate={tripStartDate}
+                recentlySyncedNodeIds={recentlySyncedNodeIds}
+                onEditingChange={onEditingChange}
+                nodeEditingLocks={nodeEditingLocks}
+                onPreviewImage={onPreviewImage}
+              />
             );
           })}
         </AnimatePresence>

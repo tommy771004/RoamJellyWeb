@@ -8,6 +8,7 @@ export interface Expense {
   payer: string;
   splitWith: string[];
   date: string;
+  clearedAt?: string | null;
 }
 
 export interface Settlement {

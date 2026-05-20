@@ -986,6 +986,7 @@ export class AppRepository {
           payer: exp.payerId,
           splitWith: exp.members || [],
           date: exp.createdAt?.toISOString() || new Date().toISOString(),
+          clearedAt: exp.clearedAt?.toISOString() || null,
         }));
     }
     const rows = await this.db
@@ -1007,6 +1008,7 @@ export class AppRepository {
       payer: r.payerId,
       splitWith: memberIds,
       date: r.createdAt?.toISOString() || new Date().toISOString(),
+      clearedAt: r.clearedAt?.toISOString() || null,
     }));
   }
 

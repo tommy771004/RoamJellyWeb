@@ -286,7 +286,7 @@ export default function AiForm({
 
             <div>
               <h2 className="mb-1 text-balance text-[21px] sm:text-[33px] font-black leading-[1.08] tracking-[-0.045em] text-slate-900 sm:mb-2 font-heading">
-                先讓 <span className="text-macaron">AI 規劃</span>旅程，再隨時調整行程
+                先讓 <span className="text-sky-600">AI 規劃</span>旅程，再隨時調整行程
               </h2>
             </div>
             <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2 pb-1 -mx-3.5 px-3.5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -541,7 +541,7 @@ export default function AiForm({
               <div className="mb-1 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
                   <h3 className="text-[22px] font-black tracking-[-0.04em] text-slate-900 font-heading">
-                    補充<span className="text-macaron">偏好細節</span>
+                    補充<span className="text-sky-600">偏好細節</span>
                   </h3>
                   <p className="mt-1 text-[13px] font-medium leading-[1.6] text-slate-500">
                     這些是選填項目，用來把草稿調得更貼近你的旅程節奏。
