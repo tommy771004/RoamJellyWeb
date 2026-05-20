@@ -116,11 +116,20 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         manifestFilename: 'manifest.json',
         includeAssets: ['favicon.ico', 'icon-app.svg', 'icon-app-maskable.svg'],
+        workbox: {
+          // Let the SW take control without going through the message-channel
+          // handshake — this is what eliminates the "message channel closed" error.
+          skipWaiting: true,
+          clientsClaim: true,
+          cleanupOutdatedCaches: true,
+        },
         manifest: {
           name: 'RoamJelly 果凍漫遊',
           short_name: 'RoamJelly',
           description: 'AI 旅遊行程規劃、多人即時共編、機票搜尋比價與旅途工具包。',
           lang: 'zh-TW',
+          start_url: '/',
+          scope: '/',
           theme_color: '#0f172a',
           background_color: '#0f172a',
           display: 'standalone',

@@ -683,8 +683,10 @@ export default function ItineraryTab() {
             description: spot.ai_note || "",
             ai_note: spot.ai_note || "",
             intensity: spot.intensity,
-            lat: undefined as any,
-            lng: undefined as any,
+            transport_to_next: spot.transport_to_next || undefined,
+            lat: spot.lat ?? (undefined as any),
+            lng: spot.lng ?? (undefined as any),
+            image_url: spot.image_url || undefined,
             source: "local" as const,
           });
         });
@@ -705,9 +707,11 @@ export default function ItineraryTab() {
         }
       });
 
-      // Fetch spot images (Wikipedia thumbnail) in parallel; fall back silently
+      // Fetch spot images (Wikipedia thumbnail) in parallel; skip if server already provided one
       const enrichResults = await Promise.allSettled(
-        rawNodes.map((n) => fetchSpotEnrichment(n.title)),
+        rawNodes.map((n) =>
+          n.image_url ? Promise.resolve(null) : fetchSpotEnrichment(n.title),
+        ),
       );
       enrichResults.forEach((r, i) => {
         if (r.status === "fulfilled" && r.value?.thumbnail) {

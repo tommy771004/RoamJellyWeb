@@ -64,6 +64,23 @@ async function getWikiThumbnail(name: string): Promise<string | null> {
       /* try next language */
     }
   }
+
+  // Fallback: Wikimedia Commons image search (catches local restaurants / small venues)
+  try {
+    const q = encodeURIComponent(name);
+    const res = await fetch(
+      `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${q}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&format=json&origin=*`,
+      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+    );
+    if (res.ok) {
+      const data: any = await res.json();
+      const pages = data.query?.pages || {};
+      const firstPage: any = Object.values(pages)[0];
+      const url: string | undefined = firstPage?.imageinfo?.[0]?.url;
+      if (url && /\.(jpg|jpeg|png|webp)/i.test(url)) return url;
+    }
+  } catch { /* swallow */ }
+
   return null;
 }
 
@@ -160,7 +177,7 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
   return { ...parsed, itinerary: finalDays };
 }
 
-// ─── Weather Forecast Helper ─────────────────────────────────────────────────
+// ─── Destination Context: Weather + Holidays + Country Info + Exchange Rate ────
 
 const WMO_LABEL: Record<number, string> = {
   0: "晴天", 1: "大致晴朗", 2: "局部多雲", 3: "陰天",
@@ -171,74 +188,177 @@ const WMO_LABEL: Record<number, string> = {
   95: "雷雨", 96: "強雷雨",
 };
 
-/**
- * Fetch daily weather forecast for the destination from Open-Meteo.
- * Returns a short human-readable string for injection into the AI prompt,
- * or an empty string if unavailable (non-blocking).
- */
-async function fetchWeatherContext(
-  destination: string,
+/** Geocode destination via Photon; returns lat/lng + ISO-3166-1 alpha-2 country code. */
+async function resolveDestinationGeo(
+  destination: string
+): Promise<{ lat: number; lng: number; countryCode: string } | null> {
+  try {
+    const q = encodeURIComponent(destination);
+    const res = await fetch(
+      `https://photon.komoot.io/api/?q=${q}&limit=1`,
+      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    const feature = data.features?.[0];
+    if (!feature) return null;
+    const [lng, lat] = feature.geometry.coordinates;
+    const countryCode = (feature.properties?.countrycode || "").toUpperCase();
+    return { lat, lng, countryCode };
+  } catch {
+    return null;
+  }
+}
+
+/** Open-Meteo daily forecast — returns one line per day. */
+async function fetchWeatherLines(
+  lat: number, lng: number,
   startDate: string | null | undefined,
   days: number
-): Promise<string> {
+): Promise<string[]> {
   try {
-    // Step 1: geocode destination (Photon)
-    const geoQ = encodeURIComponent(destination);
-    const geoRes = await fetch(
-      `https://photon.komoot.io/api/?q=${geoQ}&limit=1`,
-      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(4000) }
-    );
-    if (!geoRes.ok) return "";
-    const geoData: any = await geoRes.json();
-    const coords = geoData.features?.[0]?.geometry?.coordinates; // [lng, lat]
-    if (!coords?.length) return "";
-    const [lng, lat] = coords;
-
-    // Step 2: fetch forecast from Open-Meteo
     const forecastDays = Math.min(days, 14);
     const url =
       `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat}&longitude=${lng}` +
       `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code` +
       `&timezone=auto&forecast_days=${forecastDays}`;
-    const wxRes = await fetch(url, {
-      headers: { "User-Agent": "RoamJellyApp/1.0" },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!wxRes.ok) return "";
-    const wx: any = await wxRes.json();
-
+    const res = await fetch(url, { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return [];
+    const wx: any = await res.json();
     const times: string[] = wx.daily?.time || [];
-    const maxTemps: number[] = wx.daily?.temperature_2m_max || [];
-    const minTemps: number[] = wx.daily?.temperature_2m_min || [];
-    const rainProbs: number[] = wx.daily?.precipitation_probability_max || [];
+    const maxT: number[] = wx.daily?.temperature_2m_max || [];
+    const minT: number[] = wx.daily?.temperature_2m_min || [];
+    const rain: number[] = wx.daily?.precipitation_probability_max || [];
     const codes: number[] = wx.daily?.weather_code || [];
-
-    // Align forecast days to startDate if provided
     let startIdx = 0;
     if (startDate && times.length > 0) {
-      const target = startDate.slice(0, 10);
-      const found = times.findIndex((t: string) => t === target);
+      const found = times.findIndex((t: string) => t === startDate.slice(0, 10));
       if (found !== -1) startIdx = found;
     }
-
     const lines: string[] = [];
     for (let i = 0; i < days && startIdx + i < times.length; i++) {
       const idx = startIdx + i;
       const label = WMO_LABEL[codes[idx]] ?? "未知天氣";
-      const rain = rainProbs[idx] != null ? `降雨機率 ${rainProbs[idx]}%` : "";
-      lines.push(
-        `Day ${i + 1} (${times[idx]}): ${label}, ` +
-          `${Math.round(minTemps[idx])}°C–${Math.round(maxTemps[idx])}°C${rain ? ", " + rain : ""}`
-      );
+      const rainStr = rain[idx] != null ? `, 降雨機率 ${rain[idx]}%` : "";
+      lines.push(`Day ${i + 1} (${times[idx]}): ${label}, ${Math.round(minT[idx])}°C–${Math.round(maxT[idx])}°C${rainStr}`);
     }
-
-    return lines.length > 0
-      ? `【出發地天氣預報（供規劃參考）】\n${lines.join("\n")}`
-      : "";
+    return lines;
   } catch {
-    return "";
+    return [];
   }
+}
+
+/** Nager.Date public holidays that fall within the trip date range. */
+async function fetchHolidayLines(
+  countryCode: string,
+  startDate: string | null | undefined,
+  days: number
+): Promise<string[]> {
+  if (!countryCode || !startDate) return [];
+  try {
+    const year = new Date(startDate).getFullYear();
+    const res = await fetch(
+      `https://date.nager.at/api/v3/PublicHolidays/${year}/${countryCode}`,
+      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) return [];
+    const holidays: Array<{ date: string; localName: string; name: string }> = await res.json();
+    const start = new Date(startDate.slice(0, 10));
+    const lines: string[] = [];
+    for (let i = 0; i < days; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const h = holidays.find((hol) => hol.date === dateStr);
+      if (h) lines.push(`Day ${i + 1} (${dateStr}) 是國定假日「${h.localName || h.name}」，景點可能休館或人潮擁擠。`);
+    }
+    return lines;
+  } catch {
+    return [];
+  }
+}
+
+/** RestCountries: currency, timezone, calling code for a country. */
+async function fetchCountryMeta(
+  countryCode: string
+): Promise<{ lines: string[]; currencyCode: string }> {
+  if (!countryCode) return { lines: [], currencyCode: "" };
+  try {
+    const res = await fetch(
+      `https://restcountries.com/v3.1/alpha/${countryCode}?fields=currencies,timezones,idd`,
+      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) return { lines: [], currencyCode: "" };
+    const data: any = await res.json();
+    const curs = data.currencies || {};
+    const currencyCode = Object.keys(curs)[0] || "";
+    const cur = curs[currencyCode] || {};
+    const timezone = data.timezones?.[0] || "";
+    const callingCode = data.idd?.root
+      ? `${data.idd.root}${(data.idd.suffixes || [])[0] || ""}`
+      : "";
+    const lines: string[] = [];
+    if (currencyCode) lines.push(`當地貨幣: ${cur.symbol || currencyCode} (${currencyCode} — ${cur.name || ""})`);
+    if (timezone) lines.push(`時區: ${timezone}`);
+    if (callingCode) lines.push(`國際電話碼: ${callingCode}`);
+    return { lines, currencyCode };
+  } catch {
+    return { lines: [], currencyCode: "" };
+  }
+}
+
+/** ExchangeRate-API (open.er-api.com): TWD ↔ destination currency. */
+async function fetchExchangeLines(currencyCode: string): Promise<string[]> {
+  if (!currencyCode || currencyCode === "TWD") return [];
+  try {
+    const res = await fetch(
+      `https://open.er-api.com/v6/latest/TWD`,
+      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) return [];
+    const data: any = await res.json();
+    const rate: number = data.rates?.[currencyCode];
+    if (!rate) return [];
+    const inverse = (1 / rate).toFixed(2);
+    return [`匯率參考: 1 TWD ≈ ${rate.toFixed(4)} ${currencyCode}（即 1 ${currencyCode} ≈ ${inverse} TWD）`];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch all destination context in parallel: weather + public holidays + country info + exchange rate.
+ * Returns a single formatted string for injection into the AI prompt.
+ * All sources are non-blocking; returns empty string on complete failure.
+ */
+async function fetchAllDestinationContext(
+  destination: string,
+  startDate: string | null | undefined,
+  days: number
+): Promise<string> {
+  const geo = await resolveDestinationGeo(destination);
+  if (!geo) return "";
+  const { lat, lng, countryCode } = geo;
+
+  const [weatherLines, holidayLines, countryMeta] = await Promise.all([
+    fetchWeatherLines(lat, lng, startDate, days),
+    fetchHolidayLines(countryCode, startDate, days),
+    fetchCountryMeta(countryCode),
+  ]);
+
+  const exchangeLines = await fetchExchangeLines(countryMeta.currencyCode);
+
+  const sections: string[] = [];
+  if (weatherLines.length > 0)
+    sections.push(`【天氣預報（供規劃參考）】\n${weatherLines.join("\n")}`);
+  if (holidayLines.length > 0)
+    sections.push(`【國定假日警告】\n${holidayLines.join("\n")}`);
+  const infoLines = [...countryMeta.lines, ...exchangeLines];
+  if (infoLines.length > 0)
+    sections.push(`【目的地基本資訊】\n${infoLines.join("\n")}`);
+
+  return sections.join("\n\n");
 }
 
 // ─── Prompt builder (no lat/lng/image_url in schema) ─────────────────────────
@@ -247,7 +367,7 @@ async function fetchWeatherContext(
  * Build the AI prompt for a chunk of days.
  * includeUiConfig = true for the first chunk (adds ui_config + summary to the schema).
  * startDay/endDay constrain which days the AI should output.
- * weatherContext: optional forecast string injected into the prompt.
+ * destinationContext: optional context string (weather/holidays/rates) injected into the prompt.
  */
 function buildChunkPrompt(
   destination: string,
@@ -257,7 +377,7 @@ function buildChunkPrompt(
   includeUiConfig: boolean,
   startDay: number,
   endDay: number,
-  weatherContext?: string
+  destinationContext?: string
 ): string {
   const chunkDays = endDay - startDay + 1;
   const rangeInstruction =
@@ -342,7 +462,7 @@ Details:
 - Transport: ${planner?.transport?.length ? planner.transport.join(", ") : "Not specified"}
 - Budget Level: ${planner?.budget || "Not specified"}
 - Extra notes: ${planner?.notes || "None"}
-${weatherContext ? "\n" + weatherContext : ""}
+${destinationContext ? "\n" + destinationContext : ""}
 ${generationContext}${rangeInstruction}
 
 最終提醒：所有輸出內容（包含 summary.title）都必須是「${destination}」的行程，請直接輸出 JSON，不要任何多餘文字或 markdown 包裝。`;
@@ -402,8 +522,8 @@ export async function generateItinerary(body: any) {
 
   const fallback = [{ day: 1, time: "10:00", title: "系統繁忙: 這是一筆備用資料", category: "other", emoji: "📍" }];
 
-  // ── Pre-fetch weather forecast (non-blocking; injected into AI prompt) ──────
-  const weatherContext = await fetchWeatherContext(
+  // ── Pre-fetch destination context (weather + holidays + country + rates) ───
+  const destinationContext = await fetchAllDestinationContext(
     destination,
     planner?.startDate,
     days
@@ -416,7 +536,7 @@ export async function generateItinerary(body: any) {
 
   if (!useParallel) {
     // ── Single call ──────────────────────────────────────────────────────────
-    const prompt = buildChunkPrompt(destination, days, planner, generationContext, true, 1, days, weatherContext);
+    const prompt = buildChunkPrompt(destination, days, planner, generationContext, true, 1, days, destinationContext);
     try {
       const text = await fetchOpenRouterWithFallback(apiKey, prompt);
       const match = text.match(/\{[\s\S]*\}/);
@@ -446,7 +566,7 @@ export async function generateItinerary(body: any) {
             isFirst,
             startDay,
             endDay,
-            weatherContext
+            destinationContext
           );
           return fetchOpenRouterWithFallback(apiKey!, prompt).then((text) =>
             parseChunkText(text, isFirst)
@@ -549,6 +669,7 @@ export async function regenerateSpot(params: {
         lat: coords?.lat ?? parsed.lat,
         lng: coords?.lng ?? parsed.lng,
         image_url: parsed.image_url || thumbnail || undefined,
+        transport_to_next: parsed.transport_to_next || undefined,
       };
     }
   } catch (err) {

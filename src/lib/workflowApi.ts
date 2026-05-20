@@ -422,6 +422,7 @@ export async function fetchHandbooks(): Promise<any[]> {
     return res.json();
   } catch (error) {
     console.error('fetchHandbooks failed', error);
+    return [];
   }
 }
 
@@ -760,7 +761,10 @@ export async function toggleUserSubscription(destination: string, channel: strin
 
 export async function fetchSpotEnrichment(name: string): Promise<{ description?: string; wiki_url?: string; thumbnail?: string }> {
   try {
-    const res = await fetch(`/api/spots/enrich?name=${encodeURIComponent(name)}`);
+    const token = getStoredToken();
+    const res = await fetch(`/api/spots/enrich?name=${encodeURIComponent(name)}`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    });
     if (res.ok) return res.json();
   } catch { /* ignore */ }
   return {};
