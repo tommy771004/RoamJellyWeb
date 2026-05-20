@@ -1494,8 +1494,13 @@ function LedgerSection() {
         )}
 
         {/* Add Expense Form */}
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="expense-title">支出項目</Label>
+        <motion.div
+          animate={Object.keys(errors).length > 0 ? { x: [-4, 4, -4, 4, 0] } : {}}
+          transition={{ type: "spring", stiffness: 350, damping: 10 }}
+          className="flex flex-col gap-3"
+        >
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="expense-title">支出項目</Label>
           <Input
             id="expense-title"
             value={form.title}
@@ -1668,6 +1673,7 @@ function LedgerSection() {
             </Button>
           </div>
         </div>
+        </motion.div>
 
         <Button
           onClick={() => void actions.submitExpense()}
@@ -1709,7 +1715,7 @@ function SettlementsSection() {
             currencyEntries.map(([cur, amount]) => (
               <span
                 key={cur}
-                className="text-[11px] font-black text-fuchsia-600 bg-fuchsia-50 px-4 py-2 rounded-full shrink-0 tracking-wider shadow-sm border border-fuchsia-100"
+                className="text-[11.5px] font-mono font-black text-slate-800 bg-white border border-slate-200/80 px-4 py-2 rounded-full shrink-0 tracking-wider shadow-[0_2px_8px_rgba(15,23,42,0.03)]"
               >
                 {cur} {amount.toLocaleString()}
               </span>
@@ -1721,10 +1727,17 @@ function SettlementsSection() {
       <GlassCard className="!p-4 sm:!p-6 glass-panel">
       <div className="flex flex-col gap-4 w-full">
         {settlements.length === 0 && (
-          <div className="editorial-card-soft flex items-center justify-center rounded-[32px] p-10">
-            <span className="text-slate-500 font-medium italic">
-              都算清囉！ ✨
-            </span>
+          <div className="editorial-card-soft flex flex-col items-center justify-center text-center rounded-[32px] p-12 bg-gradient-to-tr from-emerald-500/5 via-teal-500/5 to-white/90 border border-emerald-100/60 shadow-[inset_0_1px_1px_rgba(255,255,255,1)]">
+            <div className="relative mb-4 flex items-center justify-center">
+              <div className="absolute inset-x-0 size-16 bg-emerald-100 animate-ping rounded-full opacity-25 pointer-events-none" />
+              <div className="size-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 drop-shadow-sm">
+                <CheckCircle2 size={28} strokeWidth={2.5} />
+              </div>
+            </div>
+            <h4 className="text-base font-black text-slate-900 tracking-tight">款項已全部結清！</h4>
+            <p className="text-[12px] font-bold text-slate-500 max-w-[280px] mt-1.5 leading-relaxed">
+              太棒了！所有旅途花費或拆帳細項均已兩清，目前無任何未清款項。
+            </p>
           </div>
         )}
         {settlements.length > 0 && (

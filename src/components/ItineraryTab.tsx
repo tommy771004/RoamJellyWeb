@@ -3728,16 +3728,22 @@ function CollaboratorAvatar({
 }) {
   return (
     <motion.div
-      initial={{ scale: 0, x: -20 }}
+      initial={{ scale: 0, x: -15 }}
       animate={{ scale: 1, x: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className={`relative -ml-3 first:ml-0 group`}
+      whileHover={{ y: -4, scale: 1.08 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 20,
+        delay: index * 0.05 
+      }}
+      className="relative -ml-2.5 first:ml-0 group cursor-pointer"
       style={{ zIndex: 10 + index }}
     >
       <div
-        className={`w-12 h-12 rounded-full border-[3px] border-white shadow-xl overflow-hidden transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1 relative ${isOnline ? "ring-2 ring-emerald-400 ring-offset-2" : ""}`}
+        className={`w-11 h-11 rounded-full border-[2.5px] border-white shadow-[0_4px_12px_rgba(15,23,42,0.08)] overflow-hidden transition-all duration-300 relative ${isOnline ? "ring-[2.5px] ring-emerald-400/80 ring-offset-2 shadow-[0_0_12px_rgba(52,211,153,0.5)]" : ""}`}
       >
-        <div className="w-full h-full bg-pink-50 flex items-center justify-center text-xl">
+        <div className="w-full h-full bg-slate-50 flex items-center justify-center text-xl font-black">
           {(collaborator.avatar?.length ?? 0) > 2 ? (
             <img
               src={collaborator.avatar}
@@ -3748,14 +3754,17 @@ function CollaboratorAvatar({
             (collaborator.avatar ?? "👤")
           )}
         </div>
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
       </div>
 
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-800/90 backdrop-blur-md text-white text-[11px] font-black rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase tracking-widest shadow-xl">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-[10px] font-black rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase tracking-widest shadow-xl">
         {collaborator.name}
       </div>
       {isOnline && (
-        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-400 border-[3px] border-white shadow-sm animate-pulse" />
+        <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-[2.5px] border-white"></span>
+        </span>
       )}
     </motion.div>
   );
@@ -4373,7 +4382,7 @@ const ItineraryListItem = React.memo(
             item.timestamp,
         });
 
-        useAppStore.getState().showToast?.(`✨ 已為您替換為 "${restNode.title || '新景點'}"！`, "success");
+        useAppStore.getState().showToast?.(`✨ 已重新規劃此景點節點！已即時同步予共編協作者...`, "success");
       } catch (err) {
         console.error("Regenerate failed:", err);
         useAppStore.getState().showToast?.("AI 替換景點失敗，請確認網路連線或 OpenRouter 金鑰設定。", "warning");
@@ -4387,9 +4396,9 @@ const ItineraryListItem = React.memo(
     return (
       <div className="relative flex items-stretch group w-full pl-[22px] sm:pl-10 lg:pl-12">
         {/* Timeline Thread */}
-        <div className="absolute left-[10px] sm:left-4 lg:left-5 top-0 bottom-0 w-[4px] bg-gradient-to-b from-pink-100/70 via-fuchsia-100/50 to-transparent rounded-full group-last:bottom-auto group-last:h-12" />
+        <div className="absolute left-[11px] sm:left-[17px] lg:left-[21px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-fuchsia-400/80 via-pink-400/40 to-transparent shadow-[0_0_8px_rgba(244,63,94,0.25)] group-last:bottom-auto group-last:h-12 pointer-events-none" />
         <div
-          className={`absolute left-[5px] sm:left-2 lg:left-3 top-6 sm:top-7 w-[14px] h-[14px] sm:w-[18px] sm:h-[18px] lg:w-[20px] lg:h-[20px] rounded-full border-2 sm:border-[3px] lg:border-4 border-white shadow-sm z-20 transition-all duration-500 group-hover:scale-125 ${item.linkedFactId ? "bg-sky-400 ring-2 ring-sky-200 ring-offset-1 shadow-[0_0_8px_rgba(14,165,233,0.5)]" : "bg-pink-300 group-hover:bg-fuchsia-400"}`}
+          className={`absolute left-[5px] sm:left-2 lg:left-3 top-6 sm:top-7 w-[14px] h-[14px] sm:w-[20px] sm:h-[20px] rounded-full border-[3px] border-white/94 backdrop-blur-md shadow-[0_4px_12px_rgba(244,63,94,0.2)] z-20 transition-all duration-500 group-hover:scale-130 ${item.linkedFactId ? "bg-gradient-to-br from-sky-400 to-blue-500 ring-4 ring-sky-200/50 shadow-[0_0_12px_rgba(14,165,233,0.6)]" : "bg-gradient-to-br from-pink-400 to-fuchsia-400 hover:from-pink-500 hover:to-fuchsia-500 group-hover:animate-pulse"}`}
         />
 
         {/* Content Card */}
@@ -4677,9 +4686,9 @@ const ItineraryListItem = React.memo(
                         void handleRegenerate();
                       }}
                       disabled={Boolean(collaboratingLock) || regenerating}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-fuchsia-200 flex items-center justify-center text-fuchsia-700 hover:bg-fuchsia-50 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
-                      title="AI 換一個建議"
-                      aria-label="AI 換一個建議"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-fuchsia-500/10 via-pink-500/5 to-white/90 border border-fuchsia-200/80 flex items-center justify-center text-fuchsia-700 hover:from-fuchsia-500 hover:to-pink-500 hover:text-white hover:border-transparent hover:shadow-lg hover:shadow-fuchsia-200/40 transition-all duration-300 active:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transform-gpu animate-none"
+                      title="AI 重新規劃景點"
+                      aria-label="AI 重新規劃景點"
                     >
                       {regenerating ? (
                         <Loader2

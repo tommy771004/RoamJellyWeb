@@ -66,7 +66,7 @@ export function getListEntranceTransition(index = 0, reduced = false): Transitio
   };
 }
 
-// Priority 5: Micro-interactions (micro-button-press-scale down to 0.97)
-export const pressableSurfaceClass = 'transition-[transform,shadow,border] duration-300 transform-gpu ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] active:duration-100 hover:shadow-lg active:shadow-sm';
-export const subtlePressableClass = 'transition-transform duration-300 transform-gpu ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] active:duration-100';
-export const raisedHoverClass = 'hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:-translate-y-0 active:shadow-sm active:scale-[0.97]';
+// Priority 5: Micro-interactions (micro-button-press-scale down to 0.97/0.985)
+export const pressableSurfaceClass = 'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97]';
+export const subtlePressableClass = 'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.985]';
+export const raisedHoverClass = 'hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]';

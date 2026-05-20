@@ -294,7 +294,7 @@ function FlightCard({
         className={`!p-0 glass-card dark:bg-slate-800 flex-1 flex flex-col overflow-hidden rounded-[32px] sm:rounded-[36px] transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}
       >
         {/* Top Section: Airline & Route */}
-        <div className="p-3.5 sm:p-4 flex flex-col gap-2.5">
+        <div className="p-3 sm:p-4 flex flex-col gap-2">
           {/* Header: Airline + stop/duration badge */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1861,7 +1861,7 @@ export default function HomeTab({
     >
       {/* === HERO SECTION with gradient background === */}
       <div
-        className={`relative z-10 w-full pt-8 sm:pt-[60px] ${!isHeroExpanded ? "pb-3" : "pb-8 sm:pb-12"} px-3 sm:px-6 overflow-visible`}
+        className={`relative z-10 w-full pt-5 sm:pt-[55px] ${!isHeroExpanded ? "pb-2" : "pb-6 sm:pb-10"} px-3 sm:px-6 overflow-visible`}
       >
         <motion.div 
           style={{ willChange: 'transform, opacity' }}
@@ -1886,7 +1886,7 @@ export default function HomeTab({
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
             onClick={() => setIsHeroIntroCollapsed((prev) => !prev)}
-            className={`group relative mx-auto mb-4 max-w-[960px] space-y-3 overflow-hidden rounded-[32px] glass-panel px-4 py-4 text-center sm:mb-5 sm:space-y-4 sm:px-6 sm:py-6${!isHeroExpanded ? " hidden sm:block" : ""} cursor-pointer transition-colors duration-300 hover:bg-white/40`}
+            className={`group relative mx-auto mb-3.5 max-w-[960px] space-y-2.5 overflow-hidden rounded-[28px] sm:rounded-[32px] glass-panel px-3.5 py-3.5 text-center sm:mb-5 sm:space-y-4 sm:px-6 sm:py-6${!isHeroExpanded ? " hidden sm:block" : ""} cursor-pointer transition-colors duration-300 hover:bg-white/40`}
           >
             <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
             <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-sky-200/30 blur-3xl group-hover:bg-sky-200/40 transition-colors duration-300" />
@@ -1904,7 +1904,7 @@ export default function HomeTab({
               <p className={`text-[10px] font-black uppercase tracking-[0.28em] text-slate-400 transition-all duration-300 ${isHeroIntroCollapsed ? "hidden" : "block"}`}>
                 Premium Jelly Journey Desk
               </p>
-              <h1 className="mx-auto max-w-4xl text-balance text-[28px] font-black tracking-[-0.045em] text-slate-900 sm:text-[42px] md:text-[54px] md:leading-[1.01] font-heading">
+              <h1 className="mx-auto max-w-4xl text-balance text-[24px] font-black tracking-[-0.04em] text-slate-900 sm:text-[38px] md:text-[52px] leading-tight sm:leading-none font-heading">
                 把<span className="text-sky-600">航班、地圖</span>與<span className="text-sky-600">旅伴分工</span>，收進同一份旅程
               </h1>
               
@@ -3157,7 +3157,7 @@ export default function HomeTab({
                           <span className="text-white font-black text-[15px] sm:text-[16px] leading-none">{dest.name} 旅遊攻略手冊</span>
                         </div>
                         
-                        <p className="text-[11px] sm:text-[11.5px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-2">
+                        <p className="text-[11px] sm:text-[11.5px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-3">
                           {dest.description}
                         </p>
 
@@ -3254,8 +3254,8 @@ export default function HomeTab({
                           {handbook.title}
                         </h3>
                         
-                        <p className="text-[11px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-2">
-                          最具含金量的行程路線！包含：{handbook.tags.slice(0, 2).map((t) => `#${t}`).join(" ")}，一鍵複製即刻出發。
+                        <p className="text-[11px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-3">
+                          最具含金量的行程路線！包含：{handbook.tags.slice(0, 3).map((t) => `#${t}`).join(" ")}，專為自由行打造。一鍵複製即刻出發，開啟你的完美旅程。
                         </p>
 
                         <div className="flex gap-2 border-t border-white/10 pt-3.5 mt-3">

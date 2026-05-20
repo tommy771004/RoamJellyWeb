@@ -150,35 +150,68 @@ export const LocationPickerPopup = ({
                     </div>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
                       {dests.map((dest) => {
-                        const hasSlash = dest.place.includes('/');
-                        const mainCity = hasSlash ? dest.place.split('/')[0] : dest.place;
-                        const subBranch = hasSlash ? dest.place.split('/')[1] : null;
+                        // Premium Taiwanese localized mapping function for multi-airport destination clarity
+                        const getDisplayNames = (d: TravelGuideDestination) => {
+                          if (d.searchAlias === 'TPE') return { main: '台北桃園', sub: '桃園機場', code: 'TPE' };
+                          if (d.searchAlias === 'TSA') return { main: '台北松山', sub: '松山機場', code: 'TSA' };
+                          if (d.searchAlias === 'NRT') return { main: '東京成田', sub: '成田機場', code: 'NRT' };
+                          if (d.searchAlias === 'HND') return { main: '東京羽田', sub: '羽田機場', code: 'HND' };
+                          if (d.searchAlias === 'ICN') return { main: '首爾仁川', sub: '仁川機場', code: 'ICN' };
+                          if (d.searchAlias === 'GMP') return { main: '首爾金浦', sub: '金浦機場', code: 'GMP' };
+                          if (d.searchAlias === 'KIX') return { main: '大阪關西', sub: '關西機場', code: 'KIX' };
+                          if (d.searchAlias === 'CTS') return { main: '札幌新千歲', sub: '新千歲機場', code: 'CTS' };
+                          if (d.searchAlias === 'OKA') return { main: '沖繩那霸', sub: '那霸機場', code: 'OKA' };
+                          if (d.searchAlias === 'BKK') return { main: '曼谷蘇凡', sub: '蘇凡納布', code: 'BKK' };
+                          if (d.searchAlias === 'DMK') return { main: '曼谷廊曼', sub: '廊曼機場', code: 'DMK' };
+                          if (d.searchAlias === 'SIN') return { main: '新加坡', sub: '樟宜機場', code: 'SIN' };
+                          if (d.searchAlias === 'PVG') return { main: '上海浦東', sub: '浦東機場', code: 'PVG' };
+                          if (d.searchAlias === 'SHA') return { main: '上海虹橋', sub: '虹橋機場', code: 'SHA' };
+                          if (d.searchAlias === 'PEK') return { main: '北京首都', sub: '首都機場', code: 'PEK' };
+                          if (d.searchAlias === 'LHR') return { main: '倫敦希斯洛', sub: '希斯洛機場', code: 'LHR' };
+                          if (d.searchAlias === 'LGW') return { main: '倫敦蓋威克', sub: '蓋威克機場', code: 'LGW' };
+                          if (d.searchAlias === 'CDG') return { main: '巴黎戴高樂', sub: '戴高樂機場', code: 'CDG' };
+                          if (d.searchAlias === 'ORY') return { main: '巴黎奧利', sub: '奧利機場', code: 'ORY' };
+                          if (d.searchAlias === 'JFK') return { main: '紐約甘迺迪', sub: '甘迺迪機場', code: 'JFK' };
+                          if (d.searchAlias === 'EWR') return { main: '紐約紐華克', sub: '紐華克機場', code: 'EWR' };
+                          if (d.searchAlias === 'MXP') return { main: '米蘭馬爾', sub: '馬爾彭薩', code: 'MXP' };
+                          if (d.searchAlias === 'IST') return { main: '伊斯坦堡', sub: '伊斯坦堡機場', code: 'IST' };
+                          if (d.searchAlias === 'SAW') return { main: '伊斯坦堡', sub: '薩比哈機場', code: 'SAW' };
+
+                          const hasSlash = d.place.includes('/');
+                          if (hasSlash) {
+                            const parts = d.place.split('/');
+                            return { main: parts[0], sub: parts[1], code: d.searchAlias || '' };
+                          }
+                          return { main: d.place, sub: d.country, code: d.searchAlias || '' };
+                        };
+
+                        const display = getDisplayNames(dest);
 
                         return (
                           <button
                             key={dest.id}
                             onClick={() => onSelect(dest)}
-                            className="group relative flex flex-col items-center justify-center gap-1 rounded-2xl border border-slate-200/60 bg-white/80 backdrop-blur-sm py-3 px-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50/25 hover:shadow-md hover:shadow-sky-100/50 active:scale-[0.96] overflow-hidden"
+                            className="group relative flex flex-col items-center justify-center gap-1.5 rounded-[22px] border border-slate-100 bg-white/70 backdrop-blur-md py-4 px-2 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-300 hover:bg-sky-50/25 hover:shadow-lg hover:shadow-sky-100/40 active:scale-[0.95] overflow-hidden"
                           >
-                            {/* Subtle decorative dot for domestic Taiwan spots as visual feedback */}
+                            {/* Subtle premium decorative color band indicators */}
+                            <span className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-sky-400 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            
+                            {/* Cute pink pulsing dot for domestic Taiwan spots as visual feedback */}
                             {dest.country === '台灣' && (
-                              <span className="absolute top-2 right-2 size-1 rounded-full bg-pink-400 animate-pulse" />
+                              <span className="absolute top-3 right-3 size-1.5 rounded-full bg-pink-500 shadow-sm shadow-pink-300 animate-pulse" />
                             )}
-                            <span className="w-full text-center text-[13px] sm:text-[14px] font-black text-slate-800 group-hover:text-sky-600 transition-colors truncate">
-                              {mainCity}
+                            
+                            <span className="w-full text-center text-[13px] sm:text-[14px] font-black tracking-tight text-slate-800 group-hover:text-sky-600 transition-colors truncate">
+                              {display.main}
                             </span>
-                            {subBranch ? (
-                              <span className="text-[10px] font-bold text-slate-400 group-hover:text-sky-500/80 transition-colors truncate max-w-full">
-                                {subBranch}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-bold text-transparent select-none leading-none">
-                                Placeholder
-                              </span>
-                            )}
-                            {dest.searchAlias && (
-                              <span className="mt-0.5 inline-flex items-center rounded-md bg-slate-50 border border-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 font-mono tracking-wider group-hover:bg-sky-100/80 group-hover:border-sky-200 group-hover:text-sky-700 transition-all">
-                                {dest.searchAlias}
+                            
+                            <span className="text-[10px] font-bold text-slate-400 group-hover:text-indigo-500/85 transition-colors truncate max-w-full">
+                              {display.sub}
+                            </span>
+                            
+                            {display.code && (
+                              <span className="mt-1 inline-flex items-center rounded-full bg-slate-50 border border-slate-100/80 px-2 py-0.5 text-[9px] font-black text-slate-500 font-mono tracking-wider group-hover:bg-sky-100/60 group-hover:border-sky-200 group-hover:text-indigo-600 transition-all shadow-subtle">
+                                {display.code}
                               </span>
                             )}
                           </button>
