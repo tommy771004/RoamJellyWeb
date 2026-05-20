@@ -235,3 +235,57 @@ function pickIcon(value: unknown, category: string): string {
   if (icon) return icon;
   return CATEGORY_ICON_MAP[category] ?? '📍';
 }
+
+export interface ChatMessageParam {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatResponseData {
+  text: string;
+  suggestedType: 'flights' | 'packing-list' | 'activities' | 'none';
+  flights?: Array<{
+    provider: string;
+    time: string;
+    price: number;
+    from: string;
+    to: string;
+    stops: number;
+  }>;
+  packingList?: string[];
+  activities?: Array<{
+    title: string;
+    time?: string;
+    description: string;
+    category?: string;
+  }>;
+}
+
+export async function suggestChatAssistantResponse(
+  message: string,
+  history: ChatMessageParam[],
+  context?: { activeDestination?: string; activeDays?: number }
+): Promise<ChatResponseData> {
+  const token = getStoredToken();
+  const res = await fetch('/api/generate/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ message, history, context }),
+  });
+
+  if (res.status === 429) {
+    const data = await res.json().catch(() => ({}));
+    throw new AiRateLimitedError(data.message || 'AI 顧問服務繁忙，請稍後再試。');
+  }
+
+  if (!res.ok) throw new Error(`AI API error ${res.status}`);
+
+  const json = await res.json();
+  if (json.status === 'success' && json.data) {
+    return json.data as ChatResponseData;
+  }
+  throw new Error('AI response missing chat data');
+}

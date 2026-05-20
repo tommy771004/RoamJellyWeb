@@ -21,6 +21,10 @@ import {
   Bed,
   Ticket,
   CarFront,
+  Rss,
+  Mail,
+  CheckSquare,
+  Share2,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
@@ -34,6 +38,8 @@ import {
   fetchHandbooks,
   createTripFact,
   syncItinerary,
+  fetchUserSubscriptions,
+  toggleUserSubscription,
 } from "../lib/workflowApi";
 import { useSearchStore } from "../store/useSearchStore";
 import { useAppStore } from "../store/useAppStore";
@@ -1038,6 +1044,24 @@ const FEATURED_DESTINATIONS = [
   },
 ];
 
+const getIataCode = (cityName: string = "") => {
+  const name = cityName.toLowerCase();
+  if (name.includes("東京") || name.includes("tokyo")) return "NRT";
+  if (name.includes("大阪") || name.includes("osaka")) return "KIX";
+  if (name.includes("倫敦") || name.includes("london")) return "LHR";
+  if (name.includes("瑞士") || name.includes("switzerland") || name.includes("ch") || name.includes("瑞")) return "ZRH";
+  if (name.includes("尼泊爾") || name.includes("nepal") || name.includes("尼")) return "KTM";
+  if (name.includes("挪威") || name.includes("norway") || name.includes("挪")) return "OSL";
+  if (name.includes("台北") || name.includes("taipei") || name.includes("tpe")) return "TPE";
+  return "TPE";
+};
+
+const getSafetyStatus = (cityName: string = "") => {
+  const name = cityName.toLowerCase();
+  if (name.includes("倫敦") || name.includes("london")) return "💛 旅遊須知";
+  return "💚 安全無虞";
+};
+
 export default function HomeTab({
   onRequireLogin,
   isLoggedIn,
@@ -1098,6 +1122,59 @@ export default function HomeTab({
   const [progressMsgIdx, setProgressMsgIdx] = useState(0);
   const prefersReducedMotion = useReducedMotion() ?? false;
   const { onScroll } = useHideNavOnScroll();
+
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      setLoadingSubscriptions(true);
+      fetchUserSubscriptions()
+        .then((data) => {
+          setSubscriptions(data || []);
+        })
+        .catch((err) => console.error("fetchSubscriptions error", err))
+        .finally(() => setLoadingSubscriptions(false));
+    } else {
+      setSubscriptions([]);
+    }
+  }, [isLoggedIn]);
+
+  const handleToggleSubscription = async (destination: string, channel: string) => {
+    if (!isLoggedIn) {
+      if (onRequireLogin) onRequireLogin();
+      return;
+    }
+    try {
+      const res = await toggleUserSubscription(destination, channel);
+      if (res?.status === 'success') {
+        const updated = await fetchUserSubscriptions();
+        setSubscriptions(updated || []);
+        
+        const isSubscribed = res.data?.status === 'subscribed' || res.data?.data?.id !== undefined || res.data?.status !== 'unsubscribed';
+        showToast(
+          isSubscribed 
+            ? `🎉 已成功訂閱 ${destination} 的「${channel === 'web-push' ? '網頁即時推送' : '電子信箱/RSS 快訊'}」！` 
+            : `🔕 已取消 ${destination} 的「${channel === 'web-push' ? '網頁即時推送' : '電子信箱/RSS 快訊'}」訂閱。`,
+          'success'
+        );
+
+        if (isSubscribed && channel === 'web-push') {
+          if ('Notification' in window) {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+              new Notification('Jelly AI 果凍機票優惠與警報速報 🍮', {
+                body: `您已成功開啟【${destination}】的即時推送通知！我們將持續為您追蹤最殺優惠與重要旅遊安全警報。`,
+              });
+            }
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      showToast('切換訂閱失敗，請稍後再試。', 'warning');
+    }
+  };
 
   const SEARCH_LOADING_MESSAGES = [
     "搜尋航班中...",
@@ -2610,6 +2687,145 @@ export default function HomeTab({
                           ),
                         )}
                       </div>
+
+                      {/* Subscription module block */}
+                      <div className="mt-8 pt-8 border-t border-slate-200/50 dark:border-white/10 w-full text-left">
+                        <div className="flex items-center gap-2 mb-2">
+                          <BellRing size={20} className="text-pink-500 animate-pulse" />
+                          <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                            ✉️ 目的地即時快訊 & 優惠促銷訂閱
+                          </h4>
+                          <span className="text-[9px] bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Real-time Alerts
+                          </span>
+                        </div>
+                        <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                          當航班降價促銷、釋出聯名特惠，或目的地有重要安全/旅遊警示更新時，系統將即時通知您，幫助您聰明規劃、安心起飛！
+                        </p>
+
+                        {/* List of Destinations available for subscriptions */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                          {[
+                            { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", price: "NT$ 9,800起", health: "💚 安全無虞", advisory: "由傳統航空釋出大量淡季特等機票，東京梅雨季氣溫適中！", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
+                            { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", price: "NT$ 8,900起", health: "💚 安全無虞", advisory: "廉價航空本週大促銷，週末熱門時段仍有促銷票！", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
+                            { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", price: "本島漫遊", health: "💚 安全無虞", advisory: "梅雨滯留鋒面逼近，下雨行程已由 Jelly AI 為您全天候就緒。", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
+                            { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", price: "NT$ 24,500起", health: "💛 旅遊須知", advisory: "希斯洛機場本週部分行李分檢系統調整，過海關建议提早排隊。", tagColor: "bg-amber-50 text-amber-700 font-extrabold" },
+                          ].map((dest) => {
+                            const isWebPush = subscriptions.some(s => s.destination === dest.name && s.channel === 'web-push');
+                            const isEmail = subscriptions.some(s => s.destination === dest.name && s.channel === 'email');
+
+                            return (
+                              <div key={dest.name} className="flex flex-row items-stretch rounded-[22px] border border-slate-100 dark:border-white/5 bg-slate-50/42 dark:bg-slate-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans">
+                                  <img src={dest.image} alt={dest.name} className="h-full w-full object-cover" />
+                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
+                                  <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5 flex-wrap">
+                                    <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
+                                      {dest.code}
+                                    </span>
+                                    <span className={`rounded-md px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md ${dest.tagColor}`}>
+                                      {dest.health}
+                                    </span>
+                                  </div>
+                                  <div className="absolute bottom-2.5 left-2.5 text-white pr-2">
+                                    <h5 className="font-extrabold text-[13.5px] leading-tight">{dest.name}</h5>
+                                    <span className="text-[10px] font-bold text-pink-300 font-mono">最低 {dest.price}</span>
+                                  </div>
+                                </div>
+                                
+                                <div className="p-3 flex-1 flex flex-col justify-between gap-2.5">
+                                  <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 text-left">
+                                    {dest.advisory}
+                                  </p>
+                                  <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleSubscription(dest.name, 'web-push')}
+                                      className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
+                                        isWebPush
+                                          ? "bg-pink-100 dark:bg-pink-950/40 text-pink-700 border border-pink-200"
+                                          : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+                                      }`}
+                                    >
+                                      <Bell size={11} className={isWebPush ? "text-pink-600" : ""} />
+                                      {isWebPush ? "已開啟推送" : "開啟推送"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleSubscription(dest.name, 'email')}
+                                      className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
+                                        isEmail
+                                          ? "bg-sky-100 dark:bg-sky-950/40 text-sky-700 border border-sky-200"
+                                          : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+                                      }`}
+                                    >
+                                      <Mail size={11} className={isEmail ? "text-sky-600" : ""} />
+                                      {isEmail ? "已設 Email" : "Email/RSS"}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Subscription alerts and newsfeed */}
+                        <div className="rounded-3xl border border-dashed border-slate-200 dark:border-white/10 p-4 bg-white/20 dark:bg-slate-950/20">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Rss size={16} className="text-pink-500 animate-pulse" />
+                            <h5 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                              最新訂閱情報 & 降價快訊 (Deal Feed Alert)
+                            </h5>
+                          </div>
+
+                          {subscriptions.length === 0 ? (
+                            <div className="text-center py-6">
+                              <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
+                                💡 跨出第一步！訂閱上方任一目的地的推送或電郵快訊後，即可在此解鎖瀏覽專屬的降價促銷、即時機票大賞與目的地旅遊安全警報！
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-2">
+                              {[
+                                { dest: "東京 Tokyo", type: "deal", tag: "🔥 降價大促銷", text: "星宇航空限時特惠台北-東京 NT$9,800 起，降幅更高達 15%！已為您追蹤！" },
+                                { dest: "東京 Tokyo", type: "advisory", tag: "🌧️ 旅遊須知", text: "東京多地進入梅雨季節，出門建議隨身帶傘，可多參考 Jelly AI 推薦的雨天行程！" },
+                                { dest: "大阪 Osaka", type: "deal", tag: "🎉 廉航大回饋", text: "樂桃航空萬人促銷重磅來襲！大阪單程近全免未稅快閃 NT$2,200 起！" },
+                                { dest: "台北 Taipei", type: "advisory", tag: "🌧️ 降雨警報", text: "台北氣象局發布午後大雨特報，山區潮濕多雨，建議隨意挑選文創室內景點漫步。" },
+                                { dest: "倫敦 London", type: "advisory", tag: "✈️ 機場跑道封閉", text: "希斯洛機場(LHR)公告 6/5 行李系統維修，建議國際旅客提早 3 小時抵達辦理登機。" },
+                                { dest: "倫敦 London", type: "deal", tag: "💎 商務艙特等艙特惠", text: "長榮航空倫敦直飛航線釋出稀有限量商務特惠，預訂即享 92 折超值特惠！" }
+                              ]
+                                .filter(alert => subscriptions.some(sub => sub.destination.trim().toLowerCase().startsWith(alert.dest.split(' ')[0].toLowerCase())))
+                                .map((alert, idx) => (
+                                  <div key={idx} className="flex gap-3 p-3 rounded-2xl bg-white/60 dark:bg-slate-900/40 border border-white/80 dark:border-white/5 shadow-sm">
+                                    <div className="h-6 w-6 shrink-0 rounded-full bg-pink-100 dark:bg-pink-950/40 text-pink-600 text-[10px] font-black flex items-center justify-center">
+                                      {alert.type === 'deal' ? '💰' : '⚠️'}
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-[11px] font-black text-slate-800 dark:text-white">
+                                          {alert.dest}
+                                        </span>
+                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${
+                                          alert.type === 'deal' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
+                                        }`}>
+                                          {alert.tag}
+                                        </span>
+                                      </div>
+                                      <p className="text-[12px] font-bold text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-left font-sans">
+                                        {alert.text}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+
+                              {/* Show total count */}
+                              <p className="text-[10px] text-slate-400 font-extrabold text-right mt-2">
+                                隨時同步最新 2026 年夏季即時情報
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </motion.div>
                   ) : loading ? (
                     <motion.div
@@ -2647,69 +2863,63 @@ export default function HomeTab({
                   {communityTrips.map((trip) => (
                     <motion.div
                       key={trip.id}
-                      className="w-[280px] sm:w-[320px] group/trip"
+                      className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] group/trip"
                     >
                       <GlassCard
-                        className={`!p-0 overflow-hidden h-full rounded-[30px] editorial-card-soft flex flex-col ${cardSurfaceClass}`}
+                        className={`!p-0 overflow-hidden h-full rounded-[30px] flex flex-row items-stretch ${cardSurfaceClass}`}
                       >
-                        <div className="relative h-40 overflow-hidden flex-shrink-0 sm:h-44">
+                        {/* Cover image (Left column) */}
+                        <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
                           <img
                             src={trip.cover}
                             alt={trip.title}
                             loading="lazy"
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover/trip:scale-110"
+                            className="h-full w-full object-cover transition-transform duration-700 group-hover/trip:scale-110"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[11px] font-black tracking-widest uppercase text-white">
-                            Public Template
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
+                          <div className="absolute left-2 top-2 flex flex-col gap-1">
+                            <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
+                              {getIataCode(trip.destination)}
+                            </span>
+                            <span className="rounded-md bg-sky-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                              {getSafetyStatus(trip.destination)}
+                            </span>
                           </div>
-                          <div className="absolute top-3 right-3 rounded-full border border-white/30 bg-slate-950/35 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/90 backdrop-blur-md">
-                            fork & remix
-                          </div>
-                          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
-                            <div>
-                              <p className="text-white text-[11px] font-black uppercase tracking-[0.15em] opacity-80">
-                                by {trip.author || "Anonymous"}
-                              </p>
-                              <h3 className="text-white font-black text-xl leading-tight drop-shadow-md line-clamp-2">
-                                {trip.title}
-                              </h3>
-                            </div>
+                          <div className="absolute bottom-2 left-2 text-white pr-1">
+                            <span className="text-[10px] font-black tracking-wider uppercase opacity-85">
+                              by {trip.author || "Anonymous"}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 jelly-surface rounded-b-[28px] border-t-0">
-                          <div className="absolute -right-10 -top-10 size-24 rounded-full bg-pink-200/35 blur-3xl" />
-                          <div className="relative mb-2.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
-                            <Sparkles size={12} strokeWidth={2.6} />
-                            旅伴明信片
+                        {/* Card body (Right column) */}
+                        <div className="p-3.5 flex-1 flex flex-col justify-between gap-2.5 text-left">
+                          <div>
+                            <div className="mb-1.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                              <Sparkles size={11} strokeWidth={2.6} />
+                              旅伴明信片
+                            </div>
+                            <h3 className="text-[14px] xs:text-[15px] font-black text-slate-800 dark:text-white leading-snug line-clamp-2">
+                              {trip.title}
+                            </h3>
+                            <p className="text-[11px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 mt-1">
+                              先把別人的自駕/地鐵行程當成明信片，喜歡再帶走！已被複製 {trip.forkCount ?? trip.likes ?? 0} 次。
+                            </p>
                           </div>
 
-                          <div className="editorial-card-soft relative mb-3 rounded-[20px] px-3.5 py-2.5 text-[12px] font-bold leading-[1.7] text-slate-600">
-                            先把別人的旅程節奏當成一張明信片，喜歡再複製成自己的出發草稿。
-                          </div>
-
-                          <div className="relative flex items-center gap-2 mb-5 flex-wrap">
-                            {trip.destination && (
-                              <span className="text-[11px] font-bold text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-1 rounded-full">
-                                #{trip.destination}
-                              </span>
-                            )}
-                            <span className="text-[11px] font-bold text-orange-700 bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-full">
-                              已被複製 {trip.forkCount ?? trip.likes ?? 0} 次
+                          <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2 mt-auto">
+                            <button
+                              type="button"
+                              onClick={(event) => handleCloneTrip(event, trip)}
+                              className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white shadow-md shadow-pink-500/10 active:scale-[0.97]"
+                            >
+                              <Copy size={11} />
+                              複製草稿
+                            </button>
+                            <span className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-slate-200 text-slate-500 bg-slate-50/50 dark:border-white/10 dark:text-slate-400 dark:bg-white/5 font-mono">
+                              #{trip.destination || "台北"}
                             </span>
                           </div>
-
-                          <button
-                            onClick={(event) => handleCloneTrip(event, trip)}
-                            className={`mt-auto w-full py-3 sm:py-3.5 rounded-full bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 text-white font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.34),0_10px_20px_rgba(244,114,182,0.18)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_14px_24px_rgba(244,114,182,0.24)] group/btn`}
-                          >
-                            <Copy
-                              size={14}
-                              className="transition-transform group-hover/btn:rotate-12"
-                            />
-                            一鍵複製到我的草稿
-                          </button>
                         </div>
                       </GlassCard>
                     </motion.div>
@@ -2741,101 +2951,70 @@ export default function HomeTab({
                   return (
                   <motion.div
                     key={dest.id}
-                    className="w-[272px] sm:w-[304px] group/dest"
+                    className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] group/dest"
                   >
                     <GlassCard
-                      className={`!p-0 overflow-hidden h-full rounded-[30px] editorial-card flex flex-col ${cardSurfaceClass}`}
+                      className={`!p-0 overflow-hidden h-full rounded-[30px] flex flex-row items-stretch ${cardSurfaceClass}`}
                     >
-                      {/* Cover Image */}
-                      <div className="relative h-40 overflow-hidden flex-shrink-0 sm:h-44">
+                      {/* Left Column (Image & Status / IATA details) */}
+                      <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
                         <img
                           src={dest.image}
                           alt={dest.name}
                           loading="lazy"
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover/dest:scale-110"
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover/dest:scale-110"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute left-3 top-3 flex items-center gap-2">
-                          <span className="rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
-                            Postcard Pick
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
+                        <div className="absolute left-2 top-2 flex flex-col gap-1">
+                          <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
+                            {getIataCode(dest.name)}
                           </span>
-                          {dest.tags[0] ? (
-                            <span className="hidden rounded-full border border-white/30 bg-slate-950/35 px-2.5 py-1 text-[10px] font-black tracking-[0.16em] text-white/90 backdrop-blur-md sm:inline-flex">
-                              {dest.tags[0]}
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end gap-2">
-                          <span className="text-3xl drop-shadow-lg">
-                            {dest.flag}
+                          <span className="rounded-md bg-emerald-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                            {getSafetyStatus(dest.name)}
                           </span>
-                          <h3 className="text-white font-black text-xl leading-tight drop-shadow-md">
-                            {dest.name}
-                          </h3>
                         </div>
-                        {/* Tag pills on top-right */}
-                        <div className="absolute top-3 right-3 hidden flex-col gap-1 items-end sm:flex">
-                          {dest.tags.slice(1, 3).map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-[11px] font-black text-white bg-white/20 backdrop-blur-md border border-white/30 px-2 py-0.5 rounded-full uppercase tracking-wider"
-                            >
-                              {tag}
-                            </span>
-                          ))}
+                        <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1 drop-shadow-md">
+                          <span className="text-2xl">{dest.flag}</span>
+                          <span className="text-white font-extrabold text-[13px]">{dest.name}</span>
                         </div>
                       </div>
 
-                      {/* Card Body */}
-                      <div className={`relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 ${decor.body}`}>
-                        <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
-                        <div className="relative mb-2.5 flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
-                            <Sparkles size={12} strokeWidth={2.6} />
-                            Travel Mood
+                      {/* Right Column (Info and capsule action buttons) */}
+                      <div className={`p-3.5 flex-1 flex flex-col justify-between gap-2 text-left relative overflow-hidden ${decor.body}`}>
+                        <div className={`absolute -right-8 -top-8 size-20 rounded-full blur-2xl opacity-60 ${decor.glow}`} />
+                        
+                        <div>
+                          <div className="mb-1.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                            <Sparkles size={11} strokeWidth={2.6} />
+                            精選指南
+                          </div>
+                          
+                          <h4 className="text-[14px] xs:text-[15px] font-black text-slate-800 dark:text-white leading-snug">
+                            {dest.name} 旅遊攻略手冊
+                          </h4>
+                          
+                          <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 mt-1 line-clamp-3">
+                            {dest.description}
+                          </p>
+                        </div>
+
+                        <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2 mt-auto">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const g = getCountryGuide(dest.id);
+                              if (g) setActiveGuide(g);
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-md shadow-emerald-500/10 active:scale-[0.97]"
+                          >
+                            <ExternalLink size={11} />
+                            完整攻略
+                          </button>
+                          <span className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-slate-200 text-slate-500 bg-slate-50/50 dark:border-white/10 dark:text-slate-400 dark:bg-white/5 uppercase tracking-wider font-mono">
+                            #{dest.tags[0] || "漫遊"}
                           </span>
-                          {dest.highlights[0] ? (
-                            <span className="text-[11px] font-bold text-slate-500 line-clamp-1">
-                              {dest.highlights[0]}
-                            </span>
-                          ) : null}
                         </div>
-
-                        <ExpandableText
-                          text={dest.description}
-                          previewLines={2}
-                          minCharacters={60}
-                          className="relative mb-3"
-                          textClassName="text-pretty text-[13px] font-medium leading-[1.68] text-slate-600 sm:text-[13px]"
-                          collapsedLabel="展開完整內容"
-                          expandedLabel="收起內容"
-                        />
-
-                        <div className="relative flex flex-wrap gap-1.5 sm:gap-2 mb-4">
-                          {dest.highlights.slice(0, 3).map((h, highlightIndex) => (
-                            <span
-                              key={h}
-                              className={`text-[11px] font-bold border px-2.5 py-1 rounded-full ${CARD_STICKER_TONES[(index + highlightIndex) % CARD_STICKER_TONES.length]}`}
-                            >
-                              {h}
-                            </span>
-                          ))}
-                        </div>
-
-                        <button
-                          className={`mt-auto w-full py-3 sm:py-3.5 rounded-full bg-gradient-to-r text-white font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.34),0_10px_20px_rgba(14,165,233,0.14)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 group/btn ${decor.cta}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const g = getCountryGuide(dest.id);
-                            if (g) setActiveGuide(g);
-                          }}
-                        >
-                          <ExternalLink
-                            size={13}
-                            className="transition-transform group-hover/btn:translate-x-0.5"
-                          />
-                          查看完整攻略
-                        </button>
                       </div>
                     </GlassCard>
                   </motion.div>
@@ -2862,84 +3041,78 @@ export default function HomeTab({
                   return (
                   <motion.div
                     key={handbook.id}
-                    className="w-[286px] sm:w-[320px] group/handbook"
+                    className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] group/handbook"
                   >
                     <GlassCard
                       onClick={() => setActiveHandbook(handbook)}
-                      className={`!p-0 overflow-hidden h-full rounded-[30px] editorial-card-soft cursor-pointer ${cardSurfaceClass}`}
+                      className={`!p-0 overflow-hidden h-full rounded-[30px] flex flex-row items-stretch cursor-pointer ${cardSurfaceClass}`}
                     >
-                      <div className="relative h-40 overflow-hidden sm:h-44">
+                      {/* Left Column */}
+                      <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
                         <img
                           src={handbook.image}
                           alt={handbook.title}
                           loading="lazy"
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover/handbook:scale-110"
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover/handbook:scale-110"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
-                        <div className="absolute left-4 top-4 flex items-center gap-2">
-                          <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[11px] font-black text-white uppercase tracking-wider border border-white/30">
-                            {handbook.days} Days
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
+                        <div className="absolute left-2 top-2 flex flex-col gap-1">
+                          <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
+                            {getIataCode(handbook.title)}
                           </span>
-                          <span className={`hidden rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] sm:inline-flex ${decor.badge}`}>
-                            editor's pick
+                          <span className="rounded-md bg-fuchsia-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                            💚 暢遊推薦
                           </span>
                         </div>
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <div className="flex items-center gap-2">
-                            <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[11px] font-black text-white uppercase tracking-wider border border-white/30">
-                              {handbook.days} Days
-                            </span>
-                          </div>
+                        <div className="absolute bottom-2.5 left-2.5 flex flex-col items-start leading-none gap-0.5">
+                          <span className="rounded-md bg-slate-950/45 px-1.5 py-0.5 text-[8.5px] font-black tracking-wider text-pink-300 font-sans uppercase">
+                            {handbook.days} Days
+                          </span>
                         </div>
                       </div>
 
-                      <div className={`relative overflow-hidden p-4 sm:p-5 flex flex-col flex-1 ${decor.body}`}>
-                        <div className={`absolute -right-8 top-0 size-24 rounded-full blur-2xl ${decor.glow}`} />
-                        <div className="relative mb-3 flex items-start justify-between gap-3">
-                          <div>
-                            <div className="mb-2.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
-                              <Sparkles size={12} strokeWidth={2.6} />
-                              旅伴草稿
-                            </div>
-                            <h3 className="text-[18px] sm:text-xl font-black text-slate-800 mb-1 leading-tight">
-                              {handbook.title}
-                            </h3>
-                            <p className="text-[13px] sm:text-sm font-bold text-slate-500">
-                              {handbook.author}
-                            </p>
+                      {/* Right Column */}
+                      <div className={`p-3.5 flex-1 flex flex-col justify-between gap-2.5 text-left relative overflow-hidden ${decor.body}`}>
+                        <div className={`absolute -right-8 top-0 size-20 rounded-full blur-2xl opacity-60 ${decor.glow}`} />
+                        
+                        <div>
+                          <div className="mb-1.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                            <Sparkles size={11} strokeWidth={2.6} />
+                            達人手帳
                           </div>
-                          <div className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${decor.badge}`}>
-                            editor's pick
-                          </div>
+                          
+                          <h4 className="text-[14px] xs:text-[15px] font-black text-slate-800 dark:text-white leading-snug line-clamp-2">
+                            {handbook.title}
+                          </h4>
+                          <p className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 mb-1">
+                            by {handbook.author}
+                          </p>
+                          
+                          <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400">
+                            最具含金量的手帳路線！包含：{handbook.tags.slice(0, 2).map((t) => `#${t}`).join(" ")}，一鍵複製即刻出發。
+                          </p>
                         </div>
 
-                        <div className="editorial-card-soft mb-3.5 rounded-[20px] px-3.5 py-2.5 text-[12px] font-bold leading-[1.7] text-slate-600">
-                          先把這份達人手帳當成旅伴寄來的明信片，再複製成你的出發版本。
+                        <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2 mt-auto">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyExpertItinerary(e, handbook);
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md shadow-purple-500/10 active:scale-[0.97]"
+                          >
+                            <Copy size={11} />
+                            複製手帳
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveHandbook(handbook)}
+                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:bg-white/5"
+                          >
+                            預覽手帳
+                          </button>
                         </div>
-
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
-                          {handbook.tags.slice(0, 3).map((tag, tagIndex) => (
-                            <span
-                              key={tag}
-                              className={`text-[11px] font-bold border px-2.5 py-1 rounded-full ${CARD_STICKER_TONES[(index + tagIndex) % CARD_STICKER_TONES.length]}`}
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-
-                        <button
-                          onClick={(e) =>
-                            handleCopyExpertItinerary(e, handbook)
-                          }
-                          className={`mt-auto w-full py-3 sm:py-3.5 rounded-full bg-gradient-to-r text-white font-black text-[13px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.34),0_10px_20px_rgba(244,114,182,0.14)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 group/btn ${decor.cta}`}
-                        >
-                          <Copy
-                            size={14}
-                            className="transition-transform group-hover/btn:rotate-12"
-                          />
-                          複製行程
-                        </button>
                       </div>
                     </GlassCard>
                   </motion.div>

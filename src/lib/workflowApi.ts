@@ -722,6 +722,36 @@ export async function fetchSettlementHistory(tripId: string): Promise<any[]> {
   }
 }
 
+
+
+export async function fetchUserSubscriptions(): Promise<any[]> {
+  try {
+    const token = getStoredToken();
+    const res = await fetch('/api/user/subscriptions', {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.status === 'success' && Array.isArray(json.data) ? json.data : [];
+  } catch (err) {
+    console.error('fetchUserSubscriptions failed', err);
+    return [];
+  }
+}
+
+export async function toggleUserSubscription(destination: string, channel: string): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch('/api/user/subscriptions/toggle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ destination, channel })
+  });
+  if (!res.ok) {
+    throw new Error('切換訂閱失敗');
+  }
+  return res.json();
+}
+
 export async function fetchSpotEnrichment(name: string): Promise<{ description?: string; wiki_url?: string; thumbnail?: string }> {
   try {
     const res = await fetch(`/api/spots/enrich?name=${encodeURIComponent(name)}`);

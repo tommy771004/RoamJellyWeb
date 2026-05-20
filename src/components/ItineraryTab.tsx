@@ -4118,6 +4118,7 @@ const ItineraryListItem = React.memo(
   }) {
     const [isEditing, setIsEditing] = useState(false);
     const [regenerating, setRegenerating] = useState(false);
+    const [isTitleExpanded, setIsTitleExpanded] = useState(false);
     const [editTitle, setEditTitle] = useState(item.title);
     const [editDate, setEditDate] = useState(
       item.date || getDateForDay(item.day, tripStartDate) || "",
@@ -4165,6 +4166,7 @@ const ItineraryListItem = React.memo(
       setEditImageUrl(item.image_url || "");
       setEditAttachments(item.attachments || []);
       setEditLinkedFactId(item.linkedFactId || "");
+      setIsTitleExpanded(false);
     }, [item, tripStartDate]);
 
     const handleAttachmentUpload = async (
@@ -4473,11 +4475,19 @@ const ItineraryListItem = React.memo(
                 {isHotelCard && (
                   <div className="mb-1.5 w-full">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-400">
                           Tonight's Stay
                         </div>
-                        <div className="truncate text-lg font-black leading-tight sm:text-xl">
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsTitleExpanded(!isTitleExpanded);
+                          }}
+                          className={`text-lg font-black leading-tight sm:text-xl cursor-pointer hover:text-indigo-300 transition-colors ${
+                            isTitleExpanded ? "line-clamp-none whitespace-normal" : "truncate"
+                          }`}
+                        >
                           {item.title}
                         </div>
                       </div>
@@ -4490,7 +4500,13 @@ const ItineraryListItem = React.memo(
                 {!isAnchorCard && (
                   <h3
                     title={item.title}
-                    className="mb-0.5 line-clamp-3 text-[15px] font-black leading-[1.24] tracking-[-0.025em] text-slate-900 font-sans sm:text-[16px]"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsTitleExpanded(!isTitleExpanded);
+                    }}
+                    className={`mb-0.5 text-[15px] font-black leading-[1.28] tracking-[-0.025em] text-slate-900 font-sans sm:text-[16px] cursor-pointer hover:text-sky-600 transition-colors ${
+                      isTitleExpanded ? "line-clamp-none" : "line-clamp-2 sm:line-clamp-3"
+                    }`}
                   >
                     {item.title}
                   </h3>

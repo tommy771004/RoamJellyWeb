@@ -557,6 +557,45 @@ export class AppRepository {
     return row || null;
   }
 
+  async getUserSubscriptions(userId: string) {
+    if (!this.db) return [];
+    return await this.db.select().from(schema.userSubscriptions)
+      .where(eq(schema.userSubscriptions.userId, userId));
+  }
+
+  async toggleUserSubscription(userId: string, destination: string, channel: string) {
+    if (!this.db) return null;
+    const existing = await this.db.select().from(schema.userSubscriptions)
+      .where(
+        and(
+          eq(schema.userSubscriptions.userId, userId),
+          eq(schema.userSubscriptions.destination, destination),
+          eq(schema.userSubscriptions.channel, channel)
+        )
+      );
+
+    if (existing.length > 0) {
+      await this.db.delete(schema.userSubscriptions)
+        .where(
+          and(
+            eq(schema.userSubscriptions.userId, userId),
+            eq(schema.userSubscriptions.destination, destination),
+            eq(schema.userSubscriptions.channel, channel)
+          )
+        );
+      return { status: 'unsubscribed', destination, channel };
+    } else {
+      const [inserted] = await this.db.insert(schema.userSubscriptions)
+        .values({
+          userId,
+          destination,
+          channel,
+        })
+        .returning();
+      return { status: 'subscribed', data: inserted };
+    }
+  }
+
   async deleteTrip(tripId: string) {
     if (!this.db) {
       this.memoryTrips.delete(tripId);

@@ -1438,6 +1438,21 @@ async function startServer() {
     }
   });
 
+  app.post('/api/generate/chat', guestAiLimiter, aiLimiter, async (req, res) => {
+    const { message = '', history = [], context = {} } = req.body || {};
+    try {
+      const { generateChatResponse } = await import('./src/server/services/aiService');
+      const response = await generateChatResponse(message, history, context);
+      res.json({ status: 'success', data: response });
+    } catch (err: any) {
+      if (err?.message === 'ALL_MODELS_RATE_LIMITED') {
+        return res.status(429).json({ status: 'error', code: 'RATE_LIMITED', message: 'AI 服務暫時繁忙，請稍後 1~2 分鐘再試。' });
+      }
+      console.error(err);
+      res.status(500).json({ status: 'error', message: 'Failed to generate chat response' });
+    }
+  });
+
   app.post('/api/dev/generate-handbooks', async (req, res) => {
     if (process.env.NODE_ENV === 'production') {
       res.status(404).json({ status: 'error', message: 'Not Found' });
@@ -1784,6 +1799,42 @@ async function startServer() {
     const tripId = String(req.query.trip_id ?? '').trim();
     const rows = tripId ? await repo.getCollaboratorsByTrip(tripId) : await repo.getCollaborators();
     res.json(rows.map((r) => ({ id: r.userId, name: r.name, avatar: r.avatar })));
+  });
+
+  // ── User Subscriptions ──────────────────────────────────────────────────────
+  app.get('/api/user/subscriptions', async (req, res) => {
+    const userId = getRequestUserId(req);
+    if (!userId) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
+    try {
+      const subs = await repo.getUserSubscriptions(userId);
+      res.json({ status: 'success', data: subs });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ status: 'error', message: 'Failed to fetch subscriptions' });
+    }
+  });
+
+  app.post('/api/user/subscriptions/toggle', async (req, res) => {
+    const userId = getRequestUserId(req);
+    if (!userId) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
+    const { destination, channel } = req.body || {};
+    if (!destination || !channel) {
+      res.status(400).json({ status: 'error', message: 'Missing destination or channel' });
+      return;
+    }
+    try {
+      const result = await repo.toggleUserSubscription(userId, destination, channel);
+      res.json({ status: 'success', data: result });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ status: 'error', message: 'Failed to toggle subscription' });
+    }
   });
 
   // ── User Preferences ────────────────────────────────────────────────────────

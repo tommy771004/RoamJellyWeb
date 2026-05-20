@@ -162,3 +162,15 @@ export const searchHistory = pgTable('search_history', {
   index('search_history_user_id_idx').on(table.userId),
   index('search_history_from_to_idx').on(table.query_from, table.query_to, table.timestamp),
 ]);
+
+export const userSubscriptions = pgTable('user_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: varchar('user_id', { length: 128 }).notNull().references(() => users.userId),
+  destination: varchar('destination', { length: 128 }).notNull(),
+  channel: varchar('channel', { length: 64 }).notNull(), // 'web-push' | 'email' | 'rss'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('user_subscriptions_user_id_idx').on(table.userId),
+  index('user_subscriptions_dest_idx').on(table.destination)
+]);
+
