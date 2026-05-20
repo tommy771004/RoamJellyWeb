@@ -291,14 +291,14 @@ export default function App() {
       case 'itinerary':
         return {
           contextLabel: '你的行程',
-          title: '先選一趟旅程，再把 AI 草稿與共編安排接回手帳',
+          title: '先選一趟旅程，再把 AI 草稿與共編安排接回行程',
           description: '先用訪客身分體驗行程的主線，再決定是否正式註冊。',
           guestCtaLabel: '先用訪客身分開始規劃',
         };
       case 'ai_form':
         return {
           contextLabel: 'AI 旅程規劃',
-          title: '先讓 AI 起草一版旅程，再回到手帳慢慢補完',
+          title: '先讓 AI 起草一版旅程，再回到行程慢慢補完',
           description: '先用訪客身分生成可編輯的第一版旅程，確認方向對了，再登入同步與保存。',
           guestCtaLabel: '先用訪客身分交給 AI',
         };
@@ -306,7 +306,7 @@ export default function App() {
         return {
           contextLabel: '快速體驗',
           title: '先把旅程流程跑順，喜歡再註冊也不遲',
-          description: '首頁搜尋、AI 起草、手帳與工具包都可以先用訪客身分走過一遍，不必一開始就進入註冊流程。',
+          description: '首頁搜尋、AI 起草、行程與工具包都可以先用訪客身分走過一遍，不必一開始就進入註冊流程。',
           guestCtaLabel: '先用訪客身分體驗',
         };
     }

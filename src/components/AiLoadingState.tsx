@@ -67,7 +67,7 @@ export default function AiLoadingState() {
             正在把你的旅程排成更順手的第一版
           </h2>
           <p className="mx-auto max-w-[30ch] text-[13px] font-medium leading-[1.65] text-slate-500 sm:max-w-[34ch]">
-            會先整理節奏、交通與停留密度，產出之後還能回手帳再慢慢微調。
+            會先整理節奏、交通與停留密度，產出之後還能回行程再慢慢微調。
           </p>
         </div>
 
@@ -90,7 +90,7 @@ export default function AiLoadingState() {
           <span className="h-2 w-2 rounded-full bg-fuchsia-300" />
           <span className="h-2 w-2 rounded-full bg-sky-300" />
           <span className="h-2 w-2 rounded-full bg-amber-300" />
-          草稿完成後可直接回手帳調整
+          草稿完成後可直接回行程調整
         </div>
       </div>
     </div>

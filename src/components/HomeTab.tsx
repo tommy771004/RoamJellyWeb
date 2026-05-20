@@ -25,6 +25,7 @@ import {
   Mail,
   CheckSquare,
   Share2,
+  Eye,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
@@ -1318,7 +1319,7 @@ export default function HomeTab({
           }
         }
 
-        showToast(`已成功將 ${handbook.title} 複製到您的手帳！`, "success");
+        showToast(`已成功將 ${handbook.title} 複製到您的行程！`, "success");
         setActiveTripId(ensuredTripId);
         setActiveTab("itinerary");
       } catch (err) {
@@ -1468,7 +1469,7 @@ export default function HomeTab({
       const data = await res.json();
 
       showToast(
-        `已成功將行程 ${trip.name ?? trip.title ?? ""} 複製到您的手帳！`,
+        `已成功將行程 ${trip.name ?? trip.title ?? ""} 複製到您的行程！`,
         "success",
       );
 
@@ -1574,7 +1575,7 @@ export default function HomeTab({
 
     const tripId = resolveCurrentTripId();
     if (!tripId) {
-      showToast("請先開啟一趟旅程，再把航班帶入手帳。", "warning");
+      showToast("請先開啟一趟旅程，再把航班帶入行程。", "warning");
       return;
     }
 
@@ -2549,110 +2550,202 @@ export default function HomeTab({
                           contentClassName="gap-3"
                           controlsVisibilityClass="flex"
                         >
-                          {demoTemplates.map((handbook) => (
-                            <button
-                              key={handbook.id}
-                              type="button"
-                              onClick={() => {
-                                triggerHapticFeedback([16]);
-                                setActiveHandbook(handbook);
-                              }}
-                              className={`group/demo editorial-card-soft w-[286px] shrink-0 overflow-hidden rounded-[28px] text-left dark:border-white/10 dark:bg-slate-900/80 dark:shadow-black/30 hover:shadow-xl ${cardSurfaceClass}`}
-                            >
-                              <div className="relative h-36 overflow-hidden">
-                                <img
-                                  src={handbook.image}
-                                  alt={handbook.title}
-                                  className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-105"
-                                  loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                                <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-slate-950/45 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
-                                  Instant Demo
-                                </div>
-                                <div className="absolute bottom-3 left-3 right-3 text-white">
-                                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-white/75">
-                                    {handbook.days} Days
-                                  </div>
-                                  <div className="mt-1 text-lg font-black leading-tight">
-                                    {handbook.title}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="px-4 py-4">
-                                <div className="mb-3 rounded-[18px] border border-white/90 bg-white/80 px-3 py-2 text-[12px] font-bold leading-[1.65] text-slate-600">
-                                  參考旅程行程，再決定要不要加入。
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {handbook.tags.slice(0, 3).map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className="rounded-full bg-slate-100 dark:bg-white/8 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-600 dark:text-slate-200"
-                                    >
-                                      #{tag}
+                          {demoTemplates.map((handbook, index) => {
+                            const decor = HANDBOOK_CARD_DECOR[index % HANDBOOK_CARD_DECOR.length];
+                            return (
+                              <div
+                                key={handbook.id}
+                                onClick={() => {
+                                  triggerHapticFeedback([16]);
+                                  setActiveHandbook(handbook);
+                                }}
+                                className={`group/demo w-[320px] xs:w-[350px] sm:w-[410px] shrink-0 overflow-hidden rounded-[26px] flex flex-row items-stretch cursor-pointer border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-all active:scale-[0.99] ${cardSurfaceClass}`}
+                              >
+                                {/* Left Column: City Photo with IATA Code and safety info */}
+                                <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
+                                  <img
+                                    src={handbook.image}
+                                    alt={handbook.title}
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer"
+                                    className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-110"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-950/10 to-slate-950/40" />
+                                  <div className="absolute left-2 top-2 flex flex-col gap-1">
+                                    <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
+                                      {getIataCode(handbook.title)}
                                     </span>
-                                  ))}
+                                    <span className="rounded-md bg-emerald-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                                      💚 暢遊推薦
+                                    </span>
+                                  </div>
+                                  <div className="absolute bottom-2 left-2 flex flex-col items-start leading-none gap-0.5">
+                                    <span className="rounded-md bg-slate-950/45 px-1.5 py-0.5 text-[8.5px] font-black tracking-wider text-pink-300 font-sans uppercase">
+                                      {handbook.days} Days
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-800 dark:text-white">
-                                  點我預覽
-                                  <ArrowRight size={14} />
+
+                                {/* Right Column: Details & CTA Buttons */}
+                                <div className={`p-3 flex-1 flex flex-col justify-between gap-2 text-left relative overflow-hidden ${decor.body}`}>
+                                  <div className={`absolute -right-8 top-0 size-16 rounded-full blur-xl opacity-40 ${decor.glow}`} />
+                                  
+                                  <div>
+                                    <div className="mb-1 w-fit inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/90 px-2 py-0.5 text-[8.5px] font-black uppercase tracking-[0.14em] text-slate-700 shadow-xs">
+                                      <Sparkles size={10} strokeWidth={2.6} />
+                                      精選行程
+                                    </div>
+                                    
+                                    <h4 className="text-[13px] xs:text-[13.5px] font-black text-slate-850 dark:text-white leading-snug line-clamp-2">
+                                      {handbook.title}
+                                    </h4>
+                                    
+                                    <p className="text-[10px] xs:text-[10.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                                      {handbook.title.includes("東京") 
+                                        ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
+                                        : handbook.title.includes("大阪")
+                                        ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
+                                        : "免等待免登入！專專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
+                                    </p>
+                                  </div>
+
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {handbook.tags.slice(0, 2).map((tag) => (
+                                      <span key={tag} className="text-[8.5px] font-black text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/30 px-1.5 py-0.5 rounded">
+                                        #{tag}
+                                      </span>
+                                    ))}
+                                  </div>
+
+                                  <div className="flex gap-1.5 border-t border-slate-100 dark:border-white/5 pt-1.5 mt-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        triggerHapticFeedback([16]);
+                                        handleCopyExpertItinerary(e, handbook);
+                                      }}
+                                      className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full text-[9.5px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 active:scale-[0.95] text-white shadow-xs"
+                                    >
+                                      <Copy size={10} />
+                                      複製行程
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        triggerHapticFeedback([16]);
+                                        setActiveHandbook(handbook);
+                                      }}
+                                      className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full text-[9.5px] font-black border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.95] transition-all dark:border-white/10 dark:text-slate-300 dark:bg-white/5"
+                                    >
+                                      <Eye size={10} />
+                                      預覽行程
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </button>
-                          ))}
+                            );
+                          })}
                         </HorizontalScrollRail>
                         <div className="hidden gap-3 md:grid md:grid-cols-3">
-                          {demoTemplates.map((handbook) => (
-                            <button
-                              key={handbook.id}
-                              type="button"
-                              onClick={() => {
-                                triggerHapticFeedback([16]);
-                                setActiveHandbook(handbook);
-                              }}
-                              className={`group/demo editorial-card-soft overflow-hidden rounded-[28px] text-left hover:shadow-xl ${cardSurfaceClass}`}
-                            >
-                              <div className="relative h-36 overflow-hidden">
-                                <img
-                                  src={handbook.image}
-                                  alt={handbook.title}
-                                  className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-105"
-                                  loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                                <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-slate-950/45 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
-                                  Instant Demo
-                                </div>
-                                <div className="absolute bottom-3 left-3 right-3 text-white">
-                                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-white/75">
-                                    {handbook.days} Days
-                                  </div>
-                                  <div className="mt-1 text-lg font-black leading-tight">
-                                    {handbook.title}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="px-4 py-4">
-                                <div className="mb-3 rounded-[18px] border border-white/90 bg-white/80 px-3 py-2 text-[12px] font-bold leading-[1.65] text-slate-600">
-                                  先借這份旅程節奏暖身，再決定要不要複製成自己的起跑版本。
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {handbook.tags.slice(0, 3).map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className="rounded-full bg-slate-100 dark:bg-white/8 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-600 dark:text-slate-200"
-                                    >
-                                      #{tag}
+                          {demoTemplates.map((handbook, index) => {
+                            const decor = HANDBOOK_CARD_DECOR[index % HANDBOOK_CARD_DECOR.length];
+                            return (
+                              <div
+                                key={handbook.id}
+                                onClick={() => {
+                                  triggerHapticFeedback([16]);
+                                  setActiveHandbook(handbook);
+                                }}
+                                className={`group/demo w-full overflow-hidden rounded-[26px] flex flex-row items-stretch cursor-pointer border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-all active:scale-[0.99] ${cardSurfaceClass}`}
+                              >
+                                {/* Left Column: City Photo with IATA Code and safety info */}
+                                <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
+                                  <img
+                                    src={handbook.image}
+                                    alt={handbook.title}
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer"
+                                    className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-110"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-950/10 to-slate-950/40" />
+                                  <div className="absolute left-2 top-2 flex flex-col gap-1">
+                                    <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
+                                      {getIataCode(handbook.title)}
                                     </span>
-                                  ))}
+                                    <span className="rounded-md bg-emerald-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                                      💚 暢遊推薦
+                                    </span>
+                                  </div>
+                                  <div className="absolute bottom-2 left-2 flex flex-col items-start leading-none gap-0.5">
+                                    <span className="rounded-md bg-slate-950/45 px-1.5 py-0.5 text-[8.5px] font-black tracking-wider text-pink-300 font-sans uppercase">
+                                      {handbook.days} Days
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-800 dark:text-white">
-                                  點我預覽
-                                  <ArrowRight size={14} />
+
+                                {/* Right Column: Details & CTA Buttons */}
+                                <div className={`p-3 flex-1 flex flex-col justify-between gap-2 text-left relative overflow-hidden ${decor.body}`}>
+                                  <div className={`absolute -right-8 top-0 size-16 rounded-full blur-xl opacity-40 ${decor.glow}`} />
+                                  
+                                  <div>
+                                    <div className="mb-1 w-fit inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/90 px-2 py-0.5 text-[8.5px] font-black uppercase tracking-[0.14em] text-slate-700 shadow-xs">
+                                      <Sparkles size={10} strokeWidth={2.6} />
+                                      精選行程
+                                    </div>
+                                    
+                                    <h4 className="text-[13px] xs:text-[13.5px] font-black text-slate-850 dark:text-white leading-snug line-clamp-2">
+                                      {handbook.title}
+                                    </h4>
+                                    
+                                    <p className="text-[10px] xs:text-[10.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                                      {handbook.title.includes("東京") 
+                                        ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
+                                        : handbook.title.includes("大阪")
+                                        ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
+                                        : "免等待免登入！專專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
+                                    </p>
+                                  </div>
+
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {handbook.tags.slice(0, 2).map((tag) => (
+                                      <span key={tag} className="text-[8.5px] font-black text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/30 px-1.5 py-0.5 rounded">
+                                        #{tag}
+                                      </span>
+                                    ))}
+                                  </div>
+
+                                  <div className="flex gap-1.5 border-t border-slate-100 dark:border-white/5 pt-1.5 mt-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        triggerHapticFeedback([16]);
+                                        handleCopyExpertItinerary(e, handbook);
+                                      }}
+                                      className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full text-[9.5px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 active:scale-[0.95] text-white shadow-xs"
+                                    >
+                                      <Copy size={10} />
+                                      複製行程
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        triggerHapticFeedback([16]);
+                                        setActiveHandbook(handbook);
+                                      }}
+                                      className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full text-[9.5px] font-black border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.95] transition-all dark:border-white/10 dark:text-slate-300 dark:bg-white/5"
+                                    >
+                                      <Eye size={10} />
+                                      預覽行程
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </button>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -2688,144 +2781,6 @@ export default function HomeTab({
                         )}
                       </div>
 
-                      {/* Subscription module block */}
-                      <div className="mt-8 pt-8 border-t border-slate-200/50 dark:border-white/10 w-full text-left">
-                        <div className="flex items-center gap-2 mb-2">
-                          <BellRing size={20} className="text-pink-500 animate-pulse" />
-                          <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                            ✉️ 目的地即時快訊 & 優惠促銷訂閱
-                          </h4>
-                          <span className="text-[9px] bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                            Real-time Alerts
-                          </span>
-                        </div>
-                        <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                          當航班降價促銷、釋出聯名特惠，或目的地有重要安全/旅遊警示更新時，系統將即時通知您，幫助您聰明規劃、安心起飛！
-                        </p>
-
-                        {/* List of Destinations available for subscriptions */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                          {[
-                            { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", price: "NT$ 9,800起", health: "💚 安全無虞", advisory: "由傳統航空釋出大量淡季特等機票，東京梅雨季氣溫適中！", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
-                            { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", price: "NT$ 8,900起", health: "💚 安全無虞", advisory: "廉價航空本週大促銷，週末熱門時段仍有促銷票！", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
-                            { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", price: "本島漫遊", health: "💚 安全無虞", advisory: "梅雨滯留鋒面逼近，下雨行程已由 Jelly AI 為您全天候就緒。", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
-                            { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", price: "NT$ 24,500起", health: "💛 旅遊須知", advisory: "希斯洛機場本週部分行李分檢系統調整，過海關建议提早排隊。", tagColor: "bg-amber-50 text-amber-700 font-extrabold" },
-                          ].map((dest) => {
-                            const isWebPush = subscriptions.some(s => s.destination === dest.name && s.channel === 'web-push');
-                            const isEmail = subscriptions.some(s => s.destination === dest.name && s.channel === 'email');
-
-                            return (
-                              <div key={dest.name} className="flex flex-row items-stretch rounded-[22px] border border-slate-100 dark:border-white/5 bg-slate-50/42 dark:bg-slate-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all">
-                                <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans">
-                                  <img src={dest.image} alt={dest.name} className="h-full w-full object-cover" />
-                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
-                                  <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5 flex-wrap">
-                                    <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
-                                      {dest.code}
-                                    </span>
-                                    <span className={`rounded-md px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md ${dest.tagColor}`}>
-                                      {dest.health}
-                                    </span>
-                                  </div>
-                                  <div className="absolute bottom-2.5 left-2.5 text-white pr-2">
-                                    <h5 className="font-extrabold text-[13.5px] leading-tight">{dest.name}</h5>
-                                    <span className="text-[10px] font-bold text-pink-300 font-mono">最低 {dest.price}</span>
-                                  </div>
-                                </div>
-                                
-                                <div className="p-3 flex-1 flex flex-col justify-between gap-2.5">
-                                  <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 text-left">
-                                    {dest.advisory}
-                                  </p>
-                                  <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleSubscription(dest.name, 'web-push')}
-                                      className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
-                                        isWebPush
-                                          ? "bg-pink-100 dark:bg-pink-950/40 text-pink-700 border border-pink-200"
-                                          : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
-                                      }`}
-                                    >
-                                      <Bell size={11} className={isWebPush ? "text-pink-600" : ""} />
-                                      {isWebPush ? "已開啟推送" : "開啟推送"}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleSubscription(dest.name, 'email')}
-                                      className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
-                                        isEmail
-                                          ? "bg-sky-100 dark:bg-sky-950/40 text-sky-700 border border-sky-200"
-                                          : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
-                                      }`}
-                                    >
-                                      <Mail size={11} className={isEmail ? "text-sky-600" : ""} />
-                                      {isEmail ? "已設 Email" : "Email/RSS"}
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* Subscription alerts and newsfeed */}
-                        <div className="rounded-3xl border border-dashed border-slate-200 dark:border-white/10 p-4 bg-white/20 dark:bg-slate-950/20">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Rss size={16} className="text-pink-500 animate-pulse" />
-                            <h5 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                              最新訂閱情報 & 降價快訊 (Deal Feed Alert)
-                            </h5>
-                          </div>
-
-                          {subscriptions.length === 0 ? (
-                            <div className="text-center py-6">
-                              <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
-                                💡 跨出第一步！訂閱上方任一目的地的推送或電郵快訊後，即可在此解鎖瀏覽專屬的降價促銷、即時機票大賞與目的地旅遊安全警報！
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col gap-2">
-                              {[
-                                { dest: "東京 Tokyo", type: "deal", tag: "🔥 降價大促銷", text: "星宇航空限時特惠台北-東京 NT$9,800 起，降幅更高達 15%！已為您追蹤！" },
-                                { dest: "東京 Tokyo", type: "advisory", tag: "🌧️ 旅遊須知", text: "東京多地進入梅雨季節，出門建議隨身帶傘，可多參考 Jelly AI 推薦的雨天行程！" },
-                                { dest: "大阪 Osaka", type: "deal", tag: "🎉 廉航大回饋", text: "樂桃航空萬人促銷重磅來襲！大阪單程近全免未稅快閃 NT$2,200 起！" },
-                                { dest: "台北 Taipei", type: "advisory", tag: "🌧️ 降雨警報", text: "台北氣象局發布午後大雨特報，山區潮濕多雨，建議隨意挑選文創室內景點漫步。" },
-                                { dest: "倫敦 London", type: "advisory", tag: "✈️ 機場跑道封閉", text: "希斯洛機場(LHR)公告 6/5 行李系統維修，建議國際旅客提早 3 小時抵達辦理登機。" },
-                                { dest: "倫敦 London", type: "deal", tag: "💎 商務艙特等艙特惠", text: "長榮航空倫敦直飛航線釋出稀有限量商務特惠，預訂即享 92 折超值特惠！" }
-                              ]
-                                .filter(alert => subscriptions.some(sub => sub.destination.trim().toLowerCase().startsWith(alert.dest.split(' ')[0].toLowerCase())))
-                                .map((alert, idx) => (
-                                  <div key={idx} className="flex gap-3 p-3 rounded-2xl bg-white/60 dark:bg-slate-900/40 border border-white/80 dark:border-white/5 shadow-sm">
-                                    <div className="h-6 w-6 shrink-0 rounded-full bg-pink-100 dark:bg-pink-950/40 text-pink-600 text-[10px] font-black flex items-center justify-center">
-                                      {alert.type === 'deal' ? '💰' : '⚠️'}
-                                    </div>
-                                    <div>
-                                      <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-[11px] font-black text-slate-800 dark:text-white">
-                                          {alert.dest}
-                                        </span>
-                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${
-                                          alert.type === 'deal' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
-                                        }`}>
-                                          {alert.tag}
-                                        </span>
-                                      </div>
-                                      <p className="text-[12px] font-bold text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-left font-sans">
-                                        {alert.text}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
-
-                              {/* Show total count */}
-                              <p className="text-[10px] text-slate-400 font-extrabold text-right mt-2">
-                                隨時同步最新 2026 年夏季即時情報
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
                     </motion.div>
                   ) : loading ? (
                     <motion.div
@@ -3028,12 +2983,12 @@ export default function HomeTab({
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="text-fuchsia-500" size={24} />
               <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                熱門達人手帳
+                熱門達人行程
               </h2>
             </div>
 
             <HorizontalScrollRail
-              label="熱門達人手帳"
+              label="熱門達人行程"
               viewportClassName="w-full pb-6 -mx-6 px-6"
             >
                 {EXPERT_HANDBOOKS.map((handbook, index) => {
@@ -3078,7 +3033,7 @@ export default function HomeTab({
                         <div>
                           <div className="mb-1.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
                             <Sparkles size={11} strokeWidth={2.6} />
-                            達人手帳
+                            達人行程
                           </div>
                           
                           <h4 className="text-[14px] xs:text-[15px] font-black text-slate-800 dark:text-white leading-snug line-clamp-2">
@@ -3089,7 +3044,7 @@ export default function HomeTab({
                           </p>
                           
                           <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400">
-                            最具含金量的手帳路線！包含：{handbook.tags.slice(0, 2).map((t) => `#${t}`).join(" ")}，一鍵複製即刻出發。
+                            最具含金量的行程路線！包含：{handbook.tags.slice(0, 2).map((t) => `#${t}`).join(" ")}，一鍵複製即刻出發。
                           </p>
                         </div>
 
@@ -3103,14 +3058,14 @@ export default function HomeTab({
                             className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md shadow-purple-500/10 active:scale-[0.97]"
                           >
                             <Copy size={11} />
-                            複製手帳
+                            複製行程
                           </button>
                           <button
                             type="button"
                             onClick={() => setActiveHandbook(handbook)}
                             className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:bg-white/5"
                           >
-                            預覽手帳
+                            預覽行程
                           </button>
                         </div>
                       </div>
@@ -3119,6 +3074,151 @@ export default function HomeTab({
                   );
                 })}
             </HorizontalScrollRail>
+          </div>
+
+          {/* Subscription Section */}
+          <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2 pt-8 border-t border-slate-200/50 dark:border-white/10 text-left">
+            <div className="flex items-center gap-2 mb-2">
+              <BellRing size={20} className="text-pink-500 animate-pulse" />
+              <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                ✉️ 目的地即時快訊 & 優惠促銷訂閱
+              </h4>
+              <span className="text-[9px] bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                Real-time Alerts
+              </span>
+            </div>
+            <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+              當航班降價促銷、釋出聯名特惠，或目的地有重要安全/旅遊警示更新時，系統將即時通知您，幫助您聰明規劃、安心起飛！
+            </p>
+
+            {/* List of Destinations available for subscriptions */}
+            <div className="w-full mb-6">
+              <HorizontalScrollRail
+                label="目的地訂閱"
+                viewportClassName="w-full pb-4 -mx-6 px-6"
+                contentClassName="gap-4"
+              >
+                {[
+                  { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", price: "NT$ 9,800起", health: "💚 安全無虞", advisory: "由傳統航空釋出大量淡季特等機票，東京梅雨季氣溫適中！", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
+                  { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", price: "NT$ 8,900起", health: "💚 安全無虞", advisory: "廉價航空本週大促銷，週末熱門時段仍有促銷票！", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
+                  { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", price: "本島漫遊", health: "💚 安全無虞", advisory: "梅雨滯留鋒面逼近，下雨行程已由 Jelly AI 為您全天候就緒。", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
+                  { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", price: "NT$ 24,500起", health: "💛 旅遊須知", advisory: "希斯洛機場本週部分行李分檢系統調整，過海關建议提早排隊。", tagColor: "bg-amber-50 text-amber-700 font-extrabold" },
+                ].map((dest) => {
+                  const isWebPush = subscriptions.some(s => s.destination === dest.name && s.channel === 'web-push');
+                  const isEmail = subscriptions.some(s => s.destination === dest.name && s.channel === 'email');
+
+                  return (
+                    <div key={dest.name} className="flex flex-row items-stretch w-[290px] xs:w-[325px] sm:w-[365px] shrink-0 rounded-[22px] border border-slate-100 dark:border-white/5 bg-slate-50/42 dark:bg-slate-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                      <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans">
+                        <img src={dest.image} alt={dest.name} className="h-full w-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
+                        <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5 flex-wrap">
+                          <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
+                            {dest.code}
+                          </span>
+                          <span className={`rounded-md px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md ${dest.tagColor}`}>
+                            {dest.health}
+                          </span>
+                        </div>
+                        <div className="absolute bottom-2.5 left-2.5 text-white pr-2">
+                          <h5 className="font-extrabold text-[13.5px] leading-tight">{dest.name}</h5>
+                          <span className="text-[10px] font-bold text-pink-300 font-mono">最低 {dest.price}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 flex-1 flex flex-col justify-between gap-2.5">
+                        <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 text-left">
+                          {dest.advisory}
+                        </p>
+                        <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSubscription(dest.name, 'web-push')}
+                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
+                              isWebPush
+                                ? "bg-pink-100 dark:bg-pink-950/40 text-pink-700 border border-pink-200"
+                                : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}
+                          >
+                            <Bell size={11} className={isWebPush ? "text-pink-600" : ""} />
+                            {isWebPush ? "已開啟" : "推送"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSubscription(dest.name, 'email')}
+                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
+                              isEmail
+                                ? "bg-sky-100 dark:bg-sky-950/40 text-sky-700 border border-sky-200"
+                                : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}
+                          >
+                            <Mail size={11} className={isEmail ? "text-sky-600" : ""} />
+                            {isEmail ? "已設" : "Email"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </HorizontalScrollRail>
+            </div>
+
+            {/* Subscription alerts and newsfeed */}
+            <div className="rounded-3xl border border-dashed border-slate-200 dark:border-white/10 p-4 bg-white/20 dark:bg-slate-950/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Rss size={16} className="text-pink-500 animate-pulse" />
+                <h5 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                  最新訂閱情報 & 降價快訊 (Deal Feed Alert)
+                </h5>
+              </div>
+
+              {subscriptions.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
+                    💡 跨出第一步！訂閱上方任一目的地的推送或電郵快訊後，即可在此解鎖瀏覽專屬的降價促銷、即時機票大賞與目的地旅遊安全警報！
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {[
+                    { dest: "東京 Tokyo", type: "deal", tag: "🔥 降價大促銷", text: "星宇航空限時特惠台北-東京 NT$9,800 起，降幅更高達 15%！已為您追蹤！" },
+                    { dest: "東京 Tokyo", type: "advisory", tag: "🌧️ 旅遊須知", text: "東京多地進入梅雨季節，出門建議隨身帶傘，可多參考 Jelly AI 推薦的雨天行程！" },
+                    { dest: "大阪 Osaka", type: "deal", tag: "🎉 廉航大回饋", text: "樂桃航空萬人促銷重磅來襲！大阪單程近全免未稅快閃 NT$2,200 起！" },
+                    { dest: "台北 Taipei", type: "advisory", tag: "🌧️ 降雨警報", text: "台北氣象局發布午後大雨特報，山區潮濕多雨，建議隨意挑選文創室內景點漫步。" },
+                    { dest: "倫敦 London", type: "advisory", tag: "✈️ 機場跑道封閉", text: "希斯洛機場(LHR)公告 6/5 行李系統維修，建議國際旅客提早 3 小時抵達辦理登機。" },
+                    { dest: "倫敦 London", type: "deal", tag: "💎 商務艙特等艙特惠", text: "長榮航空倫敦直飛航線釋出稀有限量商務特惠，預訂即享 92 折超值特惠！" }
+                  ]
+                    .filter(alert => subscriptions.some(sub => sub.destination.trim().toLowerCase().startsWith(alert.dest.split(' ')[0].toLowerCase())))
+                    .map((alert, idx) => (
+                      <div key={idx} className="flex gap-3 p-3 rounded-2xl bg-white/60 dark:bg-slate-900/40 border border-white/80 dark:border-white/5 shadow-sm">
+                        <div className="h-6 w-6 shrink-0 rounded-full bg-pink-100 dark:bg-pink-950/40 text-pink-600 text-[10px] font-black flex items-center justify-center">
+                          {alert.type === 'deal' ? '💰' : '⚠️'}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[11px] font-black text-slate-800 dark:text-white">
+                              {alert.dest}
+                            </span>
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${
+                              alert.type === 'deal' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
+                            }`}>
+                              {alert.tag}
+                            </span>
+                          </div>
+                          <p className="text-[12px] font-bold text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-left font-sans">
+                            {alert.text}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+
+                  {/* Show total count */}
+                  <p className="text-[10px] text-slate-400 font-extrabold text-right mt-2">
+                    隨時同步最新 2026 年夏季即時情報
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -3235,7 +3335,7 @@ export default function HomeTab({
                   src={
                     flyingCard.handbook.image || flyingCard.handbook.coverImage
                   }
-                  alt={flyingCard.handbook.title || "達人手帳預覽"}
+                  alt={flyingCard.handbook.title || "達人行程預覽"}
                   className="w-full h-2/3 object-cover"
                 />
                 <div className="p-4 flex-1 bg-white">
