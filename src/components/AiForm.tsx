@@ -368,6 +368,34 @@ export default function AiForm({
                     </button>
                   </div>
 
+                  {/* Interactive Swap Button */}
+                  <div className="flex justify-center -my-3 select-none relative z-10">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData((p) => ({
+                          ...p,
+                          departure: p.destination,
+                          destination: p.departure,
+                        }));
+                      }}
+                      title="交換出發地與目的地"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white/94 text-sky-500 hover:text-sky-600 shadow-md transition-all hover:scale-110 active:scale-95 cursor-pointer group"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="2.5"
+                        stroke="currentColor"
+                        className="h-4 w-4 transform transition-transform group-hover:rotate-180 duration-300"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5h18M3 12h18M3 16.5h18" stroke="none" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-3.75-3.75m0 0l-3.75 3.75m3.75-3.75V15.75M4.5 15.75l3.75 3.75m0 0l3.75-3.75m-3.75 3.75V8.25" />
+                      </svg>
+                    </button>
+                  </div>
+
                   {/* Destination */}
                   <div className="flex flex-col gap-2.5">
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">

@@ -8,6 +8,7 @@ import {
   TRAVEL_GUIDE_REGIONS, 
   TRAVEL_GUIDE_SOURCE_REPO, 
   matchTravelDestinations,
+  TRAVEL_GUIDE_DESTINATIONS,
   TravelGuideDestination
 } from '../data/travelGuideDestinations';
 
@@ -35,6 +36,22 @@ export const LocationPickerPopup = ({
       .sort((a, b) => a.place.localeCompare(b.place, 'zh-Hant'));
   }, [searchQuery, selectedRegion]);
 
+  const groupedDestinations = useMemo(() => {
+    const grouped: Record<string, TravelGuideDestination[]> = {};
+    filteredDestinations.forEach(dest => {
+      if (!grouped[dest.country]) grouped[dest.country] = [];
+      grouped[dest.country].push(dest);
+    });
+    // Optional: Taiwan and Japan first, then sort by name
+    return Object.entries(grouped).sort((a, b) => {
+      if (a[0] === '台灣') return -1;
+      if (b[0] === '台灣') return 1;
+      if (a[0] === '日本') return -1;
+      if (b[0] === '日本') return 1;
+      return a[0].localeCompare(b[0], 'zh-Hant');
+    });
+  }, [filteredDestinations]);
+
   const isKeyboardOpen = vv.height < 520 && window.innerWidth < 1024;
 
   const content = (
@@ -53,62 +70,33 @@ export const LocationPickerPopup = ({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.95 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative z-popup-above flex h-[calc(100%-1.5rem)] sm:h-[82%] w-full flex-col overflow-hidden rounded-t-[30px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] md:h-auto md:max-h-[80vh] md:w-[480px] md:max-w-xl md:min-w-[480px] md:rounded-[34px] md:shadow-[0_28px_60px_rgba(15,23,42,0.16)]"
+          className="relative z-popup-above flex h-[calc(100%-1.5rem)] sm:h-[85%] w-full flex-col overflow-hidden rounded-t-[24px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,1))] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] md:h-auto md:max-h-[85vh] md:w-[600px] md:max-w-2xl md:min-w-[600px] md:rounded-[30px] md:shadow-[0_28px_60px_rgba(15,23,42,0.16)]"
         >
-          <div className={`sticky top-0 z-20 bg-white/90 px-4 ${isKeyboardOpen ? 'pb-2 pt-2' : 'pb-3.5 pt-4'} backdrop-blur-xl md:px-6 md:pb-4 md:pt-6`}>
-            <div className={`mx-auto rounded-full bg-slate-200 md:hidden ${isKeyboardOpen ? 'mb-1 h-1 w-10' : 'mb-3 h-1.5 w-12'}`} />
-            <div className={`flex flex-row items-center justify-between pl-1 ${isKeyboardOpen ? 'mb-1.5' : 'mb-4'}`}>
+          <div className={`sticky top-0 z-20 bg-white/95 px-4 ${isKeyboardOpen ? 'pb-2 pt-2' : 'pb-3 mt-2 pt-4'} shadow-sm md:px-6 md:pb-4 md:pt-6`}>
+            <div className={`mx-auto rounded-full bg-slate-200 md:hidden ${isKeyboardOpen ? 'mb-1 h-1 w-10' : 'mb-4 h-1.5 w-12'}`} />
+            <div className={`flex flex-row items-center justify-between pl-1 ${isKeyboardOpen ? 'mb-1.5' : 'mb-5'}`}>
               <div className="flex flex-col">
-                <span className="fluid-title font-black text-slate-800">{title}</span>
+                <span className="text-xl md:text-2xl font-black text-slate-800">{title}</span>
                 {!isKeyboardOpen && (
-                  <span className="fluid-kicker mt-0.5 font-black uppercase text-slate-500">Select Destination</span>
+                  <span className="text-[10px] md:text-xs mt-0.5 font-bold uppercase tracking-wider text-slate-400">Select Destination</span>
                 )}
               </div>
               <button 
                 onClick={onClose}
-                className={`flex items-center justify-center rounded-full bg-slate-100/80 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:bg-slate-200 ${isKeyboardOpen ? 'h-8 w-8' : 'h-10 w-10'}`}
+                className={`flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 active:scale-[0.95] transition-all ${isKeyboardOpen ? 'h-8 w-8' : 'h-9 w-9 md:h-10 md:w-10'}`}
               >
-                <span className={`${isKeyboardOpen ? 'text-xs' : 'text-xl'} text-slate-500 font-bold`}>✕</span>
+                <span className={`${isKeyboardOpen ? 'text-sm' : 'text-lg md:text-xl'} text-slate-500 font-bold leading-none`}>✕</span>
               </button>
             </div>
 
-            {/* Region Tabs */}
-            {!isKeyboardOpen && (
-              <div className="-mx-1 mb-4 flex flex-row gap-x-2 overflow-x-auto px-1 pb-1 scrollbar-hide animate-in fade-in duration-300">
-                <button
-                  onClick={() => setSelectedRegion('全部地區')}
-                  className={`fluid-caption rounded-[16px] px-4 py-2 font-black transition-all whitespace-nowrap active:scale-[0.97] ${
-                    selectedRegion === '全部地區' 
-                      ? 'bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_10px_22px_rgba(14,165,233,0.20)]' 
-                      : 'border border-white/84 bg-white/84 text-slate-500 hover:bg-white'
-                  }`}
-                >
-                  全部
-                </button>
-                {TRAVEL_GUIDE_REGIONS.map((region) => (
-                  <button
-                    key={region}
-                    onClick={() => setSelectedRegion(region)}
-                    className={`fluid-caption rounded-[16px] px-4 py-2 font-black transition-all whitespace-nowrap active:scale-[0.97] ${
-                      selectedRegion === region 
-                        ? 'bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_10px_22px_rgba(14,165,233,0.20)]' 
-                        : 'border border-white/84 bg-white/84 text-slate-500 hover:bg-white'
-                    }`}
-                  >
-                    {region}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="relative">
+            <div className="relative mb-3">
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 value={searchQuery}
                 aria-label="搜尋世界旅遊目的地"
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="搜尋國家、城市或景點別名"
-                className="fluid-copy w-full rounded-[20px] border border-white/84 bg-white/84 py-3.5 pl-11 pr-4 font-bold text-slate-700 outline-none shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-[border-color,background-color,box-shadow] focus:border-fuchsia-200 focus:bg-white focus:ring-4 focus:ring-fuchsia-100"
+                className="w-full rounded-[16px] border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-bold text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
                 autoCapitalize="none"
                 autoCorrect="off"
                 onFocus={() => {
@@ -118,35 +106,71 @@ export const LocationPickerPopup = ({
                 }}
               />
             </div>
-          </div>
 
-          {/* Cities Grid */}
-          <div className="grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1.1rem)] pt-3 sm:grid-cols-3 md:px-6 md:pb-5 md:pt-0 no-scrollbar">
-            {filteredDestinations.length > 0 ? (
-              filteredDestinations.map((dest) => (
-                <button
-                  key={dest.id}
-                  onClick={() => onSelect(dest)}
-                  className="group flex w-full min-w-0 flex-col items-start rounded-[22px] border border-white/86 bg-white/80 p-3.5 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-fuchsia-300 hover:bg-fuchsia-50/80 hover:shadow-[0_10px_22px_rgba(217,70,239,0.10)] active:scale-[0.97]"
-                >
-                  <span className="fluid-kicker mb-0.5 font-black uppercase text-slate-500 group-hover:text-fuchsia-400">{dest.country}</span>
-                  <span className="w-full break-words text-[15px] font-extrabold tracking-[-0.03em] text-slate-700 group-hover:text-fuchsia-700 sm:text-base">{dest.place}</span>
-                </button>
-              ))
-            ) : (
-              <div className="col-span-full py-10 flex flex-col items-center">
-                <span className="text-[40px] mb-3 grayscale opacity-30">🏔️</span>
-                <span className="fluid-copy font-bold text-slate-500">找不到符合條件的地點</span>
+            {/* Region Tabs */}
+            {!isKeyboardOpen && !searchQuery.trim() && (
+              <div className="-mx-4 md:-mx-6 overflow-x-auto scrollbar-hide">
+                <div className="flex flex-row gap-x-1.5 px-4 md:px-6 pb-2 pt-1 animate-in fade-in duration-300 w-max">
+                  <button
+                    onClick={() => setSelectedRegion('全部地區')}
+                    className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap active:scale-[0.97] ${
+                      selectedRegion === '全部地區' 
+                        ? 'bg-slate-800 text-white shadow-md' 
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    綜合推薦
+                  </button>
+                  {TRAVEL_GUIDE_REGIONS.map((region) => (
+                    <button
+                      key={region}
+                      onClick={() => setSelectedRegion(region)}
+                      className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap active:scale-[0.97] ${
+                        selectedRegion === region 
+                          ? 'bg-slate-800 text-white shadow-md' 
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {region}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-          {!isKeyboardOpen && (
-            <div className="flex shrink-0 justify-center border-t border-white/78 bg-slate-50/46 p-4">
-              <span className="fluid-kicker font-black uppercase text-slate-500/80">
-                {TRAVEL_GUIDE_SOURCE_REPO}
-              </span>
-            </div>
-          )}
+
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)] pt-3 md:px-6 md:pb-6 no-scrollbar">
+            {groupedDestinations.length > 0 ? (
+              <div className="flex flex-col gap-5 md:gap-7">
+                {groupedDestinations.map(([country, dests]) => (
+                  <div key={country} className="flex flex-col gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] md:text-[15px] font-black tracking-wider text-slate-700 pl-1">{country}</span>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
+                      {dests.map((dest) => (
+                        <button
+                          key={dest.id}
+                          onClick={() => onSelect(dest)}
+                          className="group flex flex-col items-center justify-center gap-0.5 rounded-xl border border-slate-200/80 bg-white py-2.5 px-1 md:py-3 md:px-2 shadow-[0_2px_8px_rgba(15,23,42,0.04)] transition-all active:scale-[0.97] hover:border-sky-300 hover:shadow-md"
+                        >
+                          <span className="w-full text-center text-[13px] md:text-[14px] font-extrabold text-slate-800 group-hover:text-sky-600 truncate">{dest.place.split('/')[0]}</span>
+                          {dest.searchAlias && (
+                            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 group-hover:text-sky-500 font-mono tracking-wider">{dest.searchAlias}</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16">
+                <span className="text-[48px] mb-4 grayscale opacity-30">✈️</span>
+                <span className="text-[15px] font-bold text-slate-500">找不到符合條件的城市或機場</span>
+              </div>
+            )}
+          </div>
         </motion.div>
       </div>
     </AnimatePresence>

@@ -15,7 +15,7 @@ export default function CollapsibleNotes({
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Check if text is long enough to warrant line clamp/toggle
-  const canToggle = text.length > 50 || text.includes("\n");
+  const canToggle = text.length > 25 || text.includes("\n");
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -54,7 +54,7 @@ export default function CollapsibleNotes({
 
       <p
         className={`text-[12px] sm:text-[13px] font-medium text-slate-700 tracking-tight leading-[1.68] font-sans whitespace-pre-line text-pretty mt-1 transition-all ${
-          isExpanded ? "line-clamp-none" : "line-clamp-3"
+          isExpanded ? "line-clamp-none" : "line-clamp-1"
         }`}
       >
         {text}

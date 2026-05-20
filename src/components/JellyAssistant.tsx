@@ -506,22 +506,22 @@ export default function JellyAssistant() {
 
                 {/* Default Smart Suggestion Quick Actions */}
                 {messages.length === 1 && !isTyping && (
-                  <div className="flex gap-2 overflow-x-auto px-4 pb-3.5 scrollbar-hide">
+                  <div className="flex flex-wrap gap-2 px-4 pb-3.5">
                     <button
                       onClick={() => handleSend('台北下雨天推薦去哪裡晃晃？有什麼室內活動嗎？')}
-                      className="fluid-caption whitespace-nowrap rounded-full border border-purple-200 bg-purple-50 hover:bg-purple-100 px-4 py-2 font-black text-purple-700 transition-transform active:scale-[0.97]"
+                      className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-purple-200/90 bg-purple-50 hover:bg-purple-100 px-3.5 py-1.5 font-bold text-purple-700 transition-all active:scale-[0.97] whitespace-normal text-left break-words max-w-full"
                     >
                       🌧️ 台北雨天行程活動
                     </button>
                     <button
                       onClick={() => handleSend('幫我找出發去東京的直飛航班與機票比價')}
-                      className="fluid-caption whitespace-nowrap rounded-full border border-sky-200 bg-sky-50 hover:bg-sky-100 px-4 py-2 font-black text-sky-700 transition-transform active:scale-[0.97]"
+                      className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-sky-200/90 bg-sky-50 hover:bg-sky-100 px-3.5 py-1.5 font-bold text-sky-700 transition-all active:scale-[0.97] whitespace-normal text-left break-words max-w-full"
                     >
                       ✈️ 東京機票比價推薦
                     </button>
                     <button
                       onClick={() => handleSend('打包行李箱該帶什麼？幫我推薦打包清單')}
-                      className="fluid-caption whitespace-nowrap rounded-full border border-orange-200 bg-orange-50 hover:bg-orange-100 px-4 py-2 font-black text-orange-700 transition-transform active:scale-[0.97]"
+                      className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-orange-200/90 bg-orange-50 hover:bg-orange-100 px-3.5 py-1.5 font-bold text-orange-700 transition-all active:scale-[0.97] whitespace-normal text-left break-words max-w-full"
                     >
                       💼 極簡必備行李打包
                     </button>

@@ -1528,8 +1528,11 @@ export default function HomeTab({
     destination: TravelGuideDestination,
     field: "from" | "to",
   ) => {
-    // 根據選好的地方 顯示中文
-    updateField(field, destination.place);
+    // 根據選好的地方 顯示中文與機場三碼 code
+    const displayValue = destination.searchAlias
+      ? `${destination.place} (${destination.searchAlias})`
+      : destination.place;
+    updateField(field, displayValue);
     if (field === "from") setShowDeparturePicker(false);
     if (field === "to") setShowDestinationPicker(false);
   };
@@ -1984,14 +1987,25 @@ export default function HomeTab({
                       />
                     </div>
 
-                    {/* Center airplane divider */}
-                    <div className="absolute left-1/2 top-1/2 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-700">
+                    {/* Center airplane divider (Click to Swap departure and destination) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const tempFrom = searchForm.from;
+                        updateField("from", searchForm.to);
+                        updateField("to", tempFrom);
+                        triggerHapticFeedback([10]);
+                      }}
+                      title="交換出發地與目的地"
+                      className="absolute left-1/2 top-1/2 z-20 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white hover:border-slate-300 shadow-md dark:border-slate-600 dark:bg-slate-700 hover:scale-110 active:scale-95 text-sky-500 hover:text-sky-600 transition-all cursor-pointer group"
+                    >
                       <PlaneTakeoff
                         size={14}
-                        className="text-sky-500"
+                        className="transform group-hover:rotate-180 transition-transform duration-300"
                         strokeWidth={2.5}
                       />
-                    </div>
+                    </button>
 
                     {/* TO cell */}
                     <div
