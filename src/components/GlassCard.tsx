@@ -29,7 +29,7 @@ function GlassCard({ children, className = '', style: propsStyle, ...restProps }
   return (
     <div
       {...restProps}
-      className={`${glassClass.replace('overflow-hidden', '')} ${className} flex flex-col`}
+      className={`glass-panel ${glassClass.replace('overflow-hidden', '')} ${className} flex flex-col`}
       style={style}
     >
       {children}
@@ -61,7 +61,7 @@ function GlassCardPressable({ children, className = '', onPress, style: propsSty
         onPress(e);
         onClick?.(e);
       }}
-      className={`${glassClass.replace('overflow-hidden', '')} active:scale-[0.97] transition-transform hover:bg-white/50 text-left w-full flex flex-col appearance-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 ${className}`}
+      className={`glass-panel ${glassClass.replace('overflow-hidden', '')} active:scale-[0.97] transition-transform hover:bg-white/50 text-left w-full flex flex-col appearance-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 ${className}`}
       style={style}
     >
       {children}

@@ -111,16 +111,22 @@ export async function suggestItineraryWithForm(input: SuggestItineraryInput): Pr
   throw new Error('AI response missing data');
 }
 
-export async function suggestPackingList(destination: string, season: string): Promise<string[]> {
+export async function suggestPackingList(
+  destination: string,
+  season: string,
+  peopleCount?: number,
+  daysCount?: number
+): Promise<string[]> {
   try {
     const token = getStoredToken();
+    const weatherContext = `${season}${peopleCount ? `、${peopleCount} 人同行` : ""}`;
     const res = await fetch('/api/generate/packing-list', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ destination, days: 5, weatherContext: season })
+      body: JSON.stringify({ destination, days: daysCount || 5, weatherContext })
     });
     if (res.status === 429) {
       const data = await res.json().catch(() => ({}));

@@ -127,66 +127,15 @@ import {
 } from "../lib/motionTokens";
 import { useTypewriter } from "../lib/useTypewriter";
 
+// Split itinerary components
+import CollapsibleNotes from "./itinerary/CollapsibleNotes";
+import SelectedNodeTransportDetails from "./itinerary/SelectedNodeTransportDetails";
+import CalendarView from "./itinerary/CalendarView";
+import QuickExpenseModal from "./itinerary/QuickExpenseModal";
+import ImagePreviewModal from "./itinerary/ImagePreviewModal";
+
 const ItineraryMapView = lazy(() => import("./ItineraryMapView"));
 
-function CollapsibleNotes({ 
-  text, 
-  label, 
-  icon = <FileText size={12} className="opacity-70" /> 
-}: { 
-  text: string; 
-  label: string;
-  icon?: React.ReactNode;
-}) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  return (
-    <motion.div layout className="overflow-hidden">
-      <AnimatePresence mode="popLayout">
-        {!isExpanded ? (
-          <motion.button 
-            key="collapsed"
-            layout
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.2 }}
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
-            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 w-fit rounded-full bg-slate-100/80 text-slate-500 text-[11px] font-black tracking-widest uppercase hover:bg-slate-200 transition-colors"
-          >
-            {icon}
-            <span className="translate-y-px">展開 {label}</span>
-            <ChevronDown size={12} className="opacity-70" />
-          </motion.button>
-        ) : (
-          <motion.div 
-            key="expanded"
-            layout
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={SPRING_SMOOTH}
-            className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3"
-          >
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</p>
-              <button 
-                onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
-                className="text-[10px] font-bold uppercase text-slate-400 hover:text-slate-600 px-2 py-1 -mr-2 bg-slate-100/50 hover:bg-slate-200/50 rounded-[10px] transition-colors"
-              >
-                收起 <ChevronUp size={10} className="inline opacity-70 mb-[1px]" />
-              </button>
-            </div>
-            <p className="text-[13px] sm:text-[14px] font-medium text-slate-700 tracking-tight leading-[1.78] font-sans whitespace-pre-line text-pretty mt-1.5">
-              {text}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
 
 const DESTINATION_IMAGES: Array<{ keywords: string[]; url: string }> = [
   {
@@ -540,6 +489,7 @@ export default function ItineraryTab() {
   const [tip, setTip] = useState("");
   const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [isSocketConnected, setIsSocketConnected] = useState<boolean>(false);
+  const [localThemeGradient, setLocalThemeGradient] = useState<string | null>(null);
 
   // Project List states
   const [userTrips, setUserTrips] = useState<any[]>([]);
@@ -569,6 +519,7 @@ export default function ItineraryTab() {
   const [isAiHeroExpanded, setIsAiHeroExpanded] = useState<boolean>(false);
   const [showMobileFavorites, setShowMobileFavorites] =
     useState<boolean>(false);
+  const [isFavoritesCollapsed, setIsFavoritesCollapsed] = useState<boolean>(false);
   const [draggingFavorite, setDraggingFavorite] = useState<FavoriteSpot | null>(
     null,
   );
@@ -616,6 +567,7 @@ export default function ItineraryTab() {
     setActiveTripId,
     openRedirectModal,
     addNotification,
+    aiResult,
   } = useAppStore();
 
   useEffect(() => {
@@ -775,6 +727,14 @@ export default function ItineraryTab() {
         destination: formData.destination,
         rawSuggestions: finalNodes,
       });
+
+      const themeGradient = suggestions?.ui_state?.theme_gradient || 
+                            suggestions?.ui_config?.bg_gradient || 
+                            suggestions?.theme_gradient || 
+                            suggestions?.bg_gradient;
+      if (themeGradient) {
+        setLocalThemeGradient(themeGradient);
+      }
 
       setIsPlanningNew(false);
       useAppStore.getState().setActiveTab("ai_result");
@@ -1774,6 +1734,14 @@ export default function ItineraryTab() {
         planner: formToSend,
       });
 
+      const rootThemeGradient = suggestionsRaw?.ui_state?.theme_gradient || 
+                               suggestionsRaw?.ui_config?.bg_gradient || 
+                               suggestionsRaw?.theme_gradient || 
+                               suggestionsRaw?.bg_gradient;
+      if (rootThemeGradient) {
+        setLocalThemeGradient(rootThemeGradient);
+      }
+
       let suggestedNodes: ItineraryNode[] = [];
       if (
         suggestionsRaw?.itinerary &&
@@ -2294,11 +2262,19 @@ export default function ItineraryTab() {
     );
   }
 
+  const activeGradient = localThemeGradient || 
+                         aiResult?.fullResponse?.ui_state?.theme_gradient || 
+                         aiResult?.fullResponse?.ui_config?.bg_gradient || 
+                         aiResult?.fullResponse?.theme_gradient ||
+                         aiResult?.theme_gradient ||
+                         aiResult?.bg_gradient || 
+                         "from-fuchsia-50 via-pink-50 to-rose-50";
+
   if (loading) {
     return (
       <main
         onScroll={onScroll}
-        className="flex-1 w-full overflow-y-auto animate-in fade-in duration-500"
+        className={`flex-1 w-full overflow-y-auto animate-in fade-in duration-500 bg-gradient-to-br ${activeGradient}`}
       >
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-6 pb-tab-safe">
           {/* Header skeleton */}
@@ -2385,7 +2361,7 @@ export default function ItineraryTab() {
   return (
     <main
       onScroll={onScroll}
-      className="flex-1 w-full overflow-y-auto selection:bg-sky-100 animate-in fade-in duration-700 scroll-smooth bg-transparent"
+      className={`flex-1 w-full overflow-y-auto selection:bg-sky-100 animate-in fade-in duration-700 scroll-smooth bg-gradient-to-br ${activeGradient}`}
     >
       <div className="max-w-[1440px] mx-auto w-full pb-tab-safe md:px-4 lg:px-8 mt-0 sm:mt-4 md:mt-6">
         {isOffline && (
@@ -2556,25 +2532,27 @@ export default function ItineraryTab() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 md:gap-4 sticky top-2 md:top-4 z-[45] md:relative md:top-0 md:mt-8">
-            <div className="lg:hidden px-4 md:px-0">
+          <div className="flex flex-row items-center justify-start gap-3 sm:gap-4 flex-nowrap sticky top-2 md:top-4 z-[45] md:relative md:top-0 md:mt-8 px-4 md:px-8 w-full">
+            <div className="shrink-0 flex items-center">
               <button
                 onClick={handleBackToTrips}
-                className="pl-3.5 pr-4 py-2.5 md:py-2 bg-white/80 backdrop-blur-xl hover:bg-white border-2 border-white rounded-full text-[12.5px] font-black text-slate-600 transition-all uppercase tracking-widest flex items-center gap-1.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] active:scale-[0.97] w-max"
+                className="pl-4 pr-5 py-3 md:py-3.5 bg-white/90 backdrop-blur-xl hover:bg-white border-2 border-white rounded-full text-[13px] md:text-sm font-black text-slate-700 transition-all uppercase tracking-widest flex items-center gap-2 shadow-[0_8px_24px_rgba(15,23,42,0.04)] active:scale-[0.97] transition-all whitespace-nowrap"
               >
                 <ArrowLeft
                   size={16}
                   strokeWidth={3}
-                  className="text-slate-400"
+                  className="text-slate-500"
                 />
-                返回行程總覽
+                返回
               </button>
             </div>
             <HorizontalScrollRail
               label="行程檢視模式"
-              viewportClassName="w-[calc(100%-2rem)] mx-auto md:w-auto md:mx-0"
+              className="flex-1 min-w-0"
+              viewportClassName="w-full mx-0"
               contentClassName="gap-1.5 md:gap-2 rounded-[24px] md:rounded-full border-2 border-white/90 md:border-white bg-white/60 md:bg-white/70 p-1.5 md:p-2 shadow-[0_8px_24px_rgba(244,114,182,0.08)] md:shadow-xl backdrop-blur-xl"
-              controlsVisibilityClass="hidden md:flex"
+              controlsVisibilityClass="flex"
+              buttonClassName="border-white/30 bg-white/20 text-slate-700 hover:text-slate-900 shadow-none hover:bg-white/40 backdrop-blur-sm h-8 w-8 ml-0.5 mr-0.5 flex"
             >
               <button
                 onClick={() => setViewMode("list")}
@@ -2705,82 +2683,108 @@ export default function ItineraryTab() {
 
             {/* Favorites List - Desktop */}
             <GlassCard className="!p-6">
-              <div className="flex items-center justify-between mb-5">
-                <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-500">
-                  口袋名單
-                </span>
-                <span className="text-[11px] font-bold text-pink-400">
-                  拖曳或點擊 + 加入
-                </span>
-              </div>
-              <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto no-scrollbar pr-1 -mr-1">
-                {favorites.map((spot: FavoriteSpot) => (
-                  <DraggableFavoriteSpot
-                    key={spot.id}
-                    spot={spot}
-                    selectedDay={safeSelectedDay}
-                    isOffline={isOffline}
-                    onAdd={addSpotToDay}
-                    onDelete={handleDeleteFavorite}
-                    onDragStart={setDraggingFavorite}
-                    onDragEnd={() => setDraggingFavorite(null)}
+              <button
+                onClick={() => setIsFavoritesCollapsed(!isFavoritesCollapsed)}
+                className="flex items-center justify-between w-full text-left focus:outline-none group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-500 group-hover:text-slate-800 transition-colors">
+                    口袋名單 ({favorites.length})
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={`text-slate-400 transition-transform duration-200 shrink-0 ${
+                      isFavoritesCollapsed ? "-rotate-90" : ""
+                    }`}
                   />
-                ))}
-              </div>
+                </div>
+                {!isFavoritesCollapsed && (
+                  <span className="text-[11px] font-bold text-pink-400 opacity-90 group-hover:opacity-100 transition-opacity">
+                    拖曳或點擊 + 加入
+                  </span>
+                )}
+              </button>
 
-              {!isOffline && (
-                <div className="mt-6 pt-5 border-t border-slate-50">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      aria-label="選擇圖示"
-                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center active:scale-[0.97] transition-all"
-                    >
-                      <IconImg value={newSpotEmoji} size={20} />
-                    </button>
-                    <input
-                      value={newSpotTitle}
-                      onChange={(e) => setNewSpotTitle(e.target.value)}
-                      placeholder="快速收藏..."
-                      className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-200 transition-all"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          void handleAddFavorite();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => void handleAddFavorite()}
-                      disabled={addingFavorite || !newSpotTitle.trim()}
-                      aria-label="新增收藏"
-                      className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 text-white flex items-center justify-center disabled:opacity-30 active:scale-[0.97] transition-all"
-                    >
-                      <Plus size={18} />
-                    </button>
-                  </div>
-                  {showEmojiPicker && (
-                    <div className="flex flex-wrap gap-1.5 mt-3 p-2 bg-white rounded-xl border border-slate-100 shadow-xl overflow-y-auto max-h-[120px] no-scrollbar">
-                      {EMOJI_OPTIONS.map((em) => (
-                        <button
-                          key={em}
-                          onClick={() => {
-                            setNewSpotEmoji(em);
-                            setShowEmojiPicker(false);
-                          }}
-                          className="w-8 h-8 flex items-center justify-center hover:bg-pink-50 rounded-lg transition-all"
-                        >
-                          <IconImg value={em} size={20} />
-                        </button>
+              <AnimatePresence initial={false}>
+                {!isFavoritesCollapsed && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex flex-col gap-3 mt-5 max-h-[300px] overflow-y-auto no-scrollbar pr-1 -mr-1">
+                      {favorites.map((spot: FavoriteSpot) => (
+                        <DraggableFavoriteSpot
+                          key={spot.id}
+                          spot={spot}
+                          selectedDay={safeSelectedDay}
+                          isOffline={isOffline}
+                          onAdd={addSpotToDay}
+                          onDelete={handleDeleteFavorite}
+                          onDragStart={setDraggingFavorite}
+                          onDragEnd={() => setDraggingFavorite(null)}
+                        />
                       ))}
                     </div>
-                  )}
-                  {addingFavorite && (
-                    <p className="text-[11px] font-bold text-pink-500 mt-2 animate-pulse uppercase tracking-widest text-center">
-                      GEOCODING...
-                    </p>
-                  )}
-                </div>
-              )}
+
+                    {!isOffline && (
+                      <div className="mt-6 pt-5 border-t border-slate-50">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            aria-label="選擇圖示"
+                            className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center active:scale-[0.97] transition-all"
+                          >
+                            <IconImg value={newSpotEmoji} size={20} />
+                          </button>
+                          <input
+                            value={newSpotTitle}
+                            onChange={(e) => setNewSpotTitle(e.target.value)}
+                            placeholder="快速收藏..."
+                            className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-200 transition-all"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                void handleAddFavorite();
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={() => void handleAddFavorite()}
+                            disabled={addingFavorite || !newSpotTitle.trim()}
+                            aria-label="新增收藏"
+                            className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 text-white flex items-center justify-center disabled:opacity-30 active:scale-[0.97] transition-all"
+                          >
+                            <Plus size={18} />
+                          </button>
+                        </div>
+                        {showEmojiPicker && (
+                          <div className="flex flex-wrap gap-1.5 mt-3 p-2 bg-white rounded-xl border border-slate-100 shadow-xl overflow-y-auto max-h-[120px] no-scrollbar">
+                            {EMOJI_OPTIONS.map((em) => (
+                              <button
+                                key={em}
+                                onClick={() => {
+                                  setNewSpotEmoji(em);
+                                  setShowEmojiPicker(false);
+                                }}
+                                className="w-8 h-8 flex items-center justify-center hover:bg-pink-50 rounded-lg transition-all"
+                              >
+                                <IconImg value={em} size={20} />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {addingFavorite && (
+                          <p className="text-[11px] font-bold text-pink-500 mt-2 animate-pulse uppercase tracking-widest text-center">
+                            GEOCODING...
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </GlassCard>
 
             {/* New Trip Button */}
@@ -3609,7 +3613,63 @@ export default function ItineraryTab() {
                   </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto w-full no-scrollbar overscroll-contain">
+                {/* Mobile Quick Add Row */}
+                {!isOffline && (
+                  <div className="shrink-0 px-6 py-3.5 bg-slate-50 border-b border-slate-100 flex flex-col gap-2.5">
+                    <div className="flex gap-2.5">
+                      <button
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        aria-label="選擇圖示"
+                        className="w-10 h-10 shrink-0 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center active:scale-[0.97] transition-all text-xl shadow-sm"
+                      >
+                        <IconImg value={newSpotEmoji} size={20} />
+                      </button>
+                      <input
+                        value={newSpotTitle}
+                        onChange={(e) => setNewSpotTitle(e.target.value)}
+                        placeholder="新增口袋收藏，例如：一蘭拉麵..."
+                        className="flex-1 bg-white border border-slate-200/80 rounded-xl px-3.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-fuchsia-200 transition-all shadow-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            void handleAddFavorite();
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => void handleAddFavorite()}
+                        disabled={addingFavorite || !newSpotTitle.trim()}
+                        className="w-10 h-10 shrink-0 rounded-xl bg-slate-900 text-white flex items-center justify-center disabled:opacity-30 active:scale-[0.97] transition-all shadow-sm"
+                      >
+                        <Plus size={18} />
+                      </button>
+                    </div>
+
+                    {showEmojiPicker && (
+                      <div className="flex flex-wrap gap-1.5 p-2 bg-white rounded-xl border border-slate-150 shadow-md overflow-y-auto max-h-[88px] no-scrollbar">
+                        {EMOJI_OPTIONS.map((em) => (
+                          <button
+                            key={em}
+                            onClick={() => {
+                              setNewSpotEmoji(em);
+                              setShowEmojiPicker(false);
+                            }}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-pink-50 rounded-lg transition-all text-base"
+                          >
+                            <IconImg value={em} size={18} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {addingFavorite && (
+                      <p className="text-[10px] font-black text-fuchsia-500 animate-pulse uppercase tracking-[0.15em] text-center">
+                        🎯 GEOCODING SPOT LOCATION...
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="p-6 overflow-y-auto w-full no-scrollbar overscroll-contain flex-1">
                   <div className="flex flex-col gap-4">
                     {favorites.map((spot: FavoriteSpot) => (
                       <DraggableFavoriteSpot
@@ -4363,19 +4423,10 @@ const ItineraryListItem = React.memo(
                 <span className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-400">
                   {isFlightCard ? "Transit" : isHotelCard ? "Stay" : "Day Note"}
                 </span>
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border shadow-sm ${
-                    // ` is added for syntax highlight fix
-                    item.source === "remote"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
-                      : "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
-                  }`}
-                >
                   <span
                     className={`w-1.5 h-1.5 rounded-full inline-block ${item.source === "remote" ? "bg-emerald-500" : "bg-amber-500"}`}
                   />
-                  {item.source === "remote" ? "CONFIRMED" : "LOCAL"}
-                </span>
+                  
               </div>
             </div>
             <div className="flex flex-row items-start gap-2 sm:gap-2.5">
@@ -4455,17 +4506,10 @@ const ItineraryListItem = React.memo(
                     {isFlightCard ? "跨區交通錨點" : "今晚住宿錨點"}
                   </p>
                 )}
+
                 <div
                   className={`mt-1.5 flex flex-wrap items-center gap-1.5 rounded-[18px] px-2.5 py-2 ${isFlightCard || isHotelCard ? "bg-white/6" : "bg-slate-50/80 border border-slate-100 shadow-inner"}`}
                 >
-                  {item.date && (
-                    <span
-                      className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-widest flex items-center gap-0.5 border ${isFlightCard ? "bg-slate-800 text-slate-400 border-slate-700" : isHotelCard ? "bg-indigo-900 border-indigo-800 text-indigo-200" : "bg-white/95 text-slate-600 border-slate-200"}`}
-                    >
-                      <Calendar size={11} className="sm:w-[13px] sm:h-[13px]" />
-                      {item.date}
-                    </span>
-                  )}
                   <div className="relative">
                     <div className="relative flex">
                       <div
@@ -4497,17 +4541,7 @@ const ItineraryListItem = React.memo(
                   <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-700 border border-pink-100/70">
                     {meta.label}
                   </span>
-                  {item.intensity && (
-                    <span
-                      className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] border ${item.intensity === "hardcore" ? "bg-rose-50 text-rose-600 border-rose-100" : item.intensity === "chill" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"}`}
-                    >
-                      {item.intensity === "hardcore"
-                        ? "高強度"
-                        : item.intensity === "chill"
-                          ? "輕鬆"
-                          : "適中"}
-                    </span>
-                  )}
+                  
                   {linkedFact && (
                     <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-0.5">
                       <Link size={11} className="sm:w-[13px] sm:h-[13px]" />
@@ -4607,13 +4641,13 @@ const ItineraryListItem = React.memo(
                         className="sm:w-4 sm:h-4 w-3.5 h-3.5"
                       />
                     </button>
-                    {item.category === "food" && (
+                    {onQuickExpense && (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (collaboratingLock) return;
-                          onQuickExpense?.(item);
+                          onQuickExpense(item);
                         }}
                         disabled={Boolean(collaboratingLock)}
                         className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
@@ -4972,21 +5006,10 @@ const ItineraryListItem = React.memo(
                           value={editDescription}
                           onChange={(e) => setEditDescription(e.target.value)}
                           placeholder="補充行程細節、提醒或預約資訊..."
-                          className="w-full text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[80px] resize-y"
+                          rows={5}
+                          className="w-full text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[140px] resize-y"
                         />
                       </div>
-                      <input
-                        value={editTransport}
-                        onChange={(e) => setEditTransport(e.target.value)}
-                        placeholder="前往下一站交通資訊，例如：地鐵約 20 分鐘"
-                        className="w-full text-xs font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                      />
-                      <input
-                        value={editImageUrl}
-                        onChange={(e) => setEditImageUrl(e.target.value)}
-                        placeholder="貼上照片網址 (例如: https://...jpg)"
-                        className="w-full text-xs font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
-                      />
                       <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4">
                         <div className="flex items-center justify-between gap-3 flex-wrap">
                           <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
@@ -5239,42 +5262,77 @@ function ItineraryList({
           </motion.div>
         )}
       </AnimatePresence>
-      {dayWeather && (
-        <div className="-mt-8 sm:-mt-14 mb-4 sm:mb-6 ml-6 sm:ml-10 relative z-10 w-fit">
-          <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-2 sm:py-3 bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-[16px] shadow-sm transform hover:scale-105 transition-transform duration-300">
-            <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50 rounded-full shadow-inner border border-slate-100">
-              <span className="text-lg">
-                {dayWeather.rain_prob > 50
-                  ? "🌧️"
-                  : dayWeather.rain_prob > 20
-                    ? "⛅"
-                    : "☀️"}
-              </span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] sm:text-xs font-black text-slate-700 tracking-wider uppercase">
-                {dayWeather.date} 預報
-              </span>
-              <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1.5">
-                <span className="text-slate-700">
-                  {dayWeather.temp_min}°C - {dayWeather.temp_max}°C
-                </span>
-                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                降雨率{" "}
-                <span
-                  className={
-                    dayWeather.rain_prob > 50
-                      ? "text-blue-500"
-                      : "text-slate-600"
-                  }
-                >
-                  {dayWeather.rain_prob}%
-                </span>
-              </span>
+      {/* ─── 天氣預報跑馬燈及今日日期 ─── */}
+      <div className="-mt-8 sm:-mt-14 mb-4 sm:mb-6 ml-6 sm:ml-10 relative z-15 flex flex-col gap-2.5 max-w-full overflow-hidden">
+        {/* 天氣預報跑馬燈 */}
+        {Array.isArray(weather) && weather.length > 0 && (
+          <div className="relative flex items-center w-[280px] sm:w-[360px] md:w-[420px] h-[52px] bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-[20px] shadow-sm overflow-hidden select-none group transition-all duration-300 hover:shadow-md">
+            {/* 左側漸變遮罩 */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white/90 to-transparent z-10 pointer-events-none" />
+            {/* 右側漸變遮罩 */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white/90 to-transparent z-10 pointer-events-none" />
+            
+            <div className="flex w-max-content overflow-hidden">
+              {/* 跑馬燈主體 - 第一組 */}
+              <div className="flex gap-4 px-4 animate-marquee shrink-0">
+                {weather.map((wVal: any, idx: number) => {
+                  const rainProb = wVal.rain_prob ?? 0;
+                  const emoji = rainProb > 50 ? "🌧️" : rainProb > 20 ? "⛅" : "☀️";
+                  const isCurrentSelectedDay = idx === (day - 1);
+                  return (
+                    <div 
+                      key={`marq1-${idx}`} 
+                      className={`inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[11px] font-black tracking-wide border transition-all ${isCurrentSelectedDay ? "bg-fuchsia-500/10 border-fuchsia-300/60 text-fuchsia-700 shadow-sm shadow-fuchsia-100/50 scale-105" : "bg-slate-50/40 border-slate-100 text-slate-600"}`}
+                    >
+                      <span>{emoji}</span>
+                      <span className="font-bold">D{idx + 1}</span>
+                      <span className="text-slate-400 font-medium">|</span>
+                      <span>{wVal.temp_min}°-{wVal.temp_max}°</span>
+                      <span className="text-blue-400 font-bold ml-0.5">{rainProb}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* 跑馬燈主體 - 第二組 (無縫銜接) */}
+              <div className="flex gap-4 px-4 animate-marquee shrink-0" aria-hidden="true">
+                {weather.map((wVal: any, idx: number) => {
+                  const rainProb = wVal.rain_prob ?? 0;
+                  const emoji = rainProb > 50 ? "🌧️" : rainProb > 20 ? "⛅" : "☀️";
+                  const isCurrentSelectedDay = idx === (day - 1);
+                  return (
+                    <div 
+                      key={`marq2-${idx}`} 
+                      className={`inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[11px] font-black tracking-wide border transition-all ${isCurrentSelectedDay ? "bg-fuchsia-500/10 border-fuchsia-300/60 text-fuchsia-700 shadow-sm shadow-fuchsia-100/50 scale-105" : "bg-slate-50/40 border-slate-100 text-slate-600"}`}
+                    >
+                      <span>{emoji}</span>
+                      <span className="font-bold">D{idx + 1}</span>
+                      <span className="text-slate-400 font-medium">|</span>
+                      <span>{wVal.temp_min}°-{wVal.temp_max}°</span>
+                      <span className="text-blue-400 font-bold ml-0.5">{rainProb}%</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* 當天日期顯示在天氣預報卡片底下 */}
+        {(() => {
+          const formattedDate = (tripStartDate && day) ? getDateForDay(day, tripStartDate) : null;
+          if (!formattedDate) return null;
+          return (
+            <div className="flex items-center gap-2 pl-2">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/60 backdrop-blur-md border border-slate-200/40 rounded-full shadow-sm text-[11px] font-black tracking-widest text-slate-600 uppercase">
+                <Calendar size={12} className="text-pink-400" />
+                <span>{formattedDate}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-300 mx-0.5" />
+                <span className="text-pink-500">Day {day}</span>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
 
       {isDayLoading && (
         <div className="flex flex-col gap-5 mt-4">
@@ -5857,772 +5915,9 @@ function ManualAddNode({
   );
 }
 
-function QuickExpenseModal({
-  tripId,
-  destination,
-  node,
-  members,
-  onClose,
-}: {
-  tripId: string;
-  destination: string;
-  node: ItineraryNode;
-  members: string[];
-  onClose: () => void;
-}) {
-  const prefersReducedMotion = useReducedMotion();
-  const overlayTransition = getOverlayTransition(prefersReducedMotion);
-  const modalMotion = getModalMotion(prefersReducedMotion);
-  const fallbackMember = members[0] || localStorage.getItem("user_id") || "我";
-  const participantList = members.length > 0 ? members : [fallbackMember];
-  const [title, setTitle] = useState(node.title);
-  const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState(
-    getCurrencyFromDestination(destination),
-  );
-  const [payer, setPayer] = useState(participantList[0] || fallbackMember);
-  const [splitWith, setSplitWith] = useState<string[]>(participantList);
-  const [submitting, setSubmitting] = useState(false);
-  const { showToast } = useAppStore();
 
-  const toggleSplitMember = (member: string) => {
-    setSplitWith((prev) => {
-      const exists = prev.includes(member);
-      if (exists) {
-        return prev.filter((item) => item !== member);
-      }
-      return [...prev, member];
-    });
-  };
+// Using imported CalendarView component
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const numericAmount = Number(amount);
-    if (!title.trim()) {
-      showToast("請補上消費名稱。", "warning");
-      return;
-    }
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      showToast("金額需為大於 0 的數字。", "warning");
-      return;
-    }
-    if (!payer.trim()) {
-      showToast("請選擇代墊人。", "warning");
-      return;
-    }
-
-    const normalizedSplit = splitWith.includes(payer)
-      ? splitWith
-      : [...splitWith, payer];
-    if (normalizedSplit.length === 0) {
-      showToast("至少要有一位分攤成員。", "warning");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      await submitLedgerExpense(tripId, {
-        title: title.trim(),
-        amount: numericAmount,
-        currency,
-        payer,
-        splitWith: normalizedSplit,
-      });
-      showToast(
-        `已為 ${node.title} 記下一筆 ${currency} ${numericAmount.toLocaleString()}。`,
-        "success",
-      );
-      onClose();
-    } catch {
-      showToast("記帳失敗，請稍後再試。", "warning");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return createPortal(
-    <AnimatePresence>
-      <div className="fixed inset-0 z-alert flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={overlayTransition}
-          className="fixed inset-0 bg-slate-900/45 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div
-          initial={modalMotion.initial}
-          animate={modalMotion.animate}
-          exit={modalMotion.exit}
-          transition={modalMotion.transition}
-          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-alert-above overflow-hidden flex flex-col max-h-90dvh"
-        >
-          <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 z-10" />
-          <form
-            onSubmit={handleSubmit}
-            className="p-5 sm:p-8 flex flex-col gap-4 sm:gap-5 pb-12 sm:pb-32 overflow-y-auto"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-500">
-                  Quick Expense
-                </p>
-                <h3 className="mt-2 text-2xl font-black text-slate-800 tracking-tight">
-                  為景點快速記一筆
-                </h3>
-                <p className="mt-2 text-sm font-bold text-slate-500">
-                  {node.title}
-                  {node.date ? ` ・ ${node.date}` : ""}
-                  {node.time ? ` ・ ${node.time}` : ""}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-10 h-10 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-                消費名稱
-              </label>
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-                  金額
-                </label>
-                <input
-                  inputMode="decimal"
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                  placeholder="例如 980"
-                  className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-                  幣別
-                </label>
-                <input
-                  value={currency}
-                  onChange={(event) =>
-                    setCurrency(event.target.value.toUpperCase())
-                  }
-                  className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-                代墊人
-              </label>
-              <select
-                value={payer}
-                onChange={(event) => setPayer(event.target.value)}
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
-              >
-                {participantList.map((member) => (
-                  <option key={member} value={member}>
-                    {member}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-                參與旅伴
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {participantList.map((member) => {
-                  const selected = splitWith.includes(member);
-                  return (
-                    <button
-                      key={member}
-                      type="button"
-                      onClick={() => toggleSplitMember(member)}
-                      className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
-                    >
-                      {member}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full mt-2 rounded-2xl bg-slate-900 text-white py-4 font-black text-sm uppercase tracking-[0.18em] shadow-lg hover:bg-slate-800 transition-all disabled:opacity-50 flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4"
-            >
-              {submitting && (
-                <Loader2 size={16} className="animate-spin shrink-0" />
-              )}
-              <span className="truncate">
-                {submitting ? "送出中..." : "確認記帳"}
-              </span>
-            </button>
-          </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>,
-    document.body,
-  );
-}
-
-function SelectedNodeTransportDetails({
-  selectedNode,
-  nodes,
-}: {
-  selectedNode: ItineraryNode;
-  nodes: ItineraryNode[];
-}) {
-  const [apiDuration, setApiDuration] = useState<number | null>(null);
-
-  const dayNodes = useMemo(
-    () => sortNodesForDisplay(nodes.filter((n) => n.day === selectedNode.day)),
-    [nodes, selectedNode.day],
-  );
-  const currentIndex = dayNodes.findIndex(
-    (n) => n.node_id === selectedNode.node_id,
-  );
-  const nextItem =
-    currentIndex !== -1 && currentIndex < dayNodes.length - 1
-      ? dayNodes[currentIndex + 1]
-      : null;
-
-  const km =
-    selectedNode.lat && selectedNode.lng && nextItem?.lat && nextItem?.lng
-      ? haversineKm(
-          selectedNode.lat,
-          selectedNode.lng,
-          nextItem.lat,
-          nextItem.lng,
-        )
-      : 0;
-
-  useEffect(() => {
-    if (
-      km > 2 &&
-      km <= 300 &&
-      selectedNode.lng &&
-      selectedNode.lat &&
-      nextItem?.lng &&
-      nextItem?.lat
-    ) {
-      fetchDirections(
-        selectedNode.lng,
-        selectedNode.lat,
-        nextItem.lng,
-        nextItem.lat,
-      ).then((duration) => {
-        if (duration) setApiDuration(duration);
-      });
-    } else {
-      setApiDuration(null);
-    }
-  }, [km, selectedNode.lat, selectedNode.lng, nextItem?.lat, nextItem?.lng]);
-
-  const autoTransport =
-    !selectedNode.transport_to_next && km > 0 ? estimateTransport(km) : null;
-
-  const displayTransport = (() => {
-    if (selectedNode.transport_to_next) {
-      return {
-        emoji: "🚇",
-        label: selectedNode.transport_to_next,
-        minutes: extractMinutes(selectedNode.transport_to_next),
-        isApi: false,
-        isFlight: false,
-      };
-    }
-    if (autoTransport) {
-      if (apiDuration && km > 2 && !autoTransport.isFlight) {
-        return {
-          emoji: "🚗",
-          label: `預計車程 ${formatMinutes(apiDuration)}`,
-          minutes: apiDuration,
-          isApi: true,
-          isFlight: false,
-        };
-      }
-      return { ...autoTransport, isApi: false };
-    }
-    return null;
-  })();
-
-  let timeGapMinutes = 0;
-  if (selectedNode.time && nextItem?.time) {
-    const parseTime = (t: string) => {
-      const [h, m] = t.split(":").map(Number);
-      return h * 60 + m;
-    };
-    const t1 = parseTime(selectedNode.time);
-    const t2 = parseTime(nextItem.time);
-    if (t2 > t1) {
-      timeGapMinutes = t2 - t1;
-    }
-  }
-
-  const hasTransitConflict = Boolean(
-    (displayTransport &&
-      timeGapMinutes > 0 &&
-      displayTransport.minutes > timeGapMinutes) ||
-    (displayTransport && displayTransport.minutes > 90 && !displayTransport.isFlight),
-  );
-
-  if (!displayTransport) return null;
-
-  return (
-    <div
-      className={`mt-4 p-4 rounded-[2rem] border border-white shadow-sm flex flex-col gap-3 ${hasTransitConflict ? "bg-gradient-to-r from-red-50 to-amber-50" : "bg-gradient-to-r from-indigo-50 to-blue-50"}`}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 ${hasTransitConflict ? "text-red-500" : "text-indigo-500"}`}
-        >
-          <Navigation2 size={16} strokeWidth={2.5} />
-        </div>
-        <div className="flex flex-col pt-0.5 w-full">
-          <span
-            className={`text-[11px] font-black uppercase tracking-widest mb-1 ${hasTransitConflict ? "text-red-400" : "text-indigo-400"}`}
-          >
-            前往下一站 {nextItem?.title ? `(${nextItem.title})` : ""}
-          </span>
-          <span
-            className={`text-[13px] font-bold flex items-center gap-2 ${hasTransitConflict ? "text-red-900" : "text-slate-700"}`}
-          >
-            {displayTransport.emoji} {displayTransport.label}
-            {displayTransport.isApi && (
-              <span
-                className={`px-1.5 py-0.5 rounded-md text-[9px] uppercase ${hasTransitConflict ? "bg-red-200/50 text-red-700" : "bg-indigo-100 text-indigo-700"}`}
-              >
-                API估計
-              </span>
-            )}
-          </span>
-
-          {hasTransitConflict && (
-            <div className="mt-2 text-[11px] font-bold text-red-700 bg-red-100/50 p-2.5 rounded-2xl flex items-start gap-2 shadow-sm border border-red-100">
-              <AlertTriangle
-                size={15}
-                className="shrink-0 mt-0.5"
-                strokeWidth={2.5}
-              />
-              <span className="leading-relaxed">
-                {displayTransport.minutes > timeGapMinutes && timeGapMinutes > 0
-                  ? `預估需 ${formatMinutes(displayTransport.minutes)}，但距離下一行程 (${nextItem?.time || ""}) 僅剩 ${formatMinutes(timeGapMinutes)}，時間有衝突！`
-                  : `預估交通高達 ${formatMinutes(displayTransport.minutes)}，車程較長，建議調整或留意休息。`}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CalendarView({
-  nodes,
-  tripStartDate,
-}: {
-  nodes: ItineraryNode[];
-  tripStartDate?: string;
-}) {
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-
-  // Calculate start date
-  const start = tripStartDate ? new Date(tripStartDate) : new Date();
-
-  // Get nodes mapped by date string (YYYY-MM-DD local)
-  const nodesByDate: Record<string, ItineraryNode[]> = {};
-
-  nodes.forEach((node) => {
-    // calculate date
-    let d = new Date(start);
-    if (node.date) {
-      d = new Date(node.date);
-    } else {
-      d.setDate(d.getDate() + (node.day - 1));
-    }
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    if (!nodesByDate[dateStr]) nodesByDate[dateStr] = [];
-    nodesByDate[dateStr].push(node);
-  });
-
-  const allDates = Object.keys(nodesByDate).sort();
-  let viewMonth = start.getMonth();
-  let viewYear = start.getFullYear();
-  if (allDates.length > 0) {
-    const firstDate = new Date(allDates[0]);
-    viewMonth = firstDate.getMonth();
-    viewYear = firstDate.getFullYear();
-  }
-
-  const [currentMonth, setCurrentMonth] = useState(
-    new Date(viewYear, viewMonth, 1),
-  );
-
-  // build calendar grid
-  const firstDay = new Date(
-    currentMonth.getFullYear(),
-    currentMonth.getMonth(),
-    1,
-  ).getDay();
-  const daysInMonth = new Date(
-    currentMonth.getFullYear(),
-    currentMonth.getMonth() + 1,
-    0,
-  ).getDate();
-
-  const days = [];
-  for (let i = 0; i < firstDay; i++) {
-    days.push(null);
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    days.push(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i));
-  }
-
-  const selectedNode = nodes.find((n) => n.node_id === selectedNodeId);
-  const facts = useTripFactsStore((s) => s.facts);
-
-  return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[75vh]">
-      {/* Main calendar grid */}
-      <div
-        className={`flex-1 flex flex-col glass-card !p-0 overflow-hidden border-2 border-white/60 shadow-xl ${selectedNodeId ? "hidden lg:flex" : "flex"}`}
-      >
-        <div className="flex items-center justify-between p-5 border-b border-pink-100 bg-white/40">
-          <button
-            onClick={() =>
-              setCurrentMonth(
-                new Date(
-                  currentMonth.getFullYear(),
-                  currentMonth.getMonth() - 1,
-                  1,
-                ),
-              )
-            }
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
-            title="上個月"
-            aria-label="上個月"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <h2 className="text-xl font-black text-slate-700 tracking-widest">
-            {currentMonth.getFullYear()}年 {currentMonth.getMonth() + 1}月
-          </h2>
-          <button
-            onClick={() =>
-              setCurrentMonth(
-                new Date(
-                  currentMonth.getFullYear(),
-                  currentMonth.getMonth() + 1,
-                  1,
-                ),
-              )
-            }
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
-            title="下個月"
-            aria-label="下個月"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-7 gap-px bg-pink-100/50 flex-1 overflow-y-auto">
-          {["日", "一", "二", "三", "四", "五", "六"].map((d) => (
-            <div
-              key={d}
-              className="bg-white/70 backdrop-blur-md text-center py-3 text-xs font-black text-pink-400 capitalize tracking-widest sticky top-0 z-10 shadow-sm"
-            >
-              {d}
-            </div>
-          ))}
-          {days.map((d, i) => {
-            if (!d)
-              return (
-                <div key={`empty-${i}`} className="bg-white/40 min-h-[120px]" />
-              );
-            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-            const dayNodes = sortNodesForDisplay(nodesByDate[dateStr] || []);
-
-            const isToday = new Date().toDateString() === d.toDateString();
-
-            return (
-              <div
-                key={dateStr}
-                className={`bg-white/80 backdrop-blur-sm min-h-[120px] p-2 flex flex-col transition-colors border-t border-transparent hover:border-pink-200 ${isToday ? "bg-pink-50/80 ring-2 ring-pink-300 inset-0" : ""}`}
-              >
-                <span
-                  className={`text-sm font-black mb-2 px-1 ${isToday ? "text-pink-600" : "text-slate-500"}`}
-                >
-                  {d.getDate()}
-                </span>
-                <div className="flex flex-col gap-1.5 overflow-y-auto no-scrollbar flex-1 pb-1">
-                  {dayNodes.map((node) => (
-                    <button
-                      key={node.node_id}
-                      onClick={() => setSelectedNodeId(node.node_id)}
-                      className={`text-left px-2 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent flex gap-1.5 shadow-sm active:scale-[0.97] ${selectedNodeId === node.node_id ? "bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-pink-200/50 scale-105" : "bg-white text-slate-600 hover:border-pink-200 hover:shadow-md"}`}
-                    >
-                      <div className="flex flex-col w-full min-w-0">
-                        <div className="flex items-center gap-1 w-full min-w-0">
-                          <IconImg
-                            value={getNodeEmoji(node)}
-                            size={16}
-                            className="shrink-0"
-                          />
-                          <span className="truncate flex-1">{node.title}</span>
-                        </div>
-                        {node.time && (
-                          <span
-                            className={`text-[9px] mt-0.5 tracking-wider ${selectedNodeId === node.node_id ? "text-white/80" : "text-slate-500"}`}
-                          >
-                            {node.time}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Sidebar details */}
-      {selectedNodeId && selectedNode && (
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 20 }}
-          className="w-full lg:w-96 flex-shrink-0 flex flex-col gap-4 h-full relative z-20"
-        >
-          <GlassCard className="!p-4 flex items-center justify-between border-2 border-white/60 flex-shrink-0">
-            <span className="font-black text-sm text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <Sparkles size={16} className="text-pink-400" /> 詳細內容
-            </span>
-            <button
-              onClick={() => setSelectedNodeId(null)}
-              aria-label="關閉詳細內容"
-              className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-200 text-slate-500 hover:text-slate-600 transition-colors shadow-sm cursor-pointer border border-slate-200/50"
-            >
-              <X size={16} strokeWidth={3} />
-            </button>
-          </GlassCard>
-
-          <GlassCard className="!p-6 flex flex-col gap-5 overflow-y-auto no-scrollbar border-2 border-white/60 flex-1 relative">
-            {selectedNode.image_url && (
-              <div className="w-full h-48 bg-slate-100 rounded-[2rem] overflow-hidden shadow-inner border border-white relative group">
-                <img
-                  src={selectedNode.image_url}
-                  alt="spot"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-            )}
-
-            <div className="flex items-start gap-4 mt-2">
-              <div className="w-14 h-14 shrink-0 rounded-[1.5rem] bg-gradient-to-br from-pink-50 to-fuchsia-50 flex items-center justify-center border border-white shadow-md shadow-pink-100/50">
-                <IconImg value={getNodeEmoji(selectedNode)} size={32} />
-              </div>
-              <div className="flex-1 pt-1">
-                <h3 className="font-black text-xl text-slate-800 leading-tight mb-2">
-                  {selectedNode.title}
-                </h3>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {selectedNode.time && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-xs font-black text-slate-500 uppercase tracking-[0.1em] border border-white shadow-sm whitespace-nowrap">
-                      <Clock size={12} strokeWidth={3} /> {selectedNode.time}
-                    </div>
-                  )}
-                  {selectedNode.lat && selectedNode.lng && (
-                    <button
-                      onClick={() =>
-                        openNativeMap(
-                          Number(selectedNode.lat!),
-                          Number(selectedNode.lng!),
-                          selectedNode.title,
-                        )
-                      }
-                      title="開始導航"
-                      aria-label="開始導航"
-                      className="inline-flex items-center justify-center p-[24px] bg-[#3b82f6] hover:bg-blue-600 rounded-[12px] shadow-[0_4px_6px_rgba(0,0,0,0.1)] transition-colors cursor-pointer text-xl"
-                      style={{ fontFamily: "Inter, sans-serif" }}
-                    >
-                      🧭
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {selectedNode.description && (
-              <div className="relative mt-2">
-                <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-pink-400 to-fuchsia-400 rounded-full opacity-50" />
-                <p className="text-[13px] text-slate-600 leading-relaxed font-medium pl-3 whitespace-pre-wrap">
-                  {selectedNode.description}
-                </p>
-              </div>
-            )}
-
-            <SelectedNodeTransportDetails
-              selectedNode={selectedNode}
-              nodes={nodes}
-            />
-
-            {selectedNode.linkedFactId &&
-              facts.find((f: any) => f.id === selectedNode.linkedFactId) && (
-                <div className="mt-4 p-4 rounded-[1.5rem] bg-gradient-to-br from-cyan-50 to-blue-50/50 border border-white shadow-sm flex flex-col gap-2 relative overflow-hidden">
-                  <div className="absolute -top-6 -right-6 p-4 opacity-10 text-6xl pointer-events-none">
-                    ✨
-                  </div>
-
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-cyan-500 shadow-sm shrink-0 relative z-10">
-                      <Link size={14} className="text-slate-500" />
-                    </div>
-                    <span className="text-[11px] font-black text-cyan-600 uppercase tracking-widest">
-                      關聯的 Travel Fact
-                    </span>
-                  </div>
-
-                  {(() => {
-                    const fact = facts.find(
-                      (f: any) => f.id === selectedNode.linkedFactId,
-                    ) as TravelFact | undefined;
-                    if (!fact) return null;
-                    const redirectPayload = getTravelFactRedirectPayload(fact);
-                    const bookingLabel = getTravelFactBookingLabel(fact);
-                    return (
-                      <div className="flex flex-col gap-2 relative z-10 pl-1">
-                        <span className="text-sm font-bold text-slate-800">
-                          {fact.title}
-                        </span>
-
-                        {(fact.startAt || fact.endAt) && (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                            <Clock size={14} className="text-slate-500" />
-                            <span>
-                              {fact.startAt || "--"}{" "}
-                              {fact.endAt ? `至 ${fact.endAt}` : ""}
-                            </span>
-                          </div>
-                        )}
-
-                        {fact.locationName && (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                            <MapPin size={14} className="text-slate-500" />
-                            <span>{fact.locationName}</span>
-                          </div>
-                        )}
-
-                        {fact.referenceCode && (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-1">
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded bg-white">
-                              訂單編號
-                            </span>
-                            <span className="font-mono">
-                              {fact.referenceCode}
-                            </span>
-                          </div>
-                        )}
-
-                        {fact.metadata &&
-                          Object.keys(fact.metadata).length > 0 && (
-                            <div className="mt-1 pt-2 border-t border-cyan-100/50 grid grid-cols-2 gap-2">
-                              {fact.metadata.airline && (
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    航空公司
-                                  </span>
-                                  <span className="text-xs text-slate-700 font-bold">
-                                    {fact.metadata.airline}
-                                  </span>
-                                </div>
-                              )}
-                              {fact.metadata.flightNumber && (
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    航班編號
-                                  </span>
-                                  <span className="text-xs text-slate-700 font-bold font-mono">
-                                    {fact.metadata.flightNumber}
-                                  </span>
-                                </div>
-                              )}
-                              {fact.metadata.checkInTime && (
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    入住時間
-                                  </span>
-                                  <span className="text-xs text-slate-700 font-bold">
-                                    {fact.metadata.checkInTime}
-                                  </span>
-                                </div>
-                              )}
-                              {fact.metadata.checkOutTime && (
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    退房時間
-                                  </span>
-                                  <span className="text-xs text-slate-700 font-bold">
-                                    {fact.metadata.checkOutTime}
-                                  </span>
-                                </div>
-                              )}
-                              {fact.metadata.address && (
-                                <div className="flex flex-col col-span-2">
-                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    地址
-                                  </span>
-                                  <span className="text-xs text-slate-700 font-bold">
-                                    {fact.metadata.address}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        {redirectPayload && bookingLabel && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              useAppStore
-                                .getState()
-                                .openRedirectModal(redirectPayload)
-                            }
-                            className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-200 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-widest text-cyan-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-cyan-50 hover:shadow-md"
-                          >
-                            <ExternalLink size={14} strokeWidth={3} />
-                            <span>{bookingLabel}</span>
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-          </GlassCard>
-        </motion.div>
-      )}
-    </div>
-  );
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -6872,46 +6167,5 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
-function ImagePreviewModal({
-  imageUrl,
-  onClose,
-}: {
-  imageUrl: string;
-  onClose: () => void;
-}) {
-  return createPortal(
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={getOverlayTransition()}
-      className="fixed inset-0 z-max flex items-center justify-center p-4 sm:p-10"
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-      <motion.div
-        initial={getModalMotion().initial}
-        animate={getModalMotion().animate}
-        exit={getModalMotion().exit}
-        transition={getModalMotion().transition}
-        className="relative max-w-5xl w-full max-h-[90vh] rounded-[32px] overflow-hidden shadow-2xl z-10 flex items-center justify-center"
-        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center hover:bg-white hover:text-slate-800 transition-colors shadow-sm"
-          aria-label="關閉"
-        >
-          <X size={20} strokeWidth={2.5} />
-        </button>
-        <img
-          src={imageUrl}
-          alt="預覽圖片"
-          className="w-full h-full max-h-[90vh] object-contain shrink-0"
-          referrerPolicy="no-referrer"
-        />
-      </motion.div>
-    </motion.div>,
-    document.body,
-  );
-}
+// ImagePreviewModal helper
+

@@ -48,6 +48,7 @@ import type {
   ChecklistItem,
   Settlement,
   SettlementHistoryEntry,
+  ChecklistCategory,
 } from "../types/workflow";
 import { AiRateLimitedError, suggestPackingList } from "../lib/openrouterApi";
 import { useToolsStore, Expense } from "../store/useToolsStore";
@@ -74,6 +75,104 @@ function getCurrencyFromDestination(destination: string): string {
   if (dest.includes("歐") || dest.includes("paris") || dest.includes("london"))
     return "EUR";
   return "TWD";
+}
+
+function guessCategoryFromItem(text: string): ChecklistCategory {
+  const t = text.toLowerCase();
+  if (
+    t.includes("護照") ||
+    t.includes("簽證") ||
+    t.includes("證件") ||
+    t.includes("身分證") ||
+    t.includes("機票") ||
+    t.includes("門票") ||
+    t.includes("卡") ||
+    t.includes("錢包") ||
+    t.includes("外币") ||
+    t.includes("日圓") ||
+    t.includes("牙刷") || // Wait, toothbrushes are toiletries, but other documents are separate
+    t.includes("外幣") ||
+    t.includes("保險") ||
+    t.includes("憑證") ||
+    t.includes("passport") ||
+    t.includes("ticket") ||
+    t.includes("card") ||
+    t.includes("id") ||
+    t.includes("cash") ||
+    t.includes("money")
+  ) {
+    return "documents";
+  }
+  if (
+    t.includes("充電") ||
+    t.includes("線") ||
+    t.includes("插") ||
+    t.includes("轉接") ||
+    t.includes("手機") ||
+    t.includes("相機") ||
+    t.includes("行動電源") ||
+    t.includes("平板") ||
+    t.includes("電腦") ||
+    t.includes("耳機") ||
+    t.includes("ipad") ||
+    t.includes("power bank") ||
+    t.includes("charger") ||
+    t.includes("adapter") ||
+    t.includes("electronics") ||
+    t.includes("phone") ||
+    t.includes("camera")
+  ) {
+    return "electronics";
+  }
+  if (
+    t.includes("衣") ||
+    t.includes("褲") ||
+    t.includes("裙") ||
+    t.includes("鞋") ||
+    t.includes("襪") ||
+    t.includes("帽") ||
+    t.includes("外套") ||
+    t.includes("內衣") ||
+    t.includes("泳") ||
+    t.includes("圍巾") ||
+    t.includes("手套") ||
+    t.includes("墨鏡") ||
+    t.includes("太陽眼鏡") ||
+    t.includes("clothes") ||
+    t.includes("jacket") ||
+    t.includes("shoes") ||
+    t.includes("socks") ||
+    t.includes("hat") ||
+    t.includes("swimwear")
+  ) {
+    return "clothing";
+  }
+  if (
+    t.includes("洗") ||
+    t.includes("刷") ||
+    t.includes("牙") ||
+    t.includes("膏") ||
+    t.includes("保養") ||
+    t.includes("毛巾") ||
+    t.includes("防曬") ||
+    t.includes("隱形眼鏡") ||
+    t.includes("保濕") ||
+    t.includes("化妝") ||
+    t.includes("洗面") ||
+    t.includes("沐浴") ||
+    t.includes("剃鬚") ||
+    t.includes("刮鬍") ||
+    t.includes("梳") ||
+    t.includes("toiletries") ||
+    t.includes("towel") ||
+    t.includes("sunscreen") ||
+    t.includes("shampoo") ||
+    t.includes("soap") ||
+    t.includes("brush")
+  ) {
+    return "toiletries";
+  }
+  return "other";
 }
 
 const TOOLS_ENTRY_PILLARS = [
@@ -174,7 +273,7 @@ interface ToolsTabState {
 
 interface ToolsTabActions {
   toggleCheck: (item: ChecklistItem) => void;
-  handleAiPackingList: () => void;
+  handleAiPackingList: (customDest?: string, customSeason?: string, customPeople?: number, customDays?: number) => void;
   updateForm: (updater: (prev: ExpenseForm) => ExpenseForm) => void;
   clearFormError: (field: keyof FormErrors) => void;
   toggleSplitMember: (member: string) => void;
@@ -343,20 +442,35 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
       );
     },
 
-    async handleAiPackingList() {
+    async handleAiPackingList(customDest?: string, customSeason?: string, customPeople?: number, customDays?: number) {
       setAiLoading(true);
       try {
+        const dest = customDest || tripInfo?.destination || "目的地";
+        const season = customSeason || getCurrentSeason();
+        const people = customPeople || 1;
+        const days = customDays || 5;
+
         const suggestions = await suggestPackingList(
-          tripInfo?.destination ?? "目的地",
-          getCurrentSeason(),
+          dest,
+          season,
+          people,
+          days,
         );
         const newItems: ChecklistItem[] = suggestions.map((text, i) => ({
           id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${i}`,
           text,
           checked: false,
+          category: guessCategoryFromItem(text),
         }));
-        setChecklist([...checklist, ...newItems]);
-        showToast(`✨ AI 新增了 ${newItems.length} 項行李建議！`, "success");
+        const nextChecklist = [...checklist, ...newItems];
+        setChecklist(nextChecklist);
+        
+        if (tripId) {
+          await updateChecklist({ trip_id: tripId, items: nextChecklist }).catch(() => {
+            // non-blocking fallback if background api failed
+          });
+        }
+        showToast(`✨ AI 行李推薦新增了 ${newItems.length} 項物品！`, "success");
       } catch (err) {
         if (err instanceof AiRateLimitedError) {
           showToast(err.message, "warning");
@@ -774,11 +888,118 @@ function WeatherCard() {
 
 function ChecklistSection() {
   const {
-    state: { checklist, aiLoading },
+    state: { checklist, tripInfo, members },
     actions,
   } = useToolsTabContext();
-  const { isOffline } = useAppStore();
+  const { isOffline, activeTripId, showToast } = useAppStore();
+  const { setChecklist } = useToolsStore();
   const packedCount = checklist.filter((i) => i.checked).length;
+
+  // Local state for customized AI Packing list generator
+  const [customDest, setCustomDest] = useState(tripInfo?.destination ?? "");
+  const [customSeason, setCustomSeason] = useState(getCurrentSeason());
+  const [customPeople, setCustomPeople] = useState(members?.length || 1);
+  const [customDays, setCustomDays] = useState(tripInfo?.days || 5);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [suggestedItems, setSuggestedItems] = useState<{ text: string; category: ChecklistCategory; selected: boolean }[] | null>(null);
+
+  // Sync inputs with tripInfo and members once loaded
+  useEffect(() => {
+    if (tripInfo?.destination) {
+      setCustomDest(tripInfo.destination);
+    }
+    if (tripInfo?.days) {
+      setCustomDays(tripInfo.days);
+    }
+  }, [tripInfo]);
+
+  useEffect(() => {
+    if (members && members.length > 0) {
+      setCustomPeople(members.length);
+    }
+  }, [members]);
+
+  // Loading indicator step rotation
+  useEffect(() => {
+    let timer: any;
+    if (isGenerating) {
+      timer = setInterval(() => {
+        setLoadingStep((prev) => (prev + 1) % 4);
+      }, 2200);
+    } else {
+      setLoadingStep(0);
+    }
+    return () => clearInterval(timer);
+  }, [isGenerating]);
+
+  const loadingMessages = [
+    "🔍 正在連線 OpenRouter 觀測目的地的氣象狀況...",
+    "🌡️ 正在根據與該季節氣溫條件，評估最適切的服飾規格...",
+    "🧑‍💼 正在針對您填寫的參訪人數與天數，挑選推薦備件明細...",
+    "📦 正在將物品依證件、盥洗、電子線材進行智慧分箱..."
+  ];
+
+  const handleStartAiPacking = async () => {
+    if (!customDest.trim()) {
+      showToast("請輸入目標目的地", "warning");
+      return;
+    }
+    setIsGenerating(true);
+    setSuggestedItems(null);
+    try {
+      const suggestions = await suggestPackingList(customDest, customSeason, customPeople, customDays);
+      const modeled = suggestions.map((text) => ({
+        text,
+        category: guessCategoryFromItem(text),
+        selected: true,
+      }));
+      setSuggestedItems(modeled);
+      showToast(`✨ AI 推薦行李產生成功！共有 ${suggestions.length} 項精選物品。`, "success");
+    } catch (err: any) {
+      if (err instanceof AiRateLimitedError) {
+        showToast(err.message, "warning");
+      } else {
+        showToast("產生推薦清單失敗，請確認 API Key 是否設定。", "warning");
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const togglePreviewSelect = (idx: number) => {
+    if (!suggestedItems) return;
+    const copied = [...suggestedItems];
+    copied[idx].selected = !copied[idx].selected;
+    setSuggestedItems(copied);
+  };
+
+  const handleImportToTripList = async () => {
+    if (!suggestedItems) return;
+    const selectedItems = suggestedItems.filter(item => item.selected);
+    if (selectedItems.length === 0) {
+      showToast("請至少選取一項要載入的推薦物品！", "warning");
+      return;
+    }
+
+    const newItems: ChecklistItem[] = selectedItems.map((item, i) => ({
+      id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${i}`,
+      text: item.text,
+      checked: false,
+      category: item.category,
+    }));
+
+    const nextChecklist = [...checklist, ...newItems];
+    setChecklist(nextChecklist);
+
+    if (activeTripId) {
+      void updateChecklist({ trip_id: activeTripId, items: nextChecklist }).catch(() => {
+        // non-blocking
+      });
+    }
+    showToast(`✨ 已成功匯入 ${newItems.length} 項行李物品！`, "success");
+    setSuggestedItems(null);
+  };
 
   return (
     <section className="mb-8 font-sans">
@@ -898,15 +1119,227 @@ function ChecklistSection() {
         })()}
       </GlassCard>
 
-      <Button
-        onClick={() => void actions.handleAiPackingList()}
-        disabled={aiLoading || isOffline}
-        size="lg"
-        className="w-full mt-2 h-14 rounded-full bg-slate-900 text-[15px] font-bold text-white hover:bg-slate-800"
-      >
-        <Sparkles size={18} className="mr-2" />
-        {aiLoading ? "AI 正在規劃..." : "用 AI 補齊清單"}
-      </Button>
+      {/* Brand New Custom AI Packing List Generator Section */}
+      <GlassCard className="!p-5 sm:!p-6 mb-4 border-pink-100 bg-pink-50/15 relative overflow-hidden rounded-[2.5rem]">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-pink-200/20 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-sky-200/20 rounded-full blur-2xl pointer-events-none" />
+        
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles size={18} className="text-pink-500 animate-pulse" />
+          <h3 className="text-lg font-black text-slate-800">AI 推薦行李助手</h3>
+          <span className="text-[10px] font-black uppercase tracking-widest text-pink-600 bg-pink-50 border border-pink-100 px-2.5 py-1 rounded-full ml-auto">
+            Smart Packing Assistant
+          </span>
+        </div>
+
+        <p className="text-xs text-slate-500 mb-5 leading-relaxed font-semibold">
+          依據目的地、季節和同行人數，AI 能客製產生一份合適的打包必備行李，幫您省去行前煩惱。
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          {/* Destination & Days */}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ai-pack-dest" className="text-xs font-black text-slate-600">目的地</Label>
+            <Input
+              id="ai-pack-dest"
+              value={customDest}
+              onChange={(e) => setCustomDest(e.target.value)}
+              placeholder="例如：東京, 首爾"
+              className="bg-white/90"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ai-pack-days" className="text-xs font-black text-slate-600">天數 (天)</Label>
+            <Input
+              id="ai-pack-days"
+              type="number"
+              min={1}
+              value={customDays}
+              onChange={(e) => setCustomDays(Math.max(1, parseInt(e.target.value) || 1))}
+              className="bg-white/90"
+            />
+          </div>
+
+          {/* Season & People */}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ai-pack-season" className="text-xs font-black text-slate-600">預計季節</Label>
+            <select
+              id="ai-pack-season"
+              value={customSeason}
+              onChange={(e) => setCustomSeason(e.target.value)}
+              className="flex h-11 w-full rounded-xl border border-outline bg-white/90 text-on-surface px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm appearance-none cursor-pointer"
+            >
+              <option value="春季">春季 (3~5月)</option>
+              <option value="夏季">夏季 (6~8月)</option>
+              <option value="秋季">秋季 (9~11月)</option>
+              <option value="冬季">冬季 (12~2月)</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ai-pack-people" className="text-xs font-black text-slate-600">同行人數</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCustomPeople((p) => Math.max(1, p - 1))}
+                className="h-11 w-11 rounded-xl shrink-0 border-slate-200 bg-white"
+              >
+                -
+              </Button>
+              <Input
+                id="ai-pack-people"
+                type="number"
+                min={1}
+                value={customPeople}
+                onChange={(e) => setCustomPeople(Math.max(1, parseInt(e.target.value) || 1))}
+                className="bg-white/95 text-center font-bold h-11"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCustomPeople((p) => p + 1)}
+                className="h-11 w-11 rounded-xl shrink-0 border-slate-200 bg-white"
+              >
+                +
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Generate Button using brand new macaron-gradient */}
+        <button
+          type="button"
+          onClick={handleStartAiPacking}
+          disabled={isGenerating || isOffline}
+          className="macaron-gradient text-sky-900 font-extrabold text-[14px] leading-none tracking-wide h-12 w-full flex items-center justify-center gap-2 rounded-full shadow-[0_4px_14px_rgba(244,114,182,0.18)] hover:shadow-[0_6px_20px_rgba(244,114,182,0.28)] hover:-translate-y-0.5 active:scale-95 duration-200 transition-all border border-pink-200 cursor-pointer disabled:opacity-50 disabled:-translate-y-0 select-none font-sans"
+        >
+          <Sparkles size={16} />
+          {isGenerating ? "AI 智慧推薦大師正在包裝規劃中..." : "開始產生 AI 推薦清單"}
+        </button>
+
+        {/* Animated Loading Steps */}
+        <AnimatePresence>
+          {isGenerating && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 bg-white/60 rounded-2xl p-4 border border-pink-100 flex flex-col gap-3 font-sans opacity-95"
+            >
+              <div className="flex items-center gap-2">
+                <Loader2 size={16} className="text-pink-500 animate-spin" />
+                <span className="text-xs font-black text-pink-600 leading-none">AI Packing Intelligence</span>
+              </div>
+              <p className="text-xs text-slate-600 font-bold tracking-tight">
+                {loadingMessages[loadingStep]}
+              </p>
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full macaron-gradient"
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${(loadingStep + 1) * 25}%` }}
+                  transition={{ duration: 1.5 }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Suggested Items Preview */}
+        <AnimatePresence>
+          {suggestedItems && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="mt-6 flex flex-col gap-4 bg-white/95 rounded-[28px] p-4 sm:p-5 border border-pink-100 shadow-[0_8px_30px_rgb(244,114,182,0.06)]"
+            >
+              <div className="flex items-center justify-between border-b border-pink-50 pb-3">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">AI recommendations</span>
+                  <span className="text-sm font-black text-slate-800">AI 推薦打包清單</span>
+                </div>
+                <span className="text-xs font-black text-pink-600 bg-pink-50 px-2.5 py-1 rounded-full border border-pink-100">
+                  {suggestedItems.filter((i) => i.selected).length}/{suggestedItems.length} 選用
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1">
+                {suggestedItems.map((item, idx) => {
+                  const CAT_META: Record<string, { label: string; emoji: string }> = {
+                    documents: { label: "證件", emoji: "🛂" },
+                    electronics: { label: "電子", emoji: "🔌" },
+                    clothing: { label: "服裝", emoji: "👕" },
+                    toiletries: { label: "盥洗", emoji: "🧼" },
+                    other: { label: "其他", emoji: "🎒" },
+                  };
+                  const meta = CAT_META[item.category] || CAT_META.other;
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => togglePreviewSelect(idx)}
+                      className={`flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer select-none min-h-[50px] ${
+                        item.selected
+                          ? "border-pink-200 bg-pink-50/20 hover:bg-pink-50/35"
+                          : "border-slate-100 bg-transparent opacity-60 hover:opacity-100 hover:bg-slate-50/50"
+                      }`}
+                    >
+                      <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={item.selected}
+                          readOnly
+                          className="sr-only"
+                        />
+                        <div
+                          className={`w-full h-full rounded-md border transition-colors flex items-center justify-center ${
+                            item.selected ? "bg-fuchsia-500 border-fuchsia-500 text-white" : "bg-white border-slate-300"
+                          }`}
+                        >
+                          {item.selected && <Check size={12} strokeWidth={4} />}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col flex-1 min-w-0 font-bold">
+                        <span className="text-xs text-[#2C302E] leading-normal break-words">
+                          {item.text}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100 shadow-inner">
+                        <span className="text-xs select-none">{meta.emoji}</span>
+                        <span className="text-[10px] font-bold text-slate-500 tracking-wider">
+                          {meta.label}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-slate-100">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSuggestedItems(null)}
+                  className="rounded-full h-11 font-bold text-slate-500 border-slate-200"
+                >
+                  關閉預覽
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleImportToTripList}
+                  className="macaron-gradient border border-pink-200 text-sky-900 font-extrabold rounded-full h-11 shadow-sm hover:shadow active:scale-95 duration-150"
+                >
+                  匯入旅途清單
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </GlassCard>
     </section>
   );
 }

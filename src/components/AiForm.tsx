@@ -292,8 +292,8 @@ export default function AiForm({
               </span>
             </div>
             <div>
-              <h2 className="mb-1 text-balance text-[21px] sm:text-[33px] font-black leading-[1.08] tracking-[-0.045em] text-slate-900 sm:mb-2">
-                先讓 AI 規劃旅程，再隨時調整行程
+              <h2 className="mb-1 text-balance text-[21px] sm:text-[33px] font-black leading-[1.08] tracking-[-0.045em] text-slate-900 sm:mb-2 font-heading">
+                先讓 <span className="text-macaron">AI 規劃</span>旅程，再隨時調整行程
               </h2>
             </div>
             <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2 pb-1 -mx-3.5 px-3.5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -346,7 +346,7 @@ export default function AiForm({
             >
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 sm:gap-5">
                 {/* Left Column: Route & Dates */}
-                <div className="flex flex-col gap-4 rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-5 sm:p-6">
+                <div className="flex flex-col gap-4 p-4 shadow-card hover:shadow-floating transition-shadow duration-300 glass-panel !rounded-[28px] sm:gap-5 sm:p-6">
                   {/* Departure */}
                   <div className="flex flex-col gap-2.5">
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
@@ -445,7 +445,7 @@ export default function AiForm({
                 </div>
 
                 {/* Right Column: Companions */}
-                <div className="flex flex-col gap-4 rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-5 sm:p-6">
+                <div className="flex flex-col gap-4 p-4 shadow-card hover:shadow-floating transition-shadow duration-300 glass-panel !rounded-[28px] sm:gap-5 sm:p-6">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <Users size={16} className="text-orange-500" />
                     與誰同行？
@@ -547,8 +547,8 @@ export default function AiForm({
             >
               <div className="mb-1 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
-                  <h3 className="text-[22px] font-black tracking-[-0.04em] text-slate-900">
-                    補充偏好細節
+                  <h3 className="text-[22px] font-black tracking-[-0.04em] text-slate-900 font-heading">
+                    補充<span className="text-macaron">偏好細節</span>
                   </h3>
                   <p className="mt-1 text-[13px] font-medium leading-[1.6] text-slate-500">
                     這些是選填項目，用來把草稿調得更貼近你的旅程節奏。
@@ -563,7 +563,7 @@ export default function AiForm({
                 </button>
               </div>
 
-              <div className="relative flex flex-col gap-5 overflow-hidden rounded-[40px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(255,250,251,0.74),rgba(241,248,255,0.72))] p-4 shadow-[0_14px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-6 sm:p-6">
+              <div className="relative flex flex-col gap-5 p-4 transition-shadow duration-300 shadow-card hover:shadow-floating glass-panel !rounded-[40px] sm:gap-6 sm:p-6">
                 <div className="flex flex-col gap-3.5">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <Coffee size={16} className="text-amber-600" />

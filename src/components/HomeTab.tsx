@@ -1669,8 +1669,8 @@ export default function HomeTab({
               <p className={`text-[10px] font-black uppercase tracking-[0.28em] text-slate-400 transition-all duration-300 ${isHeroIntroCollapsed ? "hidden" : "block"}`}>
                 Premium Jelly Journey Desk
               </p>
-              <h1 className="mx-auto max-w-4xl text-balance text-[28px] font-black tracking-[-0.045em] text-slate-900 sm:text-[42px] md:text-[54px] md:leading-[1.01]">
-                把航班、地圖與旅伴分工，收進同一份旅程
+              <h1 className="mx-auto max-w-4xl text-balance text-[28px] font-black tracking-[-0.045em] text-slate-900 sm:text-[42px] md:text-[54px] md:leading-[1.01] font-heading">
+                把<span className="text-macaron">航班、地圖</span>與<span className="text-macaron">旅伴分工</span>，收進同一份旅程
               </h1>
               
               <AnimatePresence initial={false}>
