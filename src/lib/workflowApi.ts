@@ -82,6 +82,26 @@ export function getNativeMapUrl(lat: number, lng: number, title: string, isIOS: 
   }
 }
 
+export function getNativeDirectionsUrl(lat: number, lng: number, title: string, isIOS: boolean): string {
+  const q = title ? encodeURIComponent(title) : '';
+  if (isIOS) {
+    // Apple Maps Directions
+    return `maps://?daddr=${lat},${lng}${q ? `&q=${q}` : ''}&dirflg=d`;
+  } else {
+    // Google Maps Directions
+    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  }
+}
+
+export function getFallbackSearchUrl(title: string, city: string, isIOS: boolean): string {
+  const q = encodeURIComponent(`${title} ${city}`.trim());
+  if (isIOS) {
+    return `maps://?q=${q}`;
+  } else {
+    return `https://www.google.com/maps/search/?api=1&query=${q}`;
+  }
+}
+
 export function openNativeMap(lat: number, lng: number, title?: string) {
   window.dispatchEvent(new CustomEvent('open-map', { detail: { lat, lng, title: title || '' } }));
 }
