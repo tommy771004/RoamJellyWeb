@@ -45,7 +45,10 @@ export async function geocodeSpot(title: string, city = ''): Promise<{ lat: numb
   try {
     const q = encodeURIComponent(`${title} ${city}`);
     const url = `/api/geocode?q=${q}`;
-    const apiRes = await fetch(url);
+    const token = getStoredToken();
+    const apiRes = await fetch(url, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    });
     if (!apiRes.ok) return null;
     const data = await apiRes.json();
     if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
@@ -61,7 +64,10 @@ export async function fetchDirections(lng1: number, lat1: number, lng2: number, 
   try {
     const coords = encodeURIComponent(`${lng1},${lat1};${lng2},${lat2}`);
     const url = `/api/directions?coords=${coords}`;
-    const apiRes = await fetch(url);
+    const token = getStoredToken();
+    const apiRes = await fetch(url, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    });
     if (!apiRes.ok) return null;
     const data = await apiRes.json();
     if (data && typeof data.duration === 'number') {
