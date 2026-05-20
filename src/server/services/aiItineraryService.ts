@@ -181,16 +181,25 @@ interface AiResponse {
 type ChunkResponse = ${spotSchema};
 \`\`\``;
 
-  return `你是一個精通旅遊規劃的 AI。請讀取使用者的偏好，並**強制**回傳符合以下 TypeScript 格式的 JSON，不准帶有 markdown 標記：
+  return `你是一個精通旅遊規劃的 AI。
+
+═══════════════════════════════════════════════════════
+🔒 目的地鎖定（最高優先指令，不可違反）
+　目的地：${destination}（共 ${totalDays} 天）
+　所有景點、summary.title、smart_tags 均必須 100% 對應「${destination}」。
+　絕對禁止：放入其他城市、其他國家、或任何與「${destination}」無關的地點。
+　summary.title 必須明確包含「${destination}」這個地名。
+═══════════════════════════════════════════════════════
+
+請回傳符合以下 TypeScript 格式的 JSON，不准帶有 markdown 標記：
 ${schema}
 
 【語言與格式要求】
 1. **請一律使用「繁體中文 (Traditional Chinese)」**：景點名稱（name）、提醒（ai_note）、摘要等全部使用繁體中文。
 2. **嚴格的 JSON 格式**：請務必且只能使用**標準雙引號 \`"\`** 包覆屬性與字串值。字串內若需引號，請用全形引號「」或單引號。
-3. **嚴格的地理一致性**：所有景點**必須嚴格位於指定的目的地（${destination}）內**，絕對禁止放入其他國家或地區的景點。
 
-【最新 AI 規劃必備要求】
-1. **韓國地區**：前往首爾、釜山、濟州島等，在 \`ai_note\` 中強制提醒下載並使用 **Naver Maps**。
+【AI 規劃必備要求】
+1. **地圖 App 特例**：若目的地位於韓國（Korea），在 \`ai_note\` 中強制提醒下載 **Naver Maps**。若目的地是日本，請提醒使用 **Google Maps** 或 **Yahoo!カーナビ**。
 2. **營業時間與停車場**：\`ai_note\` 中**必須**提供大約的營業時間與停車資訊。
 3. **門票資訊**：\`ai_note\` 中**必須**說明是否需要門票及費用。
 4. **包棟住宿選項**：人數適合時，主動推薦**包棟民宿/Villa**。
@@ -203,8 +212,8 @@ ${schema}
 請完整考慮「食、衣、住、行」四個面向。
 
 Details:
+- Destination（目的地，不可更改）: ${destination}
 - Trip length: ${totalDays} days
-- Destination: ${destination}
 - Departure: ${planner?.departureFrom || "unknown"}
 - Auto flight segments: ${planner?.autoFlightSegments?.join(" | ") || "Not specified"}
 - Travel facts anchors: ${planner?.travelFactsContext || "Not specified"}
@@ -218,7 +227,7 @@ Details:
 - Extra notes: ${planner?.notes || "None"}
 ${generationContext}${rangeInstruction}
 
-注意：請直接輸出 JSON，不要有任何多餘的解釋文字或 markdown \`\`\` 包裝。`;
+最終提醒：所有輸出內容（包含 summary.title）都必須是「${destination}」的行程，請直接輸出 JSON，不要任何多餘文字或 markdown 包裝。`;
 }
 
 /** Parse the raw text from a chunk AI call into a structured object/array. */
@@ -436,6 +445,8 @@ export function buildRegenerateSpotPrompt(params: {
   travelFactsContext?: string;
 }) {
   return `你是旅遊規劃 AI，請**只輸出一個 JSON 物件**（不要陣列、不要 markdown），替換使用者不滿意的景點。
+
+🔒 目的地鎖定：${params.destination}。新景點必須 100% 位於「${params.destination}」，禁止放入其他城市或國家的景點。
 
 被替換的景點：
 - 目的地: ${params.destination}
