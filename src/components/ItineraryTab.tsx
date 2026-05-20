@@ -2869,7 +2869,7 @@ export default function ItineraryTab() {
                         <span
                           className={`drop-shadow-sm transition-colors z-10 ${isActive ? "text-white font-black" : ""}`}
                         >
-                          Day {day}
+                          第 {day} 天
                         </span>
                         {displayDate && (
                           <span
@@ -2944,7 +2944,7 @@ export default function ItineraryTab() {
                           .slice(0, 2)
                           .map((lock) => lock.userName)
                           .join("、")}
-                        正在編輯 Day {safeSelectedDay} 的景點
+                        正在編輯第 {safeSelectedDay} 天的景點
                       </span>
                     </div>
                   )}
@@ -2961,7 +2961,7 @@ export default function ItineraryTab() {
                             </div>
                             <div>
                               <h3 className="font-black text-xl text-slate-800 leading-tight">
-                                需要微調 Day {safeSelectedDay} 嗎？
+                                需要微調第 {safeSelectedDay} 天嗎？
                               </h3>
                               <p className="text-sm font-bold text-slate-500 mt-1 uppercase tracking-wider">
                                 AI 行程規劃助手
@@ -5319,7 +5319,7 @@ function ItineraryList({
                 <Calendar size={12} className="text-pink-400" />
                 <span>{formattedDate}</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300 mx-0.5" />
-                <span className="text-pink-500">Day {day}</span>
+                <span className="text-pink-500">第 {day} 天</span>
               </div>
             </div>
           );

@@ -66,14 +66,14 @@ export default function RedirectModal({
                   {airlineInitial}
                 </div>
                 <div className="flex flex-col">
-                  <span className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] leading-none text-slate-500">Airline / Provider</span>
+                  <span className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] leading-none text-slate-500">航空公司與平台</span>
                   <span className="text-[18px] sm:text-[20px] font-black tracking-[-0.03em] text-slate-800 leading-none">{airline || provider}</span>
                 </div>
               </div>
               <div className="flex flex-col items-end">
                 <div className="mb-1 flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-emerald-500">
                   <ShieldCheck size={12} strokeWidth={3} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.08em]">Verified</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.08em]">官方驗證</span>
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{provider}</span>
               </div>
@@ -87,7 +87,7 @@ export default function RedirectModal({
                     <MapPin size={17} className="text-slate-500" />
                   </div>
                   <span className="text-[24px] sm:text-[26px] font-black tracking-[-0.04em] text-slate-800">{departure}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Departure</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">出發城市</span>
                 </div>
 
                 <div className="relative z-10 mx-3 flex flex-1 flex-col items-center sm:mx-4">
@@ -97,7 +97,7 @@ export default function RedirectModal({
                    <div className="flex flex-col items-center">
                      <span className="whitespace-nowrap text-[12px] font-black text-slate-700 sm:text-[13px]">{duration || '3h 30m'}</span>
                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                      {stops === 0 ? 'Direct' : `${stops} Stop${stops! > 1 ? 's' : ''}`}
+                      {stops === 0 ? '直飛' : `轉機 ${stops} 次`}
                      </span>
                    </div>
                 </div>
@@ -107,20 +107,20 @@ export default function RedirectModal({
                     <MapPin size={17} className="text-fuchsia-400" />
                   </div>
                   <span className="text-[24px] sm:text-[26px] font-black tracking-[-0.04em] text-slate-800">{arrival}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Arrival</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">抵達城市</span>
                 </div>
               </div>
 
               <div className="mb-6 flex flex-col gap-3 rounded-[24px] border border-white/88 bg-white/86 p-4 shadow-[0_10px_22px_rgba(15,23,42,0.06)]">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-slate-500">Base Fare (1 Adult)</span>
+                  <span className="text-[13px] text-slate-500">機票票價 (1名成人)</span>
                   <span className="text-[13px] font-bold tabular-nums text-slate-700">
                     {currency} {price ? Math.round(price * 0.85).toLocaleString() : '--'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[13px] text-slate-500">
-                    Taxes & Fees <span className="text-[10px] text-slate-500">(est.)</span>
+                    預估稅項與手續費
                   </span>
                   <span className="text-[13px] font-bold tabular-nums text-slate-700">
                     {currency} {price ? Math.round(price * 0.15).toLocaleString() : '--'}
@@ -128,7 +128,7 @@ export default function RedirectModal({
                 </div>
                 <div className="h-px bg-slate-100" />
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] font-bold text-slate-900">Total Price</span>
+                  <span className="text-[13px] font-bold text-slate-900">總計金額</span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-[13px] font-bold text-violet-400">{currency}</span>
                     <span className="text-[26px] font-black tracking-[-0.04em] text-violet-600 tabular-nums">

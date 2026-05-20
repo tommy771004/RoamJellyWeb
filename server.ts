@@ -2030,9 +2030,11 @@ async function startServer() {
     }
 
     // Copy nodes
+    let cloneIdx = 0;
     for (const node of nodes) {
+      const suffix = `${Date.now()}_clean_${cloneIdx++}_${Math.random().toString(36).substring(2, 10)}`;
       await repo.upsertItineraryNode(newTripId, {
-        node_id: `node_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        node_id: `node_cloned_${suffix}`,
         day: node.day,
         date: node.date,
         time: node.time || '10:00',

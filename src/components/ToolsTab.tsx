@@ -766,7 +766,7 @@ function WeatherCard() {
       <div className="relative z-10">
         <div className="mb-5 flex flex-wrap items-center gap-2 pt-4 sm:pt-0">
           <span className="inline-flex items-center rounded-full border border-sky-200 bg-white/82 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-sky-700 shadow-sm">
-            Weather Postcard
+            天氣明信片
           </span>
           {destination ? (
             <span className="inline-flex items-center rounded-full border border-orange-100 bg-orange-50/90 px-3 py-1 text-[11px] font-black text-orange-700 shadow-sm">
@@ -779,7 +779,7 @@ function WeatherCard() {
         </h2>
         <div className="flex flex-col gap-1 mb-5 sm:mb-6">
           <p className="text-[11px] sm:text-xs uppercase text-sky-700 font-black">
-            Local Weather & Outfit
+            當地氣象與穿搭建議
           </p>
           {isOffline && (
             <span className="text-[9px] sm:text-xs text-amber-600 font-bold bg-amber-50 w-fit px-2.5 py-0.5 rounded-full border border-amber-200 shadow-sm mt-1">
@@ -1008,7 +1008,7 @@ function ChecklistSection() {
           旅途清單
         </h2>
         <span className="text-[11px] sm:text-xs uppercase font-black text-sky-700 bg-sky-100/90 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-sky-200">
-          {packedCount}/{checklist.length} Packed
+          已整理 {packedCount}/{checklist.length}
         </span>
       </div>
 

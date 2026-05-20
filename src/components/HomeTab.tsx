@@ -1196,31 +1196,32 @@ export default function HomeTab({
         const { activeTripId, setActiveTripId, setActiveTab } =
           useAppStore.getState();
 
-        let TRIP_ID = activeTripId;
-
-        // If no active trip, create a new one first
-        if (!TRIP_ID) {
-          const newTrip = await createTrip({
-            name: handbook.title,
-            destination: handbook.tags[0] || "指定地點",
-          });
-          const newTripId = String(newTrip.id);
-          TRIP_ID = newTripId;
-          setActiveTripId(newTripId);
-        }
-
-        if (!TRIP_ID) {
-          throw new Error("trip id missing after clone bootstrap");
-        }
-
-        const ensuredTripId = TRIP_ID;
+        // Always create a new trip for expert handbooks to avoid mixing nodes into an existing trip
+        const newTrip = await createTrip({
+          name: `${handbook.title} (複製)`,
+          destination: handbook.tags[0] || "指定地點",
+        });
+        const newTripId = String(newTrip.id);
+        const ensuredTripId = newTripId;
 
         if (handbook.nodes && handbook.nodes.length) {
           setNodes([]);
+          let nodeIdx = 0;
           const normalized = handbook.nodes.map(
-            (rawNode: any) => ({ ...rawNode, source: "local" }) as any,
+            (rawNode: any) => {
+              const currentIdx = ++nodeIdx;
+              const suffix = `${Date.now()}_${currentIdx}_${Math.random().toString(36).substring(2, 10)}`;
+              return {
+                ...rawNode,
+                node_id: `node_expert_${suffix}`,
+                id: `node_expert_${suffix}`,
+                sort_order: currentIdx,
+                source: "local"
+              } as any;
+            }
           );
           normalized.forEach((n: any) => addNode(n));
+          
           const results = await Promise.allSettled(
             normalized.map((n: any) =>
               syncItinerary({
@@ -1241,6 +1242,7 @@ export default function HomeTab({
         }
 
         showToast(`已成功將 ${handbook.title} 複製到您的手帳！`, "success");
+        setActiveTripId(ensuredTripId);
         setActiveTab("itinerary");
       } catch (err) {
         showToast("複製行程失敗", "warning");
@@ -1846,7 +1848,7 @@ export default function HomeTab({
                       }}
                     >
                       <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
-                        FROM
+                        出發地
                       </span>
                       <input
                         aria-label="出發地"
@@ -1883,7 +1885,7 @@ export default function HomeTab({
                       }}
                     >
                       <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
-                        TO
+                        目的地
                       </span>
                       <input
                         aria-label="目的地"
