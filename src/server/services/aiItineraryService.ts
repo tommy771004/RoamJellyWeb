@@ -2,6 +2,249 @@ import { fetchOpenRouterWithFallback } from "./openrouterHelper";
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
+// ─── Chunk size for parallel itinerary generation ────────────────────────────
+const CHUNK_SIZE = 3; // days per parallel AI call
+
+// ─── External API Helpers (Hybrid Architecture) ──────────────────────────────
+
+/** Geocode a spot name using Nominatim (OpenStreetMap). Returns null on failure. */
+async function geocodeByNominatim(
+  name: string,
+  city: string
+): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const q = encodeURIComponent(`${name} ${city}`);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja,zh`,
+      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) return null;
+    const data: any[] = await res.json();
+    if (data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+  } catch {
+    /* swallow timeout / network errors */
+  }
+  return null;
+}
+
+/** Fetch a Wikipedia thumbnail for a spot name. Returns null on failure. */
+async function getWikiThumbnail(name: string): Promise<string | null> {
+  const isChinese = /[\u4e00-\u9fa5]/.test(name);
+  const langs = isChinese ? ["zh", "en"] : ["en", "zh"];
+  for (const lang of langs) {
+    try {
+      const res = await fetch(
+        `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`,
+        { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+      );
+      if (res.ok) {
+        const data: any = await res.json();
+        if (data.thumbnail?.source) return data.thumbnail.source;
+      }
+    } catch {
+      /* try next language */
+    }
+  }
+  return null;
+}
+
+/** Get driving duration (minutes) between two coordinates via OSRM. Returns null on failure. */
+async function getOSRMMinutes(
+  lng1: number,
+  lat1: number,
+  lng2: number,
+  lat2: number
+): Promise<number | null> {
+  try {
+    const res = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`,
+      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    if (data.routes?.length > 0) return Math.round(data.routes[0].duration / 60);
+  } catch {
+    /* swallow */
+  }
+  return null;
+}
+
+/**
+ * Enrich itinerary spots after AI generation:
+ *  1. Geocode each spot via Nominatim (lat/lng) — parallel across all spots
+ *  2. Fetch Wikipedia thumbnail (image_url) — parallel with geocoding
+ *  3. Compute transport_to_next via OSRM between consecutive same-day spots
+ *     (sequential within day, but days run in parallel)
+ */
+async function enrichItinerary(parsed: any, destination: string): Promise<any> {
+  if (!parsed?.itinerary || !Array.isArray(parsed.itinerary)) return parsed;
+
+  // Step 1 & 2: Geocode + wiki thumbnail in parallel for every spot in every day
+  const enrichedDays = await Promise.all(
+    parsed.itinerary.map(async (dayData: any) => {
+      if (!Array.isArray(dayData.spots)) return dayData;
+      const enrichedSpots = await Promise.all(
+        dayData.spots.map(async (spot: any) => {
+          const name: string = spot.name || spot.title || "";
+          const [coords, thumbnail] = await Promise.all([
+            geocodeByNominatim(name, destination),
+            getWikiThumbnail(name),
+          ]);
+          return {
+            ...spot,
+            lat: coords?.lat ?? spot.lat,
+            lng: coords?.lng ?? spot.lng,
+            image_url: spot.image_url || thumbnail || undefined,
+          };
+        })
+      );
+      return { ...dayData, spots: enrichedSpots };
+    })
+  );
+
+  // Step 3: OSRM transport_to_next — days run in parallel; spots within a day are sequential
+  const finalDays = await Promise.all(
+    enrichedDays.map(async (dayData: any) => {
+      if (!Array.isArray(dayData.spots)) return dayData;
+      const spots = [...dayData.spots];
+      for (let si = 0; si < spots.length - 1; si++) {
+        const curr = spots[si];
+        const next = spots[si + 1];
+        if (curr?.lat != null && curr?.lng != null && next?.lat != null && next?.lng != null) {
+          const minutes = await getOSRMMinutes(curr.lng, curr.lat, next.lng, next.lat);
+          if (minutes !== null) {
+            spots[si] = { ...curr, transport_to_next: `車程約 ${minutes} 分鐘` };
+          }
+        }
+      }
+      return { ...dayData, spots };
+    })
+  );
+
+  return { ...parsed, itinerary: finalDays };
+}
+
+// ─── Prompt builder (no lat/lng/image_url in schema) ─────────────────────────
+
+/**
+ * Build the AI prompt for a chunk of days.
+ * includeUiConfig = true for the first chunk (adds ui_config + summary to the schema).
+ * startDay/endDay constrain which days the AI should output.
+ */
+function buildChunkPrompt(
+  destination: string,
+  totalDays: number,
+  planner: any,
+  generationContext: string,
+  includeUiConfig: boolean,
+  startDay: number,
+  endDay: number
+): string {
+  const chunkDays = endDay - startDay + 1;
+  const rangeInstruction =
+    startDay === 1 && endDay === totalDays
+      ? "" // single call: no extra restriction
+      : `\n【區段指示】請只產生第 ${startDay} 天到第 ${endDay} 天（共 ${chunkDays} 天）的行程，itinerary 的 day 值從 ${startDay} 到 ${endDay}。${startDay > 1 ? "請延續前幾天旅程的節奏與地區連貫性。" : ""}`;
+
+  const spotSchema = `Array<{
+    day: number;
+    spots: Array<{
+      time: string;           // 24h HH:MM
+      name: string;           // 景點名稱（繁體中文，專有名詞可加外文括號）
+      emoji: string;
+      category: string;       // flight | transport | landmark | food | shopping | nature | hotel | activity | nightlife | other
+      intensity: "chill" | "moderate" | "hardcore";
+      ai_note: string;        // 客製化提醒，必須含營業時間、停車、門票、量化預算
+      linkedFactId?: string;  // 若對應到 Travel facts anchors 中某項目，填入其 ID
+    }>;
+  }>`;
+
+  const schema = includeUiConfig
+    ? `\`\`\`typescript
+interface AiResponse {
+  ui_config: {
+    bg_gradient: string;       // Tailwind class, e.g. "from-amber-100 to-orange-50"
+    font_scale: "normal" | "large";
+    hero_image_keyword: string;
+  };
+  summary: {
+    title: string;
+    smart_tags: string[];
+  };
+  itinerary: ${spotSchema};
+}
+\`\`\``
+    : `\`\`\`typescript
+// 只需回傳 itinerary 陣列，勿包裹成物件
+type ChunkResponse = ${spotSchema};
+\`\`\``;
+
+  return `你是一個精通旅遊規劃的 AI。請讀取使用者的偏好，並**強制**回傳符合以下 TypeScript 格式的 JSON，不准帶有 markdown 標記：
+${schema}
+
+【語言與格式要求】
+1. **請一律使用「繁體中文 (Traditional Chinese)」**：景點名稱（name）、提醒（ai_note）、摘要等全部使用繁體中文。
+2. **嚴格的 JSON 格式**：請務必且只能使用**標準雙引號 \`"\`** 包覆屬性與字串值。字串內若需引號，請用全形引號「」或單引號。
+3. **嚴格的地理一致性**：所有景點**必須嚴格位於指定的目的地（${destination}）內**，絕對禁止放入其他國家或地區的景點。
+
+【最新 AI 規劃必備要求】
+1. **韓國地區**：前往首爾、釜山、濟州島等，在 \`ai_note\` 中強制提醒下載並使用 **Naver Maps**。
+2. **營業時間與停車場**：\`ai_note\` 中**必須**提供大約的營業時間與停車資訊。
+3. **門票資訊**：\`ai_note\` 中**必須**說明是否需要門票及費用。
+4. **包棟住宿選項**：人數適合時，主動推薦**包棟民宿/Villa**。
+5. **預算範圍量化**：\`ai_note\` 中提供具體當地貨幣或台幣估算。
+
+【內容客製化要求】
+若使用者未提供飲食禁忌，請忽略；若為情侶，安排浪漫景點。
+根據旅伴類型、節奏偏好與興趣客製化行程。
+不要給出制式通用名稱，請給出真實景點與店家名稱。
+請完整考慮「食、衣、住、行」四個面向。
+
+Details:
+- Trip length: ${totalDays} days
+- Destination: ${destination}
+- Departure: ${planner?.departureFrom || "unknown"}
+- Auto flight segments: ${planner?.autoFlightSegments?.join(" | ") || "Not specified"}
+- Travel facts anchors: ${planner?.travelFactsContext || "Not specified"}
+- Spots user likes: ${planner?.mustVisitSpots?.join(", ") || "Not specified"}
+- Companions: ${planner?.companions || "Not specified"}
+- Travel Vibes: ${planner?.vibes?.length ? planner.vibes.join(", ") : "Not specified"}
+- Interests: ${planner?.interests?.length ? planner.interests.join(", ") : "Not specified"}
+- Dietary Restrictions: ${planner?.dietary?.length ? planner.dietary.join(", ") : "None"}
+- Transport: ${planner?.transport?.length ? planner.transport.join(", ") : "Not specified"}
+- Budget Level: ${planner?.budget || "Not specified"}
+- Extra notes: ${planner?.notes || "None"}
+${generationContext}${rangeInstruction}
+
+注意：請直接輸出 JSON，不要有任何多餘的解釋文字或 markdown \`\`\` 包裝。`;
+}
+
+/** Parse the raw text from a chunk AI call into a structured object/array. */
+function parseChunkText(text: string, isFirst: boolean): any {
+  if (isFirst) {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("No JSON object in first chunk response");
+    return JSON.parse(match[0]);
+  }
+  // Subsequent chunks: prefer array, fall back to object with itinerary key
+  const arrIdx = text.indexOf("[");
+  const objIdx = text.indexOf("{");
+  if (arrIdx !== -1 && (objIdx === -1 || arrIdx < objIdx)) {
+    const match = text.match(/\[[\s\S]*\]/);
+    if (match) return JSON.parse(match[0]);
+  }
+  const objMatch = text.match(/\{[\s\S]*\}/);
+  if (objMatch) {
+    const obj = JSON.parse(objMatch[0]);
+    return Array.isArray(obj.itinerary) ? obj.itinerary : [obj];
+  }
+  throw new Error("No JSON found in chunk response");
+}
+
+// ─── Main export ─────────────────────────────────────────────────────────────
+
 export async function generateItinerary(body: any) {
   const { destination, planner, aiMode } = body;
   const days = planner?.days || 3;
@@ -21,147 +264,85 @@ export async function generateItinerary(body: any) {
     // Artificial delay for fallback
     await new Promise((r) => setTimeout(r, 2000));
     return [
-      {
-        day: 1,
-        time: "10:00",
-        title: `Arrival at ${destination}`,
-        category: "flight",
-        emoji: "✈️",
-      },
-      {
-        day: 1,
-        time: "12:00",
-        title: "Hotel Check-in",
-        category: "hotel",
-        emoji: "🏨",
-      },
-      {
-        day: 1,
-        time: "13:30",
-        title: "Local Lunch",
-        category: "food",
-        emoji: "🍜",
-      },
-      {
-        day: 1,
-        time: "15:00",
-        title: "City Center Walk",
-        category: "landmark",
-        emoji: "🏯",
-      },
-      {
-        day: 2,
-        time: "09:00",
-        title: "Morning Market",
-        category: "food",
-        emoji: "🍱",
-      },
-      {
-        day: 2,
-        time: "11:00",
-        title: "Main Attraction",
-        category: "landmark",
-        emoji: "📸",
-      },
+      { day: 1, time: "10:00", title: `Arrival at ${destination}`, category: "flight", emoji: "✈️" },
+      { day: 1, time: "12:00", title: "Hotel Check-in", category: "hotel", emoji: "🏨" },
+      { day: 1, time: "13:30", title: "Local Lunch", category: "food", emoji: "🍜" },
+      { day: 1, time: "15:00", title: "City Center Walk", category: "landmark", emoji: "🏯" },
+      { day: 2, time: "09:00", title: "Morning Market", category: "food", emoji: "🍱" },
+      { day: 2, time: "11:00", title: "Main Attraction", category: "landmark", emoji: "📸" },
     ];
   }
 
-  const detailedPrompt = `你是一個精通 UI 參數與旅遊規劃的 AI。請讀取使用者的偏好，並**強制**回傳符合以下 TypeScript 介面的 JSON，不准帶有 markdown 標記：
-\`\`\`typescript
-interface AiResponse {
-  ui_config: {
-    bg_gradient: string; // Tailwind class, 例: "from-amber-100 to-orange-50" (若是帶長輩)
-    font_scale: "normal" | "large"; // 若有長輩，設為 large
-    hero_image_keyword: string; // 用於 Unsplash API 抓圖的關鍵字
-  };
-  summary: {
-    title: string;
-    smart_tags: string[]; // 例: ["步調極慢", "素食友善"]
-  };
-  itinerary: Array<{
-    day: number;
-    spots: Array<{
-      time: string; // 24-hour HH:MM
-      name: string;
-      emoji: string;
-      category: string; // flight, transport, landmark, food, shopping, nature, hotel, activity, nightlife, other
-      intensity: "chill" | "moderate" | "hardcore"; // 體力消耗指標
-      ai_note: string; // 根據使用者偏好的客製化提醒，必須包含營業時間、停車資訊、門票與量化預算價格等細節
-      transport_to_next?: string; // 預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)
-      lat: number; // 緯度(純數字的浮點數，例如 25.0339)，不可遺漏
-      lng: number; // 經度(純數字的浮點數，例如 121.5644)，不可遺漏
-      image_url?: string; // (可選) 若能取得外部真實景點圖片的 url 則填入 (如 Wikimedia 等公開圖庫的圖片網址)
-      linkedFactId?: string; // 如果該行程節點明確對應到 [Travel facts anchors] 中的某個已知項目，請填寫其 ID
-    }>;
-  }>;
-}
-\`\`\`
-【語言與格式要求】
-1. **請一律使用「繁體中文 (Traditional Chinese)」**：無論景點在世界上哪個地方，請將景點名稱（name）、提醒（ai_note）、摘要等全部翻譯或轉寫為繁體中文（專有名詞可加上括號註記外文）。
-2. **嚴格的 JSON 格式**：請務必且只能使用**標準雙引號 \`"\`** 來包覆 JSON 裡的屬性(Key)與字串值(Value)。字串內容若需要用到引號，請直接使用全形引號「」或是單引號，切勿使用會破壞 JSON 解析的不合法引號。
-3. **嚴格的地理一致性 (Geographic Consistency)**：規劃出的所有景點 **必須嚴格位於指定的目的地（${destination}）內**。絕對禁止將其他國家或不相關地區的景點放入行程中（例如：如果目的地是日本，絕對不准放入韓國、泰國等其他國家的景點）。
+  const fallback = [{ day: 1, time: "10:00", title: "系統繁忙: 這是一筆備用資料", category: "other", emoji: "📍" }];
 
-【最新 AI 規劃必備要求】
-1. **韓國地區地圖特例**：如果是前往韓國地區（如首爾、釜山、濟州島等），請務必在交通或行前準備的 \`ai_note\` 中強制提醒使用者下載並使用 **Naver Maps**，因當地 Google Maps 支援度較差。
-2. **營業時間與停車場**：在餐廳或景點的 \`ai_note\` 中，**必須**提供大約的營業時間與停車場資訊（是否有附設停車場或附近好不好停車）。
-3. **門票資訊**：在景點的 \`ai_note\` 中**必須**註明是否需要門票，以及相關票券大約需要的費用。
-4. **包棟住宿選項**：住宿方面，如果人數適合，請主動增加並推薦**包棟民宿/Villa**的選項作為住宿點。
-5. **預算範圍量化**：請務必將所有行程中的預算（包括餐費、交通費、門票、購物等）**量化**，在 \`ai_note\` 中提供具體的當地貨幣或約略台幣預估金額。
+  // ── Decide: single call vs. parallel chunking ──────────────────────────────
+  const useParallel = days > 4;
 
-【內容客製化要求】
-若使用者未提供飲食禁忌，請忽略該限制；若為情侶，請安排浪漫景點。
-根據旅伴類型、節奏偏好與興趣，客製化每日行程安排與景點選擇。如果節奏為「特種兵急行軍」，請增加每日景點數量並緊湊安排；如果是「悠閒漫遊」，請減少景點數量，拉長單一景點停留時間，並在 transport_to_next 中反映出適當的預估交通時間與交通方式。
-請務必完整考慮「食、衣、住、行」四個面向：每日行程必須包含確切的住宿點（hotel）、合適的餐飲安排（food），以及與當地氣候或場合相關的服裝提醒或購物點（例如在 ai_note 中給予穿著建議以滿足「衣」的需求）。
-請極度客製化，發揮創意，**不要給出制式的「抵達與放行李」、「在地必吃美食推薦」、「深度體驗行程」、「經典夜生活」這種通用名稱**，請務必給出真實的當地景點名稱或特色店家名稱，並依據使用者選取的 Travel Vibes 和 Interests 打造有靈魂的旅程。
+  let parsed: any;
 
-Details: 
-- Trip length: ${days} days
-- Destination: ${destination}
-- Departure: ${planner?.departureFrom || "unknown"}
-- Auto flight segments: ${planner?.autoFlightSegments?.join(" | ") || "Not specified"}
-- Travel facts anchors: ${planner?.travelFactsContext || "Not specified"}
-- Spots user likes: ${planner?.mustVisitSpots?.join(", ") || "Not specified"}
-- Companions: ${planner?.companions || "Not specified"}
-- Travel Vibes: ${planner?.vibes?.length ? planner.vibes.join(", ") : "Not specified"}
-- Interests: ${planner?.interests?.length ? planner.interests.join(", ") : "Not specified"}
-- Dietary Restrictions: ${planner?.dietary?.length ? planner.dietary.join(", ") : "None"}
-- Transport: ${planner?.transport?.length ? planner.transport.join(", ") : "Not specified"}
-- Budget Level: ${planner?.budget || "Not specified"}
-- Extra notes: ${planner?.notes || "None"}
-
-注意：請直接輸出 JSON，不要有任何多餘的解釋文字或 markdown \`\`\` 包裝。
-`;
-
-  try {
-    let text = "";
-
-    // We strictly use OpenRouter apiKey per user request "拿掉gemini api 僅用 openrouter api"
-    if (apiKey) {
-      text = await fetchOpenRouterWithFallback(apiKey, detailedPrompt);
+  if (!useParallel) {
+    // ── Single call ──────────────────────────────────────────────────────────
+    const prompt = buildChunkPrompt(destination, days, planner, generationContext, true, 1, days);
+    try {
+      const text = await fetchOpenRouterWithFallback(apiKey, prompt);
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("No JSON object found in output");
+      parsed = JSON.parse(match[0]);
+    } catch (err) {
+      console.error("Failed to generate AI itinerary", err);
+      return fallback;
+    }
+  } else {
+    // ── Parallel Chunking ────────────────────────────────────────────────────
+    // Split days into chunks of CHUNK_SIZE and run all AI calls concurrently.
+    const chunks: Array<[number, number]> = [];
+    for (let i = 0; i < Math.ceil(days / CHUNK_SIZE); i++) {
+      chunks.push([i * CHUNK_SIZE + 1, Math.min((i + 1) * CHUNK_SIZE, days)]);
     }
 
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) {
-      throw new Error("No JSON object found in output");
-    }
+    try {
+      const chunkResults = await Promise.all(
+        chunks.map(([startDay, endDay], idx) => {
+          const isFirst = idx === 0;
+          const prompt = buildChunkPrompt(
+            destination,
+            days,
+            planner,
+            generationContext,
+            isFirst,
+            startDay,
+            endDay
+          );
+          return fetchOpenRouterWithFallback(apiKey!, prompt).then((text) =>
+            parseChunkText(text, isFirst)
+          );
+        })
+      );
 
-    const parsed = JSON.parse(match[0]);
-    if (parsed && typeof parsed === "object") {
-      return parsed; // Return the whole AiResponse
+      // Merge: chunk 0 carries ui_config + summary; remaining chunks are itinerary arrays
+      const [firstChunk, ...restChunks] = chunkResults;
+      const mergedItinerary = [
+        ...(Array.isArray(firstChunk?.itinerary) ? firstChunk.itinerary : []),
+        ...restChunks.flat(),
+      ];
+      parsed = { ...firstChunk, itinerary: mergedItinerary };
+    } catch (err) {
+      console.error("Failed to generate parallel AI itinerary", err);
+      return fallback;
     }
-  } catch (err) {
-    console.error("Failed to generate AI itinerary", err);
   }
 
-  return [
-    {
-      day: 1,
-      time: "10:00",
-      title: `系統繁忙: 這是一筆備用資料`,
-      category: "other",
-      emoji: "📍",
-    },
-  ];
+  // ── Hybrid Enrichment: geocode + wiki + OSRM (AI never touches coords) ─────
+  if (parsed && typeof parsed === "object") {
+    try {
+      parsed = await enrichItinerary(parsed, destination);
+    } catch (err) {
+      console.error("Enrichment failed (returning un-enriched result)", err);
+    }
+    return parsed;
+  }
+
+  return fallback;
 }
 
 /**
@@ -213,7 +394,18 @@ export async function regenerateSpot(params: {
 
     const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
     if (parsed && typeof parsed.title === "string") {
-      return parsed;
+      // Hybrid enrichment: geocode + wiki thumbnail (AI no longer provides coords)
+      const name: string = parsed.title || "";
+      const [coords, thumbnail] = await Promise.all([
+        geocodeByNominatim(name, params.destination),
+        getWikiThumbnail(name),
+      ]);
+      return {
+        ...parsed,
+        lat: coords?.lat ?? parsed.lat,
+        lng: coords?.lng ?? parsed.lng,
+        image_url: parsed.image_url || thumbnail || undefined,
+      };
     }
   } catch (err) {
     console.error("regenerateSpot failed", err);
@@ -267,11 +459,8 @@ ${params.travelFactsContext || "無"}
   "emoji": "對應表情",
   "category": "landmark|food|shopping|nature|hotel|activity|nightlife|transport|other",
   "ai_note": "一句話的貼心提醒，說明為何適合替換。並請務必包含：營業時間、停車資訊、門票資訊、以及預估花費（量化成當地貨幣或台幣）。若為韓國地區請推薦使用 Naver Maps。",
-  "transport_to_next": "預估前往下一個景點的交通時間與方式 (如：搭乘地鐵約 25 分鐘)（可選）",
+  "transport_to_next": "預估前往下一個景點的交通時間與方式，以文字描述即可 (如：搭乘地鐵約 25 分鐘)（可選）",
   "intensity": "chill|balanced|hardcore",
-  "lat": 緯度(純數字的浮點數，例如 25.0339)，不可遺漏,
-  "lng": 經度(純數字的浮點數，例如 121.5644)，不可遺漏,
-  "image_url": "若能取得外部真實景點圖片的 url 則填入 (如 Wikimedia 等的網址，可選)",
   "linkedFactId": "如果這明確綁定到某個 Travel Fact 可選填"
 }
 
