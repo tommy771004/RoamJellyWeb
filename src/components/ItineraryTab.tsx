@@ -4743,6 +4743,10 @@ const ItineraryListItem = React.memo(
                   <img
                     src={item.image_url}
                     alt={item.title}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).onerror = null;
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                    }}
                     className="w-full h-full object-cover rounded-[12px] sm:rounded-[16px] group-hover:scale-105 transition-transform duration-1000 transform-gpu"
                     loading="lazy"
                     decoding="async"

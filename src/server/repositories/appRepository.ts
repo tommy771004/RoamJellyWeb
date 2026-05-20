@@ -447,16 +447,56 @@ export class AppRepository {
     const idHash = (s: string) => [...s].reduce((acc, c) => acc + c.charCodeAt(0), 0);
     const DEST_COVERS: [string, string][] = [
       ['tokyo', 'photo-1542051841857-5f90071e7989'],
-      ['osaka', 'photo-1590484512398-33fb39eff960'],
+      ['東京', 'photo-1542051841857-5f90071e7989'],
+      ['osaka', 'photo-1590253187631-6f9aa4563a57'],
+      ['大阪', 'photo-1590253187631-6f9aa4563a57'],
       ['kyoto', 'photo-1493976040374-85c8e12f0c0e'],
+      ['京都', 'photo-1493976040374-85c8e12f0c0e'],
       ['seoul', 'photo-1538669715315-155098f0fb1d'],
-      ['paris', 'photo-1502602898657-3e91760cbb34'],
-      ['bali',  'photo-1537996194471-e657df975ab4'],
+      ['首爾', 'photo-1538669715315-155098f0fb1d'],
+      ['首尔', 'photo-1538669715315-155098f0fb1d'],
+      ['paris', 'photo-1499856871958-5b9627545d1a'],
+      ['巴黎', 'photo-1499856871958-5b9627545d1a'],
+      ['bali', 'photo-1537996194471-e657df975ab4'],
+      ['峇里島', 'photo-1537996194471-e657df975ab4'],
+      ['巴厘岛', 'photo-1537996194471-e657df975ab4'],
+      ['london', 'photo-1513635269975-59663e0ac1ad'],
+      ['倫敦', 'photo-1513635269975-59663e0ac1ad'],
+      ['伦敦', 'photo-1513635269975-59663e0ac1ad'],
+      ['taipei', 'photo-1503899036084-c55cdd92da26'],
+      ['台北', 'photo-1503899036084-c55cdd92da26'],
+      ['臺北', 'photo-1503899036084-c55cdd92da26'],
+      ['nepal', 'photo-1544735716-392fe2489ffa'],
+      ['尼泊爾', 'photo-1544735716-392fe2489ffa'],
+      ['尼泊尔', 'photo-1544735716-392fe2489ffa'],
+      ['norway', 'photo-1527004013197-933c4bb611b3'],
+      ['挪威', 'photo-1527004013197-933c4bb611b3'],
+      ['switzerland', 'photo-1502784444187-359ac186c5bb'],
+      ['瑞士', 'photo-1502784444187-359ac186c5bb'],
+      ['new york', 'photo-1496442226666-8d4d0e62e6e9'],
+      ['紐約', 'photo-1496442226666-8d4d0e62e6e9'],
+      ['纽约', 'photo-1496442226666-8d4d0e62e6e9'],
+      ['sydney', 'photo-1506973035872-a4ec16b8e8d9'],
+      ['雪梨', 'photo-1506973035872-a4ec16b8e8d9'],
+      ['悉尼', 'photo-1506973035872-a4ec16b8e8d9'],
+      ['singapore', 'photo-1525625293386-3f8f99389edd'],
+      ['新加坡', 'photo-1525625293386-3f8f99389edd'],
+      ['chiang mai', 'photo-1569924709013-f9ee62c737f3'],
+      ['清邁', 'photo-1569924709013-f9ee62c737f3'],
+      ['清迈', 'photo-1569924709013-f9ee62c737f3'],
+      ['busan', 'photo-1571536802807-30f71f28e3f2'],
+      ['釜山', 'photo-1571536802807-30f71f28e3f2'],
+      ['rome', 'photo-1552832230-c0197dd311b5'],
+      ['羅馬', 'photo-1552832230-c0197dd311b5'],
+      ['罗马', 'photo-1552832230-c0197dd311b5'],
+      ['italy', 'photo-1552832230-c0197dd311b5'],
+      ['義大利', 'photo-1552832230-c0197dd311b5'],
+      ['意大利', 'photo-1552832230-c0197dd311b5'],
     ];
     const getCover = (dest: string) => {
       const lower = (dest ?? '').toLowerCase();
       const match = DEST_COVERS.find(([k]) => lower.includes(k));
-      const photoId = match ? match[1] : DEST_COVERS[0][1];
+      const photoId = match ? match[1] : 'photo-1476514525535-07fb3b4ae5f1'; // Beautiful sunset boat scenic photo fallback
       return `https://images.unsplash.com/${photoId}?w=800&auto=format&fit=crop`;
     };
     return rows.map((r: any) => ({

@@ -896,6 +896,11 @@ function DestinationCard({
         <img
           src={meta.image}
           alt={title}
+          onError={(e) => {
+            (e.target as HTMLImageElement).onerror = null;
+            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&auto=format&fit=crop";
+          }}
+          referrerPolicy="no-referrer"
           className="absolute inset-0 h-full w-full object-cover object-[center_24%] transition-transform duration-700 group-hover/dest:scale-[1.04] sm:object-center"
           loading="lazy"
         />
@@ -1012,7 +1017,7 @@ const FEATURED_DESTINATIONS = [
     name: "尼泊爾",
     flag: "🇳🇵",
     image:
-      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&auto=format&fit=crop",
     description:
       "喜馬拉雅山脈的故鄉，擁有世界最高峰聖母峰。融合豐富宗教文化與壯麗高山景觀，是登山健行與靈性旅行的聖地。",
     tags: ["登山", "文化", "冒險"],
@@ -1024,7 +1029,7 @@ const FEATURED_DESTINATIONS = [
     name: "挪威",
     flag: "🇳🇴",
     image:
-      "https://images.unsplash.com/photo-1531365737338-5a6d5e3abe3a?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=600&auto=format&fit=crop",
     description:
       "北歐峽灣之國，壯闊的極光與冰川雕刻的峽灣地貌令人嘆為觀止。特羅姆瑟是追尋極光的最佳基地，峽灣巡遊更是一生必訪體驗。",
     tags: ["極光", "峽灣", "自然"],
@@ -1036,7 +1041,7 @@ const FEATURED_DESTINATIONS = [
     name: "瑞士",
     flag: "🇨🇭",
     image:
-      "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?w=600&auto=format&fit=crop",
     description:
       "歐洲心臟，由 26 個州組成。阿爾卑斯山脈、瑞士高原與侏羅山構成壯麗地貌，精緻鐘錶工藝與多語言文化造就獨特魅力。",
     tags: ["阿爾卑斯", "精品", "自然"],
@@ -2551,7 +2556,6 @@ export default function HomeTab({
                           controlsVisibilityClass="flex"
                         >
                           {demoTemplates.map((handbook, index) => {
-                            const decor = HANDBOOK_CARD_DECOR[index % HANDBOOK_CARD_DECOR.length];
                             return (
                               <div
                                 key={handbook.id}
@@ -2559,65 +2563,60 @@ export default function HomeTab({
                                   triggerHapticFeedback([16]);
                                   setActiveHandbook(handbook);
                                 }}
-                                className={`group/demo w-[320px] xs:w-[350px] sm:w-[410px] shrink-0 overflow-hidden rounded-[26px] flex flex-row items-stretch cursor-pointer border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-all active:scale-[0.99] ${cardSurfaceClass}`}
+                                className="relative overflow-hidden w-[320px] xs:w-[350px] sm:w-[410px] h-[255px] sm:h-[275px] shrink-0 rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo active:scale-[0.99]"
                               >
-                                {/* Left Column: City Photo with IATA Code and safety info */}
-                                <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
+                                {/* Absolute Background Image */}
+                                <div className="absolute inset-0 z-0">
                                   <img
                                     src={handbook.image}
                                     alt={handbook.title}
                                     loading="lazy"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).onerror = null;
+                                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                    }}
                                     referrerPolicy="no-referrer"
-                                    className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-110"
+                                    className="h-full w-full object-cover transition-transform duration-750 group-hover/demo:scale-105"
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-950/10 to-slate-950/40" />
-                                  <div className="absolute left-2 top-2 flex flex-col gap-1">
-                                    <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
-                                      {getIataCode(handbook.title)}
-                                    </span>
-                                    <span className="rounded-md bg-emerald-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                                      💚 暢遊推薦
-                                    </span>
+                                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/65 to-slate-950/25" />
+                                </div>
+
+                                {/* Top Overlays */}
+                                <div className="relative z-10 p-4 pb-0 flex items-start justify-between">
+                                  <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-white">
+                                    <Sparkles size={11} strokeWidth={2.6} className="text-purple-300" />
+                                    精選行程
                                   </div>
-                                  <div className="absolute bottom-2 left-2 flex flex-col items-start leading-none gap-0.5">
-                                    <span className="rounded-md bg-slate-950/45 px-1.5 py-0.5 text-[8.5px] font-black tracking-wider text-pink-300 font-sans uppercase">
-                                      {handbook.days} Days
+                                  
+                                  <div className="flex flex-col items-end gap-1">
+                                    <div className="flex gap-1">
+                                      <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
+                                        {getIataCode(handbook.title)}
+                                      </span>
+                                      <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-sans">
+                                        {handbook.days} Days
+                                      </span>
+                                    </div>
+                                    <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                                      💚 暢遊推薦
                                     </span>
                                   </div>
                                 </div>
 
-                                {/* Right Column: Details & CTA Buttons */}
-                                <div className={`p-3 flex-1 flex flex-col justify-between gap-2 text-left relative overflow-hidden ${decor.body}`}>
-                                  <div className={`absolute -right-8 top-0 size-16 rounded-full blur-xl opacity-40 ${decor.glow}`} />
-                                  
-                                  <div>
-                                    <div className="mb-1 w-fit inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/90 px-2 py-0.5 text-[8.5px] font-black uppercase tracking-[0.14em] text-slate-700 shadow-xs">
-                                      <Sparkles size={10} strokeWidth={2.6} />
-                                      精選行程
-                                    </div>
-                                    
-                                    <h4 className="text-[13px] xs:text-[13.5px] font-black text-slate-850 dark:text-white leading-snug line-clamp-2">
-                                      {handbook.title}
-                                    </h4>
-                                    
-                                    <p className="text-[10px] xs:text-[10.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                                      {handbook.title.includes("東京") 
-                                        ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
-                                        : handbook.title.includes("大阪")
-                                        ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
-                                        : "免等待免登入！專專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
-                                    </p>
-                                  </div>
+                                {/* Bottom Overlays */}
+                                <div className="relative z-10 p-5 pt-2 text-left text-white">
+                                  <h3 className="text-[14.5px] xs:text-[15.5px] font-black tracking-tight drop-shadow-md text-white mb-1.5 leading-snug line-clamp-2">
+                                    {handbook.title}
+                                  </h3>
+                                  <p className="text-[11px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mb-3 line-clamp-2">
+                                    {handbook.title.includes("東京") 
+                                      ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
+                                      : handbook.title.includes("大阪")
+                                      ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
+                                      : "免等待免登入！專專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
+                                  </p>
 
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {handbook.tags.slice(0, 2).map((tag) => (
-                                      <span key={tag} className="text-[8.5px] font-black text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/30 px-1.5 py-0.5 rounded">
-                                        #{tag}
-                                      </span>
-                                    ))}
-                                  </div>
-
-                                  <div className="flex gap-1.5 border-t border-slate-100 dark:border-white/5 pt-1.5 mt-1.5">
+                                  <div className="flex gap-2 border-t border-white/10 pt-3">
                                     <button
                                       type="button"
                                       onClick={(e) => {
@@ -2625,9 +2624,9 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         handleCopyExpertItinerary(e, handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full text-[9.5px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 active:scale-[0.95] text-white shadow-xs"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md active:scale-[0.97]"
                                     >
-                                      <Copy size={10} />
+                                      <Copy size={11} />
                                       複製行程
                                     </button>
                                     <button
@@ -2637,9 +2636,9 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         setActiveHandbook(handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full text-[9.5px] font-black border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.95] transition-all dark:border-white/10 dark:text-slate-300 dark:bg-white/5"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 active:scale-[0.97] transition-all"
                                     >
-                                      <Eye size={10} />
+                                      <Eye size={11} />
                                       預覽行程
                                     </button>
                                   </div>
@@ -2649,8 +2648,7 @@ export default function HomeTab({
                           })}
                         </HorizontalScrollRail>
                         <div className="hidden gap-3 md:grid md:grid-cols-3">
-                          {demoTemplates.map((handbook, index) => {
-                            const decor = HANDBOOK_CARD_DECOR[index % HANDBOOK_CARD_DECOR.length];
+                          {demoTemplates.map((handbook) => {
                             return (
                               <div
                                 key={handbook.id}
@@ -2658,65 +2656,60 @@ export default function HomeTab({
                                   triggerHapticFeedback([16]);
                                   setActiveHandbook(handbook);
                                 }}
-                                className={`group/demo w-full overflow-hidden rounded-[26px] flex flex-row items-stretch cursor-pointer border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-all active:scale-[0.99] ${cardSurfaceClass}`}
+                                className="relative overflow-hidden w-full h-[255px] sm:h-[275px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo active:scale-[0.99]"
                               >
-                                {/* Left Column: City Photo with IATA Code and safety info */}
-                                <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
+                                {/* Absolute Background Image */}
+                                <div className="absolute inset-0 z-0">
                                   <img
                                     src={handbook.image}
                                     alt={handbook.title}
                                     loading="lazy"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).onerror = null;
+                                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                    }}
                                     referrerPolicy="no-referrer"
-                                    className="h-full w-full object-cover transition-transform duration-700 group-hover/demo:scale-110"
+                                    className="h-full w-full object-cover transition-transform duration-750 group-hover/demo:scale-105"
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-950/10 to-slate-950/40" />
-                                  <div className="absolute left-2 top-2 flex flex-col gap-1">
-                                    <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
-                                      {getIataCode(handbook.title)}
-                                    </span>
-                                    <span className="rounded-md bg-emerald-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                                      💚 暢遊推薦
-                                    </span>
+                                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/65 to-slate-950/25" />
+                                </div>
+
+                                {/* Top Overlays */}
+                                <div className="relative z-10 p-4 pb-0 flex items-start justify-between">
+                                  <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-white">
+                                    <Sparkles size={11} strokeWidth={2.6} className="text-purple-300" />
+                                    精選行程
                                   </div>
-                                  <div className="absolute bottom-2 left-2 flex flex-col items-start leading-none gap-0.5">
-                                    <span className="rounded-md bg-slate-950/45 px-1.5 py-0.5 text-[8.5px] font-black tracking-wider text-pink-300 font-sans uppercase">
-                                      {handbook.days} Days
+                                  
+                                  <div className="flex flex-col items-end gap-1">
+                                    <div className="flex gap-1">
+                                      <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
+                                        {getIataCode(handbook.title)}
+                                      </span>
+                                      <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-sans">
+                                        {handbook.days} Days
+                                      </span>
+                                    </div>
+                                    <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                                      💚 暢遊推薦
                                     </span>
                                   </div>
                                 </div>
 
-                                {/* Right Column: Details & CTA Buttons */}
-                                <div className={`p-3 flex-1 flex flex-col justify-between gap-2 text-left relative overflow-hidden ${decor.body}`}>
-                                  <div className={`absolute -right-8 top-0 size-16 rounded-full blur-xl opacity-40 ${decor.glow}`} />
-                                  
-                                  <div>
-                                    <div className="mb-1 w-fit inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/90 px-2 py-0.5 text-[8.5px] font-black uppercase tracking-[0.14em] text-slate-700 shadow-xs">
-                                      <Sparkles size={10} strokeWidth={2.6} />
-                                      精選行程
-                                    </div>
-                                    
-                                    <h4 className="text-[13px] xs:text-[13.5px] font-black text-slate-850 dark:text-white leading-snug line-clamp-2">
-                                      {handbook.title}
-                                    </h4>
-                                    
-                                    <p className="text-[10px] xs:text-[10.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                                      {handbook.title.includes("東京") 
-                                        ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
-                                        : handbook.title.includes("大阪")
-                                        ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
-                                        : "免等待免登入！專專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
-                                    </p>
-                                  </div>
+                                {/* Bottom Overlays */}
+                                <div className="relative z-10 p-5 pt-2 text-left text-white">
+                                  <h3 className="text-[14.5px] xs:text-[15.5px] font-black tracking-tight drop-shadow-md text-white mb-1.5 leading-snug line-clamp-2">
+                                    {handbook.title}
+                                  </h3>
+                                  <p className="text-[11px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mb-3">
+                                    {handbook.title.includes("東京") 
+                                      ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
+                                      : handbook.title.includes("大阪")
+                                      ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
+                                      : "免等待免登入！專專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
+                                  </p>
 
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {handbook.tags.slice(0, 2).map((tag) => (
-                                      <span key={tag} className="text-[8.5px] font-black text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/30 px-1.5 py-0.5 rounded">
-                                        #{tag}
-                                      </span>
-                                    ))}
-                                  </div>
-
-                                  <div className="flex gap-1.5 border-t border-slate-100 dark:border-white/5 pt-1.5 mt-1.5">
+                                  <div className="flex gap-2 border-t border-white/10 pt-3">
                                     <button
                                       type="button"
                                       onClick={(e) => {
@@ -2724,9 +2717,9 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         handleCopyExpertItinerary(e, handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full text-[9.5px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 active:scale-[0.95] text-white shadow-xs"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md active:scale-[0.97]"
                                     >
-                                      <Copy size={10} />
+                                      <Copy size={11} />
                                       複製行程
                                     </button>
                                     <button
@@ -2736,9 +2729,9 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         setActiveHandbook(handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full text-[9.5px] font-black border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.95] transition-all dark:border-white/10 dark:text-slate-300 dark:bg-white/5"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 active:scale-[0.97] transition-all"
                                     >
-                                      <Eye size={10} />
+                                      <Eye size={11} />
                                       預覽行程
                                     </button>
                                   </div>
@@ -2818,65 +2811,74 @@ export default function HomeTab({
                   {communityTrips.map((trip) => (
                     <motion.div
                       key={trip.id}
-                      className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] group/trip"
+                      className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/trip"
                     >
-                      <GlassCard
-                        className={`!p-0 overflow-hidden h-full rounded-[30px] flex flex-row items-stretch ${cardSurfaceClass}`}
+                      <div
+                        className="relative overflow-hidden h-[235px] sm:h-[260px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all p-5 text-white"
                       >
-                        {/* Cover image (Left column) */}
-                        <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
+                        {/* Cover Image as entire Card Background */}
+                        <div className="absolute inset-0 z-0">
                           <img
                             src={trip.cover}
                             alt={trip.title}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).onerror = null;
+                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                            }}
                             loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-700 group-hover/trip:scale-110"
+                            className="h-full w-full object-cover transition-transform duration-750 group-hover/trip:scale-105"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
-                          <div className="absolute left-2 top-2 flex flex-col gap-1">
-                            <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
-                              {getIataCode(trip.destination)}
-                            </span>
-                            <span className="rounded-md bg-sky-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                              {getSafetyStatus(trip.destination)}
-                            </span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/65 to-slate-950/25" />
+                        </div>
+
+                        {/* Top Overlay */}
+                        <div className="relative z-10 flex items-start justify-between">
+                          <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white">
+                            <Sparkles size={11} strokeWidth={2.6} className="text-yellow-300" />
+                            旅伴明信片
                           </div>
-                          <div className="absolute bottom-2 left-2 text-white pr-1">
-                            <span className="text-[10px] font-black tracking-wider uppercase opacity-85">
-                              by {trip.author || "Anonymous"}
+                          
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex gap-1">
+                              <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
+                                {getIataCode(trip.destination)}
+                              </span>
+                              <span className="rounded-md bg-slate-950/50 text-sky-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
+                                #{trip.destination || "台北"}
+                              </span>
+                            </div>
+                            <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                              💚 {getSafetyStatus(trip.destination)}
                             </span>
                           </div>
                         </div>
 
-                        {/* Card body (Right column) */}
-                        <div className="p-3.5 flex-1 flex flex-col justify-between gap-2.5 text-left">
-                          <div>
-                            <div className="mb-1.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
-                              <Sparkles size={11} strokeWidth={2.6} />
-                              旅伴明信片
-                            </div>
-                            <h3 className="text-[14px] xs:text-[15px] font-black text-slate-800 dark:text-white leading-snug line-clamp-2">
-                              {trip.title}
-                            </h3>
-                            <p className="text-[11px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 mt-1">
-                              先把別人的自駕/地鐵行程當成明信片，喜歡再帶走！已被複製 {trip.forkCount ?? trip.likes ?? 0} 次。
-                            </p>
-                          </div>
+                        {/* Bottom Overlay Info & CTA */}
+                        <div className="relative z-10 text-left pt-3">
+                          <span className="text-[10px] font-black tracking-wider uppercase opacity-80 block mb-1">
+                            by {trip.author || "Anonymous"}
+                          </span>
+                          
+                          <h3 className="text-[14.5px] sm:text-[15.5px] font-black tracking-tight drop-shadow-md text-white border-none leading-snug line-clamp-2">
+                            {trip.title}
+                          </h3>
+                          
+                          <p className="text-[11px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-2">
+                            先把別人的自駕/地鐵行程當成明信片，喜歡再帶走！已被複製 {trip.forkCount ?? trip.likes ?? 0} 次。
+                          </p>
 
-                          <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2 mt-auto">
+                          <div className="flex gap-2 border-t border-white/10 pt-3.5 mt-3">
                             <button
                               type="button"
                               onClick={(event) => handleCloneTrip(event, trip)}
-                              className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white shadow-md shadow-pink-500/10 active:scale-[0.97]"
+                              className="w-full flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white shadow-md active:scale-[0.97]"
                             >
                               <Copy size={11} />
-                              複製草稿
+                              複製此行程並 remarK
                             </button>
-                            <span className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-slate-200 text-slate-500 bg-slate-50/50 dark:border-white/10 dark:text-slate-400 dark:bg-white/5 font-mono">
-                              #{trip.destination || "台北"}
-                            </span>
                           </div>
                         </div>
-                      </GlassCard>
+                      </div>
                     </motion.div>
                   ))}
               </HorizontalScrollRail>
@@ -2901,59 +2903,65 @@ export default function HomeTab({
               label="精選目的地指南"
               viewportClassName="w-full pb-6 -mx-6 px-6"
             >
-                {FEATURED_DESTINATIONS.map((dest, index) => {
-                  const decor = FEATURED_CARD_DECOR[index % FEATURED_CARD_DECOR.length];
+                {FEATURED_DESTINATIONS.map((dest) => {
                   return (
                   <motion.div
                     key={dest.id}
-                    className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] group/dest"
+                    className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/dest"
                   >
-                    <GlassCard
-                      className={`!p-0 overflow-hidden h-full rounded-[30px] flex flex-row items-stretch ${cardSurfaceClass}`}
+                    <div
+                      className="relative overflow-hidden h-[235px] sm:h-[260px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all p-5 text-white"
                     >
-                      {/* Left Column (Image & Status / IATA details) */}
-                      <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
+                      {/* Full cover background image */}
+                      <div className="absolute inset-0 z-0">
                         <img
                           src={dest.image}
                           alt={dest.name}
                           loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover/dest:scale-110"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).onerror = null;
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                          }}
+                          referrerPolicy="no-referrer"
+                          className="h-full w-full object-cover transition-transform duration-750 group-hover/dest:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
-                        <div className="absolute left-2 top-2 flex flex-col gap-1">
-                          <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
-                            {getIataCode(dest.name)}
-                          </span>
-                          <span className="rounded-md bg-emerald-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                            {getSafetyStatus(dest.name)}
-                          </span>
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/65 to-slate-950/25" />
+                      </div>
+
+                      {/* Top Overlay details */}
+                      <div className="relative z-10 flex items-start justify-between">
+                        <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white">
+                          <Sparkles size={11} strokeWidth={2.6} className="text-emerald-300" />
+                          精選指南
                         </div>
-                        <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1 drop-shadow-md">
-                          <span className="text-2xl">{dest.flag}</span>
-                          <span className="text-white font-extrabold text-[13px]">{dest.name}</span>
+                        
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex gap-1">
+                            <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
+                              {getIataCode(dest.name)}
+                            </span>
+                            <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
+                              #{dest.tags[0] || "漫遊"}
+                            </span>
+                          </div>
+                          <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                            💚 {getSafetyStatus(dest.name)}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Right Column (Info and capsule action buttons) */}
-                      <div className={`p-3.5 flex-1 flex flex-col justify-between gap-2 text-left relative overflow-hidden ${decor.body}`}>
-                        <div className={`absolute -right-8 -top-8 size-20 rounded-full blur-2xl opacity-60 ${decor.glow}`} />
-                        
-                        <div>
-                          <div className="mb-1.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
-                            <Sparkles size={11} strokeWidth={2.6} />
-                            精選指南
-                          </div>
-                          
-                          <h4 className="text-[14px] xs:text-[15px] font-black text-slate-800 dark:text-white leading-snug">
-                            {dest.name} 旅遊攻略手冊
-                          </h4>
-                          
-                          <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 mt-1 line-clamp-3">
-                            {dest.description}
-                          </p>
+                      {/* Bottom Overlay content & action */}
+                      <div className="relative z-10 text-left pt-3">
+                        <div className="flex items-center gap-1.5 drop-shadow-md mb-1">
+                          <span className="text-2xl leading-none">{dest.flag}</span>
+                          <span className="text-white font-black text-[15px] sm:text-[16px] leading-none">{dest.name} 旅遊攻略手冊</span>
                         </div>
+                        
+                        <p className="text-[11px] sm:text-[11.5px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-2">
+                          {dest.description}
+                        </p>
 
-                        <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2 mt-auto">
+                        <div className="flex gap-2 border-t border-white/10 pt-3.5 mt-3">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -2961,17 +2969,14 @@ export default function HomeTab({
                               const g = getCountryGuide(dest.id);
                               if (g) setActiveGuide(g);
                             }}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-md shadow-emerald-500/10 active:scale-[0.97]"
+                            className="w-full flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-md active:scale-[0.97]"
                           >
                             <ExternalLink size={11} />
-                            完整攻略
+                            閱讀完整攻略與指南
                           </button>
-                          <span className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-slate-200 text-slate-500 bg-slate-50/50 dark:border-white/10 dark:text-slate-400 dark:bg-white/5 uppercase tracking-wider font-mono">
-                            #{dest.tags[0] || "漫遊"}
-                          </span>
                         </div>
                       </div>
-                    </GlassCard>
+                    </div>
                   </motion.div>
                   );
                 })}
@@ -2991,85 +2996,93 @@ export default function HomeTab({
               label="熱門達人行程"
               viewportClassName="w-full pb-6 -mx-6 px-6"
             >
-                {EXPERT_HANDBOOKS.map((handbook, index) => {
-                  const decor = HANDBOOK_CARD_DECOR[index % HANDBOOK_CARD_DECOR.length];
+                {EXPERT_HANDBOOKS.map((handbook) => {
                   return (
                   <motion.div
                     key={handbook.id}
-                    className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] group/handbook"
+                    className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/handbook"
                   >
-                    <GlassCard
+                    <div
                       onClick={() => setActiveHandbook(handbook)}
-                      className={`!p-0 overflow-hidden h-full rounded-[30px] flex flex-row items-stretch cursor-pointer ${cardSurfaceClass}`}
+                      className="relative overflow-hidden h-[235px] sm:h-[260px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all p-5 text-white"
                     >
-                      {/* Left Column */}
-                      <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans border-r border-slate-100 dark:border-white/5">
+                      {/* Full cover background image */}
+                      <div className="absolute inset-0 z-0">
                         <img
                           src={handbook.image}
                           alt={handbook.title}
                           loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover/handbook:scale-110"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).onerror = null;
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                          }}
+                          referrerPolicy="no-referrer"
+                          className="h-full w-full object-cover transition-transform duration-750 group-hover/handbook:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
-                        <div className="absolute left-2 top-2 flex flex-col gap-1">
-                          <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
-                            {getIataCode(handbook.title)}
-                          </span>
-                          <span className="rounded-md bg-fuchsia-500/80 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                            💚 暢遊推薦
-                          </span>
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/65 to-slate-950/25" />
+                      </div>
+
+                      {/* Top Overlay details */}
+                      <div className="relative z-10 flex items-start justify-between">
+                        <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white">
+                          <Sparkles size={11} strokeWidth={2.6} className="text-fuchsia-300" />
+                          達人行程
                         </div>
-                        <div className="absolute bottom-2.5 left-2.5 flex flex-col items-start leading-none gap-0.5">
-                          <span className="rounded-md bg-slate-950/45 px-1.5 py-0.5 text-[8.5px] font-black tracking-wider text-pink-300 font-sans uppercase">
-                            {handbook.days} Days
+                        
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex gap-1">
+                            <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
+                              {getIataCode(handbook.title)}
+                            </span>
+                            <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
+                              {handbook.days} Days
+                            </span>
+                          </div>
+                          <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                            💚 暢遊推薦
                           </span>
                         </div>
                       </div>
 
-                      {/* Right Column */}
-                      <div className={`p-3.5 flex-1 flex flex-col justify-between gap-2.5 text-left relative overflow-hidden ${decor.body}`}>
-                        <div className={`absolute -right-8 top-0 size-20 rounded-full blur-2xl opacity-60 ${decor.glow}`} />
+                      {/* Bottom Overlay content & action */}
+                      <div className="relative z-10 text-left pt-3">
+                        <span className="text-[10px] font-black tracking-wider uppercase opacity-80 block mb-1">
+                          by {handbook.author}
+                        </span>
                         
-                        <div>
-                          <div className="mb-1.5 w-fit inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
-                            <Sparkles size={11} strokeWidth={2.6} />
-                            達人行程
-                          </div>
-                          
-                          <h4 className="text-[14px] xs:text-[15px] font-black text-slate-800 dark:text-white leading-snug line-clamp-2">
-                            {handbook.title}
-                          </h4>
-                          <p className="text-[11px] font-extrabold text-slate-400 dark:text-slate-500 mb-1">
-                            by {handbook.author}
-                          </p>
-                          
-                          <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400">
-                            最具含金量的行程路線！包含：{handbook.tags.slice(0, 2).map((t) => `#${t}`).join(" ")}，一鍵複製即刻出發。
-                          </p>
-                        </div>
+                        <h3 className="text-[14.5px] sm:text-[15.5px] font-black tracking-tight drop-shadow-md text-white border-none leading-snug line-clamp-2">
+                          {handbook.title}
+                        </h3>
+                        
+                        <p className="text-[11px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-2">
+                          最具含金量的行程路線！包含：{handbook.tags.slice(0, 2).map((t) => `#${t}`).join(" ")}，一鍵複製即刻出發。
+                        </p>
 
-                        <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2 mt-auto">
+                        <div className="flex gap-2 border-t border-white/10 pt-3.5 mt-3">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCopyExpertItinerary(e, handbook);
                             }}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md shadow-purple-500/10 active:scale-[0.97]"
+                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md active:scale-[0.97]"
                           >
                             <Copy size={11} />
-                            複製行程
+                            複製此達人行程
                           </button>
                           <button
                             type="button"
-                            onClick={() => setActiveHandbook(handbook)}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:bg-white/5"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveHandbook(handbook);
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 active:scale-[0.97] transition-all"
                           >
                             預覽行程
                           </button>
                         </div>
                       </div>
-                    </GlassCard>
+                    </div>
                   </motion.div>
                   );
                 })}
@@ -3110,7 +3123,16 @@ export default function HomeTab({
                   return (
                     <div key={dest.name} className="flex flex-row items-stretch w-[290px] xs:w-[325px] sm:w-[365px] shrink-0 rounded-[22px] border border-slate-100 dark:border-white/5 bg-slate-50/42 dark:bg-slate-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all">
                       <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans">
-                        <img src={dest.image} alt={dest.name} className="h-full w-full object-cover" />
+                        <img
+                          src={dest.image}
+                          alt={dest.name}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).onerror = null;
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                          }}
+                          referrerPolicy="no-referrer"
+                          className="h-full w-full object-cover"
+                        />
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
                         <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5 flex-wrap">
                           <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
@@ -3336,6 +3358,11 @@ export default function HomeTab({
                     flyingCard.handbook.image || flyingCard.handbook.coverImage
                   }
                   alt={flyingCard.handbook.title || "達人行程預覽"}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).onerror = null;
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                  }}
+                  referrerPolicy="no-referrer"
                   className="w-full h-2/3 object-cover"
                 />
                 <div className="p-4 flex-1 bg-white">

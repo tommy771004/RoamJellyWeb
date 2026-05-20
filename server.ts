@@ -1711,20 +1711,29 @@ async function startServer() {
   app.get('/api/spots/enrich', async (req, res) => {
     const name = String(req.query.name ?? '').trim();
     if (!name) { res.json({}); return; }
-    try {
-      const wikiRes = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`
-      );
-      if (wikiRes.ok) {
-        const data: any = await wikiRes.json();
-        res.json({
-          description: data.extract ? String(data.extract).slice(0, 220) : null,
-          wiki_url: data.content_urls?.desktop?.page ?? null,
-          thumbnail: data.thumbnail?.source ?? null,
-        });
-        return;
-      }
-    } catch { /* fall through */ }
+    
+    // Check if the query contains Chinese characters to prioritize Traditional/Simplified Chinese Wikipedia
+    const containsChinese = /[\u4e00-\u9fa5]/.test(name);
+    const wikis = containsChinese ? ['zh', 'en'] : ['en', 'zh'];
+
+    for (const lang of wikis) {
+      try {
+        const wikiRes = await fetch(
+          `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`
+        );
+        if (wikiRes.ok) {
+          const data: any = await wikiRes.json();
+          if (data.thumbnail?.source || data.extract) {
+            res.json({
+              description: data.extract ? String(data.extract).slice(0, 220) : null,
+              wiki_url: data.content_urls?.desktop?.page ?? null,
+              thumbnail: data.thumbnail?.source ?? null,
+            });
+            return;
+          }
+        }
+      } catch { /* try next language on failure */ }
+    }
     res.json({});
   });
 

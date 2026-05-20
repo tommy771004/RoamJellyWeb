@@ -23,7 +23,7 @@ export default function HorizontalScrollRail({
   className,
   viewportClassName,
   contentClassName,
-  controlsVisibilityClass = "hidden md:flex",
+  controlsVisibilityClass = "flex",
   buttonClassName,
 }: HorizontalScrollRailProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -71,11 +71,12 @@ export default function HorizontalScrollRail({
   };
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative group/rail", className)}>
       <div
         className={cn(
-          "pointer-events-none absolute inset-y-0 left-0 z-10 items-center",
+          "pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center transition-all duration-500 pl-4 bg-gradient-to-r from-white/40 via-white/5 to-transparent dark:from-slate-950/40 dark:via-slate-950/5",
           controlsVisibilityClass,
+          !canScrollLeft && "opacity-15"
         )}
       >
         <button
@@ -84,11 +85,11 @@ export default function HorizontalScrollRail({
           disabled={!canScrollLeft}
           onClick={() => scrollByDirection("left")}
           className={cn(
-            "pointer-events-auto ml-1 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/90 bg-white/92 text-slate-500 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:text-sky-700 disabled:pointer-events-none disabled:opacity-35",
+            "pointer-events-auto inline-flex h-[50px] w-[50px] items-center justify-center rounded-full border border-white/50 dark:border-white/20 bg-white/40 dark:bg-slate-950/40 text-slate-800 dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.15)] backdrop-blur-lg transition-all hover:bg-white/75 dark:hover:bg-slate-950/75 hover:scale-110 hover:shadow-lg active:scale-95 disabled:pointer-events-none disabled:opacity-30 duration-300",
             buttonClassName,
           )}
         >
-          <ChevronLeft size={18} strokeWidth={2.8} />
+          <ChevronLeft size={22} strokeWidth={2.75} />
         </button>
       </div>
 
@@ -106,8 +107,9 @@ export default function HorizontalScrollRail({
 
       <div
         className={cn(
-          "pointer-events-none absolute inset-y-0 right-0 z-10 items-center",
+          "pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center transition-all duration-500 pr-4 bg-gradient-to-l from-white/40 via-white/5 to-transparent dark:from-slate-950/40 dark:via-slate-950/5",
           controlsVisibilityClass,
+          !canScrollRight && "opacity-15"
         )}
       >
         <button
@@ -116,11 +118,11 @@ export default function HorizontalScrollRail({
           disabled={!canScrollRight}
           onClick={() => scrollByDirection("right")}
           className={cn(
-            "pointer-events-auto mr-1 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/90 bg-white/92 text-slate-500 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:text-sky-700 disabled:pointer-events-none disabled:opacity-35",
+            "pointer-events-auto inline-flex h-[50px] w-[50px] items-center justify-center rounded-full border border-white/50 dark:border-white/20 bg-white/40 dark:bg-slate-950/40 text-slate-800 dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.15)] backdrop-blur-lg transition-all hover:bg-white/75 dark:hover:bg-slate-950/75 hover:scale-110 hover:shadow-lg active:scale-95 disabled:pointer-events-none disabled:opacity-30 duration-300",
             buttonClassName,
           )}
         >
-          <ChevronRight size={18} strokeWidth={2.8} />
+          <ChevronRight size={22} strokeWidth={2.75} />
         </button>
       </div>
     </div>
