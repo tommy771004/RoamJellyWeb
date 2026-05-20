@@ -891,8 +891,8 @@ export default function App() {
             animate="center"
             exit="exit"
             transition={prefersReducedMotion ? { duration: 0.16 } : SPRING_SMOOTH}
-            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-            className="pt-[calc(56px+env(safe-area-inset-top,0px))] sm:pt-[calc(80px+env(safe-area-inset-top,0px))] pb-0"
+            style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
+            className="w-full pt-[calc(56px+env(safe-area-inset-top,0px))] sm:pt-[calc(80px+env(safe-area-inset-top,0px))] pb-0"
           >
             <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80"><PlaneTakeoff size={22} className="text-pink-500 animate-spin" strokeWidth={2.5} /></div></div>}>
               {renderContent()}

@@ -26,6 +26,8 @@ import {
   CheckSquare,
   Share2,
   Eye,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
@@ -523,7 +525,7 @@ function FlightTable({
             role="button"
             tabIndex={0}
             aria-label={`查看 ${providerName} 航班 ${flight.details?.depCode || ""} → ${flight.details?.arrCode || ""} ${flight.currency} ${flight.price}`}
-            className="glass-card dark:bg-slate-800 rounded-[32px] sm:rounded-[36px] overflow-hidden cursor-pointer transition-shadow duration-200"
+            className="group relative bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden cursor-pointer shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_32px_-8px_rgba(15,23,42,0.12)] hover:border-sky-300 dark:hover:border-sky-700 transition-all duration-300"
             onClick={() => onPress(flight)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -532,127 +534,168 @@ function FlightTable({
               }
             }}
           >
-            <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3.5 text-left">
-              {/* Left: Airline + Route */}
-              <div className="flex-1 flex flex-col gap-3">
-                {/* Airline header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+            <div className="p-4 flex flex-col md:flex-row md:items-stretch gap-4 md:gap-6 text-left">
+              {/* Left: Leg List (Outbound + Optional Return) */}
+              <div className="flex-1 flex flex-col justify-center gap-3 md:gap-4">
+                
+                {/* Outbound */}
+                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
+                  {/* Airline header (Leftmost on desktop) */}
+                  <div className="flex items-center gap-2 md:w-[140px] shrink-0">
                     <AirlineLogo
                       providerName={providerName}
-                      className="w-6 h-6 rounded-md text-xs"
+                      className="w-7 h-7 rounded-sm text-xs shadow-sm"
                     />
-                    <span className="text-sm font-semibold text-slate-800 dark:text-white">
-                      {providerName}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-[11px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${
-                      flight.details?.stops === 0
-                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
-                    }`}
-                  >
-                    {flight.details?.stops === 0
-                      ? "直飛"
-                      : `${flight.details?.stops} 轉`}
-                  </span>
-                </div>
-
-                {/* Route times */}
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex flex-col items-start text-left">
-                    <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {flight.details?.departure || "--:--"}
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-300 font-bold tracking-[0.18em] mt-0.5">
-                      {(flight.details?.depCode || "TPE")
-                        .toUpperCase()
-                        .substring(0, 3)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center justify-center flex-1 px-4 sm:px-8">
-                    <span className="text-[11px] text-slate-500 dark:text-slate-300 font-medium mb-1">
-                      {flight.details?.duration || "3h 15m"}
-                    </span>
-                    <div className="w-full relative flex items-center justify-center h-[2px] bg-slate-200 dark:bg-slate-600 rounded-full">
-                      <div className="absolute right-0 w-2 h-2 rounded-full border border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-700 translate-x-1" />
+                    <div className="flex flex-col">
+                      <span className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight">
+                        {providerName}
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {flight.details?.flightNumber || "經濟艙"}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end text-right">
-                    <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {flight.details?.arrival || "--:--"}
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-300 font-bold tracking-[0.18em] mt-0.5">
-                      {(flight.details?.arrCode || "TYO")
-                        .toUpperCase()
-                        .substring(0, 3)}
-                    </span>
+
+                  {/* Timeline Route */}
+                  <div className="flex-1 flex items-center justify-between px-1 md:px-0">
+                    {/* Dep */}
+                    <div className="flex flex-col items-start w-[60px]">
+                      <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                        {flight.details?.departure || "00:00"}
+                      </span>
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">
+                        {(flight.details?.depCode || "TPE").toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Arrow/Line */}
+                    <div className="flex flex-col items-center flex-1 px-4">
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500 font-bold mb-1.5">
+                        {flight.details?.duration || "3h 15m"}
+                      </span>
+                      <div className="w-full relative flex items-center justify-center">
+                        <div className="w-full h-[2px] bg-slate-200 dark:bg-slate-700 rounded-full" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center px-2 bg-white dark:bg-slate-800">
+                          <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-sm ${
+                            flight.details?.stops === 0
+                              ? "text-emerald-500 border border-emerald-100 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-900/30"
+                              : "text-slate-500 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                          }`}>
+                            {flight.details?.stops === 0 ? "直飛" : `${flight.details?.stops}轉`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Arr */}
+                    <div className="flex flex-col items-end w-[60px]">
+                      <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                        {flight.details?.arrival || "00:00"}
+                      </span>
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">
+                        {(flight.details?.arrCode || "TYO").toUpperCase()}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Return Leg */}
+                {flight.tripType === "roundtrip" && flight.returnLeg && (
+                  <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 pt-3 border-t border-dashed border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2 md:w-[140px] shrink-0">
+                      <span className="text-[10px] font-black text-sky-600 bg-sky-50 dark:bg-sky-900/30 dark:text-sky-400 border border-sky-100 dark:border-sky-800 rounded px-1.5 py-0.5 whitespace-nowrap hidden md:block">回程</span>
+                      <AirlineLogo
+                        providerName={flight.returnLeg.airline || providerName}
+                        className="w-7 h-7 rounded-sm text-xs shadow-sm"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight">
+                          {flight.returnLeg.airline || providerName}
+                        </span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 md:hidden">
+                          回程
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-between px-1 md:px-0">
+                      <div className="flex flex-col items-start w-[60px]">
+                        <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                          {flight.returnLeg.departure || "00:00"}
+                        </span>
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">
+                          {(flight.details?.arrCode || "TYO").toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col items-center flex-1 px-4">
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-bold mb-1.5">
+                          {flight.returnLeg.duration || "3h 15m"}
+                        </span>
+                        <div className="w-full relative flex items-center justify-center">
+                          <div className="w-full h-[2px] bg-slate-200 dark:bg-slate-700 rounded-full" />
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center px-2 bg-white dark:bg-slate-800">
+                            <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-sm ${
+                              flight.returnLeg.stops === 0
+                                ? "text-emerald-500 border border-emerald-100 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-900/30"
+                                : "text-slate-500 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                            }`}>
+                              {flight.returnLeg.stops === 0 ? "直飛" : `${flight.returnLeg.stops}轉`}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end w-[60px]">
+                        <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                          {flight.returnLeg.arrival || "00:00"}
+                        </span>
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">
+                          {(flight.details?.depCode || "TPE").toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Right: Price + Actions */}
-              <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center sm:min-w-[160px] gap-3 border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-700 pt-3 sm:pt-0 sm:pl-5">
-                <div className="flex flex-col items-start sm:items-end">
-                  <span className="text-[10px] text-slate-500 dark:text-slate-300 font-bold uppercase tracking-[0.2em] mb-1">
-                    總價
-                  </span>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-sm font-bold text-slate-500 dark:text-slate-300">
+              {/* Right: Price Segment */}
+              <div className="flex flex-row md:flex-col items-end justify-between md:justify-center md:w-[160px] md:border-l border-slate-100 dark:border-slate-700 md:pl-6 pt-4 md:pt-0 mt-2 md:mt-0 border-t md:border-t-0 border-dashed md:border-solid shrink-0">
+                <div className="flex flex-col items-start md:items-end w-full">
+                  <div className="flex items-baseline gap-1 text-sky-600 dark:text-sky-400 justify-end w-full">
+                    <span className="text-xs font-bold">
                       {flight.currency}
                     </span>
-                    <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
+                    <span className="text-2xl font-black tabular-nums tracking-tighter">
                       {flight.price.toLocaleString()}
                     </span>
                   </div>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">含稅總價</span>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center justify-end gap-2 mt-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onToggleSave(e, flight.id);
                     }}
                     aria-label={isSaved ? "取消收藏" : "收藏航班"}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-[0.97] border ${
+                    className={`h-8 w-8 rounded flex items-center justify-center transition-colors border ${
                       isSaved
-                        ? "bg-pink-50 border-pink-100 text-pink-500"
-                        : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 hover:text-pink-400 hover:border-pink-200 shadow-sm"
+                        ? "bg-rose-50 border-rose-100 text-rose-500"
+                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-400 hover:text-rose-500"
                     }`}
                   >
-                    <Heart
-                      size={15}
-                      fill={isSaved ? "currentColor" : "transparent"}
-                      strokeWidth={2.5}
-                    />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleTrack(e, flight);
-                    }}
-                    aria-label={isTracked ? "取消追蹤降價" : "追蹤降價"}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-[0.97] border ${
-                      isTracked
-                        ? "bg-slate-900 border-slate-900 text-white shadow-md"
-                        : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-500 hover:text-slate-700 hover:border-slate-300 shadow-sm"
-                    }`}
-                  >
-                    {isTracked ? (
-                      <BellRing size={15} strokeWidth={2.5} />
-                    ) : (
-                      <Bell size={15} strokeWidth={2.5} />
-                    )}
+                    <Heart size={14} fill={isSaved ? "currentColor" : "transparent"} strokeWidth={2.5} />
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onImportToTrip(e, flight);
                     }}
-                    className="h-10 px-4 rounded-xl flex items-center gap-1.5 bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition-all active:scale-[0.97] border border-transparent"
+                    className="h-8 px-4 rounded bg-sky-500 text-white font-bold text-xs hover:bg-sky-600 transition-colors shadow-sm"
                   >
-                    <PlaneTakeoff size={14} strokeWidth={2.5} />
-                    <span className="text-sm font-bold">帶入</span>
+                    選取
                   </button>
                 </div>
               </div>
@@ -1175,7 +1218,9 @@ export default function HomeTab({
         .then((data) => {
           setSubscriptions(data || []);
         })
-        .catch((err) => console.error("fetchSubscriptions error", err))
+        .catch((err) => {
+          console.error("fetchSubscriptions error", err);
+        })
         .finally(() => setLoadingSubscriptions(false));
     } else {
       setSubscriptions([]);
@@ -1376,6 +1421,7 @@ export default function HomeTab({
   const [filterType, setFilterType] = useState<
     "all" | "flight" | "ticket" | "other"
   >("all");
+  const [sortType, setSortType] = useState<"recommended" | "cheapest" | "fastest">("recommended");
 
   const normalizedResults = useMemo(
     () =>
@@ -1429,12 +1475,76 @@ export default function HomeTab({
     [typeFilteredResults],
   );
 
-  const filteredResults = useMemo(() => {
-    if (!hasRoundTripLegMenu) return typeFilteredResults;
-    return typeFilteredResults.filter(
-      (result) => result.legType === roundTripLegView,
-    );
+  const sortingStats = useMemo(() => {
+    let list = typeFilteredResults;
+    if (hasRoundTripLegMenu) {
+      list = typeFilteredResults.filter(
+        (result) => result.legType === roundTripLegView,
+      );
+    }
+    if (list.length === 0) return null;
+
+    const parseDuration = (dur: string) => {
+      let totalMinutes = 0;
+      const hMatch = dur.match(/(\d+)h/i);
+      const mMatch = dur.match(/(\d+)m/i);
+      if (hMatch) totalMinutes += parseInt(hMatch[1], 10) * 60;
+      if (mMatch) totalMinutes += parseInt(mMatch[1], 10);
+      return totalMinutes;
+    };
+
+    let cheapest = list[0].price;
+    let fastestMin = parseDuration(list[0].details?.duration || "10h");
+    let fastestDurString = list[0].details?.duration || "--";
+
+    list.forEach(item => {
+      if (item.price < cheapest) cheapest = item.price;
+      const dur = parseDuration(item.details?.duration || "10h");
+      if (dur < fastestMin) {
+        fastestMin = dur;
+        fastestDurString = item.details?.duration || "--";
+      }
+    });
+
+    return {
+      cheapest,
+      fastestDurString
+    };
   }, [hasRoundTripLegMenu, roundTripLegView, typeFilteredResults]);
+
+  const filteredResults = useMemo(() => {
+    let list = typeFilteredResults;
+    if (hasRoundTripLegMenu) {
+      list = typeFilteredResults.filter(
+        (result) => result.legType === roundTripLegView,
+      );
+    }
+    
+    // Sort logic
+    return [...list].sort((a, b) => {
+      // cheapest: lowest price first
+      if (sortType === "cheapest") {
+        return a.price - b.price;
+      }
+      // fastest: shortest duration or stops
+      if (sortType === "fastest") {
+        const parseDuration = (dur: string) => {
+          let totalMinutes = 0;
+          const hMatch = dur.match(/(\d+)h/i);
+          const mMatch = dur.match(/(\d+)m/i);
+          if (hMatch) totalMinutes += parseInt(hMatch[1], 10) * 60;
+          if (mMatch) totalMinutes += parseInt(mMatch[1], 10);
+          return totalMinutes;
+        };
+        const durA = parseDuration(a.details?.duration || "10h");
+        const durB = parseDuration(b.details?.duration || "10h");
+        return durA - durB;
+      }
+      
+      // recommended: balance of price and duration, maybe default order
+      return 0; // retain original order or specific logic
+    });
+  }, [hasRoundTripLegMenu, roundTripLegView, typeFilteredResults, sortType]);
 
   useEffect(() => {
     if (!hasRoundTripLegMenu) {
@@ -1471,6 +1581,7 @@ export default function HomeTab({
         setCommunityTrips(handbooks);
       } catch (e) {
         console.error("Failed to load initial data", e);
+        showToast("熱門行程載入失敗，我們將盡快恢復服務", "warning");
       }
     };
     void loadInitialData();
@@ -2329,6 +2440,35 @@ export default function HomeTab({
                 ))}
               </div>
             )}
+
+            {/* Sorting Tabs  */}
+            {results.length > 0 && !loading && viewType === "table" && (
+              <div className="flex items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-1 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 w-full overflow-hidden shrink-0 mt-2 mb-4">
+                {(["recommended", "cheapest", "fastest"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSortType(s)}
+                    className={`relative flex flex-col items-center justify-center flex-1 py-2.5 px-2 transition-colors rounded-xl z-10 focus:outline-none ${
+                        sortType === s ? "text-sky-600 dark:text-sky-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                    }`}
+                  >
+                    {sortType === s && (
+                      <motion.div
+                        layoutId="sortTypeIndicator"
+                        className="absolute inset-0 bg-sky-50 dark:bg-sky-900/30 rounded-xl -z-10 border border-sky-100 dark:border-sky-800"
+                        transition={layoutIndicatorTransition}
+                      />
+                    )}
+                    <span className="text-[13px] md:text-[14px] font-black tracking-widest">{s === "recommended" ? "推薦" : s === "cheapest" ? "最便宜" : "最短時間"}</span>
+                    <span className="text-[10px] md:text-[11px] font-bold mt-0.5 opacity-80 tracking-wider">
+                      {s === "recommended" && "綜合最優"}
+                      {s === "cheapest" && `NT$ ${sortingStats?.cheapest?.toLocaleString() || "--"}`}
+                      {s === "fastest" && `${sortingStats?.fastestDurString || "--"}`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="relative min-h-[300px]">
@@ -2339,9 +2479,9 @@ export default function HomeTab({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-50 flex flex-col items-center pt-20 bg-white/50 backdrop-blur-sm rounded-[32px] sm:rounded-[36px]"
+                  className="absolute inset-0 z-50 flex flex-col items-center pt-20 bg-white/50 dark:bg-slate-900/40 backdrop-blur-sm rounded-[32px] sm:rounded-[36px]"
                 >
-                  <div className="flex flex-col items-center gap-5 p-7 bg-white/97 shadow-2xl rounded-3xl border border-slate-200/80 w-[88%] max-w-sm">
+                  <div className="flex flex-col items-center gap-5 p-7 bg-white/95 dark:bg-slate-800/95 shadow-2xl rounded-3xl border border-slate-200/80 dark:border-slate-700 w-[88%] max-w-sm">
                     {/* Animated plane */}
                     <div className="relative w-full h-6 flex items-center overflow-hidden">
                       <motion.div
@@ -2353,21 +2493,21 @@ export default function HomeTab({
                         }}
                         className="absolute"
                       >
-                        <PlaneTakeoff size={20} className="text-[#b35f76]" />
+                        <PlaneTakeoff size={20} className="text-[#b35f76] dark:text-[#d97c96]" />
                       </motion.div>
                     </div>
 
                     {/* Progress bar */}
                     <div className="w-full flex flex-col gap-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest leading-none whitespace-nowrap">
+                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest leading-none whitespace-nowrap">
                           {SEARCH_LOADING_MESSAGES[progressMsgIdx]}
                         </span>
-                        <span className="text-[11px] font-black text-slate-500 tabular-nums">
+                        <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 tabular-nums">
                           {Math.round(searchProgress)}%
                         </span>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                         <motion.div
                           className="h-full rounded-full bg-gradient-to-r from-[#b35f76] via-[#7b5ea7] to-[#2c6956]"
                           animate={{ width: `${searchProgress}%` }}
@@ -2376,7 +2516,7 @@ export default function HomeTab({
                       </div>
                     </div>
 
-                    <p className="text-slate-500 font-medium text-[11px] tracking-wide text-center whitespace-nowrap">
+                    <p className="text-slate-500 dark:text-slate-400 font-medium text-[11px] tracking-wide text-center whitespace-nowrap">
                       即時爬取航班資訊，這可能需要一些時間
                     </p>
                   </div>
@@ -2389,16 +2529,26 @@ export default function HomeTab({
               className={`transition-opacity duration-300 ${loading ? "opacity-30 pointer-events-none" : ""}`}
             >
               {searchError && !loading ? (
-                <GlassCard className="bg-[#fff1f2] border-[#fecdd3] flex flex-col">
-                  <span className="text-[#be123c] font-bold text-base">
-                    果凍精靈迷路了 🥺，請稍後再試試看！
-                  </span>
-                  <span className="text-[#be123c] mt-2 text-sm">
+                <div className="flex flex-col items-center justify-center p-8 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-[24px] border border-slate-200/50 dark:border-slate-700/50 shadow-[0_2px_12px_rgba(15,23,42,0.03)] my-4 text-center">
+                  <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/40 rounded-full flex items-center justify-center mb-4 border border-rose-200 dark:border-rose-800/60 shadow-sm">
+                    <AlertCircle className="text-rose-500" size={24} strokeWidth={2.5} />
+                  </div>
+                  <h3 className="text-[16px] md:text-[18px] font-black tracking-tight text-slate-900 dark:text-white mb-2">
+                    果凍精靈暫時迷路了 🥺
+                  </h3>
+                  <p className="text-[13px] font-bold text-slate-500 dark:text-slate-400 mb-6 max-w-[280px] leading-relaxed">
                     {searchError === "timeout"
-                      ? "目前查詢逾時，已先收起錯誤細節。"
-                      : "供應商稍忙，請再試一次。"}
-                  </span>
-                </GlassCard>
+                      ? "伺服器查詢逾時，可能是搜尋範圍過大。請點擊下方按鈕重試。"
+                      : "航班供應商暫時無法回應，請稍後再試一次。"}
+                  </p>
+                  <button
+                    onClick={handleSearch}
+                    className="group flex items-center gap-2 h-10 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-[14px] hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors active:scale-95 shadow-sm"
+                  >
+                    <RefreshCw size={14} className="group-active:rotate-45 transition-transform" />
+                    重新嘗試
+                  </button>
+                </div>
               ) : (
                 <AnimatePresence mode="wait">
                   {filteredResults.length > 0 ? (
@@ -2561,16 +2711,16 @@ export default function HomeTab({
                           ? { duration: 0.16 }
                           : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
                       }
-                      className="flex flex-col items-center justify-center py-20 bg-white/40 backdrop-blur-xl rounded-3xl border border-white mx-2 shadow-sm"
+                      className="flex flex-col items-center justify-center py-20 bg-white/40 dark:bg-slate-800/40 backdrop-blur-xl rounded-[32px] border border-white/60 dark:border-slate-700/60 mx-2 shadow-sm"
                     >
-                      <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-5xl mb-6 grayscale opacity-60">
-                        🔍
+                      <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800/80 rounded-full flex items-center justify-center mb-6 shadow-inner border border-slate-200/50 dark:border-slate-700/50">
+                        <SearchIcon className="text-slate-400 dark:text-slate-500" size={32} strokeWidth={2.5} />
                       </div>
-                      <h3 className="text-xl font-black text-slate-800 mb-2">
+                      <h3 className="text-[18px] font-black tracking-tight text-slate-800 dark:text-white mb-2">
                         找不到符合條件的航班
                       </h3>
-                      <p className="text-slate-500 font-bold max-w-xs text-center leading-relaxed">
-                        請嘗試更換出發日期或搜尋其他目的地。
+                      <p className="text-slate-500 dark:text-slate-400 font-bold max-w-xs text-center leading-relaxed text-[13px]">
+                        可以嘗試更換出發日期、調整篩選條件，或搜尋其他的熱門旅行目的地。
                       </p>
                     </motion.div>
                   ) : !hasSearched && !loading ? (

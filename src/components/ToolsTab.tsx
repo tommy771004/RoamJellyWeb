@@ -18,6 +18,7 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
+  AlertCircle,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
@@ -2010,7 +2011,7 @@ export default function ToolsTab() {
 function ToolsTabContent() {
   const { activeTripId, setActiveTab } = useAppStore();
   const {
-    state: { checklist, destination, settlements, tripInfo, weather },
+    state: { loading, checklist, destination, settlements, tripInfo, weather, tip },
   } = useToolsTabContext();
   const [flights, setFlights] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
@@ -2316,9 +2317,27 @@ function ToolsTabContent() {
       onScroll={onScroll}
       className="flex-1 w-full overflow-y-auto scroll-smooth bg-transparent text-slate-900 transition-colors"
     >
-      <div className="pt-4 sm:pt-8 pb-tab-safe px-3 sm:px-8 md:px-12 lg:px-16 xl:px-24 mx-auto flex flex-col w-full max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl gap-y-6 sm:gap-y-10">
+      <div className="pt-4 sm:pt-8 pb-tab-safe px-3.5 sm:px-6 md:px-8 mx-auto flex flex-col w-full max-w-[1120px] gap-y-6 sm:gap-y-10">
         <TripSelectorBar />
 
+        {loading ? (
+          <div className="flex flex-col items-center justify-center p-12 my-8 rounded-[32px] glass-panel bg-white/50 dark:bg-slate-800/40 min-h-[400px]">
+            <Loader2 size={36} strokeWidth={2.5} className="animate-spin text-sky-400 mb-6 drop-shadow-sm" />
+            <h3 className="text-xl font-black text-slate-700 dark:text-slate-200 tracking-tight mb-2">
+              正在載入旅程工具包
+            </h3>
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
+              {tip || "正在同步天氣與分帳清單資料..."}
+            </p>
+          </div>
+        ) : tip ? (
+          <div className="flex flex-col items-center justify-center p-12 my-8 rounded-[32px] glass-panel bg-[#fff1f2]/80 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/30 min-h-[300px]">
+             <AlertCircle className="text-rose-500 mb-4" size={36} />
+             <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">載入發生錯誤</h3>
+             <p className="text-sm font-bold text-rose-500/90">{tip}</p>
+          </div>
+        ) : (
+        <div className="flex flex-col gap-y-6 sm:gap-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <motion.section
           initial={prefersReducedMotion ? undefined : { opacity: 0, y: 16, scale: 0.985 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
@@ -2649,6 +2668,8 @@ function ToolsTabContent() {
             )}
           </div>
         </div>
+        </div>
+        )}
         {/* Mobile bottom nav spacer */}
         <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
       </div>
