@@ -13,6 +13,33 @@ const CHUNK_SIZE = 3; // days per parallel AI call
  * 第二層 (Second Fallback): Geoapify API (requires GEOAPIFY_API_KEY)
  * 額外安全備用 (Safety Fallback): Photon (Komoot) — OSM-based, no API key required.
  */
+function distanceInKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function isCoordValidForCity(
+  lat: number,
+  lng: number,
+  biasCoords: { lat: number; lng: number } | null,
+  title: string,
+  city: string,
+  source: string
+): boolean {
+  if (!biasCoords) return true;
+  const dist = distanceInKm(lat, lng, biasCoords.lat, biasCoords.lng);
+  if (dist > 200) {
+    console.warn(`[Geocode Strict Limit TS] (${source}) Rejected coordinate (${lat}, ${lng}) for "${title}" - too far (${dist.toFixed(1)}km > 200km) from city "${city}" center (${biasCoords.lat}, ${biasCoords.lng})`);
+    return false;
+  }
+  return true;
+}
+
 const cityCoordsCache = new Map<string, { lat: number; lng: number }>();
 
 async function geocodeSpot(
@@ -58,7 +85,11 @@ async function geocodeSpot(
         if (data && data.length > 0) {
           const lat = parseFloat(data[0].lat);
           const lon = parseFloat(data[0].lon);
-          if (!isNaN(lat) && !isNaN(lon)) return { lat, lng: lon };
+          if (!isNaN(lat) && !isNaN(lon)) {
+            if (isCoordValidForCity(lat, lon, biasCoords, cleanName, cleanCity, 'LocationIQ')) {
+              return { lat, lng: lon };
+            }
+          }
         }
       }
     } catch { /* fall through */ }
@@ -80,7 +111,13 @@ async function geocodeSpot(
       if (res.ok) {
         const data: any = await res.json();
         const coords = data.features?.[0]?.geometry?.coordinates; // [lon, lat]
-        if (coords?.length === 2) return { lat: coords[1], lng: coords[0] };
+        if (coords?.length === 2) {
+          const lat = coords[1];
+          const lon = coords[0];
+          if (isCoordValidForCity(lat, lon, biasCoords, cleanName, cleanCity, 'Geoapify')) {
+            return { lat: coords[1], lng: coords[0] };
+          }
+        }
       }
     } catch { /* fall through */ }
   }
@@ -99,14 +136,22 @@ async function geocodeSpot(
     if (res.ok) {
       const data: any = await res.json();
       const coords = data.features?.[0]?.geometry?.coordinates; // [lon, lat]
-      if (coords?.length === 2) return { lat: coords[1], lng: coords[0] };
+      if (coords?.length === 2) {
+        const lat = coords[1];
+        const lon = coords[0];
+        if (isCoordValidForCity(lat, lon, biasCoords, cleanName, cleanCity, 'Photon')) {
+          return { lat: coords[1], lng: coords[0] };
+        }
+      }
     }
   } catch { /* swallow */ }
 
   // ── AI Fallback (Third Fallback) ──────────────────────────────────────────
-  if (apiKey && cleanName && cleanName.toLowerCase() !== cleanCity.toLowerCase()) {
+  if (apiKey && (cleanName || cleanCity)) {
     try {
-      const prompt = `Query: ${cleanName}, ${cleanCity}. Reply ONLY with GPS latitude,longitude (e.g. 25.03,121.56). Do not explain or output other text.`;
+      const prompt = `Please find the GPS coordinates (latitude,longitude) for the spot: "${cleanName}" inside the destination: "${cleanCity}".
+You MUST strictly return coordinates that are physically located within or extremely close to "${cleanCity}". If the spot matches a location outside of "${cleanCity}", you MUST find and return a matching attraction or coordinates inside "${cleanCity}" instead.
+Reply ONLY with the GPS latitude,longitude (e.g. 25.0343,121.5649 or 35.6762,139.6503). Do not explain or output other text or markdown wrapper.`;
       const resText = await fetchOpenRouterWithFallback(apiKey, prompt);
       if (resText) {
         try {
@@ -117,8 +162,10 @@ async function geocodeSpot(
             const lat = parseFloat(parsed.lat ?? parsed.latitude);
             const lng = parseFloat(parsed.lng ?? parsed.lng ?? parsed.longitude);
             if (!isNaN(lat) && !isNaN(lng)) {
-              console.log(`[AI Fallback Geocode] ${cleanName} in ${cleanCity} (JSON) -> ${lat}, ${lng}`);
-              return { lat, lng };
+              if (isCoordValidForCity(lat, lng, biasCoords, cleanName, cleanCity, 'AI Fallback JSON')) {
+                console.log(`[AI Fallback Geocode] ${cleanName} in ${cleanCity} (JSON) -> ${lat}, ${lng}`);
+                return { lat, lng };
+              }
             }
           }
         } catch { /* ignore fallback to regex */ }
@@ -129,8 +176,10 @@ async function geocodeSpot(
           const lat = parseFloat(match[1]);
           const lng = parseFloat(match[2]);
           if (!isNaN(lat) && !isNaN(lng)) {
-            console.log(`[AI Fallback Geocode] ${cleanName} in ${cleanCity} (Regex) -> ${lat}, ${lng}`);
-            return { lat, lng };
+            if (isCoordValidForCity(lat, lng, biasCoords, cleanName, cleanCity, 'AI Fallback Regex')) {
+              console.log(`[AI Fallback Geocode] ${cleanName} in ${cleanCity} (Regex) -> ${lat}, ${lng}`);
+              return { lat, lng };
+            }
           }
         }
       }
@@ -225,6 +274,8 @@ async function getOSRMMinutes(
 async function enrichItinerary(parsed: any, destination: string): Promise<any> {
   if (!parsed?.itinerary || !Array.isArray(parsed.itinerary)) return parsed;
 
+  const biasCoords = destination ? await geocodeSpot(destination, "") : null;
+
   // Step 1: Geocode + wiki thumbnail — all days in parallel, all spots within day in parallel
   const enrichedDays = await Promise.all(
     parsed.itinerary.map(async (dayData: any) => {
@@ -238,10 +289,23 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
             geocodeSpot(name, spotCity, spotLocalName),
             getWikiThumbnail(name),
           ]);
+
+          let finalLat = coords ? coords.lat : spot.lat;
+          let finalLng = coords ? coords.lng : spot.lng;
+
+          if (finalLat != null && finalLng != null && biasCoords) {
+            const dist = distanceInKm(finalLat, finalLng, biasCoords.lat, biasCoords.lng);
+            if (dist > 200) {
+              console.warn(`[aiItineraryService Bound Check] Rejecting spot "${name}" coordinate (${finalLat}, ${finalLng}) because it is too far (${dist.toFixed(1)}km > 200km) from destination "${destination}" center (${biasCoords.lat}, ${biasCoords.lng})`);
+              finalLat = null;
+              finalLng = null;
+            }
+          }
+
           return {
             ...spot,
-            lat: coords?.lat ?? spot.lat,
-            lng: coords?.lng ?? spot.lng,
+            lat: finalLat != null ? finalLat : null,
+            lng: finalLng != null ? finalLng : null,
             image_url: spot.image_url || thumbnail || undefined,
           };
         })
@@ -568,26 +632,194 @@ ${generationContext}${rangeInstruction}
 最終提醒：所有輸出內容（包含 summary.title）都必須是「${destination}」的行程，請直接輸出 JSON，不要任何多餘文字或 markdown 包裝。`;
 }
 
+function repairJsonString(s: string): string {
+  let r = s.trim();
+
+  // 1. Convert smart quotes
+  r = r.replace(/[\u201c\u201d\u201e\u201f\u2033\u2036]/g, '"');
+  r = r.replace(/[\u2018\u2019\u201a\u201b\u2032\u2035]/g, "'");
+
+  // 2. Remove comments
+  r = r.replace(/\s*\/\/.*$/gm, "");
+  r = r.replace(/\s*\/\*[\s\S]*?\*\//g, "");
+
+  // 3. Fix unquoted keys
+  r = r.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_-]*)(\s*:)/g, '$1"$2"$3');
+
+  // 4. Fix single quoted keys: 'day': 4 -> "day": 4
+  r = r.replace(/([{,]\s*)'([^'\s]+)'(\s*:)/g, '$1"$2"$3');
+
+  // 5. Fix single quoted values safely
+  r = r.replace(/:\s*'([^'\\]*(?:\\.[^'\\]*)*)'/g, (match, content) => {
+    const escaped = content.replace(/"/g, '\\"').replace(/\\'/g, "'");
+    return `: "${escaped}"`;
+  });
+
+  // Also inside arrays: [ 'apple', 'banana' ]
+  r = r.replace(/\[\s*'([^'\\]*(?:\\.[^'\\]*)*)'/g, (match, content) => {
+    const escaped = content.replace(/"/g, '\\"').replace(/\\'/g, "'");
+    return `[ "${escaped}"`;
+  });
+  r = r.replace(/,\s*'([^'\\]*(?:\\.[^'\\]*)*)'/g, (match, content) => {
+    const escaped = content.replace(/"/g, '\\"').replace(/\\'/g, "'");
+    return `, "${escaped}"`;
+  });
+
+  // 6. Fix trailing commas before closing braces/brackets
+  r = r.replace(/,\s*([}\]])/g, "$1");
+
+  // 7. Ensure control characters (like raw newlines, tabs) inside string literals are properly escaped
+  let formatted = "";
+  let inString = false;
+  let escape = false;
+  for (let i = 0; i < r.length; i++) {
+    const char = r[i];
+    if (escape) {
+      formatted += char;
+      escape = false;
+      continue;
+    }
+    if (char === '\\') {
+      formatted += char;
+      escape = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      formatted += char;
+      continue;
+    }
+    if (inString) {
+      if (char === '\n') {
+        formatted += '\\n';
+      } else if (char === '\r') {
+        formatted += '\\r';
+      } else if (char === '\t') {
+        formatted += '\\t';
+      } else {
+        formatted += char;
+      }
+    } else {
+      formatted += char;
+    }
+  }
+  r = formatted;
+
+  return r;
+}
+
+export function robustJSONParse(text: string, expectArray: boolean = false): any {
+  // 1. Remove think/thought/reasoning elements
+  let clean = text;
+  clean = clean.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  clean = clean.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "");
+  clean = clean.replace(/<thought>[\s\S]*?<\/thought>/gi, "");
+
+  // Gather code blocks as main candidates
+  const candidates: string[] = [];
+  const codeBlockRegex = /```(?:json|JSON)?\s*([\s\S]*?)\s*```/gi;
+  let match;
+  while ((match = codeBlockRegex.exec(clean)) !== null) {
+    candidates.push(match[1]);
+  }
+
+  // Also include the entire clean text as parent candidate
+  candidates.push(clean);
+
+  for (const candidate of candidates) {
+    const s = candidate.trim();
+    if (!s) continue;
+
+    // Try a direct parse with a quick repair
+    try {
+      const repaired = repairJsonString(s);
+      return JSON.parse(repaired);
+    } catch { /* proceed */ }
+
+    // Find starting indices of all '{' and '[' inside candidate
+    const startIndices: { index: number; type: '{' | '[' }[] = [];
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === '{') {
+        startIndices.push({ index: i, type: '{' });
+      } else if (s[i] === '[') {
+        startIndices.push({ index: i, type: '[' });
+      }
+    }
+
+    // Sort to prioritize start indices matching the expected outer structure (array or object)
+    if (expectArray) {
+      startIndices.sort((a, b) => {
+        if (a.type === '[' && b.type !== '[') return -1;
+        if (b.type === '[' && a.type !== '[') return 1;
+        return a.index - b.index;
+      });
+    } else {
+      startIndices.sort((a, b) => {
+        if (a.type === '{' && b.type !== '{') return -1;
+        if (b.type === '{' && a.type !== '{') return 1;
+        return a.index - b.index;
+      });
+    }
+
+    for (const { index, type } of startIndices) {
+      const closingChar = type === '{' ? '}' : ']';
+      const lastClose = s.lastIndexOf(closingChar);
+      if (lastClose === -1 || lastClose <= index) continue;
+
+      const subStr = s.slice(index, lastClose + 1);
+      try {
+        const repaired = repairJsonString(subStr);
+        return JSON.parse(repaired);
+      } catch {
+        // Fallback: match brackets balanced-count to grab exact JSON nested ending
+        let balance = 0;
+        let foundEnd = -1;
+        for (let j = index; j < s.length; j++) {
+          if (s[j] === type) balance++;
+          else if (s[j] === closingChar) {
+            balance--;
+            if (balance === 0) {
+              foundEnd = j;
+              break;
+            }
+          }
+        }
+        if (foundEnd !== -1) {
+          const balancedStr = s.slice(index, foundEnd + 1);
+          try {
+            const repaired = repairJsonString(balancedStr);
+            return JSON.parse(repaired);
+          } catch { /* proceed */ }
+        }
+      }
+    }
+  }
+
+  // Final last-resort parse of the candidates with repair
+  for (const candidate of candidates) {
+    try {
+      const repaired = repairJsonString(candidate);
+      return JSON.parse(repaired);
+    } catch { /* proceed */ }
+  }
+
+  console.error("All robust JSON parsing attempts failed. Raw text preview:", text.substring(0, 300));
+  throw new Error("Robust JSON parsing failed to identify a valid JSON structure.");
+}
+
 /** Parse the raw text from a chunk AI call into a structured object/array. */
 function parseChunkText(text: string, isFirst: boolean): any {
   if (isFirst) {
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("No JSON object in first chunk response");
-    return JSON.parse(match[0]);
+    return robustJSONParse(text, false);
   }
-  // Subsequent chunks: prefer array, fall back to object with itinerary key
-  const arrIdx = text.indexOf("[");
-  const objIdx = text.indexOf("{");
-  if (arrIdx !== -1 && (objIdx === -1 || arrIdx < objIdx)) {
-    const match = text.match(/\[[\s\S]*\]/);
-    if (match) return JSON.parse(match[0]);
+  const parsed = robustJSONParse(text, true);
+  if (Array.isArray(parsed)) {
+    return parsed;
   }
-  const objMatch = text.match(/\{[\s\S]*\}/);
-  if (objMatch) {
-    const obj = JSON.parse(objMatch[0]);
-    return Array.isArray(obj.itinerary) ? obj.itinerary : [obj];
+  if (parsed && typeof parsed === "object") {
+    return Array.isArray(parsed.itinerary) ? parsed.itinerary : [parsed];
   }
-  throw new Error("No JSON found in chunk response");
+  return [parsed];
 }
 
 // ─── Main export ─────────────────────────────────────────────────────────────
@@ -639,9 +871,7 @@ export async function generateItinerary(body: any) {
     const prompt = buildChunkPrompt(destination, days, planner, generationContext, true, 1, days, destinationContext);
     try {
       const text = await fetchOpenRouterWithFallback(apiKey, prompt);
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("No JSON object found in output");
-      parsed = JSON.parse(match[0]);
+      parsed = robustJSONParse(text, false);
     } catch (err) {
       console.error("Failed to generate AI itinerary", err);
       return fallback;
@@ -750,13 +980,7 @@ export async function regenerateSpot(params: {
 
   try {
     const text = await fetchOpenRouterWithFallback(apiKey, prompt);
-    const jsonStart = text.indexOf("{");
-    const jsonEnd = text.lastIndexOf("}");
-    if (jsonStart === -1 || jsonEnd === -1 || jsonStart >= jsonEnd) {
-      throw new Error("No JSON object found in AI response");
-    }
-
-    const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+    const parsed = robustJSONParse(text, false);
     if (parsed && typeof parsed.title === "string") {
       // Hybrid enrichment: geocode (Photon→Mapbox→Nominatim) + wiki thumbnail
       const name: string = parsed.title || "";

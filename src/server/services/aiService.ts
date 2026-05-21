@@ -1,4 +1,5 @@
 import { fetchOpenRouterWithFallback } from './openrouterHelper';
+import { robustJSONParse } from './aiItineraryService';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -25,9 +26,7 @@ Example: ["Passports & ID", "Light Jackets", "Adapter & Cables", "Toiletries", "
     
     // try to parse JSON
     try {
-      const match = text.match(/\[.*\]/s);
-      const jsonStr = match ? match[0] : text;
-      const items = JSON.parse(jsonStr) as string[];
+      const items = robustJSONParse(text, true) as string[];
       if (Array.isArray(items) && items.length > 0) {
         return items.map((item, idx) => ({ id: `ai-${idx}`, text: item, checked: false }));
       }
@@ -133,9 +132,7 @@ Ensure:
       const text = await fetchOpenRouterWithFallback(apiKey, systemPrompt + '\n\n' + prompt);
 
       try {
-        const match = text.match(/\{[\s\S]*\}/);
-        const jsonStr = match ? match[0] : text;
-        const parsed = JSON.parse(jsonStr) as ChatResponse;
+        const parsed = robustJSONParse(text, false) as ChatResponse;
         if (parsed && typeof parsed.text === 'string') {
           return parsed;
         }

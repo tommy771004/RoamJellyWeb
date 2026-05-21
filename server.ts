@@ -715,6 +715,33 @@ async function getPlanningSnapshot(tripId: string): Promise<unknown[] | null> {
   }
 }
 
+function distanceInKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function isCoordValidForCity(
+  lat: number,
+  lng: number,
+  biasCoords: { lat: number; lng: number } | null,
+  title: string,
+  city: string,
+  source: string
+): boolean {
+  if (!biasCoords) return true;
+  const dist = distanceInKm(lat, lng, biasCoords.lat, biasCoords.lng);
+  if (dist > 200) {
+    console.warn(`[Geocode Strict Limit] (${source}) Rejected coordinate (${lat}, ${lng}) for "${title}" - too far (${dist.toFixed(1)}km > 200km) from city "${city}" center (${biasCoords.lat}, ${biasCoords.lng})`);
+    return false;
+  }
+  return true;
+}
+
 const cityCoordsCache = new Map<string, { lat: number; lng: number }>();
 
 async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng: number } | null> {
@@ -755,7 +782,11 @@ async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng
         if (data && data.length > 0) {
           const lat = parseFloat(data[0].lat);
           const lon = parseFloat(data[0].lon);
-          if (!isNaN(lat) && !isNaN(lon)) return { lat, lng: lon };
+          if (!isNaN(lat) && !isNaN(lon)) {
+            if (isCoordValidForCity(lat, lon, biasCoords, cleanTitle, cleanCity, 'LocationIQ')) {
+              return { lat, lng: lon };
+            }
+          }
         }
       }
     } catch { /* fall through */ }
@@ -782,7 +813,13 @@ async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng
           }>;
         };
         const coords = data.features?.[0]?.geometry?.coordinates; // [lon, lat]
-        if (coords?.length === 2) return { lat: coords[1], lng: coords[0] };
+        if (coords?.length === 2) {
+          const lat = coords[1];
+          const lon = coords[0];
+          if (isCoordValidForCity(lat, lon, biasCoords, cleanTitle, cleanCity, 'Geoapify')) {
+            return { lat: coords[1], lng: coords[0] };
+          }
+        }
       }
     } catch { /* fall through */ }
   }
@@ -799,16 +836,22 @@ async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng
       if (data && data.length > 0) {
         const lat = parseFloat(data[0].lat);
         const lon = parseFloat(data[0].lon);
-        if (!isNaN(lat) && !isNaN(lon)) return { lat, lng: lon };
+        if (!isNaN(lat) && !isNaN(lon)) {
+          if (isCoordValidForCity(lat, lon, biasCoords, cleanTitle, cleanCity, 'Nominatim')) {
+            return { lat, lng: lon };
+          }
+        }
       }
     }
   } catch { /* fall through */ }
 
   // ── AI Fallback (Fourth Fallback) ─────────────────────────────────────────
   const openrouterApiKey = process.env.OPENROUTER_API_KEY;
-  if (openrouterApiKey && cleanTitle && cleanTitle.toLowerCase() !== cleanCity.toLowerCase()) {
+  if (openrouterApiKey && (cleanTitle || cleanCity)) {
     try {
-      const prompt = `Query: ${cleanTitle}, ${cleanCity}. Reply ONLY with GPS latitude,longitude (e.g. 25.03,121.56). Do not explain or output other text.`;
+      const prompt = `Please find the GPS coordinates (latitude,longitude) for the spot: "${cleanTitle}" inside the destination: "${cleanCity}".
+You MUST strictly return coordinates that are physically located within or extremely close to "${cleanCity}". If the spot matches a location outside of "${cleanCity}", you MUST find and return a matching attraction or coordinates inside "${cleanCity}" instead.
+Reply ONLY with the GPS latitude,longitude (e.g. 25.0343,121.5649 or 35.6762,139.6503). Do not explain or output other text or markdown wrapper.`;
       const resText = await fetchOpenRouterWithFallback(openrouterApiKey, prompt);
       if (resText) {
         try {
@@ -819,8 +862,10 @@ async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng
             const lat = parseFloat(String(parsed.lat ?? parsed.latitude ?? ''));
             const lng = parseFloat(String(parsed.lng ?? parsed.longitude ?? ''));
             if (!isNaN(lat) && !isNaN(lng)) {
-              console.log(`[AI Fallback Geocode Server] ${cleanTitle} in ${cleanCity} (JSON) -> ${lat}, ${lng}`);
-              return { lat, lng };
+              if (isCoordValidForCity(lat, lng, biasCoords, cleanTitle, cleanCity, 'AI Fallback JSON')) {
+                console.log(`[AI Fallback Geocode Server] ${cleanTitle} in ${cleanCity} (JSON) -> ${lat}, ${lng}`);
+                return { lat, lng };
+              }
             }
           }
         } catch { /* ignore fallback to regex */ }
@@ -831,8 +876,10 @@ async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng
           const lat = parseFloat(match[1]);
           const lng = parseFloat(match[2]);
           if (!isNaN(lat) && !isNaN(lng)) {
-            console.log(`[AI Fallback Geocode Server] ${cleanTitle} in ${cleanCity} (Regex) -> ${lat}, ${lng}`);
-            return { lat, lng };
+            if (isCoordValidForCity(lat, lng, biasCoords, cleanTitle, cleanCity, 'AI Fallback Regex')) {
+              console.log(`[AI Fallback Geocode Server] ${cleanTitle} in ${cleanCity} (Regex) -> ${lat}, ${lng}`);
+              return { lat, lng };
+            }
           }
         }
       }
@@ -1490,7 +1537,8 @@ async function startServer() {
     }
 
     try {
-      const prompt = `Please find the GPS coordinates (latitude,longitude) for the spot: "${title}" in "${destination}".
+      const prompt = `Please find the GPS coordinates (latitude,longitude) for the spot: "${title}" inside the destination: "${destination}".
+You MUST strictly return coordinates that are physically located within or extremely close to "${destination}". If the spot matches a location outside of "${destination}", you MUST find and return a matching attraction or coordinates inside "${destination}" instead.
 Return ONLY the latitude and longitude as a comma-separated string, for example: 25.0343,121.5649 or 35.6762,139.6503.
 Do NOT include any extra text, markdown formatting, explanations, or labels. Only reply with the coordinates in the format lat,lng.`;
       
@@ -1502,13 +1550,16 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
           const lat = parseFloat(match[1]);
           const lng = parseFloat(match[2]);
           if (!isNaN(lat) && !isNaN(lng)) {
-            console.log(`[AI Geocode API Route] Successful fallback for spot "${title}" in "${destination}": ${lat}, ${lng}`);
-            res.json({ status: 'success', data: { lat, lng } });
-            return;
+            const biasCoords = destination ? await geocodeSpot(destination, '') : null;
+            if (isCoordValidForCity(lat, lng, biasCoords, title, destination, 'AI Geocode Endpoint')) {
+              console.log(`[AI Geocode API Route] Successful fallback for spot "${title}" in "${destination}": ${lat}, ${lng}`);
+              res.json({ status: 'success', data: { lat, lng } });
+              return;
+            }
           }
         }
       }
-      res.status(404).json({ status: 'error', message: 'Could not resolve coordinates from AI' });
+      res.status(404).json({ status: 'error', message: 'Could not resolve valid coordinates close to the destination from AI' });
     } catch (err: any) {
       console.error(`[AI Geocode API Route] failed for ${title}:`, err);
       res.status(500).json({ status: 'error', message: err.message || 'AI Geocoding failed' });
@@ -1834,9 +1885,10 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
 
   app.get('/api/geocode', async (req, res) => {
     const q = String(req.query.q ?? '').trim();
+    const city = String(req.query.city ?? '').trim();
     if (!q) { res.json({ lat: null, lng: null }); return; }
     try {
-      const coords = await geocodeSpot(q);
+      const coords = await geocodeSpot(q, city);
       if (!coords) {
         res.json({ lat: null, lng: null });
         return;
@@ -2012,24 +2064,42 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
       res.status(401).json({ status: 'error', message: 'unauthorized' });
       return;
     }
-    const [savedItems, trackedPrices, aiProfile] = await Promise.all([
-      repo.getUserSavedItems(userId),
-      repo.getUserTrackedPrices(userId),
-      repo.getUserAiProfile(userId),
-    ]);
-    res.json({
-      saved_items: savedItems.map((item: any) => item.itemId),
-      tracked_prices: trackedPrices.map((item: any) => item.itemId),
-      ai_profile: aiProfile ? {
-        departure: aiProfile.preferredDeparture ?? '',
-        companions: aiProfile.preferredCompanions ?? '',
-        vibes: Array.isArray(aiProfile.preferredVibes) ? aiProfile.preferredVibes : [],
-        interests: Array.isArray(aiProfile.preferredInterests) ? aiProfile.preferredInterests : [],
-        dietary: Array.isArray(aiProfile.preferredDietary) ? aiProfile.preferredDietary : [],
-        transport: Array.isArray(aiProfile.preferredTransport) ? aiProfile.preferredTransport : [],
-        budget: aiProfile.preferredBudget ?? '',
-      } : null,
-    });
+    try {
+      const [savedItems, trackedPrices, aiProfile] = await Promise.all([
+        repo.getUserSavedItems(userId).catch((err) => {
+          console.error('[UserPref DB Error] getUserSavedItems failed:', err);
+          return [];
+        }),
+        repo.getUserTrackedPrices(userId).catch((err) => {
+          console.error('[UserPref DB Error] getUserTrackedPrices failed:', err);
+          return [];
+        }),
+        repo.getUserAiProfile(userId).catch((err) => {
+          console.error('[UserPref DB Error] getUserAiProfile failed:', err);
+          return null;
+        }),
+      ]);
+      res.json({
+        saved_items: (savedItems || []).map((item: any) => item.itemId),
+        tracked_prices: (trackedPrices || []).map((item: any) => item.itemId),
+        ai_profile: aiProfile ? {
+          departure: aiProfile.preferredDeparture ?? '',
+          companions: aiProfile.preferredCompanions ?? '',
+          vibes: Array.isArray(aiProfile.preferredVibes) ? aiProfile.preferredVibes : [],
+          interests: Array.isArray(aiProfile.preferredInterests) ? aiProfile.preferredInterests : [],
+          dietary: Array.isArray(aiProfile.preferredDietary) ? aiProfile.preferredDietary : [],
+          transport: Array.isArray(aiProfile.preferredTransport) ? aiProfile.preferredTransport : [],
+          budget: aiProfile.preferredBudget ?? '',
+        } : null,
+      });
+    } catch (err) {
+      console.error('[UserPref Endpoint Error] Failed to get preferences:', err);
+      res.json({
+        saved_items: [],
+        tracked_prices: [],
+        ai_profile: null,
+      });
+    }
   });
 
   app.patch('/api/user/preferences/profile', async (req, res) => {
@@ -2049,16 +2119,29 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
       budget: String(req.body?.budget ?? '').trim(),
     };
 
-    const row = await repo.upsertUserAiProfile(userId, profile);
-    res.json({
-      departure: row?.preferredDeparture ?? profile.departure,
-      companions: row?.preferredCompanions ?? profile.companions,
-      vibes: Array.isArray(row?.preferredVibes) ? row.preferredVibes : profile.vibes,
-      interests: Array.isArray(row?.preferredInterests) ? row.preferredInterests : profile.interests,
-      dietary: Array.isArray(row?.preferredDietary) ? row.preferredDietary : profile.dietary,
-      transport: Array.isArray(row?.preferredTransport) ? row.preferredTransport : profile.transport,
-      budget: row?.preferredBudget ?? profile.budget,
-    });
+    try {
+      const row = await repo.upsertUserAiProfile(userId, profile);
+      res.json({
+        departure: row?.preferredDeparture ?? profile.departure,
+        companions: row?.preferredCompanions ?? profile.companions,
+        vibes: Array.isArray(row?.preferredVibes) ? row.preferredVibes : profile.vibes,
+        interests: Array.isArray(row?.preferredInterests) ? row.preferredInterests : profile.interests,
+        dietary: Array.isArray(row?.preferredDietary) ? row.preferredDietary : profile.dietary,
+        transport: Array.isArray(row?.preferredTransport) ? row.preferredTransport : profile.transport,
+        budget: row?.preferredBudget ?? profile.budget,
+      });
+    } catch (err) {
+      console.error('[UserPref Endpoint Error] Failed to upsert profile:', err);
+      res.json({
+        departure: profile.departure,
+        companions: profile.companions,
+        vibes: profile.vibes,
+        interests: profile.interests,
+        dietary: profile.dietary,
+        transport: profile.transport,
+        budget: profile.budget,
+      });
+    }
   });
 
   app.post('/api/user/saves', async (req, res) => {

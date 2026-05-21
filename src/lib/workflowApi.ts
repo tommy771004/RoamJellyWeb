@@ -43,8 +43,9 @@ async function parseApiError(res: Response, fallback: string): Promise<Error> {
 
 export async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng: number } | null> {
   try {
-    const q = encodeURIComponent(`${title} ${city}`);
-    const url = `/api/geocode?q=${q}`;
+    const q = encodeURIComponent(title);
+    const c = encodeURIComponent(city);
+    const url = `/api/geocode?q=${q}&city=${c}`;
     const token = getStoredToken();
     const apiRes = await fetch(url, {
       headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },

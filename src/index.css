@@ -504,12 +504,23 @@ select {
   border-radius: 28px;
 }
 .dark .jelly-surface {
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  color: #f8fafc;
+}
+
+.dark .glass-card {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  color: #f8fafc !important;
+}
+.dark .glass-card::before {
+  display: none !important;
 }
 
 @keyframes cute-bounce {
@@ -550,11 +561,12 @@ select {
     0 4px 8px rgba(15, 23, 42, 0.03);
 }
 .dark .jelly-button {
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  color: #f8fafc;
 }
 
 .jelly-button:active {
@@ -583,12 +595,12 @@ select {
   border-radius: 28px;
 }
 .dark .glass-panel {
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
-  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  color: #f8fafc;
 }
 
 .glass-node {
@@ -608,9 +620,9 @@ select {
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  color: #f8fafc;
 }
 
 @media (prefers-reduced-motion: reduce) {

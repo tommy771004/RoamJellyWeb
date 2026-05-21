@@ -694,17 +694,31 @@ export default function ItineraryTab() {
       });
 
       // Priorities AI generated lat/lng, otherwise Geocode spots in parallel; fall back silently if any fail
+      const destCoords = await geocodeSpot(formData.destination, "").catch(() => null);
       const geocodeResults = await Promise.allSettled(
-        rawNodes.map((n) =>
-          n.lat && n.lng
-            ? Promise.resolve({ lat: n.lat, lng: n.lng })
-            : geocodeSpot(n.title, formData.destination),
-        ),
+        rawNodes.map((n) => {
+          if (n.lat && n.lng) {
+            if (destCoords) {
+              const dist = haversineKm(n.lat, n.lng, destCoords.lat, destCoords.lng);
+              if (dist <= 200) {
+                return Promise.resolve({ lat: n.lat, lng: n.lng });
+              } else {
+                console.warn(`[Itinerary Geocode Limit Frontend] Initial coordinates for "${n.title}" are too far (${dist.toFixed(1)}km > 200km) from "${formData.destination}", re-geocoding...`);
+              }
+            } else {
+              return Promise.resolve({ lat: n.lat, lng: n.lng });
+            }
+          }
+          return geocodeSpot(n.title, formData.destination);
+        }),
       );
       geocodeResults.forEach((r, i) => {
         if (r.status === "fulfilled" && r.value) {
           rawNodes[i].lat = r.value.lat;
           rawNodes[i].lng = r.value.lng;
+        } else {
+          rawNodes[i].lat = null;
+          rawNodes[i].lng = null;
         }
       });
 
@@ -714,6 +728,13 @@ export default function ItineraryTab() {
           try {
             const aiCoords = await geocodeSpotWithAI(n.title, formData.destination);
             if (aiCoords) {
+              if (destCoords) {
+                const dist = haversineKm(aiCoords.lat, aiCoords.lng, destCoords.lat, destCoords.lng);
+                if (dist > 200) {
+                  console.warn(`[AI Fallback Geocode Limit Frontend] Resolved coordinates for "${n.title}" are too far (${dist.toFixed(1)}km > 200km) from "${formData.destination}", rejecting.`);
+                  return;
+                }
+              }
               n.lat = aiCoords.lat;
               n.lng = aiCoords.lng;
               console.log(`[AI Fallback Geocode Frontend] Resolved "${n.title}" in "${formData.destination}" to: ${aiCoords.lat}, ${aiCoords.lng}`);
@@ -4989,7 +5010,7 @@ const ItineraryListItem = React.memo(
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+                  className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md"
                   onClick={() => {
                     setIsEditing(false);
                     onEditingChange?.(item.node_id, item.day, false);
@@ -4998,22 +5019,22 @@ const ItineraryListItem = React.memo(
                 {/* Modal Content */}
                 <motion.div
                   layoutId={`modal-${item.node_id}`}
-                  className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/95 backdrop-blur-3xl rounded-[32px] sm:rounded-[36px] shadow-2xl border border-white/50 flex flex-col pointer-events-auto"
+                  className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/95 dark:bg-slate-950/80 backdrop-blur-3xl rounded-[32px] sm:rounded-[36px] shadow-2xl dark:shadow-black/55 border border-white/50 dark:border-white/10 flex flex-col pointer-events-auto"
                 >
                   {/* Header */}
-                  <div className="sticky top-0 z-20 bg-white/60 backdrop-blur-xl border-b border-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-                    <h2 className="text-lg sm:text-xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                  <div className="sticky top-0 z-20 bg-white/60 dark:bg-slate-950/70 backdrop-blur-xl border-b border-white dark:border-white/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+                    <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-3">
                       <div className="relative">
                         <button
                           type="button"
                           aria-label="選擇景點表情"
                           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                          className="w-10 h-10 flex items-center justify-center bg-white shadow-sm border border-slate-100 hover:bg-pink-50 rounded-[12px] transition-colors"
+                          className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-white/10 hover:bg-pink-50 dark:hover:bg-pink-950/30 rounded-[12px] transition-colors"
                         >
                           <IconImg value={editEmoji} size={20} />
                         </button>
                         {showEmojiPicker && (
-                          <div className="absolute top-12 left-0 p-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200">
+                          <div className="absolute top-12 left-0 p-3 bg-white/95 dark:bg-slate-900 rounded-2xl shadow-2xl border border-white dark:border-white/10 flex flex-wrap gap-2 w-48 animate-in zoom-in-95 duration-200 z-50">
                             {EMOJI_OPTIONS.map((e) => (
                               <button
                                 key={e}
@@ -5023,7 +5044,7 @@ const ItineraryListItem = React.memo(
                                   setEditEmoji(e);
                                   setShowEmojiPicker(false);
                                 }}
-                                className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 rounded-[8px] transition-colors"
+                                className="w-10 h-10 flex items-center justify-center hover:bg-pink-50 dark:hover:bg-pink-950/30 rounded-[8px] transition-colors"
                               >
                                 <IconImg value={e} size={24} />
                               </button>
@@ -5038,7 +5059,7 @@ const ItineraryListItem = React.memo(
                         setIsEditing(false);
                         onEditingChange?.(item.node_id, item.day, false);
                       }}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/80 hover:text-rose-500 text-slate-500 dark:text-slate-300 hover:bg-rose-50 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/80 dark:bg-white/10 hover:text-rose-500 text-slate-500 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/55 transition-colors"
                     >
                       <X size={16} />
                     </button>
@@ -5048,7 +5069,7 @@ const ItineraryListItem = React.memo(
                   <div className="p-4 sm:p-6 pb-6 sm:pb-8 w-full flex-shrink-0 min-w-0">
                     <div className="flex flex-col gap-3 w-full">
                       <div className="flex flex-col gap-2">
-                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
+                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
                           地點名稱 (Place)
                         </label>
                         <input
@@ -5056,23 +5077,23 @@ const ItineraryListItem = React.memo(
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
                           placeholder="修改地點名稱"
-                          className="w-full text-lg font-black text-slate-900 bg-white/85 border border-slate-200 rounded-2xl px-5 py-2.5 outline-none focus:ring-4 focus:ring-pink-100 transition-all font-sans"
+                          className="outline-none w-full text-lg font-black text-slate-900 dark:text-slate-100 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl px-5 py-2.5 hover:bg-white/80 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-pink-500/30 transition-all font-sans"
                         />
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="flex flex-col gap-2">
-                          <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
+                          <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
                             日期 (Date)
                           </label>
                           <input
                             type="date"
                             value={editDate}
                             onChange={(e) => setEditDate(e.target.value)}
-                            className="w-full text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
+                            className="outline-none w-full text-sm font-black text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl px-4 py-2 hover:bg-white/80 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-pink-500/30 transition-all text-left flex items-center justify-between"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
+                          <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
                             時間 (Time)
                           </label>
                           <input
@@ -5081,12 +5102,12 @@ const ItineraryListItem = React.memo(
                             step={300}
                             value={editTime}
                             onChange={(e) => setEditTime(e.target.value)}
-                            className="w-full text-sm font-black text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all text-left flex items-center justify-between"
+                            className="outline-none w-full text-sm font-black text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl px-4 py-2 hover:bg-white/80 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-pink-500/30 transition-all text-left flex items-center justify-between"
                           />
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-1">
+                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
                           詳細說明 / 備註 (Description)
                         </label>
                         <textarea
@@ -5094,15 +5115,15 @@ const ItineraryListItem = React.memo(
                           onChange={(e) => setEditDescription(e.target.value)}
                           placeholder="補充行程細節、提醒或預約資訊..."
                           rows={5}
-                          className="w-full text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[140px] resize-y"
+                          className="outline-none w-full text-sm font-bold text-slate-700 dark:text-slate-300 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl px-5 py-3 hover:bg-white/80 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-pink-500/30 transition-all min-h-[140px] resize-y"
                         />
                       </div>
-                      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4">
+                      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-black/20 px-4 py-4">
                         <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
+                          <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                             附件 / 票券
                           </label>
-                          <label className="px-3 py-2 rounded-full bg-slate-900 text-white text-[11px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors">
+                          <label className="px-3 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-[11px] font-black uppercase tracking-widest cursor-pointer hover:opacity-95 transition-colors">
                             上傳圖片或 PDF
                             <input
                               type="file"
@@ -5121,7 +5142,7 @@ const ItineraryListItem = React.memo(
                               return (
                                 <div
                                   key={attachment.id}
-                                  className="relative group/attachment rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden"
+                                  className="relative group/attachment rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-black/30 shadow-sm overflow-hidden"
                                 >
                                   <button
                                     type="button"
@@ -5141,7 +5162,7 @@ const ItineraryListItem = React.memo(
                                         className="w-20 h-20 object-cover rounded-[12px]"
                                       />
                                     ) : (
-                                      <span className="text-xs font-black text-slate-700">
+                                      <span className="text-xs font-black text-slate-700 dark:text-slate-300">
                                         📄 {attachment.name}
                                       </span>
                                     )}
@@ -5153,7 +5174,7 @@ const ItineraryListItem = React.memo(
                                     onClick={() =>
                                       removeAttachment(attachment.id)
                                     }
-                                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 text-slate-500 hover:text-rose-500 shadow-sm opacity-0 group-hover/attachment:opacity-100 transition-opacity"
+                                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 dark:bg-slate-800 text-slate-500 hover:text-rose-500 shadow-sm opacity-0 group-hover/attachment:opacity-100 transition-opacity flex items-center justify-center"
                                   >
                                     <X size={12} />
                                   </button>
@@ -5162,7 +5183,7 @@ const ItineraryListItem = React.memo(
                             })}
                           </div>
                         ) : (
-                          <p className="text-xs font-bold text-slate-500">
+                          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
                             可放電子票、QR code 截圖或 PDF 憑證。
                           </p>
                         )}
@@ -5171,11 +5192,11 @@ const ItineraryListItem = React.memo(
                         <select
                           value={editLinkedFactId}
                           onChange={(e) => setEditLinkedFactId(e.target.value)}
-                          className="text-sm font-bold text-slate-700 bg-white/85 border border-slate-200 rounded-2xl px-4 py-2 outline-none focus:ring-4 focus:ring-pink-100 transition-all"
+                          className="outline-none w-full text-sm font-bold text-slate-700 dark:text-slate-100 bg-white/70 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-2 focus:ring-2 focus:ring-pink-500/30 transition-all shadow-sm"
                         >
-                          <option value="">無關聯 Travel Fact (未選擇)</option>
+                          <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">無關聯 Travel Fact (未選擇)</option>
                           {facts.map((f) => (
-                            <option key={f.id} value={f.id}>
+                            <option key={f.id} value={f.id} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
                               {f.title} ({f.factType})
                             </option>
                           ))}

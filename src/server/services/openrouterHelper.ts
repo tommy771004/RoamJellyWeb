@@ -1,30 +1,31 @@
 // Free-tier models sourced from https://openrouter.ai/api/v1/models (pricing.prompt === "0").
-// Last synced 2026-05-11. Ordered by expected capability for Chinese travel JSON generation.
-// Excluded: audio (lyria), OCR (qianfan-ocr), internal (openrouter/owl-alpha, openrouter/free), code-only (poolside/*), unknown (inclusionai/ring).
+// Last synced 2026-05-21. Ordered by context length descending.
+// EXCLUDED MODELS:
+// - 'openrouter/owl-alpha': Fails with 400 "Provider returned error" or returns empty content (internal/unreliable).
+// - 'google/lyria-3-pro-preview' & 'google/lyria-3-clip-preview': Require credits (402 Insufficient credits) and represent audio/video features.
+// - 'openrouter/free': Meta-router which can fail or return unexpected, unparsable formats.
+// - 'poolside/laguna-xs.2:free' & 'poolside/laguna-m.1:free': Specialized core coding models.
 const FREE_MODELS = [
-  // Large / high-capability
-  'openai/gpt-oss-120b:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  'qwen/qwen3-next-80b-a3b-instruct:free',
-  // Mid-tier — confirmed present
-  'google/gemma-4-31b-it:free',
-  'google/gemma-4-26b-a4b-it:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'openai/gpt-oss-20b:free',
-  'nvidia/nemotron-3-nano-30b-a3b:free',
-  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-  'nousresearch/hermes-3-llama-3.1-405b:free',
-  'z-ai/glm-4.5-air:free',
   'qwen/qwen3-coder:free',
-  'minimax/minimax-m2.5:free',
-  // Small — confirmed present
+  'deepseek/deepseek-v4-flash:free',
+  'google/gemma-4-26b-a4b-it:free',
+  'google/gemma-4-31b-it:free',
+  'qwen/qwen3-next-80b-a3b-instruct:free',
+  'baidu/cobuddy:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
   'meta-llama/llama-3.2-3b-instruct:free',
-  'nvidia/nemotron-nano-12b-v2-vl:free',
-  'nvidia/nemotron-nano-9b-v2:free',
-  'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
-  // Tiny — last resort
+  'nousresearch/hermes-3-llama-3.1-405b:free',
+  'minimax/minimax-m2.5:free',
+  'openai/gpt-oss-120b:free',
+  'openai/gpt-oss-20b:free',
+  'z-ai/glm-4.5-air:free',
   'liquid/lfm-2.5-1.2b-thinking:free',
   'liquid/lfm-2.5-1.2b-instruct:free',
+  'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
+  'nvidia/llama-nemotron-embed-vl-1b-v2:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'nvidia/nemotron-nano-12b-v2-vl:free',
+  'nvidia/nemotron-nano-9b-v2:free',
 ];
 
 // WARNING: PAID models — only used when ALLOW_PAID_FALLBACK=true.

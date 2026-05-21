@@ -135,7 +135,7 @@ export default function QuickExpenseModal({
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-alert-above overflow-hidden flex flex-col max-h-90dvh"
+          className="relative w-full max-w-lg rounded-[36px] bg-white/90 dark:bg-slate-950/80 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-2xl dark:shadow-black/50 z-alert-above overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 z-10" />
           <form
@@ -147,10 +147,10 @@ export default function QuickExpenseModal({
                 <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-500">
                   Quick Expense
                 </p>
-                <h3 className="mt-2 text-2xl font-black text-slate-800 tracking-tight">
+                <h3 className="mt-2 text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
                   為景點快速記一筆
                 </h3>
-                <p className="mt-2 text-sm font-bold text-slate-500">
+                <p className="mt-2 text-sm font-bold text-slate-500 dark:text-slate-400">
                   {node.title}
                   {node.date ? ` ・ ${node.date}` : ""}
                   {node.time ? ` ・ ${node.time}` : ""}
@@ -159,26 +159,26 @@ export default function QuickExpenseModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-10 h-10 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                className="w-10 h-10 rounded-full bg-slate-50 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/15 transition-colors flex items-center justify-center"
               >
                 <X size={18} />
               </button>
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+              <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                 消費名稱
               </label>
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
+                className="outline-none w-full bg-slate-50/70 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-slate-100 dark:border-white/10 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-slate-100/80 dark:hover:bg-black/50 focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-emerald-500/30 dark:focus:ring-emerald-500/20 transition-all shadow-sm"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                   金額
                 </label>
                 <input
@@ -186,11 +186,11 @@ export default function QuickExpenseModal({
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
                   placeholder="例如 980"
-                  className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
+                  className="outline-none w-full bg-slate-50/70 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-slate-100 dark:border-white/10 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-slate-100/80 dark:hover:bg-black/50 focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-emerald-500/30 dark:focus:ring-emerald-500/20 transition-all shadow-sm"
                 />
               </div>
               <div className="grid grid-cols-1 flex flex-col gap-2">
-                <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                   幣別
                 </label>
                 <input
@@ -198,22 +198,22 @@ export default function QuickExpenseModal({
                   onChange={(event) =>
                     setCurrency(event.target.value.toUpperCase())
                   }
-                  className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
+                  className="outline-none w-full bg-slate-50/70 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-slate-100 dark:border-white/10 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-slate-100/80 dark:hover:bg-black/50 focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-emerald-500/30 dark:focus:ring-emerald-500/20 transition-all shadow-sm"
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+              <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                 代墊人
               </label>
               <select
                 value={payer}
                 onChange={(event) => setPayer(event.target.value)}
-                className="w-full rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-100"
+                className="outline-none w-full bg-slate-50/70 dark:bg-slate-900 border border-slate-100 dark:border-white/10 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-slate-100/80 dark:hover:bg-slate-900/80 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-emerald-500/30 dark:focus:ring-emerald-500/20 transition-all rounded-2xl shadow-sm"
               >
                 {participantList.map((member) => (
-                  <option key={member} value={member}>
+                  <option key={member} value={member} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
                     {member}
                   </option>
                 ))}
@@ -221,7 +221,7 @@ export default function QuickExpenseModal({
             </div>
 
             <div className="flex flex-col gap-3">
-              <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+              <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                 參與旅伴
               </label>
               <div className="flex flex-wrap gap-2">
@@ -234,8 +234,8 @@ export default function QuickExpenseModal({
                       onClick={() => toggleSplitMember(member)}
                       className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${
                         selected
-                          ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                          : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"
+                          ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                          : "bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-white/10 hover:bg-white dark:hover:bg-white/10"
                       }`}
                     >
                       {member}
@@ -248,7 +248,7 @@ export default function QuickExpenseModal({
             <button
               type="submit"
               disabled={submitting}
-              className="w-full mt-2 rounded-2xl bg-slate-900 text-white py-4 font-black text-sm uppercase tracking-[0.18em] shadow-lg hover:bg-slate-800 transition-all disabled:opacity-50 flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4"
+              className="w-full mt-2 rounded-[20px] bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-4 font-black text-sm uppercase tracking-[0.18em] shadow-lg hover:opacity-90 transition-all disabled:opacity-50 flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4"
             >
               {submitting && (
                 <Loader2 size={16} className="animate-spin shrink-0" />
