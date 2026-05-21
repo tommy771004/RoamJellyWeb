@@ -1208,6 +1208,179 @@ export default function HomeTab({
   const prefersReducedMotion = useReducedMotion() ?? false;
   const { onScroll } = useHideNavOnScroll();
 
+  const [showFlightsDropdown, setShowFlightsDropdown] = useState(false);
+  const [zoomedFlightsIndex, setZoomedFlightsIndex] = useState<number | null>(null);
+  const flightDropdownRef = useRef<HTMLDivElement>(null);
+  const flightMenuContentRef = useRef<HTMLDivElement>(null);
+  const hoverTimeout = useRef<any>(null);
+
+  const [showHotelsDropdown, setShowHotelsDropdown] = useState(false);
+  const [zoomedHotelsIndex, setZoomedHotelsIndex] = useState<number | null>(null);
+  const hotelDropdownRef = useRef<HTMLDivElement>(null);
+  const hotelMenuContentRef = useRef<HTMLDivElement>(null);
+  const hotelHoverTimeout = useRef<any>(null);
+
+  const [showTicketsDropdown, setShowTicketsDropdown] = useState(false);
+  const [zoomedTicketsIndex, setZoomedTicketsIndex] = useState<number | null>(null);
+  const ticketDropdownRef = useRef<HTMLDivElement>(null);
+  const ticketMenuContentRef = useRef<HTMLDivElement>(null);
+  const ticketHoverTimeout = useRef<any>(null);
+
+  const [showTransfersDropdown, setShowTransfersDropdown] = useState(false);
+  const [zoomedTransfersIndex, setZoomedTransfersIndex] = useState<number | null>(null);
+  const transfersDropdownRef = useRef<HTMLDivElement>(null);
+  const transfersMenuContentRef = useRef<HTMLDivElement>(null);
+  const transfersHoverTimeout = useRef<any>(null);
+
+  const chipsScrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileDevice(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      const target = event.target as Node;
+      
+      const insideFlightBtn = flightDropdownRef.current && flightDropdownRef.current.contains(target);
+      const insideFlightMenu = flightMenuContentRef.current && flightMenuContentRef.current.contains(target);
+      if (!insideFlightBtn && !insideFlightMenu) {
+        setShowFlightsDropdown(false);
+        setZoomedFlightsIndex(null);
+      }
+
+      const insideHotelBtn = hotelDropdownRef.current && hotelDropdownRef.current.contains(target);
+      const insideHotelMenu = hotelMenuContentRef.current && hotelMenuContentRef.current.contains(target);
+      if (!insideHotelBtn && !insideHotelMenu) {
+        setShowHotelsDropdown(false);
+        setZoomedHotelsIndex(null);
+      }
+
+      const insideTicketBtn = ticketDropdownRef.current && ticketDropdownRef.current.contains(target);
+      const insideTicketMenu = ticketMenuContentRef.current && ticketMenuContentRef.current.contains(target);
+      if (!insideTicketBtn && !insideTicketMenu) {
+        setShowTicketsDropdown(false);
+        setZoomedTicketsIndex(null);
+      }
+
+      const insideTransfersBtn = transfersDropdownRef.current && transfersDropdownRef.current.contains(target);
+      const insideTransfersMenu = transfersMenuContentRef.current && transfersMenuContentRef.current.contains(target);
+      if (!insideTransfersBtn && !insideTransfersMenu) {
+        setShowTransfersDropdown(false);
+        setZoomedTransfersIndex(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
+
+  const FLIGHT_PLATFORMS = useMemo(() => [
+    {
+      name: "Trip.com 攜程機票",
+      badge: "最推薦 ✨",
+      logoColor: "from-blue-500 to-sky-400",
+      url: "https://www.trip.com/?allianceid=1762106&sid=111111",
+    },
+    {
+      name: "Skyscanner 比價機票",
+      badge: "流量王 ✦",
+      logoColor: "from-teal-400 to-emerald-400",
+      url: "https://www.skyscanner.com.tw/?associateid=aff-tp-1762106",
+    },
+    {
+      name: "Travelpayouts 旅遊聚合",
+      badge: "優選 ✦",
+      logoColor: "from-pink-500 to-rose-400",
+      url: "https://www.travelpayouts.com/?marker=176215",
+    }
+  ], []);
+
+  const HOTEL_PLATFORMS = useMemo(() => [
+    {
+      name: "Agoda 雅高達訂房",
+      badge: "亞洲首選 ✨",
+      logoColor: "from-purple-500 to-pink-500",
+      url: "https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw",
+    },
+    {
+      name: "Booking.com 繽客訂房",
+      badge: "房源最多 ✦",
+      logoColor: "from-blue-600 to-sky-500",
+      url: "https://www.booking.com/index.html?aid=111111",
+    },
+    {
+      name: "Trip.com 攜程訂房",
+      badge: "高額回饋 ✦",
+      logoColor: "from-teal-500 to-emerald-400",
+      url: "https://www.trip.com/hotels/?allianceid=1762106&sid=111111",
+    }
+  ], []);
+
+  const TICKET_PLATFORMS = useMemo(() => [
+    {
+      name: "Klook 客路門票",
+      badge: "亞洲首選 ✨",
+      logoColor: "from-orange-500 to-amber-500",
+      url: "https://www.klook.com/zh-TW/?aid=111111",
+    },
+    {
+      name: "KKday 觀光行程",
+      badge: "在地深度 ✦",
+      logoColor: "from-cyan-400 to-sky-500",
+      url: "https://www.kkday.com/zh-tw?cid=4480",
+    },
+    {
+      name: "GetYourGuide 體驗",
+      badge: "歐美最熱 ✦",
+      logoColor: "from-orange-600 to-yellow-500",
+      url: "https://www.getyourguide.com/",
+    },
+    {
+      name: "Viator 國外景點",
+      badge: "全球最大 ✦",
+      logoColor: "from-emerald-600 to-teal-500",
+      url: "https://www.viator.com/",
+    }
+  ], []);
+
+  const TRANSFERS_PLATFORMS = useMemo(() => [
+    {
+      name: "Klook 機場接送",
+      badge: "專車/共享 🚗",
+      logoColor: "from-orange-500 to-amber-500",
+      url: "https://www.klook.com/zh-TW/activity/987-taoyuan-airport-transfers-taipei/?aid=111111",
+    },
+    {
+      name: "KKday 機場/包車接駁",
+      badge: "優質司機 ✦",
+      logoColor: "from-cyan-400 to-sky-500",
+      url: "https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480",
+    },
+    {
+      name: "Tripool 旅步專車",
+      badge: "回頭車划算 ✦",
+      logoColor: "from-blue-600 to-indigo-500",
+      url: "https://www.tripool.app/",
+    },
+    {
+      name: "Gleefultour 快活兔車隊",
+      badge: "合法安全 ✦",
+      logoColor: "from-rose-500 to-red-400",
+      url: "https://www.gleefultour.com/",
+    }
+  ], []);
+
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
 
@@ -2209,7 +2382,7 @@ export default function HomeTab({
                     ) : (
                       <>
                         <SearchIcon size={18} strokeWidth={3} className="drop-shadow-sm group-hover:animate-cute-bounce" /> 
-                        <span className="drop-shadow-sm group-hover:text-pink-50 transition-colors">開始規劃這趟旅程 ✨</span>
+                        <span className="drop-shadow-sm group-hover:text-pink-50 transition-colors">立即比價 ✨</span>
                       </>
                     )}
                   </button>
@@ -2224,59 +2397,581 @@ export default function HomeTab({
       </div>
 
       {/* === CONTENT BELOW HERO === */}
-      <div className="relative z-0 flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60">
+      <div className="relative z-10 flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60">
         {/* Quick External Links */}
-        <div className="max-w-3xl mx-auto w-full pt-3 sm:pt-4 pb-1 sm:pb-2">
-          <div className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-1">
-            <a
-              href="https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+        <div className="max-w-3xl mx-auto w-full pt-3 sm:pt-4 pb-1 sm:pb-2 relative z-20">
+          <div className="relative group/scroll-row w-full flex items-center pr-2">
+            {/* Left transparent glass arrow button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                if (chipsScrollContainerRef.current) {
+                  chipsScrollContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
+                }
+              }}
+              className="absolute left-[-10px] md:left-[-16px] z-30 flex items-center justify-center w-8 h-8 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 active:scale-95"
+              aria-label="往左捲動"
             >
-              <Bed
-                size={17}
-                className="text-[#B92A8E] group-hover:scale-110 transition-transform"
-                strokeWidth={2.5}
-              />
-              <span className="font-bold text-[13px] tracking-wide">
-                找住宿
-              </span>
-            </a>
-            <a
-              href="https://www.kkday.com/zh-tw?cid=4480"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+              <ChevronLeft size={16} strokeWidth={3} />
+            </button>
+
+            {/* The scrollable section */}
+            <div 
+              ref={chipsScrollContainerRef}
+              className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-1 w-full"
             >
-              <Ticket
-                size={15}
-                className="text-[#F18400] group-hover:scale-110 transition-transform"
-                strokeWidth={2.5}
-              />
-              <span className="font-bold text-[13px] tracking-wide">
-                門票 & 觀光行程
-              </span>
-            </a>
-            <a
-              href="https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 snap-start transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
-            >
-              <div className="relative text-[#EC4899] group-hover:scale-110 transition-transform">
-                <CarFront size={17} strokeWidth={2.5} />
-                <PlaneTakeoff
-                  size={9}
-                  strokeWidth={3}
-                  className="absolute -top-1 -left-1"
-                />
+              {/* 找機票 (Flights Platform Multi-action Menu Button) */}
+              <div 
+                ref={flightDropdownRef} 
+                className="relative shrink-0 snap-start z-[50]"
+                onMouseEnter={() => {
+                  if (!isMobileDevice) {
+                    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+                    setShowFlightsDropdown(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (!isMobileDevice) {
+                    hoverTimeout.current = setTimeout(() => {
+                      setShowFlightsDropdown(false);
+                    }, 250);
+                  }
+                }}
+              >
+                <button
+                  id="home-find-flights-btn"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowFlightsDropdown(prev => !prev);
+                    setShowHotelsDropdown(false);
+                    setShowTicketsDropdown(false);
+                    setShowTransfersDropdown(false);
+                    if (zoomedFlightsIndex !== null) setZoomedFlightsIndex(null);
+                  }}
+                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+                >
+                  <PlaneTakeoff
+                    size={17}
+                    className="text-sky-500 group-hover:scale-110 transition-transform"
+                    strokeWidth={2.5}
+                  />
+                  <span className="font-bold text-[13px] tracking-wide">
+                    找機票
+                  </span>
+                  <ChevronDown
+                    size={12}
+                    className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 ${showFlightsDropdown ? 'rotate-180' : ''}`}
+                  />
+                </button>
               </div>
-              <span className="font-bold text-[13px] tracking-wide">
-                機場接送
-              </span>
-            </a>
+
+              {/* 找住宿 (Hotels Platform Multi-action Menu Button) */}
+              <div 
+                ref={hotelDropdownRef} 
+                className="relative shrink-0 snap-start z-[50]"
+                onMouseEnter={() => {
+                  if (!isMobileDevice) {
+                    if (hotelHoverTimeout.current) clearTimeout(hotelHoverTimeout.current);
+                    setShowHotelsDropdown(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (!isMobileDevice) {
+                    hotelHoverTimeout.current = setTimeout(() => {
+                      setShowHotelsDropdown(false);
+                    }, 250);
+                  }
+                }}
+              >
+                <button
+                  id="home-find-hotels-btn"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowHotelsDropdown(prev => !prev);
+                    setShowFlightsDropdown(false);
+                    setShowTicketsDropdown(false);
+                    setShowTransfersDropdown(false);
+                    if (zoomedHotelsIndex !== null) setZoomedHotelsIndex(null);
+                  }}
+                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+                >
+                  <Bed
+                    size={17}
+                    className="text-[#B92A8E] group-hover:scale-110 transition-transform"
+                    strokeWidth={2.5}
+                  />
+                  <span className="font-bold text-[13px] tracking-wide">
+                    找住宿
+                  </span>
+                  <ChevronDown
+                    size={12}
+                    className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 ${showHotelsDropdown ? 'rotate-180' : ''}`}
+                  />
+                </button>
+              </div>
+
+              {/* 門票 & 觀光行程 (Tickets/Activities Platform Multi-action Menu Button) */}
+              <div 
+                ref={ticketDropdownRef} 
+                className="relative shrink-0 snap-start z-[50]"
+                onMouseEnter={() => {
+                  if (!isMobileDevice) {
+                    if (ticketHoverTimeout.current) clearTimeout(ticketHoverTimeout.current);
+                    setShowTicketsDropdown(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (!isMobileDevice) {
+                    ticketHoverTimeout.current = setTimeout(() => {
+                      setShowTicketsDropdown(false);
+                    }, 250);
+                  }
+                }}
+              >
+                <button
+                  id="home-find-tickets-btn"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTicketsDropdown(prev => !prev);
+                    setShowFlightsDropdown(false);
+                    setShowHotelsDropdown(false);
+                    setShowTransfersDropdown(false);
+                    if (zoomedTicketsIndex !== null) setZoomedTicketsIndex(null);
+                  }}
+                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+                >
+                  <Ticket
+                    size={15}
+                    className="text-[#F18400] group-hover:scale-110 transition-transform"
+                    strokeWidth={2.5}
+                  />
+                  <span className="font-bold text-[13px] tracking-wide">
+                    門票 & 觀光行程
+                  </span>
+                  <ChevronDown
+                    size={12}
+                    className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 ${showTicketsDropdown ? 'rotate-180' : ''}`}
+                  />
+                </button>
+              </div>
+
+              {/* 機場接送 (Transfers/Charter Platform Multi-action Menu Button) */}
+              <div 
+                ref={transfersDropdownRef} 
+                className="relative shrink-0 snap-start z-[50]"
+                onMouseEnter={() => {
+                  if (!isMobileDevice) {
+                    if (transfersHoverTimeout.current) clearTimeout(transfersHoverTimeout.current);
+                    setShowTransfersDropdown(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (!isMobileDevice) {
+                    transfersHoverTimeout.current = setTimeout(() => {
+                      setShowTransfersDropdown(false);
+                    }, 250);
+                  }
+                }}
+              >
+                <button
+                  id="home-find-transfers-btn"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTransfersDropdown(prev => !prev);
+                    setShowFlightsDropdown(false);
+                    setShowHotelsDropdown(false);
+                    setShowTicketsDropdown(false);
+                    if (zoomedTransfersIndex !== null) setZoomedTransfersIndex(null);
+                  }}
+                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+                >
+                  <div className="relative text-[#EC4899] group-hover:scale-110 transition-transform">
+                    <CarFront size={17} strokeWidth={2.5} />
+                    <PlaneTakeoff
+                      size={9}
+                      strokeWidth={3}
+                      className="absolute -top-1 -left-1"
+                    />
+                  </div>
+                  <span className="font-bold text-[13px] tracking-wide">
+                    機場接送
+                  </span>
+                  <ChevronDown
+                    size={12}
+                    className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 ${showTransfersDropdown ? 'rotate-180' : ''}`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Right transparent glass arrow button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                if (chipsScrollContainerRef.current) {
+                  chipsScrollContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
+                }
+              }}
+              className="absolute right-[-10px] md:right-[-16px] z-30 flex items-center justify-center w-8 h-8 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 active:scale-95"
+              aria-label="往右捲動"
+            >
+              <ChevronRight size={16} strokeWidth={3} />
+            </button>
           </div>
+
+          <AnimatePresence>
+            {showFlightsDropdown && (
+              <motion.div
+                ref={flightMenuContentRef}
+                onMouseEnter={() => {
+                  if (!isMobileDevice) {
+                    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+                    setShowFlightsDropdown(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (!isMobileDevice) {
+                    setShowFlightsDropdown(false);
+                  }
+                }}
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                style={{ originY: 0 }}
+                className="absolute left-0 mt-3 w-[260px] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200/55 dark:border-white/10 rounded-[20px] p-3 shadow-[0_20px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.35)] z-[100] overflow-hidden"
+              >
+                <div className="mb-2 px-1 pb-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                  <span className="text-[12px] font-black tracking-wide text-slate-800 dark:text-slate-100">
+                    推薦比價平台
+                  </span>
+                  {isMobileDevice ? (
+                    <span className="text-[8px] font-black tracking-widest bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200/40">
+                      點擊縮放 🔍
+                    </span>
+                  ) : (
+                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-450 px-1.5 py-0.5 rounded-full border border-sky-200/45">
+                      網頁縮放 ✦
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  {FLIGHT_PLATFORMS.map((platform, idx) => {
+                    const isZoomed = zoomedFlightsIndex === idx;
+                    return (
+                      <motion.a
+                        key={platform.name}
+                        id={`flight-platform-${idx}`}
+                        href={platform.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          if (isMobileDevice) {
+                            if (!isZoomed) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setZoomedFlightsIndex(idx);
+                            }
+                          }
+                        }}
+                        whileHover={!isMobileDevice ? {
+                          scale: 1.05,
+                          x: 2,
+                          backgroundColor: "rgba(241, 245, 249, 0.9)",
+                        } : undefined}
+                        animate={isMobileDevice ? {
+                          scale: isZoomed ? 1.06 : 1,
+                          backgroundColor: isZoomed ? "rgba(241, 245, 249, 0.9)" : "rgba(255, 255, 255, 0)"
+                        } : undefined}
+                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer text-slate-700 dark:text-slate-200 ${
+                          isZoomed 
+                            ? "border-sky-400 dark:border-sky-500 bg-slate-50 dark:bg-slate-900/60" 
+                            : "border-transparent hover:border-slate-100 dark:hover:border-white/5"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-tr ${platform.logoColor} shrink-0`} />
+                          <span className="font-extrabold text-[12.5px] leading-none text-slate-800 dark:text-slate-100">
+                            {platform.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[8.5px] font-bold text-slate-400 dark:text-slate-500">
+                            {isZoomed ? "點擊前往 ➔" : platform.badge}
+                          </span>
+                        </div>
+                      </motion.a>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {showHotelsDropdown && (
+              <motion.div
+                ref={hotelMenuContentRef}
+                onMouseEnter={() => {
+                  if (!isMobileDevice) {
+                    if (hotelHoverTimeout.current) clearTimeout(hotelHoverTimeout.current);
+                    setShowHotelsDropdown(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (!isMobileDevice) {
+                    setShowHotelsDropdown(false);
+                  }
+                }}
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                style={{ originY: 0 }}
+                className="absolute left-[70px] sm:left-[110px] mt-3 w-[260px] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200/55 dark:border-white/10 rounded-[20px] p-3 shadow-[0_20px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.35)] z-[100] overflow-hidden"
+              >
+                <div className="mb-2 px-1 pb-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                  <span className="text-[12px] font-black tracking-wide text-slate-800 dark:text-slate-100">
+                    推薦住宿平台
+                  </span>
+                  {isMobileDevice ? (
+                    <span className="text-[8px] font-black tracking-widest bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200/40">
+                      點擊縮放 🔍
+                    </span>
+                  ) : (
+                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-450 px-1.5 py-0.5 rounded-full border border-sky-200/45">
+                      網頁縮放 ✦
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  {HOTEL_PLATFORMS.map((platform, idx) => {
+                    const isZoomed = zoomedHotelsIndex === idx;
+                    return (
+                      <motion.a
+                        key={platform.name}
+                        id={`hotel-platform-${idx}`}
+                        href={platform.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          if (isMobileDevice) {
+                            if (!isZoomed) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setZoomedHotelsIndex(idx);
+                            }
+                          }
+                        }}
+                        whileHover={!isMobileDevice ? {
+                          scale: 1.05,
+                          x: 2,
+                          backgroundColor: "rgba(241, 245, 249, 0.9)",
+                        } : undefined}
+                        animate={isMobileDevice ? {
+                          scale: isZoomed ? 1.06 : 1,
+                          backgroundColor: isZoomed ? "rgba(241, 245, 249, 0.9)" : "rgba(255, 255, 255, 0)"
+                        } : undefined}
+                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer text-slate-700 dark:text-slate-200 ${
+                          isZoomed 
+                            ? "border-sky-400 dark:border-sky-500 bg-slate-50 dark:bg-slate-900/60" 
+                            : "border-transparent hover:border-slate-100 dark:hover:border-white/5"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-tr ${platform.logoColor} shrink-0`} />
+                          <span className="font-extrabold text-[12.5px] leading-none text-slate-800 dark:text-slate-100">
+                            {platform.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[8.5px] font-bold text-slate-400 dark:text-slate-500">
+                            {isZoomed ? "點擊前往 ➔" : platform.badge}
+                          </span>
+                        </div>
+                      </motion.a>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {showTicketsDropdown && (
+              <motion.div
+                ref={ticketMenuContentRef}
+                onMouseEnter={() => {
+                  if (!isMobileDevice) {
+                    if (ticketHoverTimeout.current) clearTimeout(ticketHoverTimeout.current);
+                    setShowTicketsDropdown(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (!isMobileDevice) {
+                    setShowTicketsDropdown(false);
+                  }
+                }}
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                style={{ originY: 0 }}
+                className="absolute left-[140px] sm:left-[220px] mt-3 w-[260px] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200/55 dark:border-white/10 rounded-[20px] p-3 shadow-[0_20px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.35)] z-[100] overflow-hidden"
+              >
+                <div className="mb-2 px-1 pb-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                  <span className="text-[12px] font-black tracking-wide text-slate-800 dark:text-slate-100">
+                    推薦門票特惠平台
+                  </span>
+                  {isMobileDevice ? (
+                    <span className="text-[8px] font-black tracking-widest bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200/40">
+                      點擊縮放 🔍
+                    </span>
+                  ) : (
+                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-450 px-1.5 py-0.5 rounded-full border border-sky-200/45">
+                      網頁縮放 ✦
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  {TICKET_PLATFORMS.map((platform, idx) => {
+                    const isZoomed = zoomedTicketsIndex === idx;
+                    return (
+                      <motion.a
+                        key={platform.name}
+                        id={`ticket-platform-${idx}`}
+                        href={platform.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          if (isMobileDevice) {
+                            if (!isZoomed) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setZoomedTicketsIndex(idx);
+                            }
+                          }
+                        }}
+                        whileHover={!isMobileDevice ? {
+                          scale: 1.05,
+                          x: 2,
+                          backgroundColor: "rgba(241, 245, 249, 0.9)",
+                        } : undefined}
+                        animate={isMobileDevice ? {
+                          scale: isZoomed ? 1.06 : 1,
+                          backgroundColor: isZoomed ? "rgba(241, 245, 249, 0.9)" : "rgba(255, 255, 255, 0)"
+                        } : undefined}
+                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer text-slate-700 dark:text-slate-200 ${
+                          isZoomed 
+                            ? "border-sky-400 dark:border-sky-500 bg-slate-50 dark:bg-slate-900/60" 
+                            : "border-transparent hover:border-slate-100 dark:hover:border-white/5"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-tr ${platform.logoColor} shrink-0`} />
+                          <span className="font-extrabold text-[12.5px] leading-none text-slate-800 dark:text-slate-100">
+                            {platform.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[8.5px] font-bold text-slate-400 dark:text-slate-500">
+                            {isZoomed ? "點擊前往 ➔" : platform.badge}
+                          </span>
+                        </div>
+                      </motion.a>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {showTransfersDropdown && (
+              <motion.div
+                ref={transfersMenuContentRef}
+                onMouseEnter={() => {
+                  if (!isMobileDevice) {
+                    if (transfersHoverTimeout.current) clearTimeout(transfersHoverTimeout.current);
+                    setShowTransfersDropdown(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (!isMobileDevice) {
+                    setShowTransfersDropdown(false);
+                  }
+                }}
+                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                style={{ originY: 0 }}
+                className="absolute left-[200px] sm:left-[320px] mt-3 w-[260px] bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200/55 dark:border-white/10 rounded-[20px] p-3 shadow-[0_20px_40px_rgba(15,23,42,0.14)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.35)] z-[100] overflow-hidden"
+              >
+                <div className="mb-2 px-1 pb-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                  <span className="text-[12px] font-black tracking-wide text-slate-800 dark:text-slate-100">
+                    推薦接送與車隊服務
+                  </span>
+                  {isMobileDevice ? (
+                    <span className="text-[8px] font-black tracking-widest bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200/40">
+                      點擊縮放 🔍
+                    </span>
+                  ) : (
+                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-450 px-1.5 py-0.5 rounded-full border border-sky-200/45">
+                      網頁縮放 ✦
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  {TRANSFERS_PLATFORMS.map((platform, idx) => {
+                    const isZoomed = zoomedTransfersIndex === idx;
+                    return (
+                      <motion.a
+                        key={platform.name}
+                        id={`transfers-platform-${idx}`}
+                        href={platform.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          if (isMobileDevice) {
+                            if (!isZoomed) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setZoomedTransfersIndex(idx);
+                            }
+                          }
+                        }}
+                        whileHover={!isMobileDevice ? {
+                          scale: 1.05,
+                          x: 2,
+                          backgroundColor: "rgba(241, 245, 249, 0.9)",
+                        } : undefined}
+                        animate={isMobileDevice ? {
+                          scale: isZoomed ? 1.06 : 1,
+                          backgroundColor: isZoomed ? "rgba(241, 245, 249, 0.9)" : "rgba(255, 255, 255, 0)"
+                        } : undefined}
+                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer text-slate-700 dark:text-slate-200 ${
+                          isZoomed 
+                            ? "border-sky-400 dark:border-sky-500 bg-slate-50 dark:bg-slate-900/60" 
+                            : "border-transparent hover:border-slate-100 dark:hover:border-white/5"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-tr ${platform.logoColor} shrink-0`} />
+                          <span className="font-extrabold text-[12.5px] leading-none text-slate-800 dark:text-slate-100">
+                            {platform.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[8.5px] font-bold text-slate-400 dark:text-slate-500">
+                            {isZoomed ? "點擊前往 ➔" : platform.badge}
+                          </span>
+                        </div>
+                      </motion.a>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="pt-5 sm:pt-7 pb-16 md:pb-32 flex flex-col flex-1 min-w-0">

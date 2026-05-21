@@ -148,24 +148,24 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: '100%', opacity: 0, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-modal-above flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[30px] border border-white/72 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] shadow-[0_24px_60px_rgba(15,23,42,0.16)] md:inset-0 md:m-auto md:h-[85vh] md:max-w-2xl md:rounded-[32px]"
+            className="fixed bottom-0 left-0 right-0 z-modal-above flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[30px] border border-white/72 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(9,15,30,0.97),rgba(15,23,42,0.95))] dark:border-white/10 dark:text-slate-100 shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:shadow-black/60 md:inset-0 md:m-auto md:h-[85vh] md:max-w-2xl md:rounded-[32px]"
           >
             {/* Header */}
-            <div className="z-10 flex shrink-0 items-center justify-between rounded-t-[30px] border-b border-white/78 bg-white/78 px-5 py-4 backdrop-blur-xl sm:px-7 sm:py-5 md:rounded-t-[32px]">
+            <div className="z-10 flex shrink-0 items-center justify-between rounded-t-[30px] border-b border-white/78 bg-white/78 dark:bg-slate-900/90 dark:border-white/10 px-5 py-4 backdrop-blur-xl sm:px-7 sm:py-5 md:rounded-t-[32px]">
               <div className="flex items-center gap-4">
                 <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-[18px] bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_12px_26px_rgba(14,165,233,0.22)]">
                   <Sparkles size={20} className="relative z-10" />
                 </div>
                 <div>
-                  <h2 className="flex items-center gap-2 whitespace-nowrap text-[22px] font-black tracking-[-0.04em] text-slate-800">
+                  <h2 className="flex items-center gap-2 whitespace-nowrap text-[22px] font-black tracking-[-0.04em] text-slate-800 dark:text-slate-100">
                     AI 專屬行程偏好
                   </h2>
-                  <p className="mt-0.5 text-[12px] font-medium leading-[1.5] text-slate-500">預設保存，讓 AI 更懂你的旅行風格</p>
+                  <p className="mt-0.5 text-[12px] font-medium leading-[1.5] text-slate-500 dark:text-slate-400">預設保存，讓 AI 更懂你的旅行風格</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100/90 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-600"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100/90 text-slate-500 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                 aria-label="關閉"
               >
                 <X size={18} />
@@ -183,33 +183,33 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 <React.Fragment>
                   {/* Basic Info */}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4">
-                    <div className="group flex flex-col gap-3 rounded-[24px] border border-white/86 bg-white/78 p-4 text-left shadow-[0_10px_22px_rgba(15,23,42,0.05)] transition-all focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/20 sm:p-5">
-                      <Label className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <div className="group flex flex-col gap-3 rounded-[24px] border border-white/86 bg-white/78 dark:border-white/10 dark:bg-black/40 p-4 text-left shadow-[0_10px_22px_rgba(15,23,42,0.05)] dark:shadow-black/20 transition-all focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/20 sm:p-5">
+                      <Label className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                         <MapPin size={16} className="text-indigo-500 group-focus-within:scale-110 transition-transform" /> 通常出發地
                       </Label>
                       <Input 
                         placeholder="例如：TPE 桃園機場、高雄" 
                         value={profile.departure}
                         onChange={(e) => setProfile(p => ({ ...p, departure: e.target.value }))}
-                        className="h-11 rounded-none border-0 bg-slate-50/40 px-0 !text-[14px] font-medium !text-slate-800 placeholder:text-slate-400 shadow-inner focus:bg-white focus:ring-0 focus-visible:ring-0"
+                        className="h-11 rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-4 !text-[14px] font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:bg-white/60 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                       />
                     </div>
                     
-                    <div className="group flex flex-col gap-3 rounded-[24px] border border-white/86 bg-white/78 p-4 text-left shadow-[0_10px_22px_rgba(15,23,42,0.05)] transition-all focus-within:border-rose-300 focus-within:ring-2 focus-within:ring-rose-500/20 sm:p-5">
-                      <Label className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <div className="group flex flex-col gap-3 rounded-[24px] border border-white/86 bg-white/78 dark:border-white/10 dark:bg-black/40 p-4 text-left shadow-[0_10px_22px_rgba(15,23,42,0.05)] dark:shadow-black/20 transition-all focus-within:border-rose-300 focus-within:ring-2 focus-within:ring-rose-500/20 sm:p-5">
+                      <Label className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                         <Users size={16} className="text-rose-500 group-focus-within:scale-110 transition-transform" /> 同行者類型
                       </Label>
                       <Input 
                         placeholder="例如：情侶、親子、朋友群" 
                         value={profile.companions}
                         onChange={(e) => setProfile(p => ({ ...p, companions: e.target.value }))}
-                        className="h-11 rounded-none border-0 bg-slate-50/40 px-0 !text-[14px] font-medium !text-slate-800 placeholder:text-slate-400 shadow-inner focus:bg-white focus:ring-0 focus-visible:ring-0"
+                        className="h-11 rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-4 !text-[14px] font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:bg-white/60 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                       />
                     </div>
                   </div>
 
                   {/* Vibes */}
-                  <div className="space-y-4 rounded-[24px] border border-white/86 bg-white/78 p-4 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:p-5">
+                  <div className="space-y-4 rounded-[24px] border border-white/86 bg-white/78 dark:border-white/10 dark:bg-black/40 p-4 shadow-[0_10px_22px_rgba(15,23,42,0.05)] dark:shadow-black/25 sm:p-5">
                     <div className="flex items-center justify-between">
                       <h3 className="flex items-center gap-2.5 text-[14px] font-black tracking-[-0.02em] text-slate-800">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-100 bg-amber-50 text-amber-500">
@@ -286,7 +286,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                   {/* Budget & Diet Row */}
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2 sm:gap-4">
                     {/* Budget */}
-                    <div className="space-y-4 rounded-[24px] border border-white/86 bg-white/78 p-4 shadow-[0_10px_22px_rgba(15,23,42,0.05)] sm:p-5">
+                    <div className="space-y-4 rounded-[24px] border border-white/86 bg-white/78 dark:border-white/10 dark:bg-black/40 p-4 shadow-[0_10px_22px_rgba(15,23,42,0.05)] dark:shadow-black/25 sm:p-5">
                       <div className="flex items-center justify-between">
                         <h3 className="flex items-center gap-2.5 text-[14px] font-black tracking-[-0.02em] text-slate-800">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50 text-emerald-600">

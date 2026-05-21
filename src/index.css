@@ -523,6 +523,29 @@ select {
   display: none !important;
 }
 
+/* Global smooth transition for dark mode toggling */
+html, body, .jelly-bg, .jelly-surface, .glass-card, .editorial-card, .editorial-card-soft, .glass-panel, .glass-node, .jelly-button, button, input, select, textarea {
+  transition: background-color 0.5s ease-in-out, border-color 0.5s ease-in-out, color 0.5s ease-in-out, box-shadow 0.5s ease-in-out, backdrop-filter 0.5s ease-in-out !important;
+}
+
+/* Custom dark mode card overrides for high contrast and consistency */
+.dark .editorial-card, .dark .editorial-card-soft {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  color: #f8fafc !important;
+}
+
+.dark input, .dark select, .dark textarea {
+  background-color: rgba(15, 23, 42, 0.5) !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+.dark input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
 @keyframes cute-bounce {
   0%, 100% {
     transform: translateY(0) scale(1);

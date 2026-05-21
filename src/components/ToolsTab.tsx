@@ -1223,7 +1223,7 @@ function ChecklistSection() {
               id="ai-pack-season"
               value={customSeason}
               onChange={(e) => setCustomSeason(e.target.value)}
-              className="flex h-11 w-full rounded-xl border border-outline bg-white/90 text-on-surface px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm appearance-none cursor-pointer"
+              className="flex h-11 w-full rounded-xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg text-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 shadow-sm shadow-slate-100/50 dark:shadow-black/50 appearance-none cursor-pointer"
             >
               <option value="春季">春季 (3~5月)</option>
               <option value="夏季">夏季 (6~8月)</option>
@@ -1545,7 +1545,7 @@ function LedgerSection() {
                   currency: e.target.value,
                 }))
               }
-              className="w-full flex h-12 rounded-xl border border-outline bg-surface text-on-surface px-3 py-2 text-sm ring-offset-surface outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm appearance-none text-center cursor-pointer transition-colors"
+              className="w-full flex h-12 rounded-xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg text-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 shadow-sm shadow-slate-100/50 dark:shadow-black/50 appearance-none text-center cursor-pointer transition-all"
             >
               {["JPY", "TWD", "USD", "EUR", "KRW", "THB"].map((cur) => (
                 <option key={cur} value={cur}>

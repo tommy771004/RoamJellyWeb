@@ -172,7 +172,7 @@ export default function QuickExpenseModal({
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="outline-none w-full bg-slate-50/70 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-slate-100 dark:border-white/10 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-slate-100/80 dark:hover:bg-black/50 focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-emerald-500/30 dark:focus:ring-emerald-500/20 transition-all shadow-sm"
+                className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-2xl border border-white/60 dark:border-white/20 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
               />
             </div>
 
@@ -186,7 +186,7 @@ export default function QuickExpenseModal({
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
                   placeholder="例如 980"
-                  className="outline-none w-full bg-slate-50/70 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-slate-100 dark:border-white/10 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-slate-100/80 dark:hover:bg-black/50 focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-emerald-500/30 dark:focus:ring-emerald-500/20 transition-all shadow-sm"
+                  className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-2xl border border-white/60 dark:border-white/20 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                 />
               </div>
               <div className="grid grid-cols-1 flex flex-col gap-2">
@@ -198,7 +198,7 @@ export default function QuickExpenseModal({
                   onChange={(event) =>
                     setCurrency(event.target.value.toUpperCase())
                   }
-                  className="outline-none w-full bg-slate-50/70 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-slate-100 dark:border-white/10 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-slate-100/80 dark:hover:bg-black/50 focus:bg-white dark:focus:bg-black/60 focus:ring-2 focus:ring-emerald-500/30 dark:focus:ring-emerald-500/20 transition-all shadow-sm"
+                  className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-2xl border border-white/60 dark:border-white/20 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                 />
               </div>
             </div>
@@ -210,7 +210,7 @@ export default function QuickExpenseModal({
               <select
                 value={payer}
                 onChange={(event) => setPayer(event.target.value)}
-                className="outline-none w-full bg-slate-50/70 dark:bg-slate-900 border border-slate-100 dark:border-white/10 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-slate-100/80 dark:hover:bg-slate-900/80 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-emerald-500/30 dark:focus:ring-emerald-500/20 transition-all rounded-2xl shadow-sm"
+                className="outline-none w-full bg-white/40 dark:bg-slate-900 border border-white/60 dark:border-white/20 px-4 py-3 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-slate-900/85 focus:bg-white/70 dark:focus:bg-slate-900 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 transition-all rounded-2xl shadow-sm shadow-slate-100/50 dark:shadow-black/50"
               >
                 {participantList.map((member) => (
                   <option key={member} value={member} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">

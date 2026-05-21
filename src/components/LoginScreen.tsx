@@ -391,7 +391,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               <div className="mb-4 flex flex-col">
                 <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">使用者名稱</span>
                 <input
-                  className="outline-none w-full bg-white/70 dark:bg-black/40 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/84 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-sky-400/40 dark:focus:ring-sky-500/30 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                  className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   placeholder="3–30 個英數字或底線"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -406,13 +406,13 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 <div className="flex flex-col">
                   <div className="mb-4 flex flex-col">
                     <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">選擇旅伴頭像</span>
-                    <div className="flex flex-wrap gap-2 rounded-[20px] border border-white/50 dark:border-white/10 bg-white/40 dark:bg-black/20 p-2">
+                    <div className="flex flex-wrap gap-2 rounded-[20px] border border-white/50 dark:border-white/10 bg-white/30 dark:bg-black/20 p-2 backdrop-blur-sm">
                       {['🐶', '🐱', '🦊', '🐰', '🐼', '🐨', '🐻', '🐯'].map(emoji => (
                         <button
                           key={emoji}
                           type="button"
                           onClick={() => setAvatar(emoji)}
-                          className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all ${avatar === emoji ? 'bg-sky-100 dark:bg-sky-950/50 ring-2 ring-sky-400 dark:ring-sky-400 scale-110' : 'hover:bg-black/5 dark:hover:bg-white/5 hover:scale-105'}`}
+                          className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all ${avatar === emoji ? 'bg-sky-100/80 dark:bg-sky-950/60 ring-2 ring-sky-400 dark:ring-sky-400 scale-110 shadow-sm' : 'hover:bg-white/40 dark:hover:bg-white/5 hover:scale-105'}`}
                         >
                           {emoji}
                         </button>
@@ -422,7 +422,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   <div className="mb-4 flex flex-col">
                     <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">暱稱（選填）</span>
                     <input
-                      className="outline-none w-full bg-white/70 dark:bg-black/40 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/84 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-sky-400/40 dark:focus:ring-sky-500/30 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                      className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                       placeholder="顯示給其他成員的名稱"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
@@ -438,7 +438,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">密碼</span>
                 <input
                   type="password"
-                  className="outline-none w-full bg-white/70 dark:bg-black/40 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/84 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-sky-400/40 dark:focus:ring-sky-500/30 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                  className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   placeholder="至少 8 個字元"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -452,7 +452,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">確認密碼</span>
                   <input
                     type="password"
-                    className="outline-none w-full bg-white/70 dark:bg-black/40 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/84 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-sky-400/40 dark:focus:ring-sky-500/30 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                    className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                     placeholder="再次輸入密碼"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

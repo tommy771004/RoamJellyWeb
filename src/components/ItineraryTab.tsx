@@ -5866,7 +5866,7 @@ function ManualAddNode({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="例如：參觀東京鐵塔"
-                    className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                    className="w-full rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   />
                 </div>
               </div>
@@ -5885,7 +5885,7 @@ function ManualAddNode({
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                      className="w-full rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                     />
                   </div>
                 </div>
@@ -5902,7 +5902,7 @@ function ManualAddNode({
                       type="time"
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
-                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm font-mono"
+                      className="w-full rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 font-mono"
                     />
                   </div>
                 </div>
@@ -5922,7 +5922,7 @@ function ManualAddNode({
                       value={locationName}
                       onChange={(e) => setLocationName(e.target.value)}
                       placeholder="文字輸入地點名稱或地址"
-                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 pl-12 pr-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                      className="w-full rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                     />
                   </div>
                   <button
@@ -5944,7 +5944,7 @@ function ManualAddNode({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="補充行程細節、提醒或預約資訊..."
-                  className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm min-h-[92px] resize-y"
+                  className="w-full rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 min-h-[92px] resize-y"
                 />
               </div>
 
@@ -5957,7 +5957,7 @@ function ManualAddNode({
                     value={transportToNext}
                     onChange={(e) => setTransportToNext(e.target.value)}
                     placeholder="例如：地鐵約 20 分鐘"
-                    className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                    className="w-full rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   />
                 </div>
                 <div className="flex flex-col gap-3">
@@ -5968,7 +5968,7 @@ function ManualAddNode({
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://images..."
-                    className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm"
+                    className="w-full rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   />
                 </div>
               </div>
@@ -6013,7 +6013,7 @@ function ManualAddNode({
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all appearance-none shadow-sm h-full"
+                      className="w-full rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-5 py-4 font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all appearance-none shadow-sm shadow-slate-100/50 dark:shadow-black/50 h-full"
                     >
                       {CATEGORY_OPTIONS.map((opt) => (
                         <option key={opt} value={opt}>
@@ -6037,7 +6037,7 @@ function ManualAddNode({
                     <select
                       value={linkedFactId}
                       onChange={(e) => setLinkedFactId(e.target.value)}
-                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl py-4 px-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 focus:bg-white transition-all shadow-sm appearance-none"
+                      className="w-full rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 appearance-none"
                     >
                       <option value="">無關聯 (未選擇)</option>
                       {facts.map((f) => (
