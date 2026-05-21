@@ -123,7 +123,7 @@ export default defineConfig(() => {
           clientsClaim: true,
           cleanupOutdatedCaches: true,
         },
-        manifest: {
+        manifest: ({
           name: 'RoamJelly 果凍漫遊',
           short_name: 'RoamJelly',
           description: 'AI 旅遊行程規劃、多人即時共編、機票搜尋比價與旅途工具包。',
@@ -134,6 +134,11 @@ export default defineConfig(() => {
           background_color: '#0f172a',
           display: 'standalone',
           orientation: 'portrait-primary',
+          url_handlers: [
+            {
+              origin: 'https://roam-jelly-web.vercel.app'
+            }
+          ],
           icons: [
             {
               src: '/icon-app.svg',
@@ -148,7 +153,7 @@ export default defineConfig(() => {
               purpose: 'maskable'
             }
           ]
-        }
+        } as any)
       }),
     ],
     resolve: {

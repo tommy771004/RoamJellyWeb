@@ -935,9 +935,9 @@ function DestinationCard({
     flight.details?.stops === 0 ? "直飛" : `${flight.details?.stops ?? 1} 轉`;
 
   return (
-    <div className="group/dest w-full h-full">
+    <div className="group/dest w-full h-full sm:p-2">
       <div 
-        className="flex flex-row items-stretch w-[295px] xs:w-[330px] sm:w-full min-h-[190px] sm:min-h-[200px] overflow-hidden rounded-[26px] border border-white/40 dark:border-white/10 bg-white/70 dark:bg-slate-900/65 backdrop-blur-xl shadow-md hover:shadow-xl transition-all duration-300 relative"
+        className="flex flex-row items-stretch w-[295px] xs:w-[330px] sm:w-full min-h-[190px] sm:min-h-[200px] overflow-hidden rounded-[32px] border border-white/70 dark:border-white/20 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl shadow-[0_8px_32px_-4px_rgba(30,41,59,0.08)] hover:shadow-[0_16px_48px_-12px_rgba(236,72,153,0.25)] hover:border-pink-300/80 transition-all duration-500 relative"
       >
         {/* Invisible button overlay to view details */}
         <button
@@ -1861,23 +1861,23 @@ export default function HomeTab({
     >
       {/* === HERO SECTION with gradient background === */}
       <div
-        className={`relative z-10 w-full pt-5 sm:pt-[55px] ${!isHeroExpanded ? "pb-2" : "pb-6 sm:pb-10"} px-3 sm:px-6 overflow-visible`}
+        className={`relative z-10 w-full pt-10 sm:pt-[70px] ${!isHeroExpanded ? "pb-6" : "pb-12 sm:pb-16"} px-4 sm:px-8 overflow-visible`}
       >
         <motion.div 
           style={{ willChange: 'transform, opacity' }}
-          animate={{ scale: [1, 1.05, 1], opacity: [0.15, 0.2, 0.15] }}
+          animate={{ scale: [1, 1.05, 1], opacity: [0.25, 0.35, 0.25] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-10 right-6 h-72 w-72 rounded-full bg-sky-200/30 blur-[100px] pointer-events-none transform-gpu" />
+          className="absolute -top-10 right-6 h-80 w-80 rounded-full bg-sky-400/40 blur-[100px] pointer-events-none transform-gpu" />
         <motion.div 
           style={{ willChange: 'transform, opacity' }}
-          animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.2, 0.15] }}
+          animate={{ scale: [1, 1.1, 1], opacity: [0.25, 0.35, 0.25] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute top-10 left-[-1rem] h-60 w-60 rounded-full bg-pink-200/30 blur-[90px] pointer-events-none transform-gpu" />
+          className="absolute top-10 left-[-1rem] h-72 w-72 rounded-full bg-pink-500/40 blur-[100px] pointer-events-none transform-gpu" />
         <motion.div 
           style={{ willChange: 'transform, opacity' }}
-          animate={{ scale: [1, 1.08, 1], opacity: [0.18, 0.22, 0.18] }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.2, 0.3, 0.2] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute -bottom-12 right-[18%] h-64 w-64 rounded-full bg-orange-200/30 blur-[90px] pointer-events-none transform-gpu" />
+          className="absolute -bottom-12 right-[18%] h-72 w-72 rounded-full bg-fuchsia-400/30 blur-[100px] pointer-events-none transform-gpu" />
 
         <div className="relative z-20 mx-auto w-full max-w-[1120px]">
           {/* Hero title */}
@@ -2198,18 +2198,19 @@ export default function HomeTab({
                     onClick={() => void handleSearch()}
                     disabled={isSearchDisabled || loading || isOffline}
                     title={isOffline ? "請連線網路以進行機票比價" : ""}
-                    className={`group flex w-full items-center justify-center gap-2 rounded-[32px] py-4 sm:py-5 text-[16px] sm:text-[17px] font-black tracking-wide shadow-sm transition-[transform,shadow,background] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform-gpu ${
+                    className={`group relative overflow-hidden flex w-full items-center justify-center gap-3 rounded-[32px] py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-wide shadow-sm transition-[transform,shadow,border,background] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform-gpu ${
                       isSearchDisabled || loading || isOffline
-                        ? "bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
-                        : "bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[0_12px_28px_rgba(244,63,94,0.3)] hover:from-pink-500 hover:to-orange-500 active:scale-[0.97] hover:-translate-y-1.5 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)]"
+                        ? "bg-white/20 dark:bg-slate-800/40 text-slate-400 cursor-not-allowed border-transparent"
+                        : "bg-white/30 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/60 dark:border-white/20 hover:border-pink-300 text-slate-800 dark:text-slate-100 shadow-[0_8px_32px_-6px_rgba(236,72,153,0.15)] hover:-translate-y-1 hover:shadow-[0_16px_48px_-12px_rgba(236,72,153,0.3)] active:scale-[0.97]"
                     }`}
                   >
+                    <div className="absolute inset-0 z-0 bg-gradient-to-r from-pink-400/20 via-fuchsia-500/20 to-sky-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[32px]" />
                     {loading ? (
-                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-pink-500/30 border-t-pink-500 rounded-full animate-spin relative z-10" />
                     ) : (
                       <>
-                        <SearchIcon size={18} strokeWidth={3} className="drop-shadow-sm group-hover:animate-cute-bounce" /> 
-                        <span className="drop-shadow-sm group-hover:text-pink-50 transition-colors">開始規劃這趟旅程 ✨</span>
+                        <SearchIcon size={18} strokeWidth={3} className="drop-shadow-sm text-pink-500 group-hover:animate-cute-bounce relative z-10" /> 
+                        <span className="drop-shadow-sm transition-colors relative z-10">開始規劃這趟旅程 ✨</span>
                       </>
                     )}
                   </button>
@@ -3127,17 +3128,17 @@ export default function HomeTab({
                       </div>
 
                       {/* Bottom Overlay content & action */}
-                      <div className="relative z-10 text-left pt-3">
+                      <div className="relative z-10 text-left -mx-5 -mb-5 px-5 py-4 bg-white/20 dark:bg-slate-900/40 backdrop-blur-2xl border-t border-white/40 mt-3 rounded-b-[30px] shadow-[0_-8px_32px_rgba(0,0,0,0.1)]">
                         <div className="flex items-center gap-1.5 drop-shadow-md mb-1">
                           <span className="text-2xl leading-none">{dest.flag}</span>
                           <span className="text-white font-black text-[15px] sm:text-[16px] leading-none">{dest.name} 旅遊攻略手冊</span>
                         </div>
                         
-                        <p className="text-[12px] leading-relaxed font-medium text-slate-200 drop-shadow-sm mt-1 line-clamp-4">
+                        <p className="text-[12px] leading-relaxed font-medium text-slate-100 drop-shadow-sm mt-1 mb-3 line-clamp-3">
                           {dest.description}
                         </p>
 
-                        <div className="flex gap-2 border-t border-white/10 pt-3.5 mt-3">
+                        <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -3145,7 +3146,7 @@ export default function HomeTab({
                               const g = getCountryGuide(dest.id);
                               if (g) setActiveGuide(g);
                             }}
-                            className="w-full flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-md active:scale-[0.97]"
+                            className="w-full flex items-center justify-center gap-2 py-2 rounded-full text-[11px] font-black transition-all bg-white/30 backdrop-blur-md hover:bg-white/40 border border-white/60 text-white shadow-sm active:scale-[0.97]"
                           >
                             <ExternalLink size={11} />
                             閱讀完整攻略與指南
@@ -3216,7 +3217,7 @@ export default function HomeTab({
                       </div>
 
                       {/* Bottom Overlay content & action */}
-                      <div className="relative z-10 text-left pt-3">
+                      <div className="relative z-10 text-left -mx-5 -mb-5 px-5 py-4 bg-white/20 dark:bg-slate-900/40 backdrop-blur-2xl border-t border-white/40 mt-3 rounded-b-[30px] shadow-[0_-8px_32px_rgba(0,0,0,0.1)]">
                         <span className="text-[10px] font-black tracking-wider uppercase opacity-80 block mb-1">
                           by {handbook.author}
                         </span>
@@ -3225,18 +3226,18 @@ export default function HomeTab({
                           {handbook.title}
                         </h3>
                         
-                        <p className="text-[12px] leading-relaxed font-medium text-slate-200 drop-shadow-sm mt-1 line-clamp-4">
+                        <p className="text-[12px] leading-relaxed font-medium text-slate-100 drop-shadow-sm mt-1 mb-3 line-clamp-2">
                           最具含金量的行程路線！包含：{handbook.tags.slice(0, 3).map((t) => `#${t}`).join(" ")}，專為自由行打造。一鍵複製即刻出發，開啟你的完美旅程。
                         </p>
 
-                        <div className="flex gap-2 border-t border-white/10 pt-3.5 mt-3">
+                        <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCopyExpertItinerary(e, handbook);
                             }}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md active:scale-[0.97]"
+                            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[11px] font-black transition-all bg-white/30 backdrop-blur-md hover:bg-white/40 border border-white/60 text-white shadow-sm active:scale-[0.97]"
                           >
                             <Copy size={11} />
                             複製此達人行程

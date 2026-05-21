@@ -753,13 +753,16 @@ export default function AiForm({
                     </button>
                     <button
                       onClick={handleSubmit}
-                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)] active:scale-[0.97] sm:h-[3.8rem] sm:text-[15px]"
+                      className="group relative flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-white/60 bg-white/30 backdrop-blur-2xl text-[14px] font-black tracking-[0.08em] shadow-[0_8px_32px_-4px_rgba(236,72,153,0.15)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:bg-white/40 hover:shadow-[0_16px_48px_-12px_rgba(236,72,153,0.3)] hover:border-pink-300 active:scale-[0.97] sm:h-[3.8rem] sm:text-[15px] overflow-hidden"
                     >
-                      生成行程
-                      <Sparkles
-                        size={20}
-                        className="group-hover:animate-cute-bounce"
-                      />
+                      <div className="absolute inset-0 z-0 bg-gradient-to-r from-pink-400/20 via-fuchsia-500/20 to-sky-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
+                      <span className="relative z-10 text-slate-800 drop-shadow-sm group-hover:text-slate-900 flex items-center gap-3">
+                        生成行程
+                        <Sparkles
+                          size={20}
+                          className="text-pink-500 group-hover:animate-cute-bounce"
+                        />
+                      </span>
                     </button>
                   </div>
                 </div>

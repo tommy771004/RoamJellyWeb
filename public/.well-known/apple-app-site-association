@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "COM.YOURCOMPANY.ROAMJELLY",
+        "paths": ["/trip/*", "/share/trip/*", "/?trip_id=*"]
+      }
+    ]
+  }
+}
