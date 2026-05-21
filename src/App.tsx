@@ -41,8 +41,9 @@ import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, getNativeMapUrl, createGuestSession, clearClientSession } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, geocodeSpotWithAI, getNativeMapUrl, createGuestSession, clearClientSession, fetchDirections } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
+import { haversineKm, estimateTransport, formatMinutes } from './lib/geoUtils';
 import { getCategoryMeta } from './lib/itineraryUtils';
 import { JellyToast } from './components/JellyToast';
 type LoginPromptMode = 'default' | 'guest-first';
@@ -530,6 +531,23 @@ export default function App() {
             }
           });
 
+          // AI Fallback Loop for blank coordinates inside App.tsx
+          const aiGeocodePromises = nodes.map(async (n) => {
+            if (!n.lat || !n.lng) {
+              try {
+                const aiCoords = await geocodeSpotWithAI(n.title, data.destination);
+                if (aiCoords) {
+                  n.lat = aiCoords.lat;
+                  n.lng = aiCoords.lng;
+                  console.log(`[AI Fallback Geocode App] Resolved "${n.title}" in "${data.destination}" to: ${aiCoords.lat}, ${aiCoords.lng}`);
+                }
+              } catch (err) {
+                console.warn(`[AI Fallback Geocode App] Failed for "${n.title}":`, err);
+              }
+            }
+          });
+          await Promise.allSettled(aiGeocodePromises);
+
           // assign missing days correctly & populate timestamp
           const { assignDaysBasedOnTimeAndOrder } = await import('./lib/itineraryUtils');
           const startDate = new Date();
@@ -555,6 +573,46 @@ export default function App() {
               } as any);
             }
             finalNodes = assignDaysBasedOnTimeAndOrder(finalNodes, startDate.toISOString());
+          }
+
+          // Loop to calculate the distance and estimate/fetch transport times (transport_to_next) before outputting
+          const transportPromises = [];
+          for (let i = 0; i < finalNodes.length - 1; i++) {
+            const curr = finalNodes[i];
+            const next = finalNodes[i + 1];
+            if (
+              curr.day === next.day &&
+              curr.lat != null &&
+              curr.lng != null &&
+              next.lat != null &&
+              next.lng != null
+            ) {
+              const lat1 = curr.lat;
+              const lng1 = curr.lng;
+              const lat2 = next.lat;
+              const lng2 = next.lng;
+              const km = haversineKm(lat1, lng1, lat2, lng2);
+
+              if (km > 0 && !curr.transport_to_next) {
+                const promise = fetchDirections(lng1, lat1, lng2, lat2)
+                  .then((apiDuration) => {
+                    if (apiDuration && km > 1) {
+                      curr.transport_to_next = `車程約 ${formatMinutes(apiDuration)}`;
+                    } else {
+                      const est = estimateTransport(km);
+                      curr.transport_to_next = est.label;
+                    }
+                  })
+                  .catch(() => {
+                    const est = estimateTransport(km);
+                    curr.transport_to_next = est.label;
+                  });
+                transportPromises.push(promise);
+              }
+            }
+          }
+          if (transportPromises.length > 0) {
+            await Promise.allSettled(transportPromises);
           }
 
           useAppStore.getState().setAiResult({

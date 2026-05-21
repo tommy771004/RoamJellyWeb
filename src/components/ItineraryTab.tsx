@@ -82,6 +82,7 @@ import {
   regenerateItinerarySpot,
   updateTripPublicState,
   geocodeSpot,
+  geocodeSpotWithAI,
   fetchDirections,
   fetchSpotEnrichment,
   submitLedgerExpense,
@@ -707,6 +708,23 @@ export default function ItineraryTab() {
         }
       });
 
+      // AI Fallback Loop for blank coordinates
+      const aiGeocodePromises = rawNodes.map(async (n) => {
+        if (!n.lat || !n.lng) {
+          try {
+            const aiCoords = await geocodeSpotWithAI(n.title, formData.destination);
+            if (aiCoords) {
+              n.lat = aiCoords.lat;
+              n.lng = aiCoords.lng;
+              console.log(`[AI Fallback Geocode Frontend] Resolved "${n.title}" in "${formData.destination}" to: ${aiCoords.lat}, ${aiCoords.lng}`);
+            }
+          } catch (err) {
+            console.warn(`[AI Fallback Geocode Frontend] Failed for "${n.title}":`, err);
+          }
+        }
+      });
+      await Promise.allSettled(aiGeocodePromises);
+
       // Fetch spot images (Wikipedia thumbnail) in parallel; skip if server already provided one
       const enrichResults = await Promise.allSettled(
         rawNodes.map((n) =>
@@ -725,6 +743,46 @@ export default function ItineraryTab() {
         rawNodes,
         startDate.toISOString(),
       );
+
+      // Loop to calculate the distance and estimate/fetch transport times (transport_to_next) before outputting
+      const transportPromises = [];
+      for (let i = 0; i < finalNodes.length - 1; i++) {
+        const curr = finalNodes[i];
+        const next = finalNodes[i + 1];
+        if (
+          curr.day === next.day &&
+          curr.lat != null &&
+          curr.lng != null &&
+          next.lat != null &&
+          next.lng != null
+        ) {
+          const lat1 = curr.lat;
+          const lng1 = curr.lng;
+          const lat2 = next.lat;
+          const lng2 = next.lng;
+          const km = haversineKm(lat1, lng1, lat2, lng2);
+
+          if (km > 0 && !curr.transport_to_next) {
+            const promise = fetchDirections(lng1, lat1, lng2, lat2)
+              .then((apiDuration) => {
+                if (apiDuration && km > 1) {
+                  curr.transport_to_next = `車程約 ${formatMinutes(apiDuration)}`;
+                } else {
+                  const est = estimateTransport(km);
+                  curr.transport_to_next = est.label;
+                }
+              })
+              .catch(() => {
+                const est = estimateTransport(km);
+                curr.transport_to_next = est.label;
+              });
+            transportPromises.push(promise);
+          }
+        }
+      }
+      if (transportPromises.length > 0) {
+        await Promise.allSettled(transportPromises);
+      }
 
       useAppStore.getState().setAiResult({
         fullResponse: suggestions,

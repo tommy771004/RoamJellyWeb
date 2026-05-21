@@ -60,6 +60,31 @@ export async function geocodeSpot(title: string, city = ''): Promise<{ lat: numb
   return null;
 }
 
+export async function geocodeSpotWithAI(title: string, destination: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const token = getStoredToken();
+    const response = await fetch('/api/generate/geocode', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ title, destination }),
+    });
+    if (!response.ok) return null;
+    const body = await response.json();
+    if (body.status === 'success' && body.data) {
+      const { lat, lng } = body.data;
+      if (typeof lat === 'number' && typeof lng === 'number') {
+        return { lat, lng };
+      }
+    }
+  } catch (err) {
+    console.error('AI Geocoding error:', err);
+  }
+  return null;
+}
+
 export async function fetchDirections(lng1: number, lat1: number, lng2: number, lat2: number): Promise<number | null> {
   try {
     const coords = encodeURIComponent(`${lng1},${lat1};${lng2},${lat2}`);

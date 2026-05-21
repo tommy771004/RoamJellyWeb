@@ -20,6 +20,7 @@ import * as schema from './src/server/db/schema';
 
 import { scrapeTripFlights } from './src/server/services/tripParser';
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
+import { fetchOpenRouterWithFallback } from './src/server/services/openrouterHelper';
 import { createSeoRouter } from './src/server/seo/router';
 import { buildAllowedCorsOrigins, isCorsOriginAllowed } from './src/server/security/cors';
 
@@ -714,18 +715,133 @@ async function getPlanningSnapshot(tripId: string): Promise<unknown[] | null> {
   }
 }
 
+const cityCoordsCache = new Map<string, { lat: number; lng: number }>();
+
 async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng: number } | null> {
-  try {
-    const q = encodeURIComponent(`${title} ${city}`);
-    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja`;
-    const apiRes = await fetch(url, { headers: { 'User-Agent': 'RoamJellyApp/1.0' } });
-    if (!apiRes.ok) return null;
-    const data = (await apiRes.json()) as Array<{ lat: string; lon: string }>;
-    if (data.length === 0) return null;
-    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-  } catch {
-    return null;
+  const cleanTitle = title.trim();
+  const cleanCity = city.trim();
+
+  let biasCoords: { lat: number; lng: number } | null = null;
+
+  if (cleanCity && cleanCity.toLowerCase() !== cleanTitle.toLowerCase()) {
+    if (cityCoordsCache.has(cleanCity)) {
+      biasCoords = cityCoordsCache.get(cleanCity) || null;
+    } else {
+      const resolved = await geocodeSpot(cleanCity, '');
+      if (resolved) {
+        cityCoordsCache.set(cleanCity, resolved);
+        biasCoords = resolved;
+      }
+    }
   }
+
+  const qStr = `${cleanTitle} ${cleanCity || ''}`.trim();
+  const q = encodeURIComponent(qStr);
+
+  // ── Layer 1 (First Fallback): LocationIQ API ────────────────────────────────
+  const locationIqKey = process.env.LOCATIONIQ_API_KEY;
+  if (locationIqKey) {
+    try {
+      let url = `https://us1.locationiq.com/v1/search.php?key=${locationIqKey}&q=${q}&format=json&limit=1`;
+      if (biasCoords) {
+        url += `&lat=${biasCoords.lat}&lon=${biasCoords.lng}`;
+      }
+      const res = await fetch(
+        url,
+        { headers: { 'User-Agent': 'RoamJellyApp/1.0' }, signal: AbortSignal.timeout(5000) }
+      );
+      if (res.ok) {
+        const data = (await res.json()) as Array<{ lat: string; lon: string }>;
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          if (!isNaN(lat) && !isNaN(lon)) return { lat, lng: lon };
+        }
+      }
+    } catch { /* fall through */ }
+  }
+
+  // ── Layer 2 (Second Fallback): Geoapify API ─────────────────────────────────
+  const geoapifyKey = process.env.GEOAPIFY_API_KEY;
+  if (geoapifyKey) {
+    try {
+      let url = `https://api.geoapify.com/v1/geocode/search?text=${q}&apiKey=${geoapifyKey}&limit=1`;
+      if (biasCoords) {
+        url += `&bias=proximity:${biasCoords.lng},${biasCoords.lat}`;
+      }
+      const res = await fetch(
+        url,
+        { headers: { 'User-Agent': 'RoamJellyApp/1.0' }, signal: AbortSignal.timeout(5000) }
+      );
+      if (res.ok) {
+        const data = (await res.json()) as {
+          features?: Array<{
+            geometry?: {
+              coordinates?: [number, number];
+            };
+          }>;
+        };
+        const coords = data.features?.[0]?.geometry?.coordinates; // [lon, lat]
+        if (coords?.length === 2) return { lat: coords[1], lng: coords[0] };
+      }
+    } catch { /* fall through */ }
+  }
+
+  // ── Layer 3 (Safety Fallback): Nominatim ──────────────────────────────────
+  try {
+    let url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja`;
+    if (biasCoords) {
+      url += `&lat=${biasCoords.lat}&lon=${biasCoords.lng}`;
+    }
+    const apiRes = await fetch(url, { headers: { 'User-Agent': 'RoamJellyApp/1.0' }, signal: AbortSignal.timeout(5000) });
+    if (apiRes.ok) {
+      const data = (await apiRes.json()) as Array<{ lat: string; lon: string }>;
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        if (!isNaN(lat) && !isNaN(lon)) return { lat, lng: lon };
+      }
+    }
+  } catch { /* fall through */ }
+
+  // ── AI Fallback (Fourth Fallback) ─────────────────────────────────────────
+  const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+  if (openrouterApiKey && cleanTitle && cleanTitle.toLowerCase() !== cleanCity.toLowerCase()) {
+    try {
+      const prompt = `Query: ${cleanTitle}, ${cleanCity}. Reply ONLY with GPS latitude,longitude (e.g. 25.03,121.56). Do not explain or output other text.`;
+      const resText = await fetchOpenRouterWithFallback(openrouterApiKey, prompt);
+      if (resText) {
+        try {
+          const jsonStart = resText.indexOf("{");
+          const jsonEnd = resText.lastIndexOf("}");
+          if (jsonStart !== -1 && jsonEnd !== -1 && jsonStart < jsonEnd) {
+            const parsed = JSON.parse(resText.slice(jsonStart, jsonEnd + 1)) as { lat?: string | number; latitude?: string | number; lng?: string | number; longitude?: string | number };
+            const lat = parseFloat(String(parsed.lat ?? parsed.latitude ?? ''));
+            const lng = parseFloat(String(parsed.lng ?? parsed.longitude ?? ''));
+            if (!isNaN(lat) && !isNaN(lng)) {
+              console.log(`[AI Fallback Geocode Server] ${cleanTitle} in ${cleanCity} (JSON) -> ${lat}, ${lng}`);
+              return { lat, lng };
+            }
+          }
+        } catch { /* ignore fallback to regex */ }
+
+        const cleaned = resText.trim().replace(/[()[\]{}]/g, '');
+        const match = cleaned.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+        if (match) {
+          const lat = parseFloat(match[1]);
+          const lng = parseFloat(match[2]);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            console.log(`[AI Fallback Geocode Server] ${cleanTitle} in ${cleanCity} (Regex) -> ${lat}, ${lng}`);
+            return { lat, lng };
+          }
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[AI Fallback Geocode Server] failed for ${cleanTitle}:`, err.message);
+    }
+  }
+
+  return null;
 }
 
 async function startServer() {
@@ -1356,6 +1472,49 @@ async function startServer() {
     }
   });
 
+  app.post('/api/generate/geocode', guestAiLimiter, aiLimiter, async (req, res) => {
+    if (!getRequestUserId(req) && AUTH_REQUIRED) {
+      res.status(401).json({ status: 'error', message: 'unauthorized' });
+      return;
+    }
+    const { title, destination } = req.body ?? {};
+    if (!title) {
+      res.status(400).json({ status: 'error', message: 'title is required' });
+      return;
+    }
+
+    const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+    if (!openrouterApiKey) {
+      res.status(503).json({ status: 'error', message: 'OpenRouter API key is not configured' });
+      return;
+    }
+
+    try {
+      const prompt = `Please find the GPS coordinates (latitude,longitude) for the spot: "${title}" in "${destination}".
+Return ONLY the latitude and longitude as a comma-separated string, for example: 25.0343,121.5649 or 35.6762,139.6503.
+Do NOT include any extra text, markdown formatting, explanations, or labels. Only reply with the coordinates in the format lat,lng.`;
+      
+      const resText = await fetchOpenRouterWithFallback(openrouterApiKey, prompt);
+      if (resText) {
+        const cleaned = resText.trim().replace(/[()[\]{}]/g, '');
+        const match = cleaned.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+        if (match) {
+          const lat = parseFloat(match[1]);
+          const lng = parseFloat(match[2]);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            console.log(`[AI Geocode API Route] Successful fallback for spot "${title}" in "${destination}": ${lat}, ${lng}`);
+            res.json({ status: 'success', data: { lat, lng } });
+            return;
+          }
+        }
+      }
+      res.status(404).json({ status: 'error', message: 'Could not resolve coordinates from AI' });
+    } catch (err: any) {
+      console.error(`[AI Geocode API Route] failed for ${title}:`, err);
+      res.status(500).json({ status: 'error', message: err.message || 'AI Geocoding failed' });
+    }
+  });
+
   // ── Spot-level regenerate ─────────────────────────────────────────────────
   app.post('/api/itinerary/regenerate-spot', guestAiLimiter, aiLimiter, async (req, res) => {
     const { trip_id, node_id, destination, day, current_date, current_time, current_title, current_category, notes, preserve_time_window } = req.body ?? {};
@@ -1677,12 +1836,12 @@ async function startServer() {
     const q = String(req.query.q ?? '').trim();
     if (!q) { res.json({ lat: null, lng: null }); return; }
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=ja`;
-      const apiRes = await fetch(url, { headers: { 'User-Agent': 'RoamJellyApp/1.0' } });
-      if (!apiRes.ok) { res.json({ lat: null, lng: null }); return; }
-      const data = (await apiRes.json()) as Array<{ lat: string; lon: string }>;
-      if (data.length === 0) { res.json({ lat: null, lng: null }); return; }
-      res.json({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+      const coords = await geocodeSpot(q);
+      if (!coords) {
+        res.json({ lat: null, lng: null });
+        return;
+      }
+      res.json(coords);
     } catch {
       res.json({ lat: null, lng: null });
     }

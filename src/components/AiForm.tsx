@@ -737,19 +737,9 @@ export default function AiForm({
                 </div>
               </div>
 
-              {/* Spacer so last field isn't hidden under sticky button */}
-              <div className="w-full shrink-0 h-[40px] sm:h-[60px]" />
-
-              {/* Submit buttons — sticky on mobile, static on desktop */}
-              <div
-                className="sticky bottom-0 left-0 right-0 w-full z-40 mt-auto pointer-events-none transition-all duration-300"
-                style={{
-                  paddingBottom: keyboardHeight > 0 
-                    ? `${keyboardHeight + 16}px`
-                    : "calc(32px + env(safe-area-inset-bottom, 24px))",
-                }}
-              >
-                <div className="mx-auto max-w-4xl px-1 pt-3 pb-2 sm:px-0 sm:pt-2 sm:pb-0 pointer-events-auto">
+              {/* Submit buttons — aligned directly under preferences glass-panel, no sticky wrapper, heavily padded below */}
+              <div className="w-full mt-6 pb-24">
+                <div className="mx-auto max-w-4xl px-1 sm:px-0">
                   <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                     <button
                       onClick={handleBack}
