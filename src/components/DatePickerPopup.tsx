@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -65,7 +65,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative z-popup-above w-[92vw] max-w-[480px] min-w-[300px] shrink-0 overflow-hidden rounded-[28px] border border-white/86 bg-white/80 backdrop-blur-[32px] p-4 shadow-[0_24px_56px_rgba(15,23,42,0.18)] md:w-[480px] md:p-6"
+          className="relative z-popup-above w-[92vw] max-w-[480px] min-w-[300px] shrink-0 overflow-hidden rounded-[28px] border border-white/86 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] p-4 shadow-[0_24px_56px_rgba(15,23,42,0.18)] md:w-[480px] md:p-6"
         >
           <div className="mb-6 flex flex-row items-center justify-between">
             <div className="flex flex-col">

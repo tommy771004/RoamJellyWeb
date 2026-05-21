@@ -9,37 +9,66 @@ const CHUNK_SIZE = 3; // days per parallel AI call
 
 /**
  * Geocode a spot name.
- * Primary: Photon (Komoot) — OSM-based, no strict per-second rate limit.
- * Fallback: Nominatim — only used if Photon fails (1 req/s policy applies).
+ * Primary: LocationIQ API (requires LOCATIONIQ_API_KEY)
+ * First Fallback: Geoapify API (requires GEOAPIFY_API_KEY)
+ * Second Fallback: Photon (Komoot) — OSM-based, no API key required, rate-limited.
  */
 async function geocodeSpot(
   name: string,
-  city: string
+  city: string,
+  localName?: string
 ): Promise<{ lat: number; lng: number } | null> {
-  // ── Photon (primary) ──────────────────────────────────────────────────────
+  const searchName = localName && localName !== name ? `${localName} ${name}` : name;
+  const qStr = `${searchName} ${city || ""}`.trim();
+
+  // ── LocationIQ (Primary) ──────────────────────────────────────────────────
+  const locationIqKey = process.env.LOCATIONIQ_API_KEY;
+  if (locationIqKey) {
+    try {
+      const q = encodeURIComponent(qStr);
+      const res = await fetch(
+        `https://us1.locationiq.com/v1/search.php?key=${locationIqKey}&q=${q}&format=json&limit=1`,
+        { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+      );
+      if (res.ok) {
+        const data: any = await res.json();
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          if (!isNaN(lat) && !isNaN(lon)) return { lat, lng: lon };
+        }
+      }
+    } catch { /* fall through */ }
+  }
+
+  // ── Geoapify (First Fallback) ─────────────────────────────────────────────
+  const geoapifyKey = process.env.GEOAPIFY_API_KEY;
+  if (geoapifyKey) {
+    try {
+      const q = encodeURIComponent(qStr);
+      const res = await fetch(
+        `https://api.geoapify.com/v1/geocode/search?text=${q}&apiKey=${geoapifyKey}&limit=1`,
+        { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+      );
+      if (res.ok) {
+        const data: any = await res.json();
+        const coords = data.features?.[0]?.geometry?.coordinates; // [lon, lat]
+        if (coords?.length === 2) return { lat: coords[1], lng: coords[0] };
+      }
+    } catch { /* fall through */ }
+  }
+
+  // ── Photon (Second Fallback) ──────────────────────────────────────────────
   try {
-    const q = encodeURIComponent(`${name} ${city}`);
+    const q = encodeURIComponent(qStr);
     const res = await fetch(
       `https://photon.komoot.io/api/?q=${q}&limit=1`,
       { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
     );
     if (res.ok) {
       const data: any = await res.json();
-      const coords = data.features?.[0]?.geometry?.coordinates; // [lng, lat]
+      const coords = data.features?.[0]?.geometry?.coordinates; // [lon, lat]
       if (coords?.length === 2) return { lat: coords[1], lng: coords[0] };
-    }
-  } catch { /* fall through to Nominatim */ }
-
-  // ── Nominatim (fallback) ──────────────────────────────────────────────────
-  try {
-    const q = encodeURIComponent(`${name} ${city}`);
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja,zh`,
-      { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
-    );
-    if (res.ok) {
-      const data: any[] = await res.json();
-      if (data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     }
   } catch { /* swallow */ }
 
@@ -85,11 +114,11 @@ async function getWikiThumbnail(name: string): Promise<string | null> {
 }
 
 /**
- * Compute route duration (minutes) via OSRM.
- * mode: 'driving' | 'walking' | 'cycling'
- * Auto-selects walking when distance between two points is short (<3 km).
+ * Compute route duration (minutes) via OSRM, with Mapbox fallback.
+ * mode: 'driving' | 'walking'
+ * Auto-selects walking when distance between two points is short (<2.5 km).
  */
-async function getOSRMMinutes(
+async function getDirectionsMinutes(
   lng1: number,
   lat1: number,
   lng2: number,
@@ -107,16 +136,36 @@ async function getOSRMMinutes(
   const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const mode: "driving" | "walking" = distKm < 2.5 ? "walking" : "driving";
 
+  // 1. Try OSRM (free, open source)
   try {
     const res = await fetch(
       `https://router.project-osrm.org/route/v1/${mode}/${lng1},${lat1};${lng2},${lat2}?overview=false`,
       { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
     );
-    if (!res.ok) return null;
-    const data: any = await res.json();
-    if (data.routes?.length > 0)
-      return { minutes: Math.round(data.routes[0].duration / 60), mode };
+    if (res.ok) {
+      const data: any = await res.json();
+      if (data.routes?.length > 0)
+        return { minutes: Math.round(data.routes[0].duration / 60), mode };
+    }
   } catch { /* swallow */ }
+
+  // 2. Try Mapbox Directions API if available
+  const mapboxToken = process.env.MAPBOX_ACCESS_TOKEN;
+  if (mapboxToken) {
+    try {
+      const mapboxMode = mode === "walking" ? "walking" : "driving";
+      const res = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/${mapboxMode}/${lng1},${lat1};${lng2},${lat2}?access_token=${mapboxToken}`,
+        { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
+      );
+      if (res.ok) {
+        const data: any = await res.json();
+        if (data.routes?.length > 0)
+          return { minutes: Math.round(data.routes[0].duration / 60), mode };
+      }
+    } catch { /* swallow */ }
+  }
+
   return null;
 }
 
@@ -136,8 +185,10 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
       const enrichedSpots = await Promise.all(
         dayData.spots.map(async (spot: any) => {
           const name: string = spot.name || spot.title || "";
+          const spotCity: string = spot.city || destination || "";
+          const spotLocalName: string = spot.local_name || "";
           const [coords, thumbnail] = await Promise.all([
-            geocodeSpot(name, destination),
+            geocodeSpot(name, spotCity, spotLocalName),
             getWikiThumbnail(name),
           ]);
           return {
@@ -152,7 +203,7 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
     })
   );
 
-  // Step 2: OSRM transport_to_next — days run in parallel; spots within a day are sequential
+  // Step 2: OSRM/Mapbox transport_to_next — days run in parallel; spots within a day are sequential
   const finalDays = await Promise.all(
     enrichedDays.map(async (dayData: any) => {
       if (!Array.isArray(dayData.spots)) return dayData;
@@ -161,7 +212,7 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
         const curr = spots[si];
         const next = spots[si + 1];
         if (curr?.lat != null && curr?.lng != null && next?.lat != null && next?.lng != null) {
-          const result = await getOSRMMinutes(curr.lng, curr.lat, next.lng, next.lat);
+          const result = await getDirectionsMinutes(curr.lng, curr.lat, next.lng, next.lat);
           if (result !== null) {
             const label = result.mode === "walking"
               ? `步行約 ${result.minutes} 分鐘`
@@ -390,6 +441,8 @@ function buildChunkPrompt(
     spots: Array<{
       time: string;           // 24h HH:MM
       name: string;           // 景點名稱（繁體中文，專有名詞可加外文括號）
+      local_name: string;     // 該國原生語言名稱（如日文、韓文、法語等），務必精準，不可留空
+      city: string;           // 該景點所在的具體城市名，務必精準
       emoji: string;
       category: string;       // flight | transport | landmark | food | shopping | nature | hotel | activity | nightlife | other
       intensity: "chill" | "moderate" | "hardcore";
@@ -658,10 +711,12 @@ export async function regenerateSpot(params: {
 
     const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
     if (parsed && typeof parsed.title === "string") {
-      // Hybrid enrichment: geocode (Photon→Nominatim) + wiki thumbnail
+      // Hybrid enrichment: geocode (Photon→Mapbox→Nominatim) + wiki thumbnail
       const name: string = parsed.title || "";
+      const spotCity: string = parsed.city || params.destination;
+      const spotLocalName: string = parsed.local_name || "";
       const [coords, thumbnail] = await Promise.all([
-        geocodeSpot(name, params.destination),
+        geocodeSpot(name, spotCity, spotLocalName),
         getWikiThumbnail(name),
       ]);
       return {
@@ -723,10 +778,11 @@ ${params.travelFactsContext || "無"}
 {
   "time": "HH:MM",
   "title": "景點名稱（在 ${params.destination} 附近、符合上下文的替代景點）",
+  "local_name": "該國原生語言名稱（如日文、韓文、法語等），務必精準，不可留空",
+  "city": "該景點所在的具體城市名，務必精準",
   "emoji": "對應表情",
   "category": "landmark|food|shopping|nature|hotel|activity|nightlife|transport|other",
   "ai_note": "一句話的貼心提醒，說明為何適合替換。並請務必包含：營業時間、停車資訊、門票資訊、以及預估花費（量化成當地貨幣或台幣）。若為韓國地區請推薦使用 Naver Maps。",
-  "transport_to_next": "預估前往下一個景點的交通時間與方式，以文字描述即可 (如：搭乘地鐵約 25 分鐘)（可選）",
   "intensity": "chill|balanced|hardcore",
   "linkedFactId": "如果這明確綁定到某個 Travel Fact 可選填"
 }

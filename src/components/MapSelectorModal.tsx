@@ -58,11 +58,11 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
           animate={getModalMotion().animate}
           exit={getModalMotion().exit}
           transition={getModalMotion().transition}
-          className="relative z-modal-above flex h-[72vh] w-full max-w-2xl flex-col overflow-hidden rounded-[30px] border border-white/80 bg-white/80 backdrop-blur-[32px] shadow-[0_24px_56px_rgba(15,23,42,0.16)] sm:rounded-[36px]"
+          className="relative z-modal-above flex h-[72vh] w-full max-w-2xl flex-col overflow-hidden rounded-[30px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] shadow-[0_24px_56px_rgba(15,23,42,0.16)] sm:rounded-[36px]"
         >
           <div className="absolute top-0 left-0 z-10 h-1.5 w-full bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-300" />
           
-          <div className="z-10 flex shrink-0 items-center justify-between bg-white/60 p-4 pb-3.5 shadow-sm backdrop-blur-xl sm:p-5">
+          <div className="z-10 flex shrink-0 items-center justify-between bg-white/84 p-4 pb-3.5 shadow-sm backdrop-blur-xl sm:p-5">
             <div className="flex flex-col">
               <h3 className="fluid-title font-black text-slate-800">在地圖選取地點</h3>
               <p className="fluid-body mt-1 font-medium text-slate-500">
@@ -95,7 +95,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
             </MapContainer>
           </div>
 
-          <div className="z-10 shrink-0 bg-white/60 p-4 shadow-[0_-10px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl sm:p-5">
+          <div className="z-10 shrink-0 bg-white/86 p-4 shadow-[0_-10px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl sm:p-5">
             <button
               onClick={() => {
                 if (selectedPos) {

@@ -108,7 +108,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
             animate={getModalMotion(prefersReducedMotion).animate}
             exit={getModalMotion(prefersReducedMotion).exit}
             transition={getModalMotion(prefersReducedMotion).transition}
-            className="relative z-10 w-full max-w-[560px] overflow-hidden rounded-[32px] sm:rounded-[40px] border border-white/92 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-[32px] p-4 shadow-[0_20px_46px_rgba(15,23,42,0.14)] dark:shadow-[0_20px_46px_rgba(0,0,0,0.6)] sm:p-5 outline-none mb-[env(safe-area-inset-bottom)] sm:mb-0"
+            className="relative z-10 w-full max-w-[560px] overflow-hidden rounded-[32px] sm:rounded-[40px] border border-white/92 dark:border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(240,249,255,0.92))] dark:bg-[linear-gradient(180deg,rgba(30,41,59,0.86),rgba(15,23,42,0.9),rgba(2,6,23,0.92))] backdrop-blur-2xl p-4 shadow-[0_20px_46px_rgba(15,23,42,0.14)] dark:shadow-[0_20px_46px_rgba(0,0,0,0.6)] sm:p-5 outline-none mb-[env(safe-area-inset-bottom)] sm:mb-0"
             onClick={(event) => event.stopPropagation()}
           >
             <div className={`absolute -right-10 -top-10 size-28 rounded-full blur-3xl ${tone.glow} opacity-60 dark:opacity-30`} />

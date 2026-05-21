@@ -24,6 +24,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { LocationPickerPopup } from "./LocationPickerPopup";
 import { useSearchStore } from "../store/useSearchStore";
+import { useKeyboardHeight } from "../lib/useKeyboardHeight";
 
 const COMPANION_OPTIONS = [
   {
@@ -181,6 +182,7 @@ export default function AiForm({
 }) {
   const { aiProfile, saveAiProfile } = useSearchStore();
   const prefersReducedMotion = useReducedMotion() ?? false;
+  const keyboardHeight = useKeyboardHeight();
   const [step, setStep] = useState(1);
   const [showDestDropdown, setShowDestDropdown] = useState(false);
   const [showDepDropdown, setShowDepDropdown] = useState(false);
@@ -511,11 +513,13 @@ export default function AiForm({
               {/* Spacer so last field isn't hidden under sticky button */}
               <div className="w-full shrink-0 h-[40px] sm:h-[60px]" />
 
-              {/* Next Button — sticky above keyboard on mobile, static on desktop */}
+              {/* Next Button — sticky on mobile, static on desktop */}
               <div
-                className="sticky bottom-0 left-0 right-0 w-full z-40 mt-auto pointer-events-none"
+                className="sticky bottom-0 left-0 right-0 w-full z-40 mt-auto pointer-events-none transition-all duration-300"
                 style={{
-                  paddingBottom: "calc(16px + env(safe-area-inset-bottom, 16px))",
+                  paddingBottom: keyboardHeight > 0 
+                    ? `${keyboardHeight + 16}px`
+                    : "calc(32px + env(safe-area-inset-bottom, 24px))",
                 }}
               >
                 <div className="mx-auto max-w-4xl px-3.5 pt-3 pb-2 sm:px-0 sm:pt-0 sm:pb-0 pointer-events-auto flex justify-center">
@@ -736,11 +740,13 @@ export default function AiForm({
               {/* Spacer so last field isn't hidden under sticky button */}
               <div className="w-full shrink-0 h-[40px] sm:h-[60px]" />
 
-              {/* Submit buttons — sticky above keyboard on mobile, static on desktop */}
+              {/* Submit buttons — sticky on mobile, static on desktop */}
               <div
-                className="sticky bottom-0 left-0 right-0 w-full z-40 mt-auto pointer-events-none"
+                className="sticky bottom-0 left-0 right-0 w-full z-40 mt-auto pointer-events-none transition-all duration-300"
                 style={{
-                  paddingBottom: "calc(16px + env(safe-area-inset-bottom, 16px))",
+                  paddingBottom: keyboardHeight > 0 
+                    ? `${keyboardHeight + 16}px`
+                    : "calc(32px + env(safe-area-inset-bottom, 24px))",
                 }}
               >
                 <div className="mx-auto max-w-4xl px-1 pt-3 pb-2 sm:px-0 sm:pt-2 sm:pb-0 pointer-events-auto">
@@ -753,16 +759,13 @@ export default function AiForm({
                     </button>
                     <button
                       onClick={handleSubmit}
-                      className="group relative flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-white/60 bg-white/30 backdrop-blur-2xl text-[14px] font-black tracking-[0.08em] shadow-[0_8px_32px_-4px_rgba(236,72,153,0.15)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:bg-white/40 hover:shadow-[0_16px_48px_-12px_rgba(236,72,153,0.3)] hover:border-pink-300 active:scale-[0.97] sm:h-[3.8rem] sm:text-[15px] overflow-hidden"
+                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)] active:scale-[0.97] sm:h-[3.8rem] sm:text-[15px]"
                     >
-                      <div className="absolute inset-0 z-0 bg-gradient-to-r from-pink-400/20 via-fuchsia-500/20 to-sky-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
-                      <span className="relative z-10 text-slate-800 drop-shadow-sm group-hover:text-slate-900 flex items-center gap-3">
-                        生成行程
-                        <Sparkles
-                          size={20}
-                          className="text-pink-500 group-hover:animate-cute-bounce"
-                        />
-                      </span>
+                      生成行程
+                      <Sparkles
+                        size={20}
+                        className="group-hover:animate-cute-bounce"
+                      />
                     </button>
                   </div>
                 </div>

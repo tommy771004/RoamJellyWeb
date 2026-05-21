@@ -112,7 +112,7 @@ import type {
 } from "../types/workflow";
 
 import AiForm, { AiFormData } from "./AiForm";
-import { AIProgressModal, GenerationStep } from "./itinerary/AIProgressModal";
+import DatePickerPopup from "./DatePickerPopup";
 import {
   assignDaysBasedOnTimeAndOrder,
   buildTimestampFromDateTime,
@@ -489,9 +489,6 @@ export default function ItineraryTab() {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [tip, setTip] = useState("");
   const [aiLoading, setAiLoading] = useState<boolean>(false);
-  const [aiGenStep, setAiGenStep] = useState<GenerationStep>("init");
-  const [aiGenProgress, setAiGenProgress] = useState(0);
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isSocketConnected, setIsSocketConnected] = useState<boolean>(false);
   const [localThemeGradient, setLocalThemeGradient] = useState<string | null>(null);
 
@@ -641,39 +638,6 @@ export default function ItineraryTab() {
     return CATEGORY_OPTIONS.includes(s) ? s : "other";
   };
 
-  const runWithAiProgress = async <T,>(apiCall: () => Promise<T>): Promise<T> => {
-    setIsAiModalOpen(true);
-    setAiGenStep("init");
-    setAiGenProgress(15);
-    
-    let done = false;
-    const sequence = async () => {
-      await new Promise(r => setTimeout(r, 1500));
-      if (done) return;
-      setAiGenStep("flight"); setAiGenProgress(45);
-      await new Promise(r => setTimeout(r, 2000));
-      if (done) return;
-      setAiGenStep("itinerary"); setAiGenProgress(75);
-      await new Promise(r => setTimeout(r, 2500));
-      if (done) return;
-      setAiGenStep("optimize"); setAiGenProgress(95);
-    };
-    void sequence();
-
-    try {
-      const res = await apiCall();
-      done = true;
-      setAiGenStep("done"); setAiGenProgress(100);
-      await new Promise(r => setTimeout(r, 800));
-      setIsAiModalOpen(false);
-      return res;
-    } catch (err) {
-      done = true;
-      setIsAiModalOpen(false);
-      throw err;
-    }
-  };
-
   const handleAiFormSubmit = async (formData: AiFormData) => {
     setAiLoading(true);
     showToast(`正在為您生成旅程：${formData.destination}...`);
@@ -681,7 +645,7 @@ export default function ItineraryTab() {
       // Sync plannerForm.days so totalDays reflects user's selection immediately (e.g. 4 days)
       setPlannerForm((prev) => ({ ...prev, days: formData.days }));
 
-      const suggestions = await runWithAiProgress(() => suggestItineraryWithForm({
+      const suggestions = await suggestItineraryWithForm({
         destination: formData.destination,
         planner: {
           days: formData.days,
@@ -703,7 +667,7 @@ export default function ItineraryTab() {
           pace: formData.pace,
           accommodation: formData.accommodation,
         },
-      }));
+      });
 
       const rawNodes: ItineraryNode[] = [];
       suggestions.itinerary.forEach((dayData: any) => {
@@ -1770,10 +1734,10 @@ export default function ItineraryTab() {
         travelFactsContext,
       };
 
-      const suggestionsRaw = await runWithAiProgress(() => suggestItineraryWithForm({
+      const suggestionsRaw = await suggestItineraryWithForm({
         destination,
         planner: formToSend,
-      }));
+      });
 
       const rootThemeGradient = suggestionsRaw?.ui_state?.theme_gradient || 
                                suggestionsRaw?.ui_config?.bg_gradient || 
@@ -2010,7 +1974,6 @@ export default function ItineraryTab() {
           className="flex-1 flex flex-col pt-4 sm:pt-10 bg-transparent min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth"
         >
           <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
-            <AIProgressModal isOpen={isAiModalOpen} currentStep={aiGenStep} progress={aiGenProgress} />
             <button
               onClick={() => setIsPlanningNew(false)}
               className="mb-4 sm:mb-8 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-600 font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:border-sky-200 hover:text-sky-700 w-max transition-colors"
@@ -2406,7 +2369,6 @@ export default function ItineraryTab() {
       className={`flex-1 w-full overflow-y-auto selection:bg-sky-100 animate-in fade-in duration-700 scroll-smooth bg-gradient-to-br ${activeGradient}`}
     >
       <div className="max-w-[1440px] mx-auto w-full pb-tab-safe md:px-4 lg:px-8 mt-0 sm:mt-4 md:mt-6">
-        <AIProgressModal isOpen={isAiModalOpen} currentStep={aiGenStep} progress={aiGenProgress} />
         {isOffline && (
           <div className="mx-4 md:mx-8 mb-6 mt-6 glass-card rounded-2xl p-4 bg-amber-50/80 border-amber-200 shadow-sm flex items-center justify-center gap-2">
             <span className="text-amber-700 font-bold text-sm tracking-wide flex items-center gap-2">
@@ -3431,17 +3393,16 @@ export default function ItineraryTab() {
                                 <button
                                   onClick={() => void handleAiSuggest()}
                                   disabled={aiLoading}
-                                  className="group relative w-full py-5 px-4 rounded-full bg-white/30 hover:bg-white/40 dark:bg-slate-900/40 border border-white/60 shadow-[0_8px_32px_-4px_rgba(236,72,153,0.15)] hover:shadow-[0_12px_48px_-12px_rgba(236,72,153,0.3)] hover:border-pink-300 font-black text-sm uppercase tracking-[0.2em] flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.97] transition-all whitespace-nowrap overflow-hidden text-ellipsis backdrop-blur-2xl"
+                                  className="w-full py-5 px-4 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.97] transition-all whitespace-nowrap overflow-hidden text-ellipsis"
                                 >
-                                  <div className="absolute inset-0 z-0 bg-gradient-to-r from-pink-400/20 via-fuchsia-500/20 to-sky-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
-                                  <span className="shrink-0 relative z-10 text-pink-500 group-hover:text-pink-600 drop-shadow-sm">
+                                  <span className="shrink-0">
                                     {aiLoading ? (
                                       <Loader2 className="animate-spin" />
                                     ) : (
                                       <Sparkles size={20} />
                                     )}
                                   </span>
-                                  <span className="truncate relative z-10 text-slate-800 dark:text-white drop-shadow-sm group-hover:text-slate-900">
+                                  <span className="truncate">
                                     {aiLoading
                                       ? "AI 分析處理中..."
                                       : "開始智慧微調行程"}
@@ -3624,9 +3585,9 @@ export default function ItineraryTab() {
                 animate={sheetMotion.animate}
                 exit={sheetMotion.exit}
                 transition={sheetMotion.transition}
-                className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white/80 backdrop-blur-[32px] border-t border-white/60 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] z-sheet-above flex flex-col lg:hidden"
+                className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-sheet-above flex flex-col lg:hidden"
               >
-                <div className="shrink-0 p-6 pb-2 border-b border-white/40 flex items-center justify-between bg-white/40 rounded-t-[32px] sticky top-0 z-10">
+                <div className="shrink-0 p-6 pb-2 border-b border-slate-100 flex items-center justify-between bg-white/90 backdrop-blur-xl rounded-t-3xl sticky top-0 z-10">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-fuchsia-500 shadow-sm border border-fuchsia-100/50">
                       <Bookmark size={20} strokeWidth={2.5} />
@@ -4979,7 +4940,7 @@ const ItineraryListItem = React.memo(
                 {/* Modal Content */}
                 <motion.div
                   layoutId={`modal-${item.node_id}`}
-                  className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/80 backdrop-blur-[32px] rounded-[32px] sm:rounded-[36px] shadow-[0_24px_56px_rgba(15,23,42,0.16)] border border-white/60 flex flex-col pointer-events-auto"
+                  className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/95 backdrop-blur-3xl rounded-[32px] sm:rounded-[36px] shadow-2xl border border-white/50 flex flex-col pointer-events-auto"
                 >
                   {/* Header */}
                   <div className="sticky top-0 z-20 bg-white/60 backdrop-blur-xl border-b border-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
@@ -5782,7 +5743,7 @@ function ManualAddNode({
           animate={getModalMotion().animate}
           exit={getModalMotion().exit}
           transition={getModalMotion().transition}
-          className="relative w-full max-w-lg bg-white/80 backdrop-blur-[32px] border border-white/60 rounded-[40px] shadow-[0_24px_56px_rgba(15,23,42,0.16)] z-sheet-above overflow-hidden flex flex-col max-h-90dvh"
+          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-sheet-above overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
           <div className="p-5 sm:p-8 overflow-y-auto w-full pb-32">

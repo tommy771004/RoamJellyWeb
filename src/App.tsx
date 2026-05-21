@@ -52,7 +52,7 @@ const AUTO_GUEST_TABS = new Set(['ai_form', 'itinerary', 'tools']);
 /** Extract /trip/:tripId from the current URL path, null if no match. */
 function getTripLandingId(): string | null {
   if (typeof window === 'undefined') return null;
-  const match = window.location.pathname.match(/^\/(?:share\/)?trip\/([^/]+)$/);
+  const match = window.location.pathname.match(/^\/trip\/([^/]+)$/);
   return match?.[1] ?? null;
 }
 
