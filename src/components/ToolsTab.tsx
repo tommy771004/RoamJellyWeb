@@ -810,7 +810,7 @@ function WeatherCard() {
       : "未能取得天氣資料";
 
   return (
-    <GlassCard className="!p-5 sm:!p-8 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-200 hover:shadow-lg group glass-panel border-white/80">
+    <GlassCard className="!p-4 sm:!p-6 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-200 glass-panel shadow-md hover:shadow-xl border-white/80">
       <div className="absolute -top-10 -right-10 w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-sky-200/35 blur-[36px] pointer-events-none group-hover:scale-105 transition-transform duration-200" />
       <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-orange-200/25 blur-[28px] pointer-events-none group-hover:scale-105 transition-transform duration-200" />
       <div className="absolute top-5 left-5 flex gap-2 opacity-90">
@@ -844,7 +844,7 @@ function WeatherCard() {
           )}
         </div>
 
-        <div className="flex items-center sm:items-end justify-between mb-5 sm:mb-6 glass-panel p-4 sm:p-5 rounded-[28px] sm:rounded-[36px] border border-white/70 shadow-[0_8px_20px_rgba(244,114,182,0.1)]">
+        <div className="flex items-center sm:items-end justify-between mb-4 sm:mb-5 bg-white/70 dark:bg-slate-800/70 p-3 sm:p-4 rounded-[24px] sm:rounded-[28px] border border-white/70 shadow-sm">
           <div className="flex flex-col gap-3">
             <div className="flex bg-white/80 backdrop-blur-md rounded-full px-3.5 py-1.5 sm:px-4 sm:py-2 items-center gap-2 border border-slate-100 shadow-sm w-fit">
               <Icon
@@ -879,7 +879,7 @@ function WeatherCard() {
           </div>
         </div>
 
-        <div className="glass-panel backdrop-blur-md rounded-[28px] sm:rounded-[36px] p-4 flex items-center gap-4 border border-white/70 shadow-[0_8px_20px_rgba(14,165,233,0.12)] mb-5 sm:mb-6">
+        <div className="bg-white/70 dark:bg-slate-800/70 rounded-[24px] sm:rounded-[28px] p-3 flex items-center gap-4 border border-white/70 shadow-sm mb-4 sm:mb-5">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-white/86 flex items-center justify-center text-sky-600 shadow-inner border border-white shrink-0 group-hover:-translate-y-0.5 transition-transform duration-200">
             <Sparkles size={18} strokeWidth={2.5} />
           </div>
@@ -914,7 +914,7 @@ function WeatherCard() {
                 return (
                   <div
                     key={idx}
-                    className="flex flex-col items-center flex-shrink-0 glass-panel shadow-sm rounded-2xl w-[72px] py-3 snap-center"
+                    className="flex flex-col items-center flex-shrink-0 bg-white/60 dark:bg-slate-800/60 shadow-sm border border-slate-100 dark:border-slate-700/50 rounded-[18px] w-[64px] py-2.5 snap-center"
                   >
                     <span className="text-xs font-bold text-slate-500 mb-2">
                       {idx === 0 ? "Today" : dayName}
@@ -1068,7 +1068,7 @@ function ChecklistSection() {
         </span>
       </div>
 
-      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6 glass-panel">
+      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6 glass-panel shadow-md hover:shadow-xl">
         {checklist.length === 0 && (
           <span className="text-sm text-slate-500 italic">
             目前沒有行李項目
@@ -1097,7 +1097,7 @@ function ChecklistSection() {
             ),
           })).filter((g) => g.items.length > 0);
           return grouped.map(({ cat, meta, items: catItems }) => (
-            <div key={cat} className="editorial-card-soft mb-4 rounded-[32px] p-3.5 sm:p-5 last:mb-0 shadow-[0_8px_24px_rgba(244,114,182,0.06)] hover:shadow-[0_12px_28px_rgba(244,114,182,0.12)] transition-shadow">
+            <div key={cat} className="editorial-card-soft mb-3 rounded-[28px] p-3 sm:p-4 last:mb-0 shadow-sm transition-shadow">
               <div className="flex items-center gap-2 mb-2">
                 <IconImg value={meta.emoji} size={18} />
                 <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
@@ -1415,7 +1415,7 @@ function LedgerSection() {
     setNewMemberName("");
   };
   return (
-    <GlassCard className="!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300 glass-panel">
+    <GlassCard className="!p-4 sm:!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300 glass-panel shadow-md hover:shadow-xl">
       <div className="absolute -top-10 -left-10 w-32 h-32 bg-pink-100/45 rounded-full blur-[24px] pointer-events-none" />
       <div className="absolute -bottom-12 -right-8 w-36 h-36 bg-sky-100/35 rounded-full blur-[28px] pointer-events-none" />
       <div className="mb-6 flex items-start justify-between gap-4 relative z-10 px-2">
@@ -1724,7 +1724,7 @@ function SettlementsSection() {
         </div>
       </div>
 
-      <GlassCard className="!p-4 sm:!p-6 glass-panel">
+      <GlassCard className="!p-4 sm:!p-6 glass-panel shadow-md hover:shadow-xl">
       <div className="flex flex-col gap-4 w-full">
         {settlements.length === 0 && (
           <div className="editorial-card-soft flex flex-col items-center justify-center text-center rounded-[32px] p-12 bg-gradient-to-tr from-emerald-500/5 via-teal-500/5 to-white/90 border border-emerald-100/60 shadow-[inset_0_1px_1px_rgba(255,255,255,1)]">
@@ -1865,9 +1865,9 @@ function SettlementHistorySection() {
           });
 
           return (
-            <GlassCard
+            <div
               key={entry.clearedAt}
-              className="!p-4 flex flex-col gap-1.5 glass-panel transition-all duration-200 cursor-pointer hover:bg-white/90"
+              className="p-3.5 sm:p-4 flex flex-col gap-1.5 bg-white/70 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700/50 rounded-[24px] shadow-sm transition-all duration-200 cursor-pointer hover:bg-white/90"
               onClick={() => setExpandedId(isExpanded ? null : entry.clearedAt)}
             >
               <div className="flex items-center gap-4 w-full">
@@ -1945,7 +1945,7 @@ function SettlementHistorySection() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </GlassCard>
+            </div>
           );
         })}
       </div>

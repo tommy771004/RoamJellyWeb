@@ -135,7 +135,7 @@ export default function QuickExpenseModal({
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative w-full max-w-lg rounded-[36px] bg-white shadow-2xl z-alert-above overflow-hidden flex flex-col max-h-90dvh"
+          className="relative w-full max-w-lg rounded-[36px] bg-white/80 backdrop-blur-[32px] border border-white/60 shadow-[0_24px_56px_rgba(15,23,42,0.16)] z-alert-above overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 z-10" />
           <form

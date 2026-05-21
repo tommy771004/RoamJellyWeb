@@ -148,10 +148,10 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: '100%', opacity: 0, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-modal-above flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[30px] border border-white/72 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] shadow-[0_24px_60px_rgba(15,23,42,0.16)] md:inset-0 md:m-auto md:h-[85vh] md:max-w-2xl md:rounded-[32px]"
+            className="fixed bottom-0 left-0 right-0 z-modal-above flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[30px] border border-white/72 bg-white/80 backdrop-blur-[32px] shadow-[0_24px_60px_rgba(15,23,42,0.16)] md:inset-0 md:m-auto md:h-[85vh] md:max-w-2xl md:rounded-[32px]"
           >
             {/* Header */}
-            <div className="z-10 flex shrink-0 items-center justify-between rounded-t-[30px] border-b border-white/78 bg-white/78 px-5 py-4 backdrop-blur-xl sm:px-7 sm:py-5 md:rounded-t-[32px]">
+            <div className="z-10 flex shrink-0 items-center justify-between rounded-t-[30px] border-b border-white/40 bg-white/40 px-5 py-4 backdrop-blur-xl sm:px-7 sm:py-5 md:rounded-t-[32px]">
               <div className="flex items-center gap-4">
                 <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-[18px] bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_12px_26px_rgba(14,165,233,0.22)]">
                   <Sparkles size={20} className="relative z-10" />

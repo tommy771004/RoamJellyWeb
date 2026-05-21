@@ -1886,26 +1886,14 @@ export default function HomeTab({
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
             onClick={() => setIsHeroIntroCollapsed((prev) => !prev)}
-            className={`group relative mx-auto mb-3.5 max-w-[960px] space-y-2.5 overflow-hidden rounded-[28px] sm:rounded-[32px] glass-panel px-3.5 py-3.5 text-center sm:mb-5 sm:space-y-4 sm:px-6 sm:py-6${!isHeroExpanded ? " hidden sm:block" : ""} cursor-pointer transition-colors duration-300 hover:bg-white/40`}
+            className={`group relative mx-auto mb-3 max-w-[900px] space-y-2 overflow-hidden px-4 text-center sm:mb-4 sm:px-6 cursor-pointer transition-colors duration-300 ${!isHeroExpanded ? " hidden sm:block" : ""}`}
           >
-            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
-            <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-sky-200/30 blur-3xl group-hover:bg-sky-200/40 transition-colors duration-300" />
-            <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-orange-200/20 blur-3xl group-hover:bg-orange-200/30 transition-colors duration-300" />
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-              <span className="inline-flex items-center rounded-full border border-white/92 bg-white/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-sky-700 shadow-[0_6px_14px_rgba(14,165,233,0.07)] backdrop-blur-md">
-                Collaborative Trip Planner
-              </span>
-              <span className="hidden items-center rounded-full border border-white/92 bg-white/84 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-orange-500 shadow-[0_6px_14px_rgba(249,115,22,0.07)] backdrop-blur-md sm:inline-flex">
-                Beta
-              </span>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${!isHeroIntroCollapsed ? "rotate-180" : ""}`} />
-            </div>
-            <div className="relative space-y-2 sm:space-y-3">
-              <p className={`text-[10px] font-black uppercase tracking-[0.28em] text-slate-400 transition-all duration-300 ${isHeroIntroCollapsed ? "hidden" : "block"}`}>
-                Premium Jelly Journey Desk
+            <div className="relative space-y-1.5 sm:space-y-2 flex flex-col items-center">
+              <p className={`text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 transition-all duration-300 ${isHeroIntroCollapsed ? "hidden" : "block"}`}>
+                RoamJelly Trip Planner <ChevronDown size={12} className={`transition-transform duration-300 ${!isHeroIntroCollapsed ? "rotate-180" : ""}`} />
               </p>
-              <h1 className="mx-auto max-w-4xl text-balance text-[24px] font-black tracking-[-0.04em] text-slate-900 sm:text-[38px] md:text-[52px] leading-tight sm:leading-none font-heading">
-                把<span className="text-sky-600">航班、地圖</span>與<span className="text-sky-600">旅伴分工</span>，收進同一份旅程
+              <h1 className="mx-auto max-w-4xl text-balance text-[26px] font-black tracking-[-0.03em] text-slate-800 dark:text-slate-100 sm:text-[40px] md:text-[48px] leading-tight sm:leading-[1.1] font-heading">
+                把<span className="text-sky-500">航班、地圖</span>與<span className="text-sky-500">旅伴</span>，收進同一份旅程
               </h1>
               
               <AnimatePresence initial={false}>
@@ -1915,28 +1903,21 @@ export default function HomeTab({
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="overflow-hidden space-y-3"
+                    className="overflow-hidden space-y-2.5 w-full flex flex-col items-center"
                   >
-                    <p className="mx-auto max-w-[40rem] text-pretty text-[14px] leading-[1.75] text-slate-600 sm:text-[15px] sm:leading-[1.82]">
-                      RoamJelly 幫你搞定出發日期、行程清單與旅途工具，免切換 App，一站完成體驗。
+                    <p className="mx-auto max-w-2xl text-pretty text-[14px] leading-relaxed text-slate-500 dark:text-slate-400 sm:text-[15px]">
+                      幫你搞定出發日期、行程清單與旅途工具，免切換 App，一站完成體驗。
                     </p>
-                    <div className="mx-auto flex max-w-[620px] flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-white/70 pt-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 sm:gap-x-5">
-                      <span>先比價</span>
-                      <span className="h-1 w-1 rounded-full bg-slate-300" />
-                      <span>再共編</span>
-                      <span className="h-1 w-1 rounded-full bg-slate-300" />
-                      <span>最後檢查清單</span>
-                    </div>
 
                     {isHeroExpanded && (
-                      <div className="flex snap-x gap-2 overflow-x-auto pb-1 text-left sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:pb-0 pt-2">
+                      <div className="flex snap-x gap-2 overflow-x-auto pb-1 text-left w-full max-w-[900px] sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible pt-1">
                         {HERO_STORY_PILLARS.map((pillar, index) => {
                           const Icon = pillar.icon;
                           const decor = HERO_PILLAR_DECOR[index % HERO_PILLAR_DECOR.length];
                           return (
                             <div
                               key={pillar.title}
-                              className={`group/pillar editorial-card-soft relative min-w-[248px] snap-start overflow-hidden rounded-[26px] px-3.5 py-3 backdrop-blur-xl sm:min-w-0 ${decor.shell}`}
+                              className={`group/pillar bg-white/60 dark:bg-slate-800/60 border border-white/80 dark:border-slate-700 relative min-w-[240px] snap-start overflow-hidden rounded-[20px] px-3.5 py-3 backdrop-blur-xl sm:min-w-0 shadow-sm`}
                             >
                               <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
                               <div className="absolute inset-x-4 bottom-3 h-px bg-gradient-to-r from-white via-slate-200/70 to-transparent" />
@@ -3135,17 +3116,12 @@ export default function HomeTab({
                           精選指南
                         </div>
                         
-                        <div className="flex flex-col items-end gap-1">
-                          <div className="flex gap-1">
-                            <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
-                              {getIataCode(dest.name)}
-                            </span>
-                            <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
-                              #{dest.tags[0] || "漫遊"}
-                            </span>
-                          </div>
-                          <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                            💚 {getSafetyStatus(dest.name)}
+                        <div className="flex gap-1">
+                          <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
+                            {getIataCode(dest.name)}
+                          </span>
+                          <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
+                            #{dest.tags[0] || "漫遊"}
                           </span>
                         </div>
                       </div>
@@ -3157,7 +3133,7 @@ export default function HomeTab({
                           <span className="text-white font-black text-[15px] sm:text-[16px] leading-none">{dest.name} 旅遊攻略手冊</span>
                         </div>
                         
-                        <p className="text-[11px] sm:text-[11.5px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-3">
+                        <p className="text-[12px] leading-relaxed font-medium text-slate-200 drop-shadow-sm mt-1 line-clamp-4">
                           {dest.description}
                         </p>
 
@@ -3229,17 +3205,12 @@ export default function HomeTab({
                           達人行程
                         </div>
                         
-                        <div className="flex flex-col items-end gap-1">
-                          <div className="flex gap-1">
-                            <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
-                              {getIataCode(handbook.title)}
-                            </span>
-                            <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
-                              {handbook.days} Days
-                            </span>
-                          </div>
-                          <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                            💚 暢遊推薦
+                        <div className="flex gap-1">
+                          <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
+                            {getIataCode(handbook.title)}
+                          </span>
+                          <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
+                            {handbook.days} Days
                           </span>
                         </div>
                       </div>
@@ -3250,11 +3221,11 @@ export default function HomeTab({
                           by {handbook.author}
                         </span>
                         
-                        <h3 className="text-[14.5px] sm:text-[15.5px] font-black tracking-tight drop-shadow-md text-white border-none leading-snug line-clamp-2">
+                        <h3 className="text-[15px] sm:text-[16px] font-bold tracking-tight drop-shadow-md text-white border-none leading-snug line-clamp-2">
                           {handbook.title}
                         </h3>
                         
-                        <p className="text-[11px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-3">
+                        <p className="text-[12px] leading-relaxed font-medium text-slate-200 drop-shadow-sm mt-1 line-clamp-4">
                           最具含金量的行程路線！包含：{handbook.tags.slice(0, 3).map((t) => `#${t}`).join(" ")}，專為自由行打造。一鍵複製即刻出發，開啟你的完美旅程。
                         </p>
 

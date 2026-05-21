@@ -3484,7 +3484,7 @@ export default function ItineraryTab() {
                       </GlassCard>
                     }
                   >
-                    <div className="relative h-full w-full rounded-[2.5rem]">
+                    <div className="relative h-[65vh] md:h-[600px] w-full rounded-[2.5rem] overflow-hidden shadow-[inset_0_2px_12px_rgba(15,23,42,0.06)] border border-slate-100 dark:border-white/10 dark:shadow-[inset_0_2px_12px_rgba(255,255,255,0.05)] bg-slate-50">
                       {(aiLoading || loadingDay === safeSelectedDay) && (
                         <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-md rounded-[2.5rem] transition-all duration-300">
                           <div className="bg-white/80 backdrop-blur-xl px-10 py-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-5 border border-white/60">
@@ -3585,9 +3585,9 @@ export default function ItineraryTab() {
                 animate={sheetMotion.animate}
                 exit={sheetMotion.exit}
                 transition={sheetMotion.transition}
-                className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-sheet-above flex flex-col lg:hidden"
+                className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white/80 backdrop-blur-[32px] border-t border-white/60 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] z-sheet-above flex flex-col lg:hidden"
               >
-                <div className="shrink-0 p-6 pb-2 border-b border-slate-100 flex items-center justify-between bg-white/90 backdrop-blur-xl rounded-t-3xl sticky top-0 z-10">
+                <div className="shrink-0 p-6 pb-2 border-b border-white/40 flex items-center justify-between bg-white/40 rounded-t-[32px] sticky top-0 z-10">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-fuchsia-500 shadow-sm border border-fuchsia-100/50">
                       <Bookmark size={20} strokeWidth={2.5} />
@@ -4400,9 +4400,9 @@ const ItineraryListItem = React.memo(
     return (
       <div className="relative flex items-stretch group w-full pl-[22px] sm:pl-10 lg:pl-12">
         {/* Timeline Thread */}
-        <div className="absolute left-[11px] sm:left-[17px] lg:left-[21px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-fuchsia-400/80 via-pink-400/40 to-transparent shadow-[0_0_8px_rgba(244,63,94,0.25)] group-last:bottom-auto group-last:h-12 pointer-events-none" />
+        <div className="absolute left-[11px] sm:left-[17px] lg:left-[21px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-fuchsia-300/40 via-pink-300/20 to-transparent group-last:bottom-auto group-last:h-12 pointer-events-none" />
         <div
-          className={`absolute left-[5px] sm:left-2 lg:left-3 top-6 sm:top-7 w-[14px] h-[14px] sm:w-[20px] sm:h-[20px] rounded-full border-[3px] border-white/94 backdrop-blur-md shadow-[0_4px_12px_rgba(244,63,94,0.2)] z-20 transition-all duration-500 group-hover:scale-130 ${item.linkedFactId ? "bg-gradient-to-br from-sky-400 to-blue-500 ring-4 ring-sky-200/50 shadow-[0_0_12px_rgba(14,165,233,0.6)]" : "bg-gradient-to-br from-pink-400 to-fuchsia-400 hover:from-pink-500 hover:to-fuchsia-500 group-hover:animate-pulse"}`}
+          className={`absolute left-[5px] sm:left-2 lg:left-3 top-6 sm:top-7 w-[14px] h-[14px] sm:w-[20px] sm:h-[20px] rounded-full border-[3px] border-white/94 backdrop-blur-md shadow-[0_4px_12px_rgba(244,63,94,0.15)] z-20 transition-all duration-500 group-hover:scale-130 ${item.linkedFactId ? "bg-gradient-to-br from-sky-400 to-blue-500 ring-4 ring-sky-200/50 shadow-[0_0_12px_rgba(14,165,233,0.6)]" : "bg-gradient-to-br from-pink-400 to-fuchsia-400 hover:from-pink-500 hover:to-fuchsia-500 hover:shadow-md"}`}
         />
 
         {/* Content Card */}
@@ -4940,7 +4940,7 @@ const ItineraryListItem = React.memo(
                 {/* Modal Content */}
                 <motion.div
                   layoutId={`modal-${item.node_id}`}
-                  className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/95 backdrop-blur-3xl rounded-[32px] sm:rounded-[36px] shadow-2xl border border-white/50 flex flex-col pointer-events-auto"
+                  className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/80 backdrop-blur-[32px] rounded-[32px] sm:rounded-[36px] shadow-[0_24px_56px_rgba(15,23,42,0.16)] border border-white/60 flex flex-col pointer-events-auto"
                 >
                   {/* Header */}
                   <div className="sticky top-0 z-20 bg-white/60 backdrop-blur-xl border-b border-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
@@ -5239,7 +5239,7 @@ const ReorderableItineraryItem = ({
 
       {/* Drag handle for mobile/explicit drag */}
       <div
-        className="absolute left-[-24px] sm:left-[-35px] top-1/2 -translate-y-1/2 opacity-70 sm:opacity-0 group-hover/reorder:opacity-100 transition-opacity p-2 sm:p-2 cursor-grab active:cursor-grabbing text-slate-500/80 hover:text-slate-600 z-20 md:touch-none touch-pan-x"
+        className="absolute left-[-24px] sm:left-[-35px] top-1/2 -translate-y-1/2 opacity-60 sm:opacity-0 group-hover/reorder:opacity-100 transition-opacity p-2 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-500 hover:bg-slate-50 border border-transparent hover:border-slate-100 rounded-lg shadow-none hover:shadow-sm z-20 md:touch-none touch-pan-x"
         style={{
           minHeight: "44px",
           minWidth: "44px",
@@ -5743,7 +5743,7 @@ function ManualAddNode({
           animate={getModalMotion().animate}
           exit={getModalMotion().exit}
           transition={getModalMotion().transition}
-          className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-sheet-above overflow-hidden flex flex-col max-h-90dvh"
+          className="relative w-full max-w-lg bg-white/80 backdrop-blur-[32px] border border-white/60 rounded-[40px] shadow-[0_24px_56px_rgba(15,23,42,0.16)] z-sheet-above overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
           <div className="p-5 sm:p-8 overflow-y-auto w-full pb-32">
