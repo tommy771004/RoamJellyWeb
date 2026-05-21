@@ -17,7 +17,7 @@ async function geocodeSpot(
   name: string,
   city: string,
   localName?: string
-): Promise<{ lat: number; lng: number } | null> {
+): Promise<{ lat: number; lng: number; opening_hours?: string; website?: string; wheelchair?: string; phone?: string } | null> {
   const searchName = localName && localName !== name ? `${localName} ${name}` : name;
   const qStr = `${searchName} ${city || ""}`.trim();
 
@@ -27,15 +27,26 @@ async function geocodeSpot(
     try {
       const q = encodeURIComponent(qStr);
       const res = await fetch(
-        `https://us1.locationiq.com/v1/search.php?key=${locationIqKey}&q=${q}&format=json&limit=1`,
+        `https://us1.locationiq.com/v1/search.php?key=${locationIqKey}&q=${q}&format=json&extratags=1&limit=1`,
         { headers: { "User-Agent": "RoamJellyApp/1.0" }, signal: AbortSignal.timeout(5000) }
       );
       if (res.ok) {
         const data: any = await res.json();
         if (data && data.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lon = parseFloat(data[0].lon);
-          if (!isNaN(lat) && !isNaN(lon)) return { lat, lng: lon };
+          const first = data[0];
+          const lat = parseFloat(first.lat);
+          const lon = parseFloat(first.lon);
+          if (!isNaN(lat) && !isNaN(lon)) {
+            const extratags = first.extratags || {};
+            return {
+              lat,
+              lng: lon,
+              opening_hours: extratags.opening_hours,
+              website: extratags.website || extratags.url,
+              wheelchair: extratags.wheelchair,
+              phone: extratags.phone || extratags["contact:phone"]
+            };
+          }
         }
       }
     } catch { /* fall through */ }
@@ -52,8 +63,20 @@ async function geocodeSpot(
       );
       if (res.ok) {
         const data: any = await res.json();
-        const coords = data.features?.[0]?.geometry?.coordinates; // [lon, lat]
-        if (coords?.length === 2) return { lat: coords[1], lng: coords[0] };
+        const features = data.features;
+        if (features && features.length > 0) {
+          const feature = features[0];
+          const coords = feature.geometry?.coordinates; // [lon, lat]
+          if (coords?.length === 2) {
+            const props = feature.properties || {};
+            return {
+              lat: coords[1],
+              lng: coords[0],
+              website: props.website,
+              phone: props.contact?.phone || props.phone
+            };
+          }
+        }
       }
     } catch { /* fall through */ }
   }
@@ -67,8 +90,14 @@ async function geocodeSpot(
     );
     if (res.ok) {
       const data: any = await res.json();
-      const coords = data.features?.[0]?.geometry?.coordinates; // [lon, lat]
-      if (coords?.length === 2) return { lat: coords[1], lng: coords[0] };
+      const features = data.features;
+      if (features && features.length > 0) {
+        const feature = features[0];
+        const coords = feature.geometry?.coordinates; // [lon, lat]
+        if (coords?.length === 2) {
+          return { lat: coords[1], lng: coords[0] };
+        }
+      }
     }
   } catch { /* swallow */ }
 
@@ -191,8 +220,21 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
             geocodeSpot(name, spotCity, spotLocalName),
             getWikiThumbnail(name),
           ]);
+          
+          let enhancedAiNote = spot.ai_note || "";
+          if (coords) {
+            const extraData = [];
+            if (coords.opening_hours) extraData.push(`📍 營業時間：${coords.opening_hours}`);
+            if (coords.website) extraData.push(`🌐 官方網站：${coords.website}`);
+            if (coords.phone) extraData.push(`📞 聯絡電話：${coords.phone}`);
+            if (extraData.length > 0) {
+              enhancedAiNote = `${enhancedAiNote}\n\n${extraData.join('\n')}`;
+            }
+          }
+
           return {
             ...spot,
+            ai_note: enhancedAiNote,
             lat: coords?.lat ?? spot.lat,
             lng: coords?.lng ?? spot.lng,
             image_url: spot.image_url || thumbnail || undefined,
@@ -446,7 +488,7 @@ function buildChunkPrompt(
       emoji: string;
       category: string;       // flight | transport | landmark | food | shopping | nature | hotel | activity | nightlife | other
       intensity: "chill" | "moderate" | "hardcore";
-      ai_note: string;        // 客製化提醒，必須含營業時間、停車、門票、量化預算
+      ai_note: string;        // 一句話的貼心提醒，說明為何適合放入行程與替換。請專注於「根據使用者的偏好與情境」，若為韓國地區請推薦使用 Naver Maps。
       linkedFactId?: string;  // 若對應到 Travel facts anchors 中某項目，填入其 ID
     }>;
   }>`;
@@ -490,10 +532,7 @@ ${schema}
 
 【AI 規劃必備要求】
 1. **地圖 App 特例**：若目的地位於韓國（Korea），在 \`ai_note\` 中強制提醒下載 **Naver Maps**。若目的地是日本，請提醒使用 **Google Maps** 或 **Yahoo!カーナビ**。
-2. **營業時間與停車場**：\`ai_note\` 中**必須**提供大約的營業時間與停車資訊。
-3. **門票資訊**：\`ai_note\` 中**必須**說明是否需要門票及費用。
-4. **包棟住宿選項**：人數適合時，主動推薦**包棟民宿/Villa**。
-5. **預算範圍量化**：\`ai_note\` 中提供具體當地貨幣或台幣估算。
+2. **包棟住宿選項**：人數適合時，主動推薦**包棟民宿/Villa**。
 
 【內容客製化要求】
 若使用者未提供飲食禁忌，請忽略；若為情侶，安排浪漫景點。
@@ -719,8 +758,21 @@ export async function regenerateSpot(params: {
         geocodeSpot(name, spotCity, spotLocalName),
         getWikiThumbnail(name),
       ]);
+
+      let enhancedAiNote = parsed.ai_note || "";
+      if (coords) {
+        const extraData = [];
+        if (coords.opening_hours) extraData.push(`📍 營業時間：${coords.opening_hours}`);
+        if (coords.website) extraData.push(`🌐 官方網站：${coords.website}`);
+        if (coords.phone) extraData.push(`📞 聯絡電話：${coords.phone}`);
+        if (extraData.length > 0) {
+          enhancedAiNote = `${enhancedAiNote}\n\n${extraData.join('\n')}`;
+        }
+      }
+
       return {
         ...parsed,
+        ai_note: enhancedAiNote,
         lat: coords?.lat ?? parsed.lat,
         lng: coords?.lng ?? parsed.lng,
         image_url: parsed.image_url || thumbnail || undefined,
@@ -782,7 +834,7 @@ ${params.travelFactsContext || "無"}
   "city": "該景點所在的具體城市名，務必精準",
   "emoji": "對應表情",
   "category": "landmark|food|shopping|nature|hotel|activity|nightlife|transport|other",
-  "ai_note": "一句話的貼心提醒，說明為何適合替換。並請務必包含：營業時間、停車資訊、門票資訊、以及預估花費（量化成當地貨幣或台幣）。若為韓國地區請推薦使用 Naver Maps。",
+  "ai_note": "一句話的貼心提醒，說明為何適合放入行程與替換。請專注於「根據使用者的偏好與情境」，若為韓國地區請推薦使用 Naver Maps。",
   "intensity": "chill|balanced|hardcore",
   "linkedFactId": "如果這明確綁定到某個 Travel Fact 可選填"
 }
