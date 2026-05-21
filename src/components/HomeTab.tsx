@@ -43,7 +43,20 @@ import {
   syncItinerary,
   fetchUserSubscriptions,
   toggleUserSubscription,
+  trackClickOut,
 } from "../lib/workflowApi";
+import {
+  buildTripComFlightUrl,
+  buildTripComHotelUrl,
+  buildSkyscannerUrl,
+  buildTravelpayoutsUrl,
+  buildAgodaUrl,
+  buildBookingComUrl,
+  buildKlookUrl,
+  buildKkdayUrl,
+  buildGetYourGuideUrl,
+  buildViatorUrl,
+} from "../config/affiliateConfig";
 import { useSearchStore } from "../store/useSearchStore";
 import { useAppStore } from "../store/useAppStore";
 import { useItineraryStore } from "../store/useItineraryStore";
@@ -1285,24 +1298,28 @@ export default function HomeTab({
     };
   }, []);
 
+  // ─── 平台列表 — URL 由 src/config/affiliateConfig.ts 統一管理 ───
   const FLIGHT_PLATFORMS = useMemo(() => [
     {
       name: "Trip.com 攜程機票",
       badge: "最推薦 ✨",
       logoColor: "from-blue-500 to-sky-400",
-      url: "https://www.trip.com/?allianceid=1762106&sid=111111",
+      category: "flights" as const,
+      url: buildTripComFlightUrl(),
     },
     {
       name: "Skyscanner 比價機票",
       badge: "流量王 ✦",
       logoColor: "from-teal-400 to-emerald-400",
-      url: "https://www.skyscanner.com.tw/?associateid=aff-tp-1762106",
+      category: "flights" as const,
+      url: buildSkyscannerUrl(),
     },
     {
       name: "Travelpayouts 旅遊聚合",
       badge: "優選 ✦",
       logoColor: "from-pink-500 to-rose-400",
-      url: "https://www.travelpayouts.com/?marker=176215",
+      category: "flights" as const,
+      url: buildTravelpayoutsUrl(),
     }
   ], []);
 
@@ -1311,19 +1328,22 @@ export default function HomeTab({
       name: "Agoda 雅高達訂房",
       badge: "亞洲首選 ✨",
       logoColor: "from-purple-500 to-pink-500",
-      url: "https://www.agoda.com/partners/partnersearch.aspx?cid=1762106&hl=zh-tw",
+      category: "hotels" as const,
+      url: buildAgodaUrl(),
     },
     {
       name: "Booking.com 繽客訂房",
       badge: "房源最多 ✦",
       logoColor: "from-blue-600 to-sky-500",
-      url: "https://www.booking.com/index.html?aid=111111",
+      category: "hotels" as const,
+      url: buildBookingComUrl(),
     },
     {
       name: "Trip.com 攜程訂房",
       badge: "高額回饋 ✦",
       logoColor: "from-teal-500 to-emerald-400",
-      url: "https://www.trip.com/hotels/?allianceid=1762106&sid=111111",
+      category: "hotels" as const,
+      url: buildTripComHotelUrl(),
     }
   ], []);
 
@@ -1332,25 +1352,29 @@ export default function HomeTab({
       name: "Klook 客路門票",
       badge: "亞洲首選 ✨",
       logoColor: "from-orange-500 to-amber-500",
-      url: "https://www.klook.com/zh-TW/?aid=111111",
+      category: "tickets" as const,
+      url: buildKlookUrl('', 'nav-tickets'),
     },
     {
       name: "KKday 觀光行程",
       badge: "在地深度 ✦",
       logoColor: "from-cyan-400 to-sky-500",
-      url: "https://www.kkday.com/zh-tw?cid=4480",
+      category: "tickets" as const,
+      url: buildKkdayUrl('', 'nav-tickets'),
     },
     {
       name: "GetYourGuide 體驗",
       badge: "歐美最熱 ✦",
       logoColor: "from-orange-600 to-yellow-500",
-      url: "https://www.getyourguide.com/",
+      category: "tickets" as const,
+      url: buildGetYourGuideUrl(),
     },
     {
       name: "Viator 國外景點",
       badge: "全球最大 ✦",
       logoColor: "from-emerald-600 to-teal-500",
-      url: "https://www.viator.com/",
+      category: "tickets" as const,
+      url: buildViatorUrl(),
     }
   ], []);
 
@@ -1359,24 +1383,28 @@ export default function HomeTab({
       name: "Klook 機場接送",
       badge: "專車/共享 🚗",
       logoColor: "from-orange-500 to-amber-500",
-      url: "https://www.klook.com/zh-TW/activity/987-taoyuan-airport-transfers-taipei/?aid=111111",
+      category: "transfers" as const,
+      url: buildKlookUrl('activity/987-taoyuan-airport-transfers-taipei/', 'nav-transfers'),
     },
     {
       name: "KKday 機場/包車接駁",
       badge: "優質司機 ✦",
       logoColor: "from-cyan-400 to-sky-500",
-      url: "https://www.kkday.com/zh-tw/product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81&cid=4480",
+      category: "transfers" as const,
+      url: buildKkdayUrl('product/productlist?page=1&keyword=%E6%A9%9F%E5%A0%B4%E6%8E%A5%E9%80%81', 'nav-transfers'),
     },
     {
       name: "Tripool 旅步專車",
       badge: "回頭車划算 ✦",
       logoColor: "from-blue-600 to-indigo-500",
+      category: "transfers" as const,
       url: "https://www.tripool.app/",
     },
     {
       name: "Gleefultour 快活兔車隊",
       badge: "合法安全 ✦",
       logoColor: "from-rose-500 to-red-400",
+      category: "transfers" as const,
       url: "https://www.gleefultour.com/",
     }
   ], []);
@@ -2667,6 +2695,12 @@ export default function HomeTab({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => {
+                          // 追蹤分潤點擊（非阻塞）
+                          trackClickOut({
+                            item_id: `nav-flights-${platform.name}`,
+                            provider: platform.name,
+                            destination_url: platform.url,
+                          });
                           if (isMobileDevice) {
                             if (!isZoomed) {
                               e.preventDefault();
@@ -2755,6 +2789,12 @@ export default function HomeTab({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => {
+                          // 追蹤分潤點擊（非阻塞）
+                          trackClickOut({
+                            item_id: `nav-hotels-${platform.name}`,
+                            provider: platform.name,
+                            destination_url: platform.url,
+                          });
                           if (isMobileDevice) {
                             if (!isZoomed) {
                               e.preventDefault();
@@ -2843,6 +2883,12 @@ export default function HomeTab({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => {
+                          // 追蹤分潤點擊（非阻塞）
+                          trackClickOut({
+                            item_id: `nav-tickets-${platform.name}`,
+                            provider: platform.name,
+                            destination_url: platform.url,
+                          });
                           if (isMobileDevice) {
                             if (!isZoomed) {
                               e.preventDefault();
@@ -2931,6 +2977,12 @@ export default function HomeTab({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => {
+                          // 追蹤分潤點擊（非阻塞）
+                          trackClickOut({
+                            item_id: `nav-transfers-${platform.name}`,
+                            provider: platform.name,
+                            destination_url: platform.url,
+                          });
                           if (isMobileDevice) {
                             if (!isZoomed) {
                               e.preventDefault();
