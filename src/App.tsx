@@ -62,7 +62,7 @@ export default function App() {
     activeTab, setActiveTab,
     redirectModal, closeRedirectModal,
     userId, toasts, removeToast, showToast, setAuthenticated,
-    activeTripId,
+    activeTripId, setActiveTripId,
     isOffline, setOffline,
     isDarkMode, setDarkMode,
     notifications, clearNotifications,
@@ -193,6 +193,11 @@ export default function App() {
       clearClientSession();
     }
     setAuthReady(true);
+    const match = typeof window !== 'undefined' ? window.location.pathname.match(/^\/trips\/([^\/]+)$/) : null;
+    if (match) {
+      setActiveTripId(match[1]);
+      setActiveTab('itinerary');
+    }
   }, [setAuthenticated]);
 
   useEffect(() => {

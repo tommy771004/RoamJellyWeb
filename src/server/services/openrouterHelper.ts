@@ -8,10 +8,10 @@
 const FREE_MODELS = [
   'qwen/qwen3-coder:free',
   'deepseek/deepseek-v4-flash:free',
+  'qwen/qwen3-next-80b-a3b-instruct:free',
   'google/gemma-4-26b-a4b-it:free',
   'google/gemma-4-31b-it:free',
-  'qwen/qwen3-next-80b-a3b-instruct:free',
-  'baidu/cobuddy:free',
+  
   'meta-llama/llama-3.3-70b-instruct:free',
   'meta-llama/llama-3.2-3b-instruct:free',
   'nousresearch/hermes-3-llama-3.1-405b:free',
@@ -22,6 +22,7 @@ const FREE_MODELS = [
   'liquid/lfm-2.5-1.2b-thinking:free',
   'liquid/lfm-2.5-1.2b-instruct:free',
   'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
+  'baidu/cobuddy:free',
   'nvidia/llama-nemotron-embed-vl-1b-v2:free',
   'nvidia/nemotron-3-super-120b-a12b:free',
   'nvidia/nemotron-nano-12b-v2-vl:free',

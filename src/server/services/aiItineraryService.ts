@@ -1014,9 +1014,14 @@ export async function generateItinerary(body: any) {
             endDay,
             destinationContext
           );
-          return fetchOpenRouterWithFallback(apiKey!, prompt).then((text) =>
-            parseChunkText(text, isFirst)
-          );
+          const attempt = () =>
+            fetchOpenRouterWithFallback(apiKey!, prompt).then((text) =>
+              parseChunkText(text, isFirst)
+            );
+          return attempt().catch((err) => {
+            console.warn(`Chunk ${idx} failed to parse JSON, retrying once...`, err);
+            return attempt();
+          });
         })
       );
 

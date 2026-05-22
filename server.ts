@@ -2950,12 +2950,74 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
   // pSEO routes — must be registered before Vite middleware / static catch-all
   app.use(createSeoRouter(repo));
 
+  let vite: any;
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
+    vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
+  }
+
+  // UGC trips SEO metadata injection
+  app.get('/trips/:trip_id', async (req, res, next) => {
+    const tripId = req.params.trip_id;
+    if (!tripId.startsWith('trip_')) {
+      return next();
+    }
+
+    try {
+      const tripInfo = await buildTripInfo(repo, tripId);
+      if (!tripInfo || !tripInfo.isPublic) {
+        return next();
+      }
+
+      const fs = await import('fs');
+      let html = '';
+
+      if (vite) {
+        html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
+        html = await vite.transformIndexHtml(req.url, html);
+      } else {
+        const distPath = path.join(process.cwd(), 'dist');
+        const fs = await import('fs');
+        html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+      }
+
+      const title = `${tripInfo.name} - RoamJelly`;
+      const description = `這是一段由漫遊果凍建立的公開旅遊行程：${tripInfo.name}。`;
+      const coverImage = tripInfo.coverImage;
+
+      html = html.replace(/<title>.*?<\/title>/is, `<title>${title}</title>`);
+      html = html.replace(/<meta property="og:title" content=".*?"\s*\/>/is, `<meta property="og:title" content="${title}" />`);
+      html = html.replace(/<meta property="og:description" content=".*?"\s*\/>/is, `<meta property="og:description" content="${description}" />`);
+      html = html.replace(/<meta name="description" content=".*?"\s*\/>/is, `<meta name="description" content="${description}" />`);
+      if (coverImage) {
+        html = html.replace(/<meta property="og:image" content=".*?"\s*\/>/is, `<meta property="og:image" content="${coverImage}" />`);
+        html = html.replace(/<meta name="twitter:image" content=".*?"\s*\/>/is, `<meta name="twitter:image" content="${coverImage}" />`);
+      }
+
+      // 4. 結構化資料 (Schema Markup) 導入
+      const schemaMarkup = {
+        "@context": "https://schema.org",
+        "@type": "Trip",
+        "name": tripInfo.name,
+        "description": description,
+        "url": `https://roam-jelly-web.vercel.app/trips/${tripId}`
+      };
+      
+      const schemaScript = `\n    <script type="application/ld+json">\n    ${JSON.stringify(schemaMarkup, null, 2)}\n    </script>`;
+      html = html.replace('</head>', `${schemaScript}\n  </head>`);
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    } catch (err) {
+      console.error('[UGC SEO] Failed to render trip page:', err);
+      next();
+    }
+  });
+
+  if (vite) {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');

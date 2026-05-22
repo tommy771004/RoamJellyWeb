@@ -26,10 +26,16 @@ export function createSeoRouter(repo: AppRepository): Router {
   }
 
   // Sitemap
-  router.get('/sitemap-seo.xml', (_req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/xml');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.send(buildSitemapXml());
+  router.get('/sitemap-seo.xml', async (_req: Request, res: Response) => {
+    try {
+      const xml = await buildSitemapXml(repo);
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(xml);
+    } catch(err) {
+      console.error(err);
+      res.status(500).end();
+    }
   });
 
   // Route hub: /fly/
