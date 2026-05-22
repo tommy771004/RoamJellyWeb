@@ -3898,79 +3898,107 @@ export default function HomeTab({
                 label="分享行程卡片"
                 viewportClassName="w-full pb-6 -mx-6 px-6"
               >
-                  {communityTrips.map((trip) => (
-                    <motion.div
-                      key={trip.id}
-                      className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/trip"
-                    >
-                      <div
-                        className="relative overflow-hidden h-[235px] sm:h-[260px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all p-5 text-white"
-                      >
-                        {/* Cover Image as entire Card Background */}
-                        <div className="absolute inset-0 z-0">
-                          <img
-                            src={trip.cover}
-                            alt={trip.title}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).onerror = null;
-                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
-                            }}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-750 group-hover/trip:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/65 to-slate-950/25" />
-                        </div>
+                  {communityTrips.map((trip, index) => {
+                    const isEven = index % 2 === 0;
+                    const cardBg = isEven
+                      ? "from-[#FCF9F2] to-[#FFF1EA] dark:from-slate-800 dark:to-slate-850"
+                      : "from-[#EEF2FC] to-[#E2E8F0] dark:from-slate-800/90 dark:to-slate-850/90";
 
-                        {/* Top Overlay */}
-                        <div className="relative z-10 flex items-start justify-between">
-                          <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white">
-                            <Sparkles size={11} strokeWidth={2.6} className="text-yellow-300" />
-                            旅伴明信片
+                    // Asymmetric Corners
+                    const cornerShape = index % 3 === 0
+                      ? "rounded-tl-[52px] rounded-br-[52px] rounded-tr-[20px] rounded-bl-[20px]"
+                      : index % 3 === 1
+                      ? "rounded-tr-[52px] rounded-bl-[52px] rounded-tl-[20px] rounded-br-[20px]"
+                      : "rounded-tl-[24px] rounded-tr-[54px] rounded-br-[24px] rounded-bl-[54px]";
+
+                    const polaroidRotation = index % 2 === 0 ? "rotate-[-3deg]" : "rotate-[2deg]";
+                    const tapeRotation = index % 2 === 0 ? "rotate-[3deg]" : "rotate-[-2deg]";
+
+                    return (
+                      <motion.div
+                        key={trip.id}
+                        className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/trip"
+                      >
+                        <div
+                          onClick={(event) => {
+                            handleCloneTrip(event, trip);
+                          }}
+                          className={`relative overflow-hidden h-[245px] sm:h-[270px] ${cornerShape} flex flex-row items-stretch cursor-pointer border-[2px] border-slate-900/10 dark:border-white/10 bg-gradient-to-br ${cardBg} shadow-[4px_4px_0px_0px_rgba(15,23,42,0.05)] hover:shadow-[6px_6px_0px_0px_rgba(15,23,42,0.1)] hover:-translate-y-1 hover:border-slate-400 dark:hover:border-white/30 transition-all duration-300 p-4 sm:p-5`}
+                        >
+                          {/* Left Column: Polaroid Framed Image */}
+                          <div className="w-[105px] xs:w-[125px] sm:w-[145px] shrink-0 flex flex-col justify-start relative select-none">
+                            <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-2 sm:p-2.5 pb-6 sm:pb-8 rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/trip:scale-102 transition-transform duration-300 flex flex-col`}>
+                              <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
+                                <img
+                                  src={trip.cover}
+                                  alt={trip.title}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).onerror = null;
+                                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                  }}
+                                  loading="lazy"
+                                  className="h-full w-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                              </div>
+                              <div className="h-4 sm:h-5 mt-1 sm:mt-2 overflow-hidden flex items-center justify-center">
+                                <span className="font-mono text-[8.5px] sm:text-[9.5px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase leading-none truncate">
+                                  {getIataCode(trip.destination) || "MEMO"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className={`absolute top-[-8px] right-[4px] px-2.5 py-0.5 bg-yellow-100/90 dark:bg-yellow-950/95 border border-yellow-200/50 dark:border-yellow-905 text-yellow-800 dark:text-yellow-300 shadow-sm text-[8px] font-black uppercase tracking-widest leading-none ${tapeRotation} rounded-sm select-none`}>
+                              POSTCARD
+                            </div>
                           </div>
-                          
-                          <div className="flex flex-col items-end gap-1">
-                            <div className="flex gap-1">
-                              <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
-                                {getIataCode(trip.destination)}
-                              </span>
-                              <span className="rounded-md bg-slate-950/50 text-sky-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
-                                #{trip.destination || "台北"}
+
+                          {/* Right Column: Custom Text & Badges */}
+                          <div className="flex-1 flex flex-col justify-between text-left pl-2 select-none">
+                            <div className="flex flex-col gap-1 items-start">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <div className="inline-flex items-center gap-1 rounded-full bg-slate-900 dark:bg-slate-100 px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wider text-white dark:text-slate-900 shadow-sm">
+                                  <Sparkles size={8} className="text-yellow-400 dark:text-yellow-500" />
+                                  旅伴明信片
+                                </div>
+                                <span className="rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 px-1 py-0.5 text-[8px] font-black uppercase tracking-wider font-mono">
+                                  #{trip.destination || "台北"}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-black tracking-wider uppercase text-slate-400 dark:text-slate-500">
+                                by {trip.author || "Anonymous"}
                               </span>
                             </div>
-                            <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                              💚 {getSafetyStatus(trip.destination)}
-                            </span>
+
+                            <div className="my-1.5 flex-1 flex flex-col justify-center">
+                              <h3 className="text-[13px] xs:text-[14px] sm:text-[15px] font-black tracking-tight text-slate-900 dark:text-white leading-snug line-clamp-2">
+                                {trip.title}
+                              </h3>
+                              <p className="text-[10.5px] line-clamp-2 sm:line-clamp-3 leading-relaxed font-bold text-slate-505 dark:text-slate-300 mt-0.5">
+                                已被複製 {trip.forkCount ?? trip.likes ?? 0} 次。可以直接複製別人的自駕/地鐵行程，一鍵帶走再 remarque！
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 mt-auto">
+                              <span className="rounded bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider whitespace-nowrap">
+                                💚 {getSafetyStatus(trip.destination)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleCloneTrip(event, trip);
+                                }}
+                                className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 shadow-md active:scale-[0.96]"
+                              >
+                                <Copy size={10} />
+                                複製 REMIX
+                              </button>
+                            </div>
                           </div>
                         </div>
-
-                        {/* Bottom Overlay Info & CTA */}
-                        <div className="relative z-10 text-left pt-3">
-                          <span className="text-[10px] font-black tracking-wider uppercase opacity-80 block mb-1">
-                            by {trip.author || "Anonymous"}
-                          </span>
-                          
-                          <h3 className="text-[14.5px] sm:text-[15.5px] font-black tracking-tight drop-shadow-md text-white border-none leading-snug line-clamp-2">
-                            {trip.title}
-                          </h3>
-                          
-                          <p className="text-[11px] leading-relaxed font-bold text-slate-200 drop-shadow-sm mt-1 line-clamp-2">
-                            先把別人的自駕/地鐵行程當成明信片，喜歡再帶走！已被複製 {trip.forkCount ?? trip.likes ?? 0} 次。
-                          </p>
-
-                          <div className="flex gap-2 border-t border-white/10 pt-3.5 mt-3">
-                            <button
-                              type="button"
-                              onClick={(event) => handleCloneTrip(event, trip)}
-                              className="w-full flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 text-white shadow-md active:scale-[0.97]"
-                            >
-                              <Copy size={11} />
-                              複製此行程並 remarK
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
               </HorizontalScrollRail>
             </div>
           )}
@@ -3993,76 +4021,110 @@ export default function HomeTab({
               label="精選目的地指南"
               viewportClassName="w-full pb-6 -mx-6 px-6"
             >
-                {FEATURED_DESTINATIONS.map((dest) => {
+                {FEATURED_DESTINATIONS.map((dest, index) => {
+                  const isEven = index % 2 === 0;
+                  const cardBg = isEven
+                    ? "from-[#EAF5EC] to-[#E2F0EA] dark:from-slate-800 dark:to-slate-900"
+                    : "from-[#FFF5F2] to-[#FFEBE4] dark:from-slate-800 dark:to-indigo-950";
+
+                  // Alternate corners for asymmetrical organic look
+                  const cornerShape = index % 3 === 0
+                    ? "rounded-tr-[52px] rounded-bl-[52px] rounded-tl-[20px] rounded-br-[20px]"
+                    : index % 3 === 1
+                    ? "rounded-tl-[52px] rounded-br-[52px] rounded-tr-[20px] rounded-bl-[20px]"
+                    : "rounded-tl-[24px] rounded-tr-[54px] rounded-br-[24px] rounded-bl-[54px]";
+
+                  const polaroidRotation = index % 2 === 0 ? "rotate-[2.5deg]" : "rotate-[-3deg]";
+                  const tapeRotation = index % 2 === 0 ? "rotate-[-3deg]" : "rotate-[2deg]";
+
                   return (
-                  <motion.div
-                    key={dest.id}
-                    className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/dest"
-                  >
-                    <div
-                      className="relative overflow-hidden h-[235px] sm:h-[260px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all p-5 text-white"
+                    <motion.div
+                      key={dest.id}
+                      className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/dest"
                     >
-                      {/* Full cover background image */}
-                      <div className="absolute inset-0 z-0">
-                        <img
-                          src={dest.image}
-                          alt={dest.name}
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).onerror = null;
-                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
-                          }}
-                          referrerPolicy="no-referrer"
-                          className="h-full w-full object-cover transition-transform duration-750 group-hover/dest:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/65 to-slate-950/25" />
-                      </div>
+                      <div
+                        onClick={() => {
+                          const g = getCountryGuide(dest.id);
+                          if (g) setActiveGuide(g);
+                        }}
+                        className={`relative overflow-hidden h-[245px] sm:h-[270px] ${cornerShape} flex flex-row items-stretch cursor-pointer border-[2px] border-slate-900/10 dark:border-white/10 bg-gradient-to-br ${cardBg} shadow-[4px_4px_0px_0px_rgba(15,23,42,0.05)] hover:shadow-[6px_6px_0px_0px_rgba(15,23,42,0.1)] hover:-translate-y-1 hover:border-slate-400 dark:hover:border-white/30 transition-all duration-300 p-4 sm:p-5`}
+                      >
+                        {/* Left Column: Polaroid Framed Image */}
+                        <div className="w-[105px] xs:w-[125px] sm:w-[145px] shrink-0 flex flex-col justify-start relative select-none">
+                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-2 sm:p-2.5 pb-6 sm:pb-8 rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/dest:scale-102 transition-transform duration-300 flex flex-col`}>
+                            <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
+                              <img
+                                src={dest.image}
+                                alt={dest.name}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).onerror = null;
+                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                }}
+                                loading="lazy"
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                            </div>
+                            <div className="h-4 sm:h-5 mt-1 sm:mt-2 overflow-hidden flex items-center justify-center">
+                              <span className="font-mono text-[8.5px] sm:text-[9.5px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase leading-none truncate">
+                                {dest.name || "GUIDE"}
+                              </span>
+                            </div>
+                          </div>
 
-                      {/* Top Overlay details */}
-                      <div className="relative z-10 flex items-start justify-between">
-                        <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white">
-                          <Sparkles size={11} strokeWidth={2.6} className="text-emerald-300" />
-                          精選指南
+                          {/* Paper Tape Decorative Sticker */}
+                          <div className={`absolute top-[-8px] left-[4px] px-2.5 py-0.5 bg-emerald-100/90 dark:bg-emerald-950/95 border border-emerald-200/50 dark:border-emerald-905 text-emerald-800 dark:text-emerald-300 shadow-sm text-[8px] font-black uppercase tracking-widest leading-none ${tapeRotation} rounded-sm select-none`}>
+                            {getIataCode(dest.name) || "GUIDE"}
+                          </div>
                         </div>
-                        
-                        <div className="flex gap-1">
-                          <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
-                            {getIataCode(dest.name)}
-                          </span>
-                          <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
-                            #{dest.tags[0] || "漫遊"}
-                          </span>
+
+                        {/* Right Column: Custom Info Details */}
+                        <div className="flex-1 flex flex-col justify-between text-left pl-2 select-none">
+                          <div className="flex flex-col gap-1 items-start">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <div className="inline-flex items-center gap-1 rounded-full bg-emerald-900 dark:bg-emerald-100 px-2.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider text-white dark:text-emerald-900 shadow-sm">
+                                <Sparkles size={8} className="text-yellow-400 dark:text-yellow-500" />
+                                精選指南
+                              </div>
+                              <span className="rounded bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-300 px-1 py-0.5 text-[8.5px] font-black uppercase tracking-wider font-mono">
+                                #{dest.tags[0] || "漫遊"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Title & Description */}
+                          <div className="my-1.5 flex-1 flex flex-col justify-center">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-xl leading-none drop-shadow-sm">{dest.flag}</span>
+                              <h3 className="text-[13.5px] xs:text-[14px] sm:text-[15.5px] font-black tracking-tight text-slate-900 dark:text-white leading-snug">
+                                {dest.name} 旅遊攻略手冊
+                              </h3>
+                            </div>
+                            <p className="text-[11px] leading-relaxed font-bold text-slate-505 dark:text-slate-350 line-clamp-2 sm:line-clamp-3">
+                              {dest.description}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 mt-auto">
+                            <span className="rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-750 px-1.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider whitespace-nowrap">
+                              {dest.highlights?.[0] || "🗺️ 精選行程"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const g = getCountryGuide(dest.id);
+                                if (g) setActiveGuide(g);
+                              }}
+                              className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-md active:scale-[0.96]"
+                            >
+                              <ExternalLink size={10} />
+                              閱讀指南
+                            </button>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Bottom Overlay content & action */}
-                      <div className="relative z-10 text-left pt-3">
-                        <div className="flex items-center gap-1.5 drop-shadow-md mb-1">
-                          <span className="text-2xl leading-none">{dest.flag}</span>
-                          <span className="text-white font-black text-[15px] sm:text-[16px] leading-none">{dest.name} 旅遊攻略手冊</span>
-                        </div>
-                        
-                        <p className="text-[12px] leading-relaxed font-medium text-slate-200 drop-shadow-sm mt-1 line-clamp-4">
-                          {dest.description}
-                        </p>
-
-                        <div className="flex gap-2 border-t border-white/10 pt-3.5 mt-3">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const g = getCountryGuide(dest.id);
-                              if (g) setActiveGuide(g);
-                            }}
-                            className="w-full flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-md active:scale-[0.97]"
-                          >
-                            <ExternalLink size={11} />
-                            閱讀完整攻略與指南
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
+                    </motion.div>
                   );
                 })}
             </HorizontalScrollRail>
@@ -4081,89 +4143,114 @@ export default function HomeTab({
               label="熱門達人行程"
               viewportClassName="w-full pb-6 -mx-6 px-6"
             >
-                {EXPERT_HANDBOOKS.map((handbook) => {
+                {EXPERT_HANDBOOKS.map((handbook, index) => {
+                  const isEven = index % 2 === 0;
+                  const cardBg = isEven
+                    ? "from-[#F5F3FF] to-[#EDE9FE] dark:from-slate-800 dark:to-slate-900"
+                    : "from-[#FFF1EB] to-[#FFF9F5] dark:from-slate-800/90 dark:to-slate-850/95";
+
+                  // Asymmetrical corners
+                  const cornerShape = index % 3 === 0
+                    ? "rounded-tl-[52px] rounded-br-[52px] rounded-tr-[20px] rounded-bl-[20px]"
+                    : index % 3 === 1
+                    ? "rounded-tr-[52px] rounded-bl-[52px] rounded-tl-[20px] rounded-br-[20px]"
+                    : "rounded-tl-[24px] rounded-tr-[54px] rounded-br-[24px] rounded-bl-[54px]";
+
+                  const polaroidRotation = index % 2 === 0 ? "rotate-[-2.5deg]" : "rotate-[3deg]";
+                  const tapeRotation = index % 2 === 0 ? "rotate-[3deg]" : "rotate-[-2.5deg]";
+
                   return (
-                  <motion.div
-                    key={handbook.id}
-                    className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/handbook"
-                  >
-                    <div
-                      onClick={() => setActiveHandbook(handbook)}
-                      className="relative overflow-hidden h-[235px] sm:h-[260px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all p-5 text-white"
+                    <motion.div
+                      key={handbook.id}
+                      className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/handbook"
                     >
-                      {/* Full cover background image */}
-                      <div className="absolute inset-0 z-0">
-                        <img
-                          src={handbook.image}
-                          alt={handbook.title}
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).onerror = null;
-                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
-                          }}
-                          referrerPolicy="no-referrer"
-                          className="h-full w-full object-cover transition-transform duration-750 group-hover/handbook:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/65 to-slate-950/25" />
-                      </div>
+                      <div
+                        onClick={() => setActiveHandbook(handbook)}
+                        className={`relative overflow-hidden h-[245px] sm:h-[270px] ${cornerShape} flex flex-row items-stretch cursor-pointer border-[2px] border-slate-900/10 dark:border-white/10 bg-gradient-to-br ${cardBg} shadow-[4px_4px_0px_0px_rgba(15,23,42,0.05)] hover:shadow-[6px_6px_0px_0px_rgba(15,23,42,0.1)] hover:-translate-y-1 hover:border-slate-400 dark:hover:border-white/30 transition-all duration-300 p-4 sm:p-5`}
+                      >
+                        {/* Left Column: Polaroid Framed Image */}
+                        <div className="w-[105px] xs:w-[125px] sm:w-[145px] shrink-0 flex flex-col justify-start relative select-none">
+                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-2 sm:p-2.5 pb-6 sm:pb-8 rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/handbook:scale-102 transition-transform duration-300 flex flex-col`}>
+                            <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
+                              <img
+                                src={handbook.image}
+                                alt={handbook.title}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).onerror = null;
+                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                }}
+                                loading="lazy"
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                            </div>
+                            <div className="h-4 sm:h-5 mt-1 sm:mt-2 overflow-hidden flex items-center justify-center">
+                              <span className="font-mono text-[8.5px] sm:text-[9.5px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase leading-none truncate">
+                                {handbook.days || 3} DAYS
+                              </span>
+                            </div>
+                          </div>
 
-                      {/* Top Overlay details */}
-                      <div className="relative z-10 flex items-start justify-between">
-                        <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white">
-                          <Sparkles size={11} strokeWidth={2.6} className="text-fuchsia-300" />
-                          達人行程
+                          {/* Paper Tape Decorative Sticker */}
+                          <div className={`absolute top-[-8px] right-[4px] px-2.5 py-0.5 bg-fuchsia-100/90 dark:bg-fuchsia-950/95 border border-fuchsia-200/50 dark:border-fuchsia-905 text-fuchsia-800 dark:text-fuchsia-300 shadow-sm text-[8px] font-black uppercase tracking-widest leading-none ${tapeRotation} rounded-sm select-none`}>
+                            {getIataCode(handbook.title) || "TRIP"}
+                          </div>
                         </div>
-                        
-                        <div className="flex gap-1">
-                          <span className="rounded-md bg-slate-950/50 text-white border border-white/10 px-2 py-0.5 text-[9px] font-black backdrop-blur-md font-mono">
-                            {getIataCode(handbook.title)}
-                          </span>
-                          <span className="rounded-md bg-slate-950/50 text-pink-300 border border-white/10 px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider font-mono">
-                            {handbook.days} Days
-                          </span>
+
+                        {/* Right Column: Custom Info Details */}
+                        <div className="flex-1 flex flex-col justify-between text-left pl-2 select-none">
+                          <div className="flex flex-col gap-1 items-start">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <div className="inline-flex items-center gap-1 rounded-full bg-purple-900 dark:bg-purple-100 px-2.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider text-white dark:text-purple-900 shadow-sm">
+                                <Sparkles size={8} className="text-yellow-400 dark:text-yellow-500" />
+                                達人行程
+                              </div>
+                              <span className="rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 px-1 py-0.5 text-[8.5px] font-black uppercase tracking-wider font-mono">
+                                #{handbook.tags[0] || "漫遊"}
+                              </span>
+                            </div>
+
+                            <span className="text-[10px] font-black tracking-wider uppercase text-slate-400 dark:text-slate-500">
+                              by {handbook.author}
+                            </span>
+                          </div>
+
+                          {/* Title & Description */}
+                          <div className="my-1.5 flex-1 flex flex-col justify-center">
+                            <h3 className="text-[13px] xs:text-[14.5px] sm:text-[15.5px] font-black tracking-tight text-slate-900 dark:text-white leading-snug line-clamp-2">
+                              {handbook.title}
+                            </h3>
+                            <p className="text-[11px] leading-relaxed font-bold text-slate-550 dark:text-slate-350 mt-1 line-clamp-2 sm:line-clamp-3">
+                              最具含金量的達人自由行路線！包含：{handbook.tags.slice(0, 3).map((t) => `#${t}`).join(" ")}。
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-1 mt-auto">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyExpertItinerary(e, handbook);
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-purple-600 dark:bg-purple-500 hover:bg-purple-500 dark:hover:bg-purple-400 text-white shadow-md active:scale-[0.96]"
+                            >
+                              <Copy size={10} />
+                              複製行程
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveHandbook(handbook);
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider border border-slate-350 dark:border-slate-705 text-slate-700 dark:text-slate-300 bg-white/45 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.96] transition-all"
+                            >
+                              預覽
+                            </button>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Bottom Overlay content & action */}
-                      <div className="relative z-10 text-left pt-3">
-                        <span className="text-[10px] font-black tracking-wider uppercase opacity-80 block mb-1">
-                          by {handbook.author}
-                        </span>
-                        
-                        <h3 className="text-[15px] sm:text-[16px] font-bold tracking-tight drop-shadow-md text-white border-none leading-snug line-clamp-2">
-                          {handbook.title}
-                        </h3>
-                        
-                        <p className="text-[12px] leading-relaxed font-medium text-slate-200 drop-shadow-sm mt-1 line-clamp-4">
-                          最具含金量的行程路線！包含：{handbook.tags.slice(0, 3).map((t) => `#${t}`).join(" ")}，專為自由行打造。一鍵複製即刻出發，開啟你的完美旅程。
-                        </p>
-
-                        <div className="flex gap-2 border-t border-white/10 pt-3.5 mt-3">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopyExpertItinerary(e, handbook);
-                            }}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md active:scale-[0.97]"
-                          >
-                            <Copy size={11} />
-                            複製此達人行程
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveHandbook(handbook);
-                            }}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 active:scale-[0.97] transition-all"
-                          >
-                            預覽行程
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
+                    </motion.div>
                   );
                 })}
             </HorizontalScrollRail>
