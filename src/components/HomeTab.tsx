@@ -1246,6 +1246,7 @@ export default function HomeTab({
   const transfersHoverTimeout = useRef<any>(null);
 
   const chipsScrollContainerRef = useRef<HTMLDivElement>(null);
+  const destsScrollRef = useRef<HTMLDivElement>(null);
 
   const [isMobileDevice, setIsMobileDevice] = useState(false);
 
@@ -1256,6 +1257,68 @@ export default function HomeTab({
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // 左右自動軌道式滾動效果 (Auto track scrolling back and forth)
+  useEffect(() => {
+    const el = destsScrollRef.current;
+    if (!el) return;
+
+    let direction = 1; // 1 = right, -1 = left
+    let intervalId: any = null;
+    let isHovered = false;
+
+    const startScrolling = () => {
+      intervalId = setInterval(() => {
+        if (isHovered) return;
+        
+        // 取得最大可捲動寬度
+        const maxScrollLeft = el.scrollWidth - el.clientWidth;
+        if (maxScrollLeft <= 0) return;
+
+        // 如果到最右邊則往左，到最左邊則往右
+        if (el.scrollLeft >= maxScrollLeft - 1 && direction === 1) {
+          direction = -1;
+        } else if (el.scrollLeft <= 1 && direction === -1) {
+          direction = 1;
+        }
+
+        el.scrollLeft += direction * 0.8; // 絲滑漸進慢速移動 0.8px
+      }, 25);
+    };
+
+    const handleMouseEnter = () => {
+      isHovered = true;
+    };
+
+    const handleMouseLeave = () => {
+      isHovered = false;
+    };
+
+    const handleTouchStart = () => {
+      isHovered = true;
+    };
+
+    const handleTouchEnd = () => {
+      setTimeout(() => {
+        isHovered = false;
+      }, 1500); // 觸碰結束 1.5 秒後，恢復自動左右軌道滾動
+    };
+
+    startScrolling();
+
+    el.addEventListener("mouseenter", handleMouseEnter);
+    el.addEventListener("mouseleave", handleMouseLeave);
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      el.removeEventListener("mouseenter", handleMouseEnter);
+      el.removeEventListener("mouseleave", handleMouseLeave);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchend", handleTouchEnd);
+    };
   }, []);
 
   useEffect(() => {
@@ -1407,6 +1470,32 @@ export default function HomeTab({
       category: "transfers" as const,
       url: "https://www.gleefultour.com/",
     }
+  ], []);
+
+  const HOT_DESTINATIONS = useMemo(() => [
+    // 亞洲
+    { name: "東京", flag: "🇯🇵" },
+    { name: "大阪", flag: "🇯🇵" },
+    { name: "首爾", flag: "🇰🇷" },
+    { name: "釜山", flag: "🇰🇷" },
+    { name: "曼谷", flag: "🇹🇭" },
+    { name: "清邁", flag: "🇹🇭" },
+    { name: "新加坡", flag: "🇸🇬" },
+    { name: "吉隆坡", flag: "🇲🇾" },
+    { name: "香港", flag: "🇭🇰" },
+    { name: "澳門", flag: "🇲🇴" },
+    // 歐洲
+    { name: "巴黎", flag: "🇫🇷" },
+    { name: "倫敦", flag: "🇬🇧" },
+    // 美洲
+    { name: "紐約", flag: "🇺🇸" },
+    { name: "洛杉磯", flag: "🇺🇸" },
+    // 大洋洲
+    { name: "雪梨", flag: "🇦🇺" },
+    { name: "奧克蘭", flag: "🇳🇿" },
+    // 中東
+    { name: "杜拜", flag: "🇦🇪" },
+    { name: "伊斯坦堡", flag: "🇹🇷" }
   ], []);
 
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
@@ -1840,10 +1929,8 @@ export default function HomeTab({
     destination: TravelGuideDestination,
     field: "from" | "to",
   ) => {
-    // 根據選好的地方 顯示中文與機場三碼 code
-    const displayValue = destination.searchAlias
-      ? `${destination.place} (${destination.searchAlias})`
-      : destination.place;
+    // 根據選好的地方 僅顯示中文，不含任何英文縮寫或機場代碼
+    const displayValue = destination.place;
     updateField(field, displayValue);
     if (field === "from") setShowDeparturePicker(false);
     if (field === "to") setShowDestinationPicker(false);
@@ -2275,7 +2362,7 @@ export default function HomeTab({
                           setShowDatePicker(false);
                         }}
                         onChange={(e) => updateField("from", e.target.value)}
-                        placeholder="台北 TPE"
+                        placeholder="台北"
                         autoComplete="off"
                       />
                     </div>
@@ -2323,10 +2410,77 @@ export default function HomeTab({
                           setShowDatePicker(false);
                         }}
                         onChange={(e) => updateField("to", e.target.value)}
-                        placeholder="東京 NRT"
+                        placeholder="東京"
                         autoComplete="off"
                       />
                     </div>
+                  </div>
+
+                  {/* 熱門目的地建議清單 (自適應 RWD 與跑馬燈呼吸效果) */}
+                  <div className="relative group/dests-row w-full flex items-center my-1.5 pb-0.5">
+                    {/* 左側毛玻璃微型微調箭頭，在桌面游標移入時顯著，方便互動 */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (destsScrollRef.current) {
+                          destsScrollRef.current.scrollBy({ left: -160, behavior: "smooth" });
+                        }
+                      }}
+                      className="absolute -left-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-0 group-hover/dests-row:opacity-100 hover:scale-105 active:scale-95 cursor-pointer hidden md:flex"
+                      aria-label="往左捲動建議"
+                    >
+                      <ChevronLeft size={12} strokeWidth={3} />
+                    </button>
+
+                    {/* 滾動容器 */}
+                    <div
+                      ref={destsScrollRef}
+                      className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2 py-1 px-1 w-full snap-x scroll-smooth"
+                    >
+                      {/* 清單開頭提示字樣 */}
+                      <div className="flex items-center gap-1.5 text-[11px] font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase shrink-0 snap-start select-none pl-1">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 flex-shrink-0"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 flex-shrink-0"></span>
+                        </span>
+                        熱門推薦：
+                      </div>
+
+                      {HOT_DESTINATIONS.map((dest) => (
+                        <button
+                          key={dest.name}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            updateField("to", dest.name);
+                            setShowDestinationPicker(false);
+                            if (typeof triggerHapticFeedback === 'function') {
+                              triggerHapticFeedback([10]);
+                            }
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 snap-start transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.94] animate-jelly-pulse hover:animate-none hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
+                        >
+                          <span className="text-[13px]">{dest.flag}</span>
+                          <span className="tracking-wide">{dest.name}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* 右側毛玻璃微型微調箭頭 */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (destsScrollRef.current) {
+                          destsScrollRef.current.scrollBy({ left: 160, behavior: "smooth" });
+                        }
+                      }}
+                      className="absolute -right-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-0 group-hover/dests-row:opacity-100 hover:scale-105 active:scale-95 cursor-pointer hidden md:flex"
+                      aria-label="往右捲動建議"
+                    >
+                      <ChevronRight size={12} strokeWidth={3} />
+                    </button>
                   </div>
 
                   {/* Date / Return Date row */}
@@ -2697,9 +2851,11 @@ export default function HomeTab({
                         onClick={(e) => {
                           // 追蹤分潤點擊（非阻塞）
                           trackClickOut({
+                            user_id: null,
                             item_id: `nav-flights-${platform.name}`,
                             provider: platform.name,
-                            destination_url: platform.url,
+                            timestamp: new Date().toISOString(),
+                            affiliate_url: platform.url,
                           });
                           if (isMobileDevice) {
                             if (!isZoomed) {
@@ -2791,9 +2947,11 @@ export default function HomeTab({
                         onClick={(e) => {
                           // 追蹤分潤點擊（非阻塞）
                           trackClickOut({
+                            user_id: null,
                             item_id: `nav-hotels-${platform.name}`,
                             provider: platform.name,
-                            destination_url: platform.url,
+                            timestamp: new Date().toISOString(),
+                            affiliate_url: platform.url,
                           });
                           if (isMobileDevice) {
                             if (!isZoomed) {
@@ -2885,9 +3043,11 @@ export default function HomeTab({
                         onClick={(e) => {
                           // 追蹤分潤點擊（非阻塞）
                           trackClickOut({
+                            user_id: null,
                             item_id: `nav-tickets-${platform.name}`,
                             provider: platform.name,
-                            destination_url: platform.url,
+                            timestamp: new Date().toISOString(),
+                            affiliate_url: platform.url,
                           });
                           if (isMobileDevice) {
                             if (!isZoomed) {
@@ -2979,9 +3139,11 @@ export default function HomeTab({
                         onClick={(e) => {
                           // 追蹤分潤點擊（非阻塞）
                           trackClickOut({
+                            user_id: null,
                             item_id: `nav-transfers-${platform.name}`,
                             provider: platform.name,
-                            destination_url: platform.url,
+                            timestamp: new Date().toISOString(),
+                            affiliate_url: platform.url,
                           });
                           if (isMobileDevice) {
                             if (!isZoomed) {

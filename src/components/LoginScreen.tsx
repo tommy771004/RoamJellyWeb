@@ -192,15 +192,16 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
 
   return (
     <div
-      className="relative flex-1 w-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(251,146,60,0.18),transparent_36%),#f8fafc] dark:bg-gradient-to-br dark:from-indigo-950 dark:via-purple-900 dark:to-slate-900 transition-colors duration-500"
+      className="relative flex-1 w-full overflow-y-auto overflow-x-hidden bg-gradient-to-tr from-slate-50 via-[#fdfcfd] to-sky-50/50 dark:bg-gradient-to-br dark:from-[#030712] dark:via-slate-950 dark:to-[#0f172a] transition-colors duration-500"
     >
-      <div className="pointer-events-none absolute top-[-8%] left-[-10%] h-[32rem] w-[32rem] rounded-full bg-sky-200/40 dark:bg-sky-500/10 blur-[96px]" />
-      <div className="pointer-events-none absolute right-[-8%] top-[8%] h-[26rem] w-[26rem] rounded-full bg-orange-200/35 dark:bg-orange-500/10 blur-[90px]" />
-      <div className="pointer-events-none absolute bottom-[-10%] left-[18%] h-[24rem] w-[24rem] rounded-full bg-slate-200/50 dark:bg-slate-500/10 blur-[84px]" />
+      {/* Drifting backdrop spheres with variable speeds and directions */}
+      <div className="pointer-events-none absolute top-[-10%] left-[-15%] h-[36rem] w-[36rem] rounded-full bg-sky-200/35 dark:bg-sky-500/5 blur-[120px] animate-cute-bounce [animation-duration:18s]" />
+      <div className="pointer-events-none absolute right-[-10%] top-[10%] h-[30rem] w-[30rem] rounded-full bg-pink-200/40 dark:bg-fuchsia-500/5 blur-[110px] animate-cute-bounce [animation-delay:3s] [animation-duration:22s]" />
+      <div className="pointer-events-none absolute bottom-[-15%] left-[15%] h-[28rem] w-[28rem] rounded-full bg-orange-100/35 dark:bg-orange-600/5 blur-[100px] animate-cute-bounce [animation-delay:6s] [animation-duration:26s]" />
 
       <div className={`relative z-10 mx-auto flex min-h-full w-full max-w-[1040px] flex-col justify-center px-3 pt-5 pb-7 sm:px-6 sm:py-9 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
         {shouldShowGuestHero && (
-          <section className="mb-4 rounded-[32px] border border-white/84 dark:border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(255,250,251,0.70),rgba(241,248,255,0.68))] dark:bg-black/40 p-3.5 shadow-[0_18px_44px_rgba(15,23,42,0.09)] dark:shadow-black/50 backdrop-blur-[18px] sm:p-5 lg:mb-0">
+          <section className="mb-4 rounded-[32px] glass-panel border border-white/70 dark:border-white/10 p-4 shadow-[0_24px_50px_rgba(15,23,42,0.06)] backdrop-blur-[24px] sm:p-5 lg:mb-0">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-[17px] bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-[0_8px_18px_rgba(15,23,42,0.16)]">
@@ -313,7 +314,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
         )}
 
         <div
-          className={`rounded-[30px] border border-white/60 dark:border-white/20 bg-white/75 dark:bg-black/40 backdrop-blur-xl dark:backdrop-blur-2xl p-5 shadow-[0_14px_34px_rgba(15,23,42,0.10)] dark:shadow-black/50 flex flex-col relative overflow-hidden ${shouldShowGuestHero ? '' : 'mt-0'} ${pressableSurfaceClass}`}
+          className={`rounded-[30px] glass-panel border border-white/70 dark:border-white/10 p-6 shadow-[0_24px_50px_rgba(15,23,42,0.06)] flex flex-col relative overflow-hidden ${shouldShowGuestHero ? '' : 'mt-0'} ${pressableSurfaceClass}`}
         >
           <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[linear-gradient(180deg,rgba(255,255,255,0.15),transparent)]" />
           <div className="relative z-10 mb-5 flex items-start justify-between gap-4">

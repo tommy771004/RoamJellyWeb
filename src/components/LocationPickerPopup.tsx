@@ -96,7 +96,7 @@ export const LocationPickerPopup = ({
                 value={searchQuery}
                 aria-label="搜尋世界旅遊目的地"
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜尋國家、城市或機場代碼 (如 TPE)"
+                placeholder="搜尋國家、城市名"
                 className="w-full rounded-[16px] border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-bold text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
                 autoCapitalize="none"
                 autoCorrect="off"
@@ -208,12 +208,6 @@ export const LocationPickerPopup = ({
                             <span className="text-[10px] font-bold text-slate-400 group-hover:text-indigo-500/85 transition-colors truncate max-w-full">
                               {display.sub}
                             </span>
-                            
-                            {display.code && (
-                              <span className="mt-1 inline-flex items-center rounded-full bg-slate-50 border border-slate-100/80 px-2 py-0.5 text-[9px] font-black text-slate-500 font-mono tracking-wider group-hover:bg-sky-100/60 group-hover:border-sky-200 group-hover:text-indigo-600 transition-all shadow-subtle">
-                                {display.code}
-                              </span>
-                            )}
                           </button>
                         );
                       })}

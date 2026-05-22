@@ -104,57 +104,63 @@ export function sortNodesForDisplay(nodes: ItineraryNode[]): ItineraryNode[] {
 }
 
 export function assignDaysBasedOnTimeAndOrder(nodes: any[], startDateStr?: string): ItineraryNode[] {
+  if (!Array.isArray(nodes) || nodes.length === 0) return [];
   let currentDay = 1;
   let lastTimeMinutes = -1;
   let sortOrderForDay = 1;
 
-  return nodes.map((n) => {
-    const previousDay = currentDay;
-    const node: ItineraryNode = {
-      node_id: n.node_id || n.id || `node_${Date.now()}_${Math.random()}`,
-      day: Number(n.day ?? 1),
-      date: n.date,
-      time: n.time || '10:00',
-      title: n.title || n.location || '未命名行程',
-      emoji: n.emoji || n.icon || getCategoryMeta(n.category).emoji,
-      category: n.category || 'other',
-      description: n.description ?? n.ai_note ?? n.notes,
-      ai_note: n.ai_note ?? n.aiNote ?? undefined,
-      intensity: n.intensity ?? undefined,
-      is_visited: n.is_visited ?? n.isVisited ?? false,
-      source: n.source || 'remote',
-      lat: n.lat,
-      lng: n.lng,
-      transport_to_next: n.transport_to_next,
-      image_url: n.image_url,
-      linkedFactId: n.linkedFactId || n.linked_fact_id,
-      sort_order: typeof n.sort_order === 'number' ? n.sort_order : typeof n.sortOrder === 'number' ? n.sortOrder : undefined,
-    };
+  try {
+    return nodes.map((n) => {
+      const previousDay = currentDay;
+      const node: ItineraryNode = {
+        node_id: n?.node_id || n?.id || `node_${Date.now()}_${Math.random()}`,
+        day: Number(n?.day ?? 1),
+        date: n?.date,
+        time: n?.time || '10:00',
+        title: n?.title || n?.location || '未命名行程',
+        emoji: n?.emoji || n?.icon || (n?.category ? getCategoryMeta(n.category).emoji : '📍'),
+        category: n?.category || 'other',
+        description: n?.description ?? n?.ai_note ?? n?.notes,
+        ai_note: n?.ai_note ?? n?.aiNote ?? undefined,
+        intensity: n?.intensity ?? undefined,
+        is_visited: n?.is_visited ?? n?.isVisited ?? false,
+        source: n?.source || 'remote',
+        lat: n?.lat,
+        lng: n?.lng,
+        transport_to_next: n?.transport_to_next,
+        image_url: n?.image_url,
+        linkedFactId: n?.linkedFactId || n?.linked_fact_id,
+        sort_order: typeof n?.sort_order === 'number' ? n.sort_order : typeof n?.sortOrder === 'number' ? n.sortOrder : undefined,
+      };
 
-    if (n.day != null) {
-      currentDay = Number(n.day);
-      if (currentDay !== previousDay && !(typeof n.sort_order === 'number' || typeof n.sortOrder === 'number')) {
-        sortOrderForDay = 1;
+      if (n && n.day != null) {
+        currentDay = Number(n.day);
+        if (currentDay !== previousDay && !(typeof n.sort_order === 'number' || typeof n.sortOrder === 'number')) {
+          sortOrderForDay = 1;
+        }
+      } else {
+        const timeParts = String(node.time).split(':');
+        const hours = parseInt(timeParts[0] || '10', 10);
+        const mins = parseInt(timeParts[1] || '0', 10);
+        const timeMinutes = hours * 60 + mins;
+
+        if (lastTimeMinutes !== -1 && timeMinutes < lastTimeMinutes) {
+          currentDay++;
+          sortOrderForDay = 1;
+        }
+        lastTimeMinutes = timeMinutes;
       }
-    } else {
-      const timeParts = String(node.time).split(':');
-      const hours = parseInt(timeParts[0] || '10', 10);
-      const mins = parseInt(timeParts[1] || '0', 10);
-      const timeMinutes = hours * 60 + mins;
 
-      if (lastTimeMinutes !== -1 && timeMinutes < lastTimeMinutes) {
-        currentDay++;
-        sortOrderForDay = 1;
-      }
-      lastTimeMinutes = timeMinutes;
-    }
+      node.day = Number.isFinite(currentDay) && currentDay > 0 ? currentDay : 1;
+      node.date = node.date || getDateForDay(node.day, startDateStr);
+      node.timestamp = n?.timestamp || buildTimestampFromDateTime(node.date, node.time);
+      node.sort_order = node.sort_order ?? sortOrderForDay;
+      sortOrderForDay = (node.sort_order ?? sortOrderForDay) + 1;
 
-    node.day = Number.isFinite(currentDay) && currentDay > 0 ? currentDay : 1;
-    node.date = node.date || getDateForDay(node.day, startDateStr);
-    node.timestamp = n.timestamp || buildTimestampFromDateTime(node.date, node.time);
-    node.sort_order = node.sort_order ?? sortOrderForDay;
-    sortOrderForDay = (node.sort_order ?? sortOrderForDay) + 1;
-
-    return node;
-  });
+      return node;
+    });
+  } catch (e) {
+    console.error("Error in assignDaysBasedOnTimeAndOrder:", e);
+    return [];
+  }
 }

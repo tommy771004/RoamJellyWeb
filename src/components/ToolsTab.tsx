@@ -19,6 +19,9 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
+  CreditCard,
+  Layers,
+  Grid,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
@@ -684,7 +687,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function WeatherCard() {
+function WeatherCard({ className }: { className?: string }) {
   const {
     state: { weather, destination, loading, tripInfo },
   } = useToolsTabContext();
@@ -810,7 +813,7 @@ function WeatherCard() {
       : "未能取得天氣資料";
 
   return (
-    <GlassCard className="!p-4 sm:!p-6 mb-6 sm:mb-8 flex flex-col relative overflow-hidden transition-all duration-200 glass-panel shadow-md hover:shadow-xl border-white/80">
+    <GlassCard className={cn("!p-4 sm:!p-6 flex flex-col relative overflow-hidden transition-all duration-200 glass-panel shadow-md hover:shadow-xl border-white/80", className)}>
       <div className="absolute -top-10 -right-10 w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-sky-200/35 blur-[36px] pointer-events-none group-hover:scale-105 transition-transform duration-200" />
       <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-orange-200/25 blur-[28px] pointer-events-none group-hover:scale-105 transition-transform duration-200" />
       <div className="absolute top-5 left-5 flex gap-2 opacity-90">
@@ -942,7 +945,7 @@ function WeatherCard() {
   );
 }
 
-function ChecklistSection() {
+function ChecklistSection({ className }: { className?: string }) {
   const {
     state: { checklist, tripInfo, members },
     actions,
@@ -1058,17 +1061,17 @@ function ChecklistSection() {
   };
 
   return (
-    <section className="mb-8 font-sans">
+    <section className={cn("font-sans flex flex-col", className)}>
       <div className="flex justify-between items-end mb-4 sm:mb-6 px-1 sm:px-2">
         <h2 className="text-balance text-[26px] sm:text-[28px] font-black text-slate-900">
           旅途清單
         </h2>
-        <span className="text-[11px] sm:text-xs uppercase font-black text-sky-700 bg-sky-100/90 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-sky-200">
+        <span className="text-[11px] sm:text-xs uppercase font-black text-sky-700 bg-sky-100/90 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-sky-200 shrink-0 ml-2">
           已整理 {packedCount}/{checklist.length}
         </span>
       </div>
 
-      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6 glass-panel shadow-md hover:shadow-xl">
+      <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6 glass-panel shadow-md hover:shadow-xl flex-1 flex flex-col h-full overflow-y-auto min-h-[300px]">
         {checklist.length === 0 && (
           <span className="text-sm text-slate-500 italic">
             目前沒有行李項目
@@ -1089,89 +1092,131 @@ function ChecklistSection() {
             "toiletries",
             "other",
           ];
-          const grouped = ORDER.map((cat) => ({
-            cat,
-            meta: CAT_META[cat],
-            items: checklist.filter(
-              (i: any) => (i.category ?? "other") === cat,
-            ),
-          })).filter((g) => g.items.length > 0);
-          return grouped.map(({ cat, meta, items: catItems }) => (
-            <div key={cat} className="editorial-card-soft mb-3 rounded-[28px] p-3 sm:p-4 last:mb-0 shadow-sm transition-shadow">
-              <div className="flex items-center gap-2 mb-2">
-                <IconImg value={meta.emoji} size={18} />
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
-                  {meta.label}
-                </span>
-              </div>
-              <div className="flex flex-col gap-2">
-                {catItems.map((item: any) => (
-                  <label
-                    key={item.id}
-                    className={`flex items-center gap-4 group p-3 min-h-[52px] rounded-2xl transition-colors ${isOffline ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-white/80"}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (!isOffline) actions.toggleCheck(item);
-                    }}
-                  >
-                    <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
-                      <input
-                        readOnly
-                        checked={item.checked}
-                        className="peer sr-only"
-                        type="checkbox"
-                      />
-                      <motion.div
-                        animate={
-                          item.checked
-                            ? { scale: [1, 1.2, 1], backgroundColor: "#a855f7" }
-                            : { scale: 1, backgroundColor: "#f8fafc" }
-                        }
-                        transition={{
-                          type: "spring",
-                          stiffness: 500,
-                          damping: 28,
-                          duration: 0.3,
+          const grouped = ORDER.map((cat) => {
+            const itemsInCategory = checklist.filter(
+              (i: any) => (i.category ?? "other") === cat
+            );
+            // Sort: unchecked items first, checked items last for physical sliding transitions on check
+            const sortedItems = [...itemsInCategory].sort((a, b) => {
+              if (a.checked === b.checked) return 0;
+              return a.checked ? 1 : -1;
+            });
+            return {
+              cat,
+              meta: CAT_META[cat],
+              items: sortedItems,
+            };
+          }).filter((g) => g.items.length > 0);
+
+          return (
+            <motion.div layoutRoot className="flex flex-col gap-3">
+              {grouped.map(({ cat, meta, items: catItems }) => (
+                <motion.div
+                  layout
+                  key={cat}
+                  className="editorial-card-soft mb-3 rounded-[28px] p-4 last:mb-0 shadow-sm border border-slate-100 bg-white/40 backdrop-blur-md"
+                  transition={{
+                    type: "spring",
+                    stiffness: 350,
+                    damping: 28,
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <IconImg value={meta.emoji} size={18} />
+                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest leading-none">
+                      {meta.label}
+                    </span>
+                    <span className="ml-auto text-[10px] font-bold text-slate-400 bg-slate-100/65 px-2 py-0.5 rounded-full">
+                      {catItems.filter((i) => i.checked).length}/{catItems.length}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {catItems.map((item: any) => (
+                      <motion.label
+                        layout
+                        key={item.id}
+                        className={`flex items-center gap-4 group p-3.5 min-h-[56px] rounded-2xl border transition-all ${
+                          isOffline
+                            ? "opacity-50 cursor-not-allowed border-slate-100 bg-slate-50/50"
+                            : item.checked
+                            ? "cursor-pointer border-slate-100 bg-emerald-50/15 hover:bg-emerald-50/30 text-slate-400 shadow-sm/50"
+                            : "cursor-pointer border-slate-100 hover:border-slate-200/80 bg-white/80 dark:bg-slate-900/40 hover:bg-white text-[#2C302E] shadow-sm hover:shadow-md"
+                        }`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (!isOffline) actions.toggleCheck(item);
                         }}
-                        className={`w-full h-full rounded-full border shadow-sm ${item.checked ? "border-fuchsia-500" : "border-slate-200"}`}
-                      />
-                      <motion.div
-                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                        initial={false}
-                        animate={
-                          item.checked
-                            ? { scale: 1, opacity: 1 }
-                            : { scale: 0.5, opacity: 0 }
-                        }
+                        whileHover={isOffline ? {} : { scale: 1.012, y: -1 }}
+                        whileTap={isOffline ? {} : { scale: 0.985 }}
                         transition={{
                           type: "spring",
-                          stiffness: 600,
-                          damping: 30,
+                          stiffness: 450,
+                          damping: 24,
                         }}
                       >
-                        <Check
-                          size={14}
-                          className="text-white"
-                          strokeWidth={3}
-                        />
-                      </motion.div>
-                    </div>
-                    <motion.span
-                      animate={
-                        item.checked
-                          ? { opacity: 0.4, x: 0 }
-                          : { opacity: 1, x: 0 }
-                      }
-                      transition={{ duration: 0.2 }}
-                      className={`text-[15px] font-medium ${item.checked ? "line-through text-slate-500" : "text-[#2C302E]"}`}
-                    >
-                      {item.text}
-                    </motion.span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          ));
+                        <div className="relative w-6.5 h-6.5 flex items-center justify-center shrink-0">
+                          <input
+                            readOnly
+                            checked={item.checked}
+                            className="peer sr-only"
+                            type="checkbox"
+                          />
+                          <motion.div
+                            animate={
+                              item.checked
+                                ? { scale: [1, 1.25, 1], backgroundColor: "#10b981" }
+                                : { scale: 1, backgroundColor: "#f8fafc" }
+                            }
+                            transition={{
+                              type: "spring",
+                              stiffness: 700,
+                              damping: 22,
+                            }}
+                            className={`w-full h-full rounded-full border shadow-inner ${
+                              item.checked ? "border-emerald-500" : "border-slate-300"
+                            }`}
+                          />
+                          <motion.div
+                            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                            initial={false}
+                            animate={
+                              item.checked
+                                ? { scale: 1, opacity: 1, rotate: [0, 15, 0] }
+                                : { scale: 0.5, opacity: 0 }
+                            }
+                            transition={{
+                              type: "spring",
+                              stiffness: 800,
+                              damping: 18,
+                            }}
+                          >
+                            <Check
+                              size={12}
+                              className="text-white"
+                              strokeWidth={4.5}
+                            />
+                          </motion.div>
+                        </div>
+                        <motion.span
+                          layout="position"
+                          animate={
+                            item.checked
+                              ? { opacity: 0.5, x: 2 }
+                              : { opacity: 1, x: 0 }
+                          }
+                          className={`text-[15px] font-bold ${
+                            item.checked ? "line-through text-slate-400 font-medium" : "text-[#2C302E]"
+                          }`}
+                        >
+                          {item.text}
+                        </motion.span>
+                      </motion.label>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          );
         })()}
       </GlassCard>
 
@@ -1183,14 +1228,7 @@ function ChecklistSection() {
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={18} className="text-pink-500 animate-pulse" />
           <h3 className="text-lg font-black text-slate-800">AI 推薦行李助手</h3>
-          <span className="text-[10px] font-black uppercase tracking-widest text-pink-600 bg-pink-50 border border-pink-100 px-2.5 py-1 rounded-full ml-auto">
-            Smart Packing Assistant
-          </span>
         </div>
-
-        <p className="text-xs text-slate-500 mb-5 leading-relaxed font-semibold">
-          依據目的地、季節和同行人數，AI 能客製產生一份合適的打包必備行李，幫您省去行前煩惱。
-        </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           {/* Destination & Days */}
@@ -1400,13 +1438,15 @@ function ChecklistSection() {
   );
 }
 
-function LedgerSection() {
+function LedgerSection({ className }: { className?: string }) {
   const {
     state: { form, errors, members, submitting, expenses },
     actions,
   } = useToolsTabContext();
   const { isOffline } = useAppStore();
   const [newMemberName, setNewMemberName] = useState("");
+  const [walletViewMode, setWalletViewMode] = useState<"deck" | "grid">("deck");
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   const handleAddMember = () => {
     const name = newMemberName.trim();
@@ -1414,8 +1454,70 @@ function LedgerSection() {
     actions.addCustomMember(name);
     setNewMemberName("");
   };
+
+  const getCardStyle = (currency: string) => {
+    switch (currency) {
+      case "JPY":
+        return {
+          bg: "bg-gradient-to-br from-[#f43f5e] via-[#e11d48] to-[#9f1239] text-white shadow-[0_12px_24px_rgba(244,63,94,0.15)]",
+          accent: "text-rose-250",
+          glow: "bg-rose-400/20 shadow-inner",
+          chip: "from-amber-200 via-rose-300 to-amber-500",
+          brand: "🌸 Sakura Gold",
+        };
+      case "USD":
+        return {
+          bg: "bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#020617] text-white border border-[#334155] shadow-[0_12px_24px_rgba(15,23,42,0.25)]",
+          accent: "text-slate-400",
+          glow: "bg-slate-400/10 shadow-inner",
+          chip: "from-slate-100 via-slate-300 to-slate-500",
+          brand: "💎 Platinum Reserve",
+        };
+      case "TWD":
+        return {
+          bg: "bg-gradient-to-br from-[#0d9488] via-[#0f766e] to-[#134e4a] text-teal-100 shadow-[0_12px_24px_rgba(13,148,136,0.15)]",
+          accent: "text-teal-300",
+          glow: "bg-teal-400/20 shadow-inner",
+          chip: "from-amber-200 via-teal-300 to-amber-500",
+          brand: "🍃 Emerald Jade",
+        };
+      case "EUR":
+        return {
+          bg: "bg-gradient-to-br from-[#4f46e5] via-[#4338ca] to-[#1e1b4b] text-indigo-100 shadow-[0_12px_24px_rgba(79,70,229,0.15)]",
+          accent: "text-indigo-300",
+          glow: "bg-indigo-400/20 shadow-inner",
+          chip: "from-amber-200 via-indigo-300 to-amber-500",
+          brand: "🇪🇺 Royal Twilight",
+        };
+      case "KRW":
+        return {
+          bg: "bg-gradient-to-br from-[#0b132b] via-[#1c2541] to-[#3a506b] text-sky-100 shadow-[0_12px_24px_rgba(28,37,65,0.15)]",
+          accent: "text-sky-300",
+          glow: "bg-cyan-500/10 shadow-inner",
+          chip: "from-amber-100 via-sky-300 to-amber-500",
+          brand: "🇰🇷 Cardinal Navy",
+        };
+      case "THB":
+        return {
+          bg: "bg-gradient-to-br from-[#ea580c] via-[#c2410c] to-[#7c2d12] text-orange-100 shadow-[0_12px_24px_rgba(234,88,12,0.15)]",
+          accent: "text-orange-300",
+          glow: "bg-orange-400/25 shadow-inner",
+          chip: "from-amber-100 via-orange-200 to-amber-400",
+          brand: "⛱️ Sunset Bronze",
+        };
+      default:
+        return {
+          bg: "bg-gradient-to-br from-[#0284c7] via-[#0369a1] to-[#0c4a6e] text-sky-100 shadow-[0_12px_24px_rgba(2,132,199,0.15)]",
+          accent: "text-sky-300",
+          glow: "bg-sky-400/25 shadow-inner",
+          chip: "from-amber-100 via-sky-300 to-amber-500",
+          brand: "✈️ RoamJelly Global",
+        };
+    }
+  };
+
   return (
-    <GlassCard className="!p-4 sm:!p-6 flex flex-col mb-8 relative overflow-hidden transition-all duration-300 glass-panel shadow-md hover:shadow-xl">
+    <GlassCard className={cn("!p-4 sm:!p-6 flex flex-col relative overflow-hidden transition-all duration-300 glass-panel shadow-md hover:shadow-xl", className)}>
       <div className="absolute -top-10 -left-10 w-32 h-32 bg-pink-100/45 rounded-full blur-[24px] pointer-events-none" />
       <div className="absolute -bottom-12 -right-8 w-36 h-36 bg-sky-100/35 rounded-full blur-[28px] pointer-events-none" />
       <div className="mb-6 flex items-start justify-between gap-4 relative z-10 px-2">
@@ -1424,11 +1526,8 @@ function LedgerSection() {
             Trip Split
           </span>
           <h3 className="mt-3 text-balance text-[26px] sm:text-[28px] font-black text-slate-900">
-            把代墊、分攤與提醒收成同一張旅伴帳單
+            記帳與分帳
           </h3>
-          <span className="mt-2 block text-sm font-bold text-slate-500">
-            先記錄最新花費，再讓結算跟著這趟旅程慢慢收斂。
-          </span>
         </div>
         <div className="shrink-0 rounded-[28px] border border-white/80 bg-white/82 px-4 py-3 text-right shadow-[0_4px_16px_rgba(244,114,182,0.08)]">
           <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-350">本趟摘要</div>
@@ -1437,59 +1536,264 @@ function LedgerSection() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-y-5 relative z-10">
-        {/* Recent Expenses List */}
+      <div className="flex-grow flex-1 overflow-y-auto no-scrollbar flex flex-col gap-y-5 relative z-10 pr-0.5 sm:pr-1.5 pb-2">
+        {/* Recent Expenses List as Interactive Wallet */}
         {expenses && expenses.length > 0 && (
-          <div className="flex flex-col gap-3 mb-4 w-full rounded-[32px] border border-white/90 bg-white/78 p-4 shadow-[0_8px_24px_rgba(244,114,182,0.08)] hover:shadow-[0_12px_28px_rgba(244,114,182,0.12)] transition-shadow">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-2">
-              最新花費紀錄
-            </span>
-            <div className="table-wrapper mt-2">
-              <table className="responsive-table">
-                <caption className="sr-only">最新花費清單</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">支出項目</th>
-                    <th scope="col">代墊人</th>
-                    <th scope="col" className="amount">
-                      金額
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+          <div className="flex flex-col gap-4 mb-4 w-full rounded-[32px] border border-white/90 bg-white/70 p-4 sm:p-5 shadow-[0_8px_32px_rgba(244,114,182,0.06)] hover:shadow-[0_12px_40px_rgba(244,114,182,0.10)] transition-all">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 leading-none">
+                <CreditCard size={13} className="text-pink-500 animate-pulse" />
+                最新旅伴分帳卡包
+              </span>
+              
+              {/* Toggle layout mode */}
+              <div className="flex items-center gap-1 bg-slate-100/80 p-0.5 rounded-full border border-slate-200/50">
+                <button
+                  type="button"
+                  onClick={() => setWalletViewMode("deck")}
+                  className={`flex items-center gap-1 px-3 py-1 text-[11px] font-extrabold rounded-full transition-all ${
+                    walletViewMode === "deck"
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  <Layers size={11} />
+                  卡包
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWalletViewMode("grid")}
+                  className={`flex items-center gap-1 px-3 py-1 text-[11px] font-extrabold rounded-full transition-all ${
+                    walletViewMode === "grid"
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  <Grid size={11} />
+                  格狀
+                </button>
+              </div>
+            </div>
+
+            {/* Deck view mode */}
+            {walletViewMode === "deck" && (
+              <div className="relative pt-2 pb-14 w-full flex flex-col items-center">
+                <div className="relative w-full max-w-[340px] sm:max-w-md h-[210px] sm:h-[235px] my-3">
                   {expenses
                     .slice()
                     .reverse()
-                    .map((exp) => (
-                      <tr key={exp.id}>
-                        <td data-label="支出項目">
-                          <div className="flex flex-col items-end md:items-start">
-                            <span className="text-[15px] font-bold text-[#2C302E] truncate">
+                    .slice(0, 4) // Show up to 4 stacked cards
+                    .map((exp, idx, arr) => {
+                      const total = arr.length;
+                      const offset = total - 1 - idx; // Top-most (latest) is 0
+                      const cardStyle = getCardStyle(exp.currency);
+                      const isSelected = selectedCardId === exp.id || (selectedCardId === null && offset === 0);
+                      
+                      const scale = 1 - offset * 0.04;
+                      const translateY = offset * 14;
+                      const rotate = isSelected ? 0 : (offset % 2 === 0 ? 2 : -2) * offset;
+                      
+                      return (
+                        <motion.div
+                          key={exp.id}
+                          layoutId={`card-${exp.id}`}
+                          className={`absolute inset-x-0 mx-auto w-full max-w-[340px] aspect-[1.58/1] rounded-[24px] p-4 sm:p-5 shadow-lg select-none cursor-pointer flex flex-col justify-between overflow-hidden transition-all duration-300 ${cardStyle.bg}`}
+                          style={{
+                            zIndex: 10 + idx,
+                            transformOrigin: "bottom center",
+                          }}
+                          animate={{
+                            scale,
+                            y: translateY,
+                            rotate,
+                          }}
+                          whileHover={{
+                            scale: scale * 1.03,
+                            y: translateY - 12,
+                            boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                            zIndex: 50,
+                          }}
+                          whileTap={{ scale: scale * 0.98 }}
+                          onClick={() => setSelectedCardId(exp.id)}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 24,
+                          }}
+                        >
+                          <div className={`absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/12 pointer-events-none mix-blend-overlay ${cardStyle.glow}`} />
+                          
+                          <div className="flex items-center justify-between w-full relative z-10">
+                            <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em] ${cardStyle.accent}`}>
+                              {cardStyle.brand}
+                            </span>
+                            <div className="flex items-center gap-1.5 opacity-80">
+                              <span className="text-[9px] font-black tracking-widest uppercase py-0.5 px-2 bg-white/15 rounded-full border border-white/10 text-white">
+                                {exp.currency} PAY
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3.5 w-full relative z-10 my-1">
+                            {/* EMV gold smart chip */}
+                            <div className={`w-8 h-5.5 bg-gradient-to-br ${cardStyle.chip} rounded-[5px] relative overflow-hidden border border-amber-500/20 shadow-sm shrink-0`}>
+                              <div className="absolute inset-0 opacity-15 border-r border-b border-black"></div>
+                              <div className="absolute top-1/2 left-0 right-0 h-[10%] bg-black/10"></div>
+                              <div className="absolute left-1/2 top-0 bottom-0 w-[10%] bg-black/10"></div>
+                            </div>
+                            <h4 className="text-[16px] sm:text-[18px] font-black tracking-tight truncate leading-tight drop-shadow-sm flex-1 text-white">
                               {exp.title}
+                            </h4>
+                          </div>
+
+                          <div className="relative z-10 flex flex-col gap-1 w-full">
+                            <div className="text-[14px] sm:text-[16px] font-mono tracking-[0.2em] font-extrabold tabular-nums opacity-95 text-white">
+                              {exp.currency} •••• {parseFloat(exp.amount.toString()).toLocaleString()}
+                            </div>
+                            
+                            <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+                              <span className={cardStyle.accent}>
+                                HOLDER / <span className="text-white font-extrabold ml-1">{exp.payer}</span>
+                              </span>
+                              <span className={`${cardStyle.accent} flex items-center gap-1`}>
+                                SPLIT / <span className="bg-white/12 px-1.5 py-0.5 rounded text-white font-mono font-bold leading-none">{exp.splitWith?.length || 1} PAX</span>
+                              </span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                </div>
+                
+                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 bg-slate-100/90 border border-slate-200 px-4 py-1.5 rounded-full text-[10px] font-black text-slate-500 flex items-center gap-1.5 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-ping"></span>
+                  果凍漫遊卡包 • 點擊切換檢視卡
+                </div>
+              </div>
+            )}
+
+            {/* Grid display mode */}
+            {walletViewMode === "grid" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                {expenses
+                  .slice()
+                  .reverse()
+                  .map((exp) => {
+                    const cardStyle = getCardStyle(exp.currency);
+                    const isSelected = selectedCardId === exp.id;
+                    return (
+                      <motion.div
+                        key={exp.id}
+                        layoutId={`card-${exp.id}`}
+                        className={`w-full aspect-[1.58/1] rounded-[24px] p-4 sm:p-5 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between overflow-hidden relative group/card transition-all ${cardStyle.bg}`}
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setSelectedCardId(isSelected ? null : exp.id)}
+                      >
+                        <div className={`absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/12 pointer-events-none mix-blend-overlay ${cardStyle.glow}`} />
+
+                        <div className="flex items-center justify-between w-full relative z-10">
+                          <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] ${cardStyle.accent}`}>
+                            {cardStyle.brand}
+                          </span>
+                          <span className="text-[9px] font-black tracking-widest uppercase py-0.5 px-2 bg-white/15 rounded-full border border-white/10 text-white">
+                            {exp.currency} PAY
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3 w-full relative z-10 my-1">
+                          <div className={`w-8 h-5.5 bg-gradient-to-br ${cardStyle.chip} rounded-[5px] relative overflow-hidden border border-amber-500/20 shadow-sm shrink-0`}>
+                            <div className="absolute inset-0 opacity-15 border-r border-b border-black"></div>
+                          </div>
+                          <h4 className="text-[15px] sm:text-[16px] font-black tracking-tight truncate leading-tight text-white flex-1">
+                            {exp.title}
+                          </h4>
+                        </div>
+
+                        <div className="relative z-10 flex flex-col gap-1 w-full">
+                          <div className="text-[13px] sm:text-[14px] font-mono tracking-[0.18em] font-extrabold tabular-nums opacity-95 text-white">
+                            {exp.currency} •••• {parseFloat(exp.amount.toString()).toLocaleString()}
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-wider">
+                            <span className={cardStyle.accent}>
+                              Holder / <span className="text-white font-extrabold ml-1">{exp.payer}</span>
+                            </span>
+                            <span className={`${cardStyle.accent} flex items-center gap-1`}>
+                              Split / <span className="bg-white/12 px-1 rounded text-white font-mono font-bold leading-none">{exp.splitWith?.length || 1} PAX</span>
                             </span>
                           </div>
-                        </td>
-                        <td data-label="代墊人">
-                          <div className="flex justify-end md:justify-start">
-                            <span className="text-[12px] font-bold tracking-wide flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100 text-slate-600">
-                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                              {exp.payer}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Expandable Active Card Details */}
+            <AnimatePresence>
+              {(() => {
+                const activeCard = expenses.find((e) => e.id === selectedCardId) || expenses[expenses.length - 1];
+                if (!activeCard) return null;
+                return (
+                  <motion.div
+                    key={`detail-${activeCard.id}`}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden border-t border-slate-100 pt-3 mt-1"
+                  >
+                    <div className="bg-slate-50/70 rounded-2xl p-4 border border-slate-100 flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-[9px] font-black text-slate-400 tracking-widest leading-none">正在檢視</div>
+                          <h5 className="text-[14px] sm:text-[15px] font-black text-slate-800 mt-1 flex items-center gap-1.5 flex-wrap">
+                            {activeCard.title}
+                            <span className="text-[11px] font-bold font-mono text-pink-600 bg-pink-50 border border-pink-100 px-2 py-0.5 rounded-full">
+                              {activeCard.currency} {parseFloat(activeCard.amount.toString()).toLocaleString()}
                             </span>
-                          </div>
-                        </td>
-                        <td data-label="金額" className="amount">
-                          <div className="flex flex-col items-end">
-                            <span className="font-black text-fuchsia-500 text-[16px] tabular-nums">
-                              {exp.currency} {exp.amount.toLocaleString()}
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="h-px w-full bg-slate-100 my-2" />
+                          </h5>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">代墊付款</span>
+                          <span className="text-xs font-extrabold text-[#2C302E] bg-white shadow-sm border border-slate-150 px-2.5 py-0.8 rounded-full inline-block mt-1">
+                            👑 {activeCard.payer}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-slate-200/50 my-0.5" />
+
+                      <div>
+                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                          共同分攤對象 ({activeCard.splitWith?.length || 0} 位旅伴)
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {activeCard.splitWith && activeCard.splitWith.map((p) => (
+                            <div
+                              key={p}
+                              className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold shadow-sm transition-all ${
+                                p === activeCard.payer
+                                  ? "bg-amber-50/90 border-amber-200 text-amber-700"
+                                  : "bg-white border-slate-200 text-slate-600"
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${p === activeCard.payer ? 'bg-amber-500' : 'bg-slate-400'}`}></span>
+                              {p}
+                              {p === activeCard.payer && (
+                                <span className="text-[9px] font-black bg-amber-500/15 text-amber-600 px-1 rounded-full scale-90">Payer</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })()}
+            </AnimatePresence>
+
+            <div className="h-px w-full bg-slate-100 my-1" />
           </div>
         )}
 
@@ -1674,12 +1978,14 @@ function LedgerSection() {
           </div>
         </div>
         </motion.div>
+      </div>
 
+      <div className="mt-3 relative z-10 shrink-0">
         <Button
           onClick={() => void actions.submitExpense()}
           disabled={submitting || isOffline}
           size="lg"
-          className="w-full mt-4 py-6 rounded-[24px] flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4 bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 text-white shadow-[0_14px_30px_rgba(244,114,182,0.20)] hover:opacity-95"
+          className="w-full py-6 rounded-[24px] flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4 bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 text-white shadow-[0_14px_30px_rgba(244,114,182,0.20)] hover:opacity-95"
         >
           {submitting && (
             <Loader2 size={16} className="animate-spin shrink-0" />
@@ -1693,15 +1999,60 @@ function LedgerSection() {
   );
 }
 
-function SettlementsSection() {
+function SettlementsSection({ className }: { className?: string }) {
   const {
-    state: { settlements, expenseByCurrency, clearingId },
+    state: { settlements, expenseByCurrency, expenses, clearingId },
     actions,
   } = useToolsTabContext();
   const { isOffline } = useAppStore();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const currencyEntries = Object.entries(expenseByCurrency);
+
+  // Group settlements by currency
+  const settlementsByCurrency = useMemo(() => {
+    const groups: Record<string, Settlement[]> = {};
+    for (const s of settlements) {
+      if (!groups[s.currency]) {
+        groups[s.currency] = [];
+      }
+      groups[s.currency].push(s);
+    }
+    return groups;
+  }, [settlements]);
+
+  // Helper for computing member totals and debt breakdown
+  const getMemberStats = (member: string, currency: string) => {
+    const filtered = expenses.filter((e) => e.currency === currency && !e.clearedAt);
+    let totalPaid = 0;
+    let totalShare = 0;
+    filtered.forEach((e) => {
+      if (e.payer === member) {
+        totalPaid += Number(e.amount || 0);
+      }
+      if (e.splitWith && e.splitWith.includes(member)) {
+        totalShare += Number(e.amount || 0) / (e.splitWith.length || 1);
+      }
+    });
+    return {
+      paid: totalPaid,
+      share: Math.round(totalShare),
+      net: Math.round(totalPaid - totalShare),
+    };
+  };
+
+  // Retrieve direct transactions contributing to the settlement
+  const getContributingExpenses = (fromMember: string, toMember: string, currency: string) => {
+    return expenses.filter(
+      (e) =>
+        e.currency === currency &&
+        !e.clearedAt &&
+        ((e.payer === toMember && e.splitWith?.includes(fromMember)) ||
+          (e.payer === fromMember && e.splitWith?.includes(toMember))),
+    );
+  };
+
   return (
-    <section className="flex flex-col mb-16 sm:mb-32">
+    <section className={cn("flex flex-col", className)}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 sm:px-4 mb-4 sm:mb-6 gap-3">
         <h3 className="font-serif text-[24px] sm:text-[26px] text-[#2C302E]">
           結算清單 (誰應付誰)
@@ -1725,114 +2076,292 @@ function SettlementsSection() {
       </div>
 
       <GlassCard className="!p-4 sm:!p-6 glass-panel shadow-md hover:shadow-xl">
-      <div className="flex flex-col gap-4 w-full">
-        {settlements.length === 0 && (
-          <div className="editorial-card-soft flex flex-col items-center justify-center text-center rounded-[32px] p-12 bg-gradient-to-tr from-emerald-500/5 via-teal-500/5 to-white/90 border border-emerald-100/60 shadow-[inset_0_1px_1px_rgba(255,255,255,1)]">
-            <div className="relative mb-4 flex items-center justify-center">
-              <div className="absolute inset-x-0 size-16 bg-emerald-100 animate-ping rounded-full opacity-25 pointer-events-none" />
-              <div className="size-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 drop-shadow-sm">
-                <CheckCircle2 size={28} strokeWidth={2.5} />
+        <div className="flex flex-col gap-6 w-full">
+          {settlements.length === 0 && (
+            <div className="editorial-card-soft flex flex-col items-center justify-center text-center rounded-[32px] p-12 bg-gradient-to-tr from-emerald-500/5 via-teal-500/5 to-white/90 border border-emerald-100/60 shadow-[inset_0_1px_1px_rgba(255,255,255,1)]">
+              <div className="relative mb-4 flex items-center justify-center">
+                <div className="absolute inset-x-0 size-16 bg-emerald-100 animate-ping rounded-full opacity-25 pointer-events-none" />
+                <div className="size-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 drop-shadow-sm">
+                  <CheckCircle2 size={28} strokeWidth={2.5} />
+                </div>
               </div>
+              <h4 className="text-base font-black text-slate-900 tracking-tight">款項已全部結清！</h4>
+              <p className="text-[12px] font-bold text-slate-500 max-w-[280px] mt-1.5 leading-relaxed">
+                太棒了！所有旅途花費或拆帳細項均已兩清，目前無任何未清款項。
+              </p>
             </div>
-            <h4 className="text-base font-black text-slate-900 tracking-tight">款項已全部結清！</h4>
-            <p className="text-[12px] font-bold text-slate-500 max-w-[280px] mt-1.5 leading-relaxed">
-              太棒了！所有旅途花費或拆帳細項均已兩清，目前無任何未清款項。
-            </p>
-          </div>
-        )}
-        {settlements.length > 0 && (
-          <div className="editorial-card-soft table-wrapper mt-2 overflow-hidden rounded-[32px] sm:rounded-[36px] p-2 sm:p-3 shadow-[0_8px_24px_rgba(244,114,182,0.06)] hover:shadow-[0_12px_28px_rgba(244,114,182,0.1)] transition-shadow">
-            <table className="responsive-table">
-              <caption className="sr-only">結算清單</caption>
-              <thead>
-                <tr>
-                  <th scope="col">付款人</th>
-                  <th scope="col">收款人</th>
-                  <th scope="col" className="amount">
-                    結算金額
-                  </th>
-                  <th scope="col" className="text-right">
-                    動作
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {settlements.map((settlement) => (
-                  <tr key={settlement.id}>
-                    <td data-label="付款人">
-                      <div className="flex justify-end md:justify-start items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 font-black text-sm">
-                          {settlement.from?.charAt(0) || "?"}
-                        </div>
-                        <span className="text-[15px] font-bold text-[#2C302E]">
-                          {settlement.from}
-                        </span>
-                      </div>
-                    </td>
-                    <td data-label="收款人">
-                      <div className="flex justify-end md:justify-start">
-                        <span className="text-[13px] text-slate-500 font-medium px-3 py-1 rounded-full bg-slate-50 border border-slate-100">
-                          支付給{" "}
-                          <strong className="font-bold text-slate-700">
-                            {settlement.to}
-                          </strong>
-                        </span>
-                      </div>
-                    </td>
-                    <td data-label="結算金額" className="amount">
-                      <div className="flex justify-end">
-                        <span className="font-black text-fuchsia-500 text-[18px] tabular-nums">
-                          {settlement.currency}{" "}
-                          {settlement.amount.toLocaleString()}
-                        </span>
-                      </div>
-                    </td>
-                    <td data-label="動作">
-                      <div className="flex flex-row items-center gap-2 justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="min-h-[44px] px-4"
-                          onClick={() => void actions.sendReminder()}
-                        >
-                          <Send size={14} className="opacity-70 mr-1.5" />
-                          <span className="text-[11px] font-bold tracking-wide uppercase">
-                            提醒
-                          </span>
-                        </Button>
+          )}
 
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="min-h-[44px] px-4"
-                          onClick={() =>
-                            void actions.handleClearSettlement(settlement)
-                          }
-                          disabled={clearingId === settlement.id || isOffline}
+          {settlements.length > 0 &&
+            Object.entries(settlementsByCurrency).map(([currency, currencySettlements]) => (
+              <div key={currency} className="flex flex-col gap-3">
+                {/* Visual Currency Banner/Header */}
+                <div className="flex items-center gap-2 mb-1 px-1 mt-2 first:mt-0">
+                  <span className="w-1.5 h-3.5 rounded bg-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,0.3)] shrink-0" />
+                  <span className="font-mono font-black text-xs text-slate-600 uppercase tracking-widest">
+                    {currency} 幣別結算匯總 ({currencySettlements.length} 筆)
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-3.5 border-b border-dashed border-slate-200/50 pb-5 last:border-0 last:pb-0">
+                  {currencySettlements.map((settlement) => {
+                    const isExpanded = expandedId === settlement.id;
+                    const fromStats = getMemberStats(settlement.from, settlement.currency);
+                    const toStats = getMemberStats(settlement.to, settlement.currency);
+                    const contributing = getContributingExpenses(
+                      settlement.from,
+                      settlement.to,
+                      settlement.currency,
+                    );
+
+                    // Check if sum of direct transactions matches the simplified settlement amount
+                    let directSum = 0;
+                    contributing.forEach((exp) => {
+                      const share = Number(exp.amount || 0) / (exp.splitWith?.length || 1);
+                      if (exp.payer === settlement.to) {
+                        directSum += share;
+                      } else if (exp.payer === settlement.from) {
+                        directSum -= share;
+                      }
+                    });
+
+                    const isDirectSumMatch = Math.abs(directSum - settlement.amount) < 1.1;
+
+                    return (
+                      <div
+                        key={settlement.id}
+                        className="editorial-card-soft rounded-[28px] border border-slate-100 bg-white/50 backdrop-blur-md p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-3 group"
+                      >
+                        {/* Summary Header */}
+                        <div
+                          className="flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none"
+                          onClick={() => setExpandedId(isExpanded ? null : settlement.id)}
                         >
-                          <CheckCircle2
-                            size={14}
-                            className="opacity-90 mr-1.5"
-                          />
-                          <span className="text-[11px] font-bold tracking-wide uppercase">
-                            {clearingId === settlement.id ? "處理中" : "結清"}
-                          </span>
-                        </Button>
+                          {/* Left: Transfer Pair */}
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            {/* Debtor */}
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200/40 flex items-center justify-center text-slate-600 font-black text-sm shadow-sm">
+                                {settlement.from?.charAt(0) || "?"}
+                              </div>
+                              <span className="text-[14px] sm:text-[15px] font-bold text-slate-800">
+                                {settlement.from}
+                              </span>
+                            </div>
+
+                            {/* Arrow Indicator */}
+                            <div className="flex items-center justify-center text-fuchsia-500 mx-1 shrink-0 bg-fuchsia-5/60 p-1.5 rounded-full border border-fuchsia-100/30">
+                              <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                            </div>
+
+                            {/* Creditor */}
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100/40 flex items-center justify-center text-emerald-600 font-black text-sm shadow-sm">
+                                {settlement.to?.charAt(0) || "?"}
+                              </div>
+                              <span className="text-[13px] text-slate-500 font-medium px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100">
+                                支付給{" "}
+                                <strong className="font-bold text-slate-700">
+                                  {settlement.to}
+                                </strong>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Right: Amount & Actions */}
+                          <div className="flex items-center justify-between md:justify-end gap-3.5 w-full md:w-auto shrink-0 border-t border-slate-100 md:border-transparent pt-3 md:pt-0">
+                            <div className="flex flex-col items-start md:items-end">
+                              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                應付金額
+                              </span>
+                              <span className="font-black text-fuchsia-500 text-[18px] sm:text-[20px] tabular-nums leading-none mt-1">
+                                {settlement.currency}{" "}
+                                {settlement.amount.toLocaleString()}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 px-3 rounded-xl border-slate-200"
+                                onClick={() => actions.sendReminder()}
+                              >
+                                <Send size={12} className="opacity-70 mr-1" />
+                                <span className="text-[10px] font-black">提醒</span>
+                              </Button>
+
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="h-9 px-3 rounded-xl bg-slate-900 border border-slate-950 text-white hover:bg-slate-850"
+                                onClick={() =>
+                                  void actions.handleClearSettlement(settlement)
+                                }
+                                disabled={clearingId === settlement.id || isOffline}
+                              >
+                                <CheckCircle2 size={12} className="opacity-90 mr-1" />
+                                <span className="text-[10px] font-black">
+                                  {clearingId === settlement.id ? "處理中" : "結清"}
+                                </span>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Interactive toggle link */}
+                        <div
+                          className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer select-none w-fit px-1.5 py-0.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 border border-transparent hover:border-slate-100/50"
+                          onClick={() => setExpandedId(isExpanded ? null : settlement.id)}
+                        >
+                          <span>{isExpanded ? "隱藏詳細拆帳過程" : "展開查看拆帳細節與算法"}</span>
+                          {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                        </div>
+
+                        {/* Expandable breakdown panel */}
+                        <AnimatePresence initial={false}>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.25, ease: "easeInOut" }}
+                              className="overflow-hidden w-full border-t border-slate-200/60 mt-2"
+                            >
+                              <div className="pt-3.5 flex flex-col gap-4">
+                                {/* 1. Contributing direct transactions */}
+                                <div className="flex flex-col gap-2">
+                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                    <Sparkles size={11} className="text-fuchsia-500 animate-pulse" />
+                                    直接關聯花費項目 ({contributing.length} 筆)
+                                  </span>
+
+                                  {contributing.length === 0 ? (
+                                    <p className="text-[12px] text-slate-400 italic px-2">
+                                      雙方在此幣別無直接墊付/對拆之花費（此項目為簡化債務所產生的結算額）。
+                                    </p>
+                                  ) : (
+                                    <div className="flex flex-col gap-2.5 bg-slate-50/40 p-3 rounded-2xl border border-slate-200/35">
+                                      {contributing.map((exp) => {
+                                        const totalSplitters = exp.splitWith?.length || 1;
+                                        const shareAmount = Number(exp.amount || 0) / totalSplitters;
+                                        const isDebtIncrease = exp.payer === settlement.to; // to paid, from split => from owes to (+ share)
+
+                                        return (
+                                          <div
+                                            key={exp.id}
+                                            className="flex items-center justify-between gap-4 text-xs"
+                                          >
+                                            <div className="flex flex-col gap-0.5 min-w-0">
+                                              <span className="font-bold text-[#2C302E] truncate">
+                                                {exp.title}
+                                              </span>
+                                              <span className="text-[11px] text-slate-500 font-medium">
+                                                {exp.payer} 墊付 {exp.currency} {exp.amount.toLocaleString()} ・ {totalSplitters} 人分攤
+                                              </span>
+                                            </div>
+                                            <span
+                                              className={`font-mono font-bold tabular-nums shrink-0 px-2 py-0.5 rounded-md ${
+                                                isDebtIncrease
+                                                  ? "text-rose-600 bg-rose-50 border border-rose-100/30"
+                                                  : "text-emerald-600 bg-emerald-50 border border-emerald-100/30"
+                                              }`}
+                                            >
+                                              {isDebtIncrease ? "+" : "-"}
+                                              {Math.round(shareAmount).toLocaleString()}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Debt simplification tip (if sums don't match) */}
+                                {!isDirectSumMatch && (
+                                  <div className="flex items-start gap-1.5 p-3 rounded-2xl bg-amber-50/50 border border-amber-100/50 text-amber-700/90 text-xs leading-relaxed">
+                                    <AlertCircle size={13} className="shrink-0 mt-0.5 text-amber-600" />
+                                    <div>
+                                      此債務經果凍漫遊已<strong>自動簡化 (Debt Simplification)</strong>優化。此金額已整合其他旅伴之應收帳款，因此最終付款金額非單純直接花費之和，能大幅減少所有成員轉帳次數！
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* 2. Personal math balances */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-1">
+                                  {/* Debtor Info */}
+                                  <div className="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/35 flex flex-col gap-1">
+                                    <span className="text-[9.5px] font-black text-slate-400 uppercase tracking-widest">
+                                      付款人財務狀況 ・ {settlement.from}
+                                    </span>
+                                    <div className="flex flex-col gap-1 text-xs font-bold text-slate-600 mt-1">
+                                      <div className="flex justify-between">
+                                        <span>總共代墊付款:</span>
+                                        <span className="font-mono text-[#2C302E]">
+                                          {currency} {fromStats.paid.toLocaleString()}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>個人應付份額:</span>
+                                        <span className="font-mono text-rose-600">
+                                          {currency} {fromStats.share.toLocaleString()}
+                                        </span>
+                                      </div>
+                                      <div className="h-px bg-slate-200/60 my-1" />
+                                      <div className="flex justify-between font-extrabold text-[#2C302E]">
+                                        <span>淨額應付:</span>
+                                        <span className="font-mono text-fuchsia-600">
+                                          {currency} {Math.abs(fromStats.net).toLocaleString()}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Creditor Info */}
+                                  <div className="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/35 flex flex-col gap-1">
+                                    <span className="text-[9.5px] font-black text-slate-400 uppercase tracking-widest">
+                                      收款人財務狀況 ・ {settlement.to}
+                                    </span>
+                                    <div className="flex flex-col gap-1 text-xs font-bold text-slate-600 mt-1">
+                                      <div className="flex justify-between">
+                                        <span>總共代墊付款:</span>
+                                        <span className="font-mono text-emerald-600">
+                                          {currency} {toStats.paid.toLocaleString()}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>個人應付份額:</span>
+                                        <span className="font-mono text-[#2C302E]">
+                                          {currency} {toStats.share.toLocaleString()}
+                                        </span>
+                                      </div>
+                                      <div className="h-px bg-slate-200/60 my-1" />
+                                      <div className="flex justify-between font-extrabold text-[#2C302E]">
+                                        <span>淨額應收:</span>
+                                        <span className="font-mono text-emerald-600">
+                                          {currency} {Math.abs(toStats.net).toLocaleString()}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+        </div>
       </GlassCard>
     </section>
   );
 }
 
-function SettlementHistorySection() {
+function SettlementHistorySection({ className }: { className?: string }) {
   const {
     state: { settlementHistory, clearedExpenses },
   } = useToolsTabContext();
@@ -1841,7 +2370,7 @@ function SettlementHistorySection() {
   if (settlementHistory.length === 0) return null;
 
   return (
-    <section className="flex flex-col mb-12">
+    <section className={cn("flex flex-col mb-12", className)}>
       <div className="flex items-center justify-between px-4 mb-4">
         <h3 className="font-serif text-[18px] text-[#2C302E] font-bold">歷史結清明細</h3>
         <span className="text-[11px] text-slate-500 font-medium">
@@ -2328,7 +2857,7 @@ function ToolsTabContent() {
   return (
     <div
       onScroll={onScroll}
-      className="flex-1 w-full overflow-y-auto scroll-smooth bg-transparent text-slate-900 transition-colors"
+      className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth bg-transparent text-slate-900 transition-colors"
     >
       <div className="pt-4 sm:pt-8 pb-tab-safe px-3.5 sm:px-6 md:px-8 mx-auto flex flex-col w-full max-w-[1120px] gap-y-6 sm:gap-y-10">
         <TripSelectorBar />
@@ -2463,13 +2992,20 @@ function ToolsTabContent() {
           </div>
         </motion.section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-          <div className="flex flex-col gap-y-6">
-            <WeatherCard />
-            <ChecklistSection />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 xl:gap-8 auto-rows-min">
+          {/* Top row */}
+          <div className="col-span-1 md:col-span-1 lg:col-span-4 flex flex-col h-full">
+            <ChecklistSection className="flex-1 h-full" />
           </div>
-          <div className="flex flex-col gap-y-6">
-            <LedgerSection />
+          <div className="col-span-1 md:col-span-1 lg:col-span-2 flex flex-col h-full">
+            <WeatherCard className="flex-1 h-full" />
+          </div>
+
+          {/* Bottom row */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col h-[680px]">
+            <LedgerSection className="flex-1 h-full" />
+          </div>
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col h-full gap-6 xl:gap-8">
             <SettlementsSection />
             <SettlementHistorySection />
           </div>

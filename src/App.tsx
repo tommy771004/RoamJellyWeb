@@ -685,7 +685,10 @@ export default function App() {
             if (nodesToProcess.length > 0 && TRIP_ID) {
               const results = await Promise.allSettled(nodesToProcess.map(async (node: any) => {
                   addNode(node);
-                  return syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
+                  const res = await syncItinerary({ trip_id: TRIP_ID, action: 'add_node', payload: node });
+                  // wait a bit between requests to avoid connection pooling issues
+                  await new Promise(r => setTimeout(r, 50));
+                  return res;
                }));
               const failed = results.filter(result => result.status === 'rejected').length;
               if (failed > 0) {
@@ -728,7 +731,7 @@ export default function App() {
 
   return (
     <div className="flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
-      <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-500 bg-gradient-to-br from-indigo-950 via-purple-900 to-slate-900 ${isDarkMode ? 'opacity-100' : 'opacity-0'}`} />
+      <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-500 bg-gradient-to-br from-[#030712] via-[#090b18] to-[#0f172a] ${isDarkMode ? 'opacity-[0.93]' : 'opacity-0'}`} />
       <div className="noise-overlay absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20 transition-opacity duration-500" />
       {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
       {(import.meta as any).env.MODE !== 'production' && (

@@ -1061,7 +1061,13 @@ export default function ItineraryTab() {
           itineraryResult,
           tripResult.startDate || "2026-06-15",
         );
-        setNodes(assignedNodes);
+        
+        if (isOffline) {
+          setNodes(assignedNodes);
+        } else {
+          useItineraryStore.getState().replaceDayNodes(initialDay, assignedNodes.filter((n: any) => n.day === initialDay));
+        }
+        
         setLoadedDays(
           isOffline ? getLoadedDaysFromNodes(assignedNodes) : [initialDay],
         );
@@ -4366,10 +4372,12 @@ const ItineraryListItem = React.memo(
         return;
       }
 
-      const destinationCoords = encodeURIComponent(`${lat},${lng}`);
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${destinationCoords}`;
       triggerHapticFeedback([18]);
-      window.open(url, "_blank", "noopener,noreferrer");
+      window.dispatchEvent(
+        new CustomEvent("open-map", {
+          detail: { lat, lng, title: item.title },
+        })
+      );
     };
 
     const handleShareToIGStory = async (e: React.MouseEvent) => {

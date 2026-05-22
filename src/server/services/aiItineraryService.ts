@@ -302,11 +302,39 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
             }
           }
 
+          // Generate Attachments (Tickets & Reviews) using traditional deep links
+          const attachments: any[] = [];
+          if (['landmark', 'activity', 'other'].includes(spot.category)) {
+             const query = encodeURIComponent(`${name} ${spotCity}`);
+             attachments.push({
+               id: `klook-${Date.now()}-${Math.random().toString(36).substring(2,8)}`,
+               name: "Klook 門票與體驗",
+               type: "ticket",
+               url: `https://www.klook.com/zh-TW/search/result/?query=${query}`
+             });
+             attachments.push({
+               id: `kkday-${Date.now()}-${Math.random().toString(36).substring(2,8)}`,
+               name: "KKday 行程庫",
+               type: "ticket",
+               url: `https://www.kkday.com/zh-tw/product/productlist?keyword=${query}`
+             });
+          }
+          if (['food', 'nightlife', 'landmark'].includes(spot.category)) {
+             const query = encodeURIComponent(`${spotLocalName || name} ${spotCity}`);
+             attachments.push({
+               id: `gmap-${Date.now()}-${Math.random().toString(36).substring(2,8)}`,
+               name: "Google地圖即時評價",
+               type: "review",
+               url: `https://www.google.com/maps/search/?api=1&query=${query}`
+             });
+          }
+
           return {
             ...spot,
             lat: finalLat != null ? finalLat : null,
             lng: finalLng != null ? finalLng : null,
             image_url: spot.image_url || thumbnail || undefined,
+            attachments: attachments.length > 0 ? attachments : undefined,
           };
         })
       );
@@ -525,6 +553,88 @@ async function fetchAllDestinationContext(
 
 // ─── Prompt builder (no lat/lng/image_url in schema) ─────────────────────────
 
+export function getCountryExclusivePromptConfig(destination: string) {
+  const norm = (destination || "").toLowerCase();
+  
+  // Korea check
+  const isKorea = norm.includes("韓") || 
+                  norm.includes("seoul") || 
+                  norm.includes("首爾") || 
+                  norm.includes("釜山") || 
+                  norm.includes("busan") || 
+                  norm.includes("濟州") || 
+                  norm.includes("jeju") || 
+                  norm.includes("korea") ||
+                  norm.includes("仁川") ||
+                  norm.includes("incheon");
+
+  // Japan check
+  const isJapan = norm.includes("日") || 
+                  norm.includes("japan") || 
+                  norm.includes("tokyo") || 
+                  norm.includes("東京") || 
+                  norm.includes("大阪") || 
+                  norm.includes("osaka") || 
+                  norm.includes("kyoto") || 
+                  norm.includes("京都") || 
+                  norm.includes("okinawa") || 
+                  norm.includes("沖繩") || 
+                  norm.includes("fukuoka") || 
+                  norm.includes("福岡") || 
+                  norm.includes("hokkaido") || 
+                  norm.includes("北海道") || 
+                  norm.includes("nagoya") || 
+                  norm.includes("名古屋");
+
+  // Taiwan check
+  const isTaiwan = norm.includes("台") || 
+                   norm.includes("臺") || 
+                   norm.includes("taipei") || 
+                   norm.includes("taiwan") || 
+                   norm.includes("kaohsiung") || 
+                   norm.includes("高雄") || 
+                   norm.includes("taichung") || 
+                   norm.includes("台中");
+
+  if (isKorea) {
+    return {
+      countryName: "韓國",
+      mapAppText: "🚨【地圖推薦】這是一趟【韓國】旅行。韓國當地不適用 Google Maps 導航，請務必且強制在 `ai_note` 中提醒下載並使用「Naver Maps」或「KakaoMap」進行路線規劃與查詢，不要提及任何日本地圖應用。",
+      localLanguageExample: "韓文 (Hangul)",
+      geographicBoundary: "🚨【嚴格地理一致性，最高指令】注意！這是一趟【韓國】旅行。所有生成的景點、店家、地名必須 100% 位於【韓國】境內（如：首爾、釜山、濟州島、仁川、大邱、慶州等）。絕對嚴格禁止在行程中放入任何位於日本（例如：新宿、淺草、東京、大阪、沖繩、清水寺等）、台灣或其它國家地區的景點！請徹底杜絕任何日本景點或地標的污染。",
+      currency: "韓元 (KRW)",
+    };
+  }
+
+  if (isJapan) {
+    return {
+      countryName: "日本",
+      mapAppText: "🚨【地圖推薦】這是一趟【日本】旅行。請在 `ai_note` 提醒使用者下載並使用「Google Maps」或「Yahoo! 乘換案內」進行交通規劃。",
+      localLanguageExample: "日文 (漢字、平假名等)",
+      geographicBoundary: "🚨【嚴格地理一致性，最高指令】注意！這是一趟【日本】旅行。所有生成的景點、店家、地名必須 100% 位於【日本】境內（如：東京、大阪、京都、北海道、福岡、沖繩等）。絕對嚴格禁止放入任何韓國（例如：明洞、弘大、景福宮、東大門、海雲台）、台灣或其它國家地區的景點！",
+      currency: "日圓 (JPY)",
+    };
+  }
+
+  if (isTaiwan) {
+    return {
+      countryName: "台灣",
+      mapAppText: "🚨【地圖推薦】這是一趟【台灣】旅行。推薦使用「Google Maps」進行導航與美食查詢。",
+      localLanguageExample: "繁體中文 / 官方地名",
+      geographicBoundary: "🚨【嚴格地理一致性，最高指令】注意！這是一趟【台灣】旅行。所有景點與店家必須位於【台灣】（例如台北、台中、台南、高雄、花蓮、墾丁等）。絕對禁止放入任何日本、韓國或海外景點！",
+      currency: "新台幣 (TWD)",
+    };
+  }
+
+  return {
+    countryName: destination,
+    mapAppText: "🚨【地圖推薦】請根據目的地推薦適合的導航地圖應用程式（如 Google Maps）。",
+    localLanguageExample: "當地的官方語言與拼音",
+    geographicBoundary: `🚨【嚴格地理一致性，最高指令】注意！規劃出的所有景點、店家與地名必須 100% 嚴格位於指定的目的地「${destination}」地區境內。絕對禁止將其它任何國家、城市或不相關地區的景點混入行程中。`,
+    currency: "當地貨幣或台幣比例",
+  };
+}
+
 /**
  * Build the AI prompt for a chunk of days.
  * includeUiConfig = true for the first chunk (adds ui_config + summary to the schema).
@@ -547,52 +657,56 @@ function buildChunkPrompt(
       ? "" // single call: no extra restriction
       : `\n【區段指示】請只產生第 ${startDay} 天到第 ${endDay} 天（共 ${chunkDays} 天）的行程，itinerary 的 day 值從 ${startDay} 到 ${endDay}。${startDay > 1 ? "請延續前幾天旅程的節奏與地區連貫性。" : ""}`;
 
-  const spotSchema = `Array<{
-    day: number;
-    spots: Array<{
-      time: string;           // 24h HH:MM
-      name: string;           // 景點名稱（繁體中文，專有名詞可加外文括號）
-      local_name: string;     // 該國原生語言名稱（如日文、韓文、法語等），務必精準，不可留空
-      city: string;           // 該景點所在的具體城市名，務必精準
-      emoji: string;
-      category: string;       // flight | transport | landmark | food | shopping | nature | hotel | activity | nightlife | other
-      intensity: "chill" | "moderate" | "hardcore";
-      ai_note: string;        // 客製化提醒，必須含營業時間、停車、門票、量化預算
-      linkedFactId?: string;  // 若對應到 Travel facts anchors 中某項目，填入其 ID
-    }>;
-  }>`;
+  const config = getCountryExclusivePromptConfig(destination);
+
+  const spotSchema = `[
+  {
+    "day": 1, 
+    "spots": [
+      {
+        "time": "09:00", 
+        "name": "字串：景點名稱（繁體中文，專有名詞可加外文括號）",
+        "local_name": "字串：該地區官方原生語言名稱（${config.localLanguageExample}），務必精準，不可留空",
+        "city": "字串：所在城市名",
+        "emoji": "字串",
+        "category": "flight | transport | landmark | food | shopping | nature | hotel | activity | nightlife | other",
+        "intensity": "chill | moderate | hardcore",
+        "ai_note": "字串：精細客製提醒，含營業時間、停車、門票、預算",
+        "linkedFactId": "字串（這裡只填入 ID，若無則省略整個欄位）"
+      }
+    ]
+  }
+]`;
 
   const schema = includeUiConfig
-    ? `\`\`\`typescript
-interface AiResponse {
-  ui_config: {
-    bg_gradient: string;       // Tailwind class, e.g. "from-amber-100 to-orange-50"
-    font_scale: "normal" | "large";
-    hero_image_keyword: string;
-  };
-  summary: {
-    title: string;
-    smart_tags: string[];
-  };
-  itinerary: ${spotSchema};
+    ? `\`\`\`json
+{
+  "ui_config": {
+    "bg_gradient": "Tailwind class, e.g. from-amber-100 to-orange-50",
+    "font_scale": "normal | large",
+    "hero_image_keyword": "字串"
+  },
+  "summary": {
+    "title": "字串",
+    "smart_tags": ["字串"]
+  },
+  "itinerary": ${spotSchema}
 }
 \`\`\``
-    : `\`\`\`typescript
-// 只需回傳 itinerary 陣列，勿包裹成物件
-type ChunkResponse = ${spotSchema};
+    : `\`\`\`json
+${spotSchema}
 \`\`\``;
 
   return `你是一個精通旅遊規劃的 AI。
 
 ═══════════════════════════════════════════════════════
-🔒 目的地鎖定（最高優先指令，不可違反）
+🔒 目的地與國家完全鎖定（最高優先指令，不可違反）
 　目的地：${destination}（共 ${totalDays} 天）
-　所有景點、summary.title、smart_tags 均必須 100% 對應「${destination}」。
-　絕對禁止：放入其他城市、其他國家、或任何與「${destination}」無關的地點。
+　${config.geographicBoundary}
 　summary.title 必須明確包含「${destination}」這個地名。
 ═══════════════════════════════════════════════════════
 
-請回傳符合以下 TypeScript 格式的 JSON，不准帶有 markdown 標記：
+請回傳純 JSON 格式，不准帶有 markdown code block 打包，也不要有任何 // 註解：
 ${schema}
 
 【語言與格式要求】
@@ -600,16 +714,18 @@ ${schema}
 2. **嚴格的 JSON 格式**：請務必且只能使用**標準雙引號 \`"\`** 包覆屬性與字串值。字串內若需引號，請用全形引號「」或單引號。
 
 【AI 規劃必備要求】
-1. **地圖 App 特例**：若目的地位於韓國（Korea），在 \`ai_note\` 中強制提醒下載 **Naver Maps**。若目的地是日本，請提醒使用 **Google Maps** 或 **Yahoo!カーナビ**。
+1. 地圖 App 引導與提醒限制：${config.mapAppText}
 2. **營業時間與停車場**：\`ai_note\` 中**必須**提供大約的營業時間與停車資訊。
 3. **門票資訊**：\`ai_note\` 中**必須**說明是否需要門票及費用。
 4. **包棟住宿選項**：人數適合時，主動推薦**包棟民宿/Villa**。
-5. **預算範圍量化**：\`ai_note\` 中提供具體當地貨幣或台幣估算。
+5. **預算範圍量化**：\`ai_note\` 中提供估算，以「${config.currency}」或台幣標註。
+6. **專屬起訖點設計**：行程的第一天必須從目的地機場開始（降落、入境），最後一天必須在目的地機場結束（前往機場、出境）。
+7. **每日終點**：每一天的最後一個行程（節點）必須是該晚的住宿地點（hotel / accommodation）。
 
 【內容客製化要求】
 若使用者未提供飲食禁忌，請忽略；若為情侶，安排浪漫景點。
 根據旅伴類型、節奏偏好與興趣客製化行程。
-不要給出制式通用名稱，請給出真實景點與店家名稱。
+不要給出制式通用名稱，請給出真實景點與店家名稱，不可放入非「${destination}」所屬國家的景點。
 請完整考慮「食、衣、住、行」四個面向。
 
 Details:
@@ -717,7 +833,7 @@ export function robustJSONParse(text: string, expectArray: boolean = false): any
 
   // Gather code blocks as main candidates
   const candidates: string[] = [];
-  const codeBlockRegex = /```(?:json|JSON)?\s*([\s\S]*?)\s*```/gi;
+  const codeBlockRegex = /```\w*\s*([\s\S]*?)\s*```/gi;
   let match;
   while ((match = codeBlockRegex.exec(clean)) !== null) {
     candidates.push(match[1]);
