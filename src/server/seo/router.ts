@@ -26,7 +26,7 @@ export function createSeoRouter(repo: AppRepository): Router {
   }
 
   // Sitemap
-  router.get('/sitemap-seo.xml', async (_req: Request, res: Response) => {
+  router.get('/sitemap.xml', async (_req: Request, res: Response) => {
     try {
       const xml = await buildSitemapXml(repo);
       res.setHeader('Content-Type', 'application/xml');
