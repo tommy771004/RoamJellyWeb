@@ -4,9 +4,14 @@ import type { AppRepository } from '../../repositories/appRepository.js';
 
 export async function buildSitemapXml(repo: AppRepository): Promise<string> {
   const today = new Date().toISOString().split('T')[0];
-  const base = 'https://roamjelly.com';
+  const base = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://roam-jelly-web.vercel.app';
 
   const staticUrls = [
+    `${base}/`,
+    `${base}/pricing`,
+    `${base}/guide/collaborative-itinerary-planner`,
+    `${base}/guide/taiwan-travel-planner`,
+    `${base}/guide/group-travel-expense-splitting`,
     `${base}/fly/`,
     `${base}/trips/`,
   ];
