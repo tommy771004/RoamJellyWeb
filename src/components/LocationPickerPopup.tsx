@@ -56,7 +56,7 @@ export const LocationPickerPopup = ({
 
   const content = (
     <AnimatePresence>
-      <div className="fixed inset-x-0 z-popup flex items-end justify-center p-0 md:items-center md:p-4 transition-all duration-100" style={{ top: vv.offsetTop, height: vv.height }}>
+      <div className="fixed inset-x-0 z-popup flex items-center justify-center p-3 md:p-4 transition-all duration-100" style={{ top: vv.offsetTop, height: vv.height }}>
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

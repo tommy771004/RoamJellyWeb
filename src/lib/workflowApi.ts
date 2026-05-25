@@ -110,7 +110,8 @@ export function getNativeMapUrl(lat: number, lng: number, title: string, isIOS: 
   if (isIOS) {
     return `maps://?q=${q}&ll=${lat},${lng}`;
   } else {
-    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    const query = title ? encodeURIComponent(title) : `${lat},${lng}`;
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
   }
 }
 

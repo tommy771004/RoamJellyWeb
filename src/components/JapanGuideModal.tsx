@@ -69,7 +69,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={overlayTransition}
-          className="fixed inset-0 z-modal flex items-end sm:items-center justify-center"
+          className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-4"
           onClick={onClose}
         >
           {/* Backdrop */}

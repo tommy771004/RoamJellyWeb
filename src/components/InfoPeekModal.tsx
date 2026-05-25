@@ -88,7 +88,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
   return createPortal(
     <AnimatePresence>
       {open && content ? (
-        <div className="fixed inset-0 z-modal flex items-end justify-center p-3 sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-4">
           <motion.button
             type="button"
             aria-label="關閉說明"

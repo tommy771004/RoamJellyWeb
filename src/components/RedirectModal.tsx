@@ -42,7 +42,7 @@ export default function RedirectModal({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={overlayTransition}
-      className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))] sm:pb-4 bg-slate-900/52 backdrop-blur-[8px]"
+      className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))] sm:pb-4 bg-slate-900/52 backdrop-blur-[8px]"
       onClick={onClose}
     >
       <motion.div
