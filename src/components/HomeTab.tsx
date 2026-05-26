@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from "motion/react";
 import {
   Bell,
   BellRing,
@@ -1102,6 +1102,31 @@ const getSafetyStatus = (cityName: string = "") => {
   return "💚 安全無虞";
 };
 
+const HomeTabContentFocusBlock = ({ children, containerRef, className }: { children: React.ReactNode, containerRef: React.RefObject<HTMLDivElement | null>, className?: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    container: containerRef,
+    // 進入和退出時各自保留一定緩衝區，延長聚焦範圍
+    offset: ["start 95%", "end 5%"]
+  });
+  
+  // 透明度變化：捲動邊緣稍微淡出 (0.7)，中間完全可視 (1)
+  const opacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0.7, 1, 1, 0.7]);
+  // 模糊效果：邊緣微弱模糊 (2.5px)，中間清晰 (0px)，保持精緻感
+  const blurValue = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [2.5, 0, 0, 2.5]);
+  const filter = useTransform(blurValue, v => prefersReducedMotion ? "none" : `blur(${v}px)`);
+  // 縮放變化：邊緣極微小縮小 (0.975)，中間正常 (1)
+  const scale = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0.975, 1, 1, 0.975]);
+
+  return (
+    <motion.div ref={ref} style={{ opacity, filter, scale }} className={className}>
+      {children}
+    </motion.div>
+  );
+};
+
 export default function HomeTab({
   onRequireLogin,
   isLoggedIn,
@@ -1199,6 +1224,7 @@ export default function HomeTab({
   const [zoomedFlightsIndex, setZoomedFlightsIndex] = useState<number | null>(null);
   const flightDropdownRef = useRef<HTMLDivElement>(null);
   const flightMenuContentRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const hoverTimeout = useRef<any>(null);
 
   const [showHotelsDropdown, setShowHotelsDropdown] = useState(false);
@@ -2115,6 +2141,7 @@ export default function HomeTab({
 
   return (
     <motion.div
+      ref={scrollRef}
       onScroll={onScroll}
       initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12, scale: 0.985 }}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
@@ -3068,7 +3095,7 @@ export default function HomeTab({
         </div>
 
         <div className="pt-5 sm:pt-7 pb-16 md:pb-32 flex flex-col flex-1 min-w-0">
-          <div className="flex flex-col gap-3 mb-5 sm:mb-6 md:mb-7">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="flex flex-col gap-3 mb-5 sm:mb-6 md:mb-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <EditorialSectionIntro
                 eyebrow="查詢航班"
@@ -3231,7 +3258,7 @@ export default function HomeTab({
                 ))}
               </div>
             )}
-          </div>
+          </HomeTabContentFocusBlock>
 
           <div className="relative min-h-[300px]">
             {/* Loading Overlay — Skyscanner-style progress bar */}
@@ -3750,7 +3777,7 @@ export default function HomeTab({
           </div>
 
           {communityTrips.length > 0 && (
-            <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
+            <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
               <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Globe className="text-sky-500" size={24} />
@@ -3869,11 +3896,11 @@ export default function HomeTab({
                     );
                   })}
               </HorizontalScrollRail>
-            </div>
+            </HomeTabContentFocusBlock>
           )}
 
           {/* Featured Destinations Section */}
-          <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Globe className="text-emerald-500" size={24} />
@@ -3997,10 +4024,10 @@ export default function HomeTab({
                   );
                 })}
             </HorizontalScrollRail>
-          </div>
+          </HomeTabContentFocusBlock>
 
           {/* Expert Handbooks Section */}
-          <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="text-fuchsia-500" size={24} />
               <h2 className="text-2xl font-black text-slate-800 tracking-tight">
@@ -4123,10 +4150,10 @@ export default function HomeTab({
                   );
                 })}
             </HorizontalScrollRail>
-          </div>
+          </HomeTabContentFocusBlock>
 
           {/* Subscription Section */}
-          <div className="mt-8 md:mt-14 mb-6 md:mb-8 px-2 pt-8 border-t border-slate-200/50 dark:border-white/10 text-left">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-14 mb-6 md:mb-8 px-2 pt-8 border-t border-slate-200/50 dark:border-white/10 text-left">
             <div className="flex items-center gap-2 mb-2">
               <BellRing size={20} className="text-pink-500 animate-pulse" />
               <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
@@ -4267,7 +4294,7 @@ export default function HomeTab({
                 </div>
               )}
             </div>
-          </div>
+          </HomeTabContentFocusBlock>
         </div>
       </div>
 
