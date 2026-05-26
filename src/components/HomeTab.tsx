@@ -3907,6 +3907,155 @@ export default function HomeTab({
             </HomeTabContentFocusBlock>
           )}
 
+          {/* Subscription Section */}
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2 pt-10 border-t border-slate-200/50 dark:border-white/10 text-left">
+            <div className="flex items-center gap-2 mb-2">
+              <BellRing size={20} className="text-pink-500 animate-pulse" />
+              <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                ✉️ 目的地即時快訊 & 優惠促銷訂閱
+              </h4>
+            </div>
+            <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+              當航班降價促銷、釋出聯名特惠，或目的地有重要安全/旅遊警示更新時，系統將即時通知您，幫助您聰明規劃、安心起飛！
+            </p>
+
+            {/* List of Destinations available for subscriptions */}
+            <div className="w-full mb-6">
+              <HorizontalScrollRail
+                label="目的地訂閱"
+                viewportClassName="w-full pb-4 -mx-6 px-6"
+                contentClassName="gap-4"
+              >
+                {destinationAlerts.map((dest) => {
+                  const isWebPush = subscriptions.some(s => s.destination === dest.name && s.channel === 'web-push');
+                  const isEmail = subscriptions.some(s => s.destination === dest.name && s.channel === 'email');
+
+                  return (
+                    <div key={dest.name} className="flex flex-row items-stretch w-[290px] xs:w-[325px] sm:w-[365px] shrink-0 rounded-[22px] border border-slate-100 dark:border-white/5 bg-slate-50/42 dark:bg-slate-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                      <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans">
+                        <img
+                          src={dest.image}
+                          alt={dest.name}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).onerror = null;
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                          }}
+                          referrerPolicy="no-referrer"
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
+                        <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5 flex-wrap">
+                          <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
+                            {dest.code}
+                          </span>
+                          <span className={`rounded-md px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md ${dest.tagColor}`}>
+                            {dest.health}
+                          </span>
+                        </div>
+                        <div className="absolute bottom-2.5 left-2.5 text-white pr-2">
+                          <h5 className="font-extrabold text-[13.5px] leading-tight">{dest.name}</h5>
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 flex-1 flex flex-col justify-between gap-2.5">
+                        <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 text-left">
+                          {dest.advisory}
+                        </p>
+                        <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSubscription(dest.name, 'web-push')}
+                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
+                              isWebPush
+                                ? "bg-pink-100 dark:bg-pink-950/40 text-pink-700 border border-pink-200"
+                                : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}
+                          >
+                            <Bell size={11} className={isWebPush ? "text-pink-600" : ""} />
+                            {isWebPush ? "已開啟" : "推送"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSubscription(dest.name, 'email')}
+                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
+                              isEmail
+                                ? "bg-sky-100 dark:bg-sky-950/40 text-sky-700 border border-sky-200"
+                                : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}
+                          >
+                            <Mail size={11} className={isEmail ? "text-sky-600" : ""} />
+                            {isEmail ? "已設" : "Email"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </HorizontalScrollRail>
+            </div>
+
+            {/* Subscription alerts and newsfeed */}
+            <div className="rounded-3xl border border-dashed border-slate-200 dark:border-white/10 p-4 bg-white/20 dark:bg-slate-950/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Rss size={16} className="text-pink-500 animate-pulse" />
+                <h5 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                  最新訂閱情報 & 降價快訊 
+                </h5>
+              </div>
+
+              {newsLoading ? (
+                <div className="text-center py-6 flex flex-col items-center justify-center">
+                  <RefreshCw className="animate-spin text-slate-300 mb-2" size={24} />
+                  <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
+                    正在為您整理各大旅遊網站的即時優惠...
+                  </p>
+                </div>
+              ) : newsFeed.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
+                    💡 跨出第一步！訂閱上方任一目的地的推送或電郵快訊後，即可在此解鎖瀏覽專屬的降價促銷、即時機票大賞與目的地旅遊安全警報！
+                  </p>
+                </div>
+              ) : (
+                <div className="w-full relative mt-2">
+                  <HorizontalScrollRail
+                    label="最新訂閱情報"
+                    viewportClassName="w-full pb-4 -mx-4 px-4"
+                    contentClassName="gap-3"
+                  >
+                    {newsFeed.map((alert, idx) => (
+                      <div key={alert.id || idx} className="flex flex-col w-[240px] xs:w-[260px] shrink-0 gap-2 p-3.5 rounded-[18px] bg-white/60 dark:bg-slate-900/40 border border-white/80 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 shrink-0 rounded-full bg-pink-100 dark:bg-pink-950/40 text-pink-600 text-[10px] font-black flex items-center justify-center">
+                            {alert.type === 'deal' ? '💰' : '⚠️'}
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[11px] font-black text-slate-800 dark:text-white">
+                              {alert.dest}
+                            </span>
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${
+                              alert.type === 'deal' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
+                            }`}>
+                              {alert.tag}
+                            </span>
+                          </div>
+                        </div>
+                        <a href={alert.link} target="_blank" rel="noopener noreferrer" className="block text-[12px] font-bold text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-left font-sans hover:text-sky-600 hover:underline transition-colors line-clamp-3">
+                          {alert.text}
+                        </a>
+                      </div>
+                    ))}
+                  </HorizontalScrollRail>
+                  {/* Show total count */}
+                  <p className="text-[10px] text-slate-400 font-extrabold text-right pr-2">
+                    隨時同步最新旅遊即時情報
+                  </p>
+                </div>
+              )}
+            </div>
+          </HomeTabContentFocusBlock>
+
+
           {/* Featured Destinations Section */}
           <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2">
             <div className="flex items-center justify-between mb-6">
@@ -4158,152 +4307,7 @@ export default function HomeTab({
                   );
                 })}
             </HorizontalScrollRail>
-          </HomeTabContentFocusBlock>
-
-          {/* Subscription Section */}
-          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2 pt-10 border-t border-slate-200/50 dark:border-white/10 text-left">
-            <div className="flex items-center gap-2 mb-2">
-              <BellRing size={20} className="text-pink-500 animate-pulse" />
-              <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                ✉️ 目的地即時快訊 & 優惠促銷訂閱
-              </h4>
-            </div>
-            <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-              當航班降價促銷、釋出聯名特惠，或目的地有重要安全/旅遊警示更新時，系統將即時通知您，幫助您聰明規劃、安心起飛！
-            </p>
-
-            {/* List of Destinations available for subscriptions */}
-            <div className="w-full mb-6">
-              <HorizontalScrollRail
-                label="目的地訂閱"
-                viewportClassName="w-full pb-4 -mx-6 px-6"
-                contentClassName="gap-4"
-              >
-                {destinationAlerts.map((dest) => {
-                  const isWebPush = subscriptions.some(s => s.destination === dest.name && s.channel === 'web-push');
-                  const isEmail = subscriptions.some(s => s.destination === dest.name && s.channel === 'email');
-
-                  return (
-                    <div key={dest.name} className="flex flex-row items-stretch w-[290px] xs:w-[325px] sm:w-[365px] shrink-0 rounded-[22px] border border-slate-100 dark:border-white/5 bg-slate-50/42 dark:bg-slate-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all">
-                      <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans">
-                        <img
-                          src={dest.image}
-                          alt={dest.name}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).onerror = null;
-                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
-                          }}
-                          referrerPolicy="no-referrer"
-                          className="h-full w-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-900/40" />
-                        <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5 flex-wrap">
-                          <span className="rounded-md bg-slate-950/45 px-2 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono">
-                            {dest.code}
-                          </span>
-                          <span className={`rounded-md px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md ${dest.tagColor}`}>
-                            {dest.health}
-                          </span>
-                        </div>
-                        <div className="absolute bottom-2.5 left-2.5 text-white pr-2">
-                          <h5 className="font-extrabold text-[13.5px] leading-tight">{dest.name}</h5>
-                        </div>
-                      </div>
-                      
-                      <div className="p-3 flex-1 flex flex-col justify-between gap-2.5">
-                        <p className="text-[11.5px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 text-left">
-                          {dest.advisory}
-                        </p>
-                        <div className="flex gap-2 border-t border-slate-100 dark:border-white/5 pt-2">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleSubscription(dest.name, 'web-push')}
-                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
-                              isWebPush
-                                ? "bg-pink-100 dark:bg-pink-950/40 text-pink-700 border border-pink-200"
-                                : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
-                            }`}
-                          >
-                            <Bell size={11} className={isWebPush ? "text-pink-600" : ""} />
-                            {isWebPush ? "已開啟" : "推送"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleSubscription(dest.name, 'email')}
-                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all ${
-                              isEmail
-                                ? "bg-sky-100 dark:bg-sky-950/40 text-sky-700 border border-sky-200"
-                                : "bg-white hover:bg-slate-100 text-slate-600 border border-slate-200"
-                            }`}
-                          >
-                            <Mail size={11} className={isEmail ? "text-sky-600" : ""} />
-                            {isEmail ? "已設" : "Email"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </HorizontalScrollRail>
-            </div>
-
-            {/* Subscription alerts and newsfeed */}
-            <div className="rounded-3xl border border-dashed border-slate-200 dark:border-white/10 p-4 bg-white/20 dark:bg-slate-950/20">
-              <div className="flex items-center gap-2 mb-3">
-                <Rss size={16} className="text-pink-500 animate-pulse" />
-                <h5 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                  最新訂閱情報 & 降價快訊 
-                </h5>
-              </div>
-
-              {newsLoading ? (
-                <div className="text-center py-6 flex flex-col items-center justify-center">
-                  <RefreshCw className="animate-spin text-slate-300 mb-2" size={24} />
-                  <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
-                    正在為您整理各大旅遊網站的即時優惠...
-                  </p>
-                </div>
-              ) : newsFeed.length === 0 ? (
-                <div className="text-center py-6">
-                  <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
-                    💡 跨出第一步！訂閱上方任一目的地的推送或電郵快訊後，即可在此解鎖瀏覽專屬的降價促銷、即時機票大賞與目的地旅遊安全警報！
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {newsFeed
-                    .map((alert, idx) => (
-                      <div key={alert.id || idx} className="flex gap-3 p-3 rounded-2xl bg-white/60 dark:bg-slate-900/40 border border-white/80 dark:border-white/5 shadow-sm">
-                        <div className="h-6 w-6 shrink-0 rounded-full bg-pink-100 dark:bg-pink-950/40 text-pink-600 text-[10px] font-black flex items-center justify-center">
-                          {alert.type === 'deal' ? '💰' : '⚠️'}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[11px] font-black text-slate-800 dark:text-white">
-                              {alert.dest}
-                            </span>
-                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${
-                              alert.type === 'deal' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
-                            }`}>
-                              {alert.tag}
-                            </span>
-                          </div>
-                          <a href={alert.link} target="_blank" rel="noopener noreferrer" className="block text-[12px] font-bold text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-left font-sans hover:text-sky-600 hover:underline transition-colors">
-                            {alert.text}
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-
-                  {/* Show total count */}
-                  <p className="text-[10px] text-slate-400 font-extrabold text-right mt-2">
-                    隨時同步最新旅遊即時情報
-                  </p>
-                </div>
-              )}
-            </div>
-          </HomeTabContentFocusBlock>
-        </div>
+          </HomeTabContentFocusBlock>        </div>
       </div>
 
       {activeGuide && (
