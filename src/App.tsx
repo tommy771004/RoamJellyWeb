@@ -1,4 +1,4 @@
-import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from './lib/motionTokens';
+﻿import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY, SPRING_MODAL, getTabVariants } from './lib/motionTokens';
 import { useState, useEffect, useCallback, useRef, lazy, Suspense, type ComponentType } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 const HomeTab = lazy(() => import('./components/HomeTab'));
@@ -735,7 +735,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100 transition-colors duration-500">
+    <div className="dark-transition flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100">
       <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-500 bg-gradient-to-br from-[#030712] via-[#090b18] to-[#0f172a] ${isDarkMode ? 'opacity-[0.93]' : 'opacity-0'}`} />
       <div className="noise-overlay absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20 transition-opacity duration-500" />
       {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
@@ -949,14 +949,14 @@ export default function App() {
             key={showLogin ? `login-${loginPromptMode}` : isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
-              enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.99, x: dir * 50 }),
+              enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.984, x: dir * 24 }),
               center: { opacity: 1, scale: 1, x: 0 },
-              exit: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.99, x: dir * -50 }),
+              exit: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.984, x: dir * -24 }),
             }}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={prefersReducedMotion ? { duration: 0.16 } : SPRING_SMOOTH}
+            transition={prefersReducedMotion ? { duration: 0.16 } : SPRING_SNAPPY}
             style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
             className="w-full pt-[calc(56px+env(safe-area-inset-top,0px))] sm:pt-[calc(80px+env(safe-area-inset-top,0px))] pb-0"
           >
@@ -1001,13 +1001,14 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              className="absolute inset-0 modal-backdrop"
               onClick={() => setShowLogoutModal(false)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.92, y: 24 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={SPRING_MODAL}
               className="relative z-modal-above w-full max-w-[480px] bg-white/90 backdrop-blur-2xl border border-white rounded-[32px] p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center"
             >
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-3xl mb-4 border border-white shadow-inner animate-pulse shrink-0">

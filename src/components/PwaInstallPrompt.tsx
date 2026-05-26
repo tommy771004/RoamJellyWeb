@@ -125,7 +125,7 @@ export default function PwaInstallPrompt() {
               <button
                 type="button"
                 onClick={() => void handleInstall()}
-                className="flex-1 rounded-2xl bg-white py-3 text-sm font-black uppercase tracking-wider text-slate-900 transition-all active:scale-[0.97]"
+                className="flex-1 rounded-2xl bg-white py-3 text-sm font-black uppercase tracking-wider text-slate-900 transition-all ios-press"
               >
                 立即安裝
               </button>

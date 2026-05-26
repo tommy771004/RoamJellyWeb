@@ -121,7 +121,7 @@ export default function DynamicItineraryView({
       <div className="relative z-10 px-4 sm:px-6 pt-6 sm:pt-16 pb-tab-safe">
         <button
           onClick={onBack}
-          className="w-11 h-11 rounded-full bg-white/40 backdrop-blur-md border border-white/60 flex items-center justify-center shadow-sm text-slate-800 hover:bg-white/80 active:scale-[0.97] transition-all duration-200 mb-4 sm:mb-6"
+          className="w-11 h-11 rounded-full bg-white/40 backdrop-blur-md border border-white/60 flex items-center justify-center shadow-sm text-slate-800 hover:bg-white/80 ios-press transition-all duration-200 mb-4 sm:mb-6"
         >
           <ArrowLeft size={20} />
         </button>
@@ -274,7 +274,7 @@ export default function DynamicItineraryView({
         {onSave && (
           <button 
             onClick={() => onSave(result)}
-            className="group w-full mt-10 py-5 sm:py-6 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 text-white font-black text-lg sm:text-xl shadow-[0_16px_32px_rgba(236,72,153,0.3),inset_0_2px_4px_rgba(255,255,255,0.4)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.4),inset_0_2px_4px_rgba(255,255,255,0.5)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.97] flex items-center justify-center gap-3">
+            className="group w-full mt-10 py-5 sm:py-6 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 text-white font-black text-lg sm:text-xl shadow-[0_16px_32px_rgba(236,72,153,0.3),inset_0_2px_4px_rgba(255,255,255,0.4)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.4),inset_0_2px_4px_rgba(255,255,255,0.5)] transition-all duration-300 hover:scale-[1.02] ios-press flex items-center justify-center gap-3">
             <span className="group-hover:animate-cute-bounce">💾</span>
             <span className="drop-shadow-sm">儲存這份心動行程</span>
           </button>

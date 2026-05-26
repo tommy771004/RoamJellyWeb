@@ -33,7 +33,7 @@ export function WikiPreviewCard({ query }: WikiPreviewCardProps) {
     <div className="mt-2 w-full">
       <button
         onClick={handleToggle}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black tracking-widest uppercase transition-all bg-white/60 hover:bg-white/90 text-sky-600 border border-sky-200/50 hover:border-sky-300 shadow-sm hover:shadow active:scale-[0.97]"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black tracking-widest uppercase transition-all bg-white/60 hover:bg-white/90 text-sky-600 border border-sky-200/50 hover:border-sky-300 shadow-sm hover:shadow ios-press"
       >
         <BookOpen size={13} strokeWidth={2.5} />
         維基百科介紹
@@ -52,7 +52,7 @@ export function WikiPreviewCard({ query }: WikiPreviewCardProps) {
               <div className="absolute inset-0 bg-gradient-to-br from-white/90 to-sky-50/40 pointer-events-none" />
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
-                className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-100/50 hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors z-10 active:scale-[0.97]"
+                className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-100/50 hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors z-10 ios-press"
               >
                 <X size={14} strokeWidth={2.5} />
               </button>
@@ -107,7 +107,7 @@ export function WikiPreviewCard({ query }: WikiPreviewCardProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-sky-50 transition-colors text-[11px] font-black tracking-widest uppercase text-slate-500 hover:text-sky-600 border border-slate-200 hover:border-sky-300 shadow-sm active:scale-[0.97]"
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-sky-50 transition-colors text-[11px] font-black tracking-widest uppercase text-slate-500 hover:text-sky-600 border border-slate-200 hover:border-sky-300 shadow-sm ios-press"
                       >
                         <ExternalLink size={13} strokeWidth={2.5} />
                         在維基百科上閱讀完整內容

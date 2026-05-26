@@ -60,7 +60,7 @@ function GlassCardPressable({ children, className = '', onPress, style: propsSty
         onPress(e);
         onClick?.(e);
       }}
-      className={`glass-panel ${glassClass.replace('overflow-hidden', '')} active:scale-[0.97] transition-transform hover:bg-white/50 text-left w-full flex flex-col appearance-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 ${className}`}
+      className={`glass-panel ${glassClass.replace('overflow-hidden', '')} ios-press transition-transform hover:bg-white/50 text-left w-full flex flex-col appearance-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 ${className}`}
       style={style}
     >
       {children}

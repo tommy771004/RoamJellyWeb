@@ -1307,7 +1307,7 @@ function ChecklistSection({ className }: { className?: string }) {
           type="button"
           onClick={handleStartAiPacking}
           disabled={isGenerating || isOffline}
-          className="macaron-gradient text-sky-900 font-extrabold text-[14px] leading-none tracking-wide h-12 w-full flex items-center justify-center gap-2 rounded-full shadow-[0_4px_14px_rgba(244,114,182,0.18)] hover:shadow-[0_6px_20px_rgba(244,114,182,0.28)] hover:-translate-y-0.5 active:scale-95 duration-200 transition-all border border-pink-200 cursor-pointer disabled:opacity-50 disabled:-translate-y-0 select-none font-sans"
+          className="macaron-gradient text-sky-900 font-extrabold text-[14px] leading-none tracking-wide h-12 w-full flex items-center justify-center gap-2 rounded-full shadow-[0_4px_14px_rgba(244,114,182,0.18)] hover:shadow-[0_6px_20px_rgba(244,114,182,0.28)] hover:-translate-y-0.5 ios-press duration-200 transition-all border border-pink-200 cursor-pointer disabled:opacity-50 disabled:-translate-y-0 select-none font-sans"
         >
           <Sparkles size={16} />
           {isGenerating ? "AI 智慧推薦大師正在包裝規劃中..." : "開始產生 AI 推薦清單"}
@@ -1425,7 +1425,7 @@ function ChecklistSection({ className }: { className?: string }) {
                 <Button
                   size="sm"
                   onClick={handleImportToTripList}
-                  className="macaron-gradient border border-pink-200 text-sky-900 font-extrabold rounded-full h-11 shadow-sm hover:shadow active:scale-95 duration-150"
+                  className="macaron-gradient border border-pink-200 text-sky-900 font-extrabold rounded-full h-11 shadow-sm hover:shadow ios-press duration-150"
                 >
                   匯入旅途清單
                 </Button>
@@ -1522,39 +1522,39 @@ function LedgerSection({ className }: { className?: string }) {
       <div className="absolute -bottom-12 -right-8 w-36 h-36 bg-sky-100/35 rounded-full blur-[28px] pointer-events-none" />
       <div className="mb-6 flex items-start justify-between gap-4 relative z-10 px-2">
         <div>
-          <span className="inline-flex items-center rounded-full border border-pink-100 bg-white/88 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-pink-700 shadow-sm">
+          <span className="inline-flex items-center rounded-full border border-pink-100 dark:border-pink-900/50 bg-white/88 dark:bg-pink-950/40 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-pink-700 dark:text-pink-300 shadow-sm dark-transition">
             Trip Split
           </span>
-          <h3 className="mt-3 text-balance text-[26px] sm:text-[28px] font-black text-slate-900">
+          <h3 className="mt-3 text-balance text-[26px] sm:text-[28px] font-black text-slate-900 dark:text-white dark-transition">
             記帳與分帳
           </h3>
         </div>
-        <div className="shrink-0 rounded-[28px] border border-white/80 bg-white/82 px-4 py-3 text-right shadow-[0_4px_16px_rgba(244,114,182,0.08)]">
-          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-350">本趟摘要</div>
-          <div className="mt-1 text-lg font-black text-slate-900">{expenses.length} 筆</div>
-          <div className="text-[12px] font-bold text-slate-500">{members.length || 0} 位旅伴</div>
+        <div className="shrink-0 rounded-[28px] border border-white/80 dark:border-white/10 bg-white/82 dark:bg-slate-900/60 px-4 py-3 text-right shadow-sm dark-transition">
+          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">本趟摘要</div>
+          <div className="mt-1 text-lg font-black text-slate-900 dark:text-white">{expenses.length} 筆</div>
+          <div className="text-[12px] font-bold text-slate-500 dark:text-slate-400">{members.length || 0} 位旅伴</div>
         </div>
       </div>
 
       <div className="flex-grow flex-1 overflow-y-auto no-scrollbar flex flex-col gap-y-5 relative z-10 pr-0.5 sm:pr-1.5 pb-2">
         {/* Recent Expenses List as Interactive Wallet */}
         {expenses && expenses.length > 0 && (
-          <div className="flex flex-col gap-4 mb-4 w-full rounded-[32px] border border-white/90 bg-white/70 p-4 sm:p-5 shadow-[0_8px_32px_rgba(244,114,182,0.06)] hover:shadow-[0_12px_40px_rgba(244,114,182,0.10)] transition-all">
+          <div className="flex flex-col gap-4 mb-4 w-full rounded-[32px] border border-white/90 dark:border-white/10 bg-white/70 dark:bg-slate-900/50 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all dark-transition">
             <div className="flex items-center justify-between px-1">
-              <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 leading-none">
+              <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5 leading-none">
                 <CreditCard size={13} className="text-pink-500 animate-pulse" />
                 最新旅伴分帳卡包
               </span>
               
               {/* Toggle layout mode */}
-              <div className="flex items-center gap-1 bg-slate-100/80 p-0.5 rounded-full border border-slate-200/50">
+              <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-slate-800/80 p-0.5 rounded-full border border-slate-200/50 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setWalletViewMode("deck")}
                   className={`flex items-center gap-1 px-3 py-1 text-[11px] font-extrabold rounded-full transition-all ${
                     walletViewMode === "deck"
-                      ? "bg-white text-slate-900 shadow-sm"
-                      : "text-slate-500 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
                   <Layers size={11} />
@@ -1565,8 +1565,8 @@ function LedgerSection({ className }: { className?: string }) {
                   onClick={() => setWalletViewMode("grid")}
                   className={`flex items-center gap-1 px-3 py-1 text-[11px] font-extrabold rounded-full transition-all ${
                     walletViewMode === "grid"
-                      ? "bg-white text-slate-900 shadow-sm"
-                      : "text-slate-500 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
                   <Grid size={11} />
@@ -2396,7 +2396,7 @@ function SettlementHistorySection({ className }: { className?: string }) {
           return (
             <div
               key={entry.clearedAt}
-              className="p-3.5 sm:p-4 flex flex-col gap-1.5 bg-white/70 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700/50 rounded-[24px] shadow-sm transition-all duration-200 cursor-pointer hover:bg-white/90"
+              className="p-3.5 sm:p-4 flex flex-col gap-1.5 glass-card dark-transition hover:bg-white/90 dark:hover:bg-slate-800/90 rounded-[24px] shadow-sm cursor-pointer"
               onClick={() => setExpandedId(isExpanded ? null : entry.clearedAt)}
             >
               <div className="flex items-center gap-4 w-full">
@@ -2454,7 +2454,7 @@ function SettlementHistorySection({ className }: { className?: string }) {
                           無對應花費明細紀錄。
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-2 rounded-2xl bg-slate-50/50 border border-slate-100 p-3">
+                        <div className="flex flex-col gap-2 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 p-3 dark-transition">
                           {matchingExpenses.map((exp) => (
                             <div key={exp.id} className="flex items-center justify-between text-[13px] py-1 border-b border-dashed border-slate-100 last:border-0">
                               <div className="flex flex-col">
@@ -2511,7 +2511,7 @@ function TripSelectorBar() {
               key={trip.tripId}
               onClick={() => setActiveTripId(trip.tripId)}
               className={cn(
-                "px-5 py-4 flex flex-col rounded-[24px] border transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] text-left shadow-sm shrink-0 min-w-[120px] max-w-[240px] overflow-hidden group",
+                "px-5 py-4 flex flex-col rounded-[24px] border transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press text-left shadow-sm shrink-0 min-w-[120px] max-w-[240px] overflow-hidden group",
                 active
                   ? "bg-gradient-to-r from-sky-500 to-indigo-500 border-transparent text-white shadow-md shadow-sky-500/20"
                   : "bg-white/80 backdrop-blur-md border-slate-200 text-slate-500 hover:border-sky-300 hover:bg-sky-50/50 hover:shadow-md",
@@ -2724,7 +2724,7 @@ function ToolsTabContent() {
                               icon: Icon,
                             })
                           }
-                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
                         >
                           查看說明
                           <ArrowRight size={12} strokeWidth={2.6} />
@@ -2739,14 +2739,14 @@ function ToolsTabContent() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setActiveTab("ai_form")}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-sky-400 to-sky-600 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-sky-400 to-sky-600 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
                 >
                   <Sparkles size={18} strokeWidth={2.5} />
                   直接交給 AI 開始規劃
                 </button>
                 <button
                   onClick={() => setActiveTab("home")}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-slate-200/60 bg-white/70 px-6 py-3 text-[14px] font-black text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)]"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-slate-200/60 bg-white/70 px-6 py-3 text-[14px] font-black text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)]"
                 >
                   先回首頁看流程
                 </button>
@@ -3167,7 +3167,7 @@ function ToolsTabContent() {
                       </div>
                     </div>
 
-                    <button className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_8px_16px_rgba(217,70,239,0.20)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_12px_24px_rgba(217,70,239,0.26)]">
+                    <button className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ios-press hover:-translate-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_8px_16px_rgba(217,70,239,0.20)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_12px_24px_rgba(217,70,239,0.26)]">
                       查看航班詳情
                     </button>
                   </GlassCard>

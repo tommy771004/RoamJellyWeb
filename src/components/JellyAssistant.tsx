@@ -341,7 +341,7 @@ export default function JellyAssistant() {
                     setIsOpen(false);
                     window.dispatchEvent(new CustomEvent('open-login'));
                   }}
-                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-sky-500 via-fuchsia-500 to-orange-400 text-white font-black text-[13.5px] shadow-[0_8px_20px_rgba(14,165,233,0.25)] hover:shadow-[0_10px_24px_rgba(14,165,233,0.35)] active:scale-95 transition-all outline-none focus:ring-2 focus:ring-fuchsia-400"
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-sky-500 via-fuchsia-500 to-orange-400 text-white font-black text-[13.5px] shadow-[0_8px_20px_rgba(14,165,233,0.25)] hover:shadow-[0_10px_24px_rgba(14,165,233,0.35)] ios-press transition-all outline-none focus:ring-2 focus:ring-fuchsia-400"
                 >
                   立即登入 / 註冊
                 </button>
@@ -425,7 +425,7 @@ export default function JellyAssistant() {
                               <button
                                 onClick={() => handleImportPackingList(message.packingList || [], message.id)}
                                 disabled={isSyncing[message.id]}
-                                className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-orange-600 hover:bg-orange-700 active:scale-[0.98] py-2.5 text-[12.5px] font-black text-white shadow-md shadow-orange-600/14 transition-all disabled:opacity-50"
+                                className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-orange-600 hover:bg-orange-700 ios-press py-2.5 text-[12.5px] font-black text-white shadow-md shadow-orange-600/14 transition-all disabled:opacity-50"
                               >
                                 {isSyncing[message.id] ? (
                                   <Loader2 size={15} className="animate-spin" />
@@ -472,7 +472,7 @@ export default function JellyAssistant() {
                                     <div className="flex justify-end pt-1">
                                       <button
                                         onClick={() => handleAddActivityToFavorite(act.title, act.category || 'landmark')}
-                                        className="flex items-center gap-1 rounded-full bg-purple-100 hover:bg-purple-200 active:scale-[0.95] px-2.5 py-1 text-[10px] font-black text-purple-700 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
+                                        className="flex items-center gap-1 rounded-full bg-purple-100 hover:bg-purple-200 ios-press px-2.5 py-1 text-[10px] font-black text-purple-700 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
                                       >
                                         ❤ 收藏到此行程景點
                                       </button>
@@ -510,19 +510,19 @@ export default function JellyAssistant() {
                   <div className="flex flex-wrap gap-2 px-4 pb-3.5">
                     <button
                       onClick={() => handleSend('台北下雨天推薦去哪裡晃晃？有什麼室內活動嗎？')}
-                      className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-purple-200/90 bg-purple-50 hover:bg-purple-100 px-3.5 py-1.5 font-bold text-purple-700 transition-all active:scale-[0.97] whitespace-normal text-left break-words max-w-full"
+                      className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-purple-200/90 bg-purple-50 hover:bg-purple-100 px-3.5 py-1.5 font-bold text-purple-700 transition-all ios-press whitespace-normal text-left break-words max-w-full"
                     >
                       🌧️ 台北雨天行程活動
                     </button>
                     <button
                       onClick={() => handleSend('幫我找出發去東京的直飛航班與機票比價')}
-                      className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-sky-200/90 bg-sky-50 hover:bg-sky-100 px-3.5 py-1.5 font-bold text-sky-700 transition-all active:scale-[0.97] whitespace-normal text-left break-words max-w-full"
+                      className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-sky-200/90 bg-sky-50 hover:bg-sky-100 px-3.5 py-1.5 font-bold text-sky-700 transition-all ios-press whitespace-normal text-left break-words max-w-full"
                     >
                       ✈️ 東京機票比價推薦
                     </button>
                     <button
                       onClick={() => handleSend('打包行李箱該帶什麼？幫我推薦打包清單')}
-                      className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-orange-200/90 bg-orange-50 hover:bg-orange-100 px-3.5 py-1.5 font-bold text-orange-700 transition-all active:scale-[0.97] whitespace-normal text-left break-words max-w-full"
+                      className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-orange-200/90 bg-orange-50 hover:bg-orange-100 px-3.5 py-1.5 font-bold text-orange-700 transition-all ios-press whitespace-normal text-left break-words max-w-full"
                     >
                       💼 極簡必備行李打包
                     </button>

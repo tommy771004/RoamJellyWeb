@@ -95,6 +95,15 @@
   --glass-blur-strong: 16px;
   --glass-blur-medium: 12px;
   --glass-blur-soft: 8px;
+
+  /* Motion duration tokens */
+  --motion-dur-fast:   150ms;
+  --motion-dur-normal: 280ms;
+  --motion-dur-slow:   450ms;
+  /* Spring CSS approximations (for pure-CSS transitions) */
+  --motion-spring-fast:   var(--motion-dur-fast)   cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-spring-normal: var(--motion-dur-normal)  cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-spring-slow:   var(--motion-dur-slow)   cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @utility glass-card {
@@ -536,9 +545,14 @@ select {
   display: none !important;
 }
 
-/* Global smooth transition for dark mode toggling */
-html, body, .jelly-bg, .jelly-surface, .glass-card, .editorial-card, .editorial-card-soft, .glass-panel, .glass-node, .jelly-button, button, input, select, textarea {
-  transition: background-color 0.5s ease-in-out, border-color 0.5s ease-in-out, color 0.5s ease-in-out, box-shadow 0.5s ease-in-out, backdrop-filter 0.5s ease-in-out !important;
+/* Dark mode colour transition — only applies the slow ease to colour properties,
+   leaving transform/opacity/shadow free for spring-driven animations. */
+.dark-transition,
+.dark-transition * {
+  transition:
+    background-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color     0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    color            0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 /* Custom dark mode card overrides for high contrast and consistency */
@@ -585,16 +599,16 @@ html, body, .jelly-bg, .jelly-surface, .glass-card, .editorial-card, .editorial-
     0 4px 10px rgba(244, 204, 224, 0.05),
     0 2px 4px rgba(15, 23, 42, 0.02);
   transition:
-    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-    background-color 0.3s var(--motion-ios-ease);
+    transform     200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow    200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .jelly-button:hover {
+  transform: translateY(-1px) translateZ(0);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 1),
     inset 0 -1px 2px rgba(244, 204, 224, 0.08),
-    0 10px 20px rgba(244, 204, 224, 0.15),
-    0 4px 8px rgba(15, 23, 42, 0.03);
+    0 10px 22px rgba(244, 204, 224, 0.18),
+    0 4px 10px rgba(15, 23, 42, 0.04);
 }
 .dark .jelly-button {
   background: rgba(0, 0, 0, 0.4);
@@ -606,10 +620,11 @@ html, body, .jelly-bg, .jelly-surface, .glass-card, .editorial-card, .editorial-
 }
 
 .jelly-button:active {
-  transform: scale(0.95) translateY(1px);
+  transform: scale(0.97) translateY(0) translateZ(0);
   box-shadow:
     inset 0 1px 3px rgba(255, 255, 255, 0.90),
     0 2px 6px rgba(244, 204, 224, 0.1);
+  transition-duration: 80ms;
   backdrop-filter: blur(var(--glass-blur-strong));
   -webkit-backdrop-filter: blur(var(--glass-blur-strong));
 }
@@ -1009,5 +1024,160 @@ html, body, .jelly-bg, .jelly-surface, .glass-card, .editorial-card, .editorial-
 
 .animate-jelly-pulse {
   animation: jelly-pulse 3.5s ease-in-out infinite;
+}
+
+/* ── iOS-quality Press / Hover Micro-interactions ───────────────────────────── */
+
+/* ios-press: immediate scale-down on tap, spring-back on release.
+   Use on any tappable surface for tactile feedback. */
+@utility ios-press {
+  transform-origin: center;
+  transform: translateZ(0);
+  will-change: transform;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  &:active {
+    transform: scale(0.97) translateZ(0);
+    transition-duration: 80ms;
+  }
+}
+
+/* card-lift: desktop hover uplift.
+   Pairs with raisedHoverClass from motionTokens.ts */
+@utility card-lift {
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, box-shadow;
+  &:hover {
+    transform: translateY(-4px) translateZ(0);
+    box-shadow: var(--shadow-floating);
+  }
+  &:active {
+    transform: translateY(-1px) translateZ(0) scale(0.99);
+    transition-duration: 100ms;
+  }
+}
+
+/* spring-transition: drop-in iOS spring for any property */
+@utility spring-transition {
+  transition: all var(--motion-spring-normal);
+}
+
+/* smooth-scroll: iOS momentum scrolling + snap */
+@utility smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* ── Page / Tab fade-in on first render ─────────────────────────────────────── */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@utility animate-page-in {
+  animation: page-fade-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Enhanced glass-card hover (desktop) ─────────────────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+  .glass-card {
+    transition:
+      transform  280ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, box-shadow;
+  }
+  .glass-card:hover {
+    transform: translateY(-3px) translateZ(0);
+    box-shadow:
+      0 8px 32px rgba(134, 77, 97, 0.12),
+      0 2px 8px rgba(134, 77, 97, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  .glass-card:active {
+    transform: translateY(-1px) translateZ(0) scale(0.99);
+    transition-duration: 100ms;
+  }
+
+  .editorial-card,
+  .editorial-card-soft {
+    transition:
+      transform  280ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, box-shadow;
+  }
+  .editorial-card:hover,
+  .editorial-card-soft:hover {
+    transform: translateY(-2px) translateZ(0);
+  }
+}
+
+/* ── Skeleton shimmer animation ─────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@utility skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.6) 25%,
+    rgba(241, 245, 249, 0.9) 50%,
+    rgba(226, 232, 240, 0.6) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0.6) 25%,
+    rgba(51, 65, 85, 0.9) 50%,
+    rgba(30, 41, 59, 0.6) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+}
+
+/* ── Ripple tap feedback (touch devices) ────────────────────────────────────── */
+@keyframes ripple-tap {
+  from {
+    transform: scale(0);
+    opacity: 0.35;
+  }
+  to {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* ── Number roll animation ──────────────────────────────────────────────────── */
+@utility tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ── Focus ring — iOS-style blue glow ───────────────────────────────────────── */
+@utility focus-ring-ios {
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 3px rgba(14, 165, 233, 0.5),
+      0 0 0 5px rgba(14, 165, 233, 0.15);
+  }
+}
+
+/* ── Frosted modal backdrop ──────────────────────────────────────────────────── */
+@utility modal-backdrop {
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
 }
 

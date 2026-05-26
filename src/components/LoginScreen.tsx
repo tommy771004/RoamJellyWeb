@@ -268,7 +268,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                                   icon: HeroIcon,
                                 })
                               }
-                              className={`mt-2.5 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:bg-white/[0.14]`}
+                              className={`mt-2.5 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:bg-white/[0.14]`}
                             >
                               查看說明
                               <ArrowRight size={12} strokeWidth={2.6} />
@@ -288,7 +288,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     <button
                       onClick={() => void handleGuestLogin()}
                       disabled={loading}
-                      className={`flex w-full items-center justify-center gap-2 rounded-[20px] border-none bg-white px-5 py-3.5 text-slate-900 shadow-[0_8px_20px_rgba(255,255,255,0.10)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,255,255,0.14)] disabled:opacity-70 sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]`}
+                      className={`flex w-full items-center justify-center gap-2 rounded-[20px] border-none bg-white px-5 py-3.5 text-slate-900 shadow-[0_8px_20px_rgba(255,255,255,0.10)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,255,255,0.14)] disabled:opacity-70 sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press`}
                     >
                       <span className="text-[13px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
                       <ArrowRight size={16} strokeWidth={2.5} />
@@ -296,7 +296,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     <button
                       type="button"
                       onClick={() => setIsAuthCardExpanded(true)}
-                      className={`flex items-center justify-center rounded-[20px] border border-white/12 bg-white/[0.06] px-5 py-3.5 text-white hover:-translate-y-0.5 hover:bg-white/[0.12] sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]`}
+                      className={`flex items-center justify-center rounded-[20px] border border-white/12 bg-white/[0.06] px-5 py-3.5 text-white hover:-translate-y-0.5 hover:bg-white/[0.12] sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press`}
                     >
                       <span className="text-[12px] font-black tracking-[0.06em]">改用帳號同步</span>
                     </button>
@@ -475,7 +475,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               <button
                 onClick={() => void handleSubmit()}
                 disabled={loading}
-                className={`flex justify-center items-center py-3.5 mt-2 rounded-[22px] border-none appearance-none cursor-pointer transition-all duration-300 active:scale-[0.97] shadow-[0_12px_24px_rgba(14,165,233,0.18)] dark:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? 'bg-sky-300 dark:bg-sky-950 text-white/70' : 'bg-gradient-to-r from-sky-500 via-pink-500 to-orange-400 hover:opacity-95'}`}
+                className={`flex justify-center items-center py-3.5 mt-2 rounded-[22px] border-none appearance-none cursor-pointer transition-all duration-300 ios-press shadow-[0_12px_24px_rgba(14,165,233,0.18)] dark:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? 'bg-sky-300 dark:bg-sky-950 text-white/70' : 'bg-gradient-to-r from-sky-500 via-pink-500 to-orange-400 hover:opacity-95'}`}
               >
                 {loading ? (
                   <span className="text-white font-[800]">處理中…</span>
@@ -490,7 +490,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 <button
                   onClick={() => void handleGuestLogin()}
                   disabled={loading}
-                  className="mt-3 flex w-full justify-center items-center py-3 rounded-[22px] border border-slate-200 dark:border-white/10 appearance-none cursor-pointer transition-all active:scale-[0.97] bg-white/70 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45"
+                  className="mt-3 flex w-full justify-center items-center py-3 rounded-[22px] border border-slate-200 dark:border-white/10 appearance-none cursor-pointer transition-all ios-press bg-white/70 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45"
                 >
                   <span className="font-[900] text-xs sm:text-sm tracking-[0.05em]">
                     {resolvedGuestCtaLabel}
@@ -502,7 +502,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 <button
                   onClick={onCancel}
                   disabled={loading}
-                  className="mt-2.5 flex justify-center items-center py-3 rounded-[22px] border-none appearance-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all active:scale-[0.97] bg-transparent text-slate-500 dark:text-slate-400"
+                  className="mt-2.5 flex justify-center items-center py-3 rounded-[22px] border-none appearance-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all ios-press bg-transparent text-slate-500 dark:text-slate-400"
                 >
                   <span className="font-[800] text-sm tracking-[0.05em]">取消</span>
                 </button>

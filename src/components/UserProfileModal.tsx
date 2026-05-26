@@ -43,7 +43,7 @@ function PillButton({ label, selected, onClick, accentColor = 'indigo' }: { labe
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className={`relative flex items-center justify-center gap-2 overflow-hidden rounded-[20px] border px-3.5 py-2.5 text-[12px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 active:scale-[0.97] sm:rounded-[22px] sm:px-4 sm:text-[13px] ${
+      className={`relative flex items-center justify-center gap-2 overflow-hidden rounded-[20px] border px-3.5 py-2.5 text-[12px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 ios-press sm:rounded-[22px] sm:px-4 sm:text-[13px] ${
         selected 
           ? `${selectedClasses[accentColor] || selectedClasses.indigo} ring-2 ${ringClasses[accentColor] || ringClasses.indigo} ring-offset-1`
           : 'border-white/84 bg-white/82 text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:border-slate-200 hover:bg-slate-50 hover:shadow-[0_10px_20px_rgba(15,23,42,0.07)]'
@@ -345,7 +345,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             <div className="z-20 shrink-0 border-t border-white/78 bg-white/84 px-5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] pt-4 shadow-[0_-10px_24px_rgba(15,23,42,0.04)] sm:px-6 sm:pb-5 sm:pt-4 md:rounded-b-[32px]">
               <Button 
                 onClick={handleSave} 
-                className="group relative flex h-14 w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-sky-500 to-orange-400 py-4 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_10px_22px_rgba(14,165,233,0.24)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-sky-600 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_26px_rgba(14,165,233,0.30)] active:scale-[0.97] sm:text-[15px] whitespace-nowrap"
+                className="group relative flex h-14 w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-sky-500 to-orange-400 py-4 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_10px_22px_rgba(14,165,233,0.24)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-sky-600 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_26px_rgba(14,165,233,0.30)] ios-press sm:text-[15px] whitespace-nowrap"
                 disabled={saving || loading}
               >
                 <div className="absolute inset-0 bg-white/20 -translate-x-[150%] skew-x-[-15deg] group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></div>

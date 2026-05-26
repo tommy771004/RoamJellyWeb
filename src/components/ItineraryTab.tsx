@@ -2228,7 +2228,7 @@ export default function ItineraryTab() {
               </p>
               <button
                 onClick={() => setIsPlanningNew(true)}
-                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 hover:from-pink-500 hover:to-rose-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)]"
+                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:from-pink-500 hover:to-rose-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)]"
               >
                 <Sparkles size={18} />
                 建立第一趟旅程
@@ -2430,14 +2430,14 @@ export default function ItineraryTab() {
               <button
                 onClick={handleTogglePublicTemplate}
                 disabled={isUpdatingPublicState}
-                className="px-4 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-[0.97] shadow-lg text-[11px] font-black uppercase tracking-widest disabled:opacity-60"
+                className="px-4 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all ios-press shadow-lg text-[11px] font-black uppercase tracking-widest disabled:opacity-60"
               >
                 {tripInfo?.isPublic ? "公開中" : "發布"}
               </button>
               <button
                 onClick={handleShare}
                 aria-label="分享行程"
-                className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all active:scale-[0.97] shadow-lg"
+                className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all ios-press shadow-lg"
               >
                 <Share2 size={18} strokeWidth={3} />
               </button>
@@ -2462,14 +2462,14 @@ export default function ItineraryTab() {
             <div className="hidden lg:flex items-center gap-2 mb-4 flex-wrap">
               <button
                 onClick={handleBackToTrips}
-                className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97]"
+                className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm ios-press"
               >
                 <ArrowLeft size={12} strokeWidth={3} />
                 返回
               </button>
               <button
                 onClick={handleShare}
-                className="px-4 py-2 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-xl text-[11px] font-black text-pink-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97]"
+                className="px-4 py-2 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-xl text-[11px] font-black text-pink-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm ios-press"
               >
                 <Share2 size={12} strokeWidth={3} />
                 分享
@@ -2477,21 +2477,21 @@ export default function ItineraryTab() {
               <button
                 onClick={handleTogglePublicTemplate}
                 disabled={isUpdatingPublicState}
-                className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97] disabled:opacity-60 ${tripInfo?.isPublic ? "bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-600" : "bg-white hover:bg-slate-50 border border-slate-100 text-slate-500"}`}
+                className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm ios-press disabled:opacity-60 ${tripInfo?.isPublic ? "bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-600" : "bg-white hover:bg-slate-50 border border-slate-100 text-slate-500"}`}
               >
                 <Lock size={12} strokeWidth={3} />
                 {tripInfo?.isPublic ? "取消公開" : "分享行程"}
               </button>
               <button
                 onClick={handleExportIcs}
-                className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl text-[11px] font-black text-emerald-600 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97]"
+                className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl text-[11px] font-black text-emerald-600 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm ios-press"
               >
                 <Calendar size={12} strokeWidth={3} />
                 ICS
               </button>
               <button
                 onClick={() => window.print()}
-                className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm active:scale-[0.97] print:hidden"
+                className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm ios-press print:hidden"
               >
                 <Printer size={14} className="shrink-0" />
                 PDF
@@ -2563,12 +2563,12 @@ export default function ItineraryTab() {
             <div className="shrink-0 flex items-center">
               <button
                 onClick={handleBackToTrips}
-                className="pl-4 pr-5 py-3 md:py-3.5 bg-white/90 backdrop-blur-xl hover:bg-white border-2 border-white rounded-full text-[13px] md:text-sm font-black text-slate-700 transition-all uppercase tracking-widest flex items-center gap-2 shadow-[0_8px_24px_rgba(15,23,42,0.04)] active:scale-[0.97] transition-all whitespace-nowrap"
+                className="pl-4 pr-5 py-3 md:py-3.5 glass-card dark-transition hover:bg-white/80 dark:hover:bg-slate-800/80 rounded-full text-[13px] md:text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2 shadow-sm hover:shadow-md ios-press whitespace-nowrap"
               >
                 <ArrowLeft
                   size={16}
                   strokeWidth={3}
-                  className="text-slate-500"
+                  className="text-slate-500 dark:text-slate-400"
                 />
                 返回
               </button>
@@ -2576,26 +2576,25 @@ export default function ItineraryTab() {
             <HorizontalScrollRail
               label="行程檢視模式"
               className="flex-1 min-w-0"
-              viewportClassName="w-full mx-0"
-              contentClassName="gap-1.5 md:gap-2 rounded-[24px] md:rounded-full border-2 border-white/90 md:border-white bg-white/60 md:bg-white/70 p-1.5 md:p-2 shadow-[0_8px_24px_rgba(244,114,182,0.08)] md:shadow-xl backdrop-blur-xl"
+              contentClassName="gap-1.5 md:gap-2 rounded-[24px] md:rounded-full border border-white/50 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 md:bg-white/70 md:dark:bg-slate-900/70 p-1.5 md:p-2 shadow-sm md:shadow-md backdrop-blur-xl dark-transition"
               controlsVisibilityClass="flex"
-              buttonClassName="border-white/30 bg-white/20 text-slate-700 hover:text-slate-900 shadow-none hover:bg-white/40 backdrop-blur-sm h-8 w-8 ml-0.5 mr-0.5 flex"
+              buttonClassName="border-white/30 dark:border-white/10 bg-white/20 dark:bg-slate-800/20 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white shadow-none hover:bg-white/40 dark:hover:bg-slate-700/40 backdrop-blur-sm h-8 w-8 ml-0.5 mr-0.5 flex"
             >
               <button
                 onClick={() => setViewMode("list")}
-                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "list" ? "bg-slate-800 text-white shadow-md scale-[0.98] md:scale-100 border border-slate-800" : "text-slate-500 hover:text-slate-700 hover:bg-white/80 border border-transparent"}`}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "list" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md scale-[0.98] md:scale-100 border border-transparent" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
               >
                 行程列表
               </button>
               <button
                 onClick={() => setViewMode("map")}
-                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "map" ? "bg-slate-800 text-white shadow-md scale-[0.98] md:scale-100 border border-slate-800" : "text-slate-500 hover:text-slate-700 hover:bg-white/80 border border-transparent"}`}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "map" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md scale-[0.98] md:scale-100 border border-transparent" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
               >
                 景點地圖
               </button>
               <button
                 onClick={() => setViewMode("calendar")}
-                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "calendar" ? "bg-slate-800 text-white shadow-md scale-[0.98] md:scale-100 border border-slate-800" : "text-slate-500 hover:text-slate-700 hover:bg-white/80 border border-transparent"}`}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "calendar" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md scale-[0.98] md:scale-100 border border-transparent" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
               >
                 日程
               </button>
@@ -2606,12 +2605,12 @@ export default function ItineraryTab() {
         <div className="px-4 md:px-8 grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
           {/* Left Column: Filters & Info */}
           <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit max-h-sidebar-dvh overflow-y-auto pr-2 no-scrollbar">
-            <GlassCard className="!p-6 shadow-xl shadow-slate-200/40 ring-1 ring-white/60 bg-white/70 backdrop-blur-3xl overflow-hidden rounded-[32px] border border-white">
+            <GlassCard className="!p-6 glass-card dark-transition shadow-xl shadow-slate-200/40 dark:shadow-black/40 overflow-hidden rounded-[32px]">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
-                <h3 className="font-black text-[11px] xl:text-[11px] uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                <h3 className="font-black text-[11px] xl:text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <span>旅程天數</span> <span className="text-sm">📅</span>
                 </h3>
-                <div className="w-7 h-7 xl:w-8 xl:h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 shrink-0">
+                <div className="w-7 h-7 xl:w-8 xl:h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0">
                   <Settings2 size={14} />
                 </div>
               </div>
@@ -2637,8 +2636,8 @@ export default function ItineraryTab() {
                         onClick={() => setSelectedDay(day)}
                         className={`relative px-1 py-3 xl:px-2 xl:py-3.5 rounded-[14px] font-black text-xs xl:text-sm transition-colors flex flex-col items-center justify-center gap-1 border min-w-0 ${
                           isActive
-                            ? "text-pink-600 border-pink-200/50 shadow-sm"
-                            : "bg-white/60 text-slate-500 border-white hover:bg-white hover:text-pink-400"
+                            ? "text-pink-600 dark:text-pink-400 border-pink-200/50 dark:border-pink-500/30 shadow-sm"
+                            : "bg-white/60 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 border-white dark:border-white/10 hover:bg-white dark:hover:bg-slate-800 hover:text-pink-500 dark:hover:text-pink-300"
                         }`}
                       >
                         {isActive && (
@@ -2762,7 +2761,7 @@ export default function ItineraryTab() {
                           <button
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                             aria-label="選擇圖示"
-                            className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center active:scale-[0.97] transition-all"
+                            className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center ios-press transition-all"
                           >
                             <IconImg value={newSpotEmoji} size={20} />
                           </button>
@@ -2781,7 +2780,7 @@ export default function ItineraryTab() {
                             onClick={() => void handleAddFavorite()}
                             disabled={addingFavorite || !newSpotTitle.trim()}
                             aria-label="新增收藏"
-                            className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 text-white flex items-center justify-center disabled:opacity-30 active:scale-[0.97] transition-all"
+                            className="w-10 h-10 shrink-0 rounded-xl bg-slate-800 text-white flex items-center justify-center disabled:opacity-30 ios-press transition-all"
                           >
                             <Plus size={18} />
                           </button>
@@ -2817,7 +2816,7 @@ export default function ItineraryTab() {
             {/* New Trip Button */}
             <button
               onClick={() => setIsPlanningNew(true)}
-              className="w-full py-5 rounded-[28px] bg-white text-slate-700 font-bold text-sm shadow-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center justify-center gap-3 active:scale-[0.97]"
+              className="w-full py-5 rounded-[28px] bg-white text-slate-700 font-bold text-sm shadow-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center justify-center gap-3 ios-press"
             >
               <Plus size={20} className="text-pink-400" />
               重新規劃旅程
@@ -3005,7 +3004,7 @@ export default function ItineraryTab() {
                           </div>
                           <button
                             onClick={() => setShowPlanner(!showPlanner)}
-                            className={`w-full sm:w-auto px-10 py-4 rounded-full font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${showPlanner ? "bg-slate-100 text-slate-500" : "bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 active:scale-[0.97]"}`}
+                            className={`w-full sm:w-auto px-10 py-4 rounded-full font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${showPlanner ? "bg-slate-100 text-slate-500" : "bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 ios-press"}`}
                           >
                             {showPlanner ? "收起助理" : "召喚 AI"}
                             {showPlanner ? (
@@ -3407,7 +3406,7 @@ export default function ItineraryTab() {
                                 <button
                                   onClick={() => void handleAutoFetchFlights()}
                                   disabled={flightsLoading || aiLoading}
-                                  className="w-full py-3 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.97] transition-all hover:bg-slate-100"
+                                  className="w-full py-3 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 disabled:opacity-40 ios-press transition-all hover:bg-slate-100"
                                 >
                                   {flightsLoading ? (
                                     <Loader2
@@ -3423,7 +3422,7 @@ export default function ItineraryTab() {
                                 <button
                                   onClick={() => void handleAiSuggest()}
                                   disabled={aiLoading}
-                                  className="w-full py-5 px-4 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.97] transition-all whitespace-nowrap overflow-hidden text-ellipsis"
+                                  className="w-full py-5 px-4 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 ios-press transition-all whitespace-nowrap overflow-hidden text-ellipsis"
                                 >
                                   <span className="shrink-0">
                                     {aiLoading ? (
@@ -3576,7 +3575,7 @@ export default function ItineraryTab() {
             <button
               aria-label={`口袋名單 (${favorites.length} 個景點)`}
               onClick={() => setShowMobileFavorites(true)}
-              className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl active:scale-[0.97] transition-all group overflow-hidden shadow-fuchsia-200/50 relative"
+              className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl ios-press transition-all group overflow-hidden shadow-fuchsia-200/50 relative"
             >
               <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center shadow-inner text-fuchsia-500 relative">
                 <div className="absolute inset-0 bg-fuchsia-500/10 rounded-full" />
@@ -3590,7 +3589,7 @@ export default function ItineraryTab() {
           <button
             aria-label="AI 行程規劃"
             onClick={() => setIsPlanningNew(true)}
-            className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl active:scale-[0.97] transition-all group overflow-hidden shadow-pink-200/50"
+            className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl ios-press transition-all group overflow-hidden shadow-pink-200/50"
           >
             <div className="bg-gradient-to-tr from-pink-500 to-fuchsia-600 w-14 h-14 rounded-full flex items-center justify-center shadow-inner relative">
               <div className="absolute inset-0 bg-white/10 rounded-full" />
@@ -3615,9 +3614,9 @@ export default function ItineraryTab() {
                 animate={sheetMotion.animate}
                 exit={sheetMotion.exit}
                 transition={sheetMotion.transition}
-                className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-sheet-above flex flex-col lg:hidden"
+                className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white dark:bg-slate-950 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-sheet-above flex flex-col lg:hidden dark-transition border-t border-white/5"
               >
-                <div className="shrink-0 p-6 pb-2 border-b border-slate-100 flex items-center justify-between bg-white/90 backdrop-blur-xl rounded-t-3xl sticky top-0 z-10">
+                <div className="shrink-0 p-6 pb-2 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl rounded-t-[32px] sticky top-0 z-10 dark-transition">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-fuchsia-50 flex items-center justify-center text-fuchsia-500 shadow-sm border border-fuchsia-100/50">
                       <Bookmark size={20} strokeWidth={2.5} />
@@ -3647,7 +3646,7 @@ export default function ItineraryTab() {
                       <button
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                         aria-label="選擇圖示"
-                        className="w-10 h-10 shrink-0 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center active:scale-[0.97] transition-all text-xl shadow-sm"
+                        className="w-10 h-10 shrink-0 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center ios-press transition-all text-xl shadow-sm"
                       >
                         <IconImg value={newSpotEmoji} size={20} />
                       </button>
@@ -3665,7 +3664,7 @@ export default function ItineraryTab() {
                       <button
                         onClick={() => void handleAddFavorite()}
                         disabled={addingFavorite || !newSpotTitle.trim()}
-                        className="w-10 h-10 shrink-0 rounded-xl bg-slate-900 text-white flex items-center justify-center disabled:opacity-30 active:scale-[0.97] transition-all shadow-sm"
+                        className="w-10 h-10 shrink-0 rounded-xl bg-slate-900 text-white flex items-center justify-center disabled:opacity-30 ios-press transition-all shadow-sm"
                       >
                         <Plus size={18} />
                       </button>
@@ -3948,7 +3947,7 @@ function DraggableFavoriteSpot({
           <button
             onClick={() => onAdd(spot, selectedDay)}
             disabled={isOffline}
-            className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-[0.97] transition-all hover:bg-slate-900"
+            className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg ios-press transition-all hover:bg-slate-900"
             title="加入今天"
             aria-label={`將 ${spot.title} 加入 Day ${selectedDay}`}
           >
@@ -4453,7 +4452,7 @@ const ItineraryListItem = React.memo(
               openEditor();
             }
           }}
-          className={`flex-1 p-4 sm:p-5 rounded-[32px] sm:rounded-[40px] cursor-pointer transition-[transform,shadow,background,colors] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:scale-[1.01] relative z-10 w-full transform-gpu ${collaboratingLock ? "ring-2 ring-fuchsia-400/60 scale-[0.98]" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-[0_0_12px_rgba(16,185,129,0.2)]" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900/95 backdrop-blur-2xl text-white border border-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.4)]" : isHotelCard ? "bg-gradient-to-br from-indigo-900/95 to-indigo-800/95 backdrop-blur-2xl text-indigo-50 border border-indigo-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(49,46,129,0.25)] hover:shadow-[0_12px_30px_rgba(49,46,129,0.35)]" : "bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.05),0_2px_8px_rgba(15,23,42,0.02)] hover:border-sky-100 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_12px_34px_rgba(15,23,42,0.08),0_4px_12px_rgba(14,165,233,0.08)]"}`}
+          className={`flex-1 p-4 sm:p-5 rounded-[32px] sm:rounded-[40px] cursor-pointer transition-[transform,shadow,background,colors] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] ios-press hover:scale-[1.01] relative z-10 w-full transform-gpu ${collaboratingLock ? "ring-2 ring-fuchsia-400/60 scale-[0.98]" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-[0_0_12px_rgba(16,185,129,0.2)]" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900/95 backdrop-blur-2xl text-white border border-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.4)]" : isHotelCard ? "bg-gradient-to-br from-indigo-900/95 to-indigo-800/95 backdrop-blur-2xl text-indigo-50 border border-indigo-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(49,46,129,0.25)] hover:shadow-[0_12px_30px_rgba(49,46,129,0.35)]" : "bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.05),0_2px_8px_rgba(15,23,42,0.02)] hover:border-sky-100 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_12px_34px_rgba(15,23,42,0.08),0_4px_12px_rgba(14,165,233,0.08)]"}`}
         >
           {item.linkedFactId && (
             <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-sky-500 text-white shadow-sm ring-2 ring-white z-20">
@@ -4666,7 +4665,7 @@ const ItineraryListItem = React.memo(
                   title={`導航至 ${item.title}`}
                   onClick={handleNavigate}
                   disabled={isNavigating}
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 hover:bg-sky-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-50"
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 hover:bg-sky-100 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-50"
                 >
                   {isNavigating ? (
                     <Loader2
@@ -4688,7 +4687,7 @@ const ItineraryListItem = React.memo(
                         openEditor();
                       }}
                       disabled={Boolean(collaboratingLock)}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:border-slate-300 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:border-slate-300 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-40 disabled:cursor-not-allowed"
                       title="編輯此節點"
                       aria-label="編輯此節點"
                     >
@@ -4707,7 +4706,7 @@ const ItineraryListItem = React.memo(
                           onQuickExpense(item);
                         }}
                         disabled={Boolean(collaboratingLock)}
-                        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-40 disabled:cursor-not-allowed"
                         title="快速記一筆"
                         aria-label="快速記一筆"
                       >
@@ -4722,7 +4721,7 @@ const ItineraryListItem = React.memo(
                         void handleRegenerate();
                       }}
                       disabled={Boolean(collaboratingLock) || regenerating}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-fuchsia-500/10 via-pink-500/5 to-white/90 border border-fuchsia-200/80 flex items-center justify-center text-fuchsia-700 hover:from-fuchsia-500 hover:to-pink-500 hover:text-white hover:border-transparent hover:shadow-lg hover:shadow-fuchsia-200/40 transition-all duration-300 active:scale-[0.95] disabled:opacity-40 disabled:cursor-not-allowed transform-gpu animate-none"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-fuchsia-500/10 via-pink-500/5 to-white/90 border border-fuchsia-200/80 flex items-center justify-center text-fuchsia-700 hover:from-fuchsia-500 hover:to-pink-500 hover:text-white hover:border-transparent hover:shadow-lg hover:shadow-fuchsia-200/40 transition-all duration-300 ios-press disabled:opacity-40 disabled:cursor-not-allowed transform-gpu animate-none"
                       title="AI 重新規劃景點"
                       aria-label="AI 重新規劃景點"
                     >
@@ -4743,7 +4742,7 @@ const ItineraryListItem = React.memo(
                       type="button"
                       onClick={handleShareToIGStory}
                       disabled={Boolean(collaboratingLock)}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-pink-50 border border-orange-200 flex items-center justify-center text-pink-600 hover:opacity-80 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-pink-50 border border-orange-200 flex items-center justify-center text-pink-600 hover:opacity-80 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-40 disabled:cursor-not-allowed"
                       title="分享至 IG Story"
                       aria-label="分享至 IG Story"
                     >
@@ -4761,7 +4760,7 @@ const ItineraryListItem = React.memo(
                         onDelete(item.node_id);
                       }}
                       disabled={Boolean(collaboratingLock)}
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 hover:bg-rose-100 hover:shadow-md transition-[transform,shadow,background-color] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 hover:bg-rose-100 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-40 disabled:cursor-not-allowed"
                       title="刪除此節點"
                       aria-label="刪除此節點"
                     >
@@ -4975,7 +4974,7 @@ const ItineraryListItem = React.memo(
                   className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/95 dark:bg-slate-950/80 backdrop-blur-3xl rounded-[32px] sm:rounded-[36px] shadow-2xl dark:shadow-black/55 border border-white/50 dark:border-white/10 flex flex-col pointer-events-auto"
                 >
                   {/* Header */}
-                  <div className="sticky top-0 z-20 bg-white/60 dark:bg-slate-950/70 backdrop-blur-xl border-b border-white dark:border-white/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+                  <div className="sticky top-0 z-20 bg-white/60 dark:bg-slate-950/70 backdrop-blur-xl border-b border-white dark:border-white/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between dark-transition">
                     <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-3">
                       <div className="relative">
                         <button
@@ -5159,7 +5158,7 @@ const ItineraryListItem = React.memo(
                         <button
                           type="button"
                           onClick={handleSave}
-                          className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]"
+                          className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press"
                         >
                           保存
                         </button>
@@ -5170,7 +5169,7 @@ const ItineraryListItem = React.memo(
                             setIsEditing(false);
                             onEditingChange?.(item.node_id, item.day, false);
                           }}
-                          className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97]"
+                          className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press"
                         >
                           取消
                         </button>
@@ -5530,7 +5529,7 @@ function ItineraryList({
               type="button"
               onClick={() => onAskAiForDay?.()}
               disabled={isOffline}
-              className="w-full rounded-[32px] bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(192,38,211,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(192,38,211,0.35)] active:scale-[0.97] disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
+              className="w-full rounded-[32px] bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(192,38,211,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(192,38,211,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               ✨ AI 助手幫我填滿
             </button>
@@ -5538,7 +5537,7 @@ function ItineraryList({
               type="button"
               onClick={() => onRandomizeFromFavorites?.()}
               disabled={isOffline || !favoriteSuggestions?.length}
-              className="w-full rounded-[32px] bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(14,165,233,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(14,165,233,0.35)] active:scale-[0.97] disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
+              className="w-full rounded-[32px] bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(14,165,233,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(14,165,233,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               📌 從口袋名單挑選
             </button>
@@ -5546,7 +5545,7 @@ function ItineraryList({
               type="button"
               onClick={() => setManualAddTrigger((prev) => prev + 1)}
               disabled={isOffline}
-              className="w-full rounded-[32px] bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(16,185,129,0.35)] active:scale-[0.97] disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
+              className="w-full rounded-[32px] bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(16,185,129,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               ➕ 手動新增
             </button>
@@ -5881,7 +5880,7 @@ function ManualAddNode({
                   <button
                     type="button"
                     onClick={() => setIsMapSelectorOpen(true)}
-                    className="shrink-0 px-4 py-4 rounded-2xl bg-white border border-fuchsia-200 text-fuchsia-600 font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-fuchsia-50 hover:shadow-sm active:scale-[0.97] transition-all"
+                    className="shrink-0 px-4 py-4 rounded-2xl bg-white border border-fuchsia-200 text-fuchsia-600 font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-fuchsia-50 hover:shadow-sm ios-press transition-all"
                   >
                     <MapPin size={16} />
                     {coords ? "已選取座標" : "地圖選取"}
@@ -5935,7 +5934,7 @@ function ManualAddNode({
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="w-full py-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center justify-center shadow-sm hover:border-pink-200 transition-all active:scale-[0.97]"
+                      className="w-full py-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center justify-center shadow-sm hover:border-pink-200 transition-all ios-press"
                     >
                       <IconImg value={emoji} size={28} />
                     </button>
@@ -6018,7 +6017,7 @@ function ManualAddNode({
 
               <button
                 type="submit"
-                className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-[13px] uppercase tracking-[0.15em] shadow-lg hover:bg-slate-800 active:scale-[0.97] transition-all flex items-center justify-center gap-2 mt-2"
+                className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-[13px] uppercase tracking-[0.15em] shadow-lg hover:bg-slate-800 ios-press transition-all flex items-center justify-center gap-2 mt-2"
               >
                 <Plus size={18} strokeWidth={3} />
                 確認新增至 Day {getDayForDate(date, tripStartDate, day)}

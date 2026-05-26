@@ -84,7 +84,7 @@ export const LocationPickerPopup = ({
               <button 
                 onClick={onClose}
                 aria-label="關閉"
-                className={`flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 active:scale-[0.95] transition-all ${isKeyboardOpen ? 'h-8 w-8' : 'h-9 w-9 md:h-10 md:w-10'}`}
+                className={`flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 ios-press transition-all ${isKeyboardOpen ? 'h-8 w-8' : 'h-9 w-9 md:h-10 md:w-10'}`}
               >
                 <X size={isKeyboardOpen ? 18 : 20} className="text-slate-500" strokeWidth={2.5} />
               </button>
@@ -114,7 +114,7 @@ export const LocationPickerPopup = ({
                 <div className="flex flex-row gap-x-1.5 px-4 md:px-6 pb-2 pt-1 animate-in fade-in duration-300 w-max">
                   <button
                     onClick={() => setSelectedRegion('全部地區')}
-                    className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap active:scale-[0.97] ${
+                    className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap ios-press ${
                       selectedRegion === '全部地區' 
                         ? 'bg-sky-500 text-white shadow-md shadow-sky-100' 
                         : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
@@ -126,7 +126,7 @@ export const LocationPickerPopup = ({
                     <button
                       key={region}
                       onClick={() => setSelectedRegion(region)}
-                      className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap active:scale-[0.97] ${
+                      className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap ios-press ${
                         selectedRegion === region 
                           ? 'bg-sky-500 text-white shadow-md shadow-sky-100' 
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
@@ -191,7 +191,7 @@ export const LocationPickerPopup = ({
                           <button
                             key={dest.id}
                             onClick={() => onSelect(dest)}
-                            className="group relative flex flex-col items-center justify-center gap-1.5 rounded-[22px] border border-slate-100 bg-white/70 backdrop-blur-md py-4 px-2 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-300 hover:bg-sky-50/25 hover:shadow-lg hover:shadow-sky-100/40 active:scale-[0.95] overflow-hidden"
+                            className="group relative flex flex-col items-center justify-center gap-1.5 rounded-[22px] border border-slate-100 bg-white/70 backdrop-blur-md py-4 px-2 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-300 hover:bg-sky-50/25 hover:shadow-lg hover:shadow-sky-100/40 ios-press overflow-hidden"
                           >
                             {/* Subtle premium decorative color band indicators */}
                             <span className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-sky-400 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

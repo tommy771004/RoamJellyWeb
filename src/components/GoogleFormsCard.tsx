@@ -222,7 +222,7 @@ export default function GoogleFormsCard({ tripId }: { tripId?: string }) {
             <button
               onClick={handleCreateForm}
               disabled={isCreating}
-              className="flex w-full items-center justify-center gap-2 rounded-[16px] py-3 text-[14px] font-black shadow-sm transition-all duration-300 bg-violet-600 text-white hover:bg-violet-700 active:scale-[0.98]"
+              className="flex w-full items-center justify-center gap-2 rounded-[16px] py-3 text-[14px] font-black shadow-sm transition-all duration-300 bg-violet-600 text-white hover:bg-violet-700 ios-press"
             >
               {isCreating ? (
                 <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />

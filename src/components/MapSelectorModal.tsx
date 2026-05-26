@@ -73,7 +73,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
               type="button" 
               onClick={onClose}
               aria-label="關閉地圖選取"
-              className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60 active:scale-[0.97]"
+              className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60 ios-press"
             >
               <X size={20}/>
             </button>
@@ -104,7 +104,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
                 }
               }}
               disabled={!selectedPos}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 text-[14px] font-black uppercase tracking-[0.16em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.36)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:scale-100 disabled:hover:translate-y-0 whitespace-nowrap"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 text-[14px] font-black uppercase tracking-[0.16em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.36)] ios-press disabled:cursor-not-allowed disabled:opacity-40 disabled:scale-100 disabled:hover:translate-y-0 whitespace-nowrap"
             >
               <Check size={20} className="shrink-0" />
               <span>確認選取座標</span>

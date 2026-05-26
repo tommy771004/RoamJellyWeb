@@ -134,7 +134,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
                 type="button"
                 onClick={onClose}
                 aria-label="關閉說明"
-                className="flex size-10 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-white/10 text-slate-500 dark:text-slate-300 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-700 dark:hover:text-white"
+                className="flex size-10 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-white/10 text-slate-500 dark:text-slate-300 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={18} strokeWidth={2.6} />
               </button>
@@ -164,7 +164,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700"
               >
                 關閉說明
               </button>

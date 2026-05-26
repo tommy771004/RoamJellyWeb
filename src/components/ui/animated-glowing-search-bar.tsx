@@ -82,7 +82,7 @@ const SearchComponent = ({
                onClick={onSendClick}
                disabled={sendDisabled}
                aria-label="送出"
-               className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-fuchsia-500 to-sky-500 text-white transition-all active:scale-[0.94] disabled:bg-slate-200 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 z-10 shadow-sm"
+               className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-fuchsia-500 to-sky-500 text-white transition-all ios-press disabled:bg-slate-200 disabled:from-slate-200 disabled:to-slate-300 disabled:text-slate-400 z-10 shadow-sm"
              >
                <Send size={15} className="ml-0.5" />
              </button>

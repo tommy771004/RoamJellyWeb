@@ -1,9 +1,8 @@
-import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from '../lib/motionTokens';
+import { SPRING_SNAPPY, bottomBarTransition } from '../lib/motionTokens';
 import { useState, useEffect } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "motion/react";
-import { Home, Sparkles, CalendarDays, Luggage, Menu, X } from "lucide-react";
+import { Home, Sparkles, CalendarDays, Luggage, X } from "lucide-react";
 import { useAppStore } from "../store/useAppStore";
-import { bottomBarTransition, subtlePressableClass } from "../lib/motionTokens";
 
 const TAB_ICONS = {
   home: Home,
@@ -18,6 +17,13 @@ export const TABS = [
   { id: "itinerary", label: "你的行程", iconName: "calendar" },
   { id: "tools", label: "行前準備", iconName: "backpack" },
 ];
+
+const PILL_SPRING = {
+  type: "spring" as const,
+  stiffness: 480,
+  damping: 30,
+  mass: 0.7,
+};
 
 export default function BottomTabs() {
   const { activeTab, setActiveTab, isNavVisible } = useAppStore();
@@ -40,7 +46,7 @@ export default function BottomTabs() {
       (activeTab === "ai_result"
         ? "ai_form"
         : activeTab) as keyof typeof TAB_ICONS
-    ] || Menu;
+    ] || Sparkles;
 
   return (
     <motion.nav
@@ -59,18 +65,18 @@ export default function BottomTabs() {
     >
       <motion.div
         layout
-        className={`p-1 pointer-events-auto flex items-center transform-gpu mx-auto rounded-full transition-all duration-300 ${
+        className={`p-1 pointer-events-auto flex items-center transform-gpu mx-auto rounded-full ${
           isExpanded
-            ? "bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl backdrop-saturate-[150%] shadow-[0_8px_32px_-8px_rgba(244,114,182,0.15)] dark:shadow-[0_10px_20px_-8px_rgba(0,0,0,0.5)] border border-white/50 dark:border-white/10"
+            ? "bg-white/72 dark:bg-slate-900/72 backdrop-blur-2xl backdrop-saturate-[160%] shadow-[0_8px_32px_-8px_rgba(244,114,182,0.18),0_2px_8px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_20px_-8px_rgba(0,0,0,0.55)] border border-white/60 dark:border-white/10"
             : "bg-transparent border-transparent shadow-none backdrop-blur-none"
         }`}
         style={{
           width: "100%",
           maxWidth: isExpanded ? "340px" : "48px",
           height: isExpanded ? "3.5rem" : "48px",
-          willChange: "transform, opacity, width, height",
+          willChange: "transform, opacity",
         }}
-        transition={SPRING_SNAPPY}
+        transition={prefersReducedMotion ? { duration: 0.2 } : SPRING_SNAPPY}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           {!isExpanded ? (
@@ -79,9 +85,9 @@ export default function BottomTabs() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
+              transition={SPRING_SNAPPY}
               onClick={() => setIsExpanded(true)}
-              className="flex items-center justify-center w-full h-full rounded-full text-pink-500 hover:text-pink-600 transition-all active:scale-[0.97] bg-transparent border-transparent shadow-none"
+              className="flex items-center justify-center w-full h-full rounded-full text-pink-500 hover:text-pink-600 ios-press"
               aria-label="展開選單"
             >
               <ActiveIcon
@@ -96,13 +102,13 @@ export default function BottomTabs() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
+              transition={{ duration: 0.18, delay: 0.08 }}
               className="flex justify-between items-center w-full relative h-full"
             >
               {isAiFlow && (
                 <button
                   onClick={() => setIsExpanded(false)}
-                  className="absolute -left-1 p-1 text-slate-400 hover:text-sky-500 rounded-full z-20 transition-colors active:scale-[0.97]"
+                  className="absolute -left-1 p-1 text-slate-400 hover:text-sky-500 rounded-full z-20 ios-press"
                   aria-label="收起選單"
                 >
                   <X size={14} strokeWidth={3} />
@@ -122,7 +128,7 @@ export default function BottomTabs() {
                         setIsExpanded(false);
                       }
                     }}
-                    className={`flex flex-col items-center justify-center flex-1 min-w-0 h-full rounded-full relative transition-all duration-300 transform-gpu active:scale-[0.97] ${
+                    className={`flex flex-col items-center justify-center flex-1 min-w-0 h-full rounded-full relative ios-press ${
                       isActive
                         ? "text-pink-500"
                         : "opacity-70 hover:opacity-100 text-slate-500 dark:text-slate-400"
@@ -132,13 +138,8 @@ export default function BottomTabs() {
                     {isActive && (
                       <motion.div
                         layoutId="tab-pill"
-                        className="absolute inset-0 bg-white dark:bg-slate-800 rounded-full -z-10 shadow-[0_2px_12px_-2px_rgba(244,114,182,0.15)] dark:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.2)] border border-pink-50 dark:border-pink-900/30"
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 25,
-                          mass: 0.8,
-                        }}
+                        className="absolute inset-0 bg-white dark:bg-slate-800 rounded-full -z-10 shadow-[0_2px_12px_-2px_rgba(244,114,182,0.18)] dark:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.2)] border border-pink-50 dark:border-pink-900/30"
+                        transition={prefersReducedMotion ? { duration: 0.12 } : PILL_SPRING}
                       />
                     )}
                     {Icon ? (
@@ -147,23 +148,25 @@ export default function BottomTabs() {
                         animate={
                           isActive ? { y: -2, scale: 1.15 } : { y: 0, scale: 1 }
                         }
+                        transition={prefersReducedMotion ? { duration: 0.12 } : SPRING_SNAPPY}
                       >
                         <Icon
                           size={isActive ? 20 : 18}
                           strokeWidth={isActive ? 2.8 : 2.2}
-                          className={`mb-0.5 transition-all ${isActive ? "text-pink-500 fill-pink-500/10" : "text-slate-400 dark:text-slate-400"}`}
+                          className={`mb-0.5 ${isActive ? "text-pink-500 fill-pink-500/10" : "text-slate-400 dark:text-slate-400"}`}
                         />
                         {isActive && (
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
+                            transition={SPRING_SNAPPY}
                             className="absolute -bottom-1 w-1 h-1 rounded-full bg-pink-400"
                           />
                         )}
                       </motion.div>
                     ) : null}
                     <span
-                      className={`text-[9px] font-black tracking-widest whitespace-nowrap z-10 transition-colors ${isActive ? "text-pink-600 dark:text-pink-400" : "opacity-80"}`}
+                      className={`text-[9px] font-black tracking-widest whitespace-nowrap z-10 ${isActive ? "text-pink-600 dark:text-pink-400" : "opacity-80"}`}
                     >
                       {tab.label}
                     </span>

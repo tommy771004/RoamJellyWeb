@@ -961,7 +961,7 @@ function DestinationCard({
                 onToggleSave(e);
               }}
               aria-label={isSaved ? "取消收藏" : "收藏"}
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-100 dark:border-white/5 backdrop-blur-md transition-all active:scale-[0.97] ${isSaved ? "bg-pink-500 text-white border-none shadow-sm" : "bg-white/80 text-slate-500 hover:bg-white hover:text-pink-500 shadow-sm"}`}
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-100 dark:border-white/5 backdrop-blur-md transition-all ios-press ${isSaved ? "bg-pink-500 text-white border-none shadow-sm" : "bg-white/80 text-slate-500 hover:bg-white hover:text-pink-500 shadow-sm"}`}
             >
               <Heart
                 size={11}
@@ -1015,7 +1015,7 @@ function DestinationCard({
                 e.stopPropagation();
                 onImportToTrip(e);
               }}
-              className="flex-1 flex h-8 items-center justify-center gap-1.5 rounded-full bg-slate-900/90 dark:bg-slate-800 hover:bg-slate-800 text-white dark:text-slate-100 px-2.5 text-[10px] font-black uppercase tracking-[0.05em] transition-all active:scale-[0.97]"
+              className="flex-1 flex h-8 items-center justify-center gap-1.5 rounded-full bg-slate-900/90 dark:bg-slate-800 hover:bg-slate-800 text-white dark:text-slate-100 px-2.5 text-[10px] font-black uppercase tracking-[0.05em] transition-all ios-press"
             >
               <PlaneTakeoff size={10} strokeWidth={2.5} />
               帶入
@@ -1025,7 +1025,7 @@ function DestinationCard({
                 e.stopPropagation();
                 onPress();
               }}
-              className="flex-1 h-8 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-500 px-3 text-[10px] font-black text-white hover:brightness-105 active:scale-[0.97] transition-all flex items-center justify-center"
+              className="flex-1 h-8 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-500 px-3 text-[10px] font-black text-white hover:brightness-105 ios-press transition-all flex items-center justify-center"
             >
               Explore
             </button>
@@ -2247,7 +2247,7 @@ export default function HomeTab({
                 </div>
 
                 {/* Search card */}
-                <div className="flex flex-col gap-2 rounded-[32px] sm:rounded-[40px] jelly-surface p-3 sm:gap-2.5 sm:p-4">
+                <div className="flex flex-col gap-2 rounded-[32px] sm:rounded-[40px] glass-card dark-transition p-3 sm:gap-2.5 sm:p-4">
                   {/* FROM / TO row */}
                   <div className="relative grid grid-cols-2 gap-2 sm:gap-3">
                     {/* FROM cell */}
@@ -2289,7 +2289,7 @@ export default function HomeTab({
                         triggerHapticFeedback([10]);
                       }}
                       title="交換"
-                      className="absolute left-1/2 top-1/2 z-20 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] hover:scale-105 active:scale-95 text-slate-400 hover:text-sky-500 transition-all cursor-pointer group"
+                      className="absolute left-1/2 top-1/2 z-20 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] hover:scale-105 ios-press text-slate-400 hover:text-sky-500 transition-all cursor-pointer group"
                     >
                       <PlaneTakeoff
                         size={15}
@@ -2338,7 +2338,7 @@ export default function HomeTab({
                           destsScrollRef.current.scrollBy({ left: -160, behavior: "smooth" });
                         }
                       }}
-                      className="absolute -left-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-0 group-hover/dests-row:opacity-100 hover:scale-105 active:scale-95 cursor-pointer hidden md:flex"
+                      className="absolute -left-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-0 group-hover/dests-row:opacity-100 hover:scale-105 ios-press cursor-pointer hidden md:flex"
                       aria-label="往左捲動建議"
                     >
                       <ChevronLeft size={12} strokeWidth={3} />
@@ -2370,7 +2370,7 @@ export default function HomeTab({
                               triggerHapticFeedback([10]);
                             }
                           }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 snap-start transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.94] animate-jelly-pulse hover:animate-none hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 snap-start transition-all duration-300 hover:-translate-y-0.5 ios-press animate-jelly-pulse hover:animate-none hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
                         >
                           <span className="text-[13px] sm:text-[14px]">{dest.flag}</span>
                           <span className="tracking-wide">{dest.name}</span>
@@ -2387,7 +2387,7 @@ export default function HomeTab({
                           destsScrollRef.current.scrollBy({ left: 160, behavior: "smooth" });
                         }
                       }}
-                      className="absolute -right-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-0 group-hover/dests-row:opacity-100 hover:scale-105 active:scale-95 cursor-pointer hidden md:flex"
+                      className="absolute -right-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-0 group-hover/dests-row:opacity-100 hover:scale-105 ios-press cursor-pointer hidden md:flex"
                       aria-label="往右捲動建議"
                     >
                       <ChevronRight size={12} strokeWidth={3} />
@@ -2467,7 +2467,7 @@ export default function HomeTab({
                     className={`group relative flex w-full overflow-hidden items-center justify-center gap-2.5 rounded-[28px] sm:rounded-[32px] py-4 sm:py-5 mt-1 text-[17px] sm:text-[19px] font-black tracking-wide shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu ${
                       isSearchDisabled || loading || isOffline
                         ? "bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
-                        : "bg-slate-900 border border-slate-800 text-white shadow-[0_8px_20px_-6px_rgba(15,23,42,0.4)] hover:bg-slate-800 hover:shadow-[0_12px_24px_-6px_rgba(15,23,42,0.5)] active:scale-[0.98] active:translate-y-[1px]"
+                        : "bg-slate-900 border border-slate-800 text-white shadow-[0_8px_20px_-6px_rgba(15,23,42,0.4)] hover:bg-slate-800 hover:shadow-[0_12px_24px_-6px_rgba(15,23,42,0.5)] ios-press active:translate-y-[1px]"
                     }`}
                   >
                     {!isSearchDisabled && !loading && !isOffline && (
@@ -2493,7 +2493,7 @@ export default function HomeTab({
       </div>
 
       {/* === CONTENT BELOW HERO === */}
-      <div className="relative z-10 flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60">
+      <div className="relative z-10 flex-1 flex flex-col px-4 sm:px-6 bg-gradient-to-b from-white/80 to-slate-50/60 dark:from-slate-900/80 dark:to-slate-950/60 dark-transition">
         {/* Quick External Links */}
         <div className="max-w-3xl mx-auto w-full pt-3 sm:pt-4 pb-1 sm:pb-2 relative z-20">
           <div className="relative group/scroll-row w-full flex items-center pr-2">
@@ -2505,7 +2505,7 @@ export default function HomeTab({
                   chipsScrollContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
                 }
               }}
-              className="absolute left-[-10px] md:left-[-16px] z-30 flex items-center justify-center w-8 h-8 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 active:scale-95"
+              className="absolute left-[-10px] md:left-[-16px] z-30 flex items-center justify-center w-8 h-8 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 ios-press"
               aria-label="往左捲動"
             >
               <ChevronLeft size={16} strokeWidth={3} />
@@ -2544,7 +2544,7 @@ export default function HomeTab({
                     setShowTransfersDropdown(false);
                     if (zoomedFlightsIndex !== null) setZoomedFlightsIndex(null);
                   }}
-                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 ${chipPressClass}`}
                 >
                   <PlaneTakeoff
                     size={17}
@@ -2589,7 +2589,7 @@ export default function HomeTab({
                     setShowTransfersDropdown(false);
                     if (zoomedHotelsIndex !== null) setZoomedHotelsIndex(null);
                   }}
-                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 ${chipPressClass}`}
                 >
                   <Bed
                     size={17}
@@ -2634,7 +2634,7 @@ export default function HomeTab({
                     setShowTransfersDropdown(false);
                     if (zoomedTicketsIndex !== null) setZoomedTicketsIndex(null);
                   }}
-                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 ${chipPressClass}`}
                 >
                   <Ticket
                     size={15}
@@ -2679,7 +2679,7 @@ export default function HomeTab({
                     setShowTicketsDropdown(false);
                     if (zoomedTransfersIndex !== null) setZoomedTransfersIndex(null);
                   }}
-                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] hover:-translate-y-1 ${chipPressClass}`}
+                  className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 ${chipPressClass}`}
                 >
                   <div className="relative text-[#EC4899] group-hover:scale-110 transition-transform">
                     <CarFront size={17} strokeWidth={2.5} />
@@ -2708,7 +2708,7 @@ export default function HomeTab({
                   chipsScrollContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
                 }
               }}
-              className="absolute right-[-10px] md:right-[-16px] z-30 flex items-center justify-center w-8 h-8 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 active:scale-95"
+              className="absolute right-[-10px] md:right-[-16px] z-30 flex items-center justify-center w-8 h-8 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 ios-press"
               aria-label="往右捲動"
             >
               <ChevronRight size={16} strokeWidth={3} />
@@ -3132,7 +3132,7 @@ export default function HomeTab({
                 <div className="flex items-center gap-1 bg-white/70 backdrop-blur-md p-1 rounded-[10px] shadow-sm border border-slate-200/60 shrink-0">
                   <button
                     onClick={() => setViewType("grid")}
-                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] ${viewType === "grid" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
+                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press ${viewType === "grid" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
                     title="卡片檢視"
                     aria-label="卡片檢視"
                     aria-pressed={viewType === "grid"}
@@ -3141,7 +3141,7 @@ export default function HomeTab({
                   </button>
                   <button
                     onClick={() => setViewType("table")}
-                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.97] ${viewType === "table" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
+                    className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press ${viewType === "table" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
                     title="列表檢視"
                     aria-label="列表檢視"
                     aria-pressed={viewType === "table"}
@@ -3340,7 +3340,7 @@ export default function HomeTab({
                   </p>
                   <button
                     onClick={handleSearch}
-                    className="group flex items-center gap-2 h-10 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-[14px] hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors active:scale-95 shadow-sm"
+                    className="group flex items-center gap-2 h-10 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-[14px] hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors ios-press shadow-sm"
                   >
                     <RefreshCw size={14} className="group-active:rotate-45 transition-transform" />
                     重新嘗試
@@ -3557,7 +3557,7 @@ export default function HomeTab({
                                   triggerHapticFeedback([16]);
                                   setActiveHandbook(handbook);
                                 }}
-                                className="relative overflow-hidden w-[320px] xs:w-[350px] sm:w-[410px] h-[255px] sm:h-[275px] shrink-0 rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo active:scale-[0.99]"
+                                className="relative overflow-hidden w-[320px] xs:w-[350px] sm:w-[410px] h-[255px] sm:h-[275px] shrink-0 rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo ios-press"
                               >
                                 {/* Absolute Background Image */}
                                 <div className="absolute inset-0 z-0">
@@ -3618,7 +3618,7 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         handleCopyExpertItinerary(e, handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md active:scale-[0.97]"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md ios-press"
                                     >
                                       <Copy size={11} />
                                       複製行程
@@ -3630,7 +3630,7 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         setActiveHandbook(handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 active:scale-[0.97] transition-all"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 ios-press transition-all"
                                     >
                                       <Eye size={11} />
                                       預覽行程
@@ -3650,7 +3650,7 @@ export default function HomeTab({
                                   triggerHapticFeedback([16]);
                                   setActiveHandbook(handbook);
                                 }}
-                                className="relative overflow-hidden w-full h-[255px] sm:h-[275px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo active:scale-[0.99]"
+                                className="relative overflow-hidden w-full h-[255px] sm:h-[275px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo ios-press"
                               >
                                 {/* Absolute Background Image */}
                                 <div className="absolute inset-0 z-0">
@@ -3711,7 +3711,7 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         handleCopyExpertItinerary(e, handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md active:scale-[0.97]"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md ios-press"
                                     >
                                       <Copy size={11} />
                                       複製行程
@@ -3723,7 +3723,7 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         setActiveHandbook(handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 active:scale-[0.97] transition-all"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 ios-press transition-all"
                                     >
                                       <Eye size={11} />
                                       預覽行程
@@ -3892,7 +3892,7 @@ export default function HomeTab({
                                   event.stopPropagation();
                                   handleCloneTrip(event, trip);
                                 }}
-                                className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 shadow-md active:scale-[0.96]"
+                                className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 shadow-md ios-press"
                               >
                                 <Copy size={10} />
                                 複製 REMIX
@@ -4169,7 +4169,7 @@ export default function HomeTab({
                                 const g = getCountryGuide(dest.id);
                                 if (g) setActiveGuide(g);
                               }}
-                              className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-md active:scale-[0.96]"
+                              className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-md ios-press"
                             >
                               <ExternalLink size={10} />
                               閱讀指南
@@ -4285,7 +4285,7 @@ export default function HomeTab({
                                 e.stopPropagation();
                                 handleCopyExpertItinerary(e, handbook);
                               }}
-                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-purple-600 dark:bg-purple-500 hover:bg-purple-500 dark:hover:bg-purple-400 text-white shadow-md active:scale-[0.96]"
+                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-purple-600 dark:bg-purple-500 hover:bg-purple-500 dark:hover:bg-purple-400 text-white shadow-md ios-press"
                             >
                               <Copy size={10} />
                               複製行程
@@ -4296,7 +4296,7 @@ export default function HomeTab({
                                 e.stopPropagation();
                                 setActiveHandbook(handbook);
                               }}
-                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider border border-slate-350 dark:border-slate-705 text-slate-700 dark:text-slate-300 bg-white/45 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.96] transition-all"
+                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider border border-slate-350 dark:border-slate-705 text-slate-700 dark:text-slate-300 bg-white/45 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 ios-press transition-all"
                             >
                               預覽
                             </button>

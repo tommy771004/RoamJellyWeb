@@ -154,7 +154,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.12 + i * 0.025, type: 'spring', stiffness: 400, damping: 25 }}
-                      className="group flex cursor-pointer flex-col items-center gap-1 rounded-[18px] border border-white/8 bg-white/[0.05] px-1.5 py-3 transition-all hover:border-white/20 hover:bg-white/10 active:scale-[0.97]"
+                      className="group flex cursor-pointer flex-col items-center gap-1 rounded-[18px] border border-white/8 bg-white/[0.05] px-1.5 py-3 transition-all hover:border-white/20 hover:bg-white/10 ios-press"
                     >
                       <span className="text-lg leading-none">{card.emoji}</span>
                       <span className="fluid-kicker mt-0.5 w-full flex-shrink-0 overflow-hidden text-ellipsis whitespace-nowrap px-1 text-center font-black text-white/90">{card.name}</span>

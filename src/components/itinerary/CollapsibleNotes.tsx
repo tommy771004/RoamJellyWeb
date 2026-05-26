@@ -26,7 +26,7 @@ export default function CollapsibleNotes({
     <motion.div
       layout
       onClick={handleToggle}
-      className="editorial-card-soft mt-2 rounded-[22px] px-3.5 py-3 bg-slate-50/50 hover:bg-slate-100/50 border border-slate-100/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.7)] group/notes cursor-pointer active:scale-[0.99] transition-all"
+      className="editorial-card-soft mt-2 rounded-[22px] px-3.5 py-3 bg-slate-50/50 hover:bg-slate-100/50 border border-slate-100/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.7)] group/notes cursor-pointer ios-press transition-all"
     >
       <div className="flex justify-between items-center mb-1 select-none">
         <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-1">

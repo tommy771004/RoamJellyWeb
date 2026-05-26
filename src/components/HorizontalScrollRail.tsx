@@ -85,7 +85,7 @@ export default function HorizontalScrollRail({
           disabled={!canScrollLeft}
           onClick={() => scrollByDirection("left")}
           className={cn(
-            "pointer-events-auto inline-flex h-[50px] w-[50px] items-center justify-center rounded-full border border-white/50 dark:border-white/20 bg-white/40 dark:bg-slate-950/40 text-slate-800 dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.15)] backdrop-blur-lg transition-all hover:bg-white/75 dark:hover:bg-slate-950/75 hover:scale-110 hover:shadow-lg active:scale-95 disabled:pointer-events-none disabled:opacity-30 duration-300",
+            "pointer-events-auto inline-flex h-[50px] w-[50px] items-center justify-center rounded-full border border-white/50 dark:border-white/20 bg-white/40 dark:bg-slate-950/40 text-slate-800 dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.15)] backdrop-blur-lg transition-all hover:bg-white/75 dark:hover:bg-slate-950/75 hover:scale-110 hover:shadow-lg ios-press disabled:pointer-events-none disabled:opacity-30 duration-300",
             buttonClassName,
           )}
         >
@@ -118,7 +118,7 @@ export default function HorizontalScrollRail({
           disabled={!canScrollRight}
           onClick={() => scrollByDirection("right")}
           className={cn(
-            "pointer-events-auto inline-flex h-[50px] w-[50px] items-center justify-center rounded-full border border-white/50 dark:border-white/20 bg-white/40 dark:bg-slate-950/40 text-slate-800 dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.15)] backdrop-blur-lg transition-all hover:bg-white/75 dark:hover:bg-slate-950/75 hover:scale-110 hover:shadow-lg active:scale-95 disabled:pointer-events-none disabled:opacity-30 duration-300",
+            "pointer-events-auto inline-flex h-[50px] w-[50px] items-center justify-center rounded-full border border-white/50 dark:border-white/20 bg-white/40 dark:bg-slate-950/40 text-slate-800 dark:text-white shadow-[0_8px_32px_rgba(0,0,0,0.15)] backdrop-blur-lg transition-all hover:bg-white/75 dark:hover:bg-slate-950/75 hover:scale-110 hover:shadow-lg ios-press disabled:pointer-events-none disabled:opacity-30 duration-300",
             buttonClassName,
           )}
         >
