@@ -39,6 +39,8 @@ import {
   SearchServiceUnavailableError,
   SearchTimeoutError,
   fetchHandbooks,
+  getDealsFeed,
+  getDestinationAlerts,
   createTripFact,
   syncItinerary,
   fetchUserSubscriptions,
@@ -96,66 +98,6 @@ function extractAirportCode(value?: string) {
   if (matches?.length) return matches[matches.length - 1];
   return normalized.replace(/[^A-Z0-9]/g, "").slice(0, 3);
 }
-
-const HERO_STORY_PILLARS = [
-  {
-    icon: PlaneTakeoff,
-    eyebrow: "航班節奏",
-    title: "先鎖定出發與回程",
-    description: "確定出發日期，建立旅行的時間骨架。",
-    details: [
-      "日期定下來，時間就會變得具體。",
-      "先不用決定住宿與景點，將出發與回程先固定。",
-      "後續都可以順著這節奏安排。",
-    ],
-    tone: "sky",
-  },
-  {
-    icon: Globe,
-    eyebrow: "地圖動線",
-    title: "住宿與景點一目瞭然",
-    description: "將所有旅途資訊，收攏在一個地圖上。",
-    details: [
-      "確認住宿後，景點分佈與動線更清晰。",
-      "機場、行程與住宿整合成為同一路線。",
-      "讓旅伴一看就懂整趟行程。",
-    ],
-    tone: "cyan",
-  },
-  {
-    icon: Sparkles,
-    eyebrow: "AI 輔助",
-    title: "AI 起草，旅伴共編",
-    description: "先產生草稿，不需一次到位，保留彈性。",
-    details: [
-      "AI 快速建立行程架構，再手動微調。",
-      "草稿完成後再邀請旅伴加入討論。",
-      "清單與分工隨時可補，先建立主線。",
-    ],
-    tone: "orange",
-  },
-] as const;
-
-const HERO_PILLAR_DECOR = [
-  {
-    shell: "glass-card",
-    badge: "border-pink-100 bg-pink-100/90 text-pink-700",
-    glow: "bg-pink-200/55",
-    note: "確定出發節奏，再調整細節。",
-  },
-  {
-    shell: "glass-card",
-    badge: "border-teal-100 bg-teal-50/95 text-teal-700",
-    glow: "bg-teal-200/50",
-    note: "景點與動線，一圖搞定。",
-  },
-  {
-    shell: "glass-card",
-    badge: "border-sky-100 bg-sky-50/95 text-sky-700",
-    glow: "bg-sky-200/55",
-    note: "先起草一版，再邀旅伴。",
-  },
-] as const;
 
 const CARD_STICKER_TONES = [
   "border-pink-100 bg-pink-50/95 text-pink-700",
@@ -1216,6 +1158,38 @@ export default function HomeTab({
   const [isHeroExpanded, setIsHeroExpanded] = useState<boolean>(
     () => typeof window !== "undefined" && window.innerWidth >= 768
   );
+  
+  const [newsFeed, setNewsFeed] = useState<any[]>([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [destinationAlerts, setDestinationAlerts] = useState<any[]>([
+    { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", price: "載入中...", health: "💚 準備中", advisory: "正在連線取得最新資訊...", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+    { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", price: "載入中...", health: "💚 準備中", advisory: "正在連線取得最新資訊...", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+    { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", price: "載入中...", health: "💚 準備中", advisory: "正在連線取得最新資訊...", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+    { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", price: "載入中...", health: "💚 準備中", advisory: "正在連線取得最新資訊...", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+  ]);
+
+  useEffect(() => {
+    async function loadNews() {
+      setNewsLoading(true);
+      try {
+        const [newsData, alertsData] = await Promise.all([
+          getDealsFeed({ query: '旅遊 促銷 機票 優惠' }),
+          getDestinationAlerts()
+        ]);
+        if (newsData && newsData.length > 0) {
+          setNewsFeed(newsData);
+        }
+        if (alertsData && alertsData.length > 0) {
+          setDestinationAlerts(alertsData);
+        }
+      } catch (err) {
+        console.error('Failed to load dynamic data:', err);
+      } finally {
+        setNewsLoading(false);
+      }
+    }
+    loadNews();
+  }, []);
   const [searchProgress, setSearchProgress] = useState(0);
   const [progressMsgIdx, setProgressMsgIdx] = useState(0);
   const prefersReducedMotion = useReducedMotion() ?? false;
@@ -2177,92 +2151,12 @@ export default function HomeTab({
             className={`group relative mx-auto mb-3 max-w-[900px] space-y-2 overflow-hidden px-4 text-center sm:mb-4 sm:px-6 cursor-pointer transition-colors duration-300 ${!isHeroExpanded ? " hidden sm:block" : ""}`}
           >
             <div className="relative space-y-1.5 sm:space-y-2 flex flex-col items-center">
-              <p className={`text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 transition-all duration-300 ${isHeroIntroCollapsed ? "hidden" : "block"}`}>
-                RoamJelly Trip Planner <ChevronDown size={12} className={`transition-transform duration-300 ${!isHeroIntroCollapsed ? "rotate-180" : ""}`} />
+              <p className={`text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 transition-all duration-300`}>
+                RoamJelly Trip Planner
               </p>
               <h1 className="mx-auto max-w-4xl text-balance text-[26px] font-black tracking-[-0.03em] text-slate-800 dark:text-slate-100 sm:text-[40px] md:text-[48px] leading-tight sm:leading-[1.1] font-heading">
                 把<span className="text-sky-500">航班、地圖</span>與<span className="text-sky-500">旅伴</span>，收進同一份旅程
               </h1>
-              
-              <AnimatePresence initial={false}>
-                {!isHeroIntroCollapsed && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="overflow-hidden space-y-2.5 w-full flex flex-col items-center"
-                  >
-                    <p className="mx-auto max-w-2xl text-pretty text-[14px] leading-relaxed text-slate-500 dark:text-slate-400 sm:text-[15px]">
-                      幫你搞定出發日期、行程清單與旅途工具，免切換 App，一站完成體驗。
-                    </p>
-
-                    {isHeroExpanded && (
-                      <div className="flex snap-x gap-2 overflow-x-auto pb-1 text-left w-full max-w-[900px] sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible pt-1">
-                        {HERO_STORY_PILLARS.map((pillar, index) => {
-                          const Icon = pillar.icon;
-                          const decor = HERO_PILLAR_DECOR[index % HERO_PILLAR_DECOR.length];
-                          return (
-                            <div
-                              key={pillar.title}
-                              className={`group/pillar bg-white/60 dark:bg-slate-800/60 border border-white/80 dark:border-slate-700 relative min-w-[240px] snap-start overflow-hidden rounded-[20px] px-3.5 py-3 backdrop-blur-xl sm:min-w-0 shadow-sm`}
-                            >
-                              <div className={`absolute -right-8 -top-8 size-24 rounded-full blur-2xl ${decor.glow}`} />
-                              <div className="absolute inset-x-4 bottom-3 h-px bg-gradient-to-r from-white via-slate-200/70 to-transparent" />
-                              <div className="relative mb-3 flex items-center justify-between gap-3">
-                                <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${decor.badge}`}>
-                                  <Icon size={13} strokeWidth={2.6} />
-                                  {pillar.eyebrow}
-                                </span>
-                                <span className="inline-flex size-7 items-center justify-center rounded-full border border-white/80 bg-white/85 text-slate-300 shadow-sm">
-                                  <ArrowRight size={14} strokeWidth={2.5} />
-                                </span>
-                              </div>
-                              <h2 className="relative text-balance text-[15px] font-black tracking-[-0.02em] text-slate-900 sm:text-[17px]">
-                                {pillar.title}
-                              </h2>
-                              <ExpandableText
-                                text={pillar.description}
-                                previewLines={2}
-                                minCharacters={60}
-                                className="relative mt-1.5"
-                                textClassName="text-[13px] font-medium leading-[1.62] text-slate-600"
-                                buttonClassName="mt-0"
-                              />
-                              <div className="editorial-divider relative mt-3 flex items-center justify-between gap-3 pt-3">
-                                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
-                                  <span className={`inline-flex size-6 items-center justify-center rounded-full border bg-white/85 text-[10px] font-black shadow-sm ${decor.badge}`}>
-                                    0{index + 1}
-                                  </span>
-                                  <span className="text-pretty line-clamp-2">{decor.note}</span>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveStoryInfo({
-                                      eyebrow: pillar.eyebrow,
-                                      title: pillar.title,
-                                      description: pillar.description,
-                                      details: pillar.details,
-                                      tone: pillar.tone,
-                                      icon: Icon,
-                                    })
-                                  }}
-                                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/92 bg-white/94 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
-                                >
-                                  查看說明
-                                  <ArrowRight size={12} strokeWidth={2.6} />
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </motion.div>
 
@@ -2294,21 +2188,6 @@ export default function HomeTab({
             {/* Unified search form */}
             {isHeroExpanded && (
               <div className="relative z-20">
-                <div className="mb-2.5 flex flex-col items-start gap-1.5 px-1 sm:mb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-700/80">
-                      第一站
-                    </p>
-                    <p className="text-pretty text-[14px] font-bold leading-6 text-slate-700 sm:text-[15px]">
-                      先決定旅行的時間，後續再補上地圖與景點。
-                    </p>
-                  </div>
-                  {!isLoggedIn && (
-                    <span className="inline-flex items-center rounded-full border border-slate-200/80 bg-white/75 px-3 py-1 text-[11px] font-black tracking-[0.18em] text-slate-600 uppercase backdrop-blur-md">
-                      訪客也能先建立旅程
-                    </span>
-                  )}
-                </div>
                 {/* Trip type toggle */}
                 <div className="mb-2.5 flex w-fit items-center gap-1 rounded-full border border-white/75 bg-white/62 p-1">
                   <button
@@ -3210,13 +3089,6 @@ export default function HomeTab({
                       ? searchForm.date.replace(/-/g, "/")
                       : "未選日期",
                   },
-                  {
-                    label: "結果",
-                    value:
-                      filteredResults.length > 0
-                        ? `${filteredResults.length} 個`
-                        : "等待搜尋",
-                  },
                 ]}
                 titleClassName="text-2xl sm:text-3xl tracking-tighter"
                 descriptionClassName="text-[12px] font-bold leading-5 text-slate-500 sm:text-[13px]"
@@ -3607,7 +3479,7 @@ export default function HomeTab({
                         <SearchIcon className="text-slate-400 dark:text-slate-500" size={32} strokeWidth={2.5} />
                       </div>
                       <h3 className="text-[18px] font-black tracking-tight text-slate-800 dark:text-white mb-2">
-                        找不到符合條件的航班
+                        找不到合適的航班
                       </h3>
                       <p className="text-slate-500 dark:text-slate-400 font-bold max-w-xs text-center leading-relaxed text-[13px]">
                         可以嘗試更換出發日期、調整篩選條件，或搜尋其他的熱門旅行目的地。
@@ -3627,11 +3499,8 @@ export default function HomeTab({
                       <div className="relative z-10 w-full max-w-5xl mb-10">
                         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                           <div>
-                            <p className="text-[11px] font-black tracking-[0.24em] uppercase text-fuchsia-500">
-                              Demo Preview
-                            </p>
                             <h4 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                              先看別人排好的旅程，立刻進入狀況
+                              先看夥伴分享的旅程
                             </h4>
                           </div>
                           <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400">
@@ -4040,18 +3909,18 @@ export default function HomeTab({
                   return (
                     <motion.div
                       key={dest.id}
-                      className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/dest"
+                      className="w-[280px] xs:w-[320px] sm:w-[400px] md:w-[440px] shrink-0 group/dest"
                     >
                       <div
                         onClick={() => {
                           const g = getCountryGuide(dest.id);
                           if (g) setActiveGuide(g);
                         }}
-                        className={`relative overflow-hidden h-[245px] sm:h-[270px] ${cornerShape} flex flex-row items-stretch cursor-pointer border-[2px] border-slate-900/10 dark:border-white/10 bg-gradient-to-br ${cardBg} shadow-[4px_4px_0px_0px_rgba(15,23,42,0.05)] hover:shadow-[6px_6px_0px_0px_rgba(15,23,42,0.1)] hover:-translate-y-1 hover:border-slate-400 dark:hover:border-white/30 transition-all duration-300 p-4 sm:p-5`}
+                        className={`relative overflow-hidden h-[210px] xs:h-[230px] sm:h-[270px] ${cornerShape} flex flex-row items-stretch cursor-pointer border-[2px] border-slate-900/10 dark:border-white/10 bg-gradient-to-br ${cardBg} shadow-[4px_4px_0px_0px_rgba(15,23,42,0.05)] hover:shadow-[6px_6px_0px_0px_rgba(15,23,42,0.1)] hover:-translate-y-1 hover:border-slate-400 dark:hover:border-white/30 transition-all duration-300 p-3 sm:p-5`}
                       >
                         {/* Left Column: Polaroid Framed Image */}
-                        <div className="w-[105px] xs:w-[125px] sm:w-[145px] shrink-0 flex flex-col justify-start relative select-none">
-                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-2 sm:p-2.5 pb-6 sm:pb-8 rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/dest:scale-102 transition-transform duration-300 flex flex-col`}>
+                        <div className="w-[90px] xs:w-[110px] sm:w-[140px] shrink-0 flex flex-col justify-start relative select-none">
+                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-1.5 sm:p-2.5 pb-4 sm:pb-8 rounded-[12px] sm:rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/dest:scale-102 transition-transform duration-300 flex flex-col`}>
                             <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
                               <img
                                 src={dest.image}
@@ -4162,15 +4031,15 @@ export default function HomeTab({
                   return (
                     <motion.div
                       key={handbook.id}
-                      className="w-[320px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 group/handbook"
+                      className="w-[280px] xs:w-[320px] sm:w-[400px] md:w-[440px] shrink-0 group/handbook"
                     >
                       <div
                         onClick={() => setActiveHandbook(handbook)}
-                        className={`relative overflow-hidden h-[245px] sm:h-[270px] ${cornerShape} flex flex-row items-stretch cursor-pointer border-[2px] border-slate-900/10 dark:border-white/10 bg-gradient-to-br ${cardBg} shadow-[4px_4px_0px_0px_rgba(15,23,42,0.05)] hover:shadow-[6px_6px_0px_0px_rgba(15,23,42,0.1)] hover:-translate-y-1 hover:border-slate-400 dark:hover:border-white/30 transition-all duration-300 p-4 sm:p-5`}
+                        className={`relative overflow-hidden h-[210px] xs:h-[230px] sm:h-[270px] ${cornerShape} flex flex-row items-stretch cursor-pointer border-[2px] border-slate-900/10 dark:border-white/10 bg-gradient-to-br ${cardBg} shadow-[4px_4px_0px_0px_rgba(15,23,42,0.05)] hover:shadow-[6px_6px_0px_0px_rgba(15,23,42,0.1)] hover:-translate-y-1 hover:border-slate-400 dark:hover:border-white/30 transition-all duration-300 p-3 sm:p-5`}
                       >
                         {/* Left Column: Polaroid Framed Image */}
-                        <div className="w-[105px] xs:w-[125px] sm:w-[145px] shrink-0 flex flex-col justify-start relative select-none">
-                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-2 sm:p-2.5 pb-6 sm:pb-8 rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/handbook:scale-102 transition-transform duration-300 flex flex-col`}>
+                        <div className="w-[90px] xs:w-[110px] sm:w-[140px] shrink-0 flex flex-col justify-start relative select-none">
+                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-1.5 sm:p-2.5 pb-4 sm:pb-8 rounded-[12px] sm:rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/handbook:scale-102 transition-transform duration-300 flex flex-col`}>
                             <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
                               <img
                                 src={handbook.image}
@@ -4263,9 +4132,6 @@ export default function HomeTab({
               <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
                 ✉️ 目的地即時快訊 & 優惠促銷訂閱
               </h4>
-              <span className="text-[9px] bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Real-time Alerts
-              </span>
             </div>
             <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
               當航班降價促銷、釋出聯名特惠，或目的地有重要安全/旅遊警示更新時，系統將即時通知您，幫助您聰明規劃、安心起飛！
@@ -4278,12 +4144,7 @@ export default function HomeTab({
                 viewportClassName="w-full pb-4 -mx-6 px-6"
                 contentClassName="gap-4"
               >
-                {[
-                  { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", price: "NT$ 9,800起", health: "💚 安全無虞", advisory: "由傳統航空釋出大量淡季特等機票，東京梅雨季氣溫適中！", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
-                  { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", price: "NT$ 8,900起", health: "💚 安全無虞", advisory: "廉價航空本週大促銷，週末熱門時段仍有促銷票！", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
-                  { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", price: "本島漫遊", health: "💚 安全無虞", advisory: "梅雨滯留鋒面逼近，下雨行程已由 Jelly AI 為您全天候就緒。", tagColor: "bg-emerald-50 text-emerald-700 font-extrabold" },
-                  { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", price: "NT$ 24,500起", health: "💛 旅遊須知", advisory: "希斯洛機場本週部分行李分檢系統調整，過海關建议提早排隊。", tagColor: "bg-amber-50 text-amber-700 font-extrabold" },
-                ].map((dest) => {
+                {destinationAlerts.map((dest) => {
                   const isWebPush = subscriptions.some(s => s.destination === dest.name && s.channel === 'web-push');
                   const isEmail = subscriptions.some(s => s.destination === dest.name && s.channel === 'email');
 
@@ -4311,7 +4172,6 @@ export default function HomeTab({
                         </div>
                         <div className="absolute bottom-2.5 left-2.5 text-white pr-2">
                           <h5 className="font-extrabold text-[13.5px] leading-tight">{dest.name}</h5>
-                          <span className="text-[10px] font-bold text-pink-300 font-mono">最低 {dest.price}</span>
                         </div>
                       </div>
                       
@@ -4357,11 +4217,18 @@ export default function HomeTab({
               <div className="flex items-center gap-2 mb-3">
                 <Rss size={16} className="text-pink-500 animate-pulse" />
                 <h5 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                  最新訂閱情報 & 降價快訊 (Deal Feed Alert)
+                  最新訂閱情報 & 降價快訊 
                 </h5>
               </div>
 
-              {subscriptions.length === 0 ? (
+              {newsLoading ? (
+                <div className="text-center py-6 flex flex-col items-center justify-center">
+                  <RefreshCw className="animate-spin text-slate-300 mb-2" size={24} />
+                  <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
+                    正在為您整理各大旅遊網站的即時優惠...
+                  </p>
+                </div>
+              ) : newsFeed.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
                     💡 跨出第一步！訂閱上方任一目的地的推送或電郵快訊後，即可在此解鎖瀏覽專屬的降價促銷、即時機票大賞與目的地旅遊安全警報！
@@ -4369,21 +4236,13 @@ export default function HomeTab({
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  {[
-                    { dest: "東京 Tokyo", type: "deal", tag: "🔥 降價大促銷", text: "星宇航空限時特惠台北-東京 NT$9,800 起，降幅更高達 15%！已為您追蹤！" },
-                    { dest: "東京 Tokyo", type: "advisory", tag: "🌧️ 旅遊須知", text: "東京多地進入梅雨季節，出門建議隨身帶傘，可多參考 Jelly AI 推薦的雨天行程！" },
-                    { dest: "大阪 Osaka", type: "deal", tag: "🎉 廉航大回饋", text: "樂桃航空萬人促銷重磅來襲！大阪單程近全免未稅快閃 NT$2,200 起！" },
-                    { dest: "台北 Taipei", type: "advisory", tag: "🌧️ 降雨警報", text: "台北氣象局發布午後大雨特報，山區潮濕多雨，建議隨意挑選文創室內景點漫步。" },
-                    { dest: "倫敦 London", type: "advisory", tag: "✈️ 機場跑道封閉", text: "希斯洛機場(LHR)公告 6/5 行李系統維修，建議國際旅客提早 3 小時抵達辦理登機。" },
-                    { dest: "倫敦 London", type: "deal", tag: "💎 商務艙特等艙特惠", text: "長榮航空倫敦直飛航線釋出稀有限量商務特惠，預訂即享 92 折超值特惠！" }
-                  ]
-                    .filter(alert => subscriptions.some(sub => sub.destination.trim().toLowerCase().startsWith(alert.dest.split(' ')[0].toLowerCase())))
+                  {newsFeed
                     .map((alert, idx) => (
-                      <div key={idx} className="flex gap-3 p-3 rounded-2xl bg-white/60 dark:bg-slate-900/40 border border-white/80 dark:border-white/5 shadow-sm">
+                      <div key={alert.id || idx} className="flex gap-3 p-3 rounded-2xl bg-white/60 dark:bg-slate-900/40 border border-white/80 dark:border-white/5 shadow-sm">
                         <div className="h-6 w-6 shrink-0 rounded-full bg-pink-100 dark:bg-pink-950/40 text-pink-600 text-[10px] font-black flex items-center justify-center">
                           {alert.type === 'deal' ? '💰' : '⚠️'}
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[11px] font-black text-slate-800 dark:text-white">
                               {alert.dest}
@@ -4394,16 +4253,16 @@ export default function HomeTab({
                               {alert.tag}
                             </span>
                           </div>
-                          <p className="text-[12px] font-bold text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-left font-sans">
+                          <a href={alert.link} target="_blank" rel="noopener noreferrer" className="block text-[12px] font-bold text-slate-600 dark:text-slate-300 mt-1 leading-relaxed text-left font-sans hover:text-sky-600 hover:underline transition-colors">
                             {alert.text}
-                          </p>
+                          </a>
                         </div>
                       </div>
                     ))}
 
                   {/* Show total count */}
                   <p className="text-[10px] text-slate-400 font-extrabold text-right mt-2">
-                    隨時同步最新 2026 年夏季即時情報
+                    隨時同步最新旅遊即時情報
                   </p>
                 </div>
               )}
@@ -4527,7 +4386,7 @@ export default function HomeTab({
                   src={
                     flyingCard.handbook.image || flyingCard.handbook.coverImage
                   }
-                  alt={flyingCard.handbook.title || "達人行程預覽"}
+                  alt={flyingCard.handbook.title || "行程預覽"}
                   onError={(e) => {
                     (e.target as HTMLImageElement).onerror = null;
                     (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";

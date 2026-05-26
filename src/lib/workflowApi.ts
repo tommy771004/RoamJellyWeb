@@ -61,6 +61,41 @@ export async function geocodeSpot(title: string, city = ''): Promise<{ lat: numb
   return null;
 }
 
+export async function getDealsFeed({ query = '' }: { query?: string } = {}) {
+  try {
+    const token = getStoredToken();
+    const url = query ? `/api/deals/feed?q=${encodeURIComponent(query)}` : '/api/deals/feed';
+    const res = await fetch(url, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) {
+      throw await parseApiError(res, 'Failed to fetch deals feed');
+    }
+    const data = await res.json();
+    return data.data || [];
+  } catch (err) {
+    console.error('getDealsFeed error:', err);
+    return [];
+  }
+}
+
+export async function getDestinationAlerts() {
+  try {
+    const token = getStoredToken();
+    const res = await fetch('/api/destinations/alerts', {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) {
+      throw await parseApiError(res, 'Failed to fetch destination alerts');
+    }
+    const data = await res.json();
+    return data.data || [];
+  } catch (err) {
+    console.error('getDestinationAlerts error:', err);
+    return [];
+  }
+}
+
 export async function geocodeSpotWithAI(title: string, destination: string): Promise<{ lat: number; lng: number } | null> {
   try {
     const token = getStoredToken();
