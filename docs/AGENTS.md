@@ -368,8 +368,8 @@
   - 餘數分配修正：第一批非代墊人吸收 +1 誤差，確保總金額精確
   - weather 查詢與提醒分享
   - 幣別小計顯示（取代混合加總）
-- 缺口:
-  - 結清歷史沒有展示區（展示 clearedAt 不為 null 的紀錄，方便實際核對）
+- 最新 iOS 轉換:
+  - iOS Tools 已展示 settlement history 與 cleared ledger expenses，並支援提醒分享。
 
 ---
 
@@ -392,8 +392,7 @@
 ### 13.3 待辦 (Remaining)
 
 1. affiliate_url 接入真實 OTA 簽約連結（需外部合作）。
-2. Universal Link / App Link 支援，使 deep-link 在 native app 也能開啟。
-3. 結清歷史展示區（展示 clearedAt 不為 null 的記錄，方便實際核對）。
+2. Universal Link / App Link 需完成 Apple Team ID、Associated Domains 與 AASA 托管後才能正式上線。
 
 ### 13.4 候選下一步 (Next Steps — 2026-05-08)
 
