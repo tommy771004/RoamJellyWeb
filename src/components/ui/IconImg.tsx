@@ -1,12 +1,11 @@
 import React from 'react';
 import {
   Plane, Hotel, Compass, Map as MapIcon, Train, Sun, Tent,
-  Mail, Utensils, Umbrella, Mountain, Bike, Ship,
-  Wifi, Ticket, Heart, Backpack, Wine, Palmtree,
-  Briefcase, BookOpen, Camera, Globe, Footprints,
-  Airplay, Lamp, Waves, Anchor,
-  Binoculars, Telescope, Flame, Bed, Bath,
-  Glasses, HardHat, Wallet, Key, Bell, Star, Cloud,
+  Mail, Utensils, Umbrella, Mountain, Bike, Ship, Sailboat,
+  Wifi, Ticket, Heart, Backpack, Martini, Palmtree,
+  Luggage, BookOpen, Camera, Globe, Footprints,
+  Anchor, Binoculars, Telescope, Flame, Bed, Bath,
+  Glasses, Wallet, Key, Bell, Star, Cloud,
   Zap, Droplet, Snowflake, Thermometer, Calendar,
   Clock, Gift, Smile, LucideIcon
 } from 'lucide-react';
@@ -26,7 +25,8 @@ export const CUSTOM_ICONS = [
 export type CustomIconName = typeof CUSTOM_ICONS[number];
 
 type IconConfig = {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  emoji?: string;
   colors: [string, string];
 };
 
@@ -71,26 +71,26 @@ const ICON_CONFIG_MAP: Record<CustomIconName, IconConfig> = {
   ticket: { icon: Ticket, colors: PALETTES.kite },
   heart: { icon: Heart, colors: PALETTES.flower },
   backpack: { icon: Backpack, colors: PALETTES.luggage },
-  cocktail: { icon: Wine, colors: PALETTES.beach },
+  cocktail: { icon: Martini, colors: PALETTES.beach },
   'palm-tree': { icon: Palmtree, colors: PALETTES.tree },
   umbrella: { icon: Umbrella, colors: PALETTES.rain },
-  suitcase: { icon: Briefcase, colors: PALETTES.luggage },
+  suitcase: { icon: Luggage, colors: PALETTES.luggage },
   passport: { icon: BookOpen, colors: PALETTES.map },
   camera: { icon: Camera, colors: PALETTES.camera },
   globe: { icon: Globe, colors: PALETTES.earth },
   'hiking-boot': { icon: Footprints, colors: PALETTES.mountain },
-  'hot-air-balloon': { icon: Airplay, colors: PALETTES.balloon },
-  lantern: { icon: Lamp, colors: PALETTES.sunset },
-  'diving-mask': { icon: Glasses, colors: PALETTES.beach },
-  surfboard: { icon: Waves, colors: PALETTES.boat },
+  'hot-air-balloon': { emoji: '🎈', colors: PALETTES.balloon },
+  lantern: { emoji: '🏮', colors: PALETTES.sunset },
+  'diving-mask': { emoji: '🤿', colors: PALETTES.beach },
+  surfboard: { emoji: '🏄', colors: PALETTES.boat },
   anchor: { icon: Anchor, colors: PALETTES.cruise },
   binoculars: { icon: Binoculars, colors: PALETTES.tree },
   telescope: { icon: Telescope, colors: PALETTES.moon },
   campfire: { icon: Flame, colors: PALETTES.sunset },
   'sleeping-bag': { icon: Bed, colors: PALETTES.moon },
-  towel: { icon: Bath, colors: PALETTES.rain },
+  towel: { emoji: '🧺', colors: PALETTES.rain },
   sunglasses: { icon: Glasses, colors: PALETTES.sunset },
-  hat: { icon: HardHat, colors: PALETTES.kite },
+  hat: { emoji: '👒', colors: PALETTES.kite },
   wallet: { icon: Wallet, colors: PALETTES.camera },
   key: { icon: Key, colors: PALETTES.map },
   bell: { icon: Bell, colors: PALETTES.bike },
@@ -103,7 +103,7 @@ const ICON_CONFIG_MAP: Record<CustomIconName, IconConfig> = {
   calendar: { icon: Calendar, colors: PALETTES.kite },
   clock: { icon: Clock, colors: PALETTES.moon },
   gift: { icon: Gift, colors: PALETTES.flower },
-  'roam-jelly': { icon: Smile, colors: PALETTES.rainbow },
+  'roam-jelly': { emoji: '🍮', colors: PALETTES.rainbow },
 };
 
 export function isCustomIcon(value: string): boolean {
@@ -156,12 +156,25 @@ const IconImg: React.FC<IconImgProps> = ({ value, size = 24, className = "" }) =
           }}
           aria-hidden="true"
         />
-        {/* Crisp Line Icon on Top */}
-        <IconComponent 
-          size={Math.max(14, size * 0.75)} 
-          strokeWidth={1.5} 
-          className="relative z-10 text-slate-800 dark:text-slate-100 drop-shadow-sm" 
-        />
+        
+        {IconComponent ? (
+          <IconComponent 
+            size={Math.max(14, size * 0.75)} 
+            strokeWidth={1.5} 
+            className="relative z-10 text-slate-800 dark:text-slate-100 drop-shadow-sm" 
+          />
+        ) : (
+          <span
+            className="relative z-10 select-none"
+            style={{
+              fontSize: Math.max(12, Math.round(size * 0.75)),
+              lineHeight: 1,
+              filter: "grayscale(20%) drop-shadow(0 1px 1px rgba(0,0,0,0.1))"
+            }}
+          >
+            {config.emoji}
+          </span>
+        )}
       </div>
     );
   }
