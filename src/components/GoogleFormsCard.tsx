@@ -67,9 +67,7 @@ export default function GoogleFormsCard({ tripId }: { tripId?: string }) {
       return;
     }
 
-    const confirmed = window.confirm("即將在您的 Google Drive 建立一份新的「旅伴意向調查」表單。確定要建立嗎？");
-    if (!confirmed) return;
-
+    // Remove confirm to avoid iframe blocking
     setIsCreating(true);
     try {
       // 1. Create a new form

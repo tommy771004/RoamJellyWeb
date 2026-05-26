@@ -51,7 +51,7 @@ export function getModalMotion(reduced = false) {
     initial: reduced ? { opacity: 0 } : { opacity: 0, y: 14, scale: 0.98 },
     animate: { opacity: 1, y: 0, scale: 1 },
     exit: reduced ? { opacity: 0 } : { opacity: 0, y: 14, scale: 0.98 },
-    transition: reduced ? { duration: 0.18 } : { duration: 0.35, ease: "easeOut" },
+    transition: reduced ? { duration: 0.18 } : { duration: 0.35, ease: "easeOut" as const },
   };
 }
 
