@@ -2189,9 +2189,6 @@ export default function HomeTab({
               <h1 className="mx-auto max-w-4xl text-balance text-[32px] font-black tracking-[-0.04em] text-slate-800 dark:text-slate-100 sm:text-[46px] md:text-[56px] leading-[1.15] sm:leading-[1.1] font-heading drop-shadow-sm">
                 把<span className="text-gradient drop-shadow-sm">航班、地圖</span>與<span className="text-gradient drop-shadow-sm">旅伴</span><br className="hidden sm:block" />收進同一份旅程
               </h1>
-              <p className="mx-auto max-w-xl text-[14px] sm:text-[17px] text-slate-500 dark:text-slate-400 mt-2 sm:mt-4 font-medium leading-relaxed max-w-[500px]">
-                智能聚合所有旅行資訊，邀請好友共同協作，輕鬆規劃專屬於您的完美旅行體驗。
-              </p>
             </div>
           </motion.div>
 
