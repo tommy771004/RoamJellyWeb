@@ -752,7 +752,7 @@ export default function App() {
       <header className={`fixed top-0 w-full z-50 px-3 sm:px-6 pt-[calc(0.5rem+env(safe-area-inset-top,0px))] sm:pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-2 sm:pb-4 flex justify-between items-center jelly-surface !rounded-none !border-x-0 !border-t-0 !shadow-sm transition-transform duration-500 transform-gpu ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20 hover:animate-none">
-          <div className="flex items-center justify-center bg-white/80 dark:bg-slate-800/80 shadow-[0_4px_12px_rgba(236,72,153,0.15)] rounded-[18px] w-9 h-9 sm:w-11 sm:h-11 rotate-[-8deg] hover:rotate-[8deg] transition-transform duration-300 animate-cute-bounce">
+          <div className="flex items-center justify-center bg-white/80 dark:bg-slate-800/80 shadow-[0_4px_12px_rgba(236,72,153,0.15)] dark:shadow-none border border-transparent dark:border-white/10 rounded-[18px] w-9 h-9 sm:w-11 sm:h-11 rotate-[-8deg] hover:rotate-[8deg] transition-all duration-300 animate-cute-bounce">
             <span className="text-[20px] sm:text-[24px] drop-shadow-sm">🍓</span>
           </div>
           <h1 className="text-gradient text-[22px] sm:text-3xl font-black italic tracking-tighter font-plus-jakarta pr-2 drop-shadow-[0_4px_12px_rgba(244,114,182,0.3)]">RoamJelly</h1>
@@ -767,10 +767,10 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex flex-row items-center gap-2 px-5 py-2.5 transition-all rounded-[24px] border ${
+                className={`flex flex-row items-center gap-2 px-5 py-2.5 transition-all duration-300 rounded-[24px] border ios-press ${
                   isActive 
-                    ? 'border-white/90 bg-white shadow-[0_12px_24px_rgba(236,72,153,0.14)] text-pink-600' 
-                    : 'border-transparent text-slate-500 hover:bg-white/75 hover:border-white/80 hover:text-pink-500'
+                    ? 'border-white/90 dark:border-white/10 bg-white dark:bg-slate-800 shadow-sm text-pink-600 dark:text-pink-400' 
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:bg-white/75 dark:hover:bg-slate-800/80 hover:border-white/80 dark:hover:border-white/10 hover:text-pink-500 dark:hover:text-pink-400'
                 }`}
               >
                 {Icon && <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'opacity-100' : 'opacity-60'} />}
@@ -785,7 +785,7 @@ export default function App() {
           {isLoggedIn && (
             <button
               onClick={() => setShowUserProfile(true)}
-              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full jelly-button text-orange-400"
+              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full jelly-button ios-press text-orange-400"
               aria-label="偏好設定"
             >
               <Settings2 size={20} />
@@ -793,7 +793,7 @@ export default function App() {
           )}
           <button
             onClick={() => setDarkMode(!isDarkMode)}
-            className="w-10 h-10 flex items-center justify-center rounded-full jelly-button text-sky-500"
+            className="w-10 h-10 flex items-center justify-center rounded-full jelly-button ios-press text-sky-500"
             aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -801,7 +801,7 @@ export default function App() {
           <div className="relative hidden sm:block">
             <button
               onClick={() => setShowNotifications(v => !v)}
-              className="w-10 h-10 flex items-center justify-center rounded-full jelly-button text-pink-400 relative"
+              className="w-10 h-10 flex items-center justify-center rounded-full jelly-button ios-press text-pink-400 relative"
               aria-label="通知"
               aria-expanded={showNotifications}
             >

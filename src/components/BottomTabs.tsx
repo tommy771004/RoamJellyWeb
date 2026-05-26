@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "motion/react";
 import { Home, Sparkles, CalendarDays, Luggage, X } from "lucide-react";
 import { useAppStore } from "../store/useAppStore";
+import { GlowingIcon } from "./ui/GlowingIcon";
 
 const TAB_ICONS = {
   home: Home,
@@ -150,11 +151,21 @@ export default function BottomTabs() {
                         }
                         transition={prefersReducedMotion ? { duration: 0.12 } : SPRING_SNAPPY}
                       >
-                        <Icon
-                          size={isActive ? 20 : 18}
-                          strokeWidth={isActive ? 2.8 : 2.2}
-                          className={`mb-0.5 ${isActive ? "text-pink-500 fill-pink-500/10" : "text-slate-400 dark:text-slate-400"}`}
-                        />
+                        {isActive ? (
+                          <GlowingIcon
+                            icon={Icon}
+                            size={20}
+                            glowColor="bg-pink-400"
+                            iconColor="text-pink-500 fill-pink-500/10"
+                            className="mb-0.5"
+                          />
+                        ) : (
+                          <Icon
+                            size={18}
+                            strokeWidth={2.2}
+                            className="mb-0.5 text-slate-400 dark:text-slate-400"
+                          />
+                        )}
                         {isActive && (
                           <motion.div
                             initial={{ scale: 0 }}

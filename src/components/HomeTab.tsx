@@ -86,6 +86,7 @@ import {
   raisedHoverClass,
   subtlePressableClass,
 } from "../lib/motionTokens";
+import { GlowingIcon } from "./ui/GlowingIcon";
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -2546,11 +2547,9 @@ export default function HomeTab({
                   }}
                   className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 ${chipPressClass}`}
                 >
-                  <PlaneTakeoff
-                    size={17}
-                    className="text-sky-500 group-hover:scale-110 transition-transform"
-                    strokeWidth={2.5}
-                  />
+                  <div className="group-hover:scale-110 transition-transform">
+                    <GlowingIcon icon={PlaneTakeoff} size={17} iconColor="text-slate-800 dark:text-slate-100" glowColor="bg-sky-400" />
+                  </div>
                   <span className="font-bold text-[13px] tracking-wide">
                     找機票
                   </span>
@@ -2591,11 +2590,9 @@ export default function HomeTab({
                   }}
                   className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 ${chipPressClass}`}
                 >
-                  <Bed
-                    size={17}
-                    className="text-[#B92A8E] group-hover:scale-110 transition-transform"
-                    strokeWidth={2.5}
-                  />
+                  <div className="group-hover:scale-110 transition-transform">
+                    <GlowingIcon icon={Bed} size={17} iconColor="text-slate-800 dark:text-slate-100" glowColor="bg-pink-400" />
+                  </div>
                   <span className="font-bold text-[13px] tracking-wide">
                     找住宿
                   </span>
@@ -2636,11 +2633,9 @@ export default function HomeTab({
                   }}
                   className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 ${chipPressClass}`}
                 >
-                  <Ticket
-                    size={15}
-                    className="text-[#F18400] group-hover:scale-110 transition-transform"
-                    strokeWidth={2.5}
-                  />
+                  <div className="group-hover:scale-110 transition-transform">
+                    <GlowingIcon icon={Ticket} size={15} iconColor="text-slate-800 dark:text-slate-100" glowColor="bg-orange-400" />
+                  </div>
                   <span className="font-bold text-[13px] tracking-wide">
                     門票 & 觀光行程
                   </span>
@@ -2681,12 +2676,12 @@ export default function HomeTab({
                   }}
                   className={`flex items-center gap-2 text-slate-600 hover:text-slate-900 group bg-white/70 hover:bg-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-sm border border-slate-200/50 shrink-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 ${chipPressClass}`}
                 >
-                  <div className="relative text-[#EC4899] group-hover:scale-110 transition-transform">
-                    <CarFront size={17} strokeWidth={2.5} />
+                  <div className="relative group-hover:scale-110 transition-transform">
+                    <GlowingIcon icon={CarFront} size={17} iconColor="text-slate-800 dark:text-slate-100" glowColor="bg-fuchsia-400" />
                     <PlaneTakeoff
                       size={9}
                       strokeWidth={3}
-                      className="absolute -top-1 -left-1"
+                      className="absolute -top-1 -left-1 text-slate-800 dark:text-slate-100"
                     />
                   </div>
                   <span className="font-bold text-[13px] tracking-wide">

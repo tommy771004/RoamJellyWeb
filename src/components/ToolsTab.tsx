@@ -60,6 +60,7 @@ import { useToolsStore, Expense } from "../store/useToolsStore";
 import { useAppStore } from "../store/useAppStore";
 import { useHideNavOnScroll } from "../hooks/useHideNavOnScroll";
 import { cn } from "../lib/utils";
+import { GlowingIcon } from "./ui/GlowingIcon";
 
 function getCurrentSeason(): string {
   const month = new Date().getMonth() + 1;
@@ -883,8 +884,8 @@ function WeatherCard({ className }: { className?: string }) {
         </div>
 
         <div className="bg-white/70 dark:bg-slate-800/70 rounded-[24px] sm:rounded-[28px] p-3 flex items-center gap-4 border border-white/70 shadow-sm mb-4 sm:mb-5">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-white/86 flex items-center justify-center text-sky-600 shadow-inner border border-white shrink-0 group-hover:-translate-y-0.5 transition-transform duration-200">
-            <Sparkles size={18} strokeWidth={2.5} />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-white/86 flex items-center justify-center shadow-inner border border-white shrink-0 group-hover:-translate-y-0.5 transition-transform duration-200">
+            <GlowingIcon icon={Sparkles} size={18} glowColor="bg-sky-400" iconColor="text-sky-600" />
           </div>
           <div className="flex flex-col">
             <span className="text-slate-800 font-black text-sm">
@@ -922,11 +923,15 @@ function WeatherCard({ className }: { className?: string }) {
                     <span className="text-xs font-bold text-slate-500 mb-2">
                       {idx === 0 ? "Today" : dayName}
                     </span>
-                    <DayIcon
-                      size={20}
-                      className={isRainy ? "text-blue-400" : "text-amber-400"}
-                    />
-                    <div className="mt-3 flex gap-1 items-baseline font-bold">
+                    <div className="my-1">
+                      <GlowingIcon
+                        icon={DayIcon}
+                        size={20}
+                        glowColor={isRainy ? "bg-blue-400" : "bg-amber-400"}
+                        iconColor={isRainy ? "text-blue-500" : "text-amber-500"}
+                      />
+                    </div>
+                    <div className="mt-2 flex gap-1 items-baseline font-bold">
                       <span className="text-sm text-slate-700">
                         {day.temp_max}°
                       </span>
