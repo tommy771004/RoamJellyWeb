@@ -66,6 +66,7 @@ import {
 import { io, type Socket } from "socket.io-client";
 import GlassCard from "./GlassCard";
 import IconImg from "./ui/IconImg";
+import { GlowingIcon } from "./ui/GlowingIcon";
 import { ItinerarySkeletonCard } from "./SkeletonCard";
 import { WikiPreviewCard } from "./WikiPreviewCard";
 import {
@@ -2147,7 +2148,7 @@ export default function ItineraryTab() {
                                   className="editorial-card rounded-[24px] px-4 py-4"
                                 >
                                   <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-sky-700">
-                                    <Icon size={14} strokeWidth={2.5} />
+                                    <GlowingIcon icon={Icon} size={14} glowColor="bg-sky-400" iconColor="text-sky-700" />
                                     {eyebrow}
                                   </span>
                                   <h3 className="mt-3 text-sm font-black text-slate-900">
@@ -2186,7 +2187,7 @@ export default function ItineraryTab() {
                             }}
                             className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-400 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors hover:from-pink-500 hover:to-orange-500"
                           >
-                            <Sparkles size={18} />
+                            <GlowingIcon icon={Sparkles} size={18} glowColor="bg-yellow-300" iconColor="text-white" />
                             使用 AI 起草行程
                           </button>
                         </div>
