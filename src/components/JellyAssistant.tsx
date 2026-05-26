@@ -1,5 +1,6 @@
 import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from '../lib/motionTokens';
 import React, { useState, useEffect, useRef } from 'react';
+import { SearchComponent } from './ui/animated-glowing-search-bar';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Sparkles, X, Send, PlusCircle, Plane, Luggage, Loader2, ArrowUp } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
@@ -530,31 +531,16 @@ export default function JellyAssistant() {
 
                 {/* Input Area */}
                 <div className="border-t border-slate-100 bg-white/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] dark:border-white/5 dark:bg-black/40">
-                  <div className="flex items-center rounded-full border border-slate-200 bg-white p-1.5 pr-2 shadow-sm focus-within:ring-2 focus-within:ring-fuchsia-400/32 focus-within:border-fuchsia-300 transition-all">
-                    <input
-                      type="text"
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSend();
-                      }}
-                      placeholder="輸入疑問（例如：機票比價、行李帶什麼、台北下雨...）"
-                      className="text-[13.5px] font-semibold flex-1 rounded-full border-none bg-transparent px-4 outline-none placeholder:text-slate-402 focus:ring-0 dark:text-white"
-                      inputMode="text"
-                      autoCapitalize="off"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      spellCheck={false}
-                    />
-                    <button
-                      onClick={() => handleSend()}
-                      disabled={!inputValue.trim() || isTyping}
-                      aria-label="送出"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-sky-500 to-orange-400 text-white transition-all active:scale-[0.94] disabled:bg-slate-300 disabled:opacity-30"
-                    >
-                      <Send size={16} className="ml-0.5" />
-                    </button>
-                  </div>
+                  <SearchComponent 
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSend();
+                    }}
+                    onSendClick={() => handleSend()}
+                    sendDisabled={!inputValue.trim() || isTyping}
+                    placeholder="輸入疑問（例如：機票比價、行李帶什麼...）"
+                  />
                 </div>
               </>
             )}

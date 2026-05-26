@@ -2550,6 +2550,8 @@ export default function ToolsTab() {
   );
 }
 
+import GoogleFormsCard from "./GoogleFormsCard";
+
 function ToolsTabContent() {
   const { activeTripId, setActiveTab } = useAppStore();
   const {
@@ -2997,8 +2999,9 @@ function ToolsTabContent() {
           <div className="col-span-1 md:col-span-1 lg:col-span-4 flex flex-col h-full">
             <ChecklistSection className="flex-1 h-full" />
           </div>
-          <div className="col-span-1 md:col-span-1 lg:col-span-2 flex flex-col h-full">
-            <WeatherCard className="flex-1 h-full" />
+          <div className="col-span-1 md:col-span-1 lg:col-span-2 flex flex-col h-full gap-6">
+            <WeatherCard className="flex-1" />
+            <GoogleFormsCard tripId={activeTripId || undefined} />
           </div>
 
           {/* Bottom row */}

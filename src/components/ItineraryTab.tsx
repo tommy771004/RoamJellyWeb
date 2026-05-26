@@ -21,6 +21,7 @@ import MapSelectorModal from "./MapSelectorModal";
 import EditorialSectionIntro from "./EditorialSectionIntro";
 import ExpandableText from "./ExpandableText";
 import HorizontalScrollRail from "./HorizontalScrollRail";
+import { EventCard } from "./ui/event-card";
 
 import {
   List as ListIcon,
@@ -2236,112 +2237,56 @@ export default function ItineraryTab() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {userTrips.map((trip) => (
-                <motion.div
-                  key={trip.tripId ?? trip.id}
-                  whileHover={prefersReducedMotion ? undefined : { y: -6 }}
-                  whileTap={prefersReducedMotion ? undefined : { scale: 0.99 }}
-                  transition={{
-                    duration: prefersReducedMotion ? 0 : 0.2,
-                    ease: "easeOut",
-                  }}
-                  onClick={(e) => {
-                    if ((e.target as HTMLElement).closest(".delete-trip-btn"))
-                      return;
-                    setActiveTripId(trip.tripId ?? trip.id);
-                  }}
-                  className="cursor-pointer group"
-                >
-                  <div className="!p-0 overflow-hidden rounded-[30px] border border-white/60 sm:border sm:border-white/60 bg-white/70 backdrop-blur-[24px] shadow-[0_12px_40px_-5px_rgba(255,160,200,0.15),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_-10px_rgba(255,160,200,0.3)] hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-                    <div className="h-40 bg-slate-100 flex items-center justify-center overflow-hidden relative">
-                      <img
-                        src={getTripCoverImage(trip.destination)}
-                        alt={trip.destination}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-700"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            DEFAULT_TRIP_IMAGE;
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
-                      <div className="absolute top-4 right-4 z-10">
-                        <button
-                          title="刪除此專案"
-                          aria-label={`刪除行程「${trip.name}」`}
-                          className="delete-trip-btn w-8 h-8 bg-white/40 hover:bg-red-500 hover:text-white text-white flex items-center justify-center rounded-full backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (
-                              window.confirm(
-                                "確定要刪除「" +
-                                  trip.name +
-                                  "」？這將刪除所有相關資料（包含帳務、清單等）且無法復原。",
-                              )
-                            ) {
-                              try {
-                                const ok = await deleteTripApi(
-                                  trip.tripId ?? trip.id,
-                                );
-                                if (ok) {
-                                  useAppStore
-                                    .getState()
-                                    .showToast("行程專案已刪除", "success");
-                                  setUserTrips((prev) =>
-                                    prev.filter(
-                                      (t) =>
-                                        (t.tripId ?? t.id) !==
-                                        (trip.tripId ?? trip.id),
-                                    ),
-                                  );
-                                } else {
-                                  useAppStore
-                                    .getState()
-                                    .showToast(
-                                      "刪除失敗，或您不是該專案擁有者",
-                                      "warning",
-                                    );
-                                }
-                              } catch (err) {
-                                useAppStore
-                                  .getState()
-                                  .showToast("刪除發生錯誤", "warning");
-                              }
+                <div key={trip.tripId ?? trip.id} className="relative group w-full h-full flex">
+                  <EventCard
+                    heading={trip.name || "我的行程"}
+                    description={`${trip.days || 1} DAYS`}
+                    date={new Date(trip.createdAt || new Date())}
+                    imageUrl={getTripCoverImage(trip.destination)}
+                    imageAlt={trip.name}
+                    eventName={trip.destination || "Unknown Location"}
+                    location={trip.destination || "Unknown Location"}
+                    time="Anytime"
+                    actionLabel="進入行程"
+                    onActionClick={(e) => {
+                      if ((e.target as HTMLElement).closest(".delete-trip-btn")) return;
+                      setActiveTripId(trip.tripId ?? trip.id);
+                    }}
+                    className="flex-1"
+                  />
+                  <div className="absolute top-4 right-4 z-20">
+                    <button
+                      title="刪除此專案"
+                      aria-label={`刪除行程「${trip.name}」`}
+                      className="delete-trip-btn w-8 h-8 bg-white/60 hover:bg-red-500 hover:text-white text-slate-800 flex items-center justify-center rounded-full backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (
+                          window.confirm(
+                            `確定要刪除「${trip.name}」？這將刪除所有相關資料（包含帳務、清單等）且無法復原。`
+                          )
+                        ) {
+                          try {
+                            const ok = await deleteTripApi(trip.tripId ?? trip.id);
+                            if (ok) {
+                              useAppStore.getState().showToast("行程專案已刪除", "success");
+                              setUserTrips((prev) =>
+                                prev.filter((t) => (t.tripId ?? t.id) !== (trip.tripId ?? trip.id))
+                              );
+                            } else {
+                              useAppStore.getState().showToast("刪除失敗，或您不是該專案擁有者", "warning");
                             }
-                          }}
-                        >
-                          <Trash2 size={16} strokeWidth={2.5} />
-                        </button>
-                      </div>
-                      {(trip.days ?? null) != null && (
-                        <div className="absolute bottom-4 left-6">
-                          <span className="text-white/80 text-[11px] font-black uppercase tracking-widest px-2 py-1 bg-white/20 backdrop-blur-md rounded-md">
-                            {trip.days} DAYS
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="text-2xl font-black text-slate-800 mb-1 group-hover:text-sky-600 transition-colors uppercase tracking-tight">
-                        {trip.name}
-                      </h3>
-                      <p className="text-slate-500 font-bold text-sm mb-4 flex items-center gap-1">
-                        <MapPin size={18} className="shrink-0" />
-                        {trip.destination}
-                      </p>
-                      <div className="mt-auto flex items-center justify-between">
-                        <div className="flex -space-x-2">
-                          <div className="w-8 h-8 rounded-full bg-pink-100 border-2 border-white flex items-center justify-center text-[11px] font-black text-pink-600">
-                            ME
-                          </div>
-                        </div>
-                        <ArrowRight
-                          className="text-slate-500 dark:text-slate-300 group-hover:text-sky-600 group-hover:translate-x-1 transition-all"
-                          size={20}
-                        />
-                      </div>
-                    </div>
+                          } catch (err) {
+                            useAppStore.getState().showToast("刪除發生錯誤", "warning");
+                          }
+                        }
+                      }}
+                    >
+                      <Trash2 size={16} strokeWidth={2.5} />
+                    </button>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}

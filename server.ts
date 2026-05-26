@@ -11,6 +11,7 @@ import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
+import Parser from 'rss-parser';
 import { createClient, type RedisClientType } from 'redis';
 import { AppRepository } from './src/server/repositories/appRepository';
 import { pool, db } from './src/server/db/client';
@@ -1871,10 +1872,142 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
     res.json({ status: 'success', data, cache: 'miss' });
   });
 
+  app.get('/api/destinations/alerts', async (req, res) => {
+    try {
+      const cacheKey = `cache:destinations:alerts`;
+      if (redisClient) {
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+          return res.json({ status: 'success', data: JSON.parse(cached), cache: 'hit' });
+        }
+      }
+
+      const destinations = [
+        { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", defaultPrice: "NT$ 9,800起" },
+        { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", defaultPrice: "NT$ 8,900起" },
+        { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", defaultPrice: "本島漫遊" },
+        { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", defaultPrice: "NT$ 24,500起" }
+      ];
+
+      const rssParser = new Parser();
+      const results = await Promise.all(destinations.map(async (dest) => {
+        try {
+          const query = `${dest.name.split(' ')[0]} 旅遊 OR 機票 OR 警報`;
+          const feed = await rssParser.parseURL(`https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`);
+          const latest = feed.items[0];
+          
+          let health = "💚 安全無虞";
+          let tagColor = "bg-emerald-50 text-emerald-700 font-extrabold";
+          let advisory = "近期氣候適中，旅遊人潮穩定，適合安排自由行。";
+
+          if (latest) {
+            advisory = latest.title || advisory;
+            // truncate advisory if too long
+            if (advisory.length > 50) advisory = advisory.substring(0, 50) + '...';
+            
+            if (advisory.includes('警報') || advisory.includes('颱風') || advisory.includes('地震') || advisory.includes('注意')) {
+              health = "💛 旅遊須知";
+              tagColor = "bg-amber-50 text-amber-700 font-extrabold";
+            } else if (advisory.includes('促銷') || advisory.includes('優惠') || advisory.includes('低價')) {
+              health = "🔥 促銷中";
+              tagColor = "bg-pink-50 text-pink-700 font-extrabold";
+            }
+          }
+
+          return {
+            name: dest.name,
+            code: dest.code,
+            image: dest.image,
+            price: dest.defaultPrice,
+            health,
+            advisory,
+            tagColor,
+            link: latest?.link || ''
+          };
+        } catch (e) {
+          return {
+            name: dest.name,
+            code: dest.code,
+            image: dest.image,
+            price: dest.defaultPrice,
+            health: "💚 安全無虞",
+            advisory: "近期氣候適中，旅遊人潮穩定。",
+            tagColor: "bg-emerald-50 text-emerald-700 font-extrabold"
+          };
+        }
+      }));
+
+      if (redisClient) {
+        await redisClient.setEx(cacheKey, 60 * 60, JSON.stringify(results)); // cache for 1 hour
+      }
+
+      res.json({ status: 'success', data: results, cache: 'miss' });
+    } catch (err: any) {
+      console.error('Failed to fetch destination alerts:', err);
+      res.status(500).json({ status: 'error', message: 'Failed to fetch destination alerts' });
+    }
+  });
+
   app.get('/api/search/history', async (req, res) => {
     const limit = Number(req.query.limit ?? 50);
     const data = await getSearchHistory(Number.isFinite(limit) ? limit : 50);
     res.json({ status: 'success', data });
+  });
+
+  const rssParser = new Parser();
+  app.get('/api/deals/feed', async (req, res) => {
+    const q = req.query.q as string || '旅遊優惠 OR 機票促銷 OR 降價';
+    const cacheKey = `cache:rss:${encodeURIComponent(q)}`;
+    try {
+      if (redisClient) {
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+          return res.json({ status: 'success', data: JSON.parse(cached), cache: 'hit' });
+        }
+      }
+      
+      const feed = await rssParser.parseURL(`https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`);
+      
+      const data = feed.items.slice(0, 10).map((item, index) => {
+        let type = 'deal';
+        let tag = '🔥 降價促銷';
+        if (item.title?.includes('警報') || item.title?.includes('注意') || item.title?.includes('地震') || item.title?.includes('天氣') || item.title?.includes('颱風')) {
+           type = 'advisory';
+           tag = '⚠️ 旅遊須知';
+        }
+        
+        let dest = '近期關注';
+        const popularCities = ['東京', '大阪', '京都', '北海道', '首爾', '釜山', '台北', '曼谷', '倫敦', '巴黎'];
+        for (const city of popularCities) {
+          if (item.title?.includes(city)) {
+            dest = city;
+            break;
+          }
+        }
+
+        return {
+          id: `feed-${index}`,
+          dest,
+          type,
+          tag,
+          text: item.title,
+          link: item.link,
+          date: item.pubDate
+        };
+      });
+
+      if (redisClient) {
+        await redisClient.setEx(cacheKey, 60 * 60, JSON.stringify(data)); // cache for 1 hour
+      }
+
+      res.json({ status: 'success', data, cache: 'miss' });
+    } catch (err: any) {
+      console.error('Failed to fetch RSS:', err);
+      // Fallback
+      res.json({ status: 'success', data: [
+        { id: 'fb-1', dest: "東京", type: "deal", tag: "🔥 降價大促銷", text: "目前無法取得即時新聞，已為您提供預設快訊。" }
+      ]});
+    }
   });
 
   app.get('/api/handbooks', async (req, res) => {
