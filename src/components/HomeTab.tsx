@@ -249,19 +249,19 @@ function FlightCard({
         className={`!p-0 glass-card dark:bg-slate-800 flex-1 flex flex-col overflow-hidden rounded-[32px] sm:rounded-[36px] transition-all duration-200 ${pressableSurfaceClass} ${raisedHoverClass}`}
       >
         {/* Top Section: Airline & Route */}
-        <div className="p-3 sm:p-4 flex flex-col gap-2">
+        <div className="p-3.5 sm:p-5 flex flex-col gap-2.5">
           {/* Header: Airline + stop/duration badge */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <AirlineLogo
                 providerName={providerName}
-                className="w-7 h-7 rounded-lg text-sm"
+                className="w-8 h-8 rounded-lg text-sm"
               />
               <div className="flex flex-col">
-                <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                <span className="text-[13px] font-bold tracking-tight text-slate-900 dark:text-white">
                   {flight.details?.airline || flight.provider}
                 </span>
-                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-[0.22em]">
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.25em]">
                   {flight.provider}
                 </span>
               </div>
@@ -313,18 +313,18 @@ function FlightCard({
               <div className="w-1.5 h-1.5 rounded-full border border-slate-300 bg-white z-10" />
             </div>
             <div className="flex flex-col items-start z-10 bg-white/40 dark:bg-transparent backdrop-blur-sm pr-1">
-              <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
+              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
                 {flight.details?.departure}
               </span>
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] leading-none">
+              <span className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] leading-none">
                 Depart
               </span>
             </div>
             <div className="flex flex-col items-end z-10 bg-white/40 dark:bg-transparent backdrop-blur-sm pl-1">
-              <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
+              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
                 {flight.details?.arrival}
               </span>
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] leading-none">
+              <span className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] leading-none">
                 Arrive
               </span>
             </div>
@@ -338,23 +338,26 @@ function FlightCard({
                   回程
                 </span>
               </div>
-              <div className="flex items-center justify-between px-0.5">
+              <div className="flex items-center justify-between px-0.5 mt-2">
                 <div className="flex flex-col items-start min-w-0">
-                  <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">
+                  <span className="text-[18px] sm:text-[20px] font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap mb-1">
                     {flight.returnLeg.departure}
                   </span>
-                  <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest whitespace-nowrap">
+                  <span className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] leading-none whitespace-nowrap">
                     Depart
                   </span>
                 </div>
-                <div className="flex-1 flex items-center justify-center px-2">
-                  <div className="w-full border-t border-dashed border-slate-300" />
+                <div className="flex-1 flex items-center justify-center px-4 relative">
+                  <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex items-center">
+                    <div className="flex-1 border-t border-dashed border-slate-300" />
+                  </div>
+                  <PlaneTakeoff size={10} className="text-slate-400 z-10 rotate-90" />
                 </div>
                 <div className="flex flex-col items-end min-w-0">
-                  <span className="text-base font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">
+                  <span className="text-[18px] sm:text-[20px] font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap mb-1">
                     {flight.returnLeg.arrival}
                   </span>
-                  <span className="text-[9px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest whitespace-nowrap">
+                  <span className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] leading-none whitespace-nowrap">
                     Arrive
                   </span>
                 </div>
@@ -385,37 +388,37 @@ function FlightCard({
         </div>
 
         {/* Bottom: Price & CTAs */}
-        <div className="p-3.5 pt-1.5 sm:p-4 sm:pt-2 flex items-end justify-between mt-auto">
-          <div className="flex flex-col text-left">
-            <span className="text-[10px] font-extrabold text-slate-500 dark:text-slate-350 uppercase tracking-[0.22em] mb-0.5">
+        <div className="p-3.5 pt-1.5 sm:p-5 sm:pt-3 flex items-end justify-between mt-auto">
+          <div className="flex flex-col text-left mb-1">
+            <span className="text-[10px] font-black text-slate-500 dark:text-slate-350 uppercase tracking-[0.25em] mb-1">
               Estimated Price
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-350">
+              <span className="text-[14px] font-bold text-slate-500 dark:text-slate-350">
                 {flight.currency}
               </span>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
+              <span className="text-[26px] sm:text-[30px] font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
                 {flight.price.toLocaleString()}
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleTrack(e);
               }}
               aria-label={isTracked ? "取消追蹤降價" : "追蹤降價"}
-              className={`w-11 h-11 rounded-[10px] flex items-center justify-center border ${subtlePressableClass} ${raisedHoverClass} ${
+              className={`w-[46px] h-[46px] sm:w-[50px] sm:h-[50px] rounded-[14px] flex items-center justify-center border ${subtlePressableClass} ${raisedHoverClass} ${
                 isTracked
                   ? "bg-slate-900 border-slate-900 text-white shadow-md"
                   : "bg-white border-slate-200 text-slate-500 dark:text-slate-300 hover:border-slate-300 hover:text-slate-800 shadow-sm hover:shadow"
               }`}
             >
               {isTracked ? (
-                <BellRing size={14} strokeWidth={2.5} />
+                <BellRing size={16} strokeWidth={2.5} />
               ) : (
-                <Bell size={14} strokeWidth={2.5} />
+                <Bell size={16} strokeWidth={2.5} />
               )}
             </button>
             <button
@@ -424,10 +427,10 @@ function FlightCard({
                 onImportToTrip(e);
               }}
               aria-label="帶入行程"
-              className={`h-11 px-4 rounded-[10px] flex items-center gap-1.5 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg ${subtlePressableClass} ${raisedHoverClass}`}
+              className={`h-[46px] sm:h-[50px] px-5 sm:px-6 rounded-[14px] flex items-center gap-1.5 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg ${subtlePressableClass} ${raisedHoverClass}`}
             >
-              <PlaneTakeoff size={14} strokeWidth={2.5} />
-              <span className="text-[11px] font-black uppercase tracking-widest hidden sm:inline">
+              <PlaneTakeoff size={15} strokeWidth={2.5} />
+              <span className="text-[12px] sm:text-[13px] font-black uppercase tracking-widest hidden sm:inline">
                 帶入
               </span>
             </button>
@@ -892,7 +895,7 @@ function DestinationCard({
   return (
     <div className="group/dest w-full h-full">
       <div 
-        className="flex flex-row items-stretch w-[295px] xs:w-[330px] sm:w-full min-h-[190px] sm:min-h-[200px] overflow-hidden rounded-[26px] border border-white/40 dark:border-white/10 bg-white/70 dark:bg-slate-900/65 backdrop-blur-xl shadow-md hover:shadow-xl transition-all duration-300 relative"
+        className="flex flex-row items-stretch w-[300px] xs:w-[340px] sm:w-full min-h-[200px] sm:min-h-[220px] overflow-hidden rounded-[26px] border border-white/40 dark:border-white/10 bg-white/70 dark:bg-slate-900/65 backdrop-blur-xl shadow-md hover:shadow-xl transition-all duration-300 relative"
       >
         {/* Invisible button overlay to view details */}
         <button
@@ -903,7 +906,7 @@ function DestinationCard({
         />
 
         {/* Left Section: Adaptive Destination image with high contrast */}
-        <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans">
+        <div className="relative w-32 xs:w-36 sm:w-40 shrink-0 overflow-hidden font-sans">
           <img
             src={meta.image}
             alt={title}
@@ -918,28 +921,28 @@ function DestinationCard({
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
           
           {/* Top image labels */}
-          <div className="absolute left-2.5 top-2.5 flex flex-col gap-1 flex-wrap z-10">
-            <span className="rounded-md bg-slate-950/60 px-1.5 py-0.5 text-[8.5px] font-black text-white backdrop-blur-md font-mono">
+          <div className="absolute left-3 top-3 flex flex-col gap-1.5 flex-wrap z-10">
+            <span className="rounded-md bg-slate-950/60 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono tracking-wider">
               {rawArr || "TYO"}
             </span>
-            <span className="rounded-md bg-pink-500/90 px-1.5 py-0.5 text-[8px] font-black text-white backdrop-blur-md whitespace-nowrap">
+            <span className="rounded-md bg-pink-500/90 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur-md whitespace-nowrap">
               {meta.flag} {meta.country}
             </span>
           </div>
 
           {/* Bottom image overlay with Title and Price */}
-          <div className="absolute bottom-2.5 left-2.5 right-2.5 text-white z-10 select-none">
-            <h3 className="font-extrabold text-[13.5px] leading-tight drop-shadow-md truncate">
+          <div className="absolute bottom-3 left-3 right-3 text-white z-10 select-none">
+            <h3 className="font-extrabold text-[15px] leading-tight drop-shadow-md truncate">
               {title}
             </h3>
-            <span className="text-[9px] font-black text-pink-300 font-mono drop-shadow-sm block mt-0.5 whitespace-nowrap">
+            <span className="text-[10px] sm:text-[11px] font-black text-pink-300 font-mono drop-shadow-sm block mt-0.5 whitespace-nowrap">
               最低 {flight.currency} {flight.price.toLocaleString()}
             </span>
           </div>
         </div>
 
         {/* Right Section: Core flight information with high contrast & beautiful symmetry */}
-        <div className="p-3.5 flex-1 flex flex-col justify-between gap-2.5 text-left relative z-10 pointer-events-auto">
+        <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-3 text-left relative z-10 pointer-events-auto">
           {/* Top row: Airline & Save Button */}
           <div className="flex items-center justify-between gap-1.5 min-w-0">
             <div className="flex items-center gap-1.5 min-w-0">
@@ -1593,9 +1596,9 @@ export default function HomeTab({
     if (!loading && hasSearched) setIsHeroExpanded(false);
   }, [loading]);
 
-  const cardSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass} shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)]`;
+  const cardSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass} shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-black/5 dark:ring-white/10`;
   const cardActionClass = `${subtlePressableClass} ${raisedHoverClass}`;
-  const searchFieldSurfaceClass = `${pressableSurfaceClass} ${raisedHoverClass}`;
+  const searchFieldSurfaceClass = `${pressableSurfaceClass} hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:bg-white/80 dark:hover:bg-slate-800/80 bg-white/50 dark:bg-slate-900/40 ring-1 ring-slate-200/50 dark:ring-slate-700/50`;
   const chipPressClass = `${subtlePressableClass} ${raisedHoverClass}`;
 
   const handleCopyExpertItinerary = (
@@ -2175,15 +2178,20 @@ export default function HomeTab({
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
             onClick={() => setIsHeroIntroCollapsed((prev) => !prev)}
-            className={`group relative mx-auto mb-3 max-w-[900px] space-y-2 overflow-hidden px-4 text-center sm:mb-4 sm:px-6 cursor-pointer transition-colors duration-300 ${!isHeroExpanded ? " hidden sm:block" : ""}`}
+            className={`group relative mx-auto mb-5 max-w-[900px] space-y-3 overflow-hidden px-4 text-center sm:mb-8 sm:px-6 cursor-pointer transition-colors duration-300 ${!isHeroExpanded ? " hidden sm:block" : ""}`}
           >
-            <div className="relative space-y-1.5 sm:space-y-2 flex flex-col items-center">
-              <p className={`text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 transition-all duration-300`}>
+            <div className="relative space-y-3 sm:space-y-4 flex flex-col items-center">
+              <p className={`text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 flex items-center gap-2 transition-all duration-300`}>
+                <span className="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>
                 RoamJelly Trip Planner
+                <span className="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>
               </p>
-              <h1 className="mx-auto max-w-4xl text-balance text-[26px] font-black tracking-[-0.03em] text-slate-800 dark:text-slate-100 sm:text-[40px] md:text-[48px] leading-tight sm:leading-[1.1] font-heading">
-                把<span className="text-sky-500">航班、地圖</span>與<span className="text-sky-500">旅伴</span>，收進同一份旅程
+              <h1 className="mx-auto max-w-4xl text-balance text-[32px] font-black tracking-[-0.04em] text-slate-800 dark:text-slate-100 sm:text-[46px] md:text-[56px] leading-[1.15] sm:leading-[1.1] font-heading drop-shadow-sm">
+                把<span className="text-gradient drop-shadow-sm">航班、地圖</span>與<span className="text-gradient drop-shadow-sm">旅伴</span><br className="hidden sm:block" />收進同一份旅程
               </h1>
+              <p className="mx-auto max-w-xl text-[14px] sm:text-[17px] text-slate-500 dark:text-slate-400 mt-2 sm:mt-4 font-medium leading-relaxed max-w-[500px]">
+                智能聚合所有旅行資訊，邀請好友共同協作，輕鬆規劃專屬於您的完美旅行體驗。
+              </p>
             </div>
           </motion.div>
 
@@ -2242,12 +2250,12 @@ export default function HomeTab({
                 </div>
 
                 {/* Search card */}
-                <div className="flex flex-col gap-2 rounded-[32px] sm:rounded-[40px] jelly-surface p-2.5 sm:gap-2 sm:p-3.5">
+                <div className="flex flex-col gap-2 rounded-[32px] sm:rounded-[40px] jelly-surface p-3 sm:gap-2.5 sm:p-4">
                   {/* FROM / TO row */}
                   <div className="relative grid grid-cols-2 gap-2 sm:gap-3">
                     {/* FROM cell */}
                     <div
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[24px] sm:rounded-[28px] cursor-text ${searchFieldSurfaceClass}`}
+                      className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-text ${searchFieldSurfaceClass}`}
                       onClick={() => {
                         setShowDeparturePicker(true);
                         setShowDestinationPicker(false);
@@ -2255,12 +2263,12 @@ export default function HomeTab({
                         setShowReturnDatePicker(false);
                       }}
                     >
-                      <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
+                      <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">
                         出發地
                       </span>
                       <input
                         aria-label="出發地"
-                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-500 w-full outline-none focus-visible:outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.from}
                         onFocus={() => {
                           setShowDeparturePicker(true);
@@ -2268,7 +2276,7 @@ export default function HomeTab({
                           setShowDatePicker(false);
                         }}
                         onChange={(e) => updateField("from", e.target.value)}
-                        placeholder="台北"
+                        placeholder="想從哪飛？"
                         autoComplete="off"
                       />
                     </div>
@@ -2283,19 +2291,19 @@ export default function HomeTab({
                         updateField("to", tempFrom);
                         triggerHapticFeedback([10]);
                       }}
-                      title="交換出發地與目的地"
-                      className="absolute left-1/2 top-1/2 z-20 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white hover:border-slate-300 shadow-md dark:border-slate-600 dark:bg-slate-700 hover:scale-110 active:scale-95 text-sky-500 hover:text-sky-600 transition-all cursor-pointer group"
+                      title="交換"
+                      className="absolute left-1/2 top-1/2 z-20 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] hover:scale-105 active:scale-95 text-slate-400 hover:text-sky-500 transition-all cursor-pointer group"
                     >
                       <PlaneTakeoff
-                        size={14}
-                        className="transform group-hover:rotate-180 transition-transform duration-300"
+                        size={15}
+                        className="transform group-hover:rotate-180 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
                         strokeWidth={2.5}
                       />
                     </button>
 
                     {/* TO cell */}
                     <div
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[24px] sm:rounded-[28px] cursor-text ${searchFieldSurfaceClass}`}
+                      className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-text ${searchFieldSurfaceClass}`}
                       onClick={() => {
                         setShowDestinationPicker(true);
                         setShowDeparturePicker(false);
@@ -2303,12 +2311,12 @@ export default function HomeTab({
                         setShowReturnDatePicker(false);
                       }}
                     >
-                      <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase">
+                      <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">
                         目的地
                       </span>
                       <input
                         aria-label="目的地"
-                        className="bg-transparent border-none p-0 text-[17px] font-black text-slate-900 dark:text-white placeholder:text-slate-500 w-full outline-none focus-visible:outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.to}
                         onFocus={() => {
                           setShowDestinationPicker(true);
@@ -2316,7 +2324,7 @@ export default function HomeTab({
                           setShowDatePicker(false);
                         }}
                         onChange={(e) => updateField("to", e.target.value)}
-                        placeholder="東京"
+                        placeholder="去哪裡？"
                         autoComplete="off"
                       />
                     </div>
@@ -2345,7 +2353,7 @@ export default function HomeTab({
                       className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2 py-1 px-1 w-full snap-x scroll-smooth"
                     >
                       {/* 清單開頭提示字樣 */}
-                      <div className="flex items-center gap-1.5 text-[11px] font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase shrink-0 snap-start select-none pl-1">
+                      <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase shrink-0 snap-start select-none pl-1">
                         <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 flex-shrink-0"></span>
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 flex-shrink-0"></span>
@@ -2365,9 +2373,9 @@ export default function HomeTab({
                               triggerHapticFeedback([10]);
                             }
                           }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 snap-start transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.94] animate-jelly-pulse hover:animate-none hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 snap-start transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.94] animate-jelly-pulse hover:animate-none hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
                         >
-                          <span className="text-[13px]">{dest.flag}</span>
+                          <span className="text-[13px] sm:text-[14px]">{dest.flag}</span>
                           <span className="tracking-wide">{dest.name}</span>
                         </button>
                       ))}
@@ -2395,7 +2403,7 @@ export default function HomeTab({
                     <button
                       type="button"
                       aria-label={`去程日期：${searchForm.date || "尚未選擇"}`}
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[24px] sm:rounded-[28px] cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-left w-full ${searchFieldSurfaceClass}`}
+                      className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-left w-full ${searchFieldSurfaceClass}`}
                       onClick={() => {
                         setShowDatePicker(!showDatePicker);
                         setShowDeparturePicker(false);
@@ -2403,12 +2411,12 @@ export default function HomeTab({
                         setShowReturnDatePicker(false);
                       }}
                     >
-                      <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase flex items-center gap-1">
-                        <Calendar size={10} />
+                      <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase flex items-center gap-1.5">
+                        <Calendar size={11} className="text-sky-500" strokeWidth={2.5} />
                         去程日期
                       </span>
                       <span
-                        className={`text-[15px] font-black leading-none ${!searchForm.date ? "text-slate-500" : "text-slate-900 dark:text-white"}`}
+                        className={`text-[16px] sm:text-[18px] tracking-tight font-black leading-none ${!searchForm.date ? "text-slate-300 dark:text-slate-500" : "text-slate-900 dark:text-white"}`}
                       >
                         {searchForm.date || "選擇日期"}
                       </span>
@@ -2418,7 +2426,7 @@ export default function HomeTab({
                     <button
                       type="button"
                       aria-label={`回程日期：${searchForm.returnDate || (searchForm.tripType === "oneway" ? "單程（點擊切換來回）" : "尚未選擇")}`}
-                      className={`flex flex-col gap-0.5 sm:gap-1 px-3 py-2.5 sm:px-4 sm:py-3 rounded-[24px] sm:rounded-[28px] cursor-pointer border text-left w-full ${
+                      className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-pointer border text-left w-full ${
                         searchForm.tripType === "oneway"
                           ? "bg-slate-50/30 border-dashed border-slate-200 dark:border-slate-600 opacity-60"
                           : "bg-slate-50/60 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700"
@@ -2432,12 +2440,12 @@ export default function HomeTab({
                         setShowDestinationPicker(false);
                       }}
                     >
-                      <span className="text-[11px] font-black tracking-[0.18em] text-slate-500 uppercase flex items-center gap-1">
-                        <Calendar size={10} />
+                      <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase flex items-center gap-1.5">
+                        <Calendar size={11} className={searchForm.tripType === "oneway" ? "text-slate-400" : "text-sky-500"} strokeWidth={2.5} />
                         回程日期
                       </span>
                       <span
-                        className={`text-[15px] font-black leading-none ${!searchForm.returnDate ? "text-slate-500" : "text-slate-900 dark:text-white"}`}
+                        className={`text-[16px] sm:text-[18px] tracking-tight font-black leading-none ${!searchForm.returnDate ? "text-slate-300 dark:text-slate-500" : "text-slate-900 dark:text-white"}`}
                       >
                         {searchForm.returnDate ||
                           (searchForm.tripType === "oneway"
@@ -2459,23 +2467,26 @@ export default function HomeTab({
                     onClick={() => void handleSearch()}
                     disabled={isSearchDisabled || loading || isOffline}
                     title={isOffline ? "請連線網路以進行機票比價" : ""}
-                    className={`group flex w-full items-center justify-center gap-2 rounded-[32px] py-4 sm:py-5 text-[16px] sm:text-[17px] font-black tracking-wide shadow-sm transition-[transform,shadow,background] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform-gpu ${
+                    className={`group relative flex w-full overflow-hidden items-center justify-center gap-2.5 rounded-[28px] sm:rounded-[32px] py-4 sm:py-5 mt-1 text-[17px] sm:text-[19px] font-black tracking-wide shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu ${
                       isSearchDisabled || loading || isOffline
                         ? "bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
-                        : "bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[0_12px_28px_rgba(244,63,94,0.3)] hover:from-pink-500 hover:to-orange-500 active:scale-[0.97] hover:-translate-y-1.5 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)]"
+                        : "bg-slate-900 border border-slate-800 text-white shadow-[0_8px_20px_-6px_rgba(15,23,42,0.4)] hover:bg-slate-800 hover:shadow-[0_12px_24px_-6px_rgba(15,23,42,0.5)] active:scale-[0.98] active:translate-y-[1px]"
                     }`}
                   >
+                    {!isSearchDisabled && !loading && !isOffline && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-150%] skew-x-[-25deg] group-hover:transition-all group-hover:duration-700 group-hover:ease-in-out group-hover:translate-x-[150%]" />
+                    )}
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <SearchIcon size={18} strokeWidth={3} className="drop-shadow-sm group-hover:animate-cute-bounce" /> 
-                        <span className="drop-shadow-sm group-hover:text-pink-50 transition-colors">立即比價 ✨</span>
+                        <SearchIcon size={18} strokeWidth={3} className="drop-shadow-sm group-hover:animate-cute-bounce opacity-90" /> 
+                        <span className="drop-shadow-sm relative z-10 transition-colors">搜尋 航班票價</span>
                       </>
                     )}
                   </button>
-                  <p className="px-1 pt-1 text-center text-[12px] font-bold leading-5 text-slate-500">
-                    決定航班後，隨時再補上其他細節。
+                  <p className="px-1 pt-2 sm:pt-2 text-center text-[13px] font-bold leading-5 text-slate-500 dark:text-slate-400 tracking-tight">
+                    先找便宜機票，剩下的細節隨時補齊。
                   </p>
                 </div>
               </div>
@@ -3777,7 +3788,7 @@ export default function HomeTab({
           </div>
 
           {communityTrips.length > 0 && (
-            <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
+            <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2">
               <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Globe className="text-sky-500" size={24} />
@@ -3900,7 +3911,7 @@ export default function HomeTab({
           )}
 
           {/* Featured Destinations Section */}
-          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Globe className="text-emerald-500" size={24} />
@@ -4027,7 +4038,7 @@ export default function HomeTab({
           </HomeTabContentFocusBlock>
 
           {/* Expert Handbooks Section */}
-          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-14 mb-6 md:mb-8 px-2">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2">
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="text-fuchsia-500" size={24} />
               <h2 className="text-2xl font-black text-slate-800 tracking-tight">
@@ -4153,7 +4164,7 @@ export default function HomeTab({
           </HomeTabContentFocusBlock>
 
           {/* Subscription Section */}
-          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-14 mb-6 md:mb-8 px-2 pt-8 border-t border-slate-200/50 dark:border-white/10 text-left">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2 pt-10 border-t border-slate-200/50 dark:border-white/10 text-left">
             <div className="flex items-center gap-2 mb-2">
               <BellRing size={20} className="text-pink-500 animate-pulse" />
               <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
