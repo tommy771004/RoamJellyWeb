@@ -2328,71 +2328,64 @@ export default function HomeTab({
                     </div>
                   </div>
 
-                  {/* 熱門目的地建議清單 (自適應 RWD 與跑馬燈呼吸效果) */}
-                  <div className="relative group/dests-row w-full flex items-center my-1.5 pb-0.5">
-                    {/* 左側毛玻璃微型微調箭頭，在桌面游標移入時顯著，方便互動 */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (destsScrollRef.current) {
-                          destsScrollRef.current.scrollBy({ left: -160, behavior: "smooth" });
-                        }
-                      }}
-                      className="absolute -left-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-0 group-hover/dests-row:opacity-100 hover:scale-105 ios-press cursor-pointer hidden md:flex"
-                      aria-label="往左捲動建議"
-                    >
-                      <ChevronLeft size={12} strokeWidth={3} />
-                    </button>
-
-                    {/* 滾動容器 */}
-                    <div
-                      ref={destsScrollRef}
-                      className="flex flex-row items-center overflow-x-auto hide-scrollbar gap-2 py-1 px-1 w-full snap-x scroll-smooth"
-                    >
-                      {/* 清單開頭提示字樣 */}
-                      <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase shrink-0 snap-start select-none pl-1">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 flex-shrink-0"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 flex-shrink-0"></span>
-                        </span>
-                        熱門推薦：
-                      </div>
-
-                      {HOT_DESTINATIONS.map((dest) => (
-                        <button
-                          key={dest.name}
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            updateField("to", dest.name);
-                            setShowDestinationPicker(false);
-                            if (typeof triggerHapticFeedback === 'function') {
-                              triggerHapticFeedback([10]);
-                            }
-                          }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 snap-start transition-all duration-300 hover:-translate-y-0.5 ios-press animate-jelly-pulse hover:animate-none hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
-                        >
-                          <span className="text-[13px] sm:text-[14px]">{dest.flag}</span>
-                          <span className="tracking-wide">{dest.name}</span>
-                        </button>
-                      ))}
+                  {/* 熱門目的地建議清單 (跑馬燈效果) */}
+                  <div className="relative group/dests-row w-full flex items-center my-1.5 pb-0.5 overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_16px,_black_calc(100%-16px),transparent_100%)]">
+                    {/* 清單開頭提示字樣 */}
+                    <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase shrink-0 select-none pl-1 pr-3 z-10 bg-gradient-to-r from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 border-r-transparent">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 flex-shrink-0"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 flex-shrink-0"></span>
+                      </span>
+                      熱門推薦：
                     </div>
 
-                    {/* 右側毛玻璃微型微調箭頭 */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (destsScrollRef.current) {
-                          destsScrollRef.current.scrollBy({ left: 160, behavior: "smooth" });
-                        }
-                      }}
-                      className="absolute -right-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-0 group-hover/dests-row:opacity-100 hover:scale-105 ios-press cursor-pointer hidden md:flex"
-                      aria-label="往右捲動建議"
-                    >
-                      <ChevronRight size={12} strokeWidth={3} />
-                    </button>
+                    {/* 跑馬燈容器 */}
+                    <div className="flex animate-marquee w-max py-1">
+                      {/* 第一組 */}
+                      <div className="flex items-center gap-2 pr-2 shrink-0">
+                        {HOT_DESTINATIONS.map((dest) => (
+                          <button
+                            key={`m1-${dest.name}`}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              updateField("to", dest.name);
+                              setShowDestinationPicker(false);
+                              if (typeof triggerHapticFeedback === 'function') {
+                                triggerHapticFeedback([10]);
+                              }
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 transition-all duration-300 hover:-translate-y-0.5 ios-press hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
+                          >
+                            <span className="text-[13px] sm:text-[14px]">{dest.flag}</span>
+                            <span className="tracking-wide">{dest.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* 第二組 (為了無縫循環) */}
+                      <div className="flex items-center gap-2 pr-2 shrink-0" aria-hidden="true">
+                        {HOT_DESTINATIONS.map((dest) => (
+                          <button
+                            key={`m2-${dest.name}`}
+                            type="button"
+                            tabIndex={-1}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              updateField("to", dest.name);
+                              setShowDestinationPicker(false);
+                              if (typeof triggerHapticFeedback === 'function') {
+                                triggerHapticFeedback([10]);
+                              }
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 transition-all duration-300 hover:-translate-y-0.5 ios-press hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
+                          >
+                            <span className="text-[13px] sm:text-[14px]">{dest.flag}</span>
+                            <span className="tracking-wide">{dest.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Date / Return Date row */}

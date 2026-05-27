@@ -980,20 +980,17 @@ async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng
     } catch { /* fall through */ }
   }
 
-  // ── Layer 3 (Safety Fallback): Nominatim ──────────────────────────────────
+  // ── Layer 3 (Safety Fallback): Open-Meteo Geocoding ───────────────────────
   try {
-    let url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ja`;
-    if (biasCoords) {
-      url += `&lat=${biasCoords.lat}&lon=${biasCoords.lng}`;
-    }
-    const apiRes = await fetch(url, { headers: { 'User-Agent': 'RoamJellyApp/1.0' }, signal: AbortSignal.timeout(5000) });
+    let url = `https://geocoding-api.open-meteo.com/v1/search?name=${q}&count=1&language=en`;
+    const apiRes = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (apiRes.ok) {
-      const data = (await apiRes.json()) as Array<{ lat: string; lon: string }>;
-      if (data && data.length > 0) {
-        const lat = parseFloat(data[0].lat);
-        const lon = parseFloat(data[0].lon);
+      const data = await apiRes.json();
+      if (data && data.results && data.results.length > 0) {
+        const lat = parseFloat(data.results[0].latitude);
+        const lon = parseFloat(data.results[0].longitude);
         if (!isNaN(lat) && !isNaN(lon)) {
-          if (isCoordValidForCity(lat, lon, biasCoords, cleanTitle, cleanCity, 'Nominatim')) {
+          if (isCoordValidForCity(lat, lon, biasCoords, cleanTitle, cleanCity, 'Open-Meteo')) {
             return { lat, lng: lon };
           }
         }
@@ -1649,6 +1646,7 @@ async function startServer() {
               depCode: 'TPE',
               arrTime: f.details?.arrival || '13:30',
               arrCode,
+              affiliateUrl: f.affiliate_url || f.affiliateUrl || `https://www.trip.com/flights/`,
             };
           });
         }
@@ -1672,6 +1670,7 @@ async function startServer() {
           depCode: 'TPE',
           arrTime: item.details?.arrival || '12:30',
           arrCode,
+          affiliateUrl: item.affiliate_url || item.affiliateUrl || `https://www.skyscanner.com.tw/`,
         }));
       }
     }
@@ -2441,15 +2440,43 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
     }
     let lat = String(req.query.lat ?? '');
     let lng = String(req.query.lng ?? '');
+    
+    const cacheKey = `cache:weather:${lat}_${lng}_${city}`;
+    if (redisClient) {
+      try {
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+          res.json(JSON.parse(cached));
+          return;
+        }
+      } catch (err) {
+        console.warn('Weather cache read error', err);
+      }
+    }
+
     try {
       if (city && !req.query.lat && !req.query.lng) {
-        const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
-        const geoRes = await fetch(geoUrl, { headers: { 'User-Agent': 'RoamJelly/1.0' } });
-        if (geoRes.ok) {
+        // try open-meteo geocoding first (faster but limited Chinese support)
+        const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en`;
+        const geoRes = await fetch(geoUrl, { signal: AbortSignal.timeout(3000) }).catch(() => null);
+        if (geoRes && geoRes.ok) {
           const geoData = await geoRes.json();
-          if (geoData && geoData.length > 0) {
-            lat = String(geoData[0].lat);
-            lng = String(geoData[0].lon);
+          if (geoData && geoData.results && geoData.results.length > 0) {
+            lat = String(geoData.results[0].latitude);
+            lng = String(geoData.results[0].longitude);
+          }
+        }
+
+        // fallback to nominatim if open-meteo failed to find coordinates
+        if (!lat || !lng) {
+          const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
+          const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'RoamJelly/1.0' }, signal: AbortSignal.timeout(5000) }).catch(() => null);
+          if (nomRes && nomRes.ok) {
+            const nomData = await nomRes.json();
+            if (nomData && nomData.length > 0) {
+              lat = String(nomData[0].lat);
+              lng = String(nomData[0].lon);
+            }
           }
         }
       }
@@ -2468,7 +2495,7 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
       const apiRes = await fetch(url);
       if (!apiRes.ok) throw new Error('open-meteo upstream error');
       const data = (await apiRes.json());
-      res.json({
+      const weatherRes = {
         temp_current: Math.round(data.current?.temperature_2m || 0),
         temp_max: Math.round(data.daily?.temperature_2m_max?.[0] || 0),
         temp_min: Math.round(data.daily?.temperature_2m_min?.[0] || 0),
@@ -2481,7 +2508,13 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
            rain_prob: data.daily.precipitation_probability_max[idx],
            weather_code: data.daily.weather_code[idx]
         })) || []
-      });
+      };
+
+      if (redisClient) {
+        redisClient.setEx(cacheKey, 7200, JSON.stringify(weatherRes)).catch(() => {});
+      }
+
+      res.json(weatherRes);
     } catch {
       res.status(503).json({ status: 'error', message: 'weather service unavailable' });
     }
