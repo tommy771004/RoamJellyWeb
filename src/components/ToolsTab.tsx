@@ -2634,10 +2634,14 @@ function ToolsTabContent() {
   const displayedFlights = useMemo(() => {
     let result = [...flights];
     if (filterMode === "nonstop") {
-      result = result.filter((f) => f.direct || f.stops === 0);
+      // 直飛優先: Filter only direct flights and sort by price
+      result = result.filter((f) => f.direct || f.stops === 0).sort((a, b) => a.price - b.price);
     } else if (filterMode === "filters") {
-      // Just an example filter, e.g., price < 15000
-      result = result.filter((f) => f.price < 15000);
+      // 快速篩選: Exclude overly expensive flights, sort by departure time (or price)
+      result = result.filter((f) => f.price <= 20000).sort((a, b) => a.price - b.price);
+    } else {
+      // 優先推薦: Sort by price as a basic recommendation metric
+      result = result.sort((a, b) => a.price - b.price);
     }
     return result;
   }, [flights, filterMode]);

@@ -27,7 +27,7 @@ export type CustomIconName = typeof CUSTOM_ICONS[number];
 type IconConfig = {
   icon?: LucideIcon;
   emoji?: string;
-  colors: [string, string];
+  colors: readonly [string, string];
 };
 
 const PALETTES = {
