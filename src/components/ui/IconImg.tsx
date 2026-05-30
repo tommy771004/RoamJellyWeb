@@ -1,4 +1,14 @@
 import React from 'react';
+import {
+  Plane, Hotel, Compass, Map as MapIcon, Train, Sun, Tent,
+  Mail, Utensils, Umbrella, Mountain, Bike, Ship, Sailboat,
+  Wifi, Ticket, Heart, Backpack, Martini, Palmtree,
+  Luggage, BookOpen, Camera, Globe, Footprints,
+  Anchor, Binoculars, Telescope, Flame, Bed, Bath,
+  Glasses, Wallet, Key, Bell, Star, Cloud,
+  Zap, Droplet, Snowflake, Thermometer, Calendar,
+  Clock, Gift, Smile, LucideIcon
+} from 'lucide-react';
 
 export const CUSTOM_ICONS = [
   'airplane', 'hotel', 'compass', 'map', 'train', 'sun', 'tent',
@@ -14,153 +24,86 @@ export const CUSTOM_ICONS = [
 
 export type CustomIconName = typeof CUSTOM_ICONS[number];
 
-type IconTone = 'rose' | 'sky' | 'mint' | 'lilac' | 'amber' | 'peach';
-
-const CUSTOM_ICON_EMOJIS: Record<CustomIconName, string> = {
-  airplane: '✈️',
-  hotel: '🏨',
-  compass: '🧭',
-  map: '🗺️',
-  train: '🚆',
-  sun: '☀️',
-  tent: '⛺',
-  postcard: '💌',
-  'food-drink': '🍽️',
-  beach: '🏖️',
-  mountain: '⛰️',
-  bicycle: '🚲',
-  ship: '🚢',
-  wifi: '📶',
-  ticket: '🎫',
-  heart: '❤️',
-  backpack: '🎒',
-  cocktail: '🍹',
-  'palm-tree': '🌴',
-  umbrella: '☂️',
-  suitcase: '🧳',
-  passport: '📘',
-  camera: '📷',
-  globe: '🌍',
-  'hiking-boot': '🥾',
-  'hot-air-balloon': '🎈',
-  lantern: '🏮',
-  'diving-mask': '🤿',
-  surfboard: '🏄',
-  anchor: '⚓',
-  binoculars: '🔭',
-  telescope: '🔭',
-  campfire: '🔥',
-  'sleeping-bag': '🛌',
-  towel: '🧺',
-  sunglasses: '🕶️',
-  hat: '👒',
-  wallet: '👛',
-  key: '🔑',
-  bell: '🔔',
-  star: '⭐',
-  cloud: '☁️',
-  lightning: '⚡',
-  'water-drop': '💧',
-  snowflake: '❄️',
-  thermometer: '🌡️',
-  calendar: '📅',
-  clock: '🕒',
-  gift: '🎁',
-  'roam-jelly': '🍮',
+type IconConfig = {
+  icon?: LucideIcon;
+  emoji?: string;
+  colors: [string, string];
 };
 
-const ICON_THEME_MAP: Partial<Record<CustomIconName, IconTone>> = {
-  airplane: 'rose',
-  hotel: 'sky',
-  compass: 'rose',
-  map: 'mint',
-  train: 'lilac',
-  sun: 'amber',
-  tent: 'mint',
-  postcard: 'lilac',
-  'food-drink': 'rose',
-  beach: 'sky',
-  mountain: 'sky',
-  bicycle: 'rose',
-  ship: 'sky',
-  wifi: 'mint',
-  ticket: 'rose',
-  heart: 'rose',
-  backpack: 'mint',
-  cocktail: 'amber',
-  'palm-tree': 'mint',
-  umbrella: 'rose',
-  suitcase: 'peach',
-  passport: 'lilac',
-  camera: 'sky',
-  globe: 'mint',
-  'hiking-boot': 'peach',
-  'hot-air-balloon': 'amber',
-  lantern: 'amber',
-  'diving-mask': 'lilac',
-  surfboard: 'sky',
-  anchor: 'sky',
-  binoculars: 'lilac',
-  telescope: 'lilac',
-  campfire: 'peach',
-  'sleeping-bag': 'mint',
-  towel: 'rose',
-  sunglasses: 'sky',
-  hat: 'amber',
-  wallet: 'lilac',
-  key: 'amber',
-  bell: 'amber',
-  star: 'rose',
-  cloud: 'sky',
-  lightning: 'amber',
-  'water-drop': 'sky',
-  snowflake: 'sky',
-  thermometer: 'sky',
-  calendar: 'lilac',
-  clock: 'rose',
-  gift: 'rose',
-  'roam-jelly': 'sky',
-};
+const PALETTES = {
+  snow: ['rgba(0,179,255,0.5)', 'rgba(255,0,0,0.5)'],
+  sunset: ['rgba(24,170,0,0.5)', 'rgba(255,153,0,0.5)'],
+  boat: ['rgba(255,153,0,0.5)', 'rgba(99,228,197,0.5)'],
+  rainbow: ['rgba(0,116,252,0.5)', 'rgba(255,0,107,0.5)'],
+  flower: ['rgba(255,0,138,0.5)', 'rgba(24,170,0,0.5)'],
+  rain: ['rgba(0,255,240,0.5)', 'rgba(255,184,0,0.5)'],
+  kite: ['rgba(219,255,0,0.5)', 'rgba(228,99,99,0.5)'],
+  tree: ['rgba(0,163,255,0.5)', 'rgba(99,228,127,0.5)'],
+  mountain: ['rgba(0,179,255,0.5)', 'rgba(255,138,0,0.5)'],
+  balloon: ['rgba(66,255,0,0.5)', 'rgba(228,99,99,0.5)'],
+  luggage: ['rgba(24,170,0,0.5)', 'rgba(255,0,46,0.5)'],
+  map: ['rgba(255,122,0,0.5)', 'rgba(218,99,228,0.5)'],
+  beach: ['rgba(0,102,255,0.5)', 'rgba(228,99,122,0.5)'],
+  van: ['rgba(235,0,255,0.5)', 'rgba(102,228,99,0.5)'],
+  cruise: ['rgba(255,0,162,0.5)', 'rgba(0,217,255,0.5)'],
+  earth: ['rgba(0,208,255,0.5)', 'rgba(0,255,55,0.5)'],
+  camera: ['rgba(242,0,255,0.5)', 'rgba(255,247,0,0.5)'],
+  tower: ['rgba(255,0,0,0.5)', 'rgba(255,119,0,0.5)'],
+  moon: ['rgba(85,0,255,0.5)', 'rgba(0,209,255,0.5)'],
+  bike: ['rgba(242,0,255,0.5)', 'rgba(255,247,0,0.5)'],
+} as const;
 
-const GLASS_BASE = 'rgba(255,255,255,0.4)';
-
-const ICON_THEME_STYLES: Record<IconTone, { tint: string; tintSoft: string; glow: string; emojiGlow: string }> = {
-  rose: {
-    tint: '#ffd9df',
-    tintSoft: '#ffb1c2',
-    glow: '0 12px 30px rgba(156, 63, 89, 0.16)',
-    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(156, 63, 89, 0.16))',
-  },
-  sky: {
-    tint: '#c7e7ff',
-    tintSoft: '#a3cce9',
-    glow: '0 12px 30px rgba(58, 99, 124, 0.15)',
-    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(58, 99, 124, 0.16))',
-  },
-  mint: {
-    tint: '#b1efd8',
-    tintSoft: '#96d3bd',
-    glow: '0 12px 30px rgba(44, 105, 86, 0.14)',
-    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(44, 105, 86, 0.14))',
-  },
-  lilac: {
-    tint: '#efe5ff',
-    tintSoft: '#e4d5ff',
-    glow: '0 12px 30px rgba(140, 116, 188, 0.15)',
-    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(140, 116, 188, 0.16))',
-  },
-  amber: {
-    tint: '#fff0c9',
-    tintSoft: '#ffd69b',
-    glow: '0 12px 30px rgba(214, 161, 76, 0.16)',
-    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(214, 161, 76, 0.16))',
-  },
-  peach: {
-    tint: '#ffe0d4',
-    tintSoft: '#f6d9bd',
-    glow: '0 12px 30px rgba(188, 141, 116, 0.14)',
-    emojiGlow: 'drop-shadow(0 1px 0 rgba(255,255,255,0.92)) drop-shadow(0 6px 12px rgba(188, 141, 116, 0.14))',
-  },
+const ICON_CONFIG_MAP: Record<CustomIconName, IconConfig> = {
+  airplane: { icon: Plane, colors: PALETTES.snow },
+  hotel: { icon: Hotel, colors: PALETTES.sunset },
+  compass: { icon: Compass, colors: PALETTES.boat },
+  map: { icon: MapIcon, colors: PALETTES.map },
+  train: { icon: Train, colors: PALETTES.van },
+  sun: { icon: Sun, colors: PALETTES.sunset },
+  tent: { icon: Tent, colors: PALETTES.tower },
+  postcard: { icon: Mail, colors: PALETTES.kite },
+  'food-drink': { icon: Utensils, colors: PALETTES.flower },
+  beach: { icon: Umbrella, colors: PALETTES.beach },
+  mountain: { icon: Mountain, colors: PALETTES.mountain },
+  bicycle: { icon: Bike, colors: PALETTES.bike },
+  ship: { icon: Ship, colors: PALETTES.cruise },
+  wifi: { icon: Wifi, colors: PALETTES.rainbow },
+  ticket: { icon: Ticket, colors: PALETTES.kite },
+  heart: { icon: Heart, colors: PALETTES.flower },
+  backpack: { icon: Backpack, colors: PALETTES.luggage },
+  cocktail: { icon: Martini, colors: PALETTES.beach },
+  'palm-tree': { icon: Palmtree, colors: PALETTES.tree },
+  umbrella: { icon: Umbrella, colors: PALETTES.rain },
+  suitcase: { icon: Luggage, colors: PALETTES.luggage },
+  passport: { icon: BookOpen, colors: PALETTES.map },
+  camera: { icon: Camera, colors: PALETTES.camera },
+  globe: { icon: Globe, colors: PALETTES.earth },
+  'hiking-boot': { icon: Footprints, colors: PALETTES.mountain },
+  'hot-air-balloon': { emoji: '🎈', colors: PALETTES.balloon },
+  lantern: { emoji: '🏮', colors: PALETTES.sunset },
+  'diving-mask': { emoji: '🤿', colors: PALETTES.beach },
+  surfboard: { emoji: '🏄', colors: PALETTES.boat },
+  anchor: { icon: Anchor, colors: PALETTES.cruise },
+  binoculars: { icon: Binoculars, colors: PALETTES.tree },
+  telescope: { icon: Telescope, colors: PALETTES.moon },
+  campfire: { icon: Flame, colors: PALETTES.sunset },
+  'sleeping-bag': { icon: Bed, colors: PALETTES.moon },
+  towel: { emoji: '🧺', colors: PALETTES.rain },
+  sunglasses: { icon: Glasses, colors: PALETTES.sunset },
+  hat: { emoji: '👒', colors: PALETTES.kite },
+  wallet: { icon: Wallet, colors: PALETTES.camera },
+  key: { icon: Key, colors: PALETTES.map },
+  bell: { icon: Bell, colors: PALETTES.bike },
+  star: { icon: Star, colors: PALETTES.moon },
+  cloud: { icon: Cloud, colors: PALETTES.rainbow },
+  lightning: { icon: Zap, colors: PALETTES.rain },
+  'water-drop': { icon: Droplet, colors: PALETTES.rain },
+  snowflake: { icon: Snowflake, colors: PALETTES.snow },
+  thermometer: { icon: Thermometer, colors: PALETTES.sunset },
+  calendar: { icon: Calendar, colors: PALETTES.kite },
+  clock: { icon: Clock, colors: PALETTES.moon },
+  gift: { icon: Gift, colors: PALETTES.flower },
+  'roam-jelly': { emoji: '🍮', colors: PALETTES.rainbow },
 };
 
 export function isCustomIcon(value: string): boolean {
@@ -173,103 +116,70 @@ interface IconImgProps {
   className?: string;
 }
 
-const IconImg: React.FC<IconImgProps> = ({ value, size = 24, className = '' }) => {
+const IconImg: React.FC<IconImgProps> = ({ value, size = 24, className = "" }) => {
   if (isCustomIcon(value)) {
-    const iconKey = value as CustomIconName;
-    const tone = ICON_THEME_MAP[iconKey] ?? 'sky';
-    const theme = ICON_THEME_STYLES[tone];
-    const shellSize = Math.max(14, size);
-    const hasGlassShell = shellSize >= 17;
-    const borderRadius = shellSize >= 36 ? 16 : shellSize >= 24 ? 14 : 11;
-    const iconSize = shellSize >= 40 ? Math.round(shellSize * 0.56) : shellSize >= 24 ? Math.round(shellSize * 0.6) : Math.round(shellSize * 0.72);
-    const shellInset = shellSize >= 36 ? 1.5 : 1.25;
-    const topHighlightWidth = shellSize * 0.46;
-    const topHighlightHeight = shellSize * 0.26;
-    const glyph = CUSTOM_ICON_EMOJIS[iconKey] ?? '✈️';
-
-    if (!hasGlassShell) {
-      return (
-        <span
-          className={`inline-flex shrink-0 select-none items-center justify-center ${className}`}
-          style={{
-            width: shellSize,
-            height: shellSize,
-            fontSize: Math.max(12, iconSize),
-            lineHeight: 1,
-            filter: `${theme.emojiGlow} saturate(0.94) brightness(0.98)`,
-          }}
-        >
-          <span style={{ transform: 'translateY(-0.5px)' }}>{glyph}</span>
-        </span>
-      );
-    }
+    const config = ICON_CONFIG_MAP[value as CustomIconName];
+    const IconComponent = config.icon;
+    const [color1, color2] = config.colors;
+    
+    const auraSize = Math.max(size * 0.55, 12);
+    const blurRadius = Math.max(size * 0.125, 2);
 
     return (
-      <span
-        className={`relative inline-flex shrink-0 select-none items-center justify-center overflow-hidden ${className}`}
-        style={{
-          width: shellSize,
-          height: shellSize,
-          borderRadius,
-          border: '1.5px solid transparent',
-          background: `linear-gradient(180deg, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0.18) 100%) padding-box, linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.12) 100%) border-box, radial-gradient(circle at 24% 18%, ${theme.tint} 0%, ${theme.tintSoft} 38%, ${GLASS_BASE} 100%) border-box`,
-          boxShadow: `${theme.glow}, inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -10px 18px rgba(255,255,255,0.16)`,
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-        }}
+      <div 
+        className={`relative inline-flex shrink-0 items-center justify-center ${className}`}
+        style={{ width: size, height: size }}
       >
-        <span
+        {/* Aura 1 - Top Right */}
+        <div 
+          className="absolute rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen"
+          style={{
+            width: auraSize,
+            height: auraSize,
+            top: "12%",
+            right: "10%",
+            background: color1,
+            filter: `blur(${blurRadius}px)`,
+          }}
           aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: shellInset,
-            borderRadius: Math.max(borderRadius - 2, 8),
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.10) 100%)',
-          }}
         />
-        <span
+        {/* Aura 2 - Bottom Left */}
+        <div 
+          className="absolute rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen"
+          style={{
+            width: auraSize,
+            height: auraSize,
+            bottom: "12%",
+            left: "10%",
+            background: color2,
+            filter: `blur(${blurRadius}px)`,
+          }}
           aria-hidden="true"
-          style={{
-            position: 'absolute',
-            left: shellSize * 0.12,
-            top: shellSize * 0.1,
-            width: topHighlightWidth,
-            height: topHighlightHeight,
-            borderRadius: 999,
-            background: 'rgba(255,255,255,0.62)',
-            filter: 'blur(3px)',
-            opacity: 0.95,
-          }}
         />
-        <span
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            right: shellSize * 0.1,
-            bottom: shellSize * 0.12,
-            width: shellSize * 0.34,
-            height: shellSize * 0.24,
-            borderRadius: 999,
-            background: `${theme.tint}55`,
-            filter: 'blur(8px)',
-            opacity: 0.72,
-          }}
-        />
-        <span
-          className="relative z-10 inline-flex items-center justify-center"
-          style={{
-            fontSize: Math.max(12, iconSize),
-            lineHeight: 1,
-            transform: shellSize >= 32 ? 'translateY(-1px)' : 'translateY(-0.5px)',
-            filter: `${theme.emojiGlow} saturate(0.95) brightness(0.99)`,
-          }}
-        >
-          {glyph}
-        </span>
-      </span>
+        
+        {IconComponent ? (
+          <IconComponent 
+            size={Math.max(14, size * 0.75)} 
+            strokeWidth={1.5} 
+            className="relative z-10 text-slate-800 dark:text-slate-100 drop-shadow-sm" 
+          />
+        ) : (
+          <span
+            className="relative z-10 select-none"
+            style={{
+              fontSize: Math.max(12, Math.round(size * 0.75)),
+              lineHeight: 1,
+              filter: "grayscale(20%) drop-shadow(0 1px 1px rgba(0,0,0,0.1))"
+            }}
+          >
+            {config.emoji}
+          </span>
+        )}
+      </div>
     );
   }
 
+  // Fallback for raw emoji or text
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center select-none ${className}`}
@@ -278,7 +188,6 @@ const IconImg: React.FC<IconImgProps> = ({ value, size = 24, className = '' }) =
         height: size,
         fontSize: Math.max(12, Math.round(size * 0.78)),
         lineHeight: 1,
-        filter: 'drop-shadow(0 1px 1px rgba(255,255,255,0.85))',
       }}
     >
       {value}
