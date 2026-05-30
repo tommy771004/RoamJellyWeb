@@ -386,10 +386,11 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
           );
 
           if (tripInfoData.destination) {
-            const weatherData = await fetchWeather(
-              tripInfoData.destination,
-            ).catch(() => null);
-            if (weatherData) setWeather(weatherData);
+            fetchWeather(tripInfoData.destination)
+              .then((weatherData) => {
+                if (weatherData) setWeather(weatherData);
+              })
+              .catch(() => null);
           }
         }
 
@@ -2558,14 +2559,14 @@ export default function ToolsTab() {
 import GoogleFormsCard from "./GoogleFormsCard";
 
 function ToolsTabContent() {
-  const { activeTripId, setActiveTab } = useAppStore();
+  const { activeTripId, setActiveTab, openRedirectModal } = useAppStore();
   const {
     state: { loading, checklist, destination, settlements, tripInfo, weather, tip },
   } = useToolsTabContext();
   const [flights, setFlights] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
-  const [filterMode, setFilterMode] = useState<"best" | "filters" | "nonstop">(
+  const [filterMode, setFilterMode] = useState<"best" | "cheapest" | "nonstop">(
     "best",
   );
   const [activeInfoCard, setActiveInfoCard] = useState<InfoPeekContent | null>(null);
@@ -2633,11 +2634,23 @@ function ToolsTabContent() {
 
   const displayedFlights = useMemo(() => {
     let result = [...flights];
-    if (filterMode === "nonstop") {
-      result = result.filter((f) => f.direct || f.stops === 0);
-    } else if (filterMode === "filters") {
-      // Just an example filter, e.g., price < 15000
-      result = result.filter((f) => f.price < 15000);
+    if (filterMode === "cheapest") {
+      result = result.sort((a, b) => a.price - b.price);
+    } else if (filterMode === "nonstop") {
+      // 直飛優先: Filter direct first, then sort by price
+      result = result.sort((a, b) => {
+        const aStops = a.direct || a.stops === 0 ? 0 : 1;
+        const bStops = b.direct || b.stops === 0 ? 0 : 1;
+        if (aStops !== bStops) return aStops - bStops;
+        return a.price - b.price;
+      });
+    } else {
+      // 優先推薦: Sort by early departure time as a 'best' recommendation if prices are similar
+      result = result.sort((a, b) => {
+        const timeA = a.depTime || "23:59";
+        const timeB = b.depTime || "23:59";
+        return timeA.localeCompare(timeB);
+      });
     }
     return result;
   }, [flights, filterMode]);
@@ -3053,18 +3066,18 @@ function ToolsTabContent() {
               優先推薦
             </button>
             <button
-              onClick={() => setFilterMode("filters")}
-              className={cn(filterButtonClass(filterMode === "filters"), "group flex shrink-0 items-center gap-2 backdrop-blur-md")}
+              onClick={() => setFilterMode("cheapest")}
+              className={cn(filterButtonClass(filterMode === "cheapest"), "group flex shrink-0 items-center gap-2 backdrop-blur-md")}
             >
               <SlidersHorizontal
                 size={16}
                 className={
-                  filterMode === "filters"
+                  filterMode === "cheapest"
                     ? "text-sky-600"
                     : "text-slate-500 group-hover:text-sky-600"
                 }
               />
-              快速篩選
+              價格最低
             </button>
             <button
               onClick={() => setFilterMode("nonstop")}
@@ -3136,7 +3149,7 @@ function ToolsTabContent() {
                             />
                           </div>
                           <span className="text-[12px] text-slate-500 dark:text-slate-350 font-bold tracking-[0.14em] uppercase">
-                            Direct • {flight.duration}
+                            {flight.direct || flight.stops === 0 ? "Direct" : `${flight.stops} Stop${flight.stops > 1 ? 's' : ''}`} • {flight.duration}
                           </span>
                         </div>
                       </div>
@@ -3172,7 +3185,24 @@ function ToolsTabContent() {
                       </div>
                     </div>
 
-                    <button className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ios-press hover:-translate-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_8px_16px_rgba(217,70,239,0.20)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_12px_24px_rgba(217,70,239,0.26)]">
+                    <button
+                      onClick={() => {
+                        openRedirectModal({
+                          provider: "Skyscanner",
+                          affiliateUrl: flight.affiliateUrl || flight.affiliate_url,
+                          itemId: flight.id || `flight-${idx}`,
+                          airline: flight.airline,
+                          departure: `${flight.depTime} ${flight.depCode}`,
+                          arrival: `${flight.arrTime} ${flight.arrCode}`,
+                          duration: flight.duration,
+                          stops: flight.stops,
+                          price: flight.price,
+                          currency: flight.currency || "TWD",
+                          emoji: "✈️",
+                        });
+                      }}
+                      className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ios-press hover:-translate-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_8px_16px_rgba(217,70,239,0.20)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_12px_24px_rgba(217,70,239,0.26)]"
+                    >
                       查看航班詳情
                     </button>
                   </GlassCard>
@@ -3182,7 +3212,18 @@ function ToolsTabContent() {
                 {activities.map((item, idx) => (
                   <GlassCard
                     key={`klook-${idx}`}
-                    className="!p-3.5 sm:!p-4 flex flex-row gap-3 sm:gap-3 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group border border-white/92"
+                    onClick={() => {
+                      openRedirectModal({
+                        provider: "Klook",
+                        affiliateUrl: item.affiliateUrl || "https://www.klook.com/",
+                        itemId: `klook-${idx}`,
+                        airline: item.title,
+                        price: item.price,
+                        currency: "TWD",
+                        emoji: "🎫",
+                      });
+                    }}
+                    className="!p-3.5 sm:!p-4 flex flex-row gap-3 sm:gap-3 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group border border-white/92 cursor-pointer"
                   >
                     <div className="relative w-[98px] sm:w-[118px] h-full shrink-0 overflow-hidden rounded-[18px] sm:rounded-[22px]">
                       <img
