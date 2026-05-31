@@ -248,7 +248,7 @@ export default function CalendarView({
             <button
               onClick={() => setSelectedNodeId(null)}
               aria-label="關閉詳細內容"
-              className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-200 text-slate-500 hover:text-slate-600 transition-colors shadow-sm cursor-pointer border border-slate-200/50"
+              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-50 hover:bg-slate-200 text-slate-500 hover:text-slate-600 transition-colors shadow-sm cursor-pointer border border-slate-200/50"
             >
               <X size={16} strokeWidth={3} />
             </button>
@@ -291,7 +291,7 @@ export default function CalendarView({
                       }
                       title="開始導航"
                       aria-label="開始導航"
-                      className="inline-flex items-center justify-center p-[2px] w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-full shadow-sm text-sm"
+                      className="inline-flex size-11 items-center justify-center p-[2px] bg-blue-500 hover:bg-blue-600 rounded-full shadow-sm text-sm shrink-0"
                     >
                       🧭
                     </button>

@@ -10,7 +10,7 @@ export function Card({
     <div
       ref={ref}
       className={cn(
-        'rounded-[2.5rem] border-2 border-white/60 bg-white/40 backdrop-blur-3xl text-on-surface shadow-[0_8px_40px_rgba(0,0,0,0.06)] overflow-hidden transition-all duration-500',
+        'rounded-3xl border-2 border-white/60 bg-white/40 backdrop-blur-3xl text-on-surface shadow-[0_8px_40px_rgba(0,0,0,0.06)] overflow-hidden transition-all duration-500',
         className
       )}
       {...props}

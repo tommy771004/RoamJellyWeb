@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
 import { MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from 'react-leaflet';
@@ -248,7 +248,7 @@ export default function ItineraryMapView({
                   </div>
                   {selectedNode.description && <p className="text-[12px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{selectedNode.description}</p>}
                 </div>
-                <button onClick={() => setSelectedId(null)} aria-label="關閉景點詳情" className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
+                <button onClick={() => setSelectedId(null)} aria-label="關閉景點詳情" className="flex size-11 items-center justify-center rounded-full bg-slate-50 text-slate-500 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                   <X size={14} strokeWidth={3} />
                 </button>
               </GlassCard>

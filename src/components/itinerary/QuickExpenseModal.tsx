@@ -135,7 +135,7 @@ export default function QuickExpenseModal({
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
-          className="relative w-full max-w-lg rounded-[36px] bg-white/90 dark:bg-slate-950/80 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-2xl dark:shadow-black/50 z-alert-above overflow-hidden flex flex-col max-h-90dvh"
+          className="relative w-full max-w-lg rounded-[32px] bg-white/90 dark:bg-slate-950/80 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-2xl dark:shadow-black/50 z-alert-above overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 z-10" />
           <form
@@ -248,7 +248,7 @@ export default function QuickExpenseModal({
             <button
               type="submit"
               disabled={submitting}
-              className="w-full mt-2 rounded-[20px] bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-4 font-black text-sm uppercase tracking-[0.18em] shadow-lg hover:opacity-90 transition-all disabled:opacity-50 flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4"
+              className="w-full mt-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-4 font-black text-sm uppercase tracking-[0.18em] shadow-lg hover:opacity-90 transition-all disabled:opacity-50 flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4"
             >
               {submitting && (
                 <Loader2 size={16} className="animate-spin shrink-0" />

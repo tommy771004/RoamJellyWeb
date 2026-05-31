@@ -140,14 +140,11 @@ export const MultiSelectPill: React.FC<{
   accentColor?: "indigo" | "emerald" | "rose" | "blue" | "amber";
 }> = ({ label, selected, onClick, accentColor = "indigo" }) => {
   const selectedClasses: Record<string, string> = {
-    indigo:
-      "bg-indigo-50 border-indigo-200 text-indigo-700 shadow-[0_2px_10px_-3px_rgba(99,102,241,0.2)]",
-    emerald:
-      "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-[0_2px_10px_-3px_rgba(16,185,129,0.2)]",
-    rose: "bg-rose-50 border-rose-200 text-rose-700 shadow-[0_2px_10px_-3px_rgba(244,63,94,0.2)]",
-    blue: "bg-blue-50 border-blue-200 text-blue-700 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)]",
-    amber:
-      "bg-amber-50 border-amber-200 text-amber-900 shadow-[0_2px_10px_-3px_rgba(245,158,11,0.2)]",
+    indigo: "bg-indigo-100 border-indigo-300 text-indigo-800 dark:bg-indigo-950/80 dark:border-indigo-500/50 dark:text-indigo-300 dark:shadow-[inset_-3px_-3px_6px_rgba(0,0,0,0.4),inset_3px_3px_6px_rgba(129,140,248,0.25)]",
+    emerald: "bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-950/80 dark:border-emerald-500/50 dark:text-emerald-300 dark:shadow-[inset_-3px_-3px_6px_rgba(0,0,0,0.4),inset_3px_3px_6px_rgba(52,211,153,0.25)]",
+    rose: "bg-rose-100 border-rose-300 text-rose-800 dark:bg-rose-950/80 dark:border-rose-500/50 dark:text-rose-300 dark:shadow-[inset_-3px_-3px_6px_rgba(0,0,0,0.4),inset_3px_3px_6px_rgba(251,113,133,0.25)]",
+    blue: "bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-950/80 dark:border-blue-500/50 dark:text-blue-300 dark:shadow-[inset_-3px_-3px_6px_rgba(0,0,0,0.4),inset_3px_3px_6px_rgba(96,165,250,0.25)]",
+    amber: "bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-950/80 dark:border-amber-500/50 dark:text-amber-300 dark:shadow-[inset_-3px_-3px_6px_rgba(0,0,0,0.4),inset_3px_3px_6px_rgba(251,191,36,0.25)]",
   };
 
   const ringClasses: Record<string, string> = {
@@ -161,10 +158,10 @@ export const MultiSelectPill: React.FC<{
   return (
     <button
       onClick={onClick}
-      className={`min-h-[42px] px-3.5 sm:px-4.5 py-2.5 rounded-[22px] text-[12px] sm:text-[14px] font-bold transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press relative overflow-hidden flex items-center justify-center gap-2 border ${
+      className={`min-h-[42px] px-3.5 sm:px-4.5 py-2.5 rounded-[20px] text-[12px] sm:text-[14px] font-bold transition-all duration-[200ms] relative overflow-hidden flex items-center justify-center gap-2 ${
         selected
-          ? `${selectedClasses[accentColor]} ring-2 ${ringClasses[accentColor]} ring-offset-1 -translate-y-0.5`
-          : "bg-white/78 backdrop-blur-md text-slate-600 hover:bg-white hover:text-slate-900 border-white/80 shadow-[0_8px_18px_rgba(15,23,42,0.05)] hover:shadow-[0_10px_20px_rgba(15,23,42,0.07)] hover:-translate-y-0.5 hover:border-slate-200"
+          ? `${selectedClasses[accentColor]} translate-y-[2px] !shadow-[3px_3px_0_rgba(15,23,42,0.08),inset_2px_2px_4px_rgba(0,0,0,0.06)] dark:!shadow-[3px_3px_0_rgba(2,6,23,0.4),inset_2px_2px_4px_rgba(0,0,0,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.08)] border-[3px]`
+          : "clay-btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-white/80 dark:border-white/20"
       }`}
     >
       {selected && <Check size={16} strokeWidth={3} className="shrink-0" />}
@@ -382,7 +379,7 @@ export default function AiForm({
                         }));
                       }}
                       title="交換出發地與目的地"
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white/94 text-sky-500 hover:text-sky-600 shadow-md transition-all hover:scale-110 ios-press cursor-pointer group"
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/80 bg-white/94 text-sky-500 hover:text-sky-600 shadow-md transition-all hover:scale-110 ios-press cursor-pointer group"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -743,13 +740,13 @@ export default function AiForm({
                   <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                     <button
                       onClick={handleBack}
-                      className="h-14 w-full shrink-0 rounded-full border border-white/84 bg-white/86 px-6 text-[14px] font-bold text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 ios-press sm:h-[3.8rem] sm:w-auto"
+                      className="h-14 w-full shrink-0 rounded-2xl border border-white/84 bg-white/86 px-6 text-[14px] font-bold text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 ios-press sm:h-[3.8rem] sm:w-auto"
                     >
                       返回
                     </button>
                     <button
                       onClick={handleSubmit}
-                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 rounded-full border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[0_16px_36px_rgba(244,63,94,0.4)] ios-press sm:h-[3.8rem] sm:text-[15px]"
+                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 clay-btn bg-gradient-to-r from-sky-400 to-blue-500 text-[14px] font-black tracking-[0.08em] text-white ios-press sm:h-[3.8rem] sm:text-[15px]"
                     >
                       生成行程
                       <Sparkles

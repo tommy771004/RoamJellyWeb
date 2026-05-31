@@ -1,0 +1,20 @@
+295 title: "旅伴同步協作",
+1166 addNotification("協作者刪除了一個行程節點");
+1174 addNotification("協作者更新了一個行程節點");
+1178 addNotification(`協作者新增了「${node.title ?? "行程節點"}」`);
+1216 `${data?.userName ?? "旅伴"} 正在編輯這個景點，請稍後再試。`,
+2050 showToast("AI 規劃失敗，請確認 OpenRouter API Key 是否設定。");
+2089 title="選擇行程專案，集中管理所有行程與協作內容"
+2180 先確立行程骨幹，方便在手機上快速瀏覽與編輯。
+2992 正在編輯第 {safeSelectedDay} 天的景點
+3794 alt={collaborator.name ?? "協作者"}
+4256 `${collaboratingLock.userName} 取得了編輯權限。`,
+4292 `${collaboratingLock.userName} 正在編輯這個景點。`,
+4431 useAppStore.getState().showToast?.(`✨ 已重新規劃此景點節點！已即時同步予共編協作者...`, "success");
+4434 useAppStore.getState().showToast?.("AI 替換景點失敗，請確認網路連線或 OpenRouter 金鑰設定。", "warning");
+4586 {item.time || "設定時間"}
+4626 {collaboratingLock.userName} 編輯中
+4702 title="編輯此節點"
+4703 aria-label="編輯此節點"
+4874 點擊卡片編輯行程細節或備註...
+5018 編輯行程節點

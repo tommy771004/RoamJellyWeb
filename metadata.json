@@ -2,6 +2,6 @@
   "name": "RoamJelly",
   "description": "A travel planning and itinerary management application.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
 

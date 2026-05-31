@@ -56,7 +56,7 @@ export default function RedirectModal({
         <div className="relative">
           <div className="absolute -inset-1 rounded-[40px] bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-amber-300 blur-[18px] opacity-[0.1]"></div>
           
-          <GlassCard className="relative items-center !p-0 border border-white/48 shadow-[0_18px_44px_rgba(15,23,42,0.15)] bg-white/72 backdrop-blur-[26px] rounded-t-[32px] rounded-b-[26px] sm:rounded-[38px] overflow-hidden">
+          <GlassCard className="relative items-center !p-0 border border-white/48 shadow-[0_18px_44px_rgba(15,23,42,0.15)] bg-white/72 backdrop-blur-[26px] rounded-[32px] sm:rounded-[32px] overflow-hidden">
             <div className="flex justify-center pt-1.5 sm:hidden bg-white/36">
               <div className="h-1.5 w-9 rounded-full bg-slate-300/78" />
             </div>
@@ -66,14 +66,14 @@ export default function RedirectModal({
                   {airlineInitial}
                 </div>
                 <div className="flex flex-col">
-                  <span className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] leading-none text-slate-500">航空公司與平台</span>
+                  <span className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] leading-none text-sky-600">Affiliate Link Out</span>
                   <span className="text-[18px] sm:text-[20px] font-black tracking-[-0.03em] text-slate-800 leading-none">{airline || provider}</span>
                 </div>
               </div>
               <div className="flex flex-col items-end">
                 <div className="mb-1 flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-emerald-500">
                   <ShieldCheck size={12} strokeWidth={3} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.08em]">官方驗證</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.08em]">官方安全手記</span>
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{provider}</span>
               </div>
@@ -111,7 +111,7 @@ export default function RedirectModal({
                 </div>
               </div>
 
-              <div className="mb-6 flex flex-col gap-3 rounded-[24px] border border-white/88 bg-white/86 p-4 shadow-[0_10px_22px_rgba(15,23,42,0.06)]">
+              <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-white/88 bg-white/86 p-4 shadow-[0_10px_22px_rgba(15,23,42,0.06)]">
                 <div className="flex items-center justify-between">
                   <span className="text-[13px] text-slate-500">機票票價 (1名成人)</span>
                   <span className="text-[13px] font-bold tabular-nums text-slate-700">
@@ -139,14 +139,21 @@ export default function RedirectModal({
                 <p className="-mt-1 text-[10px] text-slate-500">* 費用僅供參考，以訂票頁面為準</p>
               </div>
 
+              <div className="mb-5 rounded-2xl border border-sky-100 bg-sky-50/50 p-4 flex items-start gap-3 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8)] backdrop-blur-md">
+                <ShieldCheck size={18} className="text-sky-500 shrink-0 mt-0.5" strokeWidth={2.4} />
+                <p className="text-[11px] leading-[1.62] text-sky-800 font-bold font-sans">
+                  Safety Guarantee: All bookings remain encrypted under partner agency policies. Clickout logged for support.
+                </p>
+              </div>
+
               <div className="flex w-full flex-col space-y-3.5">
                 <button
                   onClick={onConfirm}
-                  className={`group relative flex w-full items-center justify-center overflow-hidden rounded-[22px] border-none bg-slate-900 py-4 shadow-[0_16px_28px_rgba(15,23,42,0.16)] hover:bg-slate-800 ${subtlePressableClass}`}
+                  className={`group relative flex w-full items-center justify-center overflow-hidden rounded-[22px] border-none bg-gradient-to-r from-orange-500 to-amber-500 py-4 shadow-[0_12px_28px_rgba(249,115,22,0.18)] hover:from-orange-600 hover:to-orange-500 transition-all ${subtlePressableClass}`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <span className="relative z-10 flex items-center gap-2.5 whitespace-nowrap text-[16px] font-black tracking-[0.04em] text-white">
-                    立即前往預訂 <ArrowRight size={18} strokeWidth={3} className="shrink-0 transition-transform group-hover:translate-x-1" />
+                    Proceed to Booking Partner <ArrowRight size={18} strokeWidth={3} className="shrink-0 transition-transform group-hover:translate-x-1" />
                   </span>
                 </button>
                 
@@ -160,9 +167,9 @@ export default function RedirectModal({
                   </button>
                   <button
                     onClick={onClose}
-                    className={`flex-1 rounded-[20px] border border-slate-100 bg-slate-50 py-3.5 whitespace-nowrap hover:bg-slate-100 ${subtlePressableClass}`}
+                    className={`flex-1 rounded-[20px] border border-sky-200/90 bg-sky-50/15 text-sky-700 py-3.5 whitespace-nowrap hover:bg-sky-50 transition-all ${subtlePressableClass}`}
                   >
-                    <span className="text-[14px] font-bold text-slate-500">暫時關閉</span>
+                    <span className="text-[14px] font-bold">Decline and Return</span>
                   </button>
                 </div>
               </div>

@@ -1646,7 +1646,7 @@ async function startServer() {
               depCode: 'TPE',
               arrTime: f.details?.arrival || '13:30',
               arrCode,
-              affiliateUrl: f.affiliate_url || f.affiliateUrl || `https://www.trip.com/flights/`,
+              affiliateUrl: f.affiliate_url || `https://www.trip.com/flights/`,
             };
           });
         }
@@ -1670,7 +1670,7 @@ async function startServer() {
           depCode: 'TPE',
           arrTime: item.details?.arrival || '12:30',
           arrCode,
-          affiliateUrl: item.affiliate_url || item.affiliateUrl || `https://www.skyscanner.com.tw/`,
+          affiliateUrl: item.affiliate_url || `https://www.skyscanner.com.tw/`,
         }));
       }
     }

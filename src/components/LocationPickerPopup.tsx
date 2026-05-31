@@ -84,7 +84,7 @@ export const LocationPickerPopup = ({
               <button 
                 onClick={onClose}
                 aria-label="關閉"
-                className={`flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 ios-press transition-all ${isKeyboardOpen ? 'h-8 w-8' : 'h-9 w-9 md:h-10 md:w-10'}`}
+                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 ios-press transition-all"
               >
                 <X size={isKeyboardOpen ? 18 : 20} className="text-slate-500" strokeWidth={2.5} />
               </button>

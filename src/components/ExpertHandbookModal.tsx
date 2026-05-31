@@ -73,7 +73,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
-            className="relative flex max-h-modal-dvh w-full flex-col overflow-hidden rounded-t-[32px] sm:rounded-[40px] border border-white/72 dark:border-white/10 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(30,41,59,0.98),rgba(15,23,42,0.96),rgba(2,6,23,0.94))] shadow-[0_28px_64px_rgba(15,23,42,0.16)] dark:shadow-[0_28px_64px_rgba(0,0,0,0.6)] sm:max-w-3xl sm:rounded-[36px] md:max-w-4xl outline-none"
+            className="relative flex max-h-modal-dvh w-full flex-col overflow-hidden rounded-t-[32px] sm:rounded-[32px] border border-white/72 dark:border-white/10 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(30,41,59,0.98),rgba(15,23,42,0.96),rgba(2,6,23,0.94))] shadow-[0_28px_64px_rgba(15,23,42,0.16)] dark:shadow-[0_28px_64px_rgba(0,0,0,0.6)] sm:max-w-3xl sm:rounded-[32px] md:max-w-4xl outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

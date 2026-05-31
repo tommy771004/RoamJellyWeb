@@ -139,7 +139,7 @@ export default function BottomTabs() {
                     {isActive && (
                       <motion.div
                         layoutId="tab-pill"
-                        className="absolute inset-0 bg-white dark:bg-slate-800 rounded-full -z-10 shadow-[0_2px_12px_-2px_rgba(244,114,182,0.18)] dark:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.2)] border border-pink-50 dark:border-pink-900/30"
+                        className="absolute inset-0 bg-white dark:bg-slate-800 rounded-[20px] -z-10 clay-btn border-pink-100 dark:border-slate-700"
                         transition={prefersReducedMotion ? { duration: 0.12 } : PILL_SPRING}
                       />
                     )}

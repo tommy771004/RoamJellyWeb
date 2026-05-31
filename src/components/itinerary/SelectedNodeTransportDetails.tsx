@@ -130,7 +130,7 @@ export default function SelectedNodeTransportDetails({
     >
       <div className="flex items-start gap-3">
         <div
-          className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 ${
+          className={`flex size-11 items-center justify-center rounded-full bg-white shadow-sm shrink-0 ${
             hasTransitConflict ? "text-red-500" : "text-indigo-500"
           }`}
         >

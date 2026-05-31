@@ -256,7 +256,7 @@ function FlightCard({
             <div className="flex items-center gap-2.5">
               <AirlineLogo
                 providerName={providerName}
-                className="w-8 h-8 rounded-lg text-sm"
+                className="w-11 h-11 rounded-lg text-sm"
               />
               <div className="flex flex-col">
                 <span className="text-[13px] font-bold tracking-tight text-slate-900 dark:text-white">
@@ -288,7 +288,7 @@ function FlightCard({
                   onToggleSave(e);
                 }}
                 aria-label={isSaved ? "取消收藏" : "收藏航班"}
-                className={`w-8 h-8 rounded-full flex justify-center items-center ${subtlePressableClass} ${
+                className={`w-11 h-11 rounded-full flex justify-center items-center ${subtlePressableClass} ${
                   isSaved
                     ? "bg-pink-100 text-pink-600"
                     : "bg-slate-100/80 text-slate-500 hover:bg-pink-50 hover:text-pink-500"
@@ -484,7 +484,7 @@ function FlightTable({
             role="button"
             tabIndex={0}
             aria-label={`查看 ${providerName} 航班 ${flight.details?.depCode || ""} → ${flight.details?.arrCode || ""} ${flight.currency} ${flight.price}`}
-            className="group relative bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden cursor-pointer shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_32px_-8px_rgba(15,23,42,0.12)] hover:border-sky-300 dark:hover:border-sky-700 transition-all duration-300"
+            className="group relative bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden cursor-pointer shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-[0_12px_32px_-8px_rgba(15,23,42,0.12)] hover:border-sky-300 dark:hover:border-sky-700 transition-all duration-300"
             onClick={() => onPress(flight)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -639,7 +639,7 @@ function FlightTable({
                       onToggleSave(e, flight.id);
                     }}
                     aria-label={isSaved ? "取消收藏" : "收藏航班"}
-                    className={`h-8 w-8 rounded flex items-center justify-center transition-colors border ${
+                    className={`h-11 w-11 rounded-full flex items-center justify-center transition-colors border ${
                       isSaved
                         ? "bg-rose-50 border-rose-100 text-rose-500"
                         : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-400 hover:text-rose-500"
@@ -2213,7 +2213,7 @@ export default function HomeTab({
                     ? ` · ↩ ${searchForm.returnDate}`
                     : ""}
                 </span>
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-md">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-md">
                   <SearchIcon size={13} strokeWidth={3} />
                 </div>
               </button>
@@ -2499,7 +2499,7 @@ export default function HomeTab({
                   chipsScrollContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
                 }
               }}
-              className="absolute left-[-10px] md:left-[-16px] z-30 flex items-center justify-center w-8 h-8 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 ios-press"
+              className="absolute left-[-10px] md:left-[-16px] z-30 flex items-center justify-center w-11 h-11 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 ios-press"
               aria-label="往左捲動"
             >
               <ChevronLeft size={16} strokeWidth={3} />
@@ -2696,7 +2696,7 @@ export default function HomeTab({
                   chipsScrollContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
                 }
               }}
-              className="absolute right-[-10px] md:right-[-16px] z-30 flex items-center justify-center w-8 h-8 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 ios-press"
+              className="absolute right-[-10px] md:right-[-16px] z-30 flex items-center justify-center w-11 h-11 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 ios-press"
               aria-label="往右捲動"
             >
               <ChevronRight size={16} strokeWidth={3} />
@@ -3228,7 +3228,7 @@ export default function HomeTab({
 
             {/* Sorting Tabs  */}
             {results.length > 0 && !loading && viewType === "table" && (
-              <div className="flex items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-1 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 w-full overflow-hidden shrink-0 mt-2 mb-4">
+              <div className="flex items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-1 rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 w-full overflow-hidden shrink-0 mt-2 mb-4">
                 {(["recommended", "cheapest", "fastest"] as const).map((s) => (
                   <button
                     key={s}
@@ -4507,7 +4507,7 @@ function PortfolioSection() {
               <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-[18px] shadow-sm border border-slate-100 dark:border-slate-600 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform duration-300">
                 {item.icon}
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-900/50 flex items-center justify-center text-slate-300 group-hover:bg-sky-50 group-hover:text-sky-500 transition-colors">
+              <div className="w-11 h-11 rounded-full bg-slate-50 dark:bg-slate-900/50 flex items-center justify-center text-slate-300 group-hover:bg-sky-50 group-hover:text-sky-500 transition-colors">
                 <ExternalLink size={14} strokeWidth={2.5} />
               </div>
             </div>

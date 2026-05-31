@@ -6,16 +6,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#0284c7",
-        secondary: "#10b981", 
-        accent: "#f97316",
-        cta: "#fb923c",
-        background: "#f8fafc",
-        text: "#0f172a",
+        primary: "#0ea5e9", /* Vibrant Sky Blue */
+        secondary: "#10b981", /* Vibrant Emerald Green */
+        accent: "#f97316", /* Warm Amber Orange */
+        cta: "#0ea5e9",
+        background: "#0f172a", /* Deep Charcoal */
+        text: "#f8fafc", /* Soft White for dark theme */
+        clay: {
+          peach: "#FDBCB4", /* Soft Peach */
+          sky: "#ADD8E6", /* Baby Blue */
+          mint: "#B9F6CA", /* Soft Mint — calmer than neon #98FF98 for contrast */
+          lilac: "#E6E6FA", /* Lilac */
+          ink: "#334155", /* slate-700 — soft warm-dark text for clay surfaces */
+        },
       },
       fontFamily: {
-        heading: ["Nunito", "sans-serif"],
-        body: ["Noto Sans TC", "sans-serif"],
+        heading: ["Space Grotesk", "sans-serif"],
+        body: ["Inter", "sans-serif"],
+        display: ["Space Grotesk", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       spacing: {
         xs: "0.25rem",

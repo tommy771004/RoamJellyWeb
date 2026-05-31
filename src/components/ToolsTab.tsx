@@ -1,4 +1,5 @@
 import React, { createContext, use, useEffect, useMemo, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine, Cell } from "recharts";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import {
   CloudRain,
@@ -826,11 +827,11 @@ function WeatherCard({ className }: { className?: string }) {
 
       <div className="relative z-10">
         <div className="mb-5 flex flex-wrap items-center gap-2 pt-4 sm:pt-0">
-          <span className="inline-flex items-center rounded-full border border-sky-200 bg-white/82 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-sky-700 shadow-sm">
+          <span className="clay-badge clay-sky uppercase tracking-[0.16em]">
             天氣明信片
           </span>
           {destination ? (
-            <span className="inline-flex items-center rounded-full border border-orange-100 bg-orange-50/90 px-3 py-1 text-[11px] font-black text-orange-700 shadow-sm">
+            <span className="clay-badge clay-peach">
               {destination}
             </span>
           ) : null}
@@ -885,7 +886,7 @@ function WeatherCard({ className }: { className?: string }) {
         </div>
 
         <div className="bg-white/70 dark:bg-slate-800/70 rounded-[24px] sm:rounded-[28px] p-3 flex items-center gap-4 border border-white/70 shadow-sm mb-4 sm:mb-5">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-2xl bg-white/86 flex items-center justify-center shadow-inner border border-white shrink-0 group-hover:-translate-y-0.5 transition-transform duration-200">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] sm:rounded-3xl bg-white/86 flex items-center justify-center shadow-inner border border-white shrink-0 group-hover:-translate-y-0.5 transition-transform duration-200">
             <GlowingIcon icon={Sparkles} size={18} glowColor="bg-sky-400" iconColor="text-sky-600" />
           </div>
           <div className="flex flex-col">
@@ -1141,7 +1142,7 @@ function ChecklistSection({ className }: { className?: string }) {
                       <motion.label
                         layout
                         key={item.id}
-                        className={`flex items-center gap-4 group p-3.5 min-h-[56px] rounded-2xl border transition-all ${
+                        className={`flex items-center gap-4 group p-3.5 min-h-[56px] rounded-3xl border transition-all ${
                           isOffline
                             ? "opacity-50 cursor-not-allowed border-slate-100 bg-slate-50/50"
                             : item.checked
@@ -1326,7 +1327,7 @@ function ChecklistSection({ className }: { className?: string }) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-4 bg-white/60 rounded-2xl p-4 border border-pink-100 flex flex-col gap-3 font-sans opacity-95"
+              className="mt-4 bg-white/60 rounded-3xl p-4 border border-pink-100 flex flex-col gap-3 font-sans opacity-95"
             >
               <div className="flex items-center gap-2">
                 <Loader2 size={16} className="text-pink-500 animate-spin" />
@@ -1380,7 +1381,7 @@ function ChecklistSection({ className }: { className?: string }) {
                     <div
                       key={idx}
                       onClick={() => togglePreviewSelect(idx)}
-                      className={`flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer select-none min-h-[50px] ${
+                      className={`flex items-center gap-3 p-3 rounded-3xl border transition-all cursor-pointer select-none min-h-[50px] ${
                         item.selected
                           ? "border-pink-200 bg-pink-50/20 hover:bg-pink-50/35"
                           : "border-slate-100 bg-transparent opacity-60 hover:opacity-100 hover:bg-slate-50/50"
@@ -1749,7 +1750,7 @@ function LedgerSection({ className }: { className?: string }) {
                     exit={{ opacity: 0, height: 0 }}
                     className="overflow-hidden border-t border-slate-100 pt-3 mt-1"
                   >
-                    <div className="bg-slate-50/70 rounded-2xl p-4 border border-slate-100 flex flex-col gap-3">
+                    <div className="bg-slate-50/70 rounded-3xl p-4 border border-slate-100 flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-[9px] font-black text-slate-400 tracking-widest leading-none">正在檢視</div>
@@ -2026,6 +2027,22 @@ function SettlementsSection({ className }: { className?: string }) {
     return groups;
   }, [settlements]);
 
+  const currencyKeys = Object.keys(settlementsByCurrency);
+  const [activeCurrencyIdx, setActiveCurrencyIdx] = useState(0);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (activeCurrencyIdx >= currencyKeys.length) {
+      setActiveCurrencyIdx(Math.max(0, currencyKeys.length - 1));
+    }
+  }, [currencyKeys.length, activeCurrencyIdx]);
+
   // Helper for computing member totals and debt breakdown
   const getMemberStats = (member: string, currency: string) => {
     const filtered = expenses.filter((e) => e.currency === currency && !e.clearedAt);
@@ -2099,8 +2116,69 @@ function SettlementsSection({ className }: { className?: string }) {
           )}
 
           {settlements.length > 0 &&
-            Object.entries(settlementsByCurrency).map(([currency, currencySettlements]) => (
+            Object.entries(settlementsByCurrency).map(([currency, currencySettlements], idx) => {
+              if (isMobile && idx !== activeCurrencyIdx) return null;
+
+              const memberNames = new Set<string>();
+              expenses.filter(e => e.currency === currency && !e.clearedAt).forEach(e => {
+                memberNames.add(e.payer);
+                if (e.splitWith) e.splitWith.forEach(m => memberNames.add(m));
+              });
+              const chartData = Array.from(memberNames).map(member => {
+                const stats = getMemberStats(member, currency);
+                return { name: member, balance: stats.net };
+              }).sort((a, b) => b.balance - a.balance);
+
+              return (
               <div key={currency} className="flex flex-col gap-3">
+                {/* Visual Currency Chart */}
+                <motion.div 
+                  className="w-full h-[220px] mb-8 mt-4 editorial-card-soft rounded-3xl p-4 overflow-hidden relative cursor-grab active:cursor-grabbing"
+                  drag={isMobile ? "x" : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  dragDirectionLock
+                  onDragEnd={(e, info) => {
+                    if (!isMobile) return;
+                    if (info.offset.x < -30 && activeCurrencyIdx < currencyKeys.length - 1) {
+                      setActiveCurrencyIdx(prev => prev + 1);
+                    } else if (info.offset.x > 30 && activeCurrencyIdx > 0) {
+                      setActiveCurrencyIdx(prev => prev - 1);
+                    }
+                  }}
+                >
+                  <div className="flex justify-between items-center mb-2 px-1">
+                    <h4 className="text-sm font-black text-slate-800 font-display">{currency} Balance Overview</h4>
+                    {isMobile && currencyKeys.length > 1 && (
+                      <div className="flex items-center gap-1.5">
+                        {currencyKeys.map((_, i) => (
+                          <span key={i} className={`h-1.5 rounded-full transition-all ${i === activeCurrencyIdx ? 'w-3 bg-slate-700' : 'w-1.5 bg-slate-200'}`} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <ResponsiveContainer width="100%" height="85%">
+                    <BarChart
+                      data={chartData}
+                      layout="vertical"
+                      margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+                    >
+                      {!isMobile && <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(148, 163, 184, 0.2)" />}
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 13, fontWeight: 'bold'}} width={65} />
+                      <Tooltip cursor={{fill: 'rgba(255,255,255,0.4)'}} contentStyle={{borderRadius: '16px', border: 'none', background: 'rgba(15,23,42,0.9)', color: '#fff'}} />
+                      <ReferenceLine x={0} stroke="#94a3b8" strokeWidth={isMobile ? 1 : 2} />
+                      <Bar dataKey="balance" radius={[0, 6, 6, 0]}>
+                        {
+                          chartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.balance > 0 ? '#10b981' : '#f43f5e'} />
+                          ))
+                        }
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </motion.div>
+
                 {/* Visual Currency Banner/Header */}
                 <div className="flex items-center gap-2 mb-1 px-1 mt-2 first:mt-0">
                   <span className="w-1.5 h-3.5 rounded bg-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,0.3)] shrink-0" />
@@ -2147,7 +2225,7 @@ function SettlementsSection({ className }: { className?: string }) {
                           <div className="flex items-center gap-2.5 flex-wrap">
                             {/* Debtor */}
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200/40 flex items-center justify-center text-slate-600 font-black text-sm shadow-sm">
+                              <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200/40 flex items-center justify-center text-slate-600 font-black text-sm shadow-sm">
                                 {settlement.from?.charAt(0) || "?"}
                               </div>
                               <span className="text-[14px] sm:text-[15px] font-bold text-slate-800">
@@ -2162,7 +2240,7 @@ function SettlementsSection({ className }: { className?: string }) {
 
                             {/* Creditor */}
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100/40 flex items-center justify-center text-emerald-600 font-black text-sm shadow-sm">
+                              <div className="w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100/40 flex items-center justify-center text-emerald-600 font-black text-sm shadow-sm">
                                 {settlement.to?.charAt(0) || "?"}
                               </div>
                               <span className="text-[13px] text-slate-500 font-medium px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100">
@@ -2247,7 +2325,7 @@ function SettlementsSection({ className }: { className?: string }) {
                                       雙方在此幣別無直接墊付/對拆之花費（此項目為簡化債務所產生的結算額）。
                                     </p>
                                   ) : (
-                                    <div className="flex flex-col gap-2.5 bg-slate-50/40 p-3 rounded-2xl border border-slate-200/35">
+                                    <div className="flex flex-col gap-2.5 bg-slate-50/40 p-3 rounded-3xl border border-slate-200/35">
                                       {contributing.map((exp) => {
                                         const totalSplitters = exp.splitWith?.length || 1;
                                         const shareAmount = Number(exp.amount || 0) / totalSplitters;
@@ -2285,7 +2363,7 @@ function SettlementsSection({ className }: { className?: string }) {
 
                                 {/* Debt simplification tip (if sums don't match) */}
                                 {!isDirectSumMatch && (
-                                  <div className="flex items-start gap-1.5 p-3 rounded-2xl bg-amber-50/50 border border-amber-100/50 text-amber-700/90 text-xs leading-relaxed">
+                                  <div className="flex items-start gap-1.5 p-3 rounded-3xl bg-amber-50/50 border border-amber-100/50 text-amber-700/90 text-xs leading-relaxed">
                                     <AlertCircle size={13} className="shrink-0 mt-0.5 text-amber-600" />
                                     <div>
                                       此債務經果凍漫遊已<strong>自動簡化 (Debt Simplification)</strong>優化。此金額已整合其他旅伴之應收帳款，因此最終付款金額非單純直接花費之和，能大幅減少所有成員轉帳次數！
@@ -2296,7 +2374,7 @@ function SettlementsSection({ className }: { className?: string }) {
                                 {/* 2. Personal math balances */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-1">
                                   {/* Debtor Info */}
-                                  <div className="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/35 flex flex-col gap-1">
+                                  <div className="bg-slate-50/60 p-3.5 rounded-3xl border border-slate-200/35 flex flex-col gap-1">
                                     <span className="text-[9.5px] font-black text-slate-400 uppercase tracking-widest">
                                       付款人財務狀況 ・ {settlement.from}
                                     </span>
@@ -2324,7 +2402,7 @@ function SettlementsSection({ className }: { className?: string }) {
                                   </div>
 
                                   {/* Creditor Info */}
-                                  <div className="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/35 flex flex-col gap-1">
+                                  <div className="bg-slate-50/60 p-3.5 rounded-3xl border border-slate-200/35 flex flex-col gap-1">
                                     <span className="text-[9.5px] font-black text-slate-400 uppercase tracking-widest">
                                       收款人財務狀況 ・ {settlement.to}
                                     </span>
@@ -2360,7 +2438,8 @@ function SettlementsSection({ className }: { className?: string }) {
                   })}
                 </div>
               </div>
-            ))}
+            );
+          })}
         </div>
       </GlassCard>
     </section>
@@ -2406,7 +2485,7 @@ function SettlementHistorySection({ className }: { className?: string }) {
               onClick={() => setExpandedId(isExpanded ? null : entry.clearedAt)}
             >
               <div className="flex items-center gap-4 w-full">
-                <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+                <div className="w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
                   <CheckCircle2 size={18} className="text-emerald-500" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -2460,7 +2539,7 @@ function SettlementHistorySection({ className }: { className?: string }) {
                           無對應花費明細紀錄。
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-2 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 p-3 dark-transition">
+                        <div className="flex flex-col gap-2 rounded-3xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 p-3 dark-transition">
                           {matchingExpenses.map((exp) => (
                             <div key={exp.id} className="flex items-center justify-between text-[13px] py-1 border-b border-dashed border-slate-100 last:border-0">
                               <div className="flex flex-col">
@@ -2757,14 +2836,14 @@ function ToolsTabContent() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setActiveTab("ai_form")}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-b from-sky-400 to-sky-600 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-sky-400 to-sky-600 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
                 >
                   <Sparkles size={18} strokeWidth={2.5} />
                   直接交給 AI 開始規劃
                 </button>
                 <button
                   onClick={() => setActiveTab("home")}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-slate-200/60 bg-white/70 px-6 py-3 text-[14px] font-black text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)]"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border-2 border-slate-200/60 bg-white/70 px-6 py-3 text-[14px] font-black text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)]"
                 >
                   先回首頁看流程
                 </button>
@@ -2830,7 +2909,7 @@ function ToolsTabContent() {
                   },
                 ].map(({ icon: Icon, title, subtitle, description, details, tone }, index) => (
                   <div key={title} className="flex items-start gap-3 rounded-[24px] border border-white/10 bg-white/10 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md">
-                    <div className="flex size-11 items-center justify-center rounded-2xl bg-white/12 text-sky-200 shadow-inner">
+                    <div className="flex size-11 items-center justify-center rounded-3xl bg-white/12 text-sky-200 shadow-inner">
                       <Icon size={17} strokeWidth={2.4} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -3101,7 +3180,7 @@ function ToolsTabContent() {
                 <GlassCard className="!p-6 flex flex-col h-[280px] animate-pulse">
                   <div className="flex justify-between items-start mb-8">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-slate-200 rounded-2xl"></div>
+                      <div className="w-12 h-12 bg-slate-200 rounded-3xl"></div>
                       <div className="w-24 h-6 bg-slate-200 rounded-md"></div>
                     </div>
                     <div className="w-20 h-8 bg-slate-200 rounded-md"></div>
@@ -3135,7 +3214,7 @@ function ToolsTabContent() {
                   >
                     <div className="flex justify-between items-start mb-4.5">
                       <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-10 h-10 sm:w-11 sm:h-11 bg-fuchsia-50 text-fuchsia-500 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <div className="w-11 h-11 sm:w-11 sm:h-11 bg-fuchsia-50 text-fuchsia-500 rounded-3xl flex items-center justify-center group-hover:scale-105 transition-transform">
                           <Plane className="w-6 h-6 transform -rotate-45" />
                         </div>
                         <div className="flex flex-col">

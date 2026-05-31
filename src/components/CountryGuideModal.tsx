@@ -117,7 +117,7 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
                 href={place.guideUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-white border border-slate-200 hover:bg-slate-100 hover:border-slate-300 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all shadow-sm group-hover:shadow"
+                className="flex size-11 items-center justify-center rounded-full bg-white border border-slate-200 hover:bg-slate-100 hover:border-slate-300 text-slate-500 hover:text-slate-700 transition-all shadow-sm group-hover:shadow shrink-0"
               >
                 <ExternalLink size={14} />
               </a>

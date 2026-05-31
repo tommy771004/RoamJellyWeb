@@ -191,9 +191,15 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
   const HeroIcon = previewContent.icon;
 
   return (
-    <div
-      className="relative flex-1 w-full overflow-y-auto overflow-x-hidden bg-gradient-to-tr from-slate-50 via-[#fdfcfd] to-sky-50/50 dark:bg-gradient-to-br dark:from-[#030712] dark:via-slate-950 dark:to-[#0f172a] transition-colors duration-500"
-    >
+    <div className="relative flex-1 w-full overflow-y-auto overflow-x-hidden bg-gradient-to-tr from-slate-50 via-[#fdfcfd] to-sky-50/50 dark:bg-gradient-to-br dark:from-[#030712] dark:via-slate-950 dark:to-[#0f172a] transition-colors duration-500">
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          className="absolute top-4 right-4 z-50 flex h-[34px] w-[34px] items-center justify-center rounded-full bg-slate-900/5 dark:bg-white/10 text-slate-500 dark:text-slate-400 backdrop-blur-md transition-all hover:bg-slate-900/10 dark:hover:bg-white/20"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      )}
       {/* Drifting backdrop spheres with variable speeds and directions */}
       <div className="pointer-events-none absolute top-[-10%] left-[-15%] h-[36rem] w-[36rem] rounded-full bg-sky-200/35 dark:bg-sky-500/5 blur-[120px] animate-cute-bounce [animation-duration:18s]" />
       <div className="pointer-events-none absolute right-[-10%] top-[10%] h-[30rem] w-[30rem] rounded-full bg-pink-200/40 dark:bg-fuchsia-500/5 blur-[110px] animate-cute-bounce [animation-delay:3s] [animation-duration:22s]" />
@@ -230,65 +236,25 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
                 </p>
 
-                <div className="mt-4 overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.045]">
-                  <button
-                    type="button"
-                    onClick={() => setIsPreviewItemsExpanded(v => !v)}
-                    className="flex w-full items-center justify-between gap-2 border-b border-white/8 px-3.5 py-2.5 text-left"
-                    aria-expanded={isPreviewItemsExpanded}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full bg-sky-300" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-orange-300" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
-                      <span className="ml-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">{previewContent.panelLabel}</span>
-                    </div>
-                    <ChevronDown
-                      size={15}
-                      strokeWidth={2.5}
-                      className={`text-slate-400 transition-transform duration-200 ${isPreviewItemsExpanded ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                  <div className={`space-y-2.5 ${isPreviewItemsExpanded ? 'p-3.5' : 'hidden'}`}>
-                    {previewContent.items.map((item) => (
-                      <div key={`${item.label}-${item.title}`} className="rounded-[20px] border border-white/10 bg-white/[0.05] px-3.5 py-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">{item.label}</div>
-                            <div className="mt-1 text-[14px] font-black tracking-[-0.03em] text-white">{item.title}</div>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setActivePreviewInfo({
-                                  eyebrow: `${previewContent.panelLabel} · ${item.label}`,
-                                  title: item.title,
-                                  description: item.meta,
-                                  details: buildPreviewDetails(contextLabel || '快速體驗', item),
-                                  tone: getPreviewTone(item.toneClass),
-                                  icon: HeroIcon,
-                                })
-                              }
-                              className={`mt-2.5 inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:bg-white/[0.14]`}
-                            >
-                              查看說明
-                              <ArrowRight size={12} strokeWidth={2.6} />
-                            </button>
-                          </div>
-                          <div className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${item.toneClass}`}>
-                            {item.value}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                                {/* Cute replacement for the old accordion */}
+                <div className="mt-5 flex items-center justify-center p-3 sm:p-5 rounded-[22px] border border-white/10 bg-white/5 backdrop-blur-sm">
+                  <div className="text-center space-y-2">
+                    <p className="text-[14px] sm:text-[15px] font-black tracking-wide text-white">
+                      ✨ 點擊體驗，我們直接出發！
+                    </p>
+                    <p className="text-[12px] opacity-80 text-sky-100 font-medium tracking-wide">
+                      (不會留下任何包袱)
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                {guestFirst && (
+              {guestFirst && (
                   <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
                     <button
                       onClick={() => void handleGuestLogin()}
                       disabled={loading}
-                      className={`flex w-full items-center justify-center gap-2 rounded-[20px] border-none bg-white px-5 py-3.5 text-slate-900 shadow-[0_8px_20px_rgba(255,255,255,0.10)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,255,255,0.14)] disabled:opacity-70 sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press`}
+                      className={`flex w-full items-center justify-center gap-2 clay-btn bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-5 py-3.5 disabled:opacity-70 sm:flex-1 transition-all duration-300 ios-press`}
                     >
                       <span className="text-[13px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
                       <ArrowRight size={16} strokeWidth={2.5} />
@@ -309,7 +275,6 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">同步與保存留到下一步</span>
                 </div>
               </div>
-            </div>
           </section>
         )}
 
@@ -475,7 +440,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               <button
                 onClick={() => void handleSubmit()}
                 disabled={loading}
-                className={`flex justify-center items-center py-3.5 mt-2 rounded-[22px] border-none appearance-none cursor-pointer transition-all duration-300 ios-press shadow-[0_12px_24px_rgba(14,165,233,0.18)] dark:shadow-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? 'bg-sky-300 dark:bg-sky-950 text-white/70' : 'bg-gradient-to-r from-sky-500 via-pink-500 to-orange-400 hover:opacity-95'}`}
+                className={`flex justify-center items-center py-3.5 mt-2 clay-btn appearance-none cursor-pointer transition-all duration-300 ios-press focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? "bg-sky-300 dark:bg-sky-950 text-white/70" : "bg-gradient-to-r from-sky-400 to-sky-500 hover:opacity-95"}`}
               >
                 {loading ? (
                   <span className="text-white font-[800]">處理中…</span>

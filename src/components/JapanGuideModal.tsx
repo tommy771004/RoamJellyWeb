@@ -82,7 +82,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
-            className="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,18,30,0.98),rgba(17,20,36,0.96),rgba(12,14,24,0.96))] shadow-[0_28px_64px_rgba(0,0,0,0.32)] sm:max-h-[85vh] sm:max-w-2xl sm:rounded-[30px]"
+            className="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,18,30,0.98),rgba(17,20,36,0.96),rgba(12,14,24,0.96))] shadow-[0_28px_64px_rgba(0,0,0,0.32)] sm:max-h-[85vh] sm:max-w-2xl sm:rounded-[32px]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -105,7 +105,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full bg-white/8 hover:bg-white/16 flex items-center justify-center text-white/60 hover:text-white transition-all"
+                  className="flex size-11 items-center justify-center rounded-full bg-white/8 hover:bg-white/16 text-white/60 hover:text-white transition-all shrink-0"
                 >
                   <X size={15} />
                 </button>

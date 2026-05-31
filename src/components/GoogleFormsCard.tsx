@@ -253,7 +253,7 @@ export default function GoogleFormsCard({ tripId }: { tripId?: string }) {
                         value={f.url} 
                         className="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-2 py-1.5 text-[11px] text-slate-500 outline-none"
                       />
-                      <button onClick={() => copyLink(f.url)} className="p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200">
+                      <button onClick={() => copyLink(f.url)} className="flex size-11 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 ios-press">
                         <Copy size={14} />
                       </button>
                     </div>

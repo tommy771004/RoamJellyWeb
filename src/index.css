@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Noto+Serif+TC:wght@400;700;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Noto+Serif+TC:wght@400;700;900&display=swap");
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
@@ -10,7 +10,7 @@
   --color-secondary: #0ea5e9;
   --color-accent: #f97316;
   --color-cta: #fb923c;
-  --color-background: #f8fafc;
+  --color-background: #0f172a;
   --color-text: #0f172a;
   --color-text-muted: #64748b;
   --color-surface: #ffffff;
@@ -21,17 +21,18 @@
   --color-on-surface: #1b1c1c;
 
   /* Typography */
-  --font-heading: 'Nunito', 'Noto Sans TC', sans-serif;
-  --font-body: 'Noto Sans TC', sans-serif;
-  --font-sans: 'Noto Sans TC', sans-serif;
+  --font-heading: 'Space Grotesk', 'Noto Sans TC', sans-serif;
+  --font-body: 'Inter', 'Noto Sans TC', sans-serif;
+  --font-sans: 'Inter', 'Noto Sans TC', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
   --font-serif: 'Playfair Display', 'Noto Serif TC', serif;
 
   /* Override original font tokens for compatibility */
-  --font-h1: 'Nunito', 'Noto Sans TC', sans-serif;
-  --font-h2: 'Nunito', 'Noto Sans TC', sans-serif;
-  --font-body-lg: 'Noto Sans TC', sans-serif;
-  --font-body-md: 'Noto Sans TC', sans-serif;
-  --font-label-caps: 'Noto Sans TC', sans-serif;
+  --font-h1: 'Space Grotesk', 'Noto Sans TC', sans-serif;
+  --font-h2: 'Space Grotesk', 'Noto Sans TC', sans-serif;
+  --font-body-lg: 'Inter', 'Noto Sans TC', sans-serif;
+  --font-body-md: 'Inter', 'Noto Sans TC', sans-serif;
+  --font-label-caps: 'Inter', 'Noto Sans TC', sans-serif;
 
   /* Fluid type scale (design_exp.md Pattern 2): clamp(min, preferred, max)
    * Range: 320px (mobile) → 1280px (desktop) */
@@ -69,11 +70,17 @@
   --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   --shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.12);
   --shadow-modal: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
+  --shadow-clay: 6px 6px 0 rgba(15, 23, 42, 0.08), inset -2px -2px 4px rgba(0, 0, 0, 0.04), inset 2px 2px 4px rgba(255, 255, 255, 0.8);
+  --shadow-clay-press: 3px 3px 0 rgba(15, 23, 42, 0.08), inset 2px 2px 4px rgba(0, 0, 0, 0.06);
+
+  /* Border */
+  --border-clay: 3px solid rgba(255, 255, 255, 0.7);
 
   /* Border Radius */
   --radius-default: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
+  --radius-clay: 20px;
   --radius-full: 9999px;
   --motion-ios-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -529,16 +536,16 @@ select {
   -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(190%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 
-    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 16px 40px rgba(0, 0, 0, 0.5);
   color: #f8fafc;
 }
 
 .dark .glass-card {
-  background-color: rgba(0, 0, 0, 0.4) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.05) !important;
   color: #f8fafc !important;
 }
 .dark .glass-card::before {
@@ -557,10 +564,10 @@ select {
 
 /* Custom dark mode card overrides for high contrast and consistency */
 .dark .editorial-card, .dark .editorial-card-soft {
-  background-color: rgba(0, 0, 0, 0.4) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.05) !important;
   color: #f8fafc !important;
 }
 
@@ -627,6 +634,171 @@ select {
   transition-duration: 80ms;
   backdrop-filter: blur(var(--glass-blur-strong));
   -webkit-backdrop-filter: blur(var(--glass-blur-strong));
+}
+
+.clay-btn {
+  border-radius: var(--radius-clay);
+  border: var(--border-clay);
+  box-shadow: var(--shadow-clay);
+  transform: translateZ(0);
+  will-change: transform, box-shadow;
+  transition: transform var(--motion-dur-fast) var(--motion-ios-ease), box-shadow var(--motion-dur-fast) var(--motion-ios-ease);
+}
+.clay-btn:hover {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 8px 8px 0 rgba(15, 23, 42, 0.08), inset -2px -2px 4px rgba(0, 0, 0, 0.04), inset 2px 2px 4px rgba(255, 255, 255, 0.8);
+}
+.clay-btn:active {
+  transform: translateY(2px) translateZ(0);
+  box-shadow: var(--shadow-clay-press);
+}
+.dark .clay-btn {
+  background-color: #1e293b !important; /* Premium deep slate-800 as requested */
+  color: #f1f5f9 !important;
+  border: 3px solid rgba(255, 255, 255, 0.18) !important;
+  border-top-color: rgba(255, 255, 255, 0.28) !important;
+  border-left-color: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 
+    6px 6px 0 rgba(2, 6, 23, 0.45),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.4),
+    inset 4px 4px 8px rgba(14, 165, 233, 0.18), /* Beautiful sub-surface glow */
+    inset 2px 2px 4px rgba(255, 255, 255, 0.18) !important;
+}
+.dark .clay-btn:hover {
+  background-color: #334155 !important; /* slate-700 hover for responsiveness */
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 
+    8px 8px 0 rgba(2, 6, 23, 0.5),
+    inset -4px -4px 8px rgba(0, 0, 0, 0.4),
+    inset 4px 4px 8px rgba(14, 165, 233, 0.22),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.25) !important;
+}
+.dark .clay-btn:active {
+  transform: translateY(2px) translateZ(0);
+  box-shadow: 
+    3px 3px 0 rgba(2, 6, 23, 0.5),
+    inset 3px 3px 6px rgba(0, 0, 0, 0.5),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.05) !important;
+}
+
+.clay-toggle {
+  appearance: none;
+  width: 44px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: var(--border-clay);
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.06), 0 2px 4px rgba(15,23,42,0.1);
+  background-color: rgba(241, 245, 249, 0.9);
+  position: relative;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.clay-toggle:checked {
+  background-color: #38bdf8;
+  box-shadow: inset -2px -2px 4px rgba(0,0,0,0.04), inset 2px 2px 4px rgba(255,255,255,0.4), 2px 2px 0 rgba(15,23,42,0.05);
+}
+.clay-toggle::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(15,23,42,0.2);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.clay-toggle:checked::after {
+  transform: translateX(14px);
+}
+.dark .clay-toggle {
+  background-color: rgba(30, 41, 59, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.dark .clay-toggle:checked {
+  background-color: #0284c7;
+}
+
+/* ── Clay colored surfaces ────────────────────────────────────────────────── */
+/* Opaque clay cards/badges. Use as ACCENT only (Tools, Home hero, badges, CTA),
+   not on dense data lists — keep glass/flat there for density + contrast + perf. */
+.clay-surface {
+  border-radius: var(--radius-clay);
+  border: var(--border-clay);
+  box-shadow: var(--shadow-clay);
+  transform: translateZ(0);
+}
+.clay-peach {
+  background: linear-gradient(145deg, #ffd7d1, #fbb4aa);
+  box-shadow: 6px 6px 0 rgba(253, 188, 180, 0.45), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
+}
+.clay-sky {
+  background: linear-gradient(145deg, #cdeaf5, #9bc5d9);
+  box-shadow: 6px 6px 0 rgba(173, 216, 230, 0.5), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
+}
+.clay-mint {
+  background: linear-gradient(145deg, #d2fbe2, #a3ecc0);
+  box-shadow: 6px 6px 0 rgba(185, 246, 202, 0.55), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
+}
+.clay-lilac {
+  background: linear-gradient(145deg, #f1f1fb, #d6d6ea);
+  box-shadow: 6px 6px 0 rgba(230, 230, 250, 0.6), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
+}
+/* Dark mode: deep slate base + sub-surface glow keeps clay "thickness" */
+.dark .clay-peach,
+.dark .clay-sky,
+.dark .clay-mint,
+.dark .clay-lilac,
+.dark .clay-surface {
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border: 3px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 6px 6px 0 rgba(2, 6, 23, 0.45), inset -2px -2px 6px rgba(0, 0, 0, 0.4), inset 2px 2px 5px rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+/* ── Clay status badge — mini inflated bubble ─────────────────────────────── */
+.clay-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.72rem;
+  line-height: 1.1;
+  color: var(--clay-ink, #334155);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.06), inset -1px -1px 2px rgba(0, 0, 0, 0.05), inset 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+.dark .clay-badge {
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 2px 2px 0 rgba(2, 6, 23, 0.45), inset -1px -1px 2px rgba(0, 0, 0, 0.4), inset 1px 1px 2px rgba(255, 255, 255, 0.12);
+}
+
+/* ── Clay input — inset pressed-into-clay field ───────────────────────────── */
+.clay-input {
+  border-radius: var(--radius-lg);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background-color: rgba(248, 250, 252, 0.92);
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.06), inset -3px -3px 6px rgba(255, 255, 255, 0.8);
+  transition: box-shadow var(--motion-dur-fast) var(--motion-ios-ease);
+}
+.clay-input:focus,
+.clay-input:focus-visible {
+  outline: none;
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.08), inset -3px -3px 6px rgba(255, 255, 255, 0.9), 0 0 0 3px rgba(56, 189, 248, 0.35);
+}
+.dark .clay-input {
+  background-color: rgba(15, 23, 42, 0.85);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+}
+.dark .clay-input:focus,
+.dark .clay-input:focus-visible {
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -2px -2px 5px rgba(255, 255, 255, 0.08), 0 0 0 3px rgba(56, 189, 248, 0.4);
 }
 
 .glass-panel {

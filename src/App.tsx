@@ -1,4 +1,4 @@
-﻿import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY, SPRING_MODAL, getTabVariants } from './lib/motionTokens';
+import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY, SPRING_MODAL, getTabVariants } from './lib/motionTokens';
 import { useState, useEffect, useCallback, useRef, lazy, Suspense, type ComponentType } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 const HomeTab = lazy(() => import('./components/HomeTab'));
@@ -198,6 +198,12 @@ export default function App() {
       setActiveTripId(match[1]);
       setActiveTab('itinerary');
     }
+    const handleLoginRequest = () => {
+      setLoginPromptMode('default');
+      setShowLogin(true);
+    };
+    window.addEventListener('request-login', handleLoginRequest);
+    return () => window.removeEventListener('request-login', handleLoginRequest);
   }, [setAuthenticated]);
 
   useEffect(() => {
@@ -313,7 +319,7 @@ export default function App() {
       case 'ai_form':
         return {
           contextLabel: 'AI 旅程規劃',
-          title: '先讓 AI 起草一版旅程，再回到行程慢慢補完',
+          title: '先讓 AI 起草旅程，再回到行程慢慢補完',
           description: '先用訪客身分生成可編輯的第一版旅程，確認方向對了，再登入同步與保存。',
           guestCtaLabel: '先用訪客身分交給 AI',
         };
@@ -383,24 +389,6 @@ export default function App() {
   }
 
   const renderContent = () => {
-    if (showLogin) {
-      const loginCopy = loginPromptMode === 'guest-first' ? getGuestLoginCopy(activeTab) : undefined;
-      return (
-        <LoginScreen
-          onLogin={(id) => {
-            handleLogin(id);
-            setShowLogin(false);
-          }}
-          onCancel={() => {
-            setLoginPromptMode('default');
-            setShowLogin(false);
-            if (activeTab !== 'home') setActiveTab('home');
-          }}
-          guestFirst={loginPromptMode === 'guest-first'}
-          {...loginCopy}
-        />
-      );
-    }
     if (activeTab === 'home') {
       return <HomeTab onRequireLogin={() => {
         setLoginPromptMode('guest-first');
@@ -423,7 +411,7 @@ export default function App() {
             </p>
             <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
+                <div className="flex h-11 w-11 items-center justify-center rounded-3xl bg-slate-900 text-white shadow-sm">
                   <PlaneTakeoff size={18} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
@@ -785,7 +773,7 @@ export default function App() {
           {isLoggedIn && (
             <button
               onClick={() => setShowUserProfile(true)}
-              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full jelly-button ios-press text-orange-400"
+              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-orange-400"
               aria-label="偏好設定"
             >
               <Settings2 size={20} />
@@ -793,7 +781,7 @@ export default function App() {
           )}
           <button
             onClick={() => setDarkMode(!isDarkMode)}
-            className="w-10 h-10 flex items-center justify-center rounded-full jelly-button ios-press text-sky-500"
+            className="w-10 h-10 flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-sky-500"
             aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -801,7 +789,7 @@ export default function App() {
           <div className="relative hidden sm:block">
             <button
               onClick={() => setShowNotifications(v => !v)}
-              className="w-10 h-10 flex items-center justify-center rounded-full jelly-button ios-press text-pink-400 relative"
+              className="w-10 h-10 flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-pink-400 relative"
               aria-label="通知"
               aria-expanded={showNotifications}
             >
@@ -812,7 +800,7 @@ export default function App() {
             </button>
             {showNotifications && (
               <div
-                className="absolute right-0 top-12 w-72 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 z-50 overflow-hidden"
+                className="absolute right-0 top-12 w-72 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/60 z-50 overflow-hidden"
                 role="dialog"
                 aria-label="通知面板"
               >
@@ -871,12 +859,12 @@ export default function App() {
               <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-pink-700' : 'text-slate-600'}`}>
                 {isLoggedIn ? `${userId} 您好` : '未登入'}
               </span>
-              <div className={`relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-[0.97] shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
+              <div className={`relative w-11 h-11 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-[0.97] shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
                 {isLoggedIn ? <UserRound size={17} strokeWidth={2.4} /> : <SparklesIcon size={16} strokeWidth={2.4} />}
               </div>
             </button>
             {showUserMenu && (
-              <div className="absolute right-0 top-[calc(100%+8px)] w-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden flex flex-col py-1">
+              <div className="absolute right-0 top-[calc(100%+8px)] w-40 bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-100 z-50 overflow-hidden flex flex-col py-1">
                 {!isLoggedIn ? (
                   <button
                     onClick={() => {
@@ -936,7 +924,7 @@ export default function App() {
             exit={{ y: -50, opacity: 0 }}
             className="fixed top-[72px] left-0 right-0 w-full z-40 px-4 pt-2 pb-1 pointer-events-none"
           >
-            <div className="max-w-2xl mx-auto bg-red-500/80 dark:bg-red-900/80 backdrop-blur-md rounded-2xl p-2.5 shadow-lg border border-red-400/50 dark:border-red-500/30 flex items-center justify-center gap-2 pointer-events-auto">
+            <div className="max-w-2xl mx-auto bg-red-500/80 dark:bg-red-900/80 backdrop-blur-md rounded-3xl p-2.5 shadow-lg border border-red-400/50 dark:border-red-500/30 flex items-center justify-center gap-2 pointer-events-auto">
               <span className="text-white text-[13px] font-bold tracking-wide">✈️ 目前處於離線狀態，已切換至本機快取模式。</span>
             </div>
           </motion.div>
@@ -946,7 +934,7 @@ export default function App() {
       <div className="flex-1 relative z-10 w-full overflow-hidden flex flex-col">
         <AnimatePresence mode="wait" custom={tabSlideDir}>
           <motion.div
-            key={showLogin ? `login-${loginPromptMode}` : isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
+            key={isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
               enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.984, x: dir * 24 }),
@@ -971,6 +959,34 @@ export default function App() {
       <BottomTabs />
       <PwaInstallPrompt />
       {shouldShowAssistant ? <JellyAssistant /> : null}
+
+      <AnimatePresence>
+        {showLogin && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-2 sm:p-4 backdrop-blur-sm shadow-2xl"
+          >
+            <div className="w-full max-w-[420px] max-h-full overflow-y-auto rounded-[32px] bg-white shadow-xl no-scrollbar overflow-hidden relative">
+              <LoginScreen
+                onLogin={(id) => {
+                  handleLogin(id);
+                  setShowLogin(false);
+                }}
+                onCancel={() => {
+                  setLoginPromptMode('default');
+                  setShowLogin(false);
+                  if (activeTab !== 'home') setActiveTab('home');
+                }}
+                guestFirst={loginPromptMode === 'guest-first'}
+                {...(loginPromptMode === 'guest-first' ? getGuestLoginCopy(activeTab) : {})}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {redirectModal.isOpen && (

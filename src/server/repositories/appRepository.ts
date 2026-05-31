@@ -689,7 +689,7 @@ export class AppRepository {
       });
       return;
     }
-    await this.db.insert(schema.trips).values(data);
+    await this.db.insert(schema.trips).values(data).onConflictDoNothing();
   }
 
   async updateTripPublicState(tripId: string, isPublic: boolean) {
