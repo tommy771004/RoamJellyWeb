@@ -63,6 +63,7 @@ import {
   FileText,
   ChevronUp,
   UserPlus,
+  CreditCard,
 } from "lucide-react";
 import { io, type Socket } from "socket.io-client";
 import GlassCard from "./GlassCard";
@@ -587,6 +588,7 @@ export default function ItineraryTab() {
     openRedirectModal,
     addNotification,
     aiResult,
+    setActiveTab,
   } = useAppStore();
 
   useEffect(() => {
@@ -3582,6 +3584,7 @@ export default function ItineraryTab() {
                     onEditingChange={handleEditingChange}
                     nodeEditingLocks={nodeEditingLocks}
                     onPreviewImage={setPreviewImageUrl}
+                    onRequireLogin={handleEditPermissionCheck}
                   />
 
                   {selectedDayNodes.length > visibleNodeLimit && (
@@ -5454,6 +5457,7 @@ const ReorderableItineraryItem = ({
   onEditingChange,
   nodeEditingLocks,
   onPreviewImage,
+  onRequireLogin,
 }: {
   item: ItineraryNode;
   idx: number;
@@ -5472,6 +5476,7 @@ const ReorderableItineraryItem = ({
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
   nodeEditingLocks?: Record<string, { userName: string; day: number }>;
   onPreviewImage?: (url: string) => void;
+  onRequireLogin?: (itemName?: string) => void;
 }) => {
   const dragControls = useDragControls();
 
@@ -5509,7 +5514,7 @@ const ReorderableItineraryItem = ({
         onEditingChange={onEditingChange}
         collaboratingLock={nodeEditingLocks?.[item.node_id]}
         onPreviewImage={onPreviewImage}
-        onRequireLogin={handleEditPermissionCheck}
+        onRequireLogin={onRequireLogin}
       />
 
       {/* Drag handle for mobile/explicit drag */}
@@ -5565,6 +5570,7 @@ function ItineraryList({
   onEditingChange,
   nodeEditingLocks,
   onPreviewImage,
+  onRequireLogin,
 }: {
   items: ItineraryNode[];
   day: number;
@@ -5589,6 +5595,7 @@ function ItineraryList({
   onEditingChange?: (nodeId: string, day: number, isEditing: boolean) => void;
   nodeEditingLocks?: Record<string, { userName: string; day: number }>;
   onPreviewImage?: (url: string) => void;
+  onRequireLogin?: (itemName?: string) => void;
 }) {
   const [isFavoriteDragOver, setIsFavoriteDragOver] = useState(false);
   const [manualAddTrigger, setManualAddTrigger] = useState(0);
@@ -5889,6 +5896,7 @@ function ItineraryList({
                 onEditingChange={onEditingChange}
                 nodeEditingLocks={nodeEditingLocks}
                 onPreviewImage={onPreviewImage}
+                onRequireLogin={onRequireLogin}
               />
             );
           })}
@@ -6537,4 +6545,3 @@ function readFileAsDataUrl(file: File) {
 }
 
 // ImagePreviewModal helper
-

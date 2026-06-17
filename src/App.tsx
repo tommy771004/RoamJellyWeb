@@ -438,7 +438,8 @@ export default function App() {
           setLoginPromptMode('default');
           setActiveTab('home');
         }}
-        guestFirst={false}
+        guestFirst
+        {...getGuestLoginCopy(activeTab)}
       />;
     }
     if (activeTab === 'ai_form') {

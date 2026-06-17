@@ -195,6 +195,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
       {onCancel && (
         <button
           onClick={onCancel}
+          aria-label="關閉登入視窗"
           className="absolute top-4 right-4 z-50 flex h-[34px] w-[34px] items-center justify-center rounded-full bg-slate-900/5 dark:bg-white/10 text-slate-500 dark:text-slate-400 backdrop-blur-md transition-all hover:bg-slate-900/10 dark:hover:bg-white/20"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -378,6 +379,8 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                           key={emoji}
                           type="button"
                           onClick={() => setAvatar(emoji)}
+                          aria-label={`選擇 ${emoji} 作為旅伴頭像`}
+                          aria-pressed={avatar === emoji}
                           className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all ${avatar === emoji ? 'bg-sky-100/80 dark:bg-sky-950/60 ring-2 ring-sky-400 dark:ring-sky-400 scale-110 shadow-sm' : 'hover:bg-white/40 dark:hover:bg-white/5 hover:scale-105'}`}
                         >
                           {emoji}

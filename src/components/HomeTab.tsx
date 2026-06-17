@@ -1184,17 +1184,15 @@ export default function HomeTab({
   const [activeStoryInfo, setActiveStoryInfo] = useState<InfoPeekContent | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [isHeroIntroCollapsed, setIsHeroIntroCollapsed] = useState<boolean>(true);
-  const [isHeroExpanded, setIsHeroExpanded] = useState<boolean>(
-    () => typeof window !== "undefined" && window.innerWidth >= 768
-  );
+  const [isHeroExpanded, setIsHeroExpanded] = useState<boolean>(true);
   
   const [newsFeed, setNewsFeed] = useState<any[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [destinationAlerts, setDestinationAlerts] = useState<any[]>([
-    { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", price: "載入中...", health: "💚 準備中", advisory: "正在連線取得最新資訊...", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
-    { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", price: "載入中...", health: "💚 準備中", advisory: "正在連線取得最新資訊...", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
-    { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", price: "載入中...", health: "💚 準備中", advisory: "正在連線取得最新資訊...", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
-    { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", price: "載入中...", health: "💚 準備中", advisory: "正在連線取得最新資訊...", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+    { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+    { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+    { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+    { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
   ]);
 
   useEffect(() => {
@@ -2205,7 +2203,9 @@ export default function HomeTab({
               >
                 <PlaneTakeoff size={16} className="shrink-0 text-sky-600" />
                 <span className="flex-1 text-left text-[14px] font-black text-slate-900 truncate">
-                  {searchForm.from || "—"} → {searchForm.to || "—"}
+                  {searchForm.from || searchForm.to
+                    ? `${searchForm.from || "未設定"} → ${searchForm.to || "待挑選"}`
+                    : "規劃一趟新旅程"}
                 </span>
                 <span className="text-[10px] font-bold text-slate-500 shrink-0 truncate max-w-[110px] sm:max-w-[150px]">
                   {searchForm.date}
@@ -2266,7 +2266,7 @@ export default function HomeTab({
                       </span>
                       <input
                         aria-label="出發地"
-                        className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 w-full outline-none focus-visible:outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.from}
                         onFocus={() => {
                           setShowDeparturePicker(true);
@@ -2289,7 +2289,8 @@ export default function HomeTab({
                         updateField("to", tempFrom);
                         triggerHapticFeedback([10]);
                       }}
-                      title="交換"
+                        title="交換"
+                        aria-label="交換出發地與目的地"
                       className="absolute left-1/2 top-1/2 z-20 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] hover:scale-105 ios-press text-slate-400 hover:text-sky-500 transition-all cursor-pointer group"
                     >
                       <PlaneTakeoff
@@ -2314,7 +2315,7 @@ export default function HomeTab({
                       </span>
                       <input
                         aria-label="目的地"
-                        className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 w-full outline-none focus-visible:outline-none leading-none"
+                        className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.to}
                         onFocus={() => {
                           setShowDestinationPicker(true);
@@ -2407,7 +2408,7 @@ export default function HomeTab({
                         去程日期
                       </span>
                       <span
-                        className={`text-[16px] sm:text-[18px] tracking-tight font-black leading-none ${!searchForm.date ? "text-slate-300 dark:text-slate-500" : "text-slate-900 dark:text-white"}`}
+                        className={`text-[16px] sm:text-[18px] tracking-tight font-black leading-none ${!searchForm.date ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-white"}`}
                       >
                         {searchForm.date || "選擇日期"}
                       </span>
@@ -2419,7 +2420,7 @@ export default function HomeTab({
                       aria-label={`回程日期：${searchForm.returnDate || (searchForm.tripType === "oneway" ? "單程（點擊切換來回）" : "尚未選擇")}`}
                       className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-pointer border text-left w-full ${
                         searchForm.tripType === "oneway"
-                          ? "bg-slate-50/30 border-dashed border-slate-200 dark:border-slate-600 opacity-60"
+                          ? "bg-slate-50/50 border-dashed border-slate-200 dark:border-slate-600 opacity-80"
                           : "bg-slate-50/60 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700"
                       } ${searchFieldSurfaceClass}`}
                       onClick={() => {
@@ -2436,7 +2437,7 @@ export default function HomeTab({
                         回程日期
                       </span>
                       <span
-                        className={`text-[16px] sm:text-[18px] tracking-tight font-black leading-none ${!searchForm.returnDate ? "text-slate-300 dark:text-slate-500" : "text-slate-900 dark:text-white"}`}
+                        className={`text-[16px] sm:text-[18px] tracking-tight font-black leading-none ${!searchForm.returnDate ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-white"}`}
                       >
                         {searchForm.returnDate ||
                           (searchForm.tripType === "oneway"
@@ -3595,7 +3596,7 @@ export default function HomeTab({
                                       ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
                                       : handbook.title.includes("大阪")
                                       ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
-                                      : "免等待免登入！專專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
+                                      : "免等待免登入！專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
                                   </p>
 
                                   <div className="flex gap-2 border-t border-white/10 pt-3">
@@ -3688,7 +3689,7 @@ export default function HomeTab({
                                       ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
                                       : handbook.title.includes("大阪")
                                       ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
-                                      : "免等待免登入！專專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
+                                      : "免等待免登入！專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
                                   </p>
 
                                   <div className="flex gap-2 border-t border-white/10 pt-3">
@@ -3866,7 +3867,7 @@ export default function HomeTab({
                                 {trip.title}
                               </h3>
                               <p className="text-[10.5px] line-clamp-2 sm:line-clamp-3 leading-relaxed font-bold text-slate-505 dark:text-slate-300 mt-0.5">
-                                已被複製 {trip.forkCount ?? trip.likes ?? 0} 次。可以直接複製別人的自駕/地鐵行程，一鍵帶走再 remarque！
+                                已被複製 {trip.forkCount ?? trip.likes ?? 0} 次。可以直接複製別人的自駕/地鐵行程，一鍵帶走再調整！
                               </p>
                             </div>
 

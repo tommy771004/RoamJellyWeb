@@ -64,6 +64,7 @@ export async function geocodeSpot(title: string, city = ''): Promise<{ lat: numb
 export async function getDealsFeed({ query = '' }: { query?: string } = {}) {
   try {
     const token = getStoredToken();
+    if (!token) return [];
     const url = query ? `/api/deals/feed?q=${encodeURIComponent(query)}` : '/api/deals/feed';
     const res = await fetch(url, {
       headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
@@ -82,6 +83,7 @@ export async function getDealsFeed({ query = '' }: { query?: string } = {}) {
 export async function getDestinationAlerts() {
   try {
     const token = getStoredToken();
+    if (!token) return [];
     const res = await fetch('/api/destinations/alerts', {
       headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
     });
