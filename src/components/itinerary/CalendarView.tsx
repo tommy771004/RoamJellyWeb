@@ -259,7 +259,7 @@ export default function CalendarView({
               <div className="w-full h-48 bg-slate-100 rounded-[2rem] overflow-hidden shadow-inner border border-white relative group">
                 <img
                   src={selectedNode.image_url}
-                  alt="spot"
+                  alt={selectedNode.title || '景點圖片'}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   referrerPolicy="no-referrer"
                 />

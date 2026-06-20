@@ -2172,7 +2172,7 @@ export default function ItineraryTab() {
                     titleClassName="text-xl sm:text-3xl md:text-5xl"
                     descriptionClassName={`text-sm sm:text-lg font-bold leading-6 sm:leading-8 transition-opacity duration-300 ${isAiHeroExpanded ? "opacity-100" : "opacity-70 group-hover:opacity-100"}`}
                   />
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 dark:text-slate-350 group-hover:bg-slate-100 group-hover:text-slate-600 transition-colors">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500 dark:text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600 transition-colors">
                     <ChevronDown
                       size={20}
                       className={`transition-transform duration-300 ${isAiHeroExpanded ? "rotate-180" : "rotate-0"}`}
@@ -2829,7 +2829,7 @@ export default function ItineraryTab() {
                   </span>
                   <ChevronDown
                     size={16}
-                    className={`text-slate-500 dark:text-slate-350 transition-transform duration-200 shrink-0 ${
+                    className={`text-slate-500 dark:text-slate-400 transition-transform duration-200 shrink-0 ${
                       isFavoritesCollapsed ? "-rotate-90" : ""
                     }`}
                   />
@@ -3036,7 +3036,7 @@ export default function ItineraryTab() {
                   <motion.button
                     onClick={() => setVisibleDaysLimit((l) => l + 14)}
                     whileTap={{ scale: 0.96 }}
-                    className="relative flex items-center justify-center px-4 py-2.5 sm:py-2 rounded-full font-black text-[13px] sm:text-sm text-slate-500 dark:text-slate-300 hover:text-slate-700 bg-white/40 hover:bg-white border border-dashed border-slate-350 transition-all shrink-0 snap-center"
+                    className="relative flex items-center justify-center px-4 py-2.5 sm:py-2 rounded-full font-black text-[13px] sm:text-sm text-slate-500 dark:text-slate-300 hover:text-slate-700 bg-white/40 hover:bg-white border border-dashed border-slate-400 transition-all shrink-0 snap-center"
                   >
                     + 載入更多
                   </motion.button>
@@ -3791,7 +3791,7 @@ export default function ItineraryTab() {
                     </div>
 
                     {showEmojiPicker && (
-                      <div className="flex flex-wrap gap-1.5 p-2 bg-white rounded-xl border border-slate-150 shadow-md overflow-y-auto max-h-[88px] no-scrollbar">
+                      <div className="flex flex-wrap gap-1.5 p-2 bg-white rounded-xl border border-slate-200 shadow-md overflow-y-auto max-h-[88px] no-scrollbar">
                         {EMOJI_OPTIONS.map((em) => (
                           <button
                             key={em}
@@ -4708,7 +4708,7 @@ const ItineraryListItem = React.memo(
           <div className="flex flex-col gap-2 sm:gap-3 w-full">
             <div className="flex items-center justify-between gap-2 mb-0.5">
               <div className="flex items-center gap-1.5">
-                <span className={`text-[9px] font-black uppercase tracking-[0.22em] ${isFlightCard ? "text-slate-300" : isHotelCard ? "text-indigo-200" : "text-slate-500 dark:text-slate-350"}`}>
+                <span className={`text-[9px] font-black uppercase tracking-[0.22em] ${isFlightCard ? "text-slate-300" : isHotelCard ? "text-indigo-200" : "text-slate-500 dark:text-slate-400"}`}>
                   {isFlightCard ? "Transit" : isHotelCard ? "Stay" : "Day Note"}
                 </span>
                   <span
@@ -5102,7 +5102,7 @@ const ItineraryListItem = React.memo(
                 <CollapsibleNotes text={detailCopy} label="NOTES" />
               ) : (
                 <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
-                  <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-350">
+                  <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                     Notes
                   </p>
                   <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity leading-5">
@@ -5701,7 +5701,7 @@ function ItineraryList({
                     >
                       <span>{emoji}</span>
                       <span className="font-bold">D{idx + 1}</span>
-                      <span className="text-slate-500 dark:text-slate-350 font-medium">|</span>
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">|</span>
                       <span>{wVal.temp_min}°-{wVal.temp_max}°</span>
                       <span className="text-blue-400 font-bold ml-0.5">{rainProb}%</span>
                     </div>
@@ -6070,7 +6070,7 @@ function ManualAddNode({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="例如：參觀東京鐵塔"
-                    className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                    className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   />
                 </div>
               </div>
@@ -6089,7 +6089,7 @@ function ManualAddNode({
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                     />
                   </div>
                 </div>
@@ -6106,7 +6106,7 @@ function ManualAddNode({
                       type="time"
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
-                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 font-mono"
+                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 font-mono"
                     />
                   </div>
                 </div>
@@ -6126,7 +6126,7 @@ function ManualAddNode({
                       value={locationName}
                       onChange={(e) => setLocationName(e.target.value)}
                       placeholder="文字輸入地點名稱或地址"
-                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                     />
                   </div>
                   <button
@@ -6148,7 +6148,7 @@ function ManualAddNode({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="補充行程細節、提醒或預約資訊..."
-                  className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 min-h-[92px] resize-y"
+                  className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 min-h-[92px] resize-y"
                 />
               </div>
 
@@ -6161,7 +6161,7 @@ function ManualAddNode({
                     value={transportToNext}
                     onChange={(e) => setTransportToNext(e.target.value)}
                     placeholder="例如：地鐵約 20 分鐘"
-                    className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                    className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   />
                 </div>
                 <div className="flex flex-col gap-3">
@@ -6172,7 +6172,7 @@ function ManualAddNode({
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://images..."
-                    className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                    className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   />
                 </div>
               </div>
@@ -6217,7 +6217,7 @@ function ManualAddNode({
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-5 py-4 font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all appearance-none shadow-sm shadow-slate-100/50 dark:shadow-black/50 h-full"
+                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-5 py-4 font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all appearance-none shadow-sm shadow-slate-100/50 dark:shadow-black/50 h-full"
                     >
                       {CATEGORY_OPTIONS.map((opt) => (
                         <option key={opt} value={opt}>
@@ -6225,7 +6225,7 @@ function ManualAddNode({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-350">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
                       <ChevronDown size={18} />
                     </div>
                   </div>
@@ -6241,7 +6241,7 @@ function ManualAddNode({
                     <select
                       value={linkedFactId}
                       onChange={(e) => setLinkedFactId(e.target.value)}
-                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-450 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 appearance-none"
+                      className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 appearance-none"
                     >
                       <option value="">無關聯 (未選擇)</option>
                       {facts.map((f) => (
@@ -6250,7 +6250,7 @@ function ManualAddNode({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-350">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-slate-400">
                       <ChevronDown size={18} />
                     </div>
                   </div>

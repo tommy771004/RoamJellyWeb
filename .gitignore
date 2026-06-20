@@ -12,3 +12,4 @@ coverage/
 .claude/*
 graphify-out/*
 .worktrees/
+.audit/*

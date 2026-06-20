@@ -241,7 +241,7 @@ export default function JellyAssistant() {
             exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 15, scale: 0.8 }}
             transition={prefersReducedMotion ? { duration: 0.16 } : SPRING_BOUNCY}
             onClick={handleScrollToTop}
-            className={`fixed bottom-[160px] right-5 z-40 flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-2xl border border-slate-200/80 bg-white/95 text-slate-700 shadow-md backdrop-blur-md focus-visible:outline-none focus:ring-4 focus:ring-fuchsia-400/50 dark:border-white/10 dark:bg-slate-900/95 dark:text-slate-150 sm:right-6 sm:bottom-[172px] sm:h-14 sm:w-14 ${subtlePressableClass}`}
+            className={`fixed bottom-[160px] right-5 z-40 flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-2xl border border-slate-200/80 bg-white/95 text-slate-700 shadow-md backdrop-blur-md focus-visible:outline-none focus:ring-4 focus:ring-fuchsia-400/50 dark:border-white/10 dark:bg-slate-900/95 dark:text-slate-200 sm:right-6 sm:bottom-[172px] sm:h-14 sm:w-14 ${subtlePressableClass}`}
             aria-label="回到最上面"
             id="scroll-to-top-btn"
           >
@@ -333,7 +333,7 @@ export default function JellyAssistant() {
                 <h3 className="text-[17px] font-black text-slate-800 dark:text-white mb-2">
                   歡迎使用 Jelly AI 果凍顧問！
                 </h3>
-                <p className="text-[13.5px] font-semibold text-slate-500 dark:text-slate-350 leading-relaxed mb-6 max-w-[280px] sm:max-w-sm">
+                <p className="text-[13.5px] font-semibold text-slate-500 dark:text-slate-400 leading-relaxed mb-6 max-w-[280px] sm:max-w-sm">
                   開展您的智慧之旅吧！請先登入，即可解鎖 AI 詢問機票、智能行李打包推薦以及台北雨天行程靈感。
                 </p>
                 <button
@@ -407,14 +407,14 @@ export default function JellyAssistant() {
                                 <Luggage size={13} className="text-orange-500" />
                                 <span>AI 打包行李推薦清單</span>
                               </div>
-                              <span className="text-[10px] bg-orange-100 text-orange-850 font-black px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] bg-orange-100 text-orange-900 font-black px-2 py-0.5 rounded-full">
                                 {message.packingList.length} 項
                               </span>
                             </div>
                             <div className="flex flex-col gap-1.5">
                               {message.packingList.map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 rounded-[14px] bg-white border border-transparent hover:border-orange-200 px-3 py-2 shadow-[0_2px_6px_rgba(0,0,0,0.01)]">
-                                  <div className="h-4.5 w-4.5 rounded-full border border-orange-200 flex items-center justify-center text-[10px] text-orange-650 font-extrabold bg-orange-50/30">
+                                  <div className="h-4.5 w-4.5 rounded-full border border-orange-200 flex items-center justify-center text-[10px] text-orange-700 font-extrabold bg-orange-50/30">
                                     {i + 1}
                                   </div>
                                   <span className="text-[12.5px] font-semibold text-slate-700">{item}</span>
@@ -435,7 +435,7 @@ export default function JellyAssistant() {
                                 一鍵導入旅途行李箱
                               </button>
                             ) : (
-                              <p className="text-[11px] font-medium text-slate-450 text-center leading-tight">
+                              <p className="text-[11px] font-medium text-slate-500 text-center leading-tight">
                                 （進入旅程行程頁後，即可一鍵匯入為打勾清單項目）
                               </p>
                             )}

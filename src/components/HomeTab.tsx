@@ -391,11 +391,11 @@ function FlightCard({
         {/* Bottom: Price & CTAs */}
         <div className="p-3.5 pt-1.5 sm:p-5 sm:pt-3 flex items-end justify-between mt-auto">
           <div className="flex flex-col text-left mb-1">
-            <span className="text-[10px] font-black text-slate-500 dark:text-slate-350 uppercase tracking-[0.25em] mb-1">
+            <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.25em] mb-1">
               Estimated Price
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-[14px] font-bold text-slate-500 dark:text-slate-350">
+              <span className="text-[14px] font-bold text-slate-500 dark:text-slate-400">
                 {flight.currency}
               </span>
               <span className="text-[26px] sm:text-[30px] font-black text-slate-900 dark:text-white tracking-tighter leading-none tabular-nums">
@@ -2180,7 +2180,7 @@ export default function HomeTab({
             className={`group relative mx-auto mb-5 max-w-[900px] space-y-3 overflow-hidden px-4 text-center sm:mb-8 sm:px-6 cursor-pointer transition-colors duration-300 ${!isHeroExpanded ? " hidden sm:block" : ""}`}
           >
             <div className="relative space-y-3 sm:space-y-4 flex flex-col items-center">
-              <p className={`text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 flex items-center gap-2 transition-all duration-300`}>
+              <p className={`text-[11px] font-black uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400 flex items-center gap-2 transition-all duration-300`}>
                 <span className="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>
                 RoamJelly Trip Planner
                 <span className="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>
@@ -2735,7 +2735,7 @@ export default function HomeTab({
                       點擊縮放 🔍
                     </span>
                   ) : (
-                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-450 px-1.5 py-0.5 rounded-full border border-sky-200/45">
+                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-500 px-1.5 py-0.5 rounded-full border border-sky-200/45">
                       網頁縮放 ✦
                     </span>
                   )}
@@ -2831,7 +2831,7 @@ export default function HomeTab({
                       點擊縮放 🔍
                     </span>
                   ) : (
-                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-450 px-1.5 py-0.5 rounded-full border border-sky-200/45">
+                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-500 px-1.5 py-0.5 rounded-full border border-sky-200/45">
                       網頁縮放 ✦
                     </span>
                   )}
@@ -2927,7 +2927,7 @@ export default function HomeTab({
                       點擊縮放 🔍
                     </span>
                   ) : (
-                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-450 px-1.5 py-0.5 rounded-full border border-sky-200/45">
+                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-500 px-1.5 py-0.5 rounded-full border border-sky-200/45">
                       網頁縮放 ✦
                     </span>
                   )}
@@ -3023,7 +3023,7 @@ export default function HomeTab({
                       點擊縮放 🔍
                     </span>
                   ) : (
-                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-450 px-1.5 py-0.5 rounded-full border border-sky-200/45">
+                    <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-500 px-1.5 py-0.5 rounded-full border border-sky-200/45">
                       網頁縮放 ✦
                     </span>
                   )}
@@ -3546,7 +3546,7 @@ export default function HomeTab({
                                   triggerHapticFeedback([16]);
                                   setActiveHandbook(handbook);
                                 }}
-                                className="relative overflow-hidden w-[320px] xs:w-[350px] sm:w-[410px] h-[255px] sm:h-[275px] shrink-0 rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo ios-press"
+                                className="relative overflow-hidden w-[320px] xs:w-[350px] sm:w-[410px] h-[255px] sm:h-[275px] shrink-0 rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-200 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo ios-press"
                               >
                                 {/* Absolute Background Image */}
                                 <div className="absolute inset-0 z-0">
@@ -3639,7 +3639,7 @@ export default function HomeTab({
                                   triggerHapticFeedback([16]);
                                   setActiveHandbook(handbook);
                                 }}
-                                className="relative overflow-hidden w-full h-[255px] sm:h-[275px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-150 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo ios-press"
+                                className="relative overflow-hidden w-full h-[255px] sm:h-[275px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-200 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo ios-press"
                               >
                                 {/* Absolute Background Image */}
                                 <div className="absolute inset-0 z-0">
@@ -3794,8 +3794,8 @@ export default function HomeTab({
                   {communityTrips.map((trip, index) => {
                     const isEven = index % 2 === 0;
                     const cardBg = isEven
-                      ? "from-[#FCF9F2] to-[#FFF1EA] dark:from-slate-800 dark:to-slate-850"
-                      : "from-[#EEF2FC] to-[#E2E8F0] dark:from-slate-800/90 dark:to-slate-850/90";
+                      ? "from-[#FCF9F2] to-[#FFF1EA] dark:from-slate-800 dark:to-slate-900"
+                      : "from-[#EEF2FC] to-[#E2E8F0] dark:from-slate-800/90 dark:to-slate-900/90";
 
                     // Asymmetric Corners
                     const cornerShape = index % 3 === 0
@@ -3820,7 +3820,7 @@ export default function HomeTab({
                         >
                           {/* Left Column: Polaroid Framed Image */}
                           <div className="w-[105px] xs:w-[125px] sm:w-[145px] shrink-0 flex flex-col justify-start relative select-none">
-                            <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-2 sm:p-2.5 pb-6 sm:pb-8 rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/trip:scale-102 transition-transform duration-300 flex flex-col`}>
+                            <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-800 p-2 sm:p-2.5 pb-6 sm:pb-8 rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-700 ${polaroidRotation} group-hover/trip:scale-102 transition-transform duration-300 flex flex-col`}>
                               <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
                                 <img
                                   src={trip.cover}
@@ -3866,7 +3866,7 @@ export default function HomeTab({
                               <h3 className="text-[13px] xs:text-[14px] sm:text-[15px] font-black tracking-tight text-slate-900 dark:text-white leading-snug line-clamp-2">
                                 {trip.title}
                               </h3>
-                              <p className="text-[10.5px] line-clamp-2 sm:line-clamp-3 leading-relaxed font-bold text-slate-505 dark:text-slate-300 mt-0.5">
+                              <p className="text-[10.5px] line-clamp-2 sm:line-clamp-3 leading-relaxed font-bold text-slate-500 dark:text-slate-300 mt-0.5">
                                 已被複製 {trip.forkCount ?? trip.likes ?? 0} 次。可以直接複製別人的自駕/地鐵行程，一鍵帶走再調整！
                               </p>
                             </div>
@@ -4093,7 +4093,7 @@ export default function HomeTab({
                       >
                         {/* Left Column: Polaroid Framed Image */}
                         <div className="w-[90px] xs:w-[110px] sm:w-[140px] shrink-0 flex flex-col justify-start relative select-none">
-                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-1.5 sm:p-2.5 pb-4 sm:pb-8 rounded-[12px] sm:rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/dest:scale-102 transition-transform duration-300 flex flex-col`}>
+                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-800 p-1.5 sm:p-2.5 pb-4 sm:pb-8 rounded-[12px] sm:rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-700 ${polaroidRotation} group-hover/dest:scale-102 transition-transform duration-300 flex flex-col`}>
                             <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
                               <img
                                 src={dest.image}
@@ -4142,13 +4142,13 @@ export default function HomeTab({
                                 {dest.name} 旅遊攻略手冊
                               </h3>
                             </div>
-                            <p className="text-[11px] leading-relaxed font-bold text-slate-505 dark:text-slate-350 line-clamp-2 sm:line-clamp-3">
+                            <p className="text-[11px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 line-clamp-2 sm:line-clamp-3">
                               {dest.description}
                             </p>
                           </div>
 
                           <div className="flex items-center gap-1.5 mt-auto">
-                            <span className="rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-750 px-1.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider whitespace-nowrap">
+                            <span className="rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 px-1.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider whitespace-nowrap">
                               {dest.highlights?.[0] || "🗺️ 精選行程"}
                             </span>
                             <button
@@ -4189,7 +4189,7 @@ export default function HomeTab({
                   const isEven = index % 2 === 0;
                   const cardBg = isEven
                     ? "from-[#F5F3FF] to-[#EDE9FE] dark:from-slate-800 dark:to-slate-900"
-                    : "from-[#FFF1EB] to-[#FFF9F5] dark:from-slate-800/90 dark:to-slate-850/95";
+                    : "from-[#FFF1EB] to-[#FFF9F5] dark:from-slate-800/90 dark:to-slate-900/95";
 
                   // Asymmetrical corners
                   const cornerShape = index % 3 === 0
@@ -4212,7 +4212,7 @@ export default function HomeTab({
                       >
                         {/* Left Column: Polaroid Framed Image */}
                         <div className="w-[90px] xs:w-[110px] sm:w-[140px] shrink-0 flex flex-col justify-start relative select-none">
-                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-750 p-1.5 sm:p-2.5 pb-4 sm:pb-8 rounded-[12px] sm:rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-705 ${polaroidRotation} group-hover/handbook:scale-102 transition-transform duration-300 flex flex-col`}>
+                          <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-800 p-1.5 sm:p-2.5 pb-4 sm:pb-8 rounded-[12px] sm:rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-700 ${polaroidRotation} group-hover/handbook:scale-102 transition-transform duration-300 flex flex-col`}>
                             <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
                               <img
                                 src={handbook.image}
@@ -4262,7 +4262,7 @@ export default function HomeTab({
                             <h3 className="text-[13px] xs:text-[14.5px] sm:text-[15.5px] font-black tracking-tight text-slate-900 dark:text-white leading-snug line-clamp-2">
                               {handbook.title}
                             </h3>
-                            <p className="text-[11px] leading-relaxed font-bold text-slate-550 dark:text-slate-350 mt-1 line-clamp-2 sm:line-clamp-3">
+                            <p className="text-[11px] leading-relaxed font-bold text-slate-600 dark:text-slate-400 mt-1 line-clamp-2 sm:line-clamp-3">
                               最具含金量的達人自由行路線！包含：{handbook.tags.slice(0, 3).map((t) => `#${t}`).join(" ")}。
                             </p>
                           </div>
@@ -4285,7 +4285,7 @@ export default function HomeTab({
                                 e.stopPropagation();
                                 setActiveHandbook(handbook);
                               }}
-                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider border border-slate-350 dark:border-slate-705 text-slate-700 dark:text-slate-300 bg-white/45 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 ios-press transition-all"
+                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider border border-slate-400 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white/45 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 ios-press transition-all"
                             >
                               預覽
                             </button>
