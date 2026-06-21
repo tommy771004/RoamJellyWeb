@@ -1,4 +1,4 @@
-import { scrapeTripFlights } from './src/server/services/tripParser';
+import { scrapeTripFlights } from '../../src/server/services/tripParser';
 
 async function main() {
   const result = await scrapeTripFlights('TPE', 'KIX', '2026-06-15');

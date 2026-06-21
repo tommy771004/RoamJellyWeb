@@ -6,6 +6,7 @@ import { ItineraryNode } from "../../types/workflow";
 import { submitLedgerExpense } from "../../lib/workflowApi";
 import { useAppStore } from "../../store/useAppStore";
 import { getOverlayTransition, getModalMotion } from "../../lib/motionTokens";
+import { getCurrencyFromDestination } from "../../lib/currency";
 
 interface QuickExpenseModalProps {
   tripId: string;
@@ -13,33 +14,6 @@ interface QuickExpenseModalProps {
   node: ItineraryNode;
   members: string[];
   onClose: () => void;
-}
-
-function getCurrencyFromDestination(destination: string): string {
-  if (!destination) return "TWD";
-  const lower = destination.toLowerCase();
-  if (
-    lower.includes("日") ||
-    lower.includes("tokyo") ||
-    lower.includes("osaka") ||
-    lower.includes("kyoto")
-  )
-    return "JPY";
-  if (lower.includes("韓") || lower.includes("seoul")) return "KRW";
-  if (lower.includes("泰") || lower.includes("bangkok")) return "THB";
-  if (
-    lower.includes("美") ||
-    lower.includes("usa") ||
-    lower.includes("new york")
-  )
-    return "USD";
-  if (
-    lower.includes("歐") ||
-    lower.includes("paris") ||
-    lower.includes("london")
-  )
-    return "EUR";
-  return "TWD";
 }
 
 export default function QuickExpenseModal({

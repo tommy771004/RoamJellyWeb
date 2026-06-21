@@ -15,6 +15,22 @@ export const CATEGORY_META: Record<string, { label: string; icon: string; emoji:
 
 export const CATEGORY_OPTIONS = Object.keys(CATEGORY_META);
 
+/** Custom-icon names offered in the emoji/icon picker for itinerary nodes. */
+export const EMOJI_OPTIONS = [
+  "camera",
+  "mountain",
+  "beach",
+  "food-drink",
+  "hotel",
+  "heart",
+  "star",
+  "compass",
+  "backpack",
+  "tent",
+  "globe",
+  "map",
+];
+
 export function getCategoryMeta(category?: string) {
   const key = category && CATEGORY_META[category] ? category : "other";
   return { key, ...CATEGORY_META[key] };

@@ -4,20 +4,11 @@ import { ItineraryNode } from "../../types/workflow";
 import { haversineKm, estimateTransport, formatMinutes } from "../../lib/geoUtils";
 import { fetchDirections } from "../../lib/workflowApi";
 import { sortNodesForDisplay } from "../../lib/itineraryUtils";
+import { extractMinutes } from "../../lib/itineraryText";
 
 interface SelectedNodeTransportDetailsProps {
   selectedNode: ItineraryNode;
   nodes: ItineraryNode[];
-}
-
-function extractMinutes(text: string): number {
-  if (!text) return 0;
-  let totalMinutes = 0;
-  const hrMatch = text.match(/(\d+)\s*(h|hr|小時|時)/i);
-  if (hrMatch) totalMinutes += parseInt(hrMatch[1], 10) * 60;
-  const minMatch = text.match(/(\d+)\s*(m|min|分鐘|分)/i);
-  if (minMatch) totalMinutes += parseInt(minMatch[1], 10);
-  return totalMinutes;
 }
 
 export default function SelectedNodeTransportDetails({

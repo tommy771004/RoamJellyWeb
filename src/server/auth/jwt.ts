@@ -26,7 +26,7 @@ export function signAccessToken(user: AuthUser): string {
   };
 
   return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: (process.env.JWT_EXPIRES_IN ?? DEFAULT_EXPIRES_IN) as any,
+    expiresIn: (process.env.JWT_EXPIRES_IN ?? DEFAULT_EXPIRES_IN) as jwt.SignOptions['expiresIn'],
   });
 }
 

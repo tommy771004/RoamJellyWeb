@@ -25,6 +25,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { LocationPickerPopup } from "./LocationPickerPopup";
 import { useSearchStore } from "../store/useSearchStore";
 import { useKeyboardHeight } from "../lib/useKeyboardHeight";
+import { normalizeProfileList } from "../lib/arrays";
 
 const COMPANION_OPTIONS = [
   {
@@ -122,15 +123,6 @@ export interface AiFormData {
   budget: string;
   pace: string;
   accommodation: string[];
-}
-
-function normalizeProfileList(values?: string[]) {
-  return Array.isArray(values)
-    ? values.filter(
-        (value): value is string =>
-          typeof value === "string" && value.trim().length > 0,
-      )
-    : [];
 }
 
 export const MultiSelectPill: React.FC<{

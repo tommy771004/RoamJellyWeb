@@ -7,6 +7,7 @@ import { useAppStore } from '../store/useAppStore';
 import { getOverlayTransition, getSheetMotion, subtlePressableClass } from '../lib/motionTokens';
 import { suggestChatAssistantResponse, ChatResponseData } from '../lib/openrouterApi';
 import { getStoredToken, addFavorite } from '../lib/workflowApi';
+import { getCategoryEmoji } from '../lib/categoryEmoji';
 
 const assistantAvatar = '🍮';
 
@@ -30,18 +31,6 @@ interface ChatMessage {
     description: string;
     category?: string;
   }>;
-}
-
-function getCategoryEmoji(category: string): string {
-  const map: Record<string, string> = {
-    landmark: '🏯',
-    food: '🍜',
-    shopping: '🛍️',
-    nature: '🌿',
-    activity: '🎡',
-    other: '📍'
-  };
-  return map[category] || '📍';
 }
 
 export default function JellyAssistant() {

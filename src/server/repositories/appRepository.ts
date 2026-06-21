@@ -1,6 +1,7 @@
 import { eq, and, inArray, asc, isNull, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../db/client';
 import * as schema from '../db/schema';
+import { settleBalances, type Settlement } from './settlement';
 
 let hasWarnedMissingAttachmentsColumn = false;
 
@@ -901,37 +902,10 @@ export class AppRepository {
         }
       }
 
-      const settlements: { id: string, from: string, to: string, amount: number, currency: string }[] = [];
+      const settlements: Settlement[] = [];
 
       for (const [currency, balances] of Object.entries(balancesByCurrency)) {
-        const debtors = Object.entries(balances)
-          .filter(([, bal]) => bal < -0.01)
-          .map(([userId, bal]) => ({ userId, bal: -bal }))
-          .sort((a, b) => b.bal - a.bal);
-
-        const creditors = Object.entries(balances)
-          .filter(([, bal]) => bal > 0.01)
-          .map(([userId, bal]) => ({ userId, bal }))
-          .sort((a, b) => b.bal - a.bal);
-
-        let debtorIndex = 0;
-        let creditorIndex = 0;
-        while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
-          const debtor = debtors[debtorIndex];
-          const creditor = creditors[creditorIndex];
-          const amount = Math.min(debtor.bal, creditor.bal);
-          settlements.push({
-            id: `stl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-            from: debtor.userId,
-            to: creditor.userId,
-            amount: Math.round(amount),
-            currency,
-          });
-          debtor.bal -= amount;
-          creditor.bal -= amount;
-          if (debtor.bal < 0.01) debtorIndex += 1;
-          if (creditor.bal < 0.01) creditorIndex += 1;
-        }
+        settlements.push(...settleBalances(balances, currency));
       }
 
       return settlements;
@@ -957,39 +931,7 @@ export class AppRepository {
       }
     }
     
-    const debtors = Object.entries(balances)
-      .filter(([_, bal]) => bal < -0.01)
-      .map(([userId, bal]) => ({ userId, bal: -bal }))
-      .sort((a, b) => b.bal - a.bal);
-      
-    const creditors = Object.entries(balances)
-      .filter(([_, bal]) => bal > 0.01)
-      .map(([userId, bal]) => ({ userId, bal }))
-      .sort((a, b) => b.bal - a.bal);
-
-    const settlements: { id: string, from: string, to: string, amount: number, currency: string }[] = [];
-    let i = 0;
-    let j = 0;
-    while (i < debtors.length && j < creditors.length) {
-      const debtor = debtors[i];
-      const creditor = creditors[j];
-      const amount = Math.min(debtor.bal, creditor.bal);
-      
-      settlements.push({
-        id: `stl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        from: debtor.userId,
-        to: creditor.userId,
-        amount: Math.round(amount),
-        currency: 'TWD',
-      });
-      
-      debtor.bal -= amount;
-      creditor.bal -= amount;
-      if (debtor.bal < 0.01) i++;
-      if (creditor.bal < 0.01) j++;
-    }
-    
-    return settlements;
+    return settleBalances(balances, 'TWD');
   }
 
   async clearSettlements(tripId: string) {

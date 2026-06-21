@@ -1,4 +1,5 @@
 import { fetchOpenRouterWithFallback } from "./openrouterHelper";
+import { distanceInKm } from "../utils/serverHelpers";
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -13,16 +14,6 @@ const CHUNK_SIZE = 3; // days per parallel AI call
  * 第二層 (Second Fallback): Geoapify API (requires GEOAPIFY_API_KEY)
  * 額外安全備用 (Safety Fallback): Photon (Komoot) — OSM-based, no API key required.
  */
-function distanceInKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const toRad = (d: number) => d * Math.PI / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
 function isCoordValidForCity(
   lat: number,
   lng: number,

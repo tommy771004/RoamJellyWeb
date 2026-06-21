@@ -19,35 +19,11 @@ import IconImg from "../ui/IconImg";
 import GlassCard from "../GlassCard";
 import SelectedNodeTransportDetails from "./SelectedNodeTransportDetails";
 import { getModalMotion } from "../../lib/motionTokens";
+import { getTravelFactBookingLabel, getTravelFactRedirectPayload } from "../../lib/travelFact";
 
 interface CalendarViewProps {
   nodes: ItineraryNode[];
   tripStartDate?: string;
-}
-
-function getTravelFactBookingLabel(fact?: TravelFact | null) {
-  if (!fact?.metadata?.bookingUrl) return null;
-  return fact.factType.includes("flight") ? "前往預訂" : "查看價格";
-}
-
-function getTravelFactRedirectPayload(fact?: TravelFact | null) {
-  const bookingUrl = fact?.metadata?.bookingUrl?.trim();
-  if (!fact || !bookingUrl) return null;
-
-  return {
-    provider: fact.metadata?.provider || fact.metadata?.airline || fact.title,
-    affiliateUrl: bookingUrl,
-    itemId: fact.id,
-    airline: fact.metadata?.airline || fact.metadata?.provider || fact.title,
-    departure: fact.metadata?.depCode || "出發",
-    arrival: fact.metadata?.arrCode || fact.locationName || "目的地",
-    price:
-      typeof fact.metadata?.price === "number"
-        ? fact.metadata.price
-        : undefined,
-    currency: fact.metadata?.currency,
-    emoji: fact.factType.includes("flight") ? "✈️" : "🏨",
-  };
 }
 
 export default function CalendarView({

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { X } from 'lucide-react';
+import { isStandaloneDisplayMode, isIosMobileSafari } from '../lib/pwa';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -10,17 +11,6 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISS_KEY = 'roamjelly-pwa-install-dismissed';
-
-function isStandaloneDisplayMode() {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
-}
-
-function isIosMobileSafari() {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent.toLowerCase();
-  return /iphone|ipad|ipod/.test(ua) && /safari/.test(ua) && !/crios|fxios/.test(ua);
-}
 
 export default function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);

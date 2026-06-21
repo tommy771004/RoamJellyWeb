@@ -5,34 +5,11 @@ import {defineConfig} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const FEATURE_CHUNK_RULES: Array<{name: string; patterns: string[]}> = [
-  {
-    name: 'feature-editor',
-    patterns: [
-      '/src/components/ItineraryTab.tsx',
-      '/src/components/DynamicItineraryView.tsx',
-      '/src/components/ItineraryMapView.tsx',
-    ],
-  },
-  {
-    name: 'feature-ai',
-    patterns: [
-      '/src/components/JellyAssistant.tsx',
-      '/src/lib/openrouterApi.ts',
-      '/src/lib/geminiApi.ts',
-    ],
-  },
-  {
-    name: 'feature-collaboration',
-    patterns: [
-      '/src/lib/workflowApi.ts',
-      '/src/store/useAppStore.ts',
-      '/src/store/useSearchStore.ts',
-      '/src/store/useItineraryStore.ts',
-      '/src/store/useTripFactsStore.ts',
-      '/src/components/TripLandingPage.tsx',
-      '/src/components/RedirectModal.tsx',
-    ],
-  },
+  // NOTE: app-feature manual chunks were removed. After decomposing the big
+  // tab components into many shared modules, forcing feature groups produced
+  // circular chunk warnings (feature-editor <-> feature-collaboration/ai). Vite
+  // now auto-splits app code along the lazy-import boundaries in App.tsx, which
+  // is cycle-free. Vendor chunks below remain (incl. vendor-charts for recharts).
 ];
 
 const VENDOR_CHUNK_RULES: Array<{name: string; patterns: string[]}> = [
@@ -76,6 +53,17 @@ const VENDOR_CHUNK_RULES: Array<{name: string; patterns: string[]}> = [
       '/node_modules/leaflet/',
       '/node_modules/react-leaflet/',
       '/node_modules/@react-leaflet/core/',
+    ],
+  },
+  {
+    // recharts + its d3-* dependencies are large; split them out so the
+    // ToolsTab feature chunk stays lean and the charting lib is cached separately.
+    name: 'vendor-charts',
+    patterns: [
+      '/node_modules/recharts/',
+      '/node_modules/d3-',
+      '/node_modules/victory-vendor/',
+      '/node_modules/internmap/',
     ],
   },
 ];
