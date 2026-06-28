@@ -27,7 +27,12 @@ export async function buildSitemapXml(repo: AppRepository): Promise<string> {
   let ugcUrls: string[] = [];
   try {
     const publicTrips = await repo.getPublicTrips(100);
-    ugcUrls = publicTrips.map((t) => `${base}/trips/${t.id}`);
+    // Only list trips the UGC SEO handler actually enhances (it requires a
+    // `trip_` prefix). Excludes legacy/demo ids (e.g. h1/h2/h3) that would
+    // otherwise surface as thin, metadata-less SPA pages.
+    ugcUrls = publicTrips
+      .filter((t) => String(t.id).startsWith('trip_'))
+      .map((t) => `${base}/trips/${t.id}`);
   } catch (err) {
     console.error('[seo] sitemap UGC trips query failed, serving without them', err);
   }

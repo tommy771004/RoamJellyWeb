@@ -1502,10 +1502,12 @@ async function startServer() {
         const authorId = 'seeder_1';
         await repo.createUserWithPassword(authorId, 'Travel Guru', 'nomatter');
         
+        // IDs must be `trip_`-prefixed so the UGC SEO handler injects per-trip
+        // title/description/Trip schema (and so they qualify for the sitemap).
         const demoTrips = [
-          { id: 'h1', name: '東京散策：巷弄裡的小秘密', destination: '東京', userId: authorId, role: 'owner' },
-          { id: 'h2', name: '大阪美食地圖 2024', destination: '大阪', userId: authorId, role: 'owner' },
-          { id: 'h3', name: '京都紅葉季完全攻略', destination: '京都', userId: authorId, role: 'owner' },
+          { id: 'trip_demo_tokyo', name: '東京散策：巷弄裡的小秘密', destination: '東京', userId: authorId, role: 'owner' },
+          { id: 'trip_demo_osaka', name: '大阪美食地圖 2024', destination: '大阪', userId: authorId, role: 'owner' },
+          { id: 'trip_demo_kyoto', name: '京都紅葉季完全攻略', destination: '京都', userId: authorId, role: 'owner' },
         ];
         
         for (const mt of demoTrips) {
