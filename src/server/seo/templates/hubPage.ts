@@ -1,6 +1,55 @@
 // src/server/seo/templates/hubPage.ts
 import { KNOWN_ROUTES, KNOWN_DESTINATIONS } from '../cities.js';
-import { escHtml } from '../utils.js';
+import { escHtml, safeJsonLd, SITE_ORIGIN } from '../utils.js';
+
+function hubHead(opts: {
+  title: string;
+  description: string;
+  path: string;
+  crumbName: string;
+  items: { name: string; url: string }[];
+}): string {
+  const canonical = `${SITE_ORIGIN}${opts.path}`;
+  return `  <title>${escHtml(opts.title)}</title>
+  <meta name="description" content="${escHtml(opts.description)}">
+  <link rel="canonical" href="${canonical}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="${escHtml(opts.title)}">
+  <meta property="og:description" content="${escHtml(opts.description)}">
+  <meta property="og:url" content="${canonical}">
+  <meta property="og:site_name" content="RoamJelly 果凍漫遊">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:image" content="${SITE_ORIGIN}/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escHtml(opts.title)}">
+  <meta name="twitter:description" content="${escHtml(opts.description)}">
+  <meta name="twitter:image" content="${SITE_ORIGIN}/og-image.png">
+  <script type="application/ld+json">${safeJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    'name': opts.title,
+    'description': opts.description,
+    'url': canonical,
+    'inLanguage': 'zh-TW',
+    'mainEntity': {
+      '@type': 'ItemList',
+      'itemListElement': opts.items.map((it, i) => ({
+        '@type': 'ListItem',
+        'position': i + 1,
+        'name': it.name,
+        'item': it.url,
+      })),
+    },
+  })}</script>
+  <script type="application/ld+json">${safeJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      { '@type': 'ListItem', 'position': 1, 'name': '果凍漫遊', 'item': `${SITE_ORIGIN}/` },
+      { '@type': 'ListItem', 'position': 2, 'name': opts.crumbName, 'item': canonical },
+    ],
+  })}</script>`;
+}
 
 const BASE_STYLES = `
   *{box-sizing:border-box;margin:0;padding:0}
@@ -31,9 +80,13 @@ export function buildRouteHubPage(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>台灣出發航線搜尋熱度分析 | 果凍漫遊</title>
-  <meta name="description" content="果凍漫遊整理台灣出發各大航線的旅人搜尋熱度，幫你找出最佳出發時機。">
-  <link rel="canonical" href="https://roamjelly.com/fly/">
+${hubHead({
+    title: '台灣出發航線搜尋熱度分析 | 果凍漫遊',
+    description: '果凍漫遊整理台灣出發各大航線的旅人搜尋熱度，幫你找出最佳出發時機。',
+    path: '/fly/',
+    crumbName: '航線分析',
+    items: KNOWN_ROUTES.map((r) => ({ name: `${r.fromDisplay} → ${r.toDisplay}`, url: `${SITE_ORIGIN}/fly/${r.slug}/` })),
+  })}
   <style>${BASE_STYLES}</style>
 </head>
 <body>
@@ -65,9 +118,13 @@ export function buildDestinationHubPage(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>旅遊目的地行程推薦 | 果凍漫遊</title>
-  <meta name="description" content="果凍漫遊用戶分享的各大目的地旅遊行程，免費複製使用。">
-  <link rel="canonical" href="https://roamjelly.com/trips/">
+${hubHead({
+    title: '旅遊目的地行程推薦 | 果凍漫遊',
+    description: '果凍漫遊用戶分享的各大目的地旅遊行程，免費複製使用。',
+    path: '/trips/',
+    crumbName: '目的地行程',
+    items: KNOWN_DESTINATIONS.map((d) => ({ name: d.displayName, url: `${SITE_ORIGIN}/trips/${d.slug}/` })),
+  })}
   <style>${BASE_STYLES}</style>
 </head>
 <body>

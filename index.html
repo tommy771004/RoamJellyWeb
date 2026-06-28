@@ -18,7 +18,7 @@
     <link rel="canonical" href="https://roam-jelly-web.vercel.app/" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/icon-app.svg" />
-    <link rel="apple-touch-icon" href="/icon-app.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
     <meta name="google-site-verification" content="6KE8Qp5p0dXMp1etepmmhRmw7fG_SRwVuBampfeCL5M" />
 
     <!-- Open Graph -->
@@ -28,15 +28,17 @@
     <meta property="og:url" content="https://roam-jelly-web.vercel.app/" />
     <meta property="og:site_name" content="RoamJelly 果凍漫遊" />
     <meta property="og:locale" content="zh_TW" />
-    <meta property="og:image" content="https://roam-jelly-web.vercel.app/og-default.svg" />
+    <meta property="og:image" content="https://roam-jelly-web.vercel.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="RoamJelly 果凍漫遊 — AI 行程規劃，旅伴即時共編" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="RoamJelly 果凍漫遊 — AI 旅遊行程規劃，多人即時共編" />
     <meta name="twitter:description" content="即時共編行程、AI 一鍵生成旅遊計畫、多幣別分帳。專為台灣與亞太旅遊設計。" />
-    <meta name="twitter:image" content="https://roam-jelly-web.vercel.app/og-default.svg" />
+    <meta name="twitter:image" content="https://roam-jelly-web.vercel.app/og-image.png" />
 
     <!-- JSON-LD: WebSite -->
     <script type="application/ld+json">
@@ -74,6 +76,26 @@
         "price": "0",
         "priceCurrency": "TWD",
         "description": "早鳥免費體驗"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: Organization (site name + logo signal for Google & AI engines) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "RoamJelly 果凍漫遊",
+      "alternateName": "RoamJelly",
+      "url": "https://roam-jelly-web.vercel.app/",
+      "logo": "https://roam-jelly-web.vercel.app/icon-app-512.png",
+      "image": "https://roam-jelly-web.vercel.app/og-image.png",
+      "description": "專為多人旅遊設計的 AI 行程規劃工具，支援即時共編、機票比價與多幣別分帳。",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "yuanyouxie52@gmail.com",
+        "contactType": "customer support",
+        "availableLanguage": ["zh-Hant", "en"]
       }
     }
     </script>

@@ -103,7 +103,10 @@ export default defineConfig(() => {
       VitePWA({
         registerType: 'autoUpdate',
         manifestFilename: 'manifest.json',
-        includeAssets: ['favicon.ico', 'icon-app.svg', 'icon-app-maskable.svg'],
+        includeAssets: [
+          'favicon.ico', 'icon-app.svg', 'icon-app-maskable.svg',
+          'icon-180.png', 'icon-192.png', 'icon-app-512.png', 'icon-maskable-512.png',
+        ],
         workbox: {
           // Let the SW take control without going through the message-channel
           // handshake — this is what eliminates the "message channel closed" error.
@@ -123,6 +126,24 @@ export default defineConfig(() => {
           display: 'standalone',
           orientation: 'portrait-primary',
           icons: [
+            {
+              src: '/icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: '/icon-app-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: '/icon-maskable-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
+            },
             {
               src: '/icon-app.svg',
               sizes: 'any',

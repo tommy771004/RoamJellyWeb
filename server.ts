@@ -1449,6 +1449,40 @@ async function startServer() {
     }
   });
 
+  // /pricing — SPA route; inject page-specific canonical + metadata so it does not
+  // self-canonicalize to the homepage and gets an accurate title/description in SERPs.
+  app.get('/pricing', async (req, res, next) => {
+    try {
+      const fs = await import('fs');
+      let html = '';
+      if (vite) {
+        html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
+        html = await vite.transformIndexHtml(req.url, html);
+      } else {
+        html = fs.readFileSync(path.join(process.cwd(), 'dist', 'index.html'), 'utf-8');
+      }
+
+      const canonical = 'https://roam-jelly-web.vercel.app/pricing';
+      const title = 'RoamJelly 果凍漫遊 — 方案與價格｜早鳥免費';
+      const description = '果凍漫遊定價：早鳥階段免費，無需信用卡。每個行程最多 10 位旅伴，含 AI 行程生成、機票比價與多幣別分帳。未來 Pro / Team 方案規劃中。';
+
+      html = html.replace(/<title>.*?<\/title>/is, `<title>${title}</title>`);
+      html = html.replace(/<meta name="description" content=".*?"\s*\/>/is, `<meta name="description" content="${description}" />`);
+      html = html.replace(/<link rel="canonical" href=".*?"\s*\/>/is, `<link rel="canonical" href="${canonical}" />`);
+      html = html.replace(/<meta property="og:url" content=".*?"\s*\/>/is, `<meta property="og:url" content="${canonical}" />`);
+      html = html.replace(/<meta property="og:title" content=".*?"\s*\/>/is, `<meta property="og:title" content="${title}" />`);
+      html = html.replace(/<meta property="og:description" content=".*?"\s*\/>/is, `<meta property="og:description" content="${description}" />`);
+      html = html.replace(/<meta name="twitter:title" content=".*?"\s*\/>/is, `<meta name="twitter:title" content="${title}" />`);
+      html = html.replace(/<meta name="twitter:description" content=".*?"\s*\/>/is, `<meta name="twitter:description" content="${description}" />`);
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    } catch (err) {
+      console.error('[pricing SEO] Failed to render pricing page:', err);
+      next();
+    }
+  });
+
   if (vite) {
     app.use(vite.middlewares);
   } else {

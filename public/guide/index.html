@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>旅遊規劃指南總覽：行程共編、台灣自由行、多人分帳 | RoamJelly 果凍漫遊</title>
+  <meta name="description" content="果凍漫遊旅遊規劃指南總覽，涵蓋多人行程即時共編、台灣自由行天數與路線規劃、團體旅遊費用分攤與結算。每篇皆有實用步驟與工具比較。" />
+  <meta name="author" content="RoamJelly 旅遊編輯團隊" />
+  <meta name="last-modified" content="2026-06-28" />
+  <link rel="canonical" href="https://roam-jelly-web.vercel.app/guide/" />
+
+  <!-- hreflang -->
+  <link rel="alternate" hreflang="zh-TW" href="https://roam-jelly-web.vercel.app/guide/" />
+  <link rel="alternate" hreflang="x-default" href="https://roam-jelly-web.vercel.app/guide/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="旅遊規劃指南總覽：行程共編、台灣自由行、多人分帳" />
+  <meta property="og:description" content="行程即時共編、台灣自由行規劃、團體旅遊分帳結算 — 完整教學一次看。" />
+  <meta property="og:url" content="https://roam-jelly-web.vercel.app/guide/" />
+  <meta property="og:site_name" content="RoamJelly 果凍漫遊" />
+  <meta property="og:locale" content="zh_TW" />
+  <meta property="og:image" content="https://roam-jelly-web.vercel.app/og-guide-hub.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="RoamJelly 旅遊規劃指南總覽" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="旅遊規劃指南總覽 | RoamJelly 果凍漫遊" />
+  <meta name="twitter:description" content="行程即時共編、台灣自由行規劃、團體旅遊分帳結算 — 完整教學一次看。" />
+  <meta name="twitter:image" content="https://roam-jelly-web.vercel.app/og-guide-hub.png" />
+
+  <!-- JSON-LD: CollectionPage + ItemList -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "旅遊規劃指南總覽",
+    "description": "果凍漫遊旅遊規劃指南總覽，涵蓋多人行程共編、台灣自由行規劃與團體旅遊費用分攤。",
+    "url": "https://roam-jelly-web.vercel.app/guide/",
+    "inLanguage": "zh-TW",
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "台灣旅遊行程規劃完整指南", "item": "https://roam-jelly-web.vercel.app/guide/taiwan-travel-planner" },
+        { "@type": "ListItem", "position": 2, "name": "多人旅遊費用分攤指南", "item": "https://roam-jelly-web.vercel.app/guide/group-travel-expense-splitting" },
+        { "@type": "ListItem", "position": 3, "name": "Collaborative Itinerary Planner Guide", "item": "https://roam-jelly-web.vercel.app/guide/collaborative-itinerary-planner" }
+      ]
+    }
+  }
+  </script>
+
+  <!-- JSON-LD: BreadcrumbList -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "果凍漫遊", "item": "https://roam-jelly-web.vercel.app/" },
+      { "@type": "ListItem", "position": 2, "name": "旅遊規劃指南", "item": "https://roam-jelly-web.vercel.app/guide/" }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', Roboto, sans-serif; font-size: 17px; line-height: 1.7; color: #1a1a2e; background: #fafaf8; }
+    a { color: #e11d48; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .site-header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 12px; }
+    .site-header .logo { font-weight: 700; font-size: 18px; color: #1a1a2e; }
+    .site-header .logo span { color: #e11d48; }
+    .breadcrumb { font-size: 13px; color: #6b7280; }
+    .breadcrumb a { color: #6b7280; }
+    .hero { background: linear-gradient(135deg, #fff1f2 0%, #faf5ff 100%); padding: 56px 24px 48px; text-align: center; border-bottom: 1px solid #e5e7eb; }
+    .hero h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 800; color: #111827; max-width: 780px; margin: 0 auto 16px; line-height: 1.2; }
+    .hero p { font-size: 17px; color: #4b5563; max-width: 680px; margin: 0 auto; }
+    .layout { max-width: 920px; margin: 0 auto; padding: 48px 24px 80px; }
+    .intro { background: #fff1f2; border-left: 4px solid #e11d48; padding: 20px 24px; border-radius: 0 8px 8px 0; margin-bottom: 40px; font-size: 16px; line-height: 1.65; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+    .gcard { display: block; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px; color: #111827; transition: box-shadow .2s, transform .2s; }
+    .gcard:hover { box-shadow: 0 8px 24px rgba(0,0,0,.08); transform: translateY(-2px); text-decoration: none; }
+    .gcard .tag { display: inline-block; font-size: 12px; font-weight: 700; color: #e11d48; background: #fff1f2; border-radius: 16px; padding: 4px 12px; margin-bottom: 14px; }
+    .gcard h2 { font-size: 19px; font-weight: 700; line-height: 1.35; margin-bottom: 10px; border: none; padding: 0; }
+    .gcard p { font-size: 14px; color: #4b5563; line-height: 1.6; margin: 0; }
+    .gcard .more { display: inline-block; margin-top: 14px; font-size: 14px; font-weight: 700; color: #e11d48; }
+    .site-footer { background: #f3f4f6; border-top: 1px solid #e5e7eb; padding: 24px; text-align: center; font-size: 14px; color: #6b7280; }
+    .site-footer a { color: #6b7280; }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="logo" href="/">Roam<span>Jelly</span></a>
+  <span class="breadcrumb">/ 旅遊規劃指南</span>
+</header>
+
+<section class="hero">
+  <h1>旅遊規劃指南總覽</h1>
+  <p>從多人行程共編、台灣自由行規劃到團體分帳結算，果凍漫遊整理出最實用的旅遊規劃教學。</p>
+</section>
+
+<main class="layout">
+
+  <p class="intro">
+    規劃一趟多人旅遊，最花時間的往往不是挑景點，而是<strong>協調行程、同步資訊與事後分帳</strong>。
+    以下三篇指南分別解決行程共編、台灣自由行路線安排，以及團體費用分攤三大痛點，皆附實作步驟與工具比較，
+    可搭配果凍漫遊免費使用。
+  </p>
+
+  <div class="grid">
+    <a class="gcard" href="/guide/taiwan-travel-planner">
+      <span class="tag">台灣自由行</span>
+      <h2>台灣旅遊行程規劃完整指南</h2>
+      <p>天數建議、六大分區路線、多人共編技巧與費用分攤，適合 2–10 人團體規劃台灣自由行。</p>
+      <span class="more">閱讀指南 →</span>
+    </a>
+    <a class="gcard" href="/guide/group-travel-expense-splitting">
+      <span class="tag">分帳結算</span>
+      <h2>多人旅遊費用分攤指南</h2>
+      <p>常見分帳方式、跨幣別計算原則、實用 APP 比較，以及旅途中記帳與快速淨額結算流程。</p>
+      <span class="more">閱讀指南 →</span>
+    </a>
+    <a class="gcard" href="/guide/collaborative-itinerary-planner">
+      <span class="tag">Group Travel · EN</span>
+      <h2>Collaborative Itinerary Planner Guide</h2>
+      <p>How real-time itinerary co-editing works, roles, offline sync, and the features that matter for group trips.</p>
+      <span class="more">Read guide →</span>
+    </a>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <p>
+    © 2026 RoamJelly (果凍漫遊) &nbsp;·&nbsp;
+    <a href="/">首頁</a> &nbsp;·&nbsp;
+    <a href="/pricing">方案與價格</a> &nbsp;·&nbsp;
+    <a href="/trips/">目的地行程</a> &nbsp;·&nbsp;
+    <a href="/fly/">航線分析</a> &nbsp;·&nbsp;
+    <a href="/llms.txt">llms.txt</a>
+  </p>
+</footer>
+
+</body>
+</html>

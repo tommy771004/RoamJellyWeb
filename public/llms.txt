@@ -22,9 +22,17 @@ Groups of 2–10 travelers planning trips across Taiwan and Asia-Pacific. Common
 ## Key Pages
 
 - `/` — Main travel planning app (flight search, itinerary, tools)
-- `/trip/:id` — Shared trip landing page for collaborators joining via invite link
+- `/trips/:id` — Shared public trip page (collaborators join via invite link; `id` is prefixed `trip_`)
 - `/pricing` — Plan details and pricing
-- `/guide/collaborative-itinerary-planner` — Complete guide to collaborative group trip planning
+- `/fly/` — Flight-route search-demand analysis hub (Taiwan departures)
+- `/fly/{route}/` — Per-route monthly search-demand (e.g. `/fly/tpe-nrt/` = Taipei→Tokyo)
+- `/trips/` — Destination itinerary recommendation hub
+- `/trips/{city}/` — Per-destination user-shared itineraries (e.g. `/trips/tokyo/`)
+- `/guide/` — Travel-planning guide hub (index of all guides)
+- `/guide/collaborative-itinerary-planner` — Complete guide to collaborative group trip planning (EN)
+- `/guide/taiwan-travel-planner` — Taiwan travel planning guide (zh-TW)
+- `/guide/group-travel-expense-splitting` — Group travel expense-splitting guide (EN)
+- `/sitemap.xml` — Full list of indexable URLs
 
 ## Pricing Summary
 

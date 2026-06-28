@@ -1,17 +1,52 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" fill="#0F172A"/>
-  <rect x="56" y="56" width="400" height="400" rx="128" fill="url(#bg)"/>
-  <circle cx="176" cy="164" r="88" fill="#FBCFE8" fill-opacity="0.35"/>
-  <circle cx="366" cy="352" r="98" fill="#93C5FD" fill-opacity="0.25"/>
-  <rect x="132" y="144" width="248" height="220" rx="68" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.46)" stroke-width="12"/>
-  <path d="M191 264C191 226.997 220.997 197 258 197C295.003 197 325 226.997 325 264C325 301.003 295.003 331 258 331H217" stroke="white" stroke-width="26" stroke-linecap="round"/>
-  <path d="M241 236L296 264L241 292" stroke="#FFF7ED" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M170 326H282" stroke="#FFF7ED" stroke-width="22" stroke-linecap="round"/>
   <defs>
-    <linearGradient id="bg" x1="96" y1="72" x2="424" y2="440" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F43F5E"/>
-      <stop offset="0.45" stop-color="#D946EF"/>
-      <stop offset="1" stop-color="#1D4ED8"/>
+    <linearGradient id="bg" x1="40" y1="20" x2="472" y2="492" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FB7185"/>
+      <stop offset="0.5" stop-color="#D946EF"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+    <linearGradient id="jelly" x1="160" y1="180" x2="320" y2="392" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDFB"/>
+      <stop offset="1" stop-color="#FBE3E0"/>
     </linearGradient>
   </defs>
+
+  <!-- full-bleed background so any OS mask shape stays on-brand to the edges -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- content scaled into the maskable safe zone (~80% centered) -->
+  <g transform="translate(256 256) scale(0.82) translate(-256 -256)">
+    <circle cx="256" cy="288" r="158" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="6" stroke-dasharray="1.5 24" stroke-linecap="round" fill="none"/>
+
+    <path d="M118 150 l6 14 14 6 -14 6 -6 14 -6 -14 -14 -6 14 -6 z" fill="#FFFFFF" fill-opacity="0.9"/>
+    <path d="M150 372 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4 z" fill="#FFFFFF" fill-opacity="0.72"/>
+
+    <ellipse cx="256" cy="384" rx="96" ry="20" fill="#3B0764" fill-opacity="0.18"/>
+
+    <path d="M152 274
+      C152 218 198 182 256 182
+      C314 182 360 218 360 274
+      L360 340
+      Q334 372 308 340
+      Q282 372 256 340
+      Q230 372 204 340
+      Q178 372 152 340
+      Z" fill="url(#jelly)"/>
+
+    <ellipse cx="210" cy="232" rx="40" ry="25" fill="#FFFFFF" fill-opacity="0.55" transform="rotate(-22 210 232)"/>
+
+    <ellipse cx="202" cy="300" rx="17" ry="12" fill="#FB7185" fill-opacity="0.78"/>
+    <ellipse cx="310" cy="300" rx="17" ry="12" fill="#FB7185" fill-opacity="0.78"/>
+
+    <ellipse cx="224" cy="280" rx="13" ry="17" fill="#2B2B4A"/>
+    <ellipse cx="288" cy="280" rx="13" ry="17" fill="#2B2B4A"/>
+    <circle cx="228" cy="274" r="4.6" fill="#FFFFFF"/>
+    <circle cx="292" cy="274" r="4.6" fill="#FFFFFF"/>
+
+    <path d="M238 302 Q256 320 274 302" stroke="#9F1239" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+
+    <ellipse cx="388" cy="170" rx="15" ry="6" fill="#3B0764" fill-opacity="0.2"/>
+    <path d="M388 92 C367 92 350 109 350 130 C350 156 388 188 388 188 C388 188 426 156 426 130 C426 109 409 92 388 92 Z" fill="#FB7185"/>
+    <circle cx="388" cy="130" r="13.5" fill="#FFF8F2"/>
+  </g>
 </svg>

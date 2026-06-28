@@ -1,14 +1,16 @@
 // src/server/seo/templates/sitemap.ts
 import { KNOWN_ROUTES, KNOWN_DESTINATIONS } from '../cities.js';
+import { SITE_ORIGIN } from '../utils.js';
 import type { AppRepository } from '../../repositories/appRepository.js';
 
 export async function buildSitemapXml(repo: AppRepository): Promise<string> {
   const today = new Date().toISOString().split('T')[0];
-  const base = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://roam-jelly-web.vercel.app';
+  const base = SITE_ORIGIN;
 
   const staticUrls = [
     `${base}/`,
     `${base}/pricing`,
+    `${base}/guide/`,
     `${base}/guide/collaborative-itinerary-planner`,
     `${base}/guide/taiwan-travel-planner`,
     `${base}/guide/group-travel-expense-splitting`,
