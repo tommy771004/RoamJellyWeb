@@ -20,10 +20,17 @@ export async function buildSitemapXml(repo: AppRepository): Promise<string> {
 
   const routeUrls = KNOWN_ROUTES.map((r) => `${base}/fly/${r.slug}/`);
   const destUrls = KNOWN_DESTINATIONS.map((d) => `${base}/trips/${d.slug}/`);
-  
-  // UGC Public Trips
-  const publicTrips = await repo.getPublicTrips(100);
-  const ugcUrls = publicTrips.map((t) => `${base}/trips/${t.id}`);
+
+  // UGC Public Trips — never let a DB hiccup fail the whole sitemap (a 500 here
+  // makes Vercel serve an HTML error page, which Search Console rejects as
+  // "Sitemap is HTML"). Degrade gracefully to the static/route/destination URLs.
+  let ugcUrls: string[] = [];
+  try {
+    const publicTrips = await repo.getPublicTrips(100);
+    ugcUrls = publicTrips.map((t) => `${base}/trips/${t.id}`);
+  } catch (err) {
+    console.error('[seo] sitemap UGC trips query failed, serving without them', err);
+  }
 
   const allUrls = [...staticUrls, ...routeUrls, ...destUrls, ...ugcUrls];
 

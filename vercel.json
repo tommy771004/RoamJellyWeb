@@ -66,7 +66,10 @@
     { "src": "/guide/(.*)", "dest": "/guide/$1" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
     { "src": "/manifest.json", "dest": "/manifest.json" },
-    { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?|webmanifest))", "dest": "/$1" },
+    { "src": "/robots.txt", "dest": "/robots.txt" },
+    { "src": "/llms.txt", "dest": "/llms.txt" },
+    { "src": "/sitemap.xsl", "dest": "/sitemap.xsl" },
+    { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?|webmanifest|txt|xsl|json|map))", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 
