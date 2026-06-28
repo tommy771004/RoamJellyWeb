@@ -113,6 +113,23 @@ export default defineConfig(() => {
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,
+          // generateSW registers a NavigationRoute bound to index.html (the SPA
+          // shell). Without a denylist the SW intercepts EVERY navigation — even
+          // server-rendered / non-SPA URLs — and serves the app shell, which then
+          // client-redirects to "/". That made /sitemap.xml (and other SEO/static
+          // endpoints) open the homepage in-browser even though the server returns
+          // correct XML (curl, having no SW, sees it). Exclude non-SPA paths so
+          // they reach the network → Node function / static file.
+          navigateFallbackDenylist: [
+            /^\/api\//,
+            /^\/fly\//,
+            /^\/trips\//,
+            /^\/guide\//,
+            /^\/share\//,
+            // any URL whose last path segment has a file extension:
+            // /sitemap.xml, /sitemap.xsl, /robots.txt, /llms.txt, /manifest.json, *.png …
+            /\.[^/]+$/,
+          ],
         },
         manifest: {
           name: 'RoamJelly 果凍漫遊',
