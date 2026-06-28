@@ -43,5 +43,8 @@ export async function buildSitemapXml(repo: AppRepository): Promise<string> {
     .map((url) => `  <url>\n    <loc>${url}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n  </url>`)
     .join('\n');
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>`;
+  // No <?xml-stylesheet?> PI: a browser-only cosmetic that points at /sitemap.xsl.
+  // If that XSL ever resolves to HTML (SPA fallback), fetchers can mislabel the
+  // whole sitemap as "HTML". Bare XML is maximally compatible with Search Console.
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>`;
 }
