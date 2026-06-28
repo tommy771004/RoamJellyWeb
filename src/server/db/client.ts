@@ -8,10 +8,19 @@ if (!DATABASE_URL) {
   console.warn('DATABASE_URL is missing. Database features will be unavailable.');
 }
 
+// Managed Postgres (Neon, Render, Supabase, etc.) requires SSL. The `pg` driver
+// does NOT enable SSL just because the URL contains `sslmode=require`, so we set
+// it explicitly. Skip SSL for local Postgres, or when explicitly disabled.
+const isLocalDb = /@(localhost|127\.0\.0\.1|::1)\b/.test(DATABASE_URL ?? '');
+const sslDisabled =
+  process.env.PGSSL_DISABLE === 'true' || process.env.PGSSLMODE === 'disable';
+const ssl = !isLocalDb && !sslDisabled ? { rejectUnauthorized: false } : undefined;
+
 export const pool = DATABASE_URL ? new Pool({
   connectionString: DATABASE_URL,
   max: Number(process.env.PG_POOL_MAX ?? 10),
   idleTimeoutMillis: Number(process.env.PG_POOL_IDLE_TIMEOUT_MS ?? 30_000),
+  ssl,
 }) : null;
 
 export const db = pool ? drizzle(pool, { schema }) : null;

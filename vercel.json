@@ -60,7 +60,7 @@
     { "src": "/api/og/trip", "dest": "/api/og-trip.js" },
     { "src": "/share/trip/([^/]+)", "dest": "/api/share-trip.js?tripId=$1" },
     { "src": "/api/(.*)", "dest": "/api/index.js" },
-    { "src": "/sitemap", "status": 308, "headers": { "Location": "/sitemap.xml" } },
+    { "src": "/sitemap/?", "status": 308, "headers": { "Location": "/sitemap.xml" } },
     { "src": "/sitemap\\.xml/", "status": 308, "headers": { "Location": "/sitemap.xml" } },
     { "src": "/sitemap\\.html", "status": 308, "headers": { "Location": "/sitemap.xml" } },
     { "src": "/sitemap_index\\.xml", "status": 308, "headers": { "Location": "/sitemap.xml" } },

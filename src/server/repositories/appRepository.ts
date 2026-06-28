@@ -1137,12 +1137,12 @@ export class AppRepository {
     if (!this.db) return [];
     const rows = await this.db.execute(sql`
       SELECT
-        EXTRACT(MONTH FROM timestamp)::int AS month,
+        EXTRACT(MONTH FROM "timestamp")::int AS month,
         COUNT(*)::int AS count
       FROM search_history
       WHERE query_from = ANY(${fromVariants}::text[])
         AND query_to = ANY(${toVariants}::text[])
-        AND timestamp > NOW() - INTERVAL '12 months'
+        AND "timestamp" > NOW() - INTERVAL '12 months'
       GROUP BY month
       ORDER BY month
     `);

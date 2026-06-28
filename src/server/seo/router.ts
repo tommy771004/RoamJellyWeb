@@ -33,7 +33,7 @@ export function createSeoRouter(repo: AppRepository): Router {
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.send(xml);
     } catch(err) {
-      console.error(err);
+      console.error('[seo] /sitemap.xml error:', (err as Error)?.message, err);
       res.status(500).end();
     }
   });
@@ -79,7 +79,7 @@ export function createSeoRouter(repo: AppRepository): Router {
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.send(html);
     } catch (err) {
-      console.error('[seo] /fly/:slug error', err);
+      console.error('[seo] /fly/:slug error:', (err as Error)?.message, err);
       res.status(500).send('Internal Server Error');
     }
   });
@@ -104,7 +104,7 @@ export function createSeoRouter(repo: AppRepository): Router {
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.send(html);
     } catch (err) {
-      console.error('[seo] /trips/:slug error', err);
+      console.error('[seo] /trips/:slug error:', (err as Error)?.message, err);
       res.status(500).send('Internal Server Error');
     }
   });
