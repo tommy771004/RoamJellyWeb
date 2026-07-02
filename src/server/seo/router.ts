@@ -1,5 +1,5 @@
 // src/server/seo/router.ts
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { AppRepository } from '../repositories/appRepository.js';
 import { buildRouteData, buildDestinationData } from './seoDataService.js';
 import { buildRoutePage } from './templates/routePage.js';
@@ -85,8 +85,14 @@ export function createSeoRouter(repo: AppRepository): Router {
   });
 
   // Destination detail: /trips/tokyo/
-  router.get('/trips/:slug/', async (req: Request, res: Response) => {
+  // UGC trip pages (/trips/trip_*) are handled by the app-level route in
+  // server.ts — fall through instead of 404ing them here.
+  router.get('/trips/:slug/', async (req: Request, res: Response, next: NextFunction) => {
     const { slug } = req.params;
+    if (slug.startsWith('trip_')) {
+      next();
+      return;
+    }
     if (!KNOWN_DESTINATIONS.some((d) => d.slug === slug)) {
       res.status(404).send('Not found');
       return;

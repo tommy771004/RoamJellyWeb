@@ -1133,6 +1133,9 @@ export class AppRepository {
     await this.db.delete(schema.userSavedItems).where(and(eq(schema.userSavedItems.userId, userId), eq(schema.userSavedItems.itemId, itemId)));
   }
 
+  // NOTE: array params in raw sql`` MUST go through sql.param() — bare ${array}
+  // gets expanded by drizzle into a ($1, $2, ...) row constructor (an IN-list),
+  // which fails the ::text[] cast at runtime ("cannot cast type record to text[]").
   async getRouteSearchDemand(fromVariants: string[], toVariants: string[]): Promise<{ month: number; count: number }[]> {
     if (!this.db) return [];
     const rows = await this.db.execute(sql`
@@ -1140,8 +1143,8 @@ export class AppRepository {
         EXTRACT(MONTH FROM "timestamp")::int AS month,
         COUNT(*)::int AS count
       FROM search_history
-      WHERE query_from = ANY(${fromVariants}::text[])
-        AND query_to = ANY(${toVariants}::text[])
+      WHERE query_from = ANY(${sql.param(fromVariants)}::text[])
+        AND query_to = ANY(${sql.param(toVariants)}::text[])
         AND "timestamp" > NOW() - INTERVAL '12 months'
       GROUP BY month
       ORDER BY month
@@ -1175,7 +1178,7 @@ export class AppRepository {
       FROM trips t
       JOIN itinerary_nodes n ON n.trip_id = t.id
       WHERE t.is_public = true
-        AND t.destination = ANY(${dbVariants}::text[])
+        AND t.destination = ANY(${sql.param(dbVariants)}::text[])
       ORDER BY t.fork_count DESC, n.day ASC, n.sort_order ASC
       LIMIT 200
     `);
