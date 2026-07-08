@@ -6,6 +6,7 @@ import GlassCard from './GlassCard';
 import ExpandableText from './ExpandableText';
 import type { ItineraryNode } from '../types/workflow';
 import CollapsibleAiNote from './itinerary/CollapsibleAiNote';
+import { useTranslation } from "react-i18next";
 
 const ItineraryMapView = lazy(() => import('./ItineraryMapView'));
 
@@ -18,6 +19,7 @@ export default function DynamicItineraryView({
   onBack: () => void;
   onSave?: (result: any) => void;
 }) {
+    const { t } = useTranslation();
   const aiResponse = result?.fullResponse;
   
   // Extracting UI configurations or fallback
@@ -92,7 +94,7 @@ export default function DynamicItineraryView({
         {/* Overview route map — shows all geocoded nodes */}
         {allGeoNodes.length >= 2 && (
           <div className="mb-6 rounded-[2.5rem] overflow-hidden shadow-xl border-[6px] border-white/60 relative h-[260px] sm:h-[360px]">
-            <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-500 text-sm">載入地圖中...</div>}>
+            <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-500 text-sm">{t('str_232c4d7d')}</div>}>
               <ItineraryMapView items={allGeoNodes} />
             </Suspense>
           </div>
@@ -107,13 +109,12 @@ export default function DynamicItineraryView({
             return (
               <div key={i} className="bg-[linear-gradient(135deg,rgba(255,255,255,0.7),rgba(255,250,251,0.6))] backdrop-blur-xl border-2 border-white/80 shadow-[0_16px_40px_rgba(244,114,182,0.1),inset_0_2px_10px_rgba(255,255,255,1)] hover:shadow-[0_20px_50px_rgba(244,114,182,0.15)] rounded-[48px] p-6 sm:p-8 transition-shadow duration-500 transform-gpu">
                 <h3 className="text-xl font-bold text-slate-800 mb-4 bg-white/60 w-fit px-5 py-2 rounded-full shadow-sm text-center whitespace-nowrap">
-                  第 {dayData.day} 天
-                </h3>
+                  {t('str_7b2c')}{dayData.day} {t('str_5929')}</h3>
 
                 {/* Per-day mini route map */}
                 {dayGeoNodes.length >= 2 && (
                   <div className="mb-5 rounded-[2.5rem] overflow-hidden border-[6px] border-white/60 shadow-md relative h-[200px] sm:h-[300px]">
-                    <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-500 text-xs">載入地圖中...</div>}>
+                    <Suspense fallback={<div className="h-full bg-white/40 flex items-center justify-center text-slate-500 text-xs">{t('str_232c4d7d')}</div>}>
                       <ItineraryMapView items={dayGeoNodes} />
                     </Suspense>
                   </div>
@@ -158,11 +159,10 @@ export default function DynamicItineraryView({
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-1 text-[11px] font-bold text-fuchsia-600 bg-fuchsia-50 border border-fuchsia-100 px-2 py-0.5 rounded-full hover:bg-fuchsia-100 transition-colors shrink-0"
-                                  title="在 Google Maps 查看"
+                                  title={t('str_794f3300')}
                                 >
                                   <MapPin size={10} />
-                                  地圖
-                                </a>
+                                  {t('str_ae5e6')}</a>
                               )}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
@@ -177,8 +177,8 @@ export default function DynamicItineraryView({
                           {/* Intensity Indicator */}
                           {spot.intensity && (
                             <div className="flex-shrink-0 ml-2">
-                              {spot.intensity === 'chill' && <span title="輕鬆" className="text-emerald-500 bg-emerald-50 w-8 h-8 rounded-full flex items-center justify-center"><Leaf size={16}/></span>}
-                              {spot.intensity === 'hardcore' && <span title="耗費體力" className="text-rose-500 bg-rose-50 w-8 h-8 rounded-full flex items-center justify-center"><Flame size={16}/></span>}
+                              {spot.intensity === 'chill' && <span title={t('str_11ee91')} className="text-emerald-500 bg-emerald-50 w-8 h-8 rounded-full flex items-center justify-center"><Leaf size={16}/></span>}
+                              {spot.intensity === 'hardcore' && <span title={t('str_3c5d50cb')} className="text-rose-500 bg-rose-50 w-8 h-8 rounded-full flex items-center justify-center"><Flame size={16}/></span>}
                             </div>
                           )}
                         </div>
@@ -204,7 +204,7 @@ export default function DynamicItineraryView({
                               {isLong && (
                                 <div className="flex items-center gap-1.5 ml-1 text-red-600 bg-white/60 px-2 py-0.5 rounded-md">
                                   <AlertTriangle size={12} />
-                                  <span className="text-[11px] uppercase tracking-wider">車程較長</span>
+                                  <span className="text-[11px] uppercase tracking-wider">{t('str_42c48f15')}</span>
                                 </div>
                               )}
                             </div>
@@ -224,7 +224,7 @@ export default function DynamicItineraryView({
             onClick={() => onSave(result)}
             className="group w-full mt-10 py-5 sm:py-6 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 text-white font-black text-lg sm:text-xl shadow-[0_16px_32px_rgba(236,72,153,0.3),inset_0_2px_4px_rgba(255,255,255,0.4)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.4),inset_0_2px_4px_rgba(255,255,255,0.5)] transition-all duration-300 hover:scale-[1.02] ios-press flex items-center justify-center gap-3">
             <span className="group-hover:animate-cute-bounce">💾</span>
-            <span className="drop-shadow-sm">儲存這份心動行程</span>
+            <span className="drop-shadow-sm">{t('str_63541e5')}</span>
           </button>
         )}
       </div>

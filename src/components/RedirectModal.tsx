@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { Plane, Clock, Heart, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
 import GlassCard from './GlassCard';
 import { getModalMotion, getOverlayTransition, subtlePressableClass } from '../lib/motionTokens';
+import { useTranslation } from "react-i18next";
 
 interface RedirectModalProps {
   provider: string;
@@ -31,6 +32,7 @@ export default function RedirectModal({
   onConfirm,
   onSave 
 }: RedirectModalProps) {
+    const { t } = useTranslation();
   const airlineInitial = (airline || provider || '?').charAt(0).toUpperCase();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
@@ -73,7 +75,7 @@ export default function RedirectModal({
               <div className="flex flex-col items-end">
                 <div className="mb-1 flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-emerald-500">
                   <ShieldCheck size={12} strokeWidth={3} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.08em]">官方安全手記</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.08em]">{t('str_10b0190d')}</span>
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{provider}</span>
               </div>
@@ -87,7 +89,7 @@ export default function RedirectModal({
                     <MapPin size={17} className="text-slate-500" />
                   </div>
                   <span className="text-[24px] sm:text-[26px] font-black tracking-[-0.04em] text-slate-800">{departure}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">出發城市</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{t('str_270b7b36')}</span>
                 </div>
 
                 <div className="relative z-10 mx-3 flex flex-1 flex-col items-center sm:mx-4">
@@ -107,28 +109,27 @@ export default function RedirectModal({
                     <MapPin size={17} className="text-fuchsia-400" />
                   </div>
                   <span className="text-[24px] sm:text-[26px] font-black tracking-[-0.04em] text-slate-800">{arrival}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">抵達城市</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{t('str_2f077073')}</span>
                 </div>
               </div>
 
               <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-white/88 bg-white/86 p-4 shadow-[0_10px_22px_rgba(15,23,42,0.06)]">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-slate-500">機票票價 (1名成人)</span>
+                  <span className="text-[13px] text-slate-500">{t('str_1116c23f')}</span>
                   <span className="text-[13px] font-bold tabular-nums text-slate-700">
                     {currency} {price ? Math.round(price * 0.85).toLocaleString() : '--'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[13px] text-slate-500">
-                    預估稅項與手續費
-                  </span>
+                    {t('str_539486d')}</span>
                   <span className="text-[13px] font-bold tabular-nums text-slate-700">
                     {currency} {price ? Math.round(price * 0.15).toLocaleString() : '--'}
                   </span>
                 </div>
                 <div className="h-px bg-slate-100" />
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] font-bold text-slate-900">總計金額</span>
+                  <span className="text-[13px] font-bold text-slate-900">{t('str_3b7ae547')}</span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-[13px] font-bold text-violet-400">{currency}</span>
                     <span className="text-[26px] font-black tracking-[-0.04em] text-violet-600 tabular-nums">
@@ -136,7 +137,7 @@ export default function RedirectModal({
                     </span>
                   </div>
                 </div>
-                <p className="-mt-1 text-[10px] text-slate-500">* 費用僅供參考，以訂票頁面為準</p>
+                <p className="-mt-1 text-[10px] text-slate-500">{t('str_3b582ccb')}</p>
               </div>
 
               <div className="mb-5 rounded-2xl border border-sky-100 bg-sky-50/50 p-4 flex items-start gap-3 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8)] backdrop-blur-md">
@@ -163,7 +164,7 @@ export default function RedirectModal({
                     className={`group flex flex-1 items-center justify-center gap-2 rounded-[20px] border border-slate-200 bg-white py-3.5 shadow-sm whitespace-nowrap hover:border-pink-200 hover:bg-pink-50 ${subtlePressableClass}`}
                   >
                     <Heart size={18} className="shrink-0 text-pink-400 transition-all group-hover:fill-pink-500 group-hover:text-pink-500" />
-                    <span className="text-[14px] font-bold text-slate-600 group-hover:text-pink-600">收藏方案</span>
+                    <span className="text-[14px] font-bold text-slate-600 group-hover:text-pink-600">{t('str_30050ec8')}</span>
                   </button>
                   <button
                     onClick={onClose}
@@ -176,7 +177,7 @@ export default function RedirectModal({
 
               <div className="mt-6 flex items-center justify-center gap-2 overflow-hidden whitespace-nowrap text-slate-500">
                 <Clock size={14} className="shrink-0" />
-                <span className="truncate text-[10px] font-bold tracking-[0.08em]">價格與位子變動快速，建議及早確認</span>
+                <span className="truncate text-[10px] font-bold tracking-[0.08em]">{t('str_61b3bc2e')}</span>
               </div>
             </div>
           </GlassCard>

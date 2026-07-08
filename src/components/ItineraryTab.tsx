@@ -193,9 +193,10 @@ import {
   getCategoryMeta,
   getNodeEmoji,
 } from "../lib/itineraryUtils";
-
+import { useTranslation } from "react-i18next";
 
 export default function ItineraryTab() {
+    const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const [viewMode, setViewMode] = useState<"list" | "map" | "calendar">("list");
   const [selectedDay, setSelectedDay] = useState<number>(1);
@@ -1826,8 +1827,7 @@ export default function ItineraryTab() {
               className="mb-4 sm:mb-8 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-600 font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:border-sky-200 hover:text-sky-700 w-max transition-colors"
             >
               <ArrowLeft size={14} />
-              返回旅程入口
-            </button>
+              {t('str_66f9470e')}</button>
             <div className="flex-1">
               <AiForm onSubmit={handleAiFormSubmit} />
             </div>
@@ -1846,7 +1846,7 @@ export default function ItineraryTab() {
         <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-tab-safe animate-in fade-in duration-700">
           <EditorialSectionIntro
             eyebrow="Trip Notebook"
-            title="選擇行程專案，集中管理所有行程與協作內容"
+            title={t('str_d467c8f')}
             highlights={[
               { label: "旅程主線", value: "日期與節奏" },
               { label: "AI 起草", value: "先有第一版" },
@@ -1870,7 +1870,7 @@ export default function ItineraryTab() {
                 >
                   <EditorialSectionIntro
                     eyebrow="AI Planning Entry"
-                    title="讓 AI 起草初步行程，隨時調整細節"
+                    title={t('str_7251b979')}
                     description=""
                     highlights={[
                       { label: "起點", value: "目的地與天數" },
@@ -1920,8 +1920,8 @@ export default function ItineraryTab() {
                                     minCharacters={60}
                                     className="mt-2"
                                     textClassName="text-pretty text-[13px] leading-[1.62] text-slate-600"
-                                    collapsedLabel="展開完整內容"
-                                    expandedLabel="收起內容"
+                                    collapsedLabel={t('str_aa19e90')}
+                                    expandedLabel={t('str_301f49f3')}
                                   />
                                 </div>
                               ),
@@ -1934,11 +1934,9 @@ export default function ItineraryTab() {
                               Planning Flow
                             </p>
                             <p className="mt-2 text-[14px] font-black leading-6 text-slate-800">
-                              快速產生行程草稿，再依需求調整細節。
-                            </p>
+                              {t('str_75a6efe5')}</p>
                             <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-                              先確立行程骨幹，方便在手機上快速瀏覽與編輯。
-                            </p>
+                              {t('str_28077213')}</p>
                           </div>
                           <button
                             onClick={(e) => {
@@ -1948,8 +1946,7 @@ export default function ItineraryTab() {
                             className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-400 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors hover:from-pink-500 hover:to-orange-500"
                           >
                             <GlowingIcon icon={Sparkles} size={18} glowColor="bg-yellow-300" iconColor="text-white" />
-                            使用 AI 起草行程
-                          </button>
+                            {t('str_770014d2')}</button>
                         </div>
                       </div>
                     </motion.div>
@@ -1962,8 +1959,7 @@ export default function ItineraryTab() {
           <div className="flex items-center gap-3 mb-8">
             <div className="h-px flex-1 bg-slate-100" />
             <span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest px-4">
-              我的行程歷史
-            </span>
+              {t('str_1dd553ed')}</span>
             <div className="h-px flex-1 bg-slate-100" />
           </div>
 
@@ -1982,25 +1978,22 @@ export default function ItineraryTab() {
                 <Navigation2 size={28} />
               </div>
               <h3 className="text-balance text-[22px] sm:text-2xl font-black text-slate-900">
-                目前還沒有行程
-              </h3>
+                {t('str_1a71f905')}</h3>
               <p className="mt-2 max-w-md text-pretty text-[13px] sm:text-sm font-bold leading-6 text-slate-500">
-                先建立第一份草稿，再隨時補上景點與航班。
-              </p>
+                {t('str_2f5a1b96')}</p>
               <button
                 onClick={() => setIsPlanningNew(true)}
                 className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:from-pink-500 hover:to-rose-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)]"
               >
                 <Sparkles size={18} />
-                建立第一趟旅程
-              </button>
+                {t('str_56785280')}</button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {userTrips.map((trip) => (
                 <div key={trip.tripId ?? trip.id} className="relative group w-full h-full flex">
                   <EventCard
-                    heading={trip.name || "我的行程"}
+                    heading={trip.name || t('my_itinerary', '我的行程')}
                     description={`${trip.days || 1} DAYS`}
                     date={new Date(trip.createdAt || new Date())}
                     imageUrl={getTripCoverImage(trip.destination)}
@@ -2008,7 +2001,7 @@ export default function ItineraryTab() {
                     eventName={trip.destination || "Unknown Location"}
                     location={trip.destination || "Unknown Location"}
                     time="Anytime"
-                    actionLabel="進入行程"
+                    actionLabel={t('str_42ceb1f2')}
                     onActionClick={(e) => {
                       if ((e.target as HTMLElement).closest(".delete-trip-btn")) return;
                       setActiveTripId(trip.tripId ?? trip.id);
@@ -2017,29 +2010,29 @@ export default function ItineraryTab() {
                   />
                   <div className="absolute top-4 right-4 z-20">
                     <button
-                      title="刪除此專案"
-                      aria-label={`刪除行程「${trip.name}」`}
+                      title={t('str_342d0416')}
+                      aria-label={t('delete_itinerary_label', 'Delete Itinerary "{{name}}"', { name: trip.name })}
                       className="delete-trip-btn w-11 h-11 bg-white/60 hover:bg-red-500 hover:text-white text-slate-800 flex items-center justify-center rounded-full backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
                       onClick={async (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         if (
                           window.confirm(
-                            `確定要刪除「${trip.name}」？這將刪除所有相關資料（包含帳務、清單等）且無法復原。`
+                            t('delete_itinerary_confirm', 'Are you sure you want to delete "{{name}}"? This will delete all related data (including finances, check-lists, etc.) and cannot be undone.', { name: trip.name })
                           )
                         ) {
                           try {
                             const ok = await deleteTripApi(trip.tripId ?? trip.id);
                             if (ok) {
-                              useAppStore.getState().showToast("行程專案已刪除", "success");
+                              useAppStore.getState().showToast(t('delete_itinerary_success', 'Itinerary deleted successfully'), "success");
                               setUserTrips((prev) =>
                                 prev.filter((t) => (t.tripId ?? t.id) !== (trip.tripId ?? trip.id))
                               );
                             } else {
-                              useAppStore.getState().showToast("刪除失敗，或您不是該專案擁有者", "warning");
+                              useAppStore.getState().showToast(t('delete_itinerary_fail_owner', 'Delete failed, or you are not the owner of this project'), "warning");
                             }
                           } catch (err) {
-                            useAppStore.getState().showToast("刪除發生錯誤", "warning");
+                            useAppStore.getState().showToast(t('delete_itinerary_error', 'An error occurred while deleting'), "warning");
                           }
                         }
                       }}
@@ -2167,14 +2160,12 @@ export default function ItineraryTab() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
               </span>
-              訪客唯讀模式 - 登入後即可解鎖編輯與共編功能
-            </span>
+              {t('str_58ab6740')}</span>
             <button
               onClick={() => window.dispatchEvent(new CustomEvent('request-login'))}
               className="px-5 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 text-white rounded-full text-[13px] font-black uppercase tracking-widest shadow-md transition-all ios-press shrink-0 w-full sm:w-auto"
             >
-              立刻註冊 / 登入
-            </button>
+              {t('str_4ca18424')}</button>
           </div>
         )}
         
@@ -2185,12 +2176,12 @@ export default function ItineraryTab() {
                 <CreditCard size={20} strokeWidth={2.5} />
               </div>
               <div>
-                <h4 className="font-bold text-rose-700 text-sm">尚未結算的帳款</h4>
-                <p className="text-rose-500 text-xs font-medium">有 {pendingSettlementsCount} 筆待處理款項</p>
+                <h4 className="font-bold text-rose-700 text-sm">{t('str_47593af8')}</h4>
+                <p className="text-rose-500 text-xs font-medium">{t('str_6709')}{pendingSettlementsCount} {t('str_239bcde9')}</p>
               </div>
             </div>
             <button className="px-4 py-2 bg-white rounded-full text-rose-600 text-xs font-bold shadow-sm whitespace-nowrap">
-              前往結算 <ArrowRight size={14} className="inline ml-1" />
+              {t('str_26df965a')}<ArrowRight size={14} className="inline ml-1" />
             </button>
           </div>
         )}
@@ -2234,7 +2225,7 @@ export default function ItineraryTab() {
             <div className="flex gap-2.5">
               <button
                 onClick={handleInviteCollaborators}
-                aria-label="邀請旅伴 / 共編"
+                aria-label={t('str_166b4aee')}
                 className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all ios-press shadow-lg"
               >
                 <UserPlus size={18} strokeWidth={3} />
@@ -2244,11 +2235,11 @@ export default function ItineraryTab() {
                 disabled={isUpdatingPublicState}
                 className="px-4 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all ios-press shadow-lg text-[11px] font-black uppercase tracking-widest disabled:opacity-60"
               >
-                {tripInfo?.isPublic ? "公開中" : "發布"}
+                {tripInfo?.isPublic ? t('public_status.active', '公開中') : t('public_status.publish', '發布')}
               </button>
               <button
                 onClick={handleShare}
-                aria-label="分享行程"
+                aria-label={t('str_26817364')}
                 className="w-11 h-11 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center text-white transition-all ios-press shadow-lg"
               >
                 <Share2 size={18} strokeWidth={3} />
@@ -2277,29 +2268,26 @@ export default function ItineraryTab() {
                 className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-black text-slate-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm ios-press"
               >
                 <ArrowLeft size={12} strokeWidth={3} />
-                返回
-              </button>
+                {t('str_11c18a')}</button>
               <button
                 onClick={handleShare}
                 className="px-4 py-2 bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-xl text-[11px] font-black text-pink-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm ios-press"
               >
                 <Share2 size={12} strokeWidth={3} />
-                分享
-              </button>
+                {t('str_a3d65')}</button>
               <button
                 onClick={handleInviteCollaborators}
                 className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-xl text-[11px] font-black text-indigo-500 transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm ios-press"
               >
                 <UserPlus size={12} strokeWidth={3} />
-                邀請旅伴 / 共編
-              </button>
+                {t('str_166b4aee')}</button>
               <button
                 onClick={handleTogglePublicTemplate}
                 disabled={isUpdatingPublicState}
                 className={`px-4 py-2 rounded-xl text-[11px] font-black transition-all uppercase tracking-widest flex items-center gap-2 shadow-sm ios-press disabled:opacity-60 ${tripInfo?.isPublic ? "bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-600" : "bg-white hover:bg-slate-50 border border-slate-100 text-slate-500"}`}
               >
                 <Lock size={12} strokeWidth={3} />
-                {tripInfo?.isPublic ? "取消公開" : "分享行程"}
+                {tripInfo?.isPublic ? t('public_status.unpublish', '取消公開') : t('public_status.share', '分享行程')}
               </button>
               <button
                 onClick={handleExportIcs}
@@ -2321,7 +2309,7 @@ export default function ItineraryTab() {
               <h1 className="text-5xl lg:text-6xl font-black text-slate-800 mb-4 flex items-center gap-3 font-serif tracking-tight leading-tight">
                 <div className="flex items-center gap-2 group/title">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600">
-                    {tripInfo?.name || tripInfo?.destination || "未命名目的地"}
+                    {tripInfo?.name || tripInfo?.destination || t('unnamed_destination', '未命名目的地')}
                   </span>
                   <span className="text-4xl lg:text-5xl group-hover/title:scale-125 transition-transform duration-300">
                     ✨
@@ -2338,8 +2326,7 @@ export default function ItineraryTab() {
                     <span className="text-pink-600 font-black">
                       {totalDays}
                     </span>{" "}
-                    天
-                  </span>
+                    {t('str_5929')}</span>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-1.5 bg-white rounded-full border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                   <Users size={16} className="text-indigo-500 shrink-0" />
@@ -2347,8 +2334,7 @@ export default function ItineraryTab() {
                     <span className="text-indigo-600 font-black">
                       {collaborators.length}
                     </span>{" "}
-                    位旅行者
-                  </span>
+                    {t('str_259b5b51')}</span>
                 </div>
                 <div
                   className={`flex items-center gap-2 px-4 py-1.5 rounded-full border shadow-sm hover:shadow-md transition-shadow ${tripInfo?.isPublic ? "bg-emerald-50/60 border-emerald-100/60" : "bg-white border-slate-100"}`}
@@ -2362,7 +2348,7 @@ export default function ItineraryTab() {
                     }
                   />
                   <span className="text-slate-700 tracking-tight">
-                    {tripInfo?.isPublic ? "公開行程中..." : "目前為私人行程"}
+                    {tripInfo?.isPublic ? t('public_status.is_public', '公開行程中...') : t('public_status.is_private', '目前為私人行程')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-1.5 bg-white rounded-full border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -2371,8 +2357,7 @@ export default function ItineraryTab() {
                     <span className="text-amber-600 font-black">
                       {tripInfo?.forkCount ?? 0}
                     </span>{" "}
-                    次複製
-                  </span>
+                    {t('str_1a347b7')}</span>
                 </div>
               </div>
             </div>
@@ -2389,11 +2374,10 @@ export default function ItineraryTab() {
                   strokeWidth={3}
                   className="text-slate-500 dark:text-slate-400"
                 />
-                返回
-              </button>
+                {t('str_11c18a')}</button>
             </div>
             <HorizontalScrollRail
-              label="行程檢視模式"
+              label={t('str_7f1df301')}
               className="flex-1 min-w-0"
               contentClassName="gap-1.5 md:gap-2 rounded-[24px] md:rounded-full border border-white/50 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 md:bg-white/70 md:dark:bg-slate-900/70 p-1.5 md:p-2 shadow-sm md:shadow-md backdrop-blur-xl dark-transition"
               controlsVisibilityClass="flex"
@@ -2403,20 +2387,17 @@ export default function ItineraryTab() {
                 onClick={() => setViewMode("list")}
                 className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "list" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md scale-[0.98] md:scale-100 border border-transparent" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
               >
-                行程列表
-              </button>
+                {t('str_3fc9a0b0')}</button>
               <button
                 onClick={() => setViewMode("map")}
                 className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "map" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md scale-[0.98] md:scale-100 border border-transparent" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
               >
-                景點地圖
-              </button>
+                {t('str_30ef9475')}</button>
               <button
                 onClick={() => setViewMode("calendar")}
                 className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "calendar" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md scale-[0.98] md:scale-100 border border-transparent" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
               >
-                日程
-              </button>
+                {t('str_cd0c6')}</button>
             </HorizontalScrollRail>
           </div>
         </div>
@@ -2427,7 +2408,7 @@ export default function ItineraryTab() {
             <GlassCard className="!p-6 glass-card dark-transition shadow-xl shadow-slate-200/40 dark:shadow-black/40 overflow-hidden rounded-[32px]">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
                 <h3 className="font-black text-[11px] xl:text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                  <span>旅程天數</span> <span className="text-sm">📅</span>
+                  <span>{t('str_30185cd5')}</span> <span className="text-sm">📅</span>
                 </h3>
                 <div className="w-7 h-7 xl:w-8 xl:h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0">
                   <Settings2 size={14} />
@@ -2484,7 +2465,7 @@ export default function ItineraryTab() {
                         <span className="text-[9px] xl:text-[11px] font-bold opacity-60 uppercase tracking-tighter truncate relative z-10 transition-colors">
                           {count}{" "}
                           <span className="hidden xl:inline">SPOTS</span>
-                          <span className="inline xl:hidden">站</span>
+                          <span className="inline xl:hidden">{t('str_7ad9')}</span>
                         </span>
                       </button>
                     );
@@ -2496,8 +2477,7 @@ export default function ItineraryTab() {
                   onClick={() => setVisibleDaysLimit((l) => l + 14)}
                   className="w-full mt-4 py-2 border-2 border-dashed border-slate-200 rounded-3xl text-xs font-black tracking-widest text-slate-500 dark:text-slate-300 hover:text-slate-700 hover:border-slate-300 transition-colors uppercase"
                 >
-                  展開更多天數...
-                </button>
+                  {t('str_6db9a2dd')}</button>
               )}
             </GlassCard>
 
@@ -2505,8 +2485,7 @@ export default function ItineraryTab() {
             <GlassCard className="!p-4 xl:!p-6 overflow-hidden">
               <div className="flex items-center justify-between mb-4 xl:mb-5 flex-wrap gap-2">
                 <span className="font-black text-[11px] xl:text-xs uppercase tracking-[0.2em] text-slate-500">
-                  目前在線
-                </span>
+                  {t('str_374ff911')}</span>
                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 shrink-0">
                   <div className="w-1 h-1 xl:w-1.5 xl:h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-[8px] xl:text-[11px] font-black text-emerald-600 uppercase tracking-wider">
@@ -2534,7 +2513,7 @@ export default function ItineraryTab() {
               >
                 <div className="flex items-center gap-2">
                   <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-500 group-hover:text-slate-800 transition-colors">
-                    口袋名單 ({favorites.length})
+                    {t('str_2ece57ef')}{favorites.length})
                   </span>
                   <ChevronDown
                     size={16}
@@ -2545,8 +2524,7 @@ export default function ItineraryTab() {
                 </div>
                 {!isFavoritesCollapsed && (
                   <span className="text-[11px] font-bold text-pink-400 opacity-90 group-hover:opacity-100 transition-opacity">
-                    拖曳或點擊 + 加入
-                  </span>
+                    {t('str_6bd53bd5')}</span>
                 )}
               </button>
 
@@ -2579,7 +2557,7 @@ export default function ItineraryTab() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            aria-label="選擇圖示"
+                            aria-label={t('str_43315073')}
                             className="w-11 h-11 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center ios-press transition-all"
                           >
                             <IconImg value={newSpotEmoji} size={20} />
@@ -2587,7 +2565,7 @@ export default function ItineraryTab() {
                           <input
                             value={newSpotTitle}
                             onChange={(e) => setNewSpotTitle(e.target.value)}
-                            placeholder="快速收藏..."
+                            placeholder={t('str_42d7d09f')}
                             className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-pink-200 transition-all"
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
@@ -2598,7 +2576,7 @@ export default function ItineraryTab() {
                           <button
                             onClick={() => void handleAddFavorite()}
                             disabled={addingFavorite || !newSpotTitle.trim()}
-                            aria-label="新增收藏"
+                            aria-label={t('str_2f92ecc7')}
                             className="w-11 h-11 shrink-0 rounded-xl bg-slate-800 text-white flex items-center justify-center disabled:opacity-30 ios-press transition-all"
                           >
                             <Plus size={18} />
@@ -2638,8 +2616,7 @@ export default function ItineraryTab() {
               className="w-full py-5 rounded-[28px] bg-white text-slate-700 font-bold text-sm shadow-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center justify-center gap-3 ios-press"
             >
               <Plus size={20} className="text-pink-400" />
-              重新規劃旅程
-            </button>
+              {t('str_5abc0943')}</button>
           </aside>
 
           {/* Right Column: Content */}
@@ -2651,11 +2628,9 @@ export default function ItineraryTab() {
                   📸
                 </div>
                 <p className="text-[11px] font-black text-fuchsia-500 uppercase tracking-widest mb-1">
-                  旅程回顧
-                </p>
+                  {t('str_301848af')}</p>
                 <h3 className="font-black text-slate-800 text-xl mb-3">
-                  {tripInfo.name} · 旅行記憶
-                </h3>
+                  {tripInfo.name} {t('str_6a5d91ce')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {nodes
                     .filter((n: ItineraryNode) => n.title)
@@ -2674,8 +2649,7 @@ export default function ItineraryTab() {
                 </div>
                 {nodes.length > 12 && (
                   <p className="text-[11px] text-slate-500 mt-2">
-                    還有 {nodes.length - 12} 個旅遊景點...
-                  </p>
+                    {t('str_11e705')}{nodes.length - 12} {t('str_7cef40b1')}</p>
                 )}
               </div>
             )}
@@ -2683,7 +2657,7 @@ export default function ItineraryTab() {
             {/* Mobile Day Selector — Cuter segmented toggle style */}
             <div className="lg:hidden mb-2 md:mb-5 overflow-hidden -mx-1 -mt-3">
               <HorizontalScrollRail
-                label="Day 切換"
+                label={t('str_79a23dd8')}
                 viewportClassName="py-2 px-1"
                 contentClassName="inline-flex min-w-max gap-1.5 rounded-full border-2 border-white/80 bg-white/50 backdrop-blur-xl p-1.5 shadow-[0_4px_16px_rgba(15,23,42,0.03)] dark:border-white/10 dark:bg-slate-800/90"
                 controlsVisibilityClass="flex"
@@ -2722,8 +2696,7 @@ export default function ItineraryTab() {
                         <span
                           className={`drop-shadow-sm transition-colors z-10 ${isActive ? "text-white font-black" : ""}`}
                         >
-                          第 {day} 天
-                        </span>
+                          {t('str_7b2c')}{day} {t('str_5929')}</span>
                         {displayDate && (
                           <span
                             className={`text-[10px] sm:text-[11px] font-bold hidden sm:inline z-10 transition-colors ${isActive ? "text-pink-50" : "text-slate-500 dark:text-slate-300"}`}
@@ -2747,8 +2720,7 @@ export default function ItineraryTab() {
                     whileTap={{ scale: 0.96 }}
                     className="relative flex items-center justify-center px-4 py-2.5 sm:py-2 rounded-full font-black text-[13px] sm:text-sm text-slate-500 dark:text-slate-300 hover:text-slate-700 bg-white/40 hover:bg-white border border-dashed border-slate-400 transition-all shrink-0 snap-center"
                   >
-                    + 載入更多
-                  </motion.button>
+                    {t('str_72992809')}</motion.button>
                 )}
               </HorizontalScrollRail>
             </div>
@@ -2797,8 +2769,7 @@ export default function ItineraryTab() {
                           .slice(0, 2)
                           .map((lock) => lock.userName)
                           .join("、")}
-                        正在編輯第 {safeSelectedDay} 天的景點
-                      </span>
+                        {t('str_12ceef80')}{safeSelectedDay} {t('str_2a51960a')}</span>
                     </div>
                   )}
 
@@ -2814,18 +2785,16 @@ export default function ItineraryTab() {
                             </div>
                             <div>
                               <h3 className="font-black text-xl text-slate-800 leading-tight">
-                                需要微調第 {safeSelectedDay} 天嗎？
-                              </h3>
+                                {t('str_7028f9a6')}{safeSelectedDay} {t('str_15a15fa')}</h3>
                               <p className="text-sm font-bold text-slate-500 mt-1 uppercase tracking-wider">
-                                AI 行程規劃助手
-                              </p>
+                                {t('str_6db8a14d')}</p>
                             </div>
                           </div>
                           <button
                             onClick={() => setShowPlanner(!showPlanner)}
                             className={`w-full sm:w-auto px-10 py-4 rounded-full font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${showPlanner ? "bg-slate-100 text-slate-500" : "bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 ios-press"}`}
                           >
-                            {showPlanner ? "收起助理" : "召喚 AI"}
+                            {showPlanner ? t('ai_planner.hide', '收起助理') : t('ai_planner.show', '召喚 AI')}
                             {showPlanner ? (
                               <X size={18} />
                             ) : (
@@ -2846,10 +2815,9 @@ export default function ItineraryTab() {
                                 <div className="h-px bg-slate-100 w-full" />
                                 <div className="flex flex-col gap-3">
                                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-1">
-                                    您的具體需求或對 AI 的指令
-                                  </label>
+                                    {t('str_6db96ee9')}</label>
                                   <textarea
-                                    placeholder="例如：幫我把下午行程安排得更輕鬆一點，或是推薦三間必吃的拉麵店插入到晚上..."
+                                    placeholder={t('str_62f8045f')}
                                     value={plannerForm.notes}
                                     onChange={(e) =>
                                       setPlannerField("notes", e.target.value)
@@ -2860,11 +2828,9 @@ export default function ItineraryTab() {
 
                                 {/* Travel Preferences */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                  {/* 旅伴 */}
                                   <div className="flex flex-col gap-2">
                                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                      旅伴
-                                    </label>
+                                      {t('str_ca20f')}</label>
                                     <div className="flex flex-wrap gap-2">
                                       {[
                                         "獨行俠",
@@ -2886,16 +2852,14 @@ export default function ItineraryTab() {
                                           }
                                           className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${plannerForm.companions === opt ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                         >
-                                          {opt}
+                                          {t('ai_preferences_options.' + opt, opt)}
                                         </button>
                                       ))}
                                     </div>
                                   </div>
-                                  {/* 預算 */}
                                   <div className="flex flex-col gap-2">
                                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                      預算
-                                    </label>
+                                      {t('str_12e587')}</label>
                                     <div className="flex flex-wrap gap-2">
                                       {[
                                         "窮遊背包客",
@@ -2916,18 +2880,16 @@ export default function ItineraryTab() {
                                           }
                                           className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${plannerForm.budget === opt ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                         >
-                                          {opt}
+                                          {t('ai_preferences_options.' + opt, opt)}
                                         </button>
                                       ))}
                                     </div>
                                   </div>
                                 </div>
 
-                                {/* 旅遊節奏 */}
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    旅遊節奏
-                                  </label>
+                                    {t('str_30700374')}</label>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "特種兵式",
@@ -2954,18 +2916,16 @@ export default function ItineraryTab() {
                                           }
                                           className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-fuchsia-100 text-fuchsia-600 border-fuchsia-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                         >
-                                          {opt}
+                                          {t('ai_preferences_options.' + opt, opt)}
                                         </button>
                                       );
                                     })}
                                   </div>
                                 </div>
 
-                                {/* 興趣偏好 */}
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    興趣偏好
-                                  </label>
+                                    {t('str_3d39a4e9')}</label>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "大自然",
@@ -2994,18 +2954,16 @@ export default function ItineraryTab() {
                                           }
                                           className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-indigo-100 text-indigo-600 border-indigo-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                         >
-                                          {opt}
+                                          {t('ai_preferences_options.' + opt, opt)}
                                         </button>
                                       );
                                     })}
                                   </div>
                                 </div>
 
-                                {/* 飲食需求 */}
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    飲食需求
-                                  </label>
+                                    {t('str_47d6fc2f')}</label>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "無限制",
@@ -3032,18 +2990,16 @@ export default function ItineraryTab() {
                                           }
                                           className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-amber-100 text-amber-600 border-amber-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                         >
-                                          {opt}
+                                          {t('ai_preferences_options.' + opt, opt)}
                                         </button>
                                       );
                                     })}
                                   </div>
                                 </div>
 
-                                {/* 交通偏好 */}
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    交通偏好
-                                  </label>
+                                    {t('str_25e68384')}</label>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "大眾運輸",
@@ -3070,18 +3026,16 @@ export default function ItineraryTab() {
                                           }
                                           className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-teal-100 text-teal-600 border-teal-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                         >
-                                          {opt}
+                                          {t('ai_preferences_options.' + opt, opt)}
                                         </button>
                                       );
                                     })}
                                   </div>
                                 </div>
 
-                                {/* 行程步調 */}
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    行程步調
-                                  </label>
+                                    {t('str_3fccb379')}</label>
                                   <div className="flex flex-wrap gap-2">
                                     {["緊湊特種兵", "適中", "悠閒慢活"].map(
                                       (opt) => (
@@ -3098,18 +3052,16 @@ export default function ItineraryTab() {
                                           }
                                           className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${plannerForm.pace === opt ? "bg-amber-100 text-amber-600 border-amber-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                         >
-                                          {opt}
+                                          {t('ai_preferences_options.' + opt, opt)}
                                         </button>
                                       ),
                                     )}
                                   </div>
                                 </div>
 
-                                {/* 住宿偏好 */}
                                 <div className="flex flex-col gap-2">
                                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    住宿偏好
-                                  </label>
+                                    {t('str_256fb55e')}</label>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "青旅",
@@ -3138,7 +3090,7 @@ export default function ItineraryTab() {
                                           }
                                           className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-indigo-100 text-indigo-600 border-indigo-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                         >
-                                          {opt}
+                                          {t('ai_preferences_options.' + opt, opt)}
                                         </button>
                                       );
                                     })}
@@ -3152,7 +3104,7 @@ export default function ItineraryTab() {
                                     }
                                     className={`flex-1 py-4.5 rounded-[22px] font-black text-[11px] uppercase tracking-widest transition-all border ${aiGenerateMode === "selected_day" ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                   >
-                                    重建 Day {safeSelectedDay}
+                                    {t('str_6f76fa9')}{safeSelectedDay}
                                   </button>
                                   <button
                                     onClick={() => {
@@ -3166,23 +3118,21 @@ export default function ItineraryTab() {
                                     }}
                                     className={`flex-1 py-4.5 rounded-[22px] font-black text-[11px] uppercase tracking-widest transition-all border ${aiGenerateMode === "generate_for_selected_days" ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                   >
-                                    指定天數區間
-                                  </button>
+                                    {t('str_309ba3f5')}</button>
                                   <button
                                     onClick={() =>
                                       setAiGenerateMode("overwrite_all")
                                     }
                                     className={`flex-1 py-4.5 rounded-[22px] font-black text-[11px] uppercase tracking-widest transition-all border ${aiGenerateMode === "overwrite_all" ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
                                   >
-                                    全局重新規劃
-                                  </button>
+                                    {t('str_41d03f6f')}</button>
                                 </div>
 
                                 {aiGenerateMode ===
                                   "generate_for_selected_days" && (
                                   <div className="flex gap-4 items-center justify-center bg-white/50 py-3 px-4 rounded-[22px] border border-slate-100 shadow-inner my-2">
                                     <span className="font-bold text-xs text-slate-600">
-                                      產生範圍：Day{" "}
+                                      {t('str_386a7818')}{" "}
                                     </span>
                                     <select
                                       value={rangeStartDay}
@@ -3201,8 +3151,7 @@ export default function ItineraryTab() {
                                       )}
                                     </select>
                                     <span className="text-slate-500 font-bold px-1">
-                                      至
-                                    </span>
+                                      {t('str_81f3')}</span>
                                     <select
                                       value={rangeEndDay}
                                       onChange={(e) =>
@@ -3235,8 +3184,7 @@ export default function ItineraryTab() {
                                   ) : (
                                     <Plane size={16} />
                                   )}
-                                  自動抓取航班做為 AI 規劃參考
-                                </button>
+                                  {t('str_18c6ffc3')}</button>
 
                                 <button
                                   onClick={() => void handleAiSuggest()}
@@ -3252,8 +3200,8 @@ export default function ItineraryTab() {
                                   </span>
                                   <span className="truncate">
                                     {aiLoading
-                                      ? "AI 分析處理中..."
-                                      : "開始智慧微調行程"}
+                                      ? t('ai_planner.processing', 'AI 分析處理中...')
+                                      : t('ai_planner.start_tuning', '開始智慧微調行程')}
                                   </span>
                                 </button>
                               </div>
@@ -3302,8 +3250,7 @@ export default function ItineraryTab() {
                         onClick={() => setVisibleNodeLimit((l) => l + 20)}
                         className="py-3 px-8 rounded-full border-2 border-dashed border-slate-300 text-sm font-black tracking-widest text-slate-500 hover:text-slate-700 hover:border-slate-400 hover:bg-white/50 transition-all uppercase"
                       >
-                        展開更多景點...
-                      </button>
+                        {t('str_6769dc43')}</button>
                     </div>
                   )}
                 </motion.div>
@@ -3326,8 +3273,7 @@ export default function ItineraryTab() {
                               Map Chunk
                             </p>
                             <p className="mt-1 text-sm font-bold text-slate-500">
-                              正在載入地圖體驗...
-                            </p>
+                              {t('str_780af61c')}</p>
                           </div>
                         </div>
                       </GlassCard>
@@ -3347,12 +3293,11 @@ export default function ItineraryTab() {
                             <div className="text-center">
                               <p className="text-sm font-black tracking-widest text-slate-800 uppercase">
                                 {aiLoading
-                                  ? "AI 正在分析景點"
-                                  : "正在載入地圖資料"}
+                                  ? t('ai_planner.analyzing_places', 'AI 正在分析景點')
+                                  : t('ai_planner.loading_map', '正在載入地圖資料')}
                               </p>
                               <p className="text-xs font-bold text-slate-500 mt-1">
-                                請稍候片刻
-                              </p>
+                                {t('str_2371cd35')}</p>
                             </div>
                           </div>
                         </div>
@@ -3392,7 +3337,7 @@ export default function ItineraryTab() {
         {/* Floating Action Buttons (Mobile Only) */}
         <div className="md:hidden fixed bottom-24 right-5 flex flex-col gap-4 z-50">
           <button
-            aria-label="邀請共編"
+            aria-label={t('str_43c2fe22')}
             onClick={handleInviteCollaborators}
             className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl ios-press transition-all shadow-indigo-200/50"
           >
@@ -3416,7 +3361,7 @@ export default function ItineraryTab() {
             </button>
           )}
           <button
-            aria-label="AI 行程規劃"
+            aria-label={t('str_2c99e34b')}
             onClick={() => setIsPlanningNew(true)}
             className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 text-white shadow-2xl ios-press transition-all group overflow-hidden shadow-pink-200/50"
           >
@@ -3452,15 +3397,14 @@ export default function ItineraryTab() {
                     </div>
                     <div>
                       <h3 className="font-black text-xl text-slate-800 tracking-tight">
-                        口袋名單
-                      </h3>
+                        {t('str_282d1249')}</h3>
                       <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">
                         Saved Spots
                       </p>
                     </div>
                   </div>
                   <button
-                    aria-label="關閉口袋名單"
+                    aria-label={t('str_1ce46ef6')}
                     onClick={() => setShowMobileFavorites(false)}
                     className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
                   >
@@ -3474,7 +3418,7 @@ export default function ItineraryTab() {
                     <div className="flex gap-2.5">
                       <button
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        aria-label="選擇圖示"
+                        aria-label={t('str_43315073')}
                         className="w-11 h-11 shrink-0 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center ios-press transition-all text-xl shadow-sm"
                       >
                         <IconImg value={newSpotEmoji} size={20} />
@@ -3482,7 +3426,7 @@ export default function ItineraryTab() {
                       <input
                         value={newSpotTitle}
                         onChange={(e) => setNewSpotTitle(e.target.value)}
-                        placeholder="新增口袋收藏，例如：一蘭拉麵..."
+                        placeholder={t('str_7ae1c22f')}
                         className="flex-1 bg-white border border-slate-200/80 rounded-xl px-3.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-fuchsia-200 transition-all shadow-sm"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
@@ -3589,11 +3533,9 @@ export default function ItineraryTab() {
                     <Sparkles size={28} className="text-sky-500" strokeWidth={2} />
                   </div>
                   <h2 className="text-[22px] font-black text-slate-800 mb-2 font-display leading-tight">
-                    加入此趟旅行<br/>共同編輯行程
-                  </h2>
+                    {t('str_53a4f099')}<br/>{t('str_2adc50ff')}</h2>
                   <p className="text-[13.5px] font-medium text-slate-500 leading-relaxed mb-8">
-                    您需要登入才能編輯 <span className="text-sky-600 font-bold bg-sky-50 px-1 rounded">{contextualLoginPrompt.itemName}</span>。<br/>註冊免登入，一鍵即可加入共編！
-                  </p>
+                    {t('str_7d1a3e4a')}<span className="text-sky-600 font-bold bg-sky-50 px-1 rounded">{contextualLoginPrompt.itemName}</span>。<br/>{t('str_5df399b0')}</p>
                 </div>
                 <div className="flex flex-col gap-3">
                   <button
@@ -3603,14 +3545,12 @@ export default function ItineraryTab() {
                     }}
                     className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 shadow-md shadow-indigo-200 text-white font-bold text-[15px] transition-all ios-press"
                   >
-                    立刻登入 / 註冊
-                  </button>
+                    {t('str_4ed4b27a')}</button>
                   <button
                     onClick={() => setContextualLoginPrompt({ show: false, itemName: '' })}
                     className="w-full py-3.5 px-6 rounded-2xl bg-slate-50 text-slate-600 font-bold text-[15px] hover:bg-slate-100 transition-colors ios-press"
                   >
-                    先以唯讀模式瀏覽
-                  </button>
+                    {t('str_2a28a1aa')}</button>
                 </div>
               </motion.div>
             </motion.div>
@@ -3655,10 +3595,9 @@ export default function ItineraryTab() {
                   </div>
                   <div className="absolute top-0 right-1/4 w-3 h-3 rounded-full bg-pink-400 animate-ping opacity-75 hidden sm:block" />
                 </div>
-                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 text-center mb-3 tracking-tight">✨ 與旅伴一同即時共編！</h3>
+                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 text-center mb-3 tracking-tight">{t('str_1daa6def')}</h3>
                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400 text-center leading-relaxed mb-8 text-balance">
-                  註冊即可開啟雲端同步，邀請旅伴協同完成完美旅程。
-                </p>
+                  {t('str_2694a74d')}</p>
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={() => {
@@ -3668,15 +3607,14 @@ export default function ItineraryTab() {
                     }}
                     className="w-full h-12 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-[20px] font-black tracking-widest text-[13px] uppercase shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5 transition-all ios-press flex items-center justify-center gap-2"
                   >
-                    <span>快速註冊入口</span>
+                    <span>{t('str_239a6e5f')}</span>
                     <Sparkles size={14} className="opacity-70" />
                   </button>
                   <button
                     onClick={() => setShowInviteModal(false)}
                     className="w-full h-12 bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-[20px] font-bold text-[13px] transition-colors"
                   >
-                    下次再說
-                  </button>
+                    {t('str_251683b3')}</button>
                 </div>
               </motion.div>
             </motion.div>
@@ -3695,6 +3633,7 @@ export default function ItineraryTab() {
 // ─── Constants & Helpers ────────────────────────────────────────────────────────
 
 const getCategoryStyle = (category: string) => {
+    const { t } = useTranslation();
   switch (category) {
     case "food":
     case "restaurant":

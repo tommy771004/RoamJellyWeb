@@ -4,8 +4,10 @@ import GlassCard from "./GlassCard";
 import { initAuth, googleSignIn, logout, getAccessToken } from "../lib/googleAuth";
 import type { User } from "firebase/auth";
 import { useAppStore } from "../store/useAppStore";
+import { useTranslation } from "react-i18next";
 
 export default function GoogleFormsCard({ tripId }: { tripId?: string }) {
+    const { t } = useTranslation();
   const [needsAuth, setNeedsAuth] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -177,19 +179,16 @@ export default function GoogleFormsCard({ tripId }: { tripId?: string }) {
           </div>
           <div>
             <h3 className="text-[17px] font-black text-slate-800 tracking-tight leading-tight">
-              Google 表單問卷
-            </h3>
+              {t('str_74e9c1cb')}</h3>
             <p className="text-xs font-bold text-slate-500">
-              快速蒐集旅伴的喜好與意見
-            </p>
+              {t('str_66735137')}</p>
           </div>
         </div>
 
         {needsAuth ? (
           <div className="flex flex-col items-center justify-center py-6 bg-white/40 rounded-[20px] border border-slate-100">
             <p className="text-sm font-bold text-slate-600 mb-4 text-center">
-              需要連結您的 Google 帳號才能自動建立表單
-            </p>
+              {t('str_9e0aab1')}</p>
             <button 
               className="gsi-material-button bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2 rounded-md shadow-sm transition-all"
               onClick={handleLogin}
@@ -203,7 +202,7 @@ export default function GoogleFormsCard({ tripId }: { tripId?: string }) {
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
                   <path fill="none" d="M0 0h48v48H0z"></path>
                 </svg>
-                <span className="text-sm font-medium text-slate-600">使用 Google 帳號登入</span>
+                <span className="text-sm font-medium text-slate-600">{t('str_13871726')}</span>
               </div>
             </button>
           </div>
@@ -211,12 +210,11 @@ export default function GoogleFormsCard({ tripId }: { tripId?: string }) {
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between bg-white/60 p-3 rounded-[16px] border border-white">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500">已登入</span>
+                <span className="text-xs font-bold text-slate-500">{t('str_16f53bc')}</span>
                 <span className="text-xs font-black text-slate-800">{user?.displayName || '使用者'}</span>
               </div>
               <button onClick={logout} className="text-[11px] font-bold text-slate-400 hover:text-slate-600 underline underline-offset-2">
-                登出
-              </button>
+                {t('str_eaadf')}</button>
             </div>
 
             <button
@@ -229,22 +227,20 @@ export default function GoogleFormsCard({ tripId }: { tripId?: string }) {
               ) : (
                 <>
                   <ListTodo size={16} />
-                  一鍵產生「旅伴意向調查」表單
-                </>
+                  {t('str_1a84df22')}</>
               )}
             </button>
 
             {formLinks.length > 0 && (
               <div className="mt-2 flex flex-col gap-2">
                 <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
-                  已建立的問卷
-                </span>
+                  {t('str_3c5c09d7')}</span>
                 {formLinks.map((f, idx) => (
                   <div key={idx} className="flex flex-col gap-2 bg-white/70 backdrop-blur border border-white p-3 rounded-[16px]">
                     <div className="flex justify-between items-center">
                       <span className="text-[13px] font-black text-slate-800">{f.title}</span>
                       <a href={`https://docs.google.com/forms/d/${f.id}/edit`} target="_blank" rel="noreferrer" className="text-[11px] text-sky-600 font-bold flex items-center gap-1 hover:underline">
-                        查看結果 <ArrowRight size={12} />
+                        {t('str_3108c692')}<ArrowRight size={12} />
                       </a>
                     </div>
                     <div className="flex items-center gap-2 mt-1">

@@ -4,6 +4,7 @@ import type { SearchItem } from "../types/workflow";
 import { pressableSurfaceClass, raisedHoverClass, subtlePressableClass } from "../lib/motionTokens";
 import GlassCard from "./GlassCard";
 import AirlineLogo from "./AirlineLogo";
+import { useTranslation } from "react-i18next";
 
 export interface FlightCardProps {
   flight: SearchItem;
@@ -25,6 +26,7 @@ export default function FlightCard({
   onToggleSave,
   onToggleTrack,
 }: FlightCardProps) {
+    const { t } = useTranslation();
   const providerName = flight.details?.airline || flight.provider;
 
   return (
@@ -131,8 +133,7 @@ export default function FlightCard({
             <div className="mt-2 pt-2 border-t border-dashed border-slate-200">
               <div className="flex items-center gap-1 mb-1">
                 <span className="text-[9px] font-black tracking-[0.2em] uppercase text-sky-500 bg-sky-50 px-1.5 py-[2px] rounded-sm whitespace-nowrap">
-                  回程
-                </span>
+                  {t('str_afeed')}</span>
               </div>
               <div className="flex items-center justify-between px-0.5 mt-2">
                 <div className="flex flex-col items-start min-w-0">
@@ -222,13 +223,12 @@ export default function FlightCard({
                 e.stopPropagation();
                 onImportToTrip(e);
               }}
-              aria-label="帶入行程"
+              aria-label={t('str_2c15f56e')}
               className={`h-[46px] sm:h-[50px] px-5 sm:px-6 rounded-[14px] flex items-center gap-1.5 border border-transparent bg-slate-900 text-white hover:bg-slate-800 shadow-md hover:shadow-lg ${subtlePressableClass} ${raisedHoverClass}`}
             >
               <PlaneTakeoff size={15} strokeWidth={2.5} />
               <span className="text-[12px] sm:text-[13px] font-black uppercase tracking-widest hidden sm:inline">
-                帶入
-              </span>
+                {t('str_bb9ef')}</span>
             </button>
             <button
               type="button"
@@ -239,8 +239,7 @@ export default function FlightCard({
               className={`h-11 px-5 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_10px_20px_rgba(244,114,182,0.16)] ${subtlePressableClass} ${raisedHoverClass}`}
             >
               <span className="text-[11px] uppercase tracking-widest leading-none">
-                購買
-              </span>
+                {t('str_119f3b')}</span>
             </button>
           </div>
         </div>

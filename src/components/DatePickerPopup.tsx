@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
+import { useTranslation } from "react-i18next";
 
 interface DatePickerPopupProps {
   selectedDate: string;
@@ -14,6 +15,7 @@ interface DatePickerPopupProps {
 }
 
 export default function DatePickerPopup({ selectedDate, onSelect, onClose, allowPast = false, minDate }: DatePickerPopupProps) {
+    const { t } = useTranslation();
   const today = new Date();
   const [viewDate, setViewDate] = useState(selectedDate ? new Date(selectedDate) : new Date());
   const prefersReducedMotion = useReducedMotion() ?? false;
@@ -69,14 +71,14 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
         >
           <div className="mb-6 flex flex-row items-center justify-between">
             <div className="flex flex-col">
-              <span className="fluid-title font-black text-slate-800">{year}年 {monthNames[month]}</span>
+              <span className="fluid-title font-black text-slate-800">{year}{t('str_5e74')}{monthNames[month]}</span>
               <span className="fluid-kicker mt-0.5 font-black uppercase text-slate-500">Select Date</span>
             </div>
             <div className="flex gap-x-3">
-              <button onClick={() => changeMonth(-1)} aria-label="上個月" className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
+              <button onClick={() => changeMonth(-1)} aria-label={t('str_12f0be7')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                 <ChevronLeft size={24} className="text-slate-600" />
               </button>
-              <button onClick={() => changeMonth(1)} aria-label="下個月" className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
+              <button onClick={() => changeMonth(1)} aria-label={t('str_12f0fa8')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                 <ChevronRight size={24} className="text-slate-600" />
               </button>
             </div>
@@ -124,8 +126,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
               onClick={onClose}
               className="fluid-kicker font-black uppercase text-slate-500 transition-colors hover:text-pink-500"
             >
-              關閉
-            </button>
+              {t('str_12bb2d')}</button>
           </div>
         </motion.div>
       </div>

@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import GlassCard from './GlassCard';
 import type { ItineraryNode } from '../types/workflow';
 import { openNativeMap } from '../lib/workflowApi';
+import { useTranslation } from "react-i18next";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -119,6 +120,7 @@ export default function ItineraryMapView({
   allNodes?: ItineraryNode[];
   compact?: boolean;
 }) {
+    const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedNode = items.find((node) => node.node_id === selectedId) ?? null;
 
@@ -222,7 +224,7 @@ export default function ItineraryMapView({
 
         {items.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-max">
-            <span className="text-slate-500 font-semibold bg-white px-6 py-3 rounded-full shadow-sm">目前沒有行程顯示在地圖上</span>
+            <span className="text-slate-500 font-semibold bg-white px-6 py-3 rounded-full shadow-sm">{t('str_77ce6e04')}</span>
           </div>
         )}
       </GlassCard>
@@ -248,7 +250,7 @@ export default function ItineraryMapView({
                   </div>
                   {selectedNode.description && <p className="text-[12px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{selectedNode.description}</p>}
                 </div>
-                <button onClick={() => setSelectedId(null)} aria-label="關閉景點詳情" className="flex size-11 items-center justify-center rounded-full bg-slate-50 text-slate-500 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
+                <button onClick={() => setSelectedId(null)} aria-label={t('str_25ad2fee')} className="flex size-11 items-center justify-center rounded-full bg-slate-50 text-slate-500 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                   <X size={14} strokeWidth={3} />
                 </button>
               </GlassCard>

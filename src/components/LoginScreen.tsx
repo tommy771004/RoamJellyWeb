@@ -3,6 +3,7 @@ import { createGuestSession, loginUser, registerUser, setClientAccessToken } fro
 import { pressableSurfaceClass, subtlePressableClass } from '../lib/motionTokens';
 import { ArrowRight, ChevronDown, Compass, LockKeyhole, Luggage, NotebookText, Sparkles } from 'lucide-react';
 import InfoPeekModal, { type InfoPeekContent, type InfoPeekTone } from './InfoPeekModal';
+import { useTranslation } from "react-i18next";
 
 interface Props {
   onLogin: (userId: string) => void;
@@ -72,6 +73,7 @@ const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string
 };
 
 const getPreviewTone = (toneClass: string): InfoPeekTone => {
+    const { t } = useTranslation();
   if (toneClass.includes('emerald')) return 'emerald';
   if (toneClass.includes('orange')) return 'orange';
   if (toneClass.includes('pink')) return 'pink';
@@ -80,6 +82,7 @@ const getPreviewTone = (toneClass: string): InfoPeekTone => {
 };
 
 const buildPreviewDetails = (context: string, item: GuestPreviewItem): string[] => {
+    const { t } = useTranslation();
   if (context === '旅途工具包') {
     return [
       item.meta,
@@ -105,6 +108,7 @@ const buildPreviewDetails = (context: string, item: GuestPreviewItem): string[] 
 };
 
 export default function LoginScreen({ onLogin, onCancel, guestFirst = false, contextLabel, title, description, guestCtaLabel }: Props) {
+    const { t } = useTranslation();
   const shouldShowGuestHero = guestFirst || Boolean(title) || Boolean(description);
   const [mode, setMode] = useState<Mode>('login');
   const [username, setUsername] = useState('');
@@ -195,7 +199,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
       {onCancel && (
         <button
           onClick={onCancel}
-          aria-label="關閉登入視窗"
+          aria-label={t('str_2bd5c038')}
           className="absolute top-4 right-4 z-50 flex h-[34px] w-[34px] items-center justify-center rounded-full bg-slate-900/5 dark:bg-white/10 text-slate-500 dark:text-slate-400 backdrop-blur-md transition-all hover:bg-slate-900/10 dark:hover:bg-white/20"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -241,11 +245,9 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 <div className="mt-5 flex items-center justify-center p-3 sm:p-5 rounded-[22px] border border-white/10 bg-white/5 backdrop-blur-sm">
                   <div className="text-center space-y-2">
                     <p className="text-[14px] sm:text-[15px] font-black tracking-wide text-white">
-                      ✨ 點擊體驗，我們直接出發！
-                    </p>
+                      {t('str_3bcc79a9')}</p>
                     <p className="text-[12px] opacity-80 text-sky-100 font-medium tracking-wide">
-                      (不會留下任何包袱)
-                    </p>
+                      {t('str_5a5191ad')}</p>
                   </div>
                 </div>
               </div>
@@ -265,15 +267,15 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                       onClick={() => setIsAuthCardExpanded(true)}
                       className={`flex items-center justify-center rounded-[20px] border border-white/12 bg-white/[0.06] px-5 py-3.5 text-white hover:-translate-y-0.5 hover:bg-white/[0.12] sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press`}
                     >
-                      <span className="text-[12px] font-black tracking-[0.06em]">改用帳號同步</span>
+                      <span className="text-[12px] font-black tracking-[0.06em]">{t('str_5a81abf4')}</span>
                     </button>
                   </div>
                 )}
 
                 <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold text-slate-400">
-                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">不用密碼就能先試</span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">喜歡再綁正式帳號</span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">同步與保存留到下一步</span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">{t('str_34c202c5')}</span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">{t('str_64e70f4f')}</span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">{t('str_84a8f10')}</span>
                 </div>
               </div>
           </section>
@@ -308,14 +310,12 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
             >
               <div>
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                  已有帳號或想同步進度
-                </div>
+                  {t('str_421de3b3')}</div>
                 <div className="mt-1 text-[14px] font-black tracking-[-0.03em] text-slate-800 dark:text-white">
                   {isAuthCardExpanded ? '收起登入 / 註冊' : '展開登入 / 註冊'}
                 </div>
                 <div className="mt-1 text-[12px] font-semibold leading-[1.55] text-slate-500 dark:text-slate-400">
-                  先逛流程也可以，需要保存再展開登入。
-                </div>
+                  {t('str_242b905')}</div>
               </div>
               <span
                 className="ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 transition-transform shrink-0 shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
@@ -356,10 +356,10 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
 
               {/* Username */}
               <div className="mb-4 flex flex-col">
-                <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">使用者名稱</span>
+                <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_6894b3a0')}</span>
                 <input
                   className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
-                  placeholder="3–30 個英數字或底線"
+                  placeholder={t('str_9dd3433')}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
@@ -372,7 +372,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               {mode === 'register' && (
                 <div className="flex flex-col">
                   <div className="mb-4 flex flex-col">
-                    <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">選擇旅伴頭像</span>
+                    <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_4240bc60')}</span>
                     <div className="flex flex-wrap gap-2 rounded-[20px] border border-white/50 dark:border-white/10 bg-white/30 dark:bg-black/20 p-2 backdrop-blur-sm">
                       {['🐶', '🐱', '🦊', '🐰', '🐼', '🐨', '🐻', '🐯'].map(emoji => (
                         <button
@@ -389,10 +389,10 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                     </div>
                   </div>
                   <div className="mb-4 flex flex-col">
-                    <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">暱稱（選填）</span>
+                    <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_6c57640e')}</span>
                     <input
                       className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
-                      placeholder="顯示給其他成員的名稱"
+                      placeholder={t('str_1de61a3c')}
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       autoComplete="name"
@@ -404,11 +404,11 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
 
               {/* Password */}
               <div className="mb-4 flex flex-col">
-                <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">密碼</span>
+                <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_b95b6')}</span>
                 <input
                   type="password"
                   className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
-                  placeholder="至少 8 個字元"
+                  placeholder={t('str_721a1ff3')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -418,11 +418,11 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               {/* Confirm password – register only */}
               {mode === 'register' && (
                 <div className="mb-4 flex flex-col">
-                  <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">確認密碼</span>
+                  <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_38f4c609')}</span>
                   <input
                     type="password"
                     className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
-                    placeholder="再次輸入密碼"
+                    placeholder={t('str_512138d7')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     autoComplete="new-password"
@@ -446,7 +446,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                 className={`flex justify-center items-center py-3.5 mt-2 clay-btn appearance-none cursor-pointer transition-all duration-300 ios-press focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? "bg-sky-300 dark:bg-sky-950 text-white/70" : "bg-gradient-to-r from-sky-400 to-sky-500 hover:opacity-95"}`}
               >
                 {loading ? (
-                  <span className="text-white font-[800]">處理中…</span>
+                  <span className="text-white font-[800]">{t('str_3ecd7faa')}</span>
                 ) : (
                   <span className="text-white font-[900] text-sm sm:text-base tracking-[0.06em]">
                     {mode === 'login' ? '登入' : '建立帳號'}
@@ -472,7 +472,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
                   disabled={loading}
                   className="mt-2.5 flex justify-center items-center py-3 rounded-[22px] border-none appearance-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all ios-press bg-transparent text-slate-500 dark:text-slate-400"
                 >
-                  <span className="font-[800] text-sm tracking-[0.05em]">取消</span>
+                  <span className="font-[800] text-sm tracking-[0.05em]">{t('str_a9472')}</span>
                 </button>
               )}
             </>

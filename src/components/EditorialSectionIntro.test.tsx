@@ -3,13 +3,14 @@ import assert from "node:assert/strict";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import EditorialSectionIntro from "./EditorialSectionIntro";
+import { useTranslation } from "react-i18next";
 
 test("EditorialSectionIntro renders title, description, and highlight pills", () => {
   const html = renderToStaticMarkup(
     <EditorialSectionIntro
       eyebrow="Trip Utility Layer"
-      title="把天氣、清單與分帳綁回這趟旅程"
-      description="讓手機上的閱讀先聚焦在重點，再視需要展開更多內容。"
+      title="出發前工具包"
+      description="把天氣、清單與分帳綁回這趟旅程"
       highlights={[
         { label: "閱讀節奏", value: "先看重點" },
         { label: "資訊層次", value: "卡片分主次" },

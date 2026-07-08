@@ -515,6 +515,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
 // ── Trip selector bar ─────────────────────────────────────────────────────────
 
 function TripSelectorBar() {
+  const { t } = useTranslation();
   const { activeTripId, setActiveTripId } = useAppStore();
   const [trips, setTrips] = useState<TripSummary[]>([]);
 
@@ -528,7 +529,7 @@ function TripSelectorBar() {
 
   return (
     <HorizontalScrollRail
-      label="旅程切換"
+      label={t('str_30177e1a')}
       className="mb-8"
       viewportClassName="w-full py-1 -mx-4 px-4 sm:mx-0 sm:px-0"
       contentClassName="flex flex-row gap-3"
@@ -573,6 +574,7 @@ function TripSelectorBar() {
 // ── Exported component ────────────────────────────────────────────────────────
 
 export default function ToolsTab() {
+    const { t } = useTranslation();
   return (
     <ToolsTabProvider>
       <ToolsTabContent />
@@ -581,8 +583,10 @@ export default function ToolsTab() {
 }
 
 import GoogleFormsCard from "./GoogleFormsCard";
+import { useTranslation } from "react-i18next";
 
 function ToolsTabContent() {
+  const { t } = useTranslation();
   const { activeTripId, setActiveTab, openRedirectModal } = useAppStore();
   const {
     state: { loading, checklist, destination, settlements, tripInfo, weather, tip },
@@ -693,15 +697,12 @@ function ToolsTabContent() {
           <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-center">
             <div className="space-y-5 text-center md:text-left">
               <div className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-black uppercase text-sky-700">
-                旅程工具包
-              </div>
+                {t('str_2cfd1593')}</div>
               <div className="space-y-2.5 sm:space-y-3">
                 <h2 className="text-balance text-2xl font-black leading-tight text-slate-900 sm:text-[34px] md:text-[40px]">
-                  請先選擇或建立行程
-                </h2>
+                  {t('str_3aab8f46')}</h2>
                 <p className="text-pretty text-[13px] leading-relaxed text-slate-600 sm:text-base sm:leading-7">
-                  工具包與特定行程綁定。選擇行程後即可查看天氣、管理清單與紀錄分帳。
-                </p>
+                  {t('str_b0118f4')}</p>
               </div>
 
               {/* Collapsible pillars — mobile collapsed by default */}
@@ -712,7 +713,7 @@ function ToolsTabContent() {
                   className="md:hidden w-full flex items-center justify-between px-4 py-3 text-left"
                   aria-expanded={isPillarsExpanded}
                 >
-                  <span className="text-[13px] font-black text-slate-700">功能說明（3 項）</span>
+                  <span className="text-[13px] font-black text-slate-700">{t('str_50eb0469')}</span>
                   <ChevronDown
                     size={18}
                     strokeWidth={2.5}
@@ -744,8 +745,8 @@ function ToolsTabContent() {
                         minCharacters={72}
                         className="relative mt-2.5"
                         textClassName="text-pretty text-[13px] leading-[1.65] text-slate-600"
-                        collapsedLabel="看更多內容"
-                        expandedLabel="收起重點"
+                        collapsedLabel={t('str_4252901d')}
+                        expandedLabel={t('str_30275972')}
                       />
                       <div className="editorial-divider relative mt-4 flex items-center justify-between gap-3 pt-3">
                         <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
@@ -768,8 +769,7 @@ function ToolsTabContent() {
                           }
                           className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/90 bg-white/92 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-md"
                         >
-                          查看說明
-                          <ArrowRight size={12} strokeWidth={2.6} />
+                          {t('str_310a62ea')}<ArrowRight size={12} strokeWidth={2.6} />
                         </button>
                       </div>
                     </div>
@@ -784,14 +784,12 @@ function ToolsTabContent() {
                   className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-sky-400 to-sky-600 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
                 >
                   <Sparkles size={18} strokeWidth={2.5} />
-                  直接交給 AI 開始規劃
-                </button>
+                  {t('str_2b5ac87f')}</button>
                 <button
                   onClick={() => setActiveTab("home")}
                   className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border-2 border-slate-200/60 bg-white/70 px-6 py-3 text-[14px] font-black text-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_8px_20px_rgba(14,165,233,0.12)]"
                 >
-                  先回首頁看流程
-                </button>
+                  {t('str_4fb330ac')}</button>
               </div>
             </div>
 
@@ -878,8 +876,7 @@ function ToolsTabContent() {
                         }
                         className="mt-3 inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-black text-white/80 transition-colors hover:bg-white/14 hover:text-white"
                       >
-                        查看說明
-                        <ArrowRight size={12} strokeWidth={2.6} />
+                        {t('str_310a62ea')}<ArrowRight size={12} strokeWidth={2.6} />
                       </button>
                     </div>
                   </div>
@@ -910,8 +907,7 @@ function ToolsTabContent() {
           <div className="flex flex-col items-center justify-center p-12 my-8 rounded-[32px] glass-panel bg-white/50 dark:bg-slate-800/40 min-h-[400px]">
             <Loader2 size={36} strokeWidth={2.5} className="animate-spin text-sky-400 mb-6 drop-shadow-sm" />
             <h3 className="text-xl font-black text-slate-700 dark:text-slate-200 tracking-tight mb-2">
-              正在載入旅程工具包
-            </h3>
+              {t('str_1e9cc754')}</h3>
             <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
               {tip || "正在同步天氣與分帳清單資料..."}
             </p>
@@ -919,7 +915,7 @@ function ToolsTabContent() {
         ) : tip ? (
           <div className="flex flex-col items-center justify-center p-12 my-8 rounded-[32px] glass-panel bg-[#fff1f2]/80 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/30 min-h-[300px]">
              <AlertCircle className="text-rose-500 mb-4" size={36} />
-             <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">載入發生錯誤</h3>
+             <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 mb-2">{t('str_38fe4bcc')}</h3>
              <p className="text-sm font-bold text-rose-500/90">{tip}</p>
           </div>
         ) : (
@@ -948,7 +944,7 @@ function ToolsTabContent() {
                   onClick={() => setActiveTab("itinerary")}
                   className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white bg-white/70 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-white hover:text-sky-700"
                 >
-                  回到行程 <ArrowRight size={12} strokeWidth={2.6} />
+                  {t('str_28c255d1')}<ArrowRight size={12} strokeWidth={2.6} />
                 </button>
               )}
             </div>
@@ -987,8 +983,7 @@ function ToolsTabContent() {
                         onClick={() => setActiveTab("itinerary")}
                         className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/92 bg-white/90 px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
                       >
-                        回到行程
-                        <ArrowRight size={16} strokeWidth={2.6} />
+                        {t('str_28c255d1')}<ArrowRight size={16} strokeWidth={2.6} />
                       </button>
                     </div>
 
@@ -1019,8 +1014,8 @@ function ToolsTabContent() {
                             minCharacters={72}
                             className="relative mt-1"
                             textClassName="text-pretty text-[13px] leading-[1.64] text-slate-600"
-                            collapsedLabel="看更多"
-                            expandedLabel="收起"
+                            collapsedLabel={t('str_1cbb0f1')}
+                            expandedLabel={t('str_ccf01')}
                           />
                           <div className="editorial-divider relative mt-2 pt-2 text-[10px] font-bold text-slate-500">
                             <span className="text-pretty line-clamp-2">{decor.note}</span>
@@ -1061,7 +1056,7 @@ function ToolsTabContent() {
         <div className="flex flex-col gap-y-6">
           <EditorialSectionIntro
             eyebrow="For This Trip"
-            title="把延伸選項接回這趟旅程"
+            title={t('str_3e98333e')}
             description=""
             highlights={[
               { label: "航班", value: "補齊移動節奏" },
@@ -1087,8 +1082,7 @@ function ToolsTabContent() {
                     : "text-slate-500 group-hover:text-sky-600"
                 }
               />
-              優先推薦
-            </button>
+              {t('str_2622dcdc')}</button>
             <button
               onClick={() => setFilterMode("cheapest")}
               className={cn(filterButtonClass(filterMode === "cheapest"), "group flex shrink-0 items-center gap-2 backdrop-blur-md")}
@@ -1101,8 +1095,7 @@ function ToolsTabContent() {
                     : "text-slate-500 group-hover:text-sky-600"
                 }
               />
-              價格最低
-            </button>
+              {t('str_2662f1f1')}</button>
             <button
               onClick={() => setFilterMode("nonstop")}
               className={cn(filterButtonClass(filterMode === "nonstop"), "group flex shrink-0 items-center gap-2 backdrop-blur-md")}
@@ -1115,8 +1108,7 @@ function ToolsTabContent() {
                     : "text-slate-500 group-hover:text-sky-600"
                 }
               />
-              直飛優先
-            </button>
+              {t('str_385aa805')}</button>
           </div>
 
           <div className="grid grid-cols-1 gap-5 pb-6 md:grid-cols-2">
@@ -1227,8 +1219,7 @@ function ToolsTabContent() {
                       }}
                       className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ios-press hover:-translate-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_8px_16px_rgba(217,70,239,0.20)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_12px_24px_rgba(217,70,239,0.26)]"
                     >
-                      查看航班詳情
-                    </button>
+                      {t('str_14655fbb')}</button>
                   </GlassCard>
                 ))}
 
@@ -1259,8 +1250,7 @@ function ToolsTabContent() {
                     <div className="flex flex-col flex-1 py-1">
                       <div className="flex items-center gap-1.5 mb-1.5 sm:mb-2">
                         <span className="font-black text-fuchsia-500 text-[10px] sm:text-[11px] uppercase tracking-widest bg-fuchsia-50 px-2 py-0.5 sm:py-1 rounded-md">
-                          Klook 精選
-                        </span>
+                          {t('str_7c1ff610')}</span>
                       </div>
                       <h3 className="font-bold text-[#2C302E] leading-snug text-[15px] sm:text-[17px] mb-auto line-clamp-3">
                         {item.title}

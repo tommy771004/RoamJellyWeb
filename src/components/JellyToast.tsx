@@ -3,6 +3,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { useTranslation } from "react-i18next";
 
 export type ToastType = 'success' | 'warning' | 'info';
 
@@ -27,6 +28,7 @@ const TOAST_STYLES = {
 };
 
 export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], removeToast: (id: string) => void }) {
+  const { t } = useTranslation();
   const content = (
     <div
       aria-live="polite"
@@ -66,7 +68,7 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
               )}
               <button
                 onClick={() => removeToast(toast.id)}
-                aria-label="關閉通知"
+                aria-label={t('str_46628ef8')}
                 className="p-1.5 hover:bg-slate-200/60 rounded-full ios-press text-slate-400 hover:text-slate-600 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 ml-0.5"
               >
                 <X size={14} />

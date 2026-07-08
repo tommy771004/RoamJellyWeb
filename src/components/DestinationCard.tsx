@@ -2,6 +2,7 @@ import React from "react";
 import { Heart, PlaneTakeoff } from "lucide-react";
 import type { SearchItem } from "../types/workflow";
 import AirlineLogo from "./AirlineLogo";
+import { useTranslation } from "react-i18next";
 
 // Destination metadata lookup by IATA code
 const DEST_META: Record<
@@ -216,6 +217,7 @@ export default function DestinationCard({
   onImportToTrip,
   onToggleSave,
 }: DestinationCardProps) {
+    const { t } = useTranslation();
   const providerName = flight.details?.airline || flight.provider;
   const rawDep = (flight.details?.depCode || "").toUpperCase().substring(0, 3);
   const rawArr = (flight.details?.arrCode || "").toUpperCase().substring(0, 3);
@@ -274,7 +276,7 @@ export default function DestinationCard({
               {title}
             </h3>
             <span className="text-[10px] sm:text-[11px] font-black text-pink-300 font-mono drop-shadow-sm block mt-0.5 whitespace-nowrap">
-              最低 {flight.currency} {flight.price.toLocaleString()}
+              {t('str_cc84e')}{flight.currency} {flight.price.toLocaleString()}
             </span>
           </div>
         </div>
@@ -356,8 +358,7 @@ export default function DestinationCard({
               className="flex-1 flex h-8 items-center justify-center gap-1.5 rounded-full bg-slate-900/90 dark:bg-slate-800 hover:bg-slate-800 text-white dark:text-slate-100 px-2.5 text-[10px] font-black uppercase tracking-[0.05em] transition-all ios-press"
             >
               <PlaneTakeoff size={10} strokeWidth={2.5} />
-              帶入
-            </button>
+              {t('str_bb9ef')}</button>
             <button
               onClick={(e) => {
                 e.stopPropagation();

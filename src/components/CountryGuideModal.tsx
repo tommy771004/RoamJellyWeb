@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import type { CountryGuide, GuidePlace, AreaColor } from '../data/countryGuideData';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
+import { useTranslation } from "react-i18next";
 
 // ─── Color helpers ────────────────────────────────────────────────────────────
 
@@ -27,6 +28,7 @@ const AREA_COLORS: Record<AreaColor, { badge: string; dot: string; text: string;
 // ─── Area filter tabs ─────────────────────────────────────────────────────────
 
 function AreaTabs({ areas, active, onChange }: { areas: string[]; active: string; onChange: (a: string) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="relative -mx-5 sm:-mx-7">
       <div className="absolute left-0 top-0 bottom-0 z-10 w-5 sm:w-7 bg-gradient-to-r from-white/90 to-transparent pointer-events-none" />
@@ -50,7 +52,7 @@ function AreaTabs({ areas, active, onChange }: { areas: string[]; active: string
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
-            <span className="relative z-10 tracking-wide whitespace-nowrap">{area}</span>
+            <span className="relative z-10 tracking-wide whitespace-nowrap">{area === 'all' ? t('all', '全部') : area}</span>
           </button>
         ))}
       </div>
@@ -61,6 +63,7 @@ function AreaTabs({ areas, active, onChange }: { areas: string[]; active: string
 // ─── Expandable place card ────────────────────────────────────────────────────
 
 function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const colors = AREA_COLORS[place.areaColor];
   const previewItems = place.sections[0]?.items.slice(0, 3) ?? [];
@@ -130,7 +133,7 @@ function PlaceCard({ place, index }: { place: GuidePlace; index: number }) {
                   : 'bg-slate-900 text-white hover:bg-slate-800 hover:shadow-md'
               }`}
             >
-              <span className="whitespace-nowrap">{open ? '收起' : '探索'}</span>
+              <span className="whitespace-nowrap">{open ? t('ccf01', '收起') : t('explore', '探索')}</span>
               <motion.div
                 animate={{ rotate: open ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -211,23 +214,58 @@ interface CountryGuideModalProps {
   guide: CountryGuide;
 }
 
+function useLocalizedCountryGuide(guide: CountryGuide | undefined) {
+  const { t, i18n } = useTranslation();
+  
+  return React.useMemo(() => {
+    if (!guide) return undefined;
+    if (i18n.language === 'zh') return guide;
+    
+    return {
+      ...guide,
+      name: t(`country_guide.${guide.id}.name`, guide.name),
+      intro: t(`country_guide.${guide.id}.intro`, guide.intro),
+      places: guide.places.map((place) => ({
+        ...place,
+        name: t(`country_guide.${guide.id}.places.${place.id}.name`, place.name),
+        areaLabel: t(`country_guide.${guide.id}.places.${place.id}.areaLabel`, place.areaLabel),
+        intro: t(`country_guide.${guide.id}.places.${place.id}.intro`, place.intro),
+        sections: place.sections.map((sec, secIdx) => ({
+          ...sec,
+          title: t(`country_guide.${guide.id}.places.${place.id}.sections.${secIdx}.title`, sec.title),
+          items: sec.items.map((item, itemIdx) => 
+            t(`country_guide.${guide.id}.places.${place.id}.sections.${secIdx}.items.${itemIdx}`, item)
+          )
+        })),
+        tags: place.tags.map((tag, tagIdx) => 
+          t(`country_guide.${guide.id}.places.${place.id}.tags.${tagIdx}`, tag)
+        )
+      }))
+    };
+  }, [guide, t, i18n.language]);
+}
+
 export default function CountryGuideModal({ open, onClose, guide }: CountryGuideModalProps) {
-  const [activeArea, setActiveArea] = useState('全部');
+    const { t } = useTranslation();
+  const localizedGuide = useLocalizedCountryGuide(guide);
+  const [activeArea, setActiveArea] = useState('all');
   const prefersReducedMotion = useReducedMotion();
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const modalMotion = getModalMotion(prefersReducedMotion);
 
   const handleClose = useCallback(() => {
-    setActiveArea('全部');
+    setActiveArea('all');
     onClose();
   }, [onClose]);
 
-  const areas = ['全部', ...Array.from(new Set(guide.places.map((p) => p.areaLabel)))];
+  if (!localizedGuide) return null;
+
+  const areas = ['all', ...Array.from(new Set(localizedGuide.places.map((p) => p.areaLabel)))];
 
   const filtered =
-    activeArea === '全部'
-      ? guide.places
-      : guide.places.filter((p) => p.areaLabel === activeArea);
+    activeArea === 'all'
+      ? localizedGuide.places
+      : localizedGuide.places.filter((p) => p.areaLabel === activeArea);
 
   const infoCards = filtered.filter((p) => p.type === 'info');
   const regionCards = filtered.filter((p) => p.type !== 'info');
@@ -260,19 +298,18 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
             <div className="z-20 flex-shrink-0 border-b border-white/78 bg-white/80 px-5 pb-4 pt-5 backdrop-blur-xl sm:px-7 sm:pt-7">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
-                  <span className="text-5xl drop-shadow-sm">{guide.flag}</span>
+                  <span className="text-5xl drop-shadow-sm">{localizedGuide.flag}</span>
                   <div>
                     <h1 className="fluid-title font-extrabold text-slate-900 sm:text-3xl">
-                      {guide.name}
-                      <span className="ml-2 text-[0.82em] font-medium text-slate-500">攻略</span>
+                      {localizedGuide.name}
+                      <span className="ml-2 text-[0.82em] font-medium text-slate-500">{t('str_cb78a')}</span>
                     </h1>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-500">
                          <MapPin size={11} strokeWidth={2.5}/>
                       </div>
                       <p className="fluid-kicker font-medium uppercase text-slate-500">
-                        travel-guide-tw · 共 {guide.places.length} 個地區
-                      </p>
+                        {t('str_44a840ef')}{localizedGuide.places.length} {t('str_1375b5b')}</p>
                     </div>
                   </div>
                 </div>
@@ -283,7 +320,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                   <X size={18} />
                 </button>
               </div>
-              <p className="fluid-copy mt-4 max-w-3xl font-medium text-slate-600">{guide.intro}</p>
+              <p className="fluid-copy mt-4 max-w-3xl font-medium text-slate-600">{localizedGuide.intro}</p>
               <div className="mt-5 border-t border-slate-100 pt-3">
                 <AreaTabs areas={areas} active={activeArea} onChange={setActiveArea} />
               </div>
@@ -295,7 +332,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                 <div className="mb-6">
                   {activeArea === '全部' && (
                     <div className="flex items-center gap-3 mb-4">
-                      <h2 className="fluid-kicker whitespace-nowrap px-1 font-black uppercase text-slate-800">基本資訊</h2>
+                      <h2 className="fluid-kicker whitespace-nowrap px-1 font-black uppercase text-slate-800">{t('str_2992d015')}</h2>
                       <div className="flex-1 h-px bg-slate-200/60" />
                     </div>
                   )}
@@ -311,7 +348,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                 <div>
                   {activeArea === '全部' && infoCards.length > 0 && (
                     <div className="flex items-center gap-3 mt-4 mb-4">
-                      <h2 className="fluid-kicker whitespace-nowrap px-1 font-black uppercase text-slate-800">各地區指南</h2>
+                      <h2 className="fluid-kicker whitespace-nowrap px-1 font-black uppercase text-slate-800">{t('str_372a5ebc')}</h2>
                       <div className="flex-1 h-px bg-slate-200/60" />
                     </div>
                   )}
@@ -327,17 +364,15 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
             {/* Footer — fixed */}
             <div className="z-20 flex flex-shrink-0 items-center justify-between border-t border-white/78 bg-white/84 px-5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] pt-4 backdrop-blur-xl sm:px-7 sm:pb-4">
               <p className="fluid-caption font-medium text-slate-500">
-                內容來源：travel-guide-tw.github.io · CC BY-NC 4.0
-              </p>
+                {t('str_630ec61e')}</p>
               <a
-                href={guide.guideUrl}
+                href={localizedGuide.guideUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="fluid-caption flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 font-black text-slate-700 transition-colors hover:bg-slate-200 hover:text-slate-900 whitespace-nowrap"
               >
                 <ExternalLink size={13} strokeWidth={2.5} />
-                查看全站
-              </a>
+                {t('str_310388b7')}</a>
             </div>
           </motion.div>
         </motion.div>

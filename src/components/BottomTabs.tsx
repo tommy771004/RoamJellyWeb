@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "motion/react";
 import { Home, Sparkles, CalendarDays, Luggage, X } from "lucide-react";
 import { useAppStore } from "../store/useAppStore";
+import { useTranslation } from "react-i18next";
 import { GlowingIcon } from "./ui/GlowingIcon";
 
 const TAB_ICONS = {
@@ -27,6 +28,7 @@ const PILL_SPRING = {
 };
 
 export default function BottomTabs() {
+  const { t } = useTranslation();
   const { activeTab, setActiveTab, isNavVisible } = useAppStore();
   const prefersReducedMotion = useReducedMotion();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -62,7 +64,7 @@ export default function BottomTabs() {
       transition={
         prefersReducedMotion ? { duration: 0.16 } : bottomBarTransition
       }
-      aria-label="底部導覽"
+      aria-label={t('str_2d2a43a2')}
     >
       <motion.div
         layout
@@ -89,7 +91,7 @@ export default function BottomTabs() {
               transition={SPRING_SNAPPY}
               onClick={() => setIsExpanded(true)}
               className="flex items-center justify-center w-full h-full rounded-full text-pink-500 hover:text-pink-600 ios-press"
-              aria-label="展開選單"
+              aria-label={t('str_2c3bfa8c')}
             >
               <ActiveIcon
                 size={22}
@@ -110,7 +112,7 @@ export default function BottomTabs() {
                 <button
                   onClick={() => setIsExpanded(false)}
                   className="absolute -left-1 p-1 text-slate-400 hover:text-sky-500 rounded-full z-20 ios-press"
-                  aria-label="收起選單"
+                  aria-label={t('str_3026e6f7')}
                 >
                   <X size={14} strokeWidth={3} />
                 </button>
@@ -179,7 +181,7 @@ export default function BottomTabs() {
                     <span
                       className={`text-[9px] font-black tracking-widest whitespace-nowrap z-10 ${isActive ? "text-pink-600 dark:text-pink-400" : "opacity-80"}`}
                     >
-                      {tab.label}
+                      {t(`tab_${tab.id}`)}
                     </span>
                   </button>
                 );

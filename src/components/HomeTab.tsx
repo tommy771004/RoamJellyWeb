@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from "motion/react";
@@ -196,6 +197,7 @@ const FEATURED_DESTINATIONS = [
 ];
 
 const HomeTabContentFocusBlock = ({ children, containerRef, className }: { children: React.ReactNode, containerRef: React.RefObject<HTMLDivElement | null>, className?: string }) => {
+    const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
@@ -227,6 +229,40 @@ export default function HomeTab({
   onRequireLogin?: () => void;
   isLoggedIn?: boolean;
 }) {
+  const { t, i18n } = useTranslation();
+
+  const localizedExpertHandbooks = useMemo(() => {
+    if (i18n.language === 'zh') return EXPERT_HANDBOOKS;
+    return EXPERT_HANDBOOKS.map((handbook) => ({
+      ...handbook,
+      title: t(`expert_handbook.${handbook.id}.title`, handbook.title),
+      author: t(`expert_handbook.${handbook.id}.author`, handbook.author),
+      tags: handbook.tags.map((tag, idx) => 
+        t(`expert_handbook.${handbook.id}.tags.${idx}`, tag)
+      ),
+      cities: handbook.cities.map((city, idx) => ({
+        ...city,
+        name: t(`expert_handbook.${handbook.id}.cities.${idx}.name`, city.name),
+        reason: t(`expert_handbook.${handbook.id}.cities.${idx}.reason`, city.reason)
+      })),
+      nodes: handbook.nodes.map((node) => ({
+        ...node,
+        title: t(`expert_handbook.${handbook.id}.nodes.${node.node_id}.title`, node.title),
+        description: t(`expert_handbook.${handbook.id}.nodes.${node.node_id}.description`, node.description)
+      }))
+    }));
+  }, [t, i18n.language]);
+
+  const localizedFeaturedDestinations = useMemo(() => {
+    return FEATURED_DESTINATIONS.map((dest) => ({
+      ...dest,
+      name: t(`featured_destinations.${dest.id}.name`, dest.name),
+      description: t(`featured_destinations.${dest.id}.description`, dest.description),
+      tags: dest.tags.map((tag, idx) => t(`featured_destinations.${dest.id}.tags.${idx}`, tag)),
+      highlights: dest.highlights.map((hl, idx) => t(`featured_destinations.${dest.id}.highlights.${idx}`, hl)),
+    }));
+  }, [t]);
+
   const {
     searchForm,
     updateField,
@@ -1275,8 +1311,7 @@ export default function HomeTab({
                 <span className="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>
               </p>
               <h1 className="mx-auto max-w-4xl text-balance text-[32px] font-black tracking-[-0.04em] text-slate-800 dark:text-slate-100 sm:text-[46px] md:text-[56px] leading-[1.15] sm:leading-[1.1] font-heading drop-shadow-sm">
-                把<span className="text-gradient drop-shadow-sm">航班、地圖</span>與<span className="text-gradient drop-shadow-sm">旅伴</span><br className="hidden sm:block" />收進同一份旅程
-              </h1>
+                {t('str_628a')}<span className="text-gradient drop-shadow-sm">{t('str_5fb0dfc4')}</span>{t('str_8207')}<span className="text-gradient drop-shadow-sm">{t('str_ca20f')}</span><br className="hidden sm:block" />{t('str_2dd96b8d')}</h1>
             </div>
           </motion.div>
 
@@ -1321,8 +1356,7 @@ export default function HomeTab({
                         : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    單程
-                  </button>
+                    {t('str_ada1d')}</button>
                   <button
                     onClick={() => updateField("tripType", "roundtrip")}
                     aria-pressed={searchForm.tripType === "roundtrip"}
@@ -1332,8 +1366,7 @@ export default function HomeTab({
                         : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    來回
-                  </button>
+                    {t('str_9f818')}</button>
                 </div>
 
                 {/* Search card */}
@@ -1351,10 +1384,9 @@ export default function HomeTab({
                       }}
                     >
                       <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">
-                        出發地
-                      </span>
+                        {t('str_1426bae')}</span>
                       <input
-                        aria-label="出發地"
+                        aria-label={t('str_1426bae')}
                         className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.from}
                         onFocus={() => {
@@ -1363,7 +1395,7 @@ export default function HomeTab({
                           setShowDatePicker(false);
                         }}
                         onChange={(e) => updateField("from", e.target.value)}
-                        placeholder="想從哪飛？"
+                        placeholder={t('str_7d05f8dd')}
                         autoComplete="off"
                       />
                     </div>
@@ -1378,8 +1410,8 @@ export default function HomeTab({
                         updateField("to", tempFrom);
                         triggerHapticFeedback([10]);
                       }}
-                        title="交換"
-                        aria-label="交換出發地與目的地"
+                        title={t('str_9e9b7')}
+                        aria-label={t('str_7dc97fb6')}
                       className="absolute left-1/2 top-1/2 z-20 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] hover:scale-105 ios-press text-slate-400 hover:text-sky-500 transition-all cursor-pointer group"
                     >
                       <PlaneTakeoff
@@ -1400,10 +1432,9 @@ export default function HomeTab({
                       }}
                     >
                       <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">
-                        目的地
-                      </span>
+                        {t('str_1cd249a')}</span>
                       <input
-                        aria-label="目的地"
+                        aria-label={t('str_1cd249a')}
                         className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.to}
                         onFocus={() => {
@@ -1412,7 +1443,7 @@ export default function HomeTab({
                           setShowDatePicker(false);
                         }}
                         onChange={(e) => updateField("to", e.target.value)}
-                        placeholder="去哪裡？"
+                        placeholder={t('str_2760232d')}
                         autoComplete="off"
                       />
                     </div>
@@ -1426,8 +1457,7 @@ export default function HomeTab({
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 flex-shrink-0"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 flex-shrink-0"></span>
                       </span>
-                      熱門推薦：
-                    </div>
+                      {t('str_78650c73')}</div>
 
                     {/* 跑馬燈容器 */}
                     <div className="flex animate-marquee w-max py-1">
@@ -1494,8 +1524,7 @@ export default function HomeTab({
                     >
                       <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase flex items-center gap-1.5">
                         <Calendar size={11} className="text-sky-500" strokeWidth={2.5} />
-                        去程日期
-                      </span>
+                        {t('str_27e6af8a')}</span>
                       <span
                         className={`text-[16px] sm:text-[18px] tracking-tight font-black leading-none ${!searchForm.date ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-white"}`}
                       >
@@ -1523,8 +1552,7 @@ export default function HomeTab({
                     >
                       <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase flex items-center gap-1.5">
                         <Calendar size={11} className={searchForm.tripType === "oneway" ? "text-slate-400" : "text-sky-500"} strokeWidth={2.5} />
-                        回程日期
-                      </span>
+                        {t('str_2953b587')}</span>
                       <span
                         className={`text-[16px] sm:text-[18px] tracking-tight font-black leading-none ${!searchForm.returnDate ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-white"}`}
                       >
@@ -1562,13 +1590,12 @@ export default function HomeTab({
                     ) : (
                       <>
                         <SearchIcon size={18} strokeWidth={3} className="drop-shadow-sm group-hover:animate-cute-bounce opacity-90" /> 
-                        <span className="drop-shadow-sm relative z-10 transition-colors">搜尋 航班票價</span>
+                        <span className="drop-shadow-sm relative z-10 transition-colors">{t('str_7a2c8e5')}</span>
                       </>
                     )}
                   </button>
                   <p className="px-1 pt-2 sm:pt-2 text-center text-[13px] font-bold leading-5 text-slate-500 dark:text-slate-400 tracking-tight">
-                    先找便宜機票，剩下的細節隨時補齊。
-                  </p>
+                    {t('str_72cbb618')}</p>
                 </div>
               </div>
             )}
@@ -1590,7 +1617,7 @@ export default function HomeTab({
                 }
               }}
               className="absolute left-[-10px] md:left-[-16px] z-30 flex items-center justify-center w-11 h-11 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 ios-press"
-              aria-label="往左捲動"
+              aria-label={t('str_2cd64a89')}
             >
               <ChevronLeft size={16} strokeWidth={3} />
             </button>
@@ -1634,8 +1661,7 @@ export default function HomeTab({
                     <GlowingIcon icon={PlaneTakeoff} size={17} iconColor="text-slate-800 dark:text-slate-100" glowColor="bg-sky-400" />
                   </div>
                   <span className="font-bold text-[13px] tracking-wide">
-                    找機票
-                  </span>
+                    {t('str_17f15e7')}</span>
                   <ChevronDown
                     size={12}
                     className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 ${showFlightsDropdown ? 'rotate-180' : ''}`}
@@ -1677,8 +1703,7 @@ export default function HomeTab({
                     <GlowingIcon icon={Bed} size={17} iconColor="text-slate-800 dark:text-slate-100" glowColor="bg-pink-400" />
                   </div>
                   <span className="font-bold text-[13px] tracking-wide">
-                    找住宿
-                  </span>
+                    {t('str_17bb14e')}</span>
                   <ChevronDown
                     size={12}
                     className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 ${showHotelsDropdown ? 'rotate-180' : ''}`}
@@ -1720,8 +1745,7 @@ export default function HomeTab({
                     <GlowingIcon icon={Ticket} size={15} iconColor="text-slate-800 dark:text-slate-100" glowColor="bg-orange-400" />
                   </div>
                   <span className="font-bold text-[13px] tracking-wide">
-                    門票 & 觀光行程
-                  </span>
+                    {t('str_483a8c86')}</span>
                   <ChevronDown
                     size={12}
                     className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 ${showTicketsDropdown ? 'rotate-180' : ''}`}
@@ -1768,8 +1792,7 @@ export default function HomeTab({
                     />
                   </div>
                   <span className="font-bold text-[13px] tracking-wide">
-                    機場接送
-                  </span>
+                    {t('str_31b24171')}</span>
                   <ChevronDown
                     size={12}
                     className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 ${showTransfersDropdown ? 'rotate-180' : ''}`}
@@ -1787,7 +1810,7 @@ export default function HomeTab({
                 }
               }}
               className="absolute right-[-10px] md:right-[-16px] z-30 flex items-center justify-center w-11 h-11 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-white/10 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all opacity-40 hover:opacity-100 hover:scale-105 ios-press"
-              aria-label="往右捲動"
+              aria-label={t('str_2cb0f156')}
             >
               <ChevronRight size={16} strokeWidth={3} />
             </button>
@@ -1817,16 +1840,13 @@ export default function HomeTab({
               >
                 <div className="mb-2 px-1 pb-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                   <span className="text-[12px] font-black tracking-wide text-slate-800 dark:text-slate-100">
-                    推薦比價平台
-                  </span>
+                    {t('str_63f349c0')}</span>
                   {isMobileDevice ? (
                     <span className="text-[8px] font-black tracking-widest bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200/40">
-                      點擊縮放 🔍
-                    </span>
+                      {t('str_15c56f94')}</span>
                   ) : (
                     <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-500 px-1.5 py-0.5 rounded-full border border-sky-200/45">
-                      網頁縮放 ✦
-                    </span>
+                      {t('str_165ed4e5')}</span>
                   )}
                 </div>
 
@@ -1913,16 +1933,13 @@ export default function HomeTab({
               >
                 <div className="mb-2 px-1 pb-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                   <span className="text-[12px] font-black tracking-wide text-slate-800 dark:text-slate-100">
-                    推薦住宿平台
-                  </span>
+                    {t('str_70c1b1d5')}</span>
                   {isMobileDevice ? (
                     <span className="text-[8px] font-black tracking-widest bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200/40">
-                      點擊縮放 🔍
-                    </span>
+                      {t('str_15c56f94')}</span>
                   ) : (
                     <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-500 px-1.5 py-0.5 rounded-full border border-sky-200/45">
-                      網頁縮放 ✦
-                    </span>
+                      {t('str_165ed4e5')}</span>
                   )}
                 </div>
 
@@ -2009,16 +2026,13 @@ export default function HomeTab({
               >
                 <div className="mb-2 px-1 pb-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                   <span className="text-[12px] font-black tracking-wide text-slate-800 dark:text-slate-100">
-                    推薦門票特惠平台
-                  </span>
+                    {t('str_2b09fc0a')}</span>
                   {isMobileDevice ? (
                     <span className="text-[8px] font-black tracking-widest bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200/40">
-                      點擊縮放 🔍
-                    </span>
+                      {t('str_15c56f94')}</span>
                   ) : (
                     <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-500 px-1.5 py-0.5 rounded-full border border-sky-200/45">
-                      網頁縮放 ✦
-                    </span>
+                      {t('str_165ed4e5')}</span>
                   )}
                 </div>
 
@@ -2105,16 +2119,13 @@ export default function HomeTab({
               >
                 <div className="mb-2 px-1 pb-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
                   <span className="text-[12px] font-black tracking-wide text-slate-800 dark:text-slate-100">
-                    推薦接送與車隊服務
-                  </span>
+                    {t('str_648260b9')}</span>
                   {isMobileDevice ? (
                     <span className="text-[8px] font-black tracking-widest bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-200/40">
-                      點擊縮放 🔍
-                    </span>
+                      {t('str_15c56f94')}</span>
                   ) : (
                     <span className="text-[8px] font-black tracking-widest bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-500 px-1.5 py-0.5 rounded-full border border-sky-200/45">
-                      網頁縮放 ✦
-                    </span>
+                      {t('str_165ed4e5')}</span>
                   )}
                 </div>
 
@@ -2184,7 +2195,7 @@ export default function HomeTab({
           <HomeTabContentFocusBlock containerRef={scrollRef} className="flex flex-col gap-3 mb-5 sm:mb-6 md:mb-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <EditorialSectionIntro
-                eyebrow="查詢航班"
+                eyebrow={t('str_315202e0')}
                 title=""
                 description=""
                 highlights={[
@@ -2211,8 +2222,8 @@ export default function HomeTab({
                   <button
                     onClick={() => setViewType("grid")}
                     className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press ${viewType === "grid" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
-                    title="卡片檢視"
-                    aria-label="卡片檢視"
+                    title={t('str_27a154ba')}
+                    aria-label={t('str_27a154ba')}
                     aria-pressed={viewType === "grid"}
                   >
                     <LayoutGrid size={16} strokeWidth={2.5} />
@@ -2220,8 +2231,8 @@ export default function HomeTab({
                   <button
                     onClick={() => setViewType("table")}
                     className={`w-11 h-11 flex items-center justify-center rounded-[8px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press ${viewType === "table" ? "bg-white shadow-sm text-slate-900 border border-slate-200/50" : "text-slate-500 hover:text-slate-600 hover:-translate-y-0.5"}`}
-                    title="列表檢視"
-                    aria-label="列表檢視"
+                    title={t('str_275e6425')}
+                    aria-label={t('str_275e6425')}
                     aria-pressed={viewType === "table"}
                   >
                     <List size={16} strokeWidth={2.5} />
@@ -2392,8 +2403,7 @@ export default function HomeTab({
                     </div>
 
                     <p className="text-slate-500 dark:text-slate-400 font-medium text-[11px] tracking-wide text-center whitespace-nowrap">
-                      即時爬取航班資訊，這可能需要一些時間
-                    </p>
+                      {t('str_40f98d9')}</p>
                   </div>
                 </motion.div>
               )}
@@ -2409,8 +2419,7 @@ export default function HomeTab({
                     <AlertCircle className="text-rose-500" size={24} strokeWidth={2.5} />
                   </div>
                   <h3 className="text-[16px] md:text-[18px] font-black tracking-tight text-slate-900 dark:text-white mb-2">
-                    果凍精靈暫時迷路了 🥺
-                  </h3>
+                    {t('str_33d7d1e0')}</h3>
                   <p className="text-[13px] font-bold text-slate-500 dark:text-slate-400 mb-6 max-w-[280px] leading-relaxed">
                     {searchError === "timeout"
                       ? "伺服器查詢逾時，可能是搜尋範圍過大。請點擊下方按鈕重試。"
@@ -2421,8 +2430,7 @@ export default function HomeTab({
                     className="group flex items-center gap-2 h-10 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-[14px] hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors ios-press shadow-sm"
                   >
                     <RefreshCw size={14} className="group-active:rotate-45 transition-transform" />
-                    重新嘗試
-                  </button>
+                    {t('str_43cfaff2')}</button>
                 </div>
               ) : (
                 <AnimatePresence mode="wait">
@@ -2592,11 +2600,9 @@ export default function HomeTab({
                         <SearchIcon className="text-slate-400 dark:text-slate-500" size={32} strokeWidth={2.5} />
                       </div>
                       <h3 className="text-[18px] font-black tracking-tight text-slate-800 dark:text-white mb-2">
-                        找不到合適的航班
-                      </h3>
+                        {t('str_4ca52765')}</h3>
                       <p className="text-slate-500 dark:text-slate-400 font-bold max-w-xs text-center leading-relaxed text-[13px]">
-                        可以嘗試更換出發日期、調整篩選條件，或搜尋其他的熱門旅行目的地。
-                      </p>
+                        {t('str_647cfb13')}</p>
                     </motion.div>
                   ) : !hasSearched && !loading ? (
                     <motion.div
@@ -2613,15 +2619,13 @@ export default function HomeTab({
                         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                           <div>
                             <h4 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                              先看夥伴分享的旅程
-                            </h4>
+                              {t('str_23b668d')}</h4>
                           </div>
                           <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400">
-                            免登入、免等待，直接預覽完整節奏與景點安排。
-                          </p>
+                            {t('str_c0e005')}</p>
                         </div>
                         <HorizontalScrollRail
-                          label="Demo 卡片"
+                          label={t('str_404151bd')}
                           className="md:hidden"
                           viewportClassName="-mx-1 px-1 pb-2"
                           contentClassName="gap-3"
@@ -2657,8 +2661,7 @@ export default function HomeTab({
                                 <div className="relative z-10 p-4 pb-0 flex items-start justify-between">
                                   <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-white">
                                     <Sparkles size={11} strokeWidth={2.6} className="text-purple-300" />
-                                    精選行程
-                                  </div>
+                                    {t('str_3ae3b039')}</div>
                                   
                                   <div className="flex flex-col items-end gap-1">
                                     <div className="flex gap-1">
@@ -2670,8 +2673,7 @@ export default function HomeTab({
                                       </span>
                                     </div>
                                     <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                                      💚 暢遊推薦
-                                    </span>
+                                      {t('str_7f9d6ad7')}</span>
                                   </div>
                                 </div>
 
@@ -2699,8 +2701,7 @@ export default function HomeTab({
                                       className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md ios-press"
                                     >
                                       <Copy size={11} />
-                                      複製行程
-                                    </button>
+                                      {t('str_405d3e95')}</button>
                                     <button
                                       type="button"
                                       onClick={(e) => {
@@ -2711,8 +2712,7 @@ export default function HomeTab({
                                       className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 ios-press transition-all"
                                     >
                                       <Eye size={11} />
-                                      預覽行程
-                                    </button>
+                                      {t('str_4735b7ac')}</button>
                                   </div>
                                 </div>
                               </div>
@@ -2750,8 +2750,7 @@ export default function HomeTab({
                                 <div className="relative z-10 p-4 pb-0 flex items-start justify-between">
                                   <div className="w-fit inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 backdrop-blur-md px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-white">
                                     <Sparkles size={11} strokeWidth={2.6} className="text-purple-300" />
-                                    精選行程
-                                  </div>
+                                    {t('str_3ae3b039')}</div>
                                   
                                   <div className="flex flex-col items-end gap-1">
                                     <div className="flex gap-1">
@@ -2763,8 +2762,7 @@ export default function HomeTab({
                                       </span>
                                     </div>
                                     <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
-                                      💚 暢遊推薦
-                                    </span>
+                                      {t('str_7f9d6ad7')}</span>
                                   </div>
                                 </div>
 
@@ -2792,8 +2790,7 @@ export default function HomeTab({
                                       className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md ios-press"
                                     >
                                       <Copy size={11} />
-                                      複製行程
-                                    </button>
+                                      {t('str_405d3e95')}</button>
                                     <button
                                       type="button"
                                       onClick={(e) => {
@@ -2804,8 +2801,7 @@ export default function HomeTab({
                                       className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 ios-press transition-all"
                                     >
                                       <Eye size={11} />
-                                      預覽行程
-                                    </button>
+                                      {t('str_4735b7ac')}</button>
                                   </div>
                                 </div>
                               </div>
@@ -2826,8 +2822,7 @@ export default function HomeTab({
                       </div>
 
                       <h3 className="text-2xl sm:text-[32px] font-black text-slate-900 dark:text-white mb-4 tracking-tight text-center leading-tight">
-                        輸入出發地、目的地與日期，找出最聰明的飛航選擇。
-                      </h3>
+                        {t('str_3c0246dd')}</h3>
 
                       <div className="flex flex-wrap gap-2 justify-center mb-4">
                         {["東京 NRT", "大阪 KIX", "倫敦 LHR", "紐約 JFK"].map(
@@ -2868,8 +2863,7 @@ export default function HomeTab({
                 <div className="flex items-center gap-2">
                   <Globe className="text-sky-500" size={24} />
                   <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                    分享行程
-                  </h2>
+                    {t('str_26817364')}</h2>
                 </div>
                 <span className="text-[11px] font-black tracking-[0.15em] uppercase text-slate-500">
                   fork-and-remix
@@ -2877,7 +2871,7 @@ export default function HomeTab({
               </div>
 
               <HorizontalScrollRail
-                label="分享行程卡片"
+                label={t('str_74034a96')}
                 viewportClassName="w-full pb-6 -mx-6 px-6"
               >
                   {communityTrips.map((trip, index) => {
@@ -2940,8 +2934,7 @@ export default function HomeTab({
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <div className="inline-flex items-center gap-1 rounded-full bg-slate-900 dark:bg-slate-100 px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wider text-white dark:text-slate-900 shadow-sm">
                                   <Sparkles size={8} className="text-yellow-400 dark:text-yellow-500" />
-                                  旅伴明信片
-                                </div>
+                                  {t('str_4057d75b')}</div>
                                 <span className="rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 px-1 py-0.5 text-[8px] font-black uppercase tracking-wider font-mono">
                                   #{trip.destination || "台北"}
                                 </span>
@@ -2956,8 +2949,7 @@ export default function HomeTab({
                                 {trip.title}
                               </h3>
                               <p className="text-[10.5px] line-clamp-2 sm:line-clamp-3 leading-relaxed font-bold text-slate-500 dark:text-slate-300 mt-0.5">
-                                已被複製 {trip.forkCount ?? trip.likes ?? 0} 次。可以直接複製別人的自駕/地鐵行程，一鍵帶走再調整！
-                              </p>
+                                {t('str_2cc6af8f')}{trip.forkCount ?? trip.likes ?? 0} {t('str_28c8e103')}</p>
                             </div>
 
                             <div className="flex items-center gap-1.5 mt-auto">
@@ -2973,8 +2965,7 @@ export default function HomeTab({
                                 className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 shadow-md ios-press"
                               >
                                 <Copy size={10} />
-                                複製 REMIX
-                              </button>
+                                {t('str_2a6dcb5f')}</button>
                             </div>
                           </div>
                         </div>
@@ -2990,17 +2981,15 @@ export default function HomeTab({
             <div className="flex items-center gap-2 mb-2">
               <BellRing size={20} className="text-pink-500 animate-pulse" />
               <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                ✉️ 目的地即時快訊 & 優惠促銷訂閱
-              </h4>
+                {t('str_497b0ec5')}</h4>
             </div>
             <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-              當航班降價促銷、釋出聯名特惠，或目的地有重要安全/旅遊警示更新時，系統將即時通知您，幫助您聰明規劃、安心起飛！
-            </p>
+              {t('str_4e2be4eb')}</p>
 
             {/* List of Destinations available for subscriptions */}
             <div className="w-full mb-6">
               <HorizontalScrollRail
-                label="目的地訂閱"
+                label={t('str_3cd84df7')}
                 viewportClassName="w-full pb-4 -mx-6 px-6"
                 contentClassName="gap-4"
               >
@@ -3077,27 +3066,24 @@ export default function HomeTab({
               <div className="flex items-center gap-2 mb-3">
                 <Rss size={16} className="text-pink-500 animate-pulse" />
                 <h5 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                  最新訂閱情報 & 降價快訊 
-                </h5>
+                  {t('str_6083175a')}</h5>
               </div>
 
               {newsLoading ? (
                 <div className="text-center py-6 flex flex-col items-center justify-center">
                   <RefreshCw className="animate-spin text-slate-300 mb-2" size={24} />
                   <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
-                    正在為您整理各大旅遊網站的即時優惠...
-                  </p>
+                    {t('str_62990507')}</p>
                 </div>
               ) : newsFeed.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-[12px] font-bold text-slate-400 leading-relaxed">
-                    💡 跨出第一步！訂閱上方任一目的地的推送或電郵快訊後，即可在此解鎖瀏覽專屬的降價促銷、即時機票大賞與目的地旅遊安全警報！
-                  </p>
+                    {t('str_217cdbb5')}</p>
                 </div>
               ) : (
                 <div className="w-full relative mt-2">
                   <HorizontalScrollRail
-                    label="最新訂閱情報"
+                    label={t('str_62e7dd15')}
                     viewportClassName="w-full pb-4 -mx-4 px-4"
                     contentClassName="gap-3"
                   >
@@ -3126,8 +3112,7 @@ export default function HomeTab({
                   </HorizontalScrollRail>
                   {/* Show total count */}
                   <p className="text-[10px] text-slate-400 font-extrabold text-right pr-2">
-                    隨時同步最新旅遊即時情報
-                  </p>
+                    {t('str_25433f3d')}</p>
                 </div>
               )}
             </div>
@@ -3140,8 +3125,7 @@ export default function HomeTab({
               <div className="flex items-center gap-2">
                 <Globe className="text-emerald-500" size={24} />
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                  精選目的地指南
-                </h2>
+                  {t('str_11552810')}</h2>
               </div>
               <span className="text-[11px] font-black tracking-[0.15em] uppercase text-slate-500 hidden sm:block">
                 travel-guide-tw
@@ -3149,10 +3133,10 @@ export default function HomeTab({
             </div>
 
             <HorizontalScrollRail
-              label="精選目的地指南"
+              label={t('str_11552810')}
               viewportClassName="w-full pb-6 -mx-6 px-6"
             >
-                {FEATURED_DESTINATIONS.map((dest, index) => {
+                {localizedFeaturedDestinations.map((dest, index) => {
                   const isEven = index % 2 === 0;
                   const cardBg = isEven
                     ? "from-[#EAF5EC] to-[#E2F0EA] dark:from-slate-800 dark:to-slate-900"
@@ -3215,8 +3199,7 @@ export default function HomeTab({
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <div className="inline-flex items-center gap-1 rounded-full bg-emerald-900 dark:bg-emerald-100 px-2.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider text-white dark:text-emerald-900 shadow-sm">
                                 <Sparkles size={8} className="text-yellow-400 dark:text-yellow-500" />
-                                精選指南
-                              </div>
+                                {t('str_3adf062a')}</div>
                               <span className="rounded bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-300 px-1 py-0.5 text-[8.5px] font-black uppercase tracking-wider font-mono">
                                 #{dest.tags[0] || "漫遊"}
                               </span>
@@ -3228,8 +3211,7 @@ export default function HomeTab({
                             <div className="flex items-center gap-1.5 mb-1">
                               <span className="text-xl leading-none drop-shadow-sm">{dest.flag}</span>
                               <h3 className="text-[13.5px] xs:text-[14px] sm:text-[15.5px] font-black tracking-tight text-slate-900 dark:text-white leading-snug">
-                                {dest.name} 旅遊攻略手冊
-                              </h3>
+                                {dest.name} {t('str_354a01b2')}</h3>
                             </div>
                             <p className="text-[11px] leading-relaxed font-bold text-slate-500 dark:text-slate-400 line-clamp-2 sm:line-clamp-3">
                               {dest.description}
@@ -3250,8 +3232,7 @@ export default function HomeTab({
                               className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-md ios-press"
                             >
                               <ExternalLink size={10} />
-                              閱讀指南
-                            </button>
+                              {t('str_4623bd5f')}</button>
                           </div>
                         </div>
                       </div>
@@ -3266,15 +3247,14 @@ export default function HomeTab({
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="text-fuchsia-500" size={24} />
               <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                熱門達人行程
-              </h2>
+                {t('str_7f35ed14')}</h2>
             </div>
 
             <HorizontalScrollRail
-              label="熱門達人行程"
+              label={t('str_7f35ed14')}
               viewportClassName="w-full pb-6 -mx-6 px-6"
             >
-                {EXPERT_HANDBOOKS.map((handbook, index) => {
+                {localizedExpertHandbooks.map((handbook, index) => {
                   const isEven = index % 2 === 0;
                   const cardBg = isEven
                     ? "from-[#F5F3FF] to-[#EDE9FE] dark:from-slate-800 dark:to-slate-900"
@@ -3334,8 +3314,7 @@ export default function HomeTab({
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <div className="inline-flex items-center gap-1 rounded-full bg-purple-900 dark:bg-purple-100 px-2.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider text-white dark:text-purple-900 shadow-sm">
                                 <Sparkles size={8} className="text-yellow-400 dark:text-yellow-500" />
-                                達人行程
-                              </div>
+                                {t('str_42d422a5')}</div>
                               <span className="rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 px-1 py-0.5 text-[8.5px] font-black uppercase tracking-wider font-mono">
                                 #{handbook.tags[0] || "漫遊"}
                               </span>
@@ -3352,7 +3331,7 @@ export default function HomeTab({
                               {handbook.title}
                             </h3>
                             <p className="text-[11px] leading-relaxed font-bold text-slate-600 dark:text-slate-400 mt-1 line-clamp-2 sm:line-clamp-3">
-                              最具含金量的達人自由行路線！包含：{handbook.tags.slice(0, 3).map((t) => `#${t}`).join(" ")}。
+                              {t('str_27ea802b')}{handbook.tags.slice(0, 3).map((t) => `#${t}`).join(" ")}。
                             </p>
                           </div>
 
@@ -3366,8 +3345,7 @@ export default function HomeTab({
                               className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-purple-600 dark:bg-purple-500 hover:bg-purple-500 dark:hover:bg-purple-400 text-white shadow-md ios-press"
                             >
                               <Copy size={10} />
-                              複製行程
-                            </button>
+                              {t('str_405d3e95')}</button>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -3376,8 +3354,7 @@ export default function HomeTab({
                               }}
                               className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider border border-slate-400 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white/45 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 ios-press transition-all"
                             >
-                              預覽
-                            </button>
+                              {t('str_12f3ad')}</button>
                           </div>
                         </div>
                       </div>
@@ -3415,7 +3392,7 @@ export default function HomeTab({
 
       {showDeparturePicker && (
         <LocationPickerPopup
-          title="出發地"
+          title={t('str_1426bae')}
           query={searchForm.from}
           onClose={() => setShowDeparturePicker(false)}
           onSelect={(dest) => applyGuideDestination(dest, "from")}
@@ -3424,7 +3401,7 @@ export default function HomeTab({
 
       {showDestinationPicker && (
         <LocationPickerPopup
-          title="熱門目的地"
+          title={t('str_781f2fb5')}
           query={searchForm.to}
           onClose={() => setShowDestinationPicker(false)}
           onSelect={(dest) => applyGuideDestination(dest, "to")}
@@ -3533,14 +3510,12 @@ export default function HomeTab({
             href="/fly/"
             style={{ color: '#94a3b8', fontSize: 11 }}
           >
-            航線搜尋熱度分析
-          </a>
+            {t('str_ab8ff02')}</a>
           <a
             href="/trips/"
             style={{ color: '#94a3b8', fontSize: 11 }}
           >
-            目的地旅遊行程
-          </a>
+            {t('str_78790f42')}</a>
         </div>
       </div>
     </motion.div>

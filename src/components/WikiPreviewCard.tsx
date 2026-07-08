@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, ExternalLink, Loader2, X, Image as ImageIcon } from 'lucide-react';
 import { useWikiSearch, WikiInfo } from '../hooks/useWikiSearch';
+import { useTranslation } from "react-i18next";
 
 interface WikiPreviewCardProps {
   query: string;
 }
 
 export function WikiPreviewCard({ query }: WikiPreviewCardProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [wikiData, setWikiData] = useState<WikiInfo | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
@@ -36,8 +38,7 @@ export function WikiPreviewCard({ query }: WikiPreviewCardProps) {
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black tracking-widest uppercase transition-all bg-white/60 hover:bg-white/90 text-sky-600 border border-sky-200/50 hover:border-sky-300 shadow-sm hover:shadow ios-press"
       >
         <BookOpen size={13} strokeWidth={2.5} />
-        維基百科介紹
-      </button>
+        {t('str_7b93cc72')}</button>
 
       <AnimatePresence>
         {isOpen && (
@@ -61,12 +62,11 @@ export function WikiPreviewCard({ query }: WikiPreviewCardProps) {
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-6 gap-3 text-sky-500">
                     <Loader2 className="animate-spin" size={24} />
-                    <span className="text-[11px] font-bold tracking-widest uppercase animate-pulse">載入中...</span>
+                    <span className="text-[11px] font-bold tracking-widest uppercase animate-pulse">{t('str_4d1a6163')}</span>
                   </div>
                 ) : error ? (
                   <div className="py-6 text-center text-slate-500 text-sm font-medium">
-                    無法取得維基百科資訊
-                  </div>
+                    {t('str_2430af78')}</div>
                 ) : wikiData ? (
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start gap-4">
@@ -110,14 +110,12 @@ export function WikiPreviewCard({ query }: WikiPreviewCardProps) {
                         className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-sky-50 transition-colors text-[11px] font-black tracking-widest uppercase text-slate-500 hover:text-sky-600 border border-slate-200 hover:border-sky-300 shadow-sm ios-press"
                       >
                         <ExternalLink size={13} strokeWidth={2.5} />
-                        在維基百科上閱讀完整內容
-                      </a>
+                        {t('str_5c0a0055')}</a>
                     </div>
                   </div>
                 ) : (
                   <div className="py-6 text-center text-slate-500 text-[12px] font-bold">
-                    找不到相關的維基百科條目
-                  </div>
+                    {t('str_36a10cd0')}</div>
                 )}
               </div>
             </div>

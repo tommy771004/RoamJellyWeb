@@ -18,6 +18,7 @@ import {
   joinTrip,
 } from '../lib/workflowApi';
 import { cn } from '../lib/utils';
+import { useTranslation } from "react-i18next";
 
 interface TripPreview {
   trip_id: string;
@@ -50,6 +51,7 @@ const JOIN_HIGHLIGHTS = [
 ] as const;
 
 export default function TripLandingPage({ tripId, onJoined }: Props) {
+    const { t } = useTranslation();
   const [tripInfo, setTripInfo] = useState<TripPreview | null>(null);
   const [fetchError, setFetchError] = useState('');
   const [notFound, setNotFound] = useState(false);
@@ -116,10 +118,9 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
           </div>
           <div className="space-y-1.5">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-sky-700">Shared Trip Invite</p>
-            <h1 className="text-balance text-[24px] font-black tracking-[-0.04em] text-slate-900">正在同步旅程邀請</h1>
+            <h1 className="text-balance text-[24px] font-black tracking-[-0.04em] text-slate-900">{t('str_5101a26f')}</h1>
             <p className="text-pretty text-[13px] leading-[1.65] text-slate-600">
-              RoamJelly 正在確認這份旅程的目的地、日期與共編權限。
-            </p>
+              {t('str_46adab4a')}</p>
           </div>
         </motion.div>
       ) : notFound || fetchError ? (
@@ -142,8 +143,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
             href="/"
             className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
           >
-            返回首頁
-          </a>
+            {t('str_42bab835')}</a>
         </motion.div>
       ) : (
         <motion.div
@@ -158,7 +158,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
                 <span className="inline-flex items-center rounded-full border border-sky-200/80 bg-sky-50/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-sky-700">
                   Shared Trip Invite
                 </span>
-                <p className="mt-3 text-[13px] font-bold leading-[1.55] text-slate-500">有人邀請你一起補完這趟旅程</p>
+                <p className="mt-3 text-[13px] font-bold leading-[1.55] text-slate-500">{t('str_38c59f89')}</p>
               </div>
               <div className="flex size-11 items-center justify-center rounded-[18px] bg-orange-50 text-orange-500 shadow-[0_8px_18px_rgba(251,146,60,0.10)]">
                 <PlaneTakeoff size={20} strokeWidth={2.4} />
@@ -172,8 +172,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
                     {tripInfo.name}
                   </h1>
                   <p className="text-pretty text-[13px] leading-[1.65] text-slate-600 sm:text-[14px]">
-                    先加入這份旅程，你就可以直接查看目前的行程內容，接著再和旅伴一起補完清單、分帳與地圖動線。
-                  </p>
+                    {t('str_3a2ae59b')}</p>
                 </div>
 
                 <div className="grid gap-2.5 sm:grid-cols-2">
@@ -182,7 +181,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
                       <MapPin size={18} strokeWidth={2.4} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">目的地</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">{t('str_1cd249a')}</p>
                       <p className="truncate text-[13px] font-bold text-slate-900 sm:text-[14px]">{tripInfo.destination}</p>
                     </div>
                   </div>
@@ -191,8 +190,8 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
                       <CalendarDays size={18} strokeWidth={2.4} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">旅程天數</p>
-                      <p className="text-[13px] font-bold text-slate-900 sm:text-[14px]">{tripInfo.days} 天行程</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">{t('str_30185cd5')}</p>
+                      <p className="text-[13px] font-bold text-slate-900 sm:text-[14px]">{tripInfo.days} {t('str_15fae28')}</p>
                     </div>
                   </div>
                 </div>
@@ -226,13 +225,12 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
             {requiresNickname && (
               <div className="mt-5 space-y-2.5">
                 <label htmlFor="trip-guest-nickname" className="block text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-                  先輸入暱稱，再加入這趟旅程
-                </label>
+                  {t('str_665f2899')}</label>
                 <Input
                   id="trip-guest-nickname"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  placeholder="例如：小美"
+                  placeholder={t('str_729f08be')}
                   name="nickname"
                   autoComplete="nickname"
                   className="h-12 rounded-[20px] border-white/84 bg-white/86 text-[14px] font-bold text-slate-900 shadow-[0_8px_18px_rgba(15,23,42,0.05)] focus-visible:ring-sky-300"
@@ -254,26 +252,22 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
               {joining ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  處理中…
-                </>
+                  {t('str_3ecd7faa')}</>
               ) : (
                 <>
-                  加入這趟旅程
-                  <ArrowRight size={16} strokeWidth={2.6} />
+                  {t('str_42f55baf')}<ArrowRight size={16} strokeWidth={2.6} />
                 </>
               )}
             </button>
 
             <p className="mt-3 text-pretty text-[12px] leading-[1.55] text-slate-500">
-              加入後即可接上這份旅程的共編內容；如果你是訪客，也不需要先完成完整註冊流程。
-            </p>
+              {t('str_3be2f0b1')}</p>
 
             <a
               href="/"
               className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-white/84 bg-white/74 px-5 py-3 text-[14px] font-black text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.05)] backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-0.5 hover:border-sky-300/60 hover:text-sky-700 hover:shadow-[0_10px_20px_rgba(14,165,233,0.10)]"
             >
-              先回首頁看看
-            </a>
+              {t('str_3c60989f')}</a>
           </div>
         </motion.div>
       )}

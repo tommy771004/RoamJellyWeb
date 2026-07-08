@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { getModalMotion, getOverlayTransition } from "../lib/motionTokens";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type PeekIcon = ComponentType<{
   size?: number;
@@ -61,6 +62,7 @@ const TONE_STYLES: Record<InfoPeekTone, { badge: string; icon: string; chip: str
 };
 
 export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalProps) {
+    const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion() ?? false;
 
   useEffect(() => {
@@ -91,7 +93,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
         <div className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-4">
           <motion.button
             type="button"
-            aria-label="關閉說明"
+            aria-label={t('str_4661d491')}
             className="absolute inset-0 bg-slate-900/42 backdrop-blur-[6px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -133,7 +135,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="關閉說明"
+                aria-label={t('str_4661d491')}
                 className="flex size-10 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-white/10 text-slate-500 dark:text-slate-300 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={18} strokeWidth={2.6} />
@@ -166,8 +168,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
                 onClick={onClose}
                 className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700"
               >
-                關閉說明
-              </button>
+                {t('str_4661d491')}</button>
             </div>
           </motion.div>
         </div>

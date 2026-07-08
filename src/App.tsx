@@ -46,6 +46,7 @@ import { suggestItineraryWithForm } from './lib/openrouterApi';
 import { haversineKm, estimateTransport, formatMinutes } from './lib/geoUtils';
 import { getCategoryMeta } from './lib/itineraryUtils';
 import { JellyToast } from './components/JellyToast';
+import { useTranslation } from 'react-i18next';
 type LoginPromptMode = 'default' | 'guest-first';
 
 const AUTO_GUEST_TABS = new Set(['ai_form', 'itinerary', 'tools']);
@@ -58,6 +59,7 @@ function getTripLandingId(): string | null {
 }
 
 export default function App() {
+  const { t, i18n } = useTranslation();
   const {
     activeTab, setActiveTab,
     redirectModal, closeRedirectModal,
@@ -143,7 +145,7 @@ export default function App() {
       if (now - lastActivityRef.current > SESSION_TIMEOUT) {
         console.log('Session expired. Logging out...');
         handleLogout();
-        showToast('工作階段已過期，請重新登入。');
+        showToast(t('guest_session_expired'));
       }
     };
 
@@ -297,38 +299,38 @@ export default function App() {
       window.open(current.affiliateUrl, '_blank', 'noopener,noreferrer');
     }
 
-    showToast(`已導向至 ${current.provider}`);
+    showToast(t('redirected_to', { provider: current.provider }));
   };
 
   const getGuestLoginCopy = (tab: typeof activeTab) => {
     switch (tab) {
       case 'tools':
         return {
-          contextLabel: '旅途工具包',
-          title: '先開一趟訪客旅程，再把清單、天氣與分帳接上工具包',
-          description: '不用先註冊，先用訪客身分建立或挑一份行程，工具包就會立刻拿到這趟旅程的上下文。',
-          guestCtaLabel: '先用訪客身分開一趟旅程',
+          contextLabel: t('tool_kit_context'),
+          title: t('tool_kit_title'),
+          description: t('tool_kit_desc'),
+          guestCtaLabel: t('tool_kit_cta'),
         };
       case 'itinerary':
         return {
-          contextLabel: '你的行程',
-          title: '先選一趟旅程，再把 AI 草稿與共編安排接回行程',
-          description: '先用訪客身分體驗行程的主線，再決定是否正式註冊。',
-          guestCtaLabel: '先用訪客身分開始規劃',
+          contextLabel: t('itinerary_context'),
+          title: t('itinerary_title'),
+          description: t('itinerary_desc'),
+          guestCtaLabel: t('itinerary_cta'),
         };
       case 'ai_form':
         return {
-          contextLabel: 'AI 旅程規劃',
-          title: '先讓 AI 起草旅程，再回到行程慢慢補完',
-          description: '先用訪客身分生成可編輯的第一版旅程，確認方向對了，再登入同步與保存。',
-          guestCtaLabel: '先用訪客身分交給 AI',
+          contextLabel: t('ai_context'),
+          title: t('ai_title'),
+          description: t('ai_desc'),
+          guestCtaLabel: t('ai_cta'),
         };
       default:
         return {
-          contextLabel: '快速體驗',
-          title: '先把旅程流程跑順，喜歡再註冊也不遲',
-          description: '首頁搜尋、AI 起草、行程與工具包都可以先用訪客身分走過一遍，不必一開始就進入註冊流程。',
-          guestCtaLabel: '先用訪客身分體驗',
+          contextLabel: t('quick_context'),
+          title: t('quick_title'),
+          description: t('quick_desc'),
+          guestCtaLabel: t('quick_cta'),
         };
     }
   };
@@ -404,7 +406,7 @@ export default function App() {
               Guest Access
             </div>
             <h2 className="mt-4 text-balance text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
-              正在幫你開一個訪客旅程入口
+              {t('creating_guest_entry')}
             </h2>
             <p className="mt-3 text-pretty text-sm font-bold leading-6 text-slate-600 sm:text-base sm:leading-7">
               {bootstrapCopy.description}
@@ -419,7 +421,7 @@ export default function App() {
                     {bootstrapCopy.contextLabel}
                   </p>
                   <p className="mt-1 text-sm font-bold text-slate-700">
-                    建立訪客身分後，會直接帶你進入新的入口畫面。
+                    {t('guest_entry_desc')}
                   </p>
                 </div>
               </div>
@@ -448,7 +450,7 @@ export default function App() {
       }
       return <AiForm onSubmit={async (data) => {
         setIsGenerating(true);
-        showToast(`正在為您生成旅程：${data.destination}...`);
+        showToast(t('generating_journey', { destination: data.destination }));
         try {
           const suggestions = await suggestItineraryWithForm({
             destination: data.destination,
@@ -482,7 +484,7 @@ export default function App() {
                      node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${dayData.day}_${i}`,
                      day: dayData.day || 1,
                      time: spot.time || "10:00",
-                     title: String(spot.name || spot.title || '景點'),
+                     title: String(spot.name || spot.title || t('default_spot')),
                      emoji: spot.emoji || getCategoryMeta(spot.category).emoji,
                      category: spot.category || 'other',
                      description: spot.ai_note || '',
@@ -501,7 +503,7 @@ export default function App() {
                 node_id: spot.node_id || `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${spot.day || 1}_${i}`,
                 day: spot.day || 1,
                 time: spot.time || "10:00",
-                title: String(spot.name || spot.title || '景點'),
+                title: String(spot.name || spot.title || t('default_spot')),
                 emoji: spot.emoji || getCategoryMeta(spot.category).emoji,
                 category: spot.category || 'other',
                 description: spot.ai_note || '',
@@ -557,11 +559,11 @@ export default function App() {
                  node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_empty_day_${d}`,
                  day: d,
                  time: '10:00',
-                 title: '自由活動',
+                 title: t('free_time'),
                  emoji: '🏖️',
                  category: 'activity',
-                 description: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
-                 ai_note: '這天尚未安排具體行程，您可以自行填加喜愛的口袋名單景點！',
+                 description: t('free_time_desc'),
+                 ai_note: t('free_time_desc'),
                  intensity: 'chill',
                  source: 'local'
               } as any);
@@ -591,7 +593,7 @@ export default function App() {
                 const promise = fetchDirections(lng1, lat1, lng2, lat2)
                   .then((apiDuration) => {
                     if (apiDuration && km > 1) {
-                      curr.transport_to_next = `車程約 ${formatMinutes(apiDuration)}`;
+                      curr.transport_to_next = t('drive_time', { duration: formatMinutes(apiDuration) });
                     } else {
                       const est = estimateTransport(km);
                       curr.transport_to_next = est.label;
@@ -611,13 +613,13 @@ export default function App() {
 
           useAppStore.getState().setAiResult({
              fullResponse: suggestions,
-             title: suggestions?.summary?.title || data.destination || '行程規劃',
+             title: suggestions?.summary?.title || data.destination || t('itinerary_planning'),
              destination: data.destination,
              rawSuggestions: finalNodes
           });
           setActiveTab('ai_result');
         } catch (e) {
-          showToast('生成失敗，請稍後再試。', 'warning');
+          showToast(t('generate_failed'), 'warning');
         } finally {
           setIsGenerating(false);
         }
@@ -629,7 +631,7 @@ export default function App() {
         result={aiResult} 
         onBack={() => setActiveTab('ai_form')} 
         onSave={async (result) => {
-          showToast('正在儲存行程...', 'info');
+          showToast(t('saving_itinerary'), 'info');
           
           try {
             const { useItineraryStore } = await import('./store/useItineraryStore');
@@ -660,8 +662,8 @@ export default function App() {
             // If no active trip or permission denied, create a new one first
             if (!TRIP_ID || !canEdit) {
               const newTrip = await createTrip({
-                name: result.title || `規劃之旅`,
-                destination: result.destination || result.title || '旅遊行程'
+                name: result.title || t('planned_trip'),
+                destination: result.destination || result.title || t('travel_itinerary')
               });
               const newTripId = newTrip?.data?.id || newTrip?.id;
               if (newTrip && newTripId) {
@@ -705,11 +707,11 @@ export default function App() {
             }
           } catch (err) {
              console.error('Failed to save to server', err);
-             showToast('行程儲存失敗，請重試。', 'warning');
+             showToast(t('save_failed'), 'warning');
              return;
           }
 
-          showToast('行程已為您準備好！', 'success');
+          showToast(t('itinerary_ready'), 'success');
           setActiveTab('itinerary');
         }}
       />;
@@ -732,7 +734,7 @@ export default function App() {
         <div className="fixed top-2 left-2 z-floating flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
           <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
             <input type="checkbox" checked={isOffline} onChange={e => setOffline(e.target.checked)} className="accent-red-500" />
-            斷網
+            {t('offline')}
           </label>
         </div>
       )}
@@ -763,7 +765,7 @@ export default function App() {
                 }`}
               >
                 {Icon && <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'opacity-100' : 'opacity-60'} />}
-                <span className="font-bold text-sm tracking-wide">{tab.label}</span>
+                <span className="font-bold text-sm tracking-wide">{t(`tab_${tab.id}`)}</span>
               </button>
             );
           })}
@@ -775,15 +777,22 @@ export default function App() {
             <button
               onClick={() => setShowUserProfile(true)}
               className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-orange-400"
-              aria-label="偏好設定"
+              aria-label={t('preferences')}
             >
               <Settings2 size={20} />
             </button>
           )}
           <button
+            onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'zh' : 'en')}
+            className="w-10 h-10 flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-indigo-500 font-bold text-sm"
+            aria-label={t('language_toggle_label')}
+          >
+            {t('language_toggle')}
+          </button>
+          <button
             onClick={() => setDarkMode(!isDarkMode)}
             className="w-10 h-10 flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-sky-500"
-            aria-label={isDarkMode ? '切換亮色模式' : '切換深色模式'}
+            aria-label={isDarkMode ? t('switch_light_mode') : t('switch_dark_mode')}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
@@ -791,7 +800,7 @@ export default function App() {
             <button
               onClick={() => setShowNotifications(v => !v)}
               className="w-10 h-10 flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-pink-400 relative"
-              aria-label="通知"
+              aria-label={t('notifications')}
               aria-expanded={showNotifications}
             >
               <Bell size={20} />
@@ -803,29 +812,29 @@ export default function App() {
               <div
                 className="absolute right-0 top-12 w-72 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/60 z-50 overflow-hidden"
                 role="dialog"
-                aria-label="通知面板"
+                aria-label={t('notifications_panel')}
               >
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                  <span className="font-bold text-[14px] text-slate-700">通知</span>
+                  <span className="font-bold text-[14px] text-slate-700">{t('notifications')}</span>
                   <div className="flex items-center gap-2">
                     {notifications.length > 0 && (
                       <button
                         onClick={clearNotifications}
                         className="text-[11px] text-slate-400 hover:text-slate-600"
-                      >全部清除</button>
+                      >{t('clear_all')}</button>
                     )}
                     <button
                       onClick={() => setShowNotifications(false)}
                       className="text-slate-400 hover:text-slate-600 text-[18px] leading-none"
-                      aria-label="關閉"
+                      aria-label="{t('close')}"
                     >×</button>
                   </div>
                 </div>
                 {notifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 px-4 gap-2">
                     <span className="text-3xl">🔔</span>
-                    <p className="text-[13px] text-slate-400 text-center font-medium">目前沒有新通知</p>
-                    <p className="text-[11px] text-slate-300 text-center">行程更新、協作邀請等訊息<br/>將在這裡顯示</p>
+                    <p className="text-[13px] text-slate-400 text-center font-medium">{t('no_new_notifications')}</p>
+                    <p className="text-[11px] text-slate-300 text-center">{t('notifications_desc')}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col max-h-72 overflow-y-auto">
@@ -853,12 +862,12 @@ export default function App() {
           <div className="relative z-30">
             <button
               type="button"
-              aria-label={isLoggedIn ? '帳號選單' : '登入選單'}
+              aria-label={t('account_menu')}
               onClick={() => setShowUserMenu(v => !v)}
               className={`flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'border-white/90 bg-[linear-gradient(135deg,rgba(254,242,248,0.95),rgba(240,249,255,0.88))] hover:bg-white/95' : 'border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88),rgba(254,242,248,0.76))] hover:bg-white/95'}`}
             >
               <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-pink-700' : 'text-slate-600'}`}>
-                {isLoggedIn ? `${userId} 您好` : '未登入'}
+                {isLoggedIn ? t('hello_user', { userId }) : t('not_logged_in')}
               </span>
               <div className={`relative w-11 h-11 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-[0.97] shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
                 {isLoggedIn ? <UserRound size={17} strokeWidth={2.4} /> : <SparklesIcon size={16} strokeWidth={2.4} />}
@@ -876,7 +885,7 @@ export default function App() {
                     className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left w-full"
                   >
                     <UserRound size={16} className="text-slate-400" />
-                    <span className="text-[14px] font-bold text-slate-700">登入帳號</span>
+                    <span className="text-[14px] font-bold text-slate-700">{t('login_account')}</span>
                   </button>
                 ) : (
                   <>
@@ -888,7 +897,7 @@ export default function App() {
                       className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left w-full"
                     >
                       <SparklesIcon size={16} className="text-orange-400" />
-                      <span className="text-[14px] font-bold text-slate-700">AI 偏好設定</span>
+                      <span className="text-[14px] font-bold text-slate-700">{t('ai_preferences')}</span>
                     </button>
                     <div className="mx-3 h-px bg-slate-100" />
                     <button
@@ -899,7 +908,7 @@ export default function App() {
                       className="flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition-colors text-left w-full group"
                     >
                       <LogOut size={16} className="text-rose-400 group-hover:text-rose-500 transition-colors" />
-                      <span className="text-[13px] font-bold text-rose-600 group-hover:text-rose-700 transition-colors">登出帳號</span>
+                      <span className="text-[13px] font-bold text-rose-600 group-hover:text-rose-700 transition-colors">{t('logout_account')}</span>
                     </button>
                   </>
                 )}
@@ -926,7 +935,7 @@ export default function App() {
             className="fixed top-[72px] left-0 right-0 w-full z-40 px-4 pt-2 pb-1 pointer-events-none"
           >
             <div className="max-w-2xl mx-auto bg-red-500/80 dark:bg-red-900/80 backdrop-blur-md rounded-3xl p-2.5 shadow-lg border border-red-400/50 dark:border-red-500/30 flex items-center justify-center gap-2 pointer-events-auto">
-              <span className="text-white text-[13px] font-bold tracking-wide">✈️ 目前處於離線狀態，已切換至本機快取模式。</span>
+              <span className="text-white text-[13px] font-bold tracking-wide">{t("offline_mode_msg")}</span>
             </div>
           </motion.div>
         )}
@@ -1007,7 +1016,7 @@ export default function App() {
               const currentId = redirectModal.itemId;
               toggleSave(currentId);
               const isSaved = savedItems.includes(currentId);
-              showToast(!isSaved ? '✨ 已收藏該機票！' : '已從收藏清單移除');
+              showToast(!isSaved ? t('saved_flight') : t('removed_flight'));
               closeRedirectModal();
             }}
           />
@@ -1031,21 +1040,21 @@ export default function App() {
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-3xl mb-4 border border-white shadow-inner animate-pulse shrink-0">
                 🐴
               </div>
-              <h3 className="font-h2 text-2xl text-slate-800 mb-2">準備要休息一會嗎？</h3>
-              <p className="font-body-md text-slate-500 mb-8 px-2 sm:px-6">雖然很捨不得您離開，但 RoamJelly 會一直在這裡等您回來探索世界。</p>
+              <h3 className="font-h2 text-2xl text-slate-800 mb-2">{t('rest_awhile')}</h3>
+              <p className="font-body-md text-slate-500 mb-8 px-2 sm:px-6">{t('rest_desc')}</p>
               
               <div className="flex flex-row w-full gap-3 sm:gap-4">
                 <button
                   onClick={() => setShowLogoutModal(false)}
                   className="flex-1 py-3 sm:py-3.5 px-2 sm:px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-colors whitespace-nowrap text-[15px]"
                 >
-                  再待一下
+                  {t('stay_longer')}
                 </button>
                 <button
                   onClick={handleLogout}
                   className="flex-1 py-3 sm:py-3.5 px-2 sm:px-4 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 text-white font-bold transition-colors shadow-md shadow-orange-500/30 whitespace-nowrap text-[15px]"
                 >
-                  確認登出
+                  {t('confirm_logout')}
                 </button>
               </div>
             </motion.div>

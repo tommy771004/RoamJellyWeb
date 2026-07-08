@@ -11,6 +11,7 @@ import {
   TRAVEL_GUIDE_DESTINATIONS,
   TravelGuideDestination
 } from '../data/travelGuideDestinations';
+import { useTranslation } from "react-i18next";
 
 export const LocationPickerPopup = ({ 
   onClose, 
@@ -23,6 +24,7 @@ export const LocationPickerPopup = ({
   title: string;
   query: string;
 }) => {
+    const { t, i18n } = useTranslation();
   const vv = useVisualViewport();
   const [selectedRegion, setSelectedRegion] = useState<string>('全部地區');
   const [searchQuery, setSearchQuery] = useState(query);
@@ -83,7 +85,7 @@ export const LocationPickerPopup = ({
               </div>
               <button 
                 onClick={onClose}
-                aria-label="關閉"
+                aria-label={t('str_12bb2d')}
                 className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 ios-press transition-all"
               >
                 <X size={isKeyboardOpen ? 18 : 20} className="text-slate-500" strokeWidth={2.5} />
@@ -94,9 +96,9 @@ export const LocationPickerPopup = ({
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 value={searchQuery}
-                aria-label="搜尋世界旅遊目的地"
+                aria-label={t('str_dafacd0')}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜尋國家、城市名"
+                placeholder={t('str_1426bb2')}
                 className="w-full rounded-[16px] border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-bold text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
                 autoCapitalize="none"
                 autoCorrect="off"
@@ -108,7 +110,6 @@ export const LocationPickerPopup = ({
               />
             </div>
 
-            {/* Region Tabs */}
             {!isKeyboardOpen && !searchQuery.trim() && (
               <div className="-mx-4 md:-mx-6 overflow-x-auto scrollbar-hide">
                 <div className="flex flex-row gap-x-1.5 px-4 md:px-6 pb-2 pt-1 animate-in fade-in duration-300 w-max">
@@ -120,8 +121,7 @@ export const LocationPickerPopup = ({
                         : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    綜合推薦
-                  </button>
+                    {t('region.全部地區', '全部地區')}</button>
                   {TRAVEL_GUIDE_REGIONS.map((region) => (
                     <button
                       key={region}
@@ -132,7 +132,7 @@ export const LocationPickerPopup = ({
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      {region}
+                      {t('region.' + region, region)}
                     </button>
                   ))}
                 </div>
@@ -146,12 +146,40 @@ export const LocationPickerPopup = ({
                 {groupedDestinations.map(([country, dests]) => (
                   <div key={country} className="flex flex-col gap-2.5">
                     <div className="flex items-center gap-2 border-l-2 border-sky-400 pl-2">
-                      <span className="text-[14px] md:text-[15px] font-black tracking-wider text-slate-700">{country}</span>
+                      <span className="text-[14px] md:text-[15px] font-black tracking-wider text-slate-700">{t('countries.' + country, country)}</span>
                     </div>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
                       {dests.map((dest) => {
                         // Premium Taiwanese localized mapping function for multi-airport destination clarity
                         const getDisplayNames = (d: TravelGuideDestination) => {
+                          const isEn = i18n.language === 'en';
+                          if (isEn) {
+                            if (d.searchAlias === 'TPE') return { main: 'Taipei Taoyuan', sub: 'Taoyuan Airport', code: 'TPE' };
+                            if (d.searchAlias === 'TSA') return { main: 'Taipei Songshan', sub: 'Songshan Airport', code: 'TSA' };
+                            if (d.searchAlias === 'NRT') return { main: 'Tokyo Narita', sub: 'Narita Airport', code: 'NRT' };
+                            if (d.searchAlias === 'HND') return { main: 'Tokyo Haneda', sub: 'Haneda Airport', code: 'HND' };
+                            if (d.searchAlias === 'ICN') return { main: 'Seoul Incheon', sub: 'Incheon Airport', code: 'ICN' };
+                            if (d.searchAlias === 'GMP') return { main: 'Seoul Gimpo', sub: 'Gimpo Airport', code: 'GMP' };
+                            if (d.searchAlias === 'KIX') return { main: 'Osaka Kansai', sub: 'Kansai Airport', code: 'KIX' };
+                            if (d.searchAlias === 'CTS') return { main: 'Sapporo New Chitose', sub: 'New Chitose Airport', code: 'CTS' };
+                            if (d.searchAlias === 'OKA') return { main: 'Okinawa Naha', sub: 'Naha Airport', code: 'OKA' };
+                            if (d.searchAlias === 'BKK') return { main: 'Bangkok Suv.', sub: 'Suvarnabhumi', code: 'BKK' };
+                            if (d.searchAlias === 'DMK') return { main: 'Bangkok Don M.', sub: 'Don Mueang Airport', code: 'DMK' };
+                            if (d.searchAlias === 'SIN') return { main: 'Singapore Changi', sub: 'Changi Airport', code: 'SIN' };
+                            if (d.searchAlias === 'PVG') return { main: 'Shanghai Pudong', sub: 'Pudong Airport', code: 'PVG' };
+                            if (d.searchAlias === 'SHA') return { main: 'Shanghai Hongqiao', sub: 'Hongqiao Airport', code: 'SHA' };
+                            if (d.searchAlias === 'PEK') return { main: 'Beijing Capital', sub: 'Capital Airport', code: 'PEK' };
+                            if (d.searchAlias === 'LHR') return { main: 'London Heathrow', sub: 'Heathrow Airport', code: 'LHR' };
+                            if (d.searchAlias === 'LGW') return { main: 'London Gatwick', sub: 'Gatwick Airport', code: 'LGW' };
+                            if (d.searchAlias === 'CDG') return { main: 'Paris CDG', sub: 'CDG Airport', code: 'CDG' };
+                            if (d.searchAlias === 'ORY') return { main: 'Paris Orly', sub: 'Orly Airport', code: 'ORY' };
+                            if (d.searchAlias === 'JFK') return { main: 'New York JFK', sub: 'JFK Airport', code: 'JFK' };
+                            if (d.searchAlias === 'EWR') return { main: 'New York Newark', sub: 'Newark Airport', code: 'EWR' };
+                            if (d.searchAlias === 'MXP') return { main: 'Milan Malpensa', sub: 'Malpensa Airport', code: 'MXP' };
+                            if (d.searchAlias === 'IST') return { main: 'Istanbul IST', sub: 'Istanbul Airport', code: 'IST' };
+                            if (d.searchAlias === 'SAW') return { main: 'Istanbul Sabiha', sub: 'Sabiha Airport', code: 'SAW' };
+                          }
+
                           if (d.searchAlias === 'TPE') return { main: '台北桃園', sub: '桃園機場', code: 'TPE' };
                           if (d.searchAlias === 'TSA') return { main: '台北松山', sub: '松山機場', code: 'TSA' };
                           if (d.searchAlias === 'NRT') return { main: '東京成田', sub: '成田機場', code: 'NRT' };
@@ -180,9 +208,17 @@ export const LocationPickerPopup = ({
                           const hasSlash = d.place.includes('/');
                           if (hasSlash) {
                             const parts = d.place.split('/');
-                            return { main: parts[0], sub: parts[1], code: d.searchAlias || '' };
+                            return {
+                              main: t(`destinations.${d.id}.main`, parts[0]),
+                              sub: t(`destinations.${d.id}.sub`, parts[1]),
+                              code: d.searchAlias || ''
+                            };
                           }
-                          return { main: d.place, sub: d.country, code: d.searchAlias || '' };
+                          return {
+                            main: t(`destinations.${d.id}.main`, d.place),
+                            sub: t(`destinations.${d.id}.sub`, t(`countries.${d.country}`, d.country)),
+                            code: d.searchAlias || ''
+                          };
                         };
 
                         const display = getDisplayNames(dest);
@@ -218,7 +254,7 @@ export const LocationPickerPopup = ({
             ) : (
               <div className="flex flex-col items-center justify-center py-16">
                 <span className="text-[48px] mb-4 grayscale opacity-30">✈️</span>
-                <span className="text-[15px] font-bold text-slate-500">找不到符合條件的城市或機場</span>
+                <span className="text-[15px] font-bold text-slate-500">{t('str_499a902f')}</span>
               </div>
             )}
           </div>

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, MapPin } from 'lucide-react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
+import { useTranslation } from "react-i18next";
 
 interface JapanGuideModalProps {
   open: boolean;
@@ -56,6 +57,23 @@ const REGION_CARDS = [
 ];
 
 export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps) {
+  const { t } = useTranslation();
+  const localizedInfoCards = React.useMemo(() => {
+    return INFO_CARDS.map(card => ({
+      ...card,
+      name: t(`japan_modal.info_cards.${card.name}.name`, card.name),
+      desc: t(`japan_modal.info_cards.${card.name}.desc`, card.desc),
+    }));
+  }, [t]);
+
+  const localizedRegionCards = React.useMemo(() => {
+    return REGION_CARDS.map(card => ({
+      ...card,
+      name: t(`japan_modal.region_cards.${card.name}.name`, card.name),
+      desc: t(`japan_modal.region_cards.${card.name}.desc`, card.desc),
+    }));
+  }, [t]);
+
   const prefersReducedMotion = useReducedMotion();
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const modalMotion = getModalMotion(prefersReducedMotion);
@@ -95,12 +113,10 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                   <span className="text-3xl">🇯🇵</span>
                   <div>
                     <h2 className="fluid-title font-black text-white">
-                      日本完整攻略
-                    </h2>
+                      {t('str_46bb94a7')}</h2>
                     <p className="fluid-kicker mt-0.5 flex items-center gap-1 font-medium uppercase text-white/60">
                       <MapPin size={10} />
-                      travel-guide-tw · 34 個地區指南
-                    </p>
+                      {t('str_1346960e')}</p>
                   </div>
                 </div>
                 <button
@@ -117,10 +133,9 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
               {/* Info section */}
               <section>
                 <p className="fluid-kicker mb-3 font-black uppercase text-white/50">
-                  基本資訊
-                </p>
+                  {t('str_2992d015')}</p>
                 <div className="grid grid-cols-3 gap-2.5">
-                  {INFO_CARDS.map((card, i) => (
+                  {localizedInfoCards.map((card, i) => (
                     <motion.a
                       key={card.name}
                       href={card.url}
@@ -142,10 +157,9 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
               {/* Regions grid */}
               <section>
                 <p className="fluid-kicker mb-3 font-black uppercase text-white/50">
-                  各都道府縣
-                </p>
+                  {t('str_1bff217f')}</p>
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-                  {REGION_CARDS.map((card, i) => (
+                  {localizedRegionCards.map((card, i) => (
                     <motion.a
                       key={card.name}
                       href={card.url}
@@ -168,8 +182,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
             {/* Footer */}
             <div className="flex flex-shrink-0 items-center justify-between border-t border-white/8 px-5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] pt-4 sm:px-6 sm:py-4">
               <span className="fluid-kicker font-medium uppercase text-white/25">
-                內容來源：travel-guide-tw.github.io
-              </span>
+                {t('str_4f9ecc34')}</span>
               <a
                 href={BASE}
                 target="_blank"
@@ -177,8 +190,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                 className="fluid-kicker flex items-center gap-1.5 font-black uppercase text-rose-400 transition-colors hover:text-rose-300"
               >
                 <ExternalLink size={11} />
-                查看全站
-              </a>
+                {t('str_310388b7')}</a>
             </div>
           </motion.div>
         </motion.div>

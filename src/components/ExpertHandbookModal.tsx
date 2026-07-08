@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, MapPin, Calendar, Clock, Download } from 'lucide-react';
 import { EXPERT_HANDBOOKS } from '../data/expertHandbooks';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
+import { useTranslation } from "react-i18next";
 
 interface ExpertHandbookModalProps {
   open: boolean;
@@ -12,23 +13,54 @@ interface ExpertHandbookModalProps {
   onCopyPath: (handbook: typeof EXPERT_HANDBOOKS[0]) => void;
 }
 
+function useLocalizedHandbook(handbook: typeof EXPERT_HANDBOOKS[0] | null) {
+  const { t, i18n } = useTranslation();
+  
+  return React.useMemo(() => {
+    if (!handbook) return null;
+    if (i18n.language === 'zh') return handbook;
+    
+    return {
+      ...handbook,
+      title: t(`expert_handbook.${handbook.id}.title`, handbook.title),
+      author: t(`expert_handbook.${handbook.id}.author`, handbook.author),
+      tags: handbook.tags.map((tag, idx) => 
+        t(`expert_handbook.${handbook.id}.tags.${idx}`, tag)
+      ),
+      cities: handbook.cities.map((city, idx) => ({
+        ...city,
+        name: t(`expert_handbook.${handbook.id}.cities.${idx}.name`, city.name),
+        reason: t(`expert_handbook.${handbook.id}.cities.${idx}.reason`, city.reason)
+      })),
+      nodes: handbook.nodes.map((node) => ({
+        ...node,
+        title: t(`expert_handbook.${handbook.id}.nodes.${node.node_id}.title`, node.title),
+        description: t(`expert_handbook.${handbook.id}.nodes.${node.node_id}.description`, node.description)
+      }))
+    };
+  }, [handbook, t, i18n.language]);
+}
+
 export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPath }: ExpertHandbookModalProps) {
+  const { t } = useTranslation();
+  const localizedHandbook = useLocalizedHandbook(handbook);
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);
   const prefersReducedMotion = useReducedMotion();
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const modalMotion = getModalMotion(prefersReducedMotion);
+  if (!handbook || !localizedHandbook) return null;
 
   if (!handbook) return null;
 
   // Group nodes by day
-  const groupedNodes = handbook.nodes.reduce((acc, node) => {
+  const groupedNodes = localizedHandbook.nodes.reduce((acc, node) => {
     const day = node.day || 1;
     if (!acc[day]) acc[day] = [];
     acc[day].push(node);
     return acc;
-  }, {} as Record<number, typeof handbook.nodes>);
+  }, {} as Record<number, typeof localizedHandbook.nodes>);
 
   const getIntensityColor = (category?: string) => {
     switch (category) {
@@ -43,12 +75,12 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
 
   const getCategoryLabel = (category?: string) => {
     switch (category) {
-      case 'food': return '美食';
-      case 'activity': return '活動';
-      case 'landmark': return '景點';
-      case 'nightlife': return '夜生活';
-      case 'hotel': return '住宿';
-      default: return '其他';
+      case 'food': return t('category.food', '美食');
+      case 'activity': return t('category.activity', '活動');
+      case 'landmark': return t('category.landmark', '景點');
+      case 'nightlife': return t('category.nightlife', '夜生活');
+      case 'hotel': return t('category.hotel', '住宿');
+      default: return t('category.other', '其他');
     }
   };
 
@@ -81,35 +113,33 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-[18px] border border-white/84 dark:border-white/20 shadow-[0_8px_18px_rgba(15,23,42,0.06)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.5)] sm:h-[3.75rem] sm:w-[3.75rem]">
-                    <img src={handbook.image} alt={handbook.title} width={64} height={64} className="w-full h-full object-cover" />
+                    <img src={localizedHandbook.image} alt={localizedHandbook.title} width={64} height={64} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
                     <h1 className="fluid-title line-clamp-2 font-extrabold text-slate-900 dark:text-white sm:text-[30px]">
-                      {handbook.title}
+                      {localizedHandbook.title}
                     </h1>
                     <div className="flex items-center overflow-x-auto scrollbar-hide snap-x gap-x-3 gap-y-1 mt-2">
                        <span className="fluid-caption flex-shrink-0 snap-start rounded-md bg-slate-100 px-2 py-0.5 font-black tracking-[0.04em] text-slate-500">
-                         {handbook.author}
+                         {localizedHandbook.author}
                        </span>
                        <span className="fluid-kicker flex-shrink-0 snap-start flex items-center gap-1 font-medium uppercase text-slate-500">
-                         <Calendar size={14}/> {handbook.days} 天旅程
-                       </span>
+                         <Calendar size={14}/> {localizedHandbook.days} {t('str_15b7fcf')}</span>
                        <span className="fluid-kicker flex-shrink-0 snap-start flex items-center gap-1 font-medium uppercase text-slate-500">
-                         <MapPin size={14}/> {handbook.nodes.length} 個行程點
-                       </span>
+                         <MapPin size={14}/> {localizedHandbook.nodes.length} {t('str_2671bb94')}</span>
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={handleClose}
-                  aria-label="關閉行程"
+                  aria-label={t('str_46619f2c')}
                   className="w-10 h-10 rounded-full bg-slate-100/50 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
                 >
                   <X size={18} />
                 </button>
               </div>
               <div className="mt-4 flex overflow-x-auto scrollbar-hide snap-x gap-2">
-                {handbook.tags.map(tag => (
+                {localizedHandbook.tags.map(tag => (
                    <span key={tag} className="fluid-kicker flex-shrink-0 snap-start rounded-md border border-slate-200 bg-slate-100 px-2 py-1 font-black uppercase text-slate-600 shadow-sm">
                      #{tag}
                    </span>
@@ -127,7 +157,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                        <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-gradient-to-br from-sky-500 to-orange-400 text-[17px] font-black text-white shadow-[0_12px_26px_rgba(14,165,233,0.22)]">
                          D{dayNum}
                        </div>
-                       <h2 className="text-[18px] font-black tracking-[-0.03em] text-slate-800">第 {dayNum} 天行程</h2>
+                       <h2 className="text-[18px] font-black tracking-[-0.03em] text-slate-800">{t('str_7b2c')}{dayNum} {t('str_15fae28')}</h2>
                        <div className="flex-1 h-px bg-slate-200/60" />
                      </div>
 
@@ -172,8 +202,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
             {/* Footer */}
             <div className="z-20 flex flex-shrink-0 items-center justify-between border-t border-white/78 bg-white/84 px-5 pb-[max(1rem,env(safe-area-inset-bottom,1rem))] pt-4 backdrop-blur-xl sm:px-7 sm:py-4">
               <p className="fluid-caption font-medium text-slate-500">
-                此為達人分享之公開行程，可一鍵匯入為草稿。
-              </p>
+                {t('str_40c626c8')}</p>
               <button
                 onClick={() => {
                   onCopyPath(handbook);
@@ -182,7 +211,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                 className="flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 px-6 py-3 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.28)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.34)] ios-press"
               >
                 <Download size={16} strokeWidth={2.5}/>
-                <span className="whitespace-nowrap">一鍵複製行程</span>
+                <span className="whitespace-nowrap">{t('str_784d818a')}</span>
               </button>
             </div>
           </motion.div>

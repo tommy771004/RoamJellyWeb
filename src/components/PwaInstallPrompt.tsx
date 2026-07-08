@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { X } from 'lucide-react';
 import { isStandaloneDisplayMode, isIosMobileSafari } from '../lib/pwa';
+import { useTranslation } from "react-i18next";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -13,6 +14,7 @@ interface BeforeInstallPromptEvent extends Event {
 const DISMISS_KEY = 'roamjelly-pwa-install-dismissed';
 
 export default function PwaInstallPrompt() {
+    const { t } = useTranslation();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [isDelayedVisible, setIsDelayedVisible] = useState(false);
@@ -89,7 +91,7 @@ export default function PwaInstallPrompt() {
         <button
           onClick={dismiss}
           className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-colors"
-          aria-label="關閉"
+          aria-label={t('str_12bb2d')}
         >
           <X size={14} strokeWidth={3} />
         </button>
@@ -99,8 +101,8 @@ export default function PwaInstallPrompt() {
               ✨
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-fuchsia-300">加入主畫面</p>
-              <p className="mt-0.5 text-lg font-black tracking-tight text-white leading-tight">把 RoamJelly 裝進案頭</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-fuchsia-300">{t('str_4d758a13')}</p>
+              <p className="mt-0.5 text-lg font-black tracking-tight text-white leading-tight">{t('str_f819e1b')}</p>
             </div>
           </div>
           
@@ -117,20 +119,17 @@ export default function PwaInstallPrompt() {
                 onClick={() => void handleInstall()}
                 className="flex-1 rounded-2xl bg-white py-3 text-sm font-black uppercase tracking-wider text-slate-900 transition-all ios-press"
               >
-                立即安裝
-              </button>
+                {t('str_39166e7c')}</button>
             ) : (
               <div className="flex-1 rounded-2xl border border-white/15 bg-white/10 py-3 text-center text-[12px] font-black text-fuchsia-100">
-                分享 → 加入主畫面
-              </div>
+                {t('str_1e46a5dc')}</div>
             )}
             <button
               type="button"
               onClick={dismiss}
               className="px-4 py-3 text-sm font-bold text-slate-400 hover:text-white transition-colors"
             >
-              稍後
-            </button>
+              {t('str_f271f')}</button>
           </div>
         </div>
       </motion.div>

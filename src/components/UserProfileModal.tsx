@@ -9,6 +9,7 @@ import { useAppStore } from '../store/useAppStore';
 import { fetchUserPreferences, updateUserAiProfile } from '../lib/workflowApi';
 import type { AiPreferenceProfile } from '../types/workflow';
 import { PulsingIndicator } from './ui/PulsingIndicator';
+import { useTranslation } from "react-i18next";
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -56,6 +57,7 @@ function PillButton({ label, selected, onClick, accentColor = 'indigo' }: { labe
 }
 
 export default function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
+    const { t } = useTranslation();
   const { showToast, notifications, clearNotifications } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -151,15 +153,14 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                 </div>
                 <div>
                   <h2 className="flex items-center gap-2 whitespace-nowrap text-[22px] font-black tracking-[-0.04em] text-slate-800 dark:text-slate-100">
-                    AI 專屬行程偏好
-                  </h2>
-                  <p className="mt-0.5 text-[12px] font-medium leading-[1.5] text-slate-500 dark:text-slate-400">預設保存，讓 AI 更懂你的旅行風格</p>
+                    {t('str_430acce9')}</h2>
+                  <p className="mt-0.5 text-[12px] font-medium leading-[1.5] text-slate-500 dark:text-slate-400">{t('str_fc97c44')}</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100/90 text-slate-500 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-                aria-label="關閉"
+                aria-label={t('str_12bb2d')}
               >
                 <X size={18} />
               </button>
@@ -179,8 +180,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                     }`}
                   >
-                    AI 行程偏好設定
-                  </button>
+                    {t('str_53d34552')}</button>
                   <button
                     type="button"
                     onClick={() => setActiveSubTab('notifications')}
@@ -191,7 +191,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     }`}
                   >
                     <PulsingIndicator size="sm" />
-                    <span>協作動態通知</span>
+                    <span>{t('str_48f5b6d7')}</span>
                     {notifications.length > 0 && (
                       <span className="absolute -top-1 -right-1 inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-[10px] font-black leading-none text-white bg-orange-500 rounded-full border border-white">
                         {notifications.length}
@@ -206,7 +206,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                   loading ? (
                     <div className="flex flex-col items-center justify-center h-64 gap-4 text-slate-500">
                       <Loader2 size={28} className="animate-spin text-indigo-500 text-opacity-80" />
-                      <p className="text-sm font-medium tracking-wide">還原偏好設定中...</p>
+                      <p className="text-sm font-medium tracking-wide">{t('str_308c0529')}</p>
                     </div>
                   ) : (
                     <React.Fragment>
@@ -214,10 +214,9 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4">
                         <div className="group flex flex-col gap-3 rounded-3xl border border-white/86 bg-white/78 dark:border-white/10 dark:bg-black/40 p-4 text-left shadow-[0_10px_22px_rgba(15,23,42,0.05)] dark:shadow-black/20 transition-all focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/20 sm:p-5">
                           <Label className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                            <MapPin size={16} className="text-indigo-500 group-focus-within:scale-110 transition-transform" /> 通常出發地
-                          </Label>
+                            <MapPin size={16} className="text-indigo-500 group-focus-within:scale-110 transition-transform" /> {t('str_1abdb590')}</Label>
                           <Input 
-                            placeholder="例如：TPE 桃園機場、高雄" 
+                            placeholder={t('str_66b63351')} 
                             value={profile.departure}
                             onChange={(e) => setProfile(p => ({ ...p, departure: e.target.value }))}
                             className="h-11 rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-4 !text-[14px] font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:bg-white/60 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
@@ -226,10 +225,9 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         
                         <div className="group flex flex-col gap-3 rounded-3xl border border-white/86 bg-white/78 dark:border-white/10 dark:bg-black/40 p-4 text-left shadow-[0_10px_22px_rgba(15,23,42,0.05)] dark:shadow-black/20 transition-all focus-within:border-rose-300 focus-within:ring-2 focus-within:ring-rose-500/20 sm:p-5">
                           <Label className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                            <Users size={16} className="text-rose-500 group-focus-within:scale-110 transition-transform" /> 同行者類型
-                          </Label>
+                            <Users size={16} className="text-rose-500 group-focus-within:scale-110 transition-transform" /> {t('str_1fb8300e')}</Label>
                           <Input 
-                            placeholder="例如：情侶、親子、朋友群" 
+                            placeholder={t('str_69b5daea')} 
                             value={profile.companions}
                             onChange={(e) => setProfile(p => ({ ...p, companions: e.target.value }))}
                             className="h-11 rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-4 !text-[14px] font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:bg-white/60 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
@@ -244,9 +242,8 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                             <div className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-100 bg-amber-50 text-amber-500">
                               <Sparkles size={16} />
                             </div>
-                            旅遊節奏 (Vibes)
-                          </h3>
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">複選</span>
+                            {t('str_6a6b5398')}</h3>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">{t('str_112851')}</span>
                         </div>
                         <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                           {VIBE_OPTIONS.map(vibe => (
@@ -269,9 +266,8 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                             <div className="flex h-8 w-8 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-500">
                               <Heart size={16} />
                             </div>
-                            旅遊興趣
-                          </h3>
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">複選</span>
+                            {t('str_3070fa80')}</h3>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">{t('str_112851')}</span>
                         </div>
                         <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                           {INTEREST_OPTIONS.map(opt => (
@@ -294,9 +290,8 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                             <div className="flex h-8 w-8 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-blue-500">
                               <Car size={16} />
                             </div>
-                            交通方式偏好
-                          </h3>
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">複選</span>
+                            {t('str_502ea8fa')}</h3>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">{t('str_112851')}</span>
                         </div>
                         <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                           {TRANSPORT_OPTIONS.map(opt => (
@@ -321,9 +316,8 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                               <div className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50 text-emerald-600">
                                 <DollarSign size={16} />
                               </div>
-                              預算等級
-                            </h3>
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">單選</span>
+                              {t('str_46ff0ab8')}</h3>
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">{t('str_af08a')}</span>
                           </div>
                           <div className="grid grid-cols-2 gap-2.5 pt-1">
                             {BUDGET_OPTIONS.map(opt => (
@@ -345,9 +339,8 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                               <div className="flex h-8 w-8 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-indigo-500">
                                 <Coffee size={16} />
                               </div>
-                              飲食禁忌
-                            </h3>
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">複選</span>
+                              {t('str_47d35d58')}</h3>
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 dark:bg-slate-800">{t('str_112851')}</span>
                           </div>
                           <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                             {DIETARY_OPTIONS.map(opt => (
@@ -376,24 +369,20 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                         <Bell size={28} className="text-slate-300 dark:text-slate-500" />
                       </div>
                       <h4 className="text-[16px] font-black tracking-[-0.01em] text-slate-700 dark:text-slate-200 mb-1">
-                        暫無協作通知
-                      </h4>
+                        {t('str_6c962b97')}</h4>
                       <p className="text-[12px] font-medium leading-[1.6] text-slate-400 max-w-xs">
-                        當其他共同編輯者同步景點、修改日程或調整分帳時，即時通知會顯示在此處。
-                      </p>
+                        {t('str_7ec1ed78')}</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between px-1 border-b border-slate-100 pb-2 dark:border-slate-800">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                          最近 {notifications.length} 筆協作異動
-                        </span>
+                          {t('str_d08d1')}{notifications.length} {t('str_fc127cd')}</span>
                         <button
                           onClick={clearNotifications}
                           className="flex items-center gap-1.5 text-[11px] font-bold text-red-500 hover:text-red-650 transition-colors"
                         >
-                          <Trash2 size={13} /> 清空所有
-                        </button>
+                          <Trash2 size={13} /> {t('str_33db289e')}</button>
                       </div>
                       <div className="space-y-3">
                         {notifications.map((notif) => {
@@ -450,15 +439,13 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                       className="flex-shrink-0 flex items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50/40 px-5 text-[14px] font-bold text-red-650 hover:bg-red-55 transition-colors"
                     >
                       <Trash2 size={16} />
-                      清空通知
-                    </button>
+                      {t('str_33e0c6e0')}</button>
                   )}
                   <button 
                     onClick={onClose} 
                     className="flex-1 flex h-14 items-center justify-center rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-[14px] font-black tracking-wide shadow-md transition-all duration-200"
                   >
-                    關閉視窗
-                  </button>
+                    {t('str_4661c7ae')}</button>
                 </div>
               )}
             </div>

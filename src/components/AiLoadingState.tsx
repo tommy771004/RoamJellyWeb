@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTypewriter } from '../lib/useTypewriter';
+import { useTranslation } from "react-i18next";
 
 const MESSAGES = [
   '正在打包行李，替今天塞進剛剛好的節奏...',
@@ -25,6 +26,7 @@ function TypewriterMessage({ text }: { text: string }) {
 }
 
 export default function AiLoadingState() {
+    const { t } = useTranslation();
   const [msgIndex, setMsgIndex] = useState(0);
 
   useEffect(() => {
@@ -64,11 +66,9 @@ export default function AiLoadingState() {
         <div className="space-y-2 text-center">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">Premium Jelly Planner</p>
           <h2 className="text-balance text-[20px] font-black leading-[1.12] tracking-[-0.04em] text-slate-900 sm:text-[24px]">
-            正在把你的旅程排成更順手的第一版
-          </h2>
+            {t('str_68c7f2bc')}</h2>
           <p className="mx-auto max-w-[30ch] text-[13px] font-medium leading-[1.65] text-slate-500 sm:max-w-[34ch]">
-            會先整理節奏、交通與停留密度，產出之後還能回行程再慢慢微調。
-          </p>
+            {t('str_e3dca16')}</p>
         </div>
 
         <div aria-live="polite" aria-atomic="true" className="flex min-h-[3.5rem] w-full flex-col items-center justify-center px-1 sm:px-3 text-center overflow-hidden">
@@ -90,8 +90,7 @@ export default function AiLoadingState() {
           <span className="h-2 w-2 rounded-full bg-fuchsia-300" />
           <span className="h-2 w-2 rounded-full bg-sky-300" />
           <span className="h-2 w-2 rounded-full bg-amber-300" />
-          草稿完成後可直接回行程調整
-        </div>
+          {t('str_34dffb3c')}</div>
       </div>
     </div>
   );

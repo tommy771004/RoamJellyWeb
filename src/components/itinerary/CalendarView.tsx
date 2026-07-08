@@ -20,6 +20,7 @@ import GlassCard from "../GlassCard";
 import SelectedNodeTransportDetails from "./SelectedNodeTransportDetails";
 import { getModalMotion } from "../../lib/motionTokens";
 import { getTravelFactBookingLabel, getTravelFactRedirectPayload } from "../../lib/travelFact";
+import { useTranslation } from "react-i18next";
 
 interface CalendarViewProps {
   nodes: ItineraryNode[];
@@ -30,6 +31,7 @@ export default function CalendarView({
   nodes,
   tripStartDate,
 }: CalendarViewProps) {
+    const { t } = useTranslation();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   // Calculate start date
@@ -107,14 +109,13 @@ export default function CalendarView({
               )
             }
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
-            title="上個月"
-            aria-label="上個月"
+            title={t('str_12f0be7')}
+            aria-label={t('str_12f0be7')}
           >
             <ChevronLeft size={20} />
           </button>
           <h2 className="text-xl font-black text-slate-700 tracking-widest">
-            {currentMonth.getFullYear()}年 {currentMonth.getMonth() + 1}月
-          </h2>
+            {currentMonth.getFullYear()}{t('str_5e74')}{currentMonth.getMonth() + 1}{t('str_6708')}</h2>
           <button
             onClick={() =>
               setCurrentMonth(
@@ -126,8 +127,8 @@ export default function CalendarView({
               )
             }
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-pink-500 shadow-sm hover:bg-pink-50 hover:scale-105 transition-all"
-            title="下個月"
-            aria-label="下個月"
+            title={t('str_12f0fa8')}
+            aria-label={t('str_12f0fa8')}
           >
             <ChevronRight size={20} />
           </button>
@@ -219,11 +220,10 @@ export default function CalendarView({
         >
           <GlassCard className="!p-4 flex items-center justify-between border-2 border-white/60 flex-shrink-0">
             <span className="font-black text-sm text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <Sparkles size={16} className="text-pink-400" /> 詳細內容
-            </span>
+              <Sparkles size={16} className="text-pink-400" /> {t('str_40cfa50f')}</span>
             <button
               onClick={() => setSelectedNodeId(null)}
-              aria-label="關閉詳細內容"
+              aria-label={t('str_358701bc')}
               className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-50 hover:bg-slate-200 text-slate-500 hover:text-slate-600 transition-colors shadow-sm cursor-pointer border border-slate-200/50"
             >
               <X size={16} strokeWidth={3} />
@@ -265,8 +265,8 @@ export default function CalendarView({
                           selectedNode.title,
                         )
                       }
-                      title="開始導航"
-                      aria-label="開始導航"
+                      title={t('str_4557357c')}
+                      aria-label={t('str_4557357c')}
                       className="inline-flex size-11 items-center justify-center p-[2px] bg-blue-500 hover:bg-blue-600 rounded-full shadow-sm text-sm shrink-0"
                     >
                       🧭
@@ -302,8 +302,7 @@ export default function CalendarView({
                       <Link size={14} className="text-slate-500" />
                     </div>
                     <span className="text-[11px] font-black text-cyan-600 uppercase tracking-widest">
-                      關聯的 Travel Fact
-                    </span>
+                      {t('str_64a150e3')}</span>
                   </div>
 
                   {(() => {
@@ -339,8 +338,7 @@ export default function CalendarView({
                         {fact.referenceCode && (
                           <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-1">
                             <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded bg-white">
-                              訂單編號
-                            </span>
+                              {t('str_400d8663')}</span>
                             <span className="font-mono">
                               {fact.referenceCode}
                             </span>
@@ -353,8 +351,7 @@ export default function CalendarView({
                               {fact.metadata.airline && (
                                 <div className="flex flex-col">
                                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    航空公司
-                                  </span>
+                                    {t('str_3d01499c')}</span>
                                   <span className="text-xs text-slate-700 font-bold font-sans">
                                     {fact.metadata.airline}
                                   </span>
@@ -363,8 +360,7 @@ export default function CalendarView({
                               {fact.metadata.flightNumber && (
                                 <div className="flex flex-col">
                                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    航班編號
-                                  </span>
+                                    {t('str_3cee47ba')}</span>
                                   <span className="text-xs text-slate-700 font-bold font-mono">
                                     {fact.metadata.flightNumber}
                                   </span>
@@ -373,8 +369,7 @@ export default function CalendarView({
                               {fact.metadata.checkInTime && (
                                 <div className="flex flex-col">
                                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    入住時間
-                                  </span>
+                                    {t('str_2636a79b')}</span>
                                   <span className="text-xs text-slate-700 font-bold font-sans">
                                     {fact.metadata.checkInTime}
                                   </span>
@@ -383,8 +378,7 @@ export default function CalendarView({
                               {fact.metadata.checkOutTime && (
                                 <div className="flex flex-col">
                                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    退房時間
-                                  </span>
+                                    {t('str_42f33610')}</span>
                                   <span className="text-xs text-slate-700 font-bold font-sans">
                                     {fact.metadata.checkOutTime}
                                   </span>
@@ -393,8 +387,7 @@ export default function CalendarView({
                               {fact.metadata.address && (
                                 <div className="flex flex-col col-span-2">
                                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                    地址
-                                  </span>
+                                    {t('str_ae610')}</span>
                                   <span className="text-xs text-slate-700 font-bold font-sans">
                                     {fact.metadata.address}
                                   </span>

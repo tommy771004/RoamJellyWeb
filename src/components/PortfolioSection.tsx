@@ -1,6 +1,8 @@
 import { Sparkles, ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function PortfolioSection() {
+    const { t } = useTranslation();
   const portfolios = [
     {
       title: "蔬果價格查詢",
@@ -31,8 +33,7 @@ export default function PortfolioSection() {
         <div className="h-px w-8 bg-slate-200 dark:bg-slate-700"></div>
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 pt-0.5">
           <Sparkles size={14} className="text-slate-400" />
-          更多作品推薦
-        </h3>
+          {t('str_445a0fb7')}</h3>
         <div className="h-px w-8 bg-slate-200 dark:bg-slate-700"></div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 w-full max-w-5xl">

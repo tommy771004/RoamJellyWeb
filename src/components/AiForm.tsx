@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from "react";
 import {
   MapPin,
@@ -131,6 +132,7 @@ export const MultiSelectPill: React.FC<{
   onClick: () => void;
   accentColor?: "indigo" | "emerald" | "rose" | "blue" | "amber";
 }> = ({ label, selected, onClick, accentColor = "indigo" }) => {
+    const { t } = useTranslation();
   const selectedClasses: Record<string, string> = {
     indigo: "bg-indigo-100 border-indigo-300 text-indigo-800 dark:bg-indigo-950/80 dark:border-indigo-500/50 dark:text-indigo-300 dark:shadow-[inset_-3px_-3px_6px_rgba(0,0,0,0.4),inset_3px_3px_6px_rgba(129,140,248,0.25)]",
     emerald: "bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-950/80 dark:border-emerald-500/50 dark:text-emerald-300 dark:shadow-[inset_-3px_-3px_6px_rgba(0,0,0,0.4),inset_3px_3px_6px_rgba(52,211,153,0.25)]",
@@ -157,7 +159,7 @@ export const MultiSelectPill: React.FC<{
       }`}
     >
       {selected && <Check size={16} strokeWidth={3} className="shrink-0" />}
-      <span className="relative z-10">{label}</span>
+      <span className="relative z-10">{t('ai_preferences_options.' + label, label)}</span>
     </button>
   );
 };
@@ -169,6 +171,7 @@ export default function AiForm({
   onSubmit: (data: AiFormData) => void;
   onCancel?: () => void;
 }) {
+  const { t } = useTranslation();
   const { aiProfile, saveAiProfile } = useSearchStore();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const keyboardHeight = useKeyboardHeight();
@@ -256,12 +259,12 @@ export default function AiForm({
   };
 
   const stepOneHint = !formData.departure
-    ? "先選擇出發地。"
+    ? t("step_hint.departure", "先選擇出發地。")
     : !formData.destination
-      ? "再選擇目的地。"
+      ? t("step_hint.destination", "再選擇目的地。")
       : !formData.companions
-        ? "最後選擇同行者。"
-        : "已完成基本資料，下一步可微調節奏、飲食與預算。";
+        ? t("step_hint.companions", "最後選擇同行者。")
+        : t("step_hint.ready", "已完成基本資料，下一步可微調節奏、飲食與預算。");
 
   return (
     <div className="relative flex flex-col h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -277,7 +280,7 @@ export default function AiForm({
 
             <div>
               <h2 className="mb-1 text-balance text-[21px] sm:text-[33px] font-black leading-[1.08] tracking-[-0.045em] text-slate-900 sm:mb-2 font-heading">
-                先讓 <span className="text-sky-600">AI 規劃</span>旅程，再隨時調整行程
+                {t('ai_plan_first')}
               </h2>
             </div>
             <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2 pb-1 -mx-3.5 px-3.5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -286,7 +289,7 @@ export default function AiForm({
                   key={pill}
                   className="shrink-0 inline-flex items-center rounded-full border border-white/84 bg-white/84 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-600 shadow-[0_8px_16px_rgba(15,23,42,0.05)]"
                 >
-                  {pill}
+                  {t('ai_preferences_options.' + pill, pill)}
                 </span>
               ))}
             </div>
@@ -295,7 +298,7 @@ export default function AiForm({
             <button
               onClick={onCancel}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/84 bg-white/88 text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors ios-press hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 sm:h-11 sm:w-11"
-              aria-label="取消"
+              aria-label={t('str_a9472')}
             >
               <ArrowLeft size={20} className="sm:hidden" />
               <ArrowLeft size={24} className="hidden sm:block" />
@@ -335,8 +338,7 @@ export default function AiForm({
                   <div className="flex flex-col gap-2.5">
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                       <MapPin size={16} className="text-sky-500" />
-                      出發地
-                    </label>
+                      {t('str_1426bae')}</label>
                     <button
                       onClick={() => setShowDepDropdown(true)}
                       className="group flex min-h-[56px] w-full items-center justify-between rounded-[32px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-100 sm:text-base"
@@ -348,7 +350,7 @@ export default function AiForm({
                             : "text-slate-500 font-medium"
                         }
                       >
-                        {formData.departure || "請選擇出發城市"}
+                        {formData.departure || t('str_dep_placeholder', '請選擇出發城市')}
                       </span>
                       {!formData.departure && (
                         <Search
@@ -370,7 +372,7 @@ export default function AiForm({
                           destination: p.departure,
                         }));
                       }}
-                      title="交換出發地與目的地"
+                      title={t('str_7dc97fb6')}
                       className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/80 bg-white/94 text-sky-500 hover:text-sky-600 shadow-md transition-all hover:scale-110 ios-press cursor-pointer group"
                     >
                       <svg
@@ -391,8 +393,7 @@ export default function AiForm({
                   <div className="flex flex-col gap-2.5">
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                       <MapPin size={16} className="text-orange-500" />
-                      目的地
-                    </label>
+                      {t('str_1cd249a')}</label>
                     <button
                       onClick={() => setShowDestDropdown(true)}
                       className="group flex min-h-[56px] w-full items-center justify-between rounded-[32px] border border-white/84 bg-white/86 px-4 py-3.5 text-left text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors hover:border-orange-300 focus:outline-none focus:ring-4 focus:ring-orange-100 sm:text-base"
@@ -404,7 +405,7 @@ export default function AiForm({
                             : "text-slate-500 font-medium"
                         }
                       >
-                        {formData.destination || "想去哪裡探索？"}
+                        {formData.destination || t('str_dest_placeholder', '想去哪裡探索？')}
                       </span>
                       {!formData.destination && (
                         <Search
@@ -419,8 +420,7 @@ export default function AiForm({
                   <div className="flex flex-col gap-2.5 pt-1">
                     <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                       <Calendar size={16} className="text-sky-500" />
-                      預計天數
-                    </label>
+                      {t('str_47310767')}</label>
                     <div className="flex min-h-[56px] items-center justify-between rounded-[32px] border border-white/84 bg-white/86 p-2 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
                       <button
                         onClick={() =>
@@ -438,8 +438,7 @@ export default function AiForm({
                           {formData.days}
                         </span>
                         <span className="text-slate-500 font-bold text-sm">
-                          天
-                        </span>
+                          {t('str_5929')}</span>
                       </div>
                       <button
                         onClick={() =>
@@ -460,8 +459,7 @@ export default function AiForm({
                 <div className="flex flex-col gap-4 p-4 shadow-card hover:shadow-floating transition-shadow duration-300 glass-panel !rounded-[28px] sm:gap-5 sm:p-6">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <Users size={16} className="text-orange-500" />
-                    與誰同行？
-                  </label>
+                    {t('str_68aa5f36')}</label>
                   <div className="grid h-full grid-cols-2 content-start gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
                     {COMPANION_OPTIONS.map((opt) => {
                       const isSelected = formData.companions === opt.id;
@@ -527,8 +525,7 @@ export default function AiForm({
                         : "border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] ios-press"
                     }`}
                   >
-                    下一步，設定偏好細節
-                    <ArrowLeft className="rotate-180" size={18} />
+                    {t('str_62dffff9')}<ArrowLeft className="rotate-180" size={18} />
                   </button>
                 </div>
               </div>
@@ -562,18 +559,16 @@ export default function AiForm({
               <div className="mb-1 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
                   <h3 className="text-[22px] font-black tracking-[-0.04em] text-slate-900 font-heading">
-                    補充<span className="text-sky-600">偏好細節</span>
+                    {t('str_10e3e9')}<span className="text-sky-600">{t('str_25e12c1e')}</span>
                   </h3>
                   <p className="mt-1 text-[13px] font-medium leading-[1.6] text-slate-500">
-                    這些是選填項目，用來把草稿調得更貼近你的旅程節奏。
-                  </p>
+                    {t('str_7632b257')}</p>
                 </div>
                 <button
                   onClick={handleSubmit}
                   className="flex shrink-0 items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.12em] text-sky-700 transition-colors hover:bg-sky-100 hover:text-sky-800 ios-press"
                 >
-                  跳過直接生成
-                  <Sparkles size={16} />
+                  {t('str_63143efd')}<Sparkles size={16} />
                 </button>
               </div>
 
@@ -581,8 +576,7 @@ export default function AiForm({
                 <div className="flex flex-col gap-3.5">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <Coffee size={16} className="text-amber-600" />
-                    旅遊節奏
-                  </label>
+                    {t('str_30700374')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                     {VIBE_OPTIONS.map((vibe) => (
                       <div className="shrink-0" key={vibe}>
@@ -600,8 +594,7 @@ export default function AiForm({
                 <div className="flex flex-col gap-3.5">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <Heart size={16} className="text-rose-500" />
-                    興趣偏好
-                  </label>
+                    {t('str_3d39a4e9')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                     {INTEREST_OPTIONS.map((interest) => (
                       <div className="shrink-0" key={interest}>
@@ -619,8 +612,7 @@ export default function AiForm({
                 <div className="flex flex-col gap-3.5">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <Settings2 size={16} className="text-emerald-600" />
-                    飲食禁忌
-                  </label>
+                    {t('str_47d35d58')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                     {DIETARY_OPTIONS.map((diet) => (
                       <div className="shrink-0" key={diet}>
@@ -638,8 +630,7 @@ export default function AiForm({
                 <div className="flex flex-col gap-3.5">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <Car size={16} className="text-blue-500" />
-                    交通方式
-                  </label>
+                    {t('str_25e920ec')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                     {TRANSPORT_OPTIONS.map((trans) => (
                       <div className="shrink-0" key={trans}>
@@ -657,8 +648,7 @@ export default function AiForm({
                 <div className="flex flex-col gap-3.5">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <DollarSign size={16} className="text-teal-600" />
-                    預算等級 (單選)
-                  </label>
+                    {t('str_7204d7e1')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                     {BUDGET_OPTIONS.map((budget) => (
                       <div className="shrink-0" key={budget}>
@@ -681,8 +671,7 @@ export default function AiForm({
                 <div className="flex flex-col gap-3.5">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <Footprints size={16} className="text-sky-600" />
-                    行程步調 (單選)
-                  </label>
+                    {t('str_4cdcffe')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                     {PACE_OPTIONS.map((pace) => (
                       <div className="shrink-0" key={pace}>
@@ -705,8 +694,7 @@ export default function AiForm({
                 <div className="flex flex-col gap-3.5">
                   <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                     <MapPin size={16} className="text-rose-600" />
-                    住宿偏好
-                  </label>
+                    {t('str_256fb55e')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
                     {ACCOMMODATION_OPTIONS.map((accommodation) => (
                       <div className="shrink-0" key={accommodation}>
@@ -734,14 +722,12 @@ export default function AiForm({
                       onClick={handleBack}
                       className="h-14 w-full shrink-0 rounded-2xl border border-white/84 bg-white/86 px-6 text-[14px] font-bold text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 ios-press sm:h-[3.8rem] sm:w-auto"
                     >
-                      返回
-                    </button>
+                      {t('str_11c18a')}</button>
                     <button
                       onClick={handleSubmit}
                       className="group flex h-14 w-full flex-1 items-center justify-center gap-3 clay-btn bg-gradient-to-r from-sky-400 to-blue-500 text-[14px] font-black tracking-[0.08em] text-white ios-press sm:h-[3.8rem] sm:text-[15px]"
                     >
-                      生成行程
-                      <Sparkles
+                      {t('str_36be9bd0')}<Sparkles
                         size={20}
                         className="group-hover:animate-cute-bounce"
                       />
@@ -755,7 +741,7 @@ export default function AiForm({
 
         {showDepDropdown && (
           <LocationPickerPopup
-            title="出發地"
+            title={t('str_1426bae')}
             query={formData.departure}
             onClose={() => setShowDepDropdown(false)}
             onSelect={(dest) => {
@@ -770,7 +756,7 @@ export default function AiForm({
 
         {showDestDropdown && (
           <LocationPickerPopup
-            title="目的地"
+            title={t('str_1cd249a')}
             query={formData.destination}
             onClose={() => setShowDestDropdown(false)}
             onSelect={(dest) => {

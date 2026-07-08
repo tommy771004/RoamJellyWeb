@@ -8,6 +8,7 @@ import { getOverlayTransition, getSheetMotion, subtlePressableClass } from '../l
 import { suggestChatAssistantResponse, ChatResponseData } from '../lib/openrouterApi';
 import { getStoredToken, addFavorite } from '../lib/workflowApi';
 import { getCategoryEmoji } from '../lib/categoryEmoji';
+import { useTranslation } from "react-i18next";
 
 const assistantAvatar = '🍮';
 
@@ -34,6 +35,7 @@ interface ChatMessage {
 }
 
 export default function JellyAssistant() {
+    const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: '1', role: 'ai', text: '哈囉！我是您的行程果凍顧問 🍮！我可以幫您比價機票、行李準備、以及推薦台北的私房下雨行程，需要我的時候隨時問我喔！' }
@@ -231,7 +233,7 @@ export default function JellyAssistant() {
             transition={prefersReducedMotion ? { duration: 0.16 } : SPRING_BOUNCY}
             onClick={handleScrollToTop}
             className={`fixed bottom-[160px] right-5 z-40 flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-2xl border border-slate-200/80 bg-white/95 text-slate-700 shadow-md backdrop-blur-md focus-visible:outline-none focus:ring-4 focus:ring-fuchsia-400/50 dark:border-white/10 dark:bg-slate-900/95 dark:text-slate-200 sm:right-6 sm:bottom-[172px] sm:h-14 sm:w-14 ${subtlePressableClass}`}
-            aria-label="回到最上面"
+            aria-label={t('str_10f956ba')}
             id="scroll-to-top-btn"
           >
             <ArrowUp size={22} className="text-slate-600 dark:text-slate-200 animate-pulse" strokeWidth={2.5} />
@@ -249,7 +251,7 @@ export default function JellyAssistant() {
             transition={prefersReducedMotion ? { duration: 0.16 } : SPRING_BOUNCY}
             onClick={() => setIsOpen(true)}
             className={`fixed bottom-[96px] right-5 z-40 flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-tr from-sky-500 via-fuchsia-500 to-orange-400 shadow-[0_12px_28px_rgba(14,165,233,0.32)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-400/60 sm:right-6 sm:h-14 sm:w-14 ${subtlePressableClass}`}
-            aria-label="開啟 Jelly AI 行程顧問"
+            aria-label={t('str_19b57e0f')}
             id="jelly-ai-assistant-btn"
           >
             <div className="absolute inset-[1px] rounded-[14px] bg-gradient-to-br from-white/22 to-transparent opacity-80 animate-pulse" />
@@ -296,16 +298,15 @@ export default function JellyAssistant() {
                   {assistantAvatar}
                 </div>
                 <div>
-                  <h3 className="text-[16px] font-black tracking-[-0.03em] text-slate-800 dark:text-white">Jelly AI 果凍顧問</h3>
+                  <h3 className="text-[16px] font-black tracking-[-0.03em] text-slate-800 dark:text-white">{t('str_81415cf')}</h3>
                   <p className="fluid-kicker text-sky-600 dark:text-sky-400 flex items-center gap-1.5 font-bold">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block animate-ping" />
-                    旅行管家在線
-                  </p>
+                    {t('str_63e3164e')}</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                aria-label="關閉 AI 顧問"
+                aria-label={t('str_21499df3')}
                 id="jelly-ai-close-btn"
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
               >
@@ -320,11 +321,9 @@ export default function JellyAssistant() {
                   🍮
                 </div>
                 <h3 className="text-[17px] font-black text-slate-800 dark:text-white mb-2">
-                  歡迎使用 Jelly AI 果凍顧問！
-                </h3>
+                  {t('str_5df3ed9c')}</h3>
                 <p className="text-[13.5px] font-semibold text-slate-500 dark:text-slate-400 leading-relaxed mb-6 max-w-[280px] sm:max-w-sm">
-                  開展您的智慧之旅吧！請先登入，即可解鎖 AI 詢問機票、智能行李打包推薦以及台北雨天行程靈感。
-                </p>
+                  {t('str_5c6e1344')}</p>
                 <button
                   onClick={() => {
                     setIsOpen(false);
@@ -332,8 +331,7 @@ export default function JellyAssistant() {
                   }}
                   className="px-6 py-2.5 rounded-full bg-gradient-to-r from-sky-500 via-fuchsia-500 to-orange-400 text-white font-black text-[13.5px] shadow-[0_8px_20px_rgba(14,165,233,0.25)] hover:shadow-[0_10px_24px_rgba(14,165,233,0.35)] ios-press transition-all outline-none focus:ring-2 focus:ring-fuchsia-400"
                 >
-                  立即登入 / 註冊
-                </button>
+                  {t('str_4b99fd4e')}</button>
               </div>
             ) : (
               <>
@@ -363,7 +361,7 @@ export default function JellyAssistant() {
                           >
                             <div className="flex items-center gap-1.5 text-sky-800 text-[10px] font-black uppercase tracking-[0.18em]">
                               <Plane size={13} className="text-sky-500 animate-pulse" />
-                              <span>AI 最低航班速報</span>
+                              <span>{t('str_3f01a27b')}</span>
                             </div>
                             <div className="flex flex-col gap-2">
                               {message.flights.map((f, i) => (
@@ -394,11 +392,10 @@ export default function JellyAssistant() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5 text-orange-900 text-[10px] font-black uppercase tracking-[0.18em]">
                                 <Luggage size={13} className="text-orange-500" />
-                                <span>AI 打包行李推薦清單</span>
+                                <span>{t('str_249f9d3')}</span>
                               </div>
                               <span className="text-[10px] bg-orange-100 text-orange-900 font-black px-2 py-0.5 rounded-full">
-                                {message.packingList.length} 項
-                              </span>
+                                {message.packingList.length} {t('str_9805')}</span>
                             </div>
                             <div className="flex flex-col gap-1.5">
                               {message.packingList.map((item, i) => (
@@ -421,12 +418,10 @@ export default function JellyAssistant() {
                                 ) : (
                                   <PlusCircle size={15} />
                                 )}
-                                一鍵導入旅途行李箱
-                              </button>
+                                {t('str_4ef6254')}</button>
                             ) : (
                               <p className="text-[11px] font-medium text-slate-500 text-center leading-tight">
-                                （進入旅程行程頁後，即可一鍵匯入為打勾清單項目）
-                              </p>
+                                {t('str_3e41c51a')}</p>
                             )}
                           </motion.div>
                         )}
@@ -440,7 +435,7 @@ export default function JellyAssistant() {
                           >
                             <div className="flex items-center gap-1.5 text-purple-900 text-[10px] font-black uppercase tracking-[0.18em]">
                               <Sparkles size={13} className="text-purple-500 animate-pulse" />
-                              <span>AI 文青散步特輯景點</span>
+                              <span>{t('str_7eae016a')}</span>
                             </div>
                             <div className="flex flex-col gap-2.5">
                               {message.activities.map((act, i) => (
@@ -463,8 +458,7 @@ export default function JellyAssistant() {
                                         onClick={() => handleAddActivityToFavorite(act.title, act.category || 'landmark')}
                                         className="flex items-center gap-1 rounded-full bg-purple-100 hover:bg-purple-200 ios-press px-2.5 py-1 text-[10px] font-black text-purple-700 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
                                       >
-                                        ❤ 收藏到此行程景點
-                                      </button>
+                                        {t('str_4ef44329')}</button>
                                     </div>
                                   )}
                                 </div>
@@ -501,20 +495,17 @@ export default function JellyAssistant() {
                       onClick={() => handleSend('台北下雨天推薦去哪裡晃晃？有什麼室內活動嗎？')}
                       className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-purple-200/90 bg-purple-50 hover:bg-purple-100 px-3.5 py-1.5 font-bold text-purple-700 transition-all ios-press whitespace-normal text-left break-words max-w-full"
                     >
-                      🌧️ 台北雨天行程活動
-                    </button>
+                      {t('str_3b97e943')}</button>
                     <button
                       onClick={() => handleSend('幫我找出發去東京的直飛航班與機票比價')}
                       className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-sky-200/90 bg-sky-50 hover:bg-sky-100 px-3.5 py-1.5 font-bold text-sky-700 transition-all ios-press whitespace-normal text-left break-words max-w-full"
                     >
-                      ✈️ 東京機票比價推薦
-                    </button>
+                      {t('str_41723b20')}</button>
                     <button
                       onClick={() => handleSend('打包行李箱該帶什麼？幫我推薦打包清單')}
                       className="fluid-caption text-[11px] sm:text-[12.5px] rounded-xl border border-orange-200/90 bg-orange-50 hover:bg-orange-100 px-3.5 py-1.5 font-bold text-orange-700 transition-all ios-press whitespace-normal text-left break-words max-w-full"
                     >
-                      💼 極簡必備行李打包
-                    </button>
+                      {t('str_3b71c64b')}</button>
                   </div>
                 )}
 
@@ -528,7 +519,7 @@ export default function JellyAssistant() {
                     }}
                     onSendClick={() => handleSend()}
                     sendDisabled={!inputValue.trim() || isTyping}
-                    placeholder="輸入疑問（例如：機票比價、行李帶什麼...）"
+                    placeholder={t('str_22f41262')}
                   />
                 </div>
               </>

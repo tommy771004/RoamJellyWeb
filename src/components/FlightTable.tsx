@@ -2,6 +2,7 @@ import React from "react";
 import { Heart } from "lucide-react";
 import type { SearchItem } from "../types/workflow";
 import AirlineLogo from "./AirlineLogo";
+import { useTranslation } from "react-i18next";
 
 export default function FlightTable({
   results,
@@ -20,6 +21,7 @@ export default function FlightTable({
   onToggleSave: (e: React.MouseEvent, id: string) => void;
   onToggleTrack: (e: React.MouseEvent, f: SearchItem) => void;
 }) {
+    const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-3 w-full pb-4">
       {results.map((flight) => {
@@ -111,7 +113,7 @@ export default function FlightTable({
                 {flight.tripType === "roundtrip" && flight.returnLeg && (
                   <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 pt-3 border-t border-dashed border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-2 md:w-[140px] shrink-0">
-                      <span className="text-[10px] font-black text-sky-600 bg-sky-50 dark:bg-sky-900/30 dark:text-sky-400 border border-sky-100 dark:border-sky-800 rounded px-1.5 py-0.5 whitespace-nowrap hidden md:block">回程</span>
+                      <span className="text-[10px] font-black text-sky-600 bg-sky-50 dark:bg-sky-900/30 dark:text-sky-400 border border-sky-100 dark:border-sky-800 rounded px-1.5 py-0.5 whitespace-nowrap hidden md:block">{t('str_afeed')}</span>
                       <AirlineLogo
                         providerName={flight.returnLeg.airline || providerName}
                         className="w-7 h-7 rounded-sm text-xs shadow-sm"
@@ -121,8 +123,7 @@ export default function FlightTable({
                           {flight.returnLeg.airline || providerName}
                         </span>
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 md:hidden">
-                          回程
-                        </span>
+                          {t('str_afeed')}</span>
                       </div>
                     </div>
 
@@ -178,7 +179,7 @@ export default function FlightTable({
                       {flight.price.toLocaleString()}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">含稅總價</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{t('str_281c5f16')}</span>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 mt-2">
@@ -203,8 +204,7 @@ export default function FlightTable({
                     }}
                     className="h-8 px-4 rounded bg-sky-500 text-white font-bold text-xs hover:bg-sky-600 transition-colors shadow-sm"
                   >
-                    選取
-                  </button>
+                    {t('str_11d25e')}</button>
                 </div>
               </div>
             </div>
