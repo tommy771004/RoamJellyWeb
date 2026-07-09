@@ -1457,7 +1457,7 @@ export default function HomeTab({
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 flex-shrink-0"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 flex-shrink-0"></span>
                       </span>
-                      {t('str_78650c73')}</div>
+                      </div>
 
                     {/* 跑馬燈容器 */}
                     <div className="flex animate-marquee w-max py-1">
