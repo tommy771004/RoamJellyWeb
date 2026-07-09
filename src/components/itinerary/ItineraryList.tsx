@@ -542,8 +542,7 @@ const ItineraryListItem = React.memo(
                       animate={{ scale: 1, opacity: 1 }}
                       className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-fuchsia-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-fuchsia-700 border border-fuchsia-200 shadow-sm shadow-fuchsia-200/50"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 animate-ping inline-block" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 absolute" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 shadow-[0_0_6px_#d946ef] inline-block" />
                       {collaboratingLock.userName} 編輯中
                     </motion.span>
                   )}
@@ -1171,14 +1170,13 @@ const ReorderableItineraryItem = ({
       value={item}
       dragControls={dragControls}
       dragListener={false}
-      initial={{ opacity: 0, scale: 0.95, y: 30 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, x: -30 }}
+      initial={{ opacity: 0, height: 0, scale: 0.95, overflow: "hidden" }}
+      animate={{ opacity: 1, height: "auto", scale: 1, transitionEnd: { overflow: "visible" } }}
+      exit={{ opacity: 0, height: 0, scale: 0.9, overflow: "hidden", transition: { duration: 0.2 } }}
       transition={{
         type: "spring",
         ...SPRING_BOUNCY,
         duration: 0.5,
-        delay: idx * 0.05,
       }}
       onDragStart={() => triggerHapticFeedback([14])}
       onDragEnd={() => triggerHapticFeedback([10, 32, 12])}

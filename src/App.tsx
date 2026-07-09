@@ -949,7 +949,7 @@ export default function App() {
             variants={{
               enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.984, x: dir * 24 }),
               center: { opacity: 1, scale: 1, x: 0 },
-              exit: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.984, x: dir * -24 }),
+              exit: { opacity: 0, transition: { duration: 0.15, ease: "easeOut" } },
             }}
             initial="enter"
             animate="center"

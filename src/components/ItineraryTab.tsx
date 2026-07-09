@@ -2157,8 +2157,7 @@ export default function ItineraryTab() {
           <div className="mx-4 md:mx-0 mb-6 mt-6 md:mt-0 glass-card rounded-3xl p-4 bg-[linear-gradient(135deg,rgba(240,249,255,0.7),rgba(224,242,254,0.5))] border border-sky-200/50 shadow-[0_8px_30px_rgb(14,165,233,0.1)] flex flex-col sm:flex-row items-center justify-between gap-4 z-50 relative">
             <span className="text-sky-700 font-bold text-sm tracking-wide flex items-center gap-3">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500 shadow-[0_0_6px_#0ea5e9]"></span>
               </span>
               {t('str_58ab6740')}</span>
             <button
@@ -2189,8 +2188,7 @@ export default function ItineraryTab() {
           <div className="mx-4 md:mx-8 mb-6 mt-6 glass-card rounded-3xl p-4 bg-amber-50/10 border border-amber-500/20 shadow-sm flex items-center justify-center gap-2">
             <span className="text-amber-400 font-mono text-xs tracking-wide flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 shadow-[0_0_6px_#f59e0b]"></span>
               </span>
               OFFLINE / READ-ONLY
             </span>
@@ -2199,8 +2197,7 @@ export default function ItineraryTab() {
           <div className="absolute top-8 left-5 z-50 flex items-center justify-center gap-2 bg-slate-900/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
             <span className="text-emerald-400 font-mono text-[10px] sm:text-xs tracking-wider flex items-center gap-2 font-semibold">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 pulse"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_6px_#10b981]"></span>
               </span>
               SYNC CONNECTED
             </span>
@@ -3593,7 +3590,7 @@ export default function ItineraryTab() {
                   <div className="w-16 h-16 rounded-[24px] bg-[linear-gradient(135deg,#e0e7ff,#fae8ff)] dark:bg-[linear-gradient(135deg,#312e81,#701a75)] flex items-center justify-center mb-6 shadow-inner mx-auto transform -rotate-6 transition-transform">
                     <UserPlus size={28} className="text-indigo-500 dark:text-indigo-300" strokeWidth={2.5} />
                   </div>
-                  <div className="absolute top-0 right-1/4 w-3 h-3 rounded-full bg-pink-400 animate-ping opacity-75 hidden sm:block" />
+                  <div className="absolute top-0 right-1/4 w-3 h-3 rounded-full bg-pink-400 shadow-[0_0_6px_#f472b6] hidden sm:block" />
                 </div>
                 <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 text-center mb-3 tracking-tight">{t('str_1daa6def')}</h3>
                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400 text-center leading-relaxed mb-8 text-balance">

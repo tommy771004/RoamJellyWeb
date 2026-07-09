@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
 import { SPRING_SMOOTH } from '../../lib/motionTokens';
 
-/** Inline expand/collapse panel for an itinerary node's AI tip/note. */
 export default function CollapsibleAiNote({ text, label }: { text: string; label: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -20,7 +19,7 @@ export default function CollapsibleAiNote({ text, label }: { text: string; label
             transition={{ duration: 0.2 }}
             type="button"
             onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
-            className="mt-3 flex items-center gap-1.5 px-3 py-1.5 w-fit rounded-full bg-white/60 text-slate-500 text-[11px] font-black tracking-widest uppercase hover:bg-white/80 transition-colors border border-white/40"
+            className="mt-3 flex items-center gap-1.5 px-4 py-3 min-h-[44px] w-fit rounded-full bg-white/60 text-slate-500 text-[11px] font-black tracking-widest uppercase hover:bg-white/80 transition-colors border border-white/40"
           >
             <Lightbulb size={12} className="opacity-70" />
             <span className="translate-y-px">展開 {label}</span>
@@ -42,7 +41,7 @@ export default function CollapsibleAiNote({ text, label }: { text: string; label
               </p>
               <button
                 onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
-                className="text-[10px] font-bold uppercase text-slate-400 hover:text-slate-600 px-2 py-1 -mr-2 bg-white/50 hover:bg-white/80 rounded-[10px] transition-colors"
+                className="text-[10px] font-bold uppercase text-slate-400 hover:text-slate-600 px-3 py-2.5 min-h-[44px] flex items-center justify-center -mr-2 bg-white/50 hover:bg-white/80 rounded-[10px] transition-colors"
               >
                 收起 <ChevronUp size={10} className="inline opacity-70 mb-[1px]" />
               </button>

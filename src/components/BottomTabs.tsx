@@ -111,7 +111,7 @@ export default function BottomTabs() {
               {isAiFlow && (
                 <button
                   onClick={() => setIsExpanded(false)}
-                  className="absolute -left-1 p-1 text-slate-400 hover:text-sky-500 rounded-full z-20 ios-press"
+                  className="absolute -left-1.5 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-sky-500 rounded-full z-20 ios-press"
                   aria-label={t('str_3026e6f7')}
                 >
                   <X size={14} strokeWidth={3} />

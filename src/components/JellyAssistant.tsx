@@ -291,7 +291,6 @@ export default function JellyAssistant() {
               <div className="h-1.5 w-10 rounded-full bg-slate-300/80 dark:bg-white/15" />
             </div>
 
-            {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 bg-white/52 px-5 py-4 dark:border-white/5 dark:bg-black/40">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-sky-500 to-orange-400 text-xl shadow-inner animate-bounce" style={{ animationDuration: '3s' }}>
@@ -300,7 +299,7 @@ export default function JellyAssistant() {
                 <div>
                   <h3 className="text-[16px] font-black tracking-[-0.03em] text-slate-800 dark:text-white">{t('str_81415cf')}</h3>
                   <p className="fluid-kicker text-sky-600 dark:text-sky-400 flex items-center gap-1.5 font-bold">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block animate-ping" />
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block shadow-[0_0_6px_#10b981]" />
                     {t('str_63e3164e')}</p>
                 </div>
               </div>

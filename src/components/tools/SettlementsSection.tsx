@@ -110,7 +110,11 @@ export default function SettlementsSection({ className }: { className?: string }
           {settlements.length === 0 && (
             <div className="editorial-card-soft flex flex-col items-center justify-center text-center rounded-[32px] p-12 bg-gradient-to-tr from-emerald-500/5 via-teal-500/5 to-white/90 border border-emerald-100/60 shadow-[inset_0_1px_1px_rgba(255,255,255,1)]">
               <div className="relative mb-4 flex items-center justify-center">
-                <div className="absolute inset-x-0 size-16 bg-emerald-100 animate-ping rounded-full opacity-25 pointer-events-none" />
+                <motion.div
+                  animate={{ scale: [1, 1.15, 1], opacity: [0.25, 0.1, 0.25] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute inset-x-0 size-16 bg-emerald-100 rounded-full pointer-events-none"
+                />
                 <div className="size-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 drop-shadow-sm">
                   <CheckCircle2 size={28} strokeWidth={2.5} />
                 </div>

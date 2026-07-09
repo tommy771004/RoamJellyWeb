@@ -1449,15 +1449,12 @@ export default function HomeTab({
                     </div>
                   </div>
 
-                  {/* 熱門目的地建議清單 (跑馬燈效果) */}
                   <div className="relative group/dests-row w-full flex items-center my-1.5 pb-0.5 overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_16px,_black_calc(100%-16px),transparent_100%)]">
-                    {/* 清單開頭提示字樣 */}
                     <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase shrink-0 select-none pl-1 pr-3 z-10 bg-gradient-to-r from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 border-r-transparent">
                       <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 flex-shrink-0"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 flex-shrink-0"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 shadow-[0_0_6px_#0ea5e9] flex-shrink-0"></span>
                       </span>
-                      </div>
+                    </div>
 
                     {/* 跑馬燈容器 */}
                     <div className="flex animate-marquee w-max py-1">

@@ -47,8 +47,7 @@ export default function CollaboratorAvatar({
       </div>
       {isOnline && (
         <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-[2.5px] border-white"></span>
+          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-[2.5px] border-white shadow-[0_0_6px_#10b981]" />
         </span>
       )}
     </motion.div>

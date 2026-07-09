@@ -240,7 +240,7 @@ export default function LedgerSection({ className }: { className?: string }) {
                 </div>
                 
                 <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 bg-slate-100/90 border border-slate-200 px-4 py-1.5 rounded-full text-[10px] font-black text-slate-500 flex items-center gap-1.5 shadow-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-ping"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-pink-500 shadow-[0_0_6px_#ec4899]"></span>
                   果凍漫遊卡包 • 點擊切換檢視卡
                 </div>
               </div>

@@ -52,7 +52,12 @@ export default function AiLoadingState() {
         </div>
         <div className="relative">
           <div className="absolute inset-0 scale-[1.9] rounded-full bg-fuchsia-400/28 blur-[36px] animate-pulse transform-gpu" style={{ animationDuration: '2s', willChange: 'opacity' }} />
-          <div className="absolute inset-0 scale-[1.16] rounded-full border-[3px] border-fuchsia-200/70 opacity-50 animate-ping transform-gpu" style={{ animationDuration: '3s', willChange: 'transform, opacity' }} />
+          <motion.div
+            initial={{ scale: 1, opacity: 0.5 }}
+            animate={{ scale: [1, 1.12, 1], opacity: [0.5, 0.25, 0.5] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-full border-[3px] border-fuchsia-200/70 transform-gpu"
+          />
           <motion.div
             style={{ willChange: 'transform' }}
             animate={{ rotate: 360, scale: [1, 1.05, 1] }}
