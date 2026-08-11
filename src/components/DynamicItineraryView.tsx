@@ -1,7 +1,5 @@
-import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from '../lib/motionTokens';
-import React, { lazy, Suspense, useMemo, useState } from 'react';
-import { ArrowLeft, Clock, MapPin, Leaf, Flame, Navigation2, AlertTriangle, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { lazy, Suspense, useMemo } from 'react';
+import { ArrowLeft, Clock, MapPin, Leaf, Flame, Navigation2, AlertTriangle } from 'lucide-react';
 import GlassCard from './GlassCard';
 import ExpandableText from './ExpandableText';
 import type { ItineraryNode } from '../types/workflow';
