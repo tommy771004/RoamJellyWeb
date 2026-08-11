@@ -1,4 +1,4 @@
-import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from '../lib/motionTokens';
+import { SPRING_SMOOTH } from '../lib/motionTokens';
 import React, {
   Fragment,
   Suspense,
@@ -8,7 +8,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 import {
   motion,
   AnimatePresence,
@@ -70,7 +69,6 @@ import GlassCard from "./GlassCard";
 import IconImg from "./ui/IconImg";
 import { GlowingIcon } from "./ui/GlowingIcon";
 import { ItinerarySkeletonCard } from "./SkeletonCard";
-import { WikiPreviewCard } from "./WikiPreviewCard";
 import {
   searchOffers,
   ensureClientAccessToken,
@@ -97,7 +95,7 @@ import {
   suggestItineraryWithForm,
   AiRateLimitedError,
 } from "../lib/openrouterApi";
-import { haversineKm, estimateTransport, formatMinutes } from "../lib/geoUtils";
+import { haversineKm, estimateTransport, formatMinutes, optimizeSpotOrder } from "../lib/geoUtils";
 import { useItineraryStore } from "../store/useItineraryStore";
 import { useSearchStore } from "../store/useSearchStore";
 import { useAppStore } from "../store/useAppStore";
@@ -126,14 +124,12 @@ import {
   sortNodesForDisplay,
 } from "../lib/itineraryUtils";
 import { triggerHapticFeedback } from "../lib/haptics";
-import { getCurrencyFromDestination } from "../lib/currency";
-import { parseCsvInput, normalizeClockInput, extractMinutes, formatCurrentTime } from "../lib/itineraryText";
+import { parseCsvInput, normalizeClockInput, formatCurrentTime } from "../lib/itineraryText";
 import { buildIcsCalendar } from "../lib/icsExport";
 import { readCachedItinerary, writeCachedItineraryForLoadedDays, summarizeItineraryDiff, buildReconnectSummaryMessage } from "../lib/itinerarySync";
-import { getFlightRouteSummary, extractFlightSegments } from "../lib/flightFormat";
-import { getLoadedDaysFromNodes, buildNodePatchChanges, getDynamicMapPercent } from "../lib/itineraryNodes";
+import { extractFlightSegments } from "../lib/flightFormat";
+import { getLoadedDaysFromNodes, buildNodePatchChanges } from "../lib/itineraryNodes";
 import { getTripCoverImage } from "../lib/tripCoverImage";
-import { getTravelFactBookingLabel, getTravelFactRedirectPayload } from "../lib/travelFact";
 import { withAutoCategoryIcon, normalizeScheduleForNode } from "../lib/itinerarySchedule";
 import { buildDefaultPlannerForm } from "../lib/plannerForm";
 import CollaboratorAvatar from "./itinerary/CollaboratorAvatar";
@@ -146,7 +142,6 @@ import {
   getOverlayTransition,
   getSheetMotion,
 } from "../lib/motionTokens";
-import { useTypewriter } from "../lib/useTypewriter";
 
 // Split itinerary components
 import CollapsibleNotes from "./itinerary/CollapsibleNotes";
@@ -271,6 +266,7 @@ export default function ItineraryTab() {
   const reorderCommitTimerRef = useRef<number | null>(null);
   const pendingReorderRef = useRef<ItineraryNode[] | null>(null);
   const reconnectHighlightTimerRef = useRef<number | null>(null);
+  const remoteReorderToastTimerRef = useRef<number | null>(null);
   const offlineSnapshotRef = useRef<ItineraryNode[]>([]);
   const pendingReconnectSummaryRef = useRef(false);
   const pendingDeleteTimersRef = useRef<Record<string, number>>({});
@@ -654,6 +650,29 @@ export default function ItineraryTab() {
     }, 350);
   };
 
+  const handleOptimizeRoute = () => {
+    if (!handleEditPermissionCheck()) return;
+    if (selectedDayNodes.length <= 1) {
+      setTip("當天景點數量至少需要 2 個以上才能進行路線最佳化！");
+      setTimeout(() => setTip(""), 2500);
+      return;
+    }
+
+    const { ordered, savedKm, savedMinutes } = optimizeSpotOrder(selectedDayNodes);
+    if (savedKm <= 0.1) {
+      setTip("目前的景點順序已是極佳的移動路線，無需調整！");
+      setTimeout(() => setTip(""), 2500);
+      return;
+    }
+
+    handleReorder(ordered);
+    const timeSavedText = savedMinutes > 0 ? `（約可省下 ${formatMinutes(savedMinutes)} 交通時間）` : '';
+    const message = `✨ 已完成路線最佳化！預計為您省下約 ${savedKm.toFixed(1)} km 移動距離${timeSavedText}。`;
+    setTip(message);
+    showToast(message, "success");
+    setTimeout(() => setTip(""), 4000);
+  };
+
   const handleManualAddNode = (node: Partial<ItineraryNode>) => {
     if (!handleEditPermissionCheck()) return;
     if (!activeTripId) return;
@@ -921,7 +940,17 @@ export default function ItineraryTab() {
           };
           if (!patch?.node_id || !patch?.changes) return;
           patchNode(patch.node_id, { ...patch.changes, source: "remote" });
-          addNotification("協作者更新了一個行程節點");
+          if (patch.changes.sort_order !== undefined) {
+            if (remoteReorderToastTimerRef.current) {
+              window.clearTimeout(remoteReorderToastTimerRef.current);
+            }
+            remoteReorderToastTimerRef.current = window.setTimeout(() => {
+              showToast("📍 協作者已最佳化並更新今日行程路線順序！", "info");
+              addNotification("協作者更新了行程路線與地點順序");
+            }, 500);
+          } else {
+            addNotification("協作者更新了一個行程節點");
+          }
         } else if (event.action === "add_node") {
           const node = event.payload as ItineraryNode;
           addNode({ ...node, source: "remote" });
@@ -2618,6 +2647,76 @@ export default function ItineraryTab() {
 
           {/* Right Column: Content */}
           <div className="lg:col-span-3 flex flex-col gap-5">
+            {/* 頂部視覺化進度條與時長指示器 (Visual Trip Progress Indicator) */}
+            <div className="p-4 md:p-5 rounded-[28px] bg-gradient-to-r from-slate-900/95 via-indigo-950/95 to-slate-900/95 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-white shadow-xl backdrop-blur-xl border border-white/15 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-500 to-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md shrink-0">
+                    <Sparkles size={18} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] font-black uppercase tracking-widest text-pink-300">
+                        行程總進度指示器
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-pink-500/20 border border-pink-400/40 text-[11px] font-black text-pink-200">
+                        Day {safeSelectedDay} / {totalDays} 天
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-200 mt-0.5">
+                      已進行 <span className="text-pink-300 font-black">{Math.round((safeSelectedDay / totalDays) * 100)}%</span>
+                      <span className="text-slate-300 font-medium ml-2 hidden sm:inline">
+                        （今日 {selectedDayNodes.length} 個景點 · 全行程共 {nodes.length} 個景點）
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-mono font-bold text-slate-200">
+                    {tripInfo?.startDate && tripInfo?.endDate ? `${tripInfo.startDate} ~ ${tripInfo.endDate}` : `行程總時長 ${totalDays} 天`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress Bar Track */}
+              <div className="relative z-10 w-full h-3 bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/15 shadow-inner">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 shadow-sm relative"
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${Math.min(100, Math.round((safeSelectedDay / totalDays) * 100))}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                />
+              </div>
+
+              {/* Interactive Day Step Switchers along the bar */}
+              <div className="relative z-10 flex items-center justify-between mt-3 pt-1 gap-1.5 overflow-x-auto hide-scrollbar">
+                {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
+                  const isPast = day < safeSelectedDay;
+                  const isCurrent = day === safeSelectedDay;
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => setSelectedDay(day)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black transition-all shrink-0 cursor-pointer ${
+                        isCurrent
+                          ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md shadow-pink-500/25 scale-105 border border-pink-300/40"
+                          : isPast
+                          ? "bg-white/15 text-purple-200 hover:bg-white/25 border border-white/10"
+                          : "bg-white/5 text-slate-400 hover:bg-white/10 border border-white/5"
+                      }`}
+                      title={`點擊切換至 Day ${day}`}
+                    >
+                      <span>{isPast ? "✓" : isCurrent ? "📍" : "○"}</span>
+                      <span>Day {day}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             {/* Memory Album — Trip Recap Banner */}
             {tripInfo?.endDate && new Date(tripInfo.endDate) < new Date() && (
               <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-fuchsia-50 via-pink-50 to-rose-50 border border-pink-100 p-6 print:hidden">
@@ -3216,6 +3315,7 @@ export default function ItineraryTab() {
                     onUpdate={handleUpdateNode}
                     onReorder={handleReorder}
                     onManualAdd={handleManualAddNode}
+                    onOptimizeRoute={handleOptimizeRoute}
                     onQuickExpense={setExpenseTargetNode}
                     draggingFavorite={draggingFavorite}
                     favoriteSuggestions={favorites}
