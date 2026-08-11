@@ -1,16 +1,64 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { CloudRain, Check, Sparkles, Sun, Send, CheckCircle2, Plane, Star, ExternalLink, SlidersHorizontal, ArrowDownUp, Loader2, CalendarDays, MapPin, ArrowRight, ChevronDown, ChevronUp, AlertCircle, CreditCard, Layers, Grid } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Check, Loader2, CreditCard, Layers, Grid, BarChart3, Sparkles } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
 import GlassCard from "../GlassCard";
 import IconImg from "../ui/IconImg";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Button } from "../ui/button";
-import { cn } from "../../lib/utils";
-import { useAppStore } from "../../store/useAppStore";
-import { useToolsTabContext } from "./toolsTabContext";
-import { useToolsStore } from "../../store/useToolsStore";
-import { getCurrencyFromDestination } from "../../lib/currency";
+import { Input  } from "../ui/input";
+import { Label  } from "../ui/label";
+import { Button  } from "../ui/button";
+import { cn  } from "../../lib/utils";
+import { useAppStore  } from "../../store/useAppStore";
+import { useToolsTabContext  } from "./toolsTabContext";
+
+const CATEGORY_CONFIG: Record<string, { label: string; icon: string; color: string; keywords: string[] }> = {
+  dining: {
+    label: "餐飲美食",
+    icon: "🍔",
+    color: "#f43f5e",
+    keywords: ["餐", "飯", "麵", "吃", "食", "咖啡", "茶", "酒", "肉", "冰", "甜點", "宵夜", "點心", "拉麵", "壽司", "燒肉", "水果", "超商", "7-11", "全家", "買菜", "food", "dine", "drink", "coffee", "tea", "cafe", "restaurant", "lunch", "dinner", "breakfast"]
+  },
+  transport: {
+    label: "交通出行",
+    icon: "🚆",
+    color: "#0284c7",
+    keywords: ["車", "捷運", "地鐵", "火車", "高鐵", "新幹線", "機票", "公車", "巴士", "船", "租車", "油錢", "加油", "停車", "計程車", "taxi", "uber", "pass", "悠遊卡", "西瓜卡", "suica", "icoca", "flight", "train", "bus", "subway"]
+  },
+  lodging: {
+    label: "住宿飯店",
+    icon: "🏨",
+    color: "#6366f1",
+    keywords: ["飯店", "酒店", "旅館", "民宿", "住宿", "房", "hotel", "airbnb", "booking", "agoda", "stay", "resort"]
+  },
+  tickets: {
+    label: "景點門票",
+    icon: "🎫",
+    color: "#10b981",
+    keywords: ["門票", "票", "迪士尼", "環球影城", "展覽", "體驗", "溫泉", "樂園", "景點", "纜車", "ticket", "museum", "park", "pass", "entrance", "show", "tour"]
+  },
+  shopping: {
+    label: "購物伴手禮",
+    icon: "🛍️",
+    color: "#f59e0b",
+    keywords: ["購物", "買", "伴手禮", "免稅", "藥妝", "禮物", "百貨", "outlet", "服飾", "紀念品", "雜貨", "shop", "store", "buy", "gift", "duty free"]
+  },
+  others: {
+    label: "其他雜項",
+    icon: "💡",
+    color: "#64748b",
+    keywords: []
+  }
+};
+
+function classifyExpenseTitle(title: string): string {
+  const lower = (title || "").toLowerCase();
+  for (const [key, cfg] of Object.entries(CATEGORY_CONFIG)) {
+    if (cfg.keywords.some((kw) => lower.includes(kw))) {
+      return key;
+    }
+  }
+  return "others";
+}
 
 export default function LedgerSection({ className }: { className?: string }) {
   const {
@@ -21,6 +69,57 @@ export default function LedgerSection({ className }: { className?: string }) {
   const [newMemberName, setNewMemberName] = useState("");
   const [walletViewMode, setWalletViewMode] = useState<"deck" | "grid">("deck");
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+
+  const availableCurrencies = useMemo(() => {
+    if (!expenses || expenses.length === 0) return ["JPY"];
+    return Array.from(new Set(expenses.map((e) => e.currency || "JPY")));
+  }, [expenses]);
+
+  const [selectedCurrencyChart, setSelectedCurrencyChart] = useState<string>("JPY");
+
+  useEffect(() => {
+    if (availableCurrencies.length > 0 && !availableCurrencies.includes(selectedCurrencyChart)) {
+      setSelectedCurrencyChart(availableCurrencies[0]);
+    }
+  }, [availableCurrencies, selectedCurrencyChart]);
+
+  const categoryChartData = useMemo(() => {
+    if (!expenses || expenses.length === 0) return [];
+    
+    const currExpenses = expenses.filter((e) => (e.currency || "JPY") === selectedCurrencyChart);
+    const categoryTotals: Record<string, number> = {
+      dining: 0,
+      transport: 0,
+      lodging: 0,
+      tickets: 0,
+      shopping: 0,
+      others: 0,
+    };
+
+    currExpenses.forEach((exp) => {
+      const cat = classifyExpenseTitle(exp.title);
+      const amt = parseFloat(exp.amount.toString()) || 0;
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
+    });
+
+    const grandTotal = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
+
+    return Object.entries(CATEGORY_CONFIG)
+      .map(([key, cfg]) => {
+        const amount = categoryTotals[key] || 0;
+        const percentage = grandTotal > 0 ? Math.round((amount / grandTotal) * 100) : 0;
+        return {
+          key,
+          label: cfg.label,
+          icon: cfg.icon,
+          name: `${cfg.icon} ${cfg.label}`,
+          amount,
+          percentage,
+          color: cfg.color,
+        };
+      })
+      .filter((item) => item.amount > 0 || grandTotal === 0);
+  }, [expenses, selectedCurrencyChart]);
 
   const handleAddMember = () => {
     const name = newMemberName.trim();
@@ -367,9 +466,126 @@ export default function LedgerSection({ className }: { className?: string }) {
               })()}
             </AnimatePresence>
 
-            <div className="h-px w-full bg-slate-100 my-1" />
+            <div className="h-px w-full bg-slate-100 dark:bg-white/10 my-1" />
           </div>
         )}
+
+        {/* 費用類別分佈分析 (Recharts Bar Chart) */}
+        <div className="flex flex-col gap-4 mb-4 w-full rounded-[32px] border border-white/90 dark:border-white/10 bg-white/70 dark:bg-slate-900/50 p-4 sm:p-5 shadow-sm hover:shadow-md transition-all dark-transition">
+          <div className="flex items-center justify-between px-1 flex-wrap gap-2">
+            <span className="text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest flex items-center gap-1.5 leading-none">
+              <BarChart3 size={15} className="text-indigo-500 animate-pulse" />
+              費用類別分佈 (Recharts 分析圖表)
+            </span>
+
+            {/* Currency selector tabs for chart */}
+            {availableCurrencies.length > 1 && (
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-full border border-slate-200/60 dark:border-white/10">
+                {availableCurrencies.map((cur) => (
+                  <button
+                    key={cur}
+                    type="button"
+                    onClick={() => setSelectedCurrencyChart(cur)}
+                    className={`px-2.5 py-0.5 text-[10px] font-black rounded-full transition-all ${
+                      selectedCurrencyChart === cur
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800"
+                    }`}
+                  >
+                    {cur}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {expenses && expenses.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              <div className="w-full h-56 sm:h-64 pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={categoryChartData} margin={{ top: 12, right: 10, left: -15, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.18)" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 11, fontWeight: 800, fill: '#64748b' }}
+                      interval={0}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(val) => (val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(99, 102, 241, 0.08)', radius: 8 }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-slate-900/95 text-white border border-white/20 px-3.5 py-2.5 rounded-2xl text-xs font-bold shadow-2xl backdrop-blur-md">
+                              <div className="flex items-center gap-1.5 text-pink-300 font-black">
+                                <span>{data.icon}</span>
+                                <span>{data.label}</span>
+                              </div>
+                              <div className="text-base font-black text-white mt-1 font-mono">
+                                {selectedCurrencyChart} {data.amount.toLocaleString()}
+                              </div>
+                              <div className="text-[10px] text-slate-300 font-bold mt-0.5">
+                                佔整體費用比例：<span className="text-emerald-400 font-black">{data.percentage}%</span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="amount" radius={[10, 10, 0, 0]} maxBarSize={48}>
+                      {categoryChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Category Pills Breakdown */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-white/10">
+                {categoryChartData.map((cat) => (
+                  <div
+                    key={cat.key}
+                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 text-xs"
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      <span className="font-bold text-slate-700 dark:text-slate-200 truncate">
+                        {cat.icon} {cat.label}
+                      </span>
+                    </div>
+                    <div className="text-right shrink-0 font-mono font-black text-slate-900 dark:text-white pl-1">
+                      {cat.amount > 0 ? (
+                        <>
+                          <span>{selectedCurrencyChart} {cat.amount.toLocaleString()}</span>
+                          <span className="text-[10px] text-slate-400 font-sans block font-semibold">({cat.percentage}%)</span>
+                        </>
+                      ) : (
+                        <span className="text-slate-400 font-sans text-[11px] font-medium">$0</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs font-bold border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+              <p>尚未記錄任何花費，新增下方支出後將在此呈現 Recharts 類別分佈條形圖。</p>
+            </div>
+          )}
+        </div>
 
         {/* Add Expense Form */}
         <motion.div
