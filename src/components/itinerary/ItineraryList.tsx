@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
 import { Calendar, CheckCircle2, Clock, ExternalLink, GripVertical, Instagram, Link, Loader2, MapPin, Navigation2, Pencil, Plane, RefreshCw, Trash2, X, ZoomIn } from "lucide-react";
-import type { ItineraryNode, TravelFact, ItineraryAttachment, FavoriteSpot } from "../../types/workflow";
+import type { ItineraryNode, ItineraryAttachment, FavoriteSpot } from "../../types/workflow";
 import { useTypewriter } from "../../lib/useTypewriter";
 import GlassCard from "../GlassCard";
 import IconImg from "../ui/IconImg";
@@ -11,16 +11,14 @@ import { WikiPreviewCard } from "../WikiPreviewCard";
 import CollapsibleNotes from "./CollapsibleNotes";
 import TransportGapIndicator from "./TransportGapIndicator";
 import ManualAddNode from "./ManualAddNode";
-import { CATEGORY_META, CATEGORY_OPTIONS, EMOJI_OPTIONS, getCategoryMeta, getNodeEmoji, getDateForDay, getDayForDate, buildTimestampFromDateTime, sortNodesForDisplay } from "../../lib/itineraryUtils";
+import { CATEGORY_META, CATEGORY_OPTIONS, EMOJI_OPTIONS, getCategoryMeta, getNodeEmoji, getDateForDay, getDayForDate, buildTimestampFromDateTime } from "../../lib/itineraryUtils";
 import { normalizeClockInput } from "../../lib/itineraryText";
 import { getFlightRouteSummary } from "../../lib/flightFormat";
 import { getTravelFactBookingLabel, getTravelFactRedirectPayload } from "../../lib/travelFact";
 import { triggerHapticFeedback } from "../../lib/haptics";
 import { geocodeSpot, fetchSpotEnrichment, regenerateItinerarySpot } from "../../lib/workflowApi";
 import { useAppStore } from "../../store/useAppStore";
-import { useItineraryStore } from "../../store/useItineraryStore";
 import { useTripFactsStore } from "../../store/useTripFactsStore";
-import { cn } from "../../lib/utils";
 import { getModalMotion, getOverlayTransition, SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY, pressableSurfaceClass, subtlePressableClass, raisedHoverClass } from "../../lib/motionTokens";
 
 const AI_LOADING_QUOTES = [
@@ -1170,13 +1168,16 @@ const ReorderableItineraryItem = ({
       value={item}
       dragControls={dragControls}
       dragListener={false}
-      initial={{ opacity: 0, height: 0, scale: 0.95, overflow: "hidden" }}
-      animate={{ opacity: 1, height: "auto", scale: 1, transitionEnd: { overflow: "visible" } }}
-      exit={{ opacity: 0, height: 0, scale: 0.9, overflow: "hidden", transition: { duration: 0.2 } }}
+      layout="position"
+      initial={{ opacity: 0, y: 18, x: -10, scale: 0.98, height: 0, overflow: "hidden" }}
+      animate={{ opacity: 1, y: 0, x: 0, scale: 1, height: "auto", transitionEnd: { overflow: "visible" } }}
+      exit={{ opacity: 0, y: -12, x: 8, scale: 0.95, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
       transition={{
         type: "spring",
-        ...SPRING_BOUNCY,
-        duration: 0.5,
+        stiffness: 380,
+        damping: 28,
+        mass: 0.8,
+        delay: Math.min(idx * 0.04, 0.3),
       }}
       onDragStart={() => triggerHapticFeedback([14])}
       onDragEnd={() => triggerHapticFeedback([10, 32, 12])}
@@ -1237,6 +1238,7 @@ export default function ItineraryList({
   onUpdate,
   onReorder,
   onManualAdd,
+  onOptimizeRoute,
   onQuickExpense,
   draggingFavorite,
   favoriteSuggestions,
@@ -1262,6 +1264,7 @@ export default function ItineraryList({
   onUpdate: (node: ItineraryNode) => void;
   onReorder: (newOrder: ItineraryNode[]) => void;
   onManualAdd: (node: Partial<ItineraryNode>) => void;
+  onOptimizeRoute?: () => void;
   onQuickExpense?: (node: ItineraryNode) => void;
   draggingFavorite?: FavoriteSpot | null;
   favoriteSuggestions?: FavoriteSpot[];
@@ -1419,15 +1422,28 @@ export default function ItineraryList({
         {/* 當天日期顯示在天氣預報卡片底下 */}
         {(() => {
           const formattedDate = (tripStartDate && day) ? getDateForDay(day, tripStartDate) : null;
-          if (!formattedDate) return null;
           return (
-            <div className="flex items-center gap-2 pl-2">
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/60 backdrop-blur-md border border-slate-200/40 rounded-full shadow-sm text-[11px] font-black tracking-widest text-slate-600 uppercase">
-                <Calendar size={12} className="text-pink-400" />
-                <span>{formattedDate}</span>
-                <span className="w-1 h-1 rounded-full bg-slate-300 mx-0.5" />
-                <span className="text-pink-500">第 {day} 天</span>
-              </div>
+            <div className="flex items-center justify-between gap-2 pl-2 pr-4 flex-wrap">
+              {formattedDate && (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-white/60 backdrop-blur-md border border-slate-200/40 rounded-full shadow-sm text-[11px] font-black tracking-widest text-slate-600 uppercase">
+                  <Calendar size={12} className="text-pink-400" />
+                  <span>{formattedDate}</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300 mx-0.5" />
+                  <span className="text-pink-500">第 {day} 天</span>
+                </div>
+              )}
+              {onOptimizeRoute && items.length >= 2 && (
+                <button
+                  type="button"
+                  onClick={onOptimizeRoute}
+                  disabled={isOffline}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-700 hover:to-indigo-700 text-white rounded-full shadow-md hover:shadow-lg text-[11px] font-black tracking-wide transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                  title="智慧重排景點順序，減少不必要的來回奔波距離"
+                >
+                  <Navigation2 size={13} className="rotate-45" />
+                  <span>一鍵最佳化路線</span>
+                </button>
+              )}
             </div>
           );
         })()}
@@ -1536,7 +1552,7 @@ export default function ItineraryList({
         onReorder={onReorder}
         className="flex flex-col gap-4 sm:gap-5"
       >
-        <AnimatePresence initial={false} mode="popLayout">
+        <AnimatePresence key={`day-presence-${day}`} initial={true} mode="popLayout">
           {items.map((item: ItineraryNode, idx: number) => {
             const nextItem = items[idx + 1];
             let timeGapStr = "";
