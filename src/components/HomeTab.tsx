@@ -1362,7 +1362,8 @@ export default function HomeTab({
                 <span className="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>
               </p>
               <h1 className="mx-auto max-w-4xl text-balance text-[32px] font-black tracking-[-0.04em] text-slate-800 dark:text-slate-100 sm:text-[46px] md:text-[56px] leading-[1.15] sm:leading-[1.1] font-heading drop-shadow-sm">
-                {t('str_628a')}<span className="text-gradient drop-shadow-sm">{t('str_5fb0dfc4')}</span>{t('str_8207')}<span className="text-gradient drop-shadow-sm">{t('str_ca20f')}</span><br className="hidden sm:block" />{t('str_2dd96b8d')}</h1>
+                <span className="text-gradient drop-shadow-sm">{t('home_hero_title', '一鍵規劃專屬自由行')}</span>
+              </h1>
             </div>
           </motion.div>
 
