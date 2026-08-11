@@ -823,7 +823,19 @@ export async function toggleUserSubscription(destination: string, channel: strin
   return res.json();
 }
 
-export async function fetchSpotEnrichment(name: string): Promise<{ description?: string; wiki_url?: string; thumbnail?: string }> {
+export interface SpotImageCandidate {
+  url: string;
+  title: string;
+  source: string;
+  description?: string;
+}
+
+export async function fetchSpotEnrichment(name: string): Promise<{
+  description?: string;
+  wiki_url?: string;
+  thumbnail?: string;
+  candidates?: SpotImageCandidate[];
+}> {
   try {
     const token = getStoredToken();
     const res = await fetch(`/api/spots/enrich?name=${encodeURIComponent(name)}`, {
@@ -832,4 +844,17 @@ export async function fetchSpotEnrichment(name: string): Promise<{ description?:
     if (res.ok) return res.json();
   } catch { /* ignore */ }
   return {};
+}
+
+export async function searchSpotImages(query: string): Promise<{
+  candidates: SpotImageCandidate[];
+}> {
+  try {
+    const token = getStoredToken();
+    const res = await fetch(`/api/spots/image-search?query=${encodeURIComponent(query)}`, {
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+    });
+    if (res.ok) return res.json();
+  } catch { /* ignore */ }
+  return { candidates: [] };
 }
