@@ -332,7 +332,7 @@ export default function SettlementsSection({ className }: { className?: string }
                                   </span>
 
                                   {contributing.length === 0 ? (
-                                    <p className="text-[12px] text-slate-400 italic px-2">
+                                    <p className="text-[12px] text-slate-400 px-2">
                                       雙方在此幣別無直接墊付/對拆之花費（此項目為簡化債務所產生的結算額）。
                                     </p>
                                   ) : (

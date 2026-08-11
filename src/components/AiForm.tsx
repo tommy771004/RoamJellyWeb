@@ -541,7 +541,7 @@ export default function AiForm({
                       !formData.destination ||
                       !formData.companions
                         ? "bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200 shadow-none"
-                        : "border border-transparent bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] hover:-translate-y-0.5 hover:from-pink-500 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] ios-press"
+                        : "border border-transparent bg-gradient-to-r from-pink-700 via-rose-400 to-orange-700 text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] hover:-translate-y-0.5 hover:from-pink-800 hover:to-orange-800 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)] ios-press"
                     }`}
                   >
                     {t('str_62dffff9')}<ArrowLeft className="rotate-180" size={18} />
@@ -752,7 +752,7 @@ export default function AiForm({
                       onClick={handleSubmit}
                       disabled={isSubmitting}
                       aria-busy={isSubmitting}
-                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 clay-btn bg-gradient-to-r from-sky-400 to-blue-500 text-sm font-semibold tracking-normal text-white ios-press sm:h-[3.8rem]"
+                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 clay-btn bg-gradient-to-r from-sky-700 to-blue-700 text-sm font-semibold tracking-normal text-white ios-press sm:h-[3.8rem]"
                     >
                       {isSubmitting ? t("ai_form.generating_button") : t('str_36be9bd0')}<Sparkles
                         size={20}

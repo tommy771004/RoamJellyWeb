@@ -131,8 +131,8 @@ export default defineConfig(() => {
           lang: 'zh-TW',
           start_url: '/',
           scope: '/',
-          theme_color: '#0f172a',
-          background_color: '#0f172a',
+          theme_color: '#fbfaf7',
+          background_color: '#fbfaf7',
           display: 'standalone',
           orientation: 'portrait-primary',
           icons: [

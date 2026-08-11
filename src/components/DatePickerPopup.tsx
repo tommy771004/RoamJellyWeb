@@ -117,7 +117,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
                     relative rounded-[16px] py-2.5 text-[13px] font-bold transition-all
                     ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'}
                     ${isSelected
-                      ? 'z-10 bg-gradient-to-r from-sky-500 to-orange-400 text-white shadow-[0_10px_22px_rgba(14,165,233,0.20)]'
+                      ? 'z-10 bg-gradient-to-r from-sky-700 to-orange-700 text-white shadow-[0_10px_22px_rgba(14,165,233,0.20)]'
                       : disabled ? 'cursor-not-allowed text-slate-400' : 'text-slate-700 hover:bg-pink-50 hover:text-pink-600'}
                   `}
                 >

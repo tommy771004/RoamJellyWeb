@@ -220,7 +220,7 @@ export default function DynamicItineraryView({
         {onSave && (
           <button 
             onClick={() => onSave(result)}
-            className="group w-full mt-10 py-5 sm:py-6 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 text-white font-black text-lg sm:text-xl shadow-[0_16px_32px_rgba(236,72,153,0.3),inset_0_2px_4px_rgba(255,255,255,0.4)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.4),inset_0_2px_4px_rgba(255,255,255,0.5)] transition-all duration-300 hover:scale-[1.02] ios-press flex items-center justify-center gap-3">
+            className="group w-full mt-10 py-5 sm:py-6 rounded-full bg-gradient-to-r from-pink-700 via-rose-500 to-orange-700 text-white font-black text-lg sm:text-xl shadow-[0_16px_32px_rgba(236,72,153,0.3),inset_0_2px_4px_rgba(255,255,255,0.4)] hover:shadow-[0_20px_40px_rgba(236,72,153,0.4),inset_0_2px_4px_rgba(255,255,255,0.5)] transition-all duration-300 hover:scale-[1.02] ios-press flex items-center justify-center gap-3">
             <span className="group-hover:animate-cute-bounce">💾</span>
             <span className="drop-shadow-sm">{t('str_63541e5')}</span>
           </button>

@@ -155,7 +155,7 @@ export default function SpotImageSearchModal({
               type="submit"
               disabled={loading || !query.trim()}
               aria-busy={loading}
-              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 shrink-0 disabled:opacity-50"
+              className="px-5 py-3 rounded-2xl bg-indigo-700 hover:bg-indigo-800 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 shrink-0 disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -279,7 +279,7 @@ export default function SpotImageSearchModal({
                     onClose();
                   }
                 }}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50"
               >
                 <Check size={16} />
                 <span>{t("image_search.apply")}</span>

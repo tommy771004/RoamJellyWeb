@@ -191,7 +191,7 @@ export default function CalendarView({
                       aria-pressed={selectedNodeId === node.node_id}
                       className={`text-left px-2 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent flex gap-1.5 shadow-sm ios-press ${
                         selectedNodeId === node.node_id
-                          ? "bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-pink-200/50 scale-105"
+                          ? "bg-gradient-to-r from-pink-700 to-fuchsia-700 text-white shadow-pink-200/50 scale-105"
                           : "bg-white text-slate-600 hover:border-pink-200 hover:shadow-md"
                       }`}
                     >

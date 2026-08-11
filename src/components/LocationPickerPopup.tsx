@@ -128,7 +128,7 @@ export const LocationPickerPopup = ({
                     onClick={() => setSelectedRegion('全部地區')}
                     className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap ios-press ${
                       selectedRegion === '全部地區' 
-                        ? 'bg-sky-500 text-white shadow-md shadow-sky-100' 
+                        ? 'bg-sky-700 text-white shadow-md shadow-sky-100' 
                         : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -140,7 +140,7 @@ export const LocationPickerPopup = ({
                       onClick={() => setSelectedRegion(region)}
                       className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap ios-press ${
                         selectedRegion === region 
-                          ? 'bg-sky-500 text-white shadow-md shadow-sky-100' 
+                          ? 'bg-sky-700 text-white shadow-md shadow-sky-100' 
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                       }`}
                     >

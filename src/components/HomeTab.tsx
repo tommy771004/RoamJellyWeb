@@ -1361,8 +1361,8 @@ export default function HomeTab({
                 RoamJelly Trip Planner
                 <span className="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>
               </p>
-              <h1 className="mx-auto max-w-4xl text-balance text-[32px] font-black tracking-[-0.04em] text-slate-800 dark:text-slate-100 sm:text-[46px] md:text-[56px] leading-[1.15] sm:leading-[1.1] font-heading drop-shadow-sm">
-                <span className="text-gradient drop-shadow-sm">{t('home_hero_title', '一鍵規劃專屬自由行')}</span>
+              <h1 className="mx-auto max-w-4xl text-balance text-[32px] font-black tracking-[-0.04em] text-slate-800 dark:text-slate-100 sm:text-[46px] md:text-[56px] leading-[1.15] sm:leading-[1.1] font-heading">
+                <span>{t('home_hero_title', '一鍵規劃專屬自由行')}</span>
               </h1>
             </div>
           </motion.div>
@@ -1389,7 +1389,7 @@ export default function HomeTab({
                     ? ` · ↩ ${searchForm.returnDate}`
                     : ""}
                 </span>
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-md">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-600 to-orange-600 text-white shadow-md">
                   <SearchIcon size={13} strokeWidth={3} />
                 </div>
               </button>
@@ -2721,7 +2721,7 @@ export default function HomeTab({
                                         {handbook.days} Days
                                       </span>
                                     </div>
-                                    <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                                    <span className="rounded-md bg-emerald-700/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
                                       {t('str_7f9d6ad7')}</span>
                                   </div>
                                 </div>
@@ -2747,7 +2747,7 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         handleCopyExpertItinerary(e, handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md ios-press"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white shadow-md ios-press"
                                     >
                                       <Copy size={11} />
                                       {t('str_405d3e95')}</button>
@@ -2810,7 +2810,7 @@ export default function HomeTab({
                                         {handbook.days} Days
                                       </span>
                                     </div>
-                                    <span className="rounded-md bg-emerald-500/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
+                                    <span className="rounded-md bg-emerald-700/85 text-white px-1.5 py-0.5 text-[8.5px] font-black backdrop-blur-md uppercase tracking-wider">
                                       {t('str_7f9d6ad7')}</span>
                                   </div>
                                 </div>
@@ -2836,7 +2836,7 @@ export default function HomeTab({
                                         triggerHapticFeedback([16]);
                                         handleCopyExpertItinerary(e, handbook);
                                       }}
-                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-md ios-press"
+                                      className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white shadow-md ios-press"
                                     >
                                       <Copy size={11} />
                                       {t('str_405d3e95')}</button>
@@ -3020,7 +3020,7 @@ export default function HomeTab({
                       onClick={() => {
                         setActiveTab("itinerary");
                       }}
-                      className="mt-3 px-5 py-2 bg-gradient-to-r from-pink-500 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 text-white rounded-full font-black text-xs shadow-md transition-all ios-press"
+                      className="mt-3 px-5 py-2 bg-gradient-to-r from-pink-700 to-indigo-700 hover:from-pink-800 hover:to-indigo-800 text-white rounded-full font-black text-xs shadow-md transition-all ios-press"
                     >
                       前往行程分頁建立新旅程
                     </button>
@@ -3402,7 +3402,7 @@ export default function HomeTab({
                                 const g = getCountryGuide(dest.id);
                                 if (g) setActiveGuide(g);
                               }}
-                              className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-500 dark:hover:bg-emerald-400 text-white shadow-md ios-press"
+                              className="ml-auto flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-emerald-700 hover:bg-emerald-800 text-white shadow-md ios-press"
                             >
                               <ExternalLink size={10} />
                               {t('str_4623bd5f')}</button>
@@ -3515,7 +3515,7 @@ export default function HomeTab({
                                 e.stopPropagation();
                                 handleCopyExpertItinerary(e, handbook);
                               }}
-                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-purple-600 dark:bg-purple-500 hover:bg-purple-500 dark:hover:bg-purple-400 text-white shadow-md ios-press"
+                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider transition-all bg-purple-700 dark:bg-purple-700 hover:bg-purple-800 dark:hover:bg-purple-800 text-white shadow-md ios-press"
                             >
                               <Copy size={10} />
                               {t('str_405d3e95')}</button>
@@ -3525,7 +3525,7 @@ export default function HomeTab({
                                 e.stopPropagation();
                                 setActiveHandbook(handbook);
                               }}
-                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider border border-slate-400 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white/45 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 ios-press transition-all"
+                              className="flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 rounded-full text-[9px] font-black uppercase tracking-wider border border-slate-400 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white/45 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-900 ios-press transition-all"
                             >
                               {t('str_12f3ad')}</button>
                           </div>

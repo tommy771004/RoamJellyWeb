@@ -488,7 +488,7 @@ export default function LedgerSection({ className }: { className?: string }) {
                     onClick={() => setSelectedCurrencyChart(cur)}
                     className={`px-2.5 py-0.5 text-[10px] font-black rounded-full transition-all ${
                       selectedCurrencyChart === cur
-                        ? "bg-indigo-600 text-white shadow-sm"
+                        ? "bg-indigo-700 text-white shadow-sm"
                         : "text-slate-500 dark:text-slate-400 hover:text-slate-800"
                     }`}
                   >
@@ -775,7 +775,7 @@ export default function LedgerSection({ className }: { className?: string }) {
           onClick={() => void actions.submitExpense()}
           disabled={submitting || isOffline}
           size="lg"
-          className="w-full py-6 rounded-[24px] flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4 bg-gradient-to-r from-pink-500 via-orange-400 to-sky-500 text-white shadow-[0_14px_30px_rgba(244,114,182,0.20)] hover:opacity-95"
+          className="w-full py-6 rounded-[24px] flex flex-nowrap items-center justify-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis px-4 bg-gradient-to-r from-pink-600 via-orange-400 to-sky-600 text-white shadow-[0_14px_30px_rgba(244,114,182,0.20)] hover:opacity-95"
         >
           {submitting && (
             <Loader2 size={16} className="animate-spin shrink-0" />

@@ -1,38 +1,368 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Noto+Serif+TC:wght@400;700;900&display=swap");
+/* Latin signature face (Sentient) is self-hosted below; only the CJK families
+ * still come from Google. The previous Inter / Space Grotesk / JetBrains Mono /
+ * Playfair Display stack has been removed. */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;700;900&display=swap");
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Sentient — Noopur Choksi / Indian Type Foundry.
+ * Fontshare Free Font License: public/fonts/Sentient-LICENSE.txt */
+@font-face {
+  font-family: "Sentient";
+  src: url("/fonts/Sentient-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Sentient";
+  src: url("/fonts/Sentient-VariableItalic.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 @theme {
-  /* Color palette: Adventure & Trustworthiness */
-  --color-primary: #0284c7;
-  --color-secondary: #0ea5e9;
-  --color-accent: #f97316;
-  --color-cta: #fb923c;
-  --color-background: #0f172a;
-  --color-text: #0f172a;
-  --color-text-muted: #64748b;
-  --color-surface: #ffffff;
-  
-  /* Retaining some original color mappings for compatibility */
-  --color-macaron-pink: #0284c7;
-  --color-macaron-orange: #f97316;
-  --color-on-surface: #1b1c1c;
+  /* ==================================================================
+   * PALETTE — "陶土紙感" (terracotta on warm paper)
+   *
+   * Components address colour almost entirely through Tailwind's stock
+   * ramps (~3,900 usages) rather than semantic tokens (~11), so the ramps
+   * themselves are redefined here. Every step keeps its ORIGINAL OKLCH
+   * lightness and only changes hue/chroma, which means existing pairings
+   * such as `text-slate-500 on bg-slate-50` keep their contrast ratio.
+   * Generated, not hand-written — see the remap plan in git history.
+   *
+   *   slate/gray/zinc/neutral/stone -> warm paper (light) to warm ink (dark)
+   *   sky ............................ THE terracotta accent (was the de-facto brand blue)
+   *   blue/cyan/indigo/violet/purple . collapsed to near-neutral warm tones
+   *   pink/rose/fuchsia .............. dusty clay, siblings of the terracotta
+   *   emerald/teal/green/lime ........ desaturated sage (success still reads green)
+   *   amber/yellow/orange ............ golden sand (warning stays separable)
+   *   red ............................ warmed to brick, full alarm strength kept
+   * ================================================================== */
 
-  /* Typography */
-  --font-heading: 'Space Grotesk', 'Noto Sans TC', sans-serif;
-  --font-body: 'Inter', 'Noto Sans TC', sans-serif;
-  --font-sans: 'Inter', 'Noto Sans TC', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-serif: 'Playfair Display', 'Noto Serif TC', serif;
+  /* slate */
+  --color-slate-50: oklch(98.4% 0.004 88);
+  --color-slate-100: oklch(96.8% 0.007 83.2);
+  --color-slate-200: oklch(92.9% 0.011 78.4);
+  --color-slate-300: oklch(86.9% 0.014 73.6);
+  --color-slate-400: oklch(70.4% 0.018 68.8);
+  --color-slate-500: oklch(55.4% 0.02 64);
+  --color-slate-600: oklch(44.6% 0.02 59.2);
+  --color-slate-700: oklch(37.2% 0.021 54.4);
+  --color-slate-800: oklch(27.9% 0.02 49.6);
+  --color-slate-900: oklch(20.8% 0.019 44.8);
+  --color-slate-950: oklch(12.9% 0.016 40);
 
-  /* Override original font tokens for compatibility */
-  --font-h1: 'Space Grotesk', 'Noto Sans TC', sans-serif;
-  --font-h2: 'Space Grotesk', 'Noto Sans TC', sans-serif;
-  --font-body-lg: 'Inter', 'Noto Sans TC', sans-serif;
-  --font-body-md: 'Inter', 'Noto Sans TC', sans-serif;
-  --font-label-caps: 'Inter', 'Noto Sans TC', sans-serif;
+  /* gray */
+  --color-gray-50: oklch(98.5% 0.004 88);
+  --color-gray-100: oklch(96.7% 0.007 83.2);
+  --color-gray-200: oklch(92.8% 0.011 78.4);
+  --color-gray-300: oklch(87.2% 0.014 73.6);
+  --color-gray-400: oklch(70.7% 0.018 68.8);
+  --color-gray-500: oklch(55.1% 0.02 64);
+  --color-gray-600: oklch(44.6% 0.02 59.2);
+  --color-gray-700: oklch(37.3% 0.021 54.4);
+  --color-gray-800: oklch(27.8% 0.02 49.6);
+  --color-gray-900: oklch(21% 0.019 44.8);
+  --color-gray-950: oklch(13% 0.016 40);
+
+  /* zinc */
+  --color-zinc-50: oklch(98.5% 0.004 88);
+  --color-zinc-100: oklch(96.7% 0.007 83.2);
+  --color-zinc-200: oklch(92% 0.011 78.4);
+  --color-zinc-300: oklch(87.1% 0.014 73.6);
+  --color-zinc-400: oklch(70.5% 0.018 68.8);
+  --color-zinc-500: oklch(55.2% 0.02 64);
+  --color-zinc-600: oklch(44.2% 0.02 59.2);
+  --color-zinc-700: oklch(37% 0.021 54.4);
+  --color-zinc-800: oklch(27.4% 0.02 49.6);
+  --color-zinc-900: oklch(21% 0.019 44.8);
+  --color-zinc-950: oklch(14.1% 0.016 40);
+
+  /* neutral */
+  --color-neutral-50: oklch(98.5% 0.004 88);
+  --color-neutral-100: oklch(97% 0.007 83.2);
+  --color-neutral-200: oklch(92.2% 0.011 78.4);
+  --color-neutral-300: oklch(87% 0.014 73.6);
+  --color-neutral-400: oklch(70.8% 0.018 68.8);
+  --color-neutral-500: oklch(55.6% 0.02 64);
+  --color-neutral-600: oklch(43.9% 0.02 59.2);
+  --color-neutral-700: oklch(37.1% 0.021 54.4);
+  --color-neutral-800: oklch(26.9% 0.02 49.6);
+  --color-neutral-900: oklch(20.5% 0.019 44.8);
+  --color-neutral-950: oklch(14.5% 0.016 40);
+
+  /* stone */
+  --color-stone-50: oklch(98.5% 0.004 88);
+  --color-stone-100: oklch(97% 0.007 83.2);
+  --color-stone-200: oklch(92.3% 0.011 78.4);
+  --color-stone-300: oklch(86.9% 0.014 73.6);
+  --color-stone-400: oklch(70.9% 0.018 68.8);
+  --color-stone-500: oklch(55.3% 0.02 64);
+  --color-stone-600: oklch(44.4% 0.02 59.2);
+  --color-stone-700: oklch(37.4% 0.021 54.4);
+  --color-stone-800: oklch(26.8% 0.02 49.6);
+  --color-stone-900: oklch(21.6% 0.019 44.8);
+  --color-stone-950: oklch(14.7% 0.016 40);
+
+  /* sky */
+  --color-sky-50: oklch(97.7% 0.01 62);
+  --color-sky-100: oklch(95.1% 0.02 58.6);
+  --color-sky-200: oklch(90.1% 0.045 55.2);
+  --color-sky-300: oklch(82.8% 0.087 51.8);
+  --color-sky-400: oklch(74.6% 0.125 48.4);
+  --color-sky-500: oklch(68.5% 0.132 45);
+  --color-sky-600: oklch(58.8% 0.123 41.6);
+  --color-sky-700: oklch(50% 0.105 38.2);
+  --color-sky-800: oklch(44.3% 0.086 34.8);
+  --color-sky-900: oklch(39.1% 0.07 31.4);
+  --color-sky-950: oklch(29.3% 0.051 28);
+
+  /* blue */
+  --color-blue-50: oklch(97% 0.004 70);
+  --color-blue-100: oklch(93.2% 0.01 66.8);
+  --color-blue-200: oklch(88.2% 0.018 63.6);
+  --color-blue-300: oklch(80.9% 0.032 60.4);
+  --color-blue-400: oklch(70.7% 0.05 57.2);
+  --color-blue-500: oklch(62.3% 0.064 54);
+  --color-blue-600: oklch(54.6% 0.073 50.8);
+  --color-blue-700: oklch(48.8% 0.073 47.6);
+  --color-blue-800: oklch(42.4% 0.06 44.4);
+  --color-blue-900: oklch(37.9% 0.044 41.2);
+  --color-blue-950: oklch(28.2% 0.027 38);
+
+  /* cyan */
+  --color-cyan-50: oklch(98.4% 0.005 75);
+  --color-cyan-100: oklch(95.6% 0.013 72);
+  --color-cyan-200: oklch(91.7% 0.022 69);
+  --color-cyan-300: oklch(86.5% 0.036 66);
+  --color-cyan-400: oklch(78.9% 0.043 63);
+  --color-cyan-500: oklch(71.5% 0.04 60);
+  --color-cyan-600: oklch(60.9% 0.035 57);
+  --color-cyan-700: oklch(52% 0.029 54);
+  --color-cyan-800: oklch(45% 0.024 51);
+  --color-cyan-900: oklch(39.8% 0.02 48);
+  --color-cyan-950: oklch(30.2% 0.016 45);
+
+  /* indigo */
+  --color-indigo-50: oklch(96.2% 0.005 72);
+  --color-indigo-100: oklch(93% 0.009 68.8);
+  --color-indigo-200: oklch(87% 0.017 65.6);
+  --color-indigo-300: oklch(78.5% 0.03 62.4);
+  --color-indigo-400: oklch(67.3% 0.047 59.2);
+  --color-indigo-500: oklch(58.5% 0.061 56);
+  --color-indigo-600: oklch(51.1% 0.068 52.8);
+  --color-indigo-700: oklch(45.7% 0.062 49.6);
+  --color-indigo-800: oklch(39.8% 0.051 46.4);
+  --color-indigo-900: oklch(35.9% 0.037 43.2);
+  --color-indigo-950: oklch(25.7% 0.023 40);
+
+  /* violet */
+  --color-violet-50: oklch(96.9% 0.004 72);
+  --color-violet-100: oklch(94.3% 0.007 68.8);
+  --color-violet-200: oklch(89.4% 0.014 65.6);
+  --color-violet-300: oklch(81.1% 0.027 62.4);
+  --color-violet-400: oklch(70.2% 0.044 59.2);
+  --color-violet-500: oklch(60.6% 0.06 56);
+  --color-violet-600: oklch(54.1% 0.067 52.8);
+  --color-violet-700: oklch(49.1% 0.065 49.6);
+  --color-violet-800: oklch(43.2% 0.056 46.4);
+  --color-violet-900: oklch(38% 0.045 43.2);
+  --color-violet-950: oklch(28.3% 0.034 40);
+
+  /* purple */
+  --color-purple-50: oklch(97.7% 0.003 70);
+  --color-purple-100: oklch(94.6% 0.008 66.8);
+  --color-purple-200: oklch(90.2% 0.015 63.6);
+  --color-purple-300: oklch(82.7% 0.029 60.4);
+  --color-purple-400: oklch(71.4% 0.049 57.2);
+  --color-purple-500: oklch(62.7% 0.064 54);
+  --color-purple-600: oklch(55.8% 0.069 50.8);
+  --color-purple-700: oklch(49.6% 0.064 47.6);
+  --color-purple-800: oklch(43.8% 0.052 44.4);
+  --color-purple-900: oklch(38.1% 0.042 41.2);
+  --color-purple-950: oklch(29.1% 0.036 38);
+
+  /* fuchsia */
+  --color-fuchsia-50: oklch(97.7% 0.007 45);
+  --color-fuchsia-100: oklch(95.2% 0.016 42.7);
+  --color-fuchsia-200: oklch(90.3% 0.032 40.4);
+  --color-fuchsia-300: oklch(83.3% 0.061 38.1);
+  --color-fuchsia-400: oklch(74% 0.1 35.8);
+  --color-fuchsia-500: oklch(66.7% 0.124 33.5);
+  --color-fuchsia-600: oklch(59.1% 0.123 31.2);
+  --color-fuchsia-700: oklch(51.8% 0.106 28.9);
+  --color-fuchsia-800: oklch(45.2% 0.089 26.6);
+  --color-fuchsia-900: oklch(40.1% 0.071 24.3);
+  --color-fuchsia-950: oklch(29.3% 0.057 22);
+
+  /* pink */
+  --color-pink-50: oklch(97.1% 0.006 40);
+  --color-pink-100: oklch(94.8% 0.012 37.8);
+  --color-pink-200: oklch(89.9% 0.026 35.6);
+  --color-pink-300: oklch(82.3% 0.05 33.4);
+  --color-pink-400: oklch(71.8% 0.085 31.2);
+  --color-pink-500: oklch(65.6% 0.101 29);
+  --color-pink-600: oklch(59.2% 0.105 26.8);
+  --color-pink-700: oklch(52.5% 0.094 24.6);
+  --color-pink-800: oklch(45.9% 0.079 22.4);
+  --color-pink-900: oklch(40.8% 0.064 20.2);
+  --color-pink-950: oklch(28.4% 0.046 18);
+
+  /* rose */
+  --color-rose-50: oklch(96.9% 0.007 32);
+  --color-rose-100: oklch(94.1% 0.015 30.2);
+  --color-rose-200: oklch(89.2% 0.029 28.4);
+  --color-rose-300: oklch(81% 0.059 26.6);
+  --color-rose-400: oklch(71.2% 0.097 24.8);
+  --color-rose-500: oklch(64.5% 0.123 23);
+  --color-rose-600: oklch(58.6% 0.127 21.2);
+  --color-rose-700: oklch(51.4% 0.111 19.4);
+  --color-rose-800: oklch(45.5% 0.094 17.6);
+  --color-rose-900: oklch(41% 0.08 15.8);
+  --color-rose-950: oklch(27.1% 0.052 14);
+
+  /* emerald */
+  --color-emerald-50: oklch(97.9% 0.009 150);
+  --color-emerald-100: oklch(95% 0.023 151);
+  --color-emerald-200: oklch(90.5% 0.042 152);
+  --color-emerald-300: oklch(84.5% 0.064 153);
+  --color-emerald-400: oklch(76.5% 0.08 154);
+  --color-emerald-500: oklch(69.6% 0.077 155);
+  --color-emerald-600: oklch(59.6% 0.065 156);
+  --color-emerald-700: oklch(50.8% 0.053 157);
+  --color-emerald-800: oklch(43.2% 0.043 158);
+  --color-emerald-900: oklch(37.8% 0.035 159);
+  --color-emerald-950: oklch(26.2% 0.023 160);
+
+  /* teal */
+  --color-teal-50: oklch(98.4% 0.006 155);
+  --color-teal-100: oklch(95.3% 0.02 156);
+  --color-teal-200: oklch(91% 0.038 157);
+  --color-teal-300: oklch(85.5% 0.055 158);
+  --color-teal-400: oklch(77.7% 0.061 159);
+  --color-teal-500: oklch(70.4% 0.056 160);
+  --color-teal-600: oklch(60% 0.047 161);
+  --color-teal-700: oklch(51.1% 0.038 162);
+  --color-teal-800: oklch(43.7% 0.031 163);
+  --color-teal-900: oklch(38.6% 0.025 164);
+  --color-teal-950: oklch(27.7% 0.018 165);
+
+  /* green */
+  --color-green-50: oklch(98.2% 0.008 145);
+  --color-green-100: oklch(96.2% 0.02 146);
+  --color-green-200: oklch(92.5% 0.038 147);
+  --color-green-300: oklch(87.1% 0.068 148);
+  --color-green-400: oklch(79.2% 0.094 149);
+  --color-green-500: oklch(72.3% 0.099 150);
+  --color-green-600: oklch(62.7% 0.087 151);
+  --color-green-700: oklch(52.7% 0.069 152);
+  --color-green-800: oklch(44.8% 0.054 153);
+  --color-green-900: oklch(39.3% 0.043 154);
+  --color-green-950: oklch(26.6% 0.029 155);
+
+  /* lime */
+  --color-lime-50: oklch(98.6% 0.013 120);
+  --color-lime-100: oklch(96.7% 0.028 121);
+  --color-lime-200: oklch(93.8% 0.053 122);
+  --color-lime-300: oklch(89.7% 0.082 123);
+  --color-lime-400: oklch(84.1% 0.1 124);
+  --color-lime-500: oklch(76.8% 0.098 125);
+  --color-lime-600: oklch(64.8% 0.084 126);
+  --color-lime-700: oklch(53.2% 0.066 127);
+  --color-lime-800: oklch(45.3% 0.052 128);
+  --color-lime-900: oklch(40.5% 0.042 129);
+  --color-lime-950: oklch(27.4% 0.03 130);
+
+  /* amber */
+  --color-amber-50: oklch(98.7% 0.018 92);
+  --color-amber-100: oklch(96.2% 0.047 87.8);
+  --color-amber-200: oklch(92.4% 0.096 83.6);
+  --color-amber-300: oklch(87.9% 0.135 79.4);
+  --color-amber-400: oklch(82.8% 0.151 75.2);
+  --color-amber-500: oklch(76.9% 0.15 71);
+  --color-amber-600: oklch(66.6% 0.143 66.8);
+  --color-amber-700: oklch(55.5% 0.13 62.6);
+  --color-amber-800: oklch(47.3% 0.11 58.4);
+  --color-amber-900: oklch(41.4% 0.09 54.2);
+  --color-amber-950: oklch(27.9% 0.062 50);
+
+  /* yellow */
+  --color-yellow-50: oklch(98.7% 0.019 100);
+  --color-yellow-100: oklch(97.3% 0.053 97);
+  --color-yellow-200: oklch(94.5% 0.097 94);
+  --color-yellow-300: oklch(90.5% 0.137 91);
+  --color-yellow-400: oklch(85.2% 0.149 88);
+  --color-yellow-500: oklch(79.5% 0.138 85);
+  --color-yellow-600: oklch(68.1% 0.121 82);
+  --color-yellow-700: oklch(55.4% 0.101 79);
+  --color-yellow-800: oklch(47.6% 0.086 76);
+  --color-yellow-900: oklch(42.1% 0.071 73);
+  --color-yellow-950: oklch(28.6% 0.05 70);
+
+  /* orange */
+  --color-orange-50: oklch(98% 0.014 62);
+  --color-orange-100: oklch(95.4% 0.032 59);
+  --color-orange-200: oklch(90.1% 0.065 56);
+  --color-orange-300: oklch(83.7% 0.109 53);
+  --color-orange-400: oklch(75% 0.156 50);
+  --color-orange-500: oklch(70.5% 0.181 47);
+  --color-orange-600: oklch(64.6% 0.189 44);
+  --color-orange-700: oklch(55.3% 0.166 41);
+  --color-orange-800: oklch(47% 0.133 38);
+  --color-orange-900: oklch(40.8% 0.105 35);
+  --color-orange-950: oklch(26.6% 0.067 32);
+
+  /* red */
+  --color-red-50: oklch(97.1% 0.011 30);
+  --color-red-100: oklch(93.6% 0.026 29);
+  --color-red-200: oklch(88.5% 0.051 28);
+  --color-red-300: oklch(80.8% 0.093 27);
+  --color-red-400: oklch(70.4% 0.157 26);
+  --color-red-500: oklch(63.7% 0.194 25);
+  --color-red-600: oklch(57.7% 0.201 24);
+  --color-red-700: oklch(50.5% 0.175 23);
+  --color-red-800: oklch(44.4% 0.145 22);
+  --color-red-900: oklch(39.6% 0.116 21);
+  --color-red-950: oklch(25.8% 0.075 20);
+
+  /* ===== Semantic colours (names unchanged — components depend on them) ===== */
+  /* Terracotta deep enough that white body text on it clears WCAG AA (4.7:1).
+   * The sky-500 step stays lighter to match the reference artwork. */
+  --color-primary: oklch(56.5% 0.126 41);
+  --color-secondary: oklch(59.6% 0.065 156);   /* sage */
+  --color-accent: oklch(68.5% 0.132 45);       /* terracotta, the reference CTA tone */
+  --color-cta: oklch(56.5% 0.126 41);
+  --color-background: oklch(98.4% 0.004 88);   /* warm paper — light is now the default theme */
+  --color-text: oklch(20.8% 0.019 44.8);       /* warm ink */
+  --color-text-muted: oklch(55.4% 0.02 64);
+  --color-surface: oklch(99.2% 0.003 90);
+
+  /* Compatibility aliases kept pointing at the one accent family */
+  --color-macaron-pink: oklch(65.6% 0.101 29);
+  --color-macaron-orange: oklch(68.5% 0.132 45);
+  --color-on-surface: oklch(20.8% 0.019 44.8);
+
+  /* ===== Typography =====
+   * Signature: Sentient (self-hosted, real italics) over Noto Serif TC.
+   * Body: a genuinely neutral system stack over Noto Sans TC.
+   * Note: CJK has no true italic, so Chinese emphasis is carried by the
+   * serif/weight shift rather than a synthesised slant. */
+  --font-heading: 'Sentient', 'Noto Serif TC', Georgia, serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-serif: 'Sentient', 'Noto Serif TC', Georgia, serif;
+
+  --font-h1: 'Sentient', 'Noto Serif TC', Georgia, serif;
+  --font-h2: 'Sentient', 'Noto Serif TC', Georgia, serif;
+  --font-body-lg: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
+  --font-body-md: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
+  --font-label-caps: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
 
   /* Fluid type scale (design_exp.md Pattern 2): clamp(min, preferred, max)
    * Range: 320px (mobile) → 1280px (desktop) */
@@ -65,22 +395,23 @@
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
 
-  /* Shadow Depths */
-  --shadow-soft: 0 2px 4px rgba(15, 23, 42, 0.05);
-  --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  --shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.12);
-  --shadow-modal: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
-  --shadow-clay: 6px 6px 0 rgba(15, 23, 42, 0.08), inset -2px -2px 4px rgba(0, 0, 0, 0.04), inset 2px 2px 4px rgba(255, 255, 255, 0.8);
-  --shadow-clay-press: 3px 3px 0 rgba(15, 23, 42, 0.08), inset 2px 2px 4px rgba(0, 0, 0, 0.06);
+  /* Shadow Depths — tinted to the warm ink, tight and cast from a single
+   * direction. Deliberately NOT a soft black bloom radiating on all sides. */
+  --shadow-soft: 0 1px 2px rgba(49, 38, 32, 0.05);
+  --shadow-card: 0 2px 6px -1px rgba(49, 38, 32, 0.07), 0 1px 2px rgba(49, 38, 32, 0.04);
+  --shadow-floating: 0 6px 16px -4px rgba(49, 38, 32, 0.10), 0 2px 4px rgba(49, 38, 32, 0.05);
+  --shadow-modal: 0 18px 40px -12px rgba(49, 38, 32, 0.22);
+  --shadow-clay: 4px 4px 0 rgba(49, 38, 32, 0.06), inset 0 1px 0 rgba(255, 252, 247, 0.75);
+  --shadow-clay-press: 2px 2px 0 rgba(49, 38, 32, 0.07), inset 0 1px 3px rgba(49, 38, 32, 0.08);
 
   /* Border */
-  --border-clay: 3px solid rgba(255, 255, 255, 0.7);
+  --border-clay: 2px solid rgba(255, 252, 247, 0.7);
 
   /* Border Radius */
   --radius-default: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
-  --radius-clay: 20px;
+  --radius-clay: 24px;
   --radius-full: 9999px;
   --motion-ios-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -123,8 +454,8 @@
   background-clip: padding-box;
   position: relative;
   box-shadow:
-    0 4px 24px rgba(134, 77, 97, 0.08),
-    0 1px 4px rgba(134, 77, 97, 0.04),
+    0 4px 24px rgba(97, 77, 63, 0.08),
+    0 1px 4px rgba(97, 77, 63, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   &::before {
     content: "";
@@ -138,7 +469,7 @@
     background: linear-gradient(
       135deg,
       rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 200, 220, 0.3) 50%,
+      rgba(247, 219, 200, 0.3) 50%,
       rgba(255, 255, 255, 0.1) 100%
     );
     -webkit-mask:
@@ -151,7 +482,7 @@
 }
 
 @utility macaron-bg {
-  background: linear-gradient(120deg, #ffd9df 0%, #c7e7ff 100%);
+  background: linear-gradient(120deg, #f7e6d8 0%, #f1d0bd 100%);
 }
 
 @utility z-floating {
@@ -210,13 +541,6 @@
   z-index: var(--z-max);
 }
 
-@utility text-gradient {
-  background: linear-gradient(to right, #f472b6, #fb7185, #fb923c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 @utility noise-overlay {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   opacity: 0.035;
@@ -262,8 +586,8 @@
   border: 1px solid rgba(255, 255, 255, 0.92);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.96),
-    0 10px 20px rgba(14, 165, 233, 0.06),
-    0 18px 36px -18px rgba(15, 23, 42, 0.22);
+    0 10px 20px rgba(220, 125, 80, 0.06),
+    0 18px 36px -18px rgba(31, 21, 17, 0.22);
 }
 
 @utility editorial-card-soft {
@@ -276,25 +600,25 @@
   border: 1px solid rgba(255, 255, 255, 0.86);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 12px 26px -18px rgba(240, 138, 173, 0.24),
-    0 4px 14px rgba(15, 23, 42, 0.05);
+    0 12px 26px -18px rgba(97, 77, 63, 0.24),
+    0 4px 14px rgba(31, 21, 17, 0.05);
 }
 
 @utility editorial-divider {
-  border-top: 1px solid rgba(226, 232, 240, 0.76);
+  border-top: 1px solid rgba(236, 231, 224, 0.76);
 }
 
 @utility editorial-toggle {
   border-radius: 9999px;
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  border: 1px solid rgba(236, 231, 224, 0.95);
   background: rgba(255, 255, 255, 0.92);
   padding: 0.375rem 0.75rem;
   font-size: 0.6875rem;
   font-weight: 900;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #475569;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  color: #5d5249;
+  box-shadow: 0 4px 12px rgba(31, 21, 17, 0.05);
   transition:
     transform 200ms ease,
     border-color 200ms ease,
@@ -304,9 +628,9 @@
 
 .editorial-toggle:hover {
   transform: translateY(-1px);
-  border-color: rgba(125, 211, 252, 0.85);
-  color: #0369a1;
-  box-shadow: 0 8px 18px rgba(14, 165, 233, 0.12);
+  border-color: rgba(236, 147, 99, 0.85);
+  color: #b25936;
+  box-shadow: 0 8px 18px rgba(220, 125, 80, 0.12);
 }
 
 @utility scrollbar-hide {
@@ -456,65 +780,68 @@ select {
   }
 }
 
+/* The page substrate: warm paper, a single directional warm rake from the top,
+ * and a fine grain that keeps the large tonal transition from banding.
+ *
+ * This replaces the previous five drifting radial colour blobs (pink / orange /
+ * sky / purple / emerald on an 28s + 35s loop). Those made a single-accent
+ * palette impossible — the background was continuously washing four competing
+ * hues under every surface — and the blurred-multiplied-blob look is the
+ * generic "soft gradient orbs" backdrop. Light is now directional with real
+ * falloff, and the texture is substrate rather than decoration. */
 .jelly-bg {
-  background-color: #f8fafc;
+  background-color: oklch(98.4% 0.004 88);
   position: relative;
   overflow: hidden;
 }
 
-.jelly-bg::before, .jelly-bg::after {
+.jelly-bg::before,
+.jelly-bg::after {
   content: '';
   position: absolute;
-  top: -10%; left: -10%; right: -10%; bottom: -10%;
+  inset: 0;
   pointer-events: none;
   z-index: 0;
-  background-size: 100% 100%;
 }
 
+/* Directional light: a warm rake falling from the top edge, not a centred halo. */
 .jelly-bg::before {
-  background-image:
-    radial-gradient(circle at 18% 28%, rgba(244, 114, 182, 0.18) 0%, rgba(244, 114, 182, 0.05) 25%, transparent 55%),
-    radial-gradient(circle at 82% 72%, rgba(251, 146, 60, 0.14) 0%, rgba(251, 146, 60, 0.04) 30%, transparent 60%),
-    radial-gradient(circle at 50% 15%, rgba(56, 189, 248, 0.18) 0%, rgba(56, 189, 248, 0.05) 25%, transparent 50%);
-  animation: floatBlobs 28s ease-in-out infinite alternate;
+  background-image: linear-gradient(
+    177deg,
+    oklch(99.3% 0.009 78) 0%,
+    oklch(98.6% 0.005 84) 38%,
+    oklch(97.6% 0.004 88) 72%,
+    oklch(96.6% 0.006 74) 100%
+  );
 }
 
+/* Grain sits on the substrate only — never over text or controls. */
 .jelly-bg::after {
-  background-image:
-    radial-gradient(circle at 85% 25%, rgba(168, 85, 247, 0.14) 0%, rgba(168, 85, 247, 0.04) 25%, transparent 55%),
-    radial-gradient(circle at 15% 75%, rgba(52, 211, 153, 0.15) 0%, rgba(52, 211, 153, 0.04) 25%, transparent 55%);
-  animation: floatBlobs2 35s ease-in-out infinite alternate-reverse;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  opacity: 0.032;
+  mix-blend-mode: multiply;
 }
 
-@keyframes floatBlobs {
-  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-  50% { transform: translate(-3%, 4%) scale(1.08) rotate(3deg); }
-  100% { transform: translate(3%, -3%) scale(0.92) rotate(-3deg); }
-}
-
-@keyframes floatBlobs2 {
-  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-  50% { transform: translate(4%, -4%) scale(1.10) rotate(-4deg); }
-  100% { transform: translate(-4%, 3%) scale(0.90) rotate(4deg); }
-}
-
+/* Dark theme: a warm ink-black that belongs to the same terracotta family,
+ * replacing the stock cool blue-charcoal (#0f0806). */
 .dark .jelly-bg {
-  background-color: #030712;
+  background-color: oklch(14.5% 0.014 45);
 }
 
 .dark .jelly-bg::before {
-  background-image:
-    radial-gradient(circle at 18% 28%, rgba(236, 72, 153, 0.09) 0%, transparent 50%),
-    radial-gradient(circle at 82% 72%, rgba(249, 115, 22, 0.07) 0%, transparent 50%),
-    radial-gradient(circle at 50% 15%, rgba(14, 165, 233, 0.09) 0%, transparent 50%);
-  display: block;
+  background-image: linear-gradient(
+    177deg,
+    oklch(19.5% 0.019 52) 0%,
+    oklch(16.5% 0.016 47) 42%,
+    oklch(14.5% 0.014 45) 76%,
+    oklch(12.8% 0.013 42) 100%
+  );
 }
 
 .dark .jelly-bg::after {
-  background-image:
-    radial-gradient(circle at 85% 25%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 15% 75%, rgba(16, 185, 129, 0.07) 0%, transparent 50%);
-  display: block;
+  opacity: 0.05;
+  mix-blend-mode: screen;
 }
 
 
@@ -526,19 +853,19 @@ select {
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.9),
-    0 12px 30px rgba(15, 23, 42, 0.05),
-    0 2px 8px rgba(15, 23, 42, 0.02);
+    0 12px 30px rgba(31, 21, 17, 0.05),
+    0 2px 8px rgba(31, 21, 17, 0.02);
   border-radius: 28px;
 }
 .dark .jelly-surface {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.65), rgba(9, 15, 30, 0.55));
+  background: linear-gradient(180deg, rgba(31, 21, 17, 0.65), rgba(12, 5, 4, 0.55));
   backdrop-filter: blur(var(--glass-blur-strong)) saturate(190%);
   -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(190%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 16px 40px rgba(0, 0, 0, 0.5);
-  color: #f8fafc;
+  color: #fbfaf7;
 }
 
 .dark .glass-card {
@@ -546,7 +873,7 @@ select {
   backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.05) !important;
-  color: #f8fafc !important;
+  color: #fbfaf7 !important;
 }
 .dark .glass-card::before {
   display: none !important;
@@ -568,12 +895,12 @@ select {
   backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.05) !important;
-  color: #f8fafc !important;
+  color: #fbfaf7 !important;
 }
 
 .dark input, .dark select, .dark textarea {
-  background-color: rgba(15, 23, 42, 0.5) !important;
-  color: #f8fafc !important;
+  background-color: rgba(31, 21, 17, 0.5) !important;
+  color: #fbfaf7 !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
 .dark input::placeholder {
@@ -602,9 +929,9 @@ select {
   border: 1px solid rgba(255, 255, 255, 0.95);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 1),
-    inset 0 -1px 3px rgba(244, 204, 224, 0.05),
-    0 4px 10px rgba(244, 204, 224, 0.05),
-    0 2px 4px rgba(15, 23, 42, 0.02);
+    inset 0 -1px 3px rgba(244, 220, 204, 0.05),
+    0 4px 10px rgba(244, 220, 204, 0.05),
+    0 2px 4px rgba(31, 21, 17, 0.02);
   transition:
     transform     200ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow    200ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -613,9 +940,9 @@ select {
   transform: translateY(-1px) translateZ(0);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 1),
-    inset 0 -1px 2px rgba(244, 204, 224, 0.08),
-    0 10px 22px rgba(244, 204, 224, 0.18),
-    0 4px 10px rgba(15, 23, 42, 0.04);
+    inset 0 -1px 2px rgba(244, 220, 204, 0.08),
+    0 10px 22px rgba(244, 220, 204, 0.18),
+    0 4px 10px rgba(31, 21, 17, 0.04);
 }
 .dark .jelly-button {
   background: rgba(0, 0, 0, 0.4);
@@ -623,14 +950,14 @@ select {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1.5px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  color: #f8fafc;
+  color: #fbfaf7;
 }
 
 .jelly-button:active {
   transform: scale(0.97) translateY(0) translateZ(0);
   box-shadow:
     inset 0 1px 3px rgba(255, 255, 255, 0.90),
-    0 2px 6px rgba(244, 204, 224, 0.1);
+    0 2px 6px rgba(244, 220, 204, 0.1);
   transition-duration: 80ms;
   backdrop-filter: blur(var(--glass-blur-strong));
   -webkit-backdrop-filter: blur(var(--glass-blur-strong));
@@ -646,37 +973,37 @@ select {
 }
 .clay-btn:hover {
   transform: translateY(-2px) translateZ(0);
-  box-shadow: 8px 8px 0 rgba(15, 23, 42, 0.08), inset -2px -2px 4px rgba(0, 0, 0, 0.04), inset 2px 2px 4px rgba(255, 255, 255, 0.8);
+  box-shadow: 8px 8px 0 rgba(31, 21, 17, 0.08), inset -2px -2px 4px rgba(0, 0, 0, 0.04), inset 2px 2px 4px rgba(255, 255, 255, 0.8);
 }
 .clay-btn:active {
   transform: translateY(2px) translateZ(0);
   box-shadow: var(--shadow-clay-press);
 }
 .dark .clay-btn {
-  background-color: #1e293b !important; /* Premium deep slate-800 as requested */
-  color: #f1f5f9 !important;
+  background-color: #312620 !important; /* Premium deep slate-800 as requested */
+  color: #f7f4ef !important;
   border: 3px solid rgba(255, 255, 255, 0.18) !important;
   border-top-color: rgba(255, 255, 255, 0.28) !important;
   border-left-color: rgba(255, 255, 255, 0.28) !important;
   box-shadow: 
-    6px 6px 0 rgba(2, 6, 23, 0.45),
+    6px 6px 0 rgba(12, 5, 4, 0.45),
     inset -4px -4px 8px rgba(0, 0, 0, 0.4),
-    inset 4px 4px 8px rgba(14, 165, 233, 0.18), /* Beautiful sub-surface glow */
+    inset 4px 4px 8px rgba(220, 125, 80, 0.18), /* Beautiful sub-surface glow */
     inset 2px 2px 4px rgba(255, 255, 255, 0.18) !important;
 }
 .dark .clay-btn:hover {
-  background-color: #334155 !important; /* slate-700 hover for responsiveness */
+  background-color: #493d36 !important; /* slate-700 hover for responsiveness */
   transform: translateY(-2px) translateZ(0);
   box-shadow: 
-    8px 8px 0 rgba(2, 6, 23, 0.5),
+    8px 8px 0 rgba(12, 5, 4, 0.5),
     inset -4px -4px 8px rgba(0, 0, 0, 0.4),
-    inset 4px 4px 8px rgba(14, 165, 233, 0.22),
+    inset 4px 4px 8px rgba(220, 125, 80, 0.22),
     inset 2px 2px 4px rgba(255, 255, 255, 0.25) !important;
 }
 .dark .clay-btn:active {
   transform: translateY(2px) translateZ(0);
   box-shadow: 
-    3px 3px 0 rgba(2, 6, 23, 0.5),
+    3px 3px 0 rgba(12, 5, 4, 0.5),
     inset 3px 3px 6px rgba(0, 0, 0, 0.5),
     inset -2px -2px 4px rgba(255, 255, 255, 0.05) !important;
 }
@@ -687,15 +1014,15 @@ select {
   height: 28px;
   border-radius: var(--radius-full);
   border: var(--border-clay);
-  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.06), 0 2px 4px rgba(15,23,42,0.1);
-  background-color: rgba(241, 245, 249, 0.9);
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.06), 0 2px 4px rgba(31, 21, 17,0.1);
+  background-color: rgba(247, 244, 239, 0.9);
   position: relative;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 .clay-toggle:checked {
-  background-color: #38bdf8;
-  box-shadow: inset -2px -2px 4px rgba(0,0,0,0.04), inset 2px 2px 4px rgba(255,255,255,0.4), 2px 2px 0 rgba(15,23,42,0.05);
+  background-color: #ec9363;
+  box-shadow: inset -2px -2px 4px rgba(0,0,0,0.04), inset 2px 2px 4px rgba(255,255,255,0.4), 2px 2px 0 rgba(31, 21, 17,0.05);
 }
 .clay-toggle::after {
   content: '';
@@ -706,18 +1033,18 @@ select {
   height: 20px;
   background-color: white;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(15,23,42,0.2);
+  box-shadow: 0 2px 4px rgba(31, 21, 17,0.2);
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .clay-toggle:checked::after {
   transform: translateX(14px);
 }
 .dark .clay-toggle {
-  background-color: rgba(30, 41, 59, 0.9);
+  background-color: rgba(49, 38, 32, 0.9);
   border-color: rgba(255, 255, 255, 0.2);
 }
 .dark .clay-toggle:checked {
-  background-color: #0284c7;
+  background-color: #b25936;
 }
 
 /* ── Clay colored surfaces ────────────────────────────────────────────────── */
@@ -734,16 +1061,16 @@ select {
   box-shadow: 6px 6px 0 rgba(253, 188, 180, 0.45), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
 }
 .clay-sky {
-  background: linear-gradient(145deg, #cdeaf5, #9bc5d9);
-  box-shadow: 6px 6px 0 rgba(173, 216, 230, 0.5), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
+  background: linear-gradient(145deg, #f7e6d8, #e3c3a6);
+  box-shadow: 6px 6px 0 rgba(227, 195, 166, 0.5), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
 }
 .clay-mint {
   background: linear-gradient(145deg, #d2fbe2, #a3ecc0);
   box-shadow: 6px 6px 0 rgba(185, 246, 202, 0.55), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
 }
 .clay-lilac {
-  background: linear-gradient(145deg, #f1f1fb, #d6d6ea);
-  box-shadow: 6px 6px 0 rgba(230, 230, 250, 0.6), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
+  background: linear-gradient(145deg, #f6f1ea, #e3dbd1);
+  box-shadow: 6px 6px 0 rgba(227, 219, 209, 0.6), inset -2px -2px 4px rgba(0, 0, 0, 0.06), inset 2px 2px 4px rgba(255, 255, 255, 0.7);
 }
 /* Dark mode: deep slate base + sub-surface glow keeps clay "thickness" */
 .dark .clay-peach,
@@ -751,10 +1078,10 @@ select {
 .dark .clay-mint,
 .dark .clay-lilac,
 .dark .clay-surface {
-  background: linear-gradient(145deg, #1e293b, #0f172a);
+  background: linear-gradient(145deg, #312620, #1f1511);
   border: 3px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 6px 6px 0 rgba(2, 6, 23, 0.45), inset -2px -2px 6px rgba(0, 0, 0, 0.4), inset 2px 2px 5px rgba(255, 255, 255, 0.12);
-  color: #f1f5f9;
+  box-shadow: 6px 6px 0 rgba(12, 5, 4, 0.45), inset -2px -2px 6px rgba(0, 0, 0, 0.4), inset 2px 2px 5px rgba(255, 255, 255, 0.12);
+  color: #f7f4ef;
 }
 
 /* ── Clay status badge — mini inflated bubble ─────────────────────────────── */
@@ -767,38 +1094,38 @@ select {
   font-weight: 700;
   font-size: 0.72rem;
   line-height: 1.1;
-  color: var(--clay-ink, #334155);
+  color: var(--clay-ink, #493d36);
   border: 2px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 2px 2px 0 rgba(15, 23, 42, 0.06), inset -1px -1px 2px rgba(0, 0, 0, 0.05), inset 1px 1px 2px rgba(255, 255, 255, 0.8);
+  box-shadow: 2px 2px 0 rgba(31, 21, 17, 0.06), inset -1px -1px 2px rgba(0, 0, 0, 0.05), inset 1px 1px 2px rgba(255, 255, 255, 0.8);
 }
 .dark .clay-badge {
-  color: #e2e8f0;
+  color: #ece7e0;
   border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 2px 2px 0 rgba(2, 6, 23, 0.45), inset -1px -1px 2px rgba(0, 0, 0, 0.4), inset 1px 1px 2px rgba(255, 255, 255, 0.12);
+  box-shadow: 2px 2px 0 rgba(12, 5, 4, 0.45), inset -1px -1px 2px rgba(0, 0, 0, 0.4), inset 1px 1px 2px rgba(255, 255, 255, 0.12);
 }
 
 /* ── Clay input — inset pressed-into-clay field ───────────────────────────── */
 .clay-input {
   border-radius: var(--radius-lg);
   border: 2px solid rgba(255, 255, 255, 0.7);
-  background-color: rgba(248, 250, 252, 0.92);
+  background-color: rgba(251, 250, 247, 0.92);
   box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.06), inset -3px -3px 6px rgba(255, 255, 255, 0.8);
   transition: box-shadow var(--motion-dur-fast) var(--motion-ios-ease);
 }
 .clay-input:focus,
 .clay-input:focus-visible {
   outline: none;
-  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.08), inset -3px -3px 6px rgba(255, 255, 255, 0.9), 0 0 0 3px rgba(56, 189, 248, 0.35);
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.08), inset -3px -3px 6px rgba(255, 255, 255, 0.9), 0 0 0 3px rgba(236, 147, 99, 0.35);
 }
 .dark .clay-input {
-  background-color: rgba(15, 23, 42, 0.85);
+  background-color: rgba(31, 21, 17, 0.85);
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.06);
-  color: #f1f5f9;
+  color: #f7f4ef;
 }
 .dark .clay-input:focus,
 .dark .clay-input:focus-visible {
-  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -2px -2px 5px rgba(255, 255, 255, 0.08), 0 0 0 3px rgba(56, 189, 248, 0.4);
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -2px -2px 5px rgba(255, 255, 255, 0.08), 0 0 0 3px rgba(236, 147, 99, 0.4);
 }
 
 .glass-panel {
@@ -813,17 +1140,17 @@ select {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     inset 0 -1px 1px rgba(255, 255, 255, 0.15),
-    0 16px 36px -12px rgba(244, 114, 182, 0.08),
-    0 4px 14px rgba(15, 23, 42, 0.02);
+    0 16px 36px -12px rgba(97, 77, 63, 0.08),
+    0 4px 14px rgba(31, 21, 17, 0.02);
   border-radius: 28px;
 }
 .dark .glass-panel {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.45), rgba(9, 15, 30, 0.35));
+  background: linear-gradient(180deg, rgba(31, 21, 17, 0.45), rgba(12, 5, 4, 0.35));
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  color: #f8fafc;
+  color: #fbfaf7;
 }
 
 .glass-node {
@@ -835,8 +1162,8 @@ select {
   border: 1px solid rgba(255, 255, 255, 0.99);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 1),
-    0 4px 16px -6px rgba(15, 23, 42, 0.04),
-    0 1px 3px -1px rgba(15, 23, 42, 0.01);
+    0 4px 16px -6px rgba(31, 21, 17, 0.04),
+    0 1px 3px -1px rgba(31, 21, 17, 0.01);
   border-radius: 16px;
 }
 .dark .glass-node {
@@ -845,7 +1172,7 @@ select {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1.5px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  color: #f8fafc;
+  color: #fbfaf7;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -860,20 +1187,6 @@ select {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-
-  .jelly-bg {
-    background-image:
-      radial-gradient(
-        circle at 10% 20%,
-        rgba(250, 179, 202, 0.22) 0%,
-        transparent 34%
-      ),
-      radial-gradient(
-        circle at 90% 80%,
-        rgba(201, 230, 255, 0.28) 0%,
-        transparent 34%
-      );
-  }
 }
 
 @media (hover: none) and (pointer: coarse) {
@@ -883,10 +1196,6 @@ select {
   .glass-node {
     backdrop-filter: blur(var(--glass-blur-soft));
     -webkit-backdrop-filter: blur(var(--glass-blur-soft));
-  }
-
-  .jelly-bg {
-    background-size: auto, auto, auto, auto, auto, cover;
   }
 }
 
@@ -955,10 +1264,10 @@ select {
   justify-content: space-between;
   align-items: center;
   padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid rgba(241, 245, 249, 0.8);
+  border-bottom: 1px solid rgba(247, 244, 239, 0.8);
   font-size: 0.875rem;
   font-weight: 700;
-  color: #334155;
+  color: #493d36;
 }
 
 .responsive-table td:last-child {
@@ -970,7 +1279,7 @@ select {
   content: attr(data-label);
   font-size: 10px;
   font-weight: 900;
-  color: #94a3b8;
+  color: #a79e94;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   flex-shrink: 0;
@@ -1004,7 +1313,7 @@ select {
     clip: auto;
     white-space: normal;
     display: table-header-group;
-    background: rgba(248, 250, 252, 0.6);
+    background: rgba(251, 250, 247, 0.6);
   }
 
   .responsive-table tbody {
@@ -1022,7 +1331,7 @@ select {
   }
 
   .responsive-table tbody tr {
-    border-bottom: 1px solid rgba(241, 245, 249, 0.6);
+    border-bottom: 1px solid rgba(247, 244, 239, 0.6);
   }
 
   .responsive-table tbody tr:last-child {
@@ -1045,10 +1354,10 @@ select {
     text-align: left;
     font-size: 10px;
     font-weight: 900;
-    color: #94a3b8;
+    color: #a79e94;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    border-bottom: 1.5px solid rgba(241, 245, 249, 0.8);
+    border-bottom: 1.5px solid rgba(247, 244, 239, 0.8);
   }
 
   /* Hide pseudo-labels on desktop — header row provides context */
@@ -1091,16 +1400,16 @@ select {
   text-align: left;
   font-size: 10px;
   font-weight: 900;
-  color: #94a3b8;
+  color: #a79e94;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  border-bottom: 1.5px solid rgba(241, 245, 249, 0.8);
-  background: rgba(248, 250, 252, 0.6);
+  border-bottom: 1.5px solid rgba(247, 244, 239, 0.8);
+  background: rgba(251, 250, 247, 0.6);
   white-space: nowrap;
 }
 
 .scroll-table tbody tr {
-  border-bottom: 1px solid rgba(241, 245, 249, 0.6);
+  border-bottom: 1px solid rgba(247, 244, 239, 0.6);
   transition: background-color 0.2s;
 }
 
@@ -1113,7 +1422,7 @@ select {
 }
 
 .scroll-table td {
-  border-bottom: 1px solid rgba(241, 245, 249, 0.6);
+  border-bottom: 1px solid rgba(247, 244, 239, 0.6);
 }
 
 .scroll-table tbody tr:last-child td {
@@ -1152,7 +1461,7 @@ select {
   }
   .glass-card {
     background: white !important;
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid #ece7e0 !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
   }
@@ -1184,13 +1493,13 @@ select {
 @keyframes jelly-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.08), 0 0 0 0px rgba(14, 165, 233, 0.15);
-    border-color: rgba(14, 165, 233, 0.15);
+    box-shadow: 0 4px 10px rgba(220, 125, 80, 0.08), 0 0 0 0px rgba(220, 125, 80, 0.15);
+    border-color: rgba(220, 125, 80, 0.15);
   }
   50% {
     transform: scale(1.025);
-    box-shadow: 0 6px 14px rgba(14, 165, 233, 0.14), 0 0 0 3px rgba(14, 165, 233, 0.08);
-    border-color: rgba(14, 165, 233, 0.4);
+    box-shadow: 0 6px 14px rgba(220, 125, 80, 0.14), 0 0 0 3px rgba(220, 125, 80, 0.08);
+    border-color: rgba(220, 125, 80, 0.4);
   }
 }
 
@@ -1268,8 +1577,8 @@ select {
   .glass-card:hover {
     transform: translateY(-3px) translateZ(0);
     box-shadow:
-      0 8px 32px rgba(134, 77, 97, 0.12),
-      0 2px 8px rgba(134, 77, 97, 0.06),
+      0 8px 32px rgba(97, 77, 63, 0.12),
+      0 2px 8px rgba(97, 77, 63, 0.06),
       inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
   .glass-card:active {
@@ -1299,9 +1608,9 @@ select {
 @utility skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(226, 232, 240, 0.6) 25%,
-    rgba(241, 245, 249, 0.9) 50%,
-    rgba(226, 232, 240, 0.6) 75%
+    rgba(236, 231, 224, 0.6) 25%,
+    rgba(247, 244, 239, 0.9) 50%,
+    rgba(236, 231, 224, 0.6) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.8s ease-in-out infinite;
@@ -1311,9 +1620,9 @@ select {
 .dark .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(30, 41, 59, 0.6) 25%,
-    rgba(51, 65, 85, 0.9) 50%,
-    rgba(30, 41, 59, 0.6) 75%
+    rgba(49, 38, 32, 0.6) 25%,
+    rgba(73, 61, 54, 0.9) 50%,
+    rgba(49, 38, 32, 0.6) 75%
   ) !important;
   background-size: 200% 100% !important;
 }
@@ -1341,14 +1650,14 @@ select {
   &:focus-visible {
     outline: none;
     box-shadow:
-      0 0 0 3px rgba(14, 165, 233, 0.5),
-      0 0 0 5px rgba(14, 165, 233, 0.15);
+      0 0 0 3px rgba(220, 125, 80, 0.5),
+      0 0 0 5px rgba(220, 125, 80, 0.15);
   }
 }
 
 /* ── Frosted modal backdrop ──────────────────────────────────────────────────── */
 @utility modal-backdrop {
-  background: rgba(15, 23, 42, 0.42);
+  background: rgba(31, 21, 17, 0.42);
   backdrop-filter: blur(8px) saturate(120%);
   -webkit-backdrop-filter: blur(8px) saturate(120%);
 }

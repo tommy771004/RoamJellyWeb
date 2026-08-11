@@ -143,7 +143,7 @@ export default function ChecklistSection({ className }: { className?: string }) 
 
       <GlassCard className="!p-4 sm:!p-6 mb-4 sm:mb-6 glass-panel shadow-md hover:shadow-xl flex-1 flex flex-col h-full overflow-y-auto min-h-[300px]">
         {checklist.length === 0 && (
-          <span className="text-sm text-slate-500 italic">
+          <span className="text-sm text-slate-500">
             目前沒有行李項目
           </span>
         )}
@@ -459,7 +459,7 @@ export default function ChecklistSection({ className }: { className?: string }) 
                         />
                         <div
                           className={`w-full h-full rounded-md border transition-colors flex items-center justify-center ${
-                            item.selected ? "bg-fuchsia-500 border-fuchsia-500 text-white" : "bg-white border-slate-300"
+                            item.selected ? "bg-fuchsia-600 border-fuchsia-600 text-white" : "bg-white border-slate-300"
                           }`}
                         >
                           {item.selected && <Check size={12} strokeWidth={4} />}

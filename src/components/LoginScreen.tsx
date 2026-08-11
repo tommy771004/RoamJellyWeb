@@ -443,7 +443,7 @@ export default function LoginScreen({ onLogin, onCancel, guestFirst = false, con
               <button
                 onClick={() => void handleSubmit()}
                 disabled={loading}
-                className={`flex justify-center items-center py-3.5 mt-2 clay-btn appearance-none cursor-pointer transition-all duration-300 ios-press focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? "bg-sky-300 dark:bg-sky-950 text-white/70" : "bg-gradient-to-r from-sky-400 to-sky-500 hover:opacity-95"}`}
+                className={`flex justify-center items-center py-3.5 mt-2 clay-btn appearance-none cursor-pointer transition-all duration-300 ios-press focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? "bg-sky-800 dark:bg-sky-950 text-white/70" : "bg-gradient-to-r from-sky-700 to-sky-800 hover:opacity-95"}`}
               >
                 {loading ? (
                   <span className="text-white font-[800]">{t('str_3ecd7faa')}</span>

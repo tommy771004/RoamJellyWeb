@@ -134,8 +134,8 @@ export default function TransportGapIndicator({
             <span
               className={`px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-black uppercase tracking-widest border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2 ${
                 unrealisticCheck.severity === 'error'
-                  ? "bg-rose-500 text-white border-rose-600 animate-bounce"
-                  : "bg-amber-500 text-white border-amber-600"
+                  ? "bg-rose-700 text-white border-rose-800 animate-bounce"
+                  : "bg-amber-700 text-white border-amber-800"
               }`}
             >
               <AlertTriangle size={13} className="shrink-0" />

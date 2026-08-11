@@ -164,7 +164,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                  return (
                    <div key={dayStr} className="relative">
                      <div className="mb-4 flex items-center gap-4">
-                       <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-gradient-to-br from-sky-500 to-orange-400 text-[17px] font-black text-white shadow-[0_12px_26px_rgba(14,165,233,0.22)]">
+                       <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-gradient-to-br from-sky-700 to-orange-700 text-[17px] font-black text-white shadow-[0_12px_26px_rgba(14,165,233,0.22)]">
                          D{dayNum}
                        </div>
                        <h2 className="text-[18px] font-black tracking-[-0.03em] text-slate-800">{t('str_7b2c')}{dayNum} {t('str_15fae28')}</h2>
@@ -219,7 +219,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                   onCopyPath(handbook);
                   handleClose();
                 }}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 px-6 py-3 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.28)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.34)] ios-press"
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-700 to-orange-700 px-6 py-3 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.28)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.34)] ios-press"
               >
                 <Download size={16} strokeWidth={2.5}/>
                 <span className="whitespace-nowrap">{t('str_784d818a')}</span>

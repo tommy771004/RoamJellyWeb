@@ -393,7 +393,7 @@ const ItineraryListItem = React.memo(
           className={`flex-1 p-4 sm:p-5 rounded-[32px] sm:rounded-[40px] cursor-pointer transition-[transform,shadow,background,colors] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] ios-press hover:scale-[1.01] relative z-10 w-full transform-gpu ${collaboratingLock ? "ring-2 ring-fuchsia-400/60 scale-[0.98]" : ""} ${isRecentlySynced ? "ring-2 ring-emerald-300/80 shadow-[0_0_12px_rgba(16,185,129,0.2)]" : ""} ${item.linkedFactId ? "ring-2 ring-sky-300/40 border-sky-200/50" : ""} ${isFlightCard ? "bg-slate-900/95 backdrop-blur-2xl text-white border border-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.4)]" : isHotelCard ? "bg-gradient-to-br from-indigo-900/95 to-indigo-800/95 backdrop-blur-2xl text-indigo-50 border border-indigo-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_20px_rgba(49,46,129,0.25)] hover:shadow-[0_12px_30px_rgba(49,46,129,0.35)]" : "bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_8px_24px_rgba(15,23,42,0.05),0_2px_8px_rgba(15,23,42,0.02)] hover:border-sky-100 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_12px_34px_rgba(15,23,42,0.08),0_4px_12px_rgba(14,165,233,0.08)]"}`}
         >
           {item.linkedFactId && (
-            <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-sky-500 text-white shadow-sm ring-2 ring-white z-20">
+            <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-sky-600 text-white shadow-sm ring-2 ring-white z-20">
               <Link size={10} strokeWidth={3} />
             </div>
           )}
@@ -507,7 +507,7 @@ const ItineraryListItem = React.memo(
                   <div className="relative">
                     <div className="relative flex">
                       <div
-                        className={`px-2 py-1 rounded-full text-lg font-semibold tabular-nums tracking-normal flex items-center gap-1 transition-colors border ${isFlightCard ? "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white" : isHotelCard ? "bg-indigo-800 hover:bg-indigo-700 border-indigo-700 text-white" : "bg-slate-800 hover:bg-slate-700 text-white border-slate-900"} relative z-0`}
+                        className={`px-2 py-1 rounded-full text-lg font-semibold tabular-nums tracking-normal flex items-center gap-1 transition-colors border ${isFlightCard ? "bg-slate-700 hover:bg-slate-700 border-slate-600 text-white" : isHotelCard ? "bg-indigo-800 hover:bg-indigo-700 border-indigo-700 text-white" : "bg-slate-800 hover:bg-slate-700 text-white border-slate-900"} relative z-0`}
                       >
                         <Clock size={11} className="sm:w-[13px] sm:h-[13px]" />
                         {item.time || t("itinerary_card.time_unset")}
@@ -658,7 +658,7 @@ const ItineraryListItem = React.memo(
                         void handleRegenerate();
                       }}
                       disabled={Boolean(collaboratingLock) || regenerating}
-                      className="w-11 h-11 rounded-full bg-gradient-to-tr from-fuchsia-500/10 via-pink-500/5 to-white/90 border border-fuchsia-200/80 flex items-center justify-center text-fuchsia-700 hover:from-fuchsia-500 hover:to-pink-500 hover:text-white hover:border-transparent hover:shadow-lg hover:shadow-fuchsia-200/40 transition-all duration-300 ios-press disabled:opacity-40 disabled:cursor-not-allowed transform-gpu animate-none"
+                      className="w-11 h-11 rounded-full bg-gradient-to-tr from-fuchsia-600/10 via-pink-500/5 to-white/90 border border-fuchsia-200/80 flex items-center justify-center text-fuchsia-700 hover:from-fuchsia-700 hover:to-pink-600 hover:text-white hover:border-transparent hover:shadow-lg hover:shadow-fuchsia-200/40 transition-all duration-300 ios-press disabled:opacity-40 disabled:cursor-not-allowed transform-gpu animate-none"
                       title={t("itinerary_card.regenerate")}
                       aria-label={t("itinerary_card.regenerate")}
                     >
@@ -833,7 +833,7 @@ const ItineraryListItem = React.memo(
                   <p className="mb-1 text-xs font-semibold tracking-normal text-slate-500 dark:text-slate-400">
                     {t("itinerary_card.notes")}
                   </p>
-                  <p className="text-sm font-medium text-slate-500 italic opacity-80 transition-opacity leading-6">
+                  <p className="text-sm font-medium text-slate-500 opacity-80 transition-opacity leading-6">
                     {t("itinerary_card.empty_notes")}
                   </p>
                 </div>
@@ -1053,7 +1053,7 @@ const ItineraryListItem = React.memo(
                           <button
                             type="button"
                             onClick={() => setShowImageSearchModal(true)}
-                            className="px-3.5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm transition-all"
+                            className="px-3.5 py-2.5 rounded-2xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm transition-all"
                           >
                             <Sparkles size={13} />
                             <span>{t("itinerary_editor.search_image")}</span>
@@ -1163,7 +1163,7 @@ const ItineraryListItem = React.memo(
                         <button
                           type="button"
                           onClick={handleSave}
-                          className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press"
+                          className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-700 to-rose-700 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press"
                         >
                           {t("itinerary_editor.save")}
                         </button>
@@ -1594,7 +1594,7 @@ export default function ItineraryList({
                     type="button"
                     onClick={onOptimizeRoute}
                     disabled={isOffline}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-700 hover:to-indigo-700 text-white rounded-full shadow-md hover:shadow-lg text-[11px] font-black tracking-wide transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-fuchsia-700 to-indigo-700 hover:from-fuchsia-800 hover:to-indigo-800 text-white rounded-full shadow-md hover:shadow-lg text-[11px] font-black tracking-wide transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                     title={t("itinerary_day.optimize_title")}
                   >
                     <Navigation2 size={13} className="rotate-45" />
@@ -1642,7 +1642,7 @@ export default function ItineraryList({
               type="button"
               onClick={() => onAskAiForDay?.()}
               disabled={isOffline}
-              className="w-full rounded-[32px] bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(192,38,211,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(192,38,211,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
+              className="w-full rounded-[32px] bg-gradient-to-r from-fuchsia-700 to-indigo-700 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(192,38,211,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(192,38,211,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               ✨ {t("itinerary_day.ask_ai")}
             </button>
@@ -1650,7 +1650,7 @@ export default function ItineraryList({
               type="button"
               onClick={() => onRandomizeFromFavorites?.()}
               disabled={isOffline || !favoriteSuggestions?.length}
-              className="w-full rounded-[32px] bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(14,165,233,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(14,165,233,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
+              className="w-full rounded-[32px] bg-gradient-to-r from-sky-700 to-blue-700 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(14,165,233,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(14,165,233,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               📌 {t("itinerary_day.choose_favorites")}
             </button>
@@ -1658,7 +1658,7 @@ export default function ItineraryList({
               type="button"
               onClick={() => setManualAddTrigger((prev) => prev + 1)}
               disabled={isOffline}
-              className="w-full rounded-[32px] bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(16,185,129,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
+              className="w-full rounded-[32px] bg-gradient-to-r from-emerald-700 to-teal-700 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(16,185,129,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
               ➕ {t("itinerary_day.add_manually")}
             </button>
@@ -1685,7 +1685,7 @@ export default function ItineraryList({
               {t("itinerary_day.ai_planning_status", { day })}
             </span>
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-3xl bg-gradient-to-br from-fuchsia-500 to-indigo-600 text-xl text-white shadow-lg shadow-fuchsia-200/50">
+              <div className="flex h-11 w-11 items-center justify-center rounded-3xl bg-gradient-to-br from-fuchsia-700 to-indigo-700 text-xl text-white shadow-lg shadow-fuchsia-200/50">
                 ✨
               </div>
               <div className="min-w-0" aria-hidden="true">

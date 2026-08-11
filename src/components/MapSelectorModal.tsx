@@ -115,7 +115,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
                 }
               }}
               disabled={!selectedPos}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-orange-400 text-[14px] font-black uppercase tracking-[0.16em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.36)] ios-press disabled:cursor-not-allowed disabled:opacity-40 disabled:scale-100 disabled:hover:translate-y-0 whitespace-nowrap"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-700 to-orange-700 text-[14px] font-black uppercase tracking-[0.16em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(14,165,233,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.36)] ios-press disabled:cursor-not-allowed disabled:opacity-40 disabled:scale-100 disabled:hover:translate-y-0 whitespace-nowrap"
             >
               <Check size={20} className="shrink-0" />
               <span>{t('str_19af053d')}</span>

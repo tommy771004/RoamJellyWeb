@@ -53,19 +53,19 @@ function hubHead(opts: {
 
 const BASE_STYLES = `
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fafafa;color:#0f172a}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fbfaf7;color:#1f1511}
   .container{max-width:800px;margin:0 auto;padding:24px 16px}
   nav{margin-bottom:32px}
-  nav a{color:#f43f5e;text-decoration:none;font-weight:700;font-size:18px}
+  nav a{color:#b25936;text-decoration:none;font-weight:700;font-size:18px}
   h1{font-size:clamp(22px,4vw,32px);font-weight:800;margin-bottom:8px}
-  .subtitle{color:#64748b;font-size:15px;margin-bottom:32px}
+  .subtitle{color:#7b7167;font-size:15px;margin-bottom:32px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-  .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-decoration:none;color:#0f172a;transition:box-shadow .2s}
+  .card{background:#fff;border:1px solid #ece7e0;border-radius:12px;padding:16px;text-decoration:none;color:#1f1511;transition:box-shadow .2s}
   .card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
   .card-title{font-weight:700;font-size:15px;margin-bottom:4px}
-  .card-sub{font-size:13px;color:#94a3b8}
-  footer{text-align:center;color:#94a3b8;font-size:13px;margin-top:48px;padding-top:24px;border-top:1px solid #e2e8f0}
-  footer a{color:#94a3b8;margin:0 8px}
+  .card-sub{font-size:13px;color:#a79e94}
+  footer{text-align:center;color:#a79e94;font-size:13px;margin-top:48px;padding-top:24px;border-top:1px solid #ece7e0}
+  footer a{color:#a79e94;margin:0 8px}
 `;
 
 export function buildRouteHubPage(): string {

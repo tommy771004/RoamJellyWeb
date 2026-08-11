@@ -194,7 +194,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             {/* Header */}
             <div className="z-10 flex shrink-0 items-center justify-between rounded-t-[32px] border-b border-white/78 bg-white/78 dark:bg-slate-900/90 dark:border-white/10 px-5 py-4 backdrop-blur-xl sm:px-7 sm:py-5 md:rounded-t-[32px]">
               <div className="flex items-center gap-4">
-                <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-[18px] bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_12px_26px_rgba(14,165,233,0.22)]">
+                <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-[18px] bg-gradient-to-br from-sky-600 to-orange-600 text-white shadow-[0_12px_26px_rgba(14,165,233,0.22)]">
                   <Sparkles size={20} className="relative z-10" />
                 </div>
                 <div>
@@ -248,7 +248,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     <PulsingIndicator size="sm" />
                     <span>{t('str_48f5b6d7')}</span>
                     {notifications.length > 0 && (
-                      <span className="absolute -top-1 -right-1 inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-[10px] font-black leading-none text-white bg-orange-500 rounded-full border border-white">
+                      <span className="absolute -top-1 -right-1 inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-[10px] font-black leading-none text-white bg-orange-700 rounded-full border border-white">
                         {notifications.length}
                       </span>
                     )}
@@ -443,7 +443,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                           {t('str_d08d1')}{notifications.length} {t('str_fc127cd')}</span>
                         <button
                           onClick={clearNotifications}
-                          className="flex items-center gap-1.5 text-[11px] font-bold text-red-500 hover:text-red-650 transition-colors"
+                          className="flex items-center gap-1.5 text-[11px] font-bold text-red-500 hover:text-red-600 transition-colors"
                         >
                           <Trash2 size={13} /> {t('str_33db289e')}</button>
                       </div>
@@ -483,7 +483,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
               {activeSubTab === 'profile' ? (
                 <Button 
                   onClick={handleSave} 
-                  className="group relative flex h-14 w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-sky-500 to-orange-400 py-4 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_10px_22px_rgba(14,165,233,0.24)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-sky-600 hover:to-orange-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_26px_rgba(14,165,233,0.30)] ios-press sm:text-[15px] whitespace-nowrap"
+                  className="group relative flex h-14 w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-sky-700 to-orange-700 py-4 text-[14px] font-black tracking-[0.08em] text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_10px_22px_rgba(14,165,233,0.24)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:from-sky-800 hover:to-orange-800 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_26px_rgba(14,165,233,0.30)] ios-press sm:text-[15px] whitespace-nowrap"
                   disabled={saving || loading}
                   aria-busy={saving}
                 >
@@ -501,7 +501,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     <button 
                       type="button"
                       onClick={clearNotifications} 
-                      className="flex-shrink-0 flex items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50/40 px-5 text-[14px] font-bold text-red-650 hover:bg-red-55 transition-colors"
+                      className="flex-shrink-0 flex items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50/40 px-5 text-[14px] font-bold text-red-600 hover:bg-red-55 transition-colors"
                     >
                       <Trash2 size={16} />
                       {t('str_33e0c6e0')}</button>

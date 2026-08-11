@@ -776,7 +776,7 @@ function ToolsTabContent() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setActiveTab("ai_form")}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-sky-400 to-sky-600 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-sky-700 to-sky-700 px-6 py-3 text-[14px] font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_24px_rgba(14,165,233,0.35)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(14,165,233,0.45)]"
                 >
                   <Sparkles size={18} strokeWidth={2.5} />
                   {t('str_2b5ac87f')}</button>
@@ -1212,7 +1212,7 @@ function ToolsTabContent() {
                           emoji: "✈️",
                         });
                       }}
-                      className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-600 hover:to-purple-700 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ios-press hover:-translate-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_8px_16px_rgba(217,70,239,0.20)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_12px_24px_rgba(217,70,239,0.26)]"
+                      className="mt-auto w-full py-3.5 rounded-full bg-gradient-to-r from-fuchsia-700 to-purple-700 hover:from-fuchsia-800 hover:to-purple-800 text-white font-black text-[14px] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ios-press hover:-translate-y-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_8px_16px_rgba(217,70,239,0.20)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_12px_24px_rgba(217,70,239,0.26)]"
                     >
                       {t('str_14655fbb')}</button>
                   </GlassCard>

@@ -7,8 +7,8 @@ const MONTH_NAMES_ZH = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', 
 function demandBar(count: number, max: number): string {
   const pct = max > 0 ? Math.round((count / max) * 100) : 0;
   return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
-    <div style="width:${pct}%;max-width:280px;height:12px;background:#f43f5e;border-radius:6px;transition:width .3s;"></div>
-    <span style="font-size:13px;color:#64748b;">${count} 次</span>
+    <div style="width:${pct}%;max-width:280px;height:12px;background:#b25936;border-radius:6px;transition:width .3s;"></div>
+    <span style="font-size:13px;color:#7b7167;">${count} 次</span>
   </div>`;
 }
 
@@ -48,7 +48,7 @@ export function buildRoutePage(data: RouteData): string {
     .slice(0, 6)
     .map((m) => `
       <div style="margin:12px 0;">
-        <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:4px;">${MONTH_NAMES_ZH[m.month - 1]}</div>
+        <div style="font-size:14px;font-weight:600;color:#1f1511;margin-bottom:4px;">${MONTH_NAMES_ZH[m.month - 1]}</div>
         ${demandBar(m.count, maxCount)}
       </div>`)
     .join('');
@@ -57,7 +57,7 @@ export function buildRoutePage(data: RouteData): string {
     .slice(6)
     .map((m) => `
       <div style="margin:12px 0;filter:blur(4px);pointer-events:none;user-select:none;">
-        <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:4px;">${MONTH_NAMES_ZH[m.month - 1]}</div>
+        <div style="font-size:14px;font-weight:600;color:#1f1511;margin-bottom:4px;">${MONTH_NAMES_ZH[m.month - 1]}</div>
         ${demandBar(m.count, maxCount)}
       </div>`)
     .join('');
@@ -111,22 +111,22 @@ export function buildRoutePage(data: RouteData): string {
   })}</script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fafafa;color:#0f172a}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fbfaf7;color:#1f1511}
     .container{max-width:800px;margin:0 auto;padding:24px 16px}
     nav{display:flex;align-items:center;gap:12px;margin-bottom:32px}
-    nav a{color:#f43f5e;text-decoration:none;font-weight:700;font-size:18px}
-    nav span{color:#94a3b8;font-size:14px}
+    nav a{color:#b25936;text-decoration:none;font-weight:700;font-size:18px}
+    nav span{color:#a79e94;font-size:14px}
     h1{font-size:clamp(20px,4vw,28px);font-weight:800;line-height:1.3;margin-bottom:8px}
-    .subtitle{color:#64748b;font-size:15px;margin-bottom:32px}
-    .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:24px}
+    .subtitle{color:#7b7167;font-size:15px;margin-bottom:32px}
+    .card{background:#fff;border:1px solid #ece7e0;border-radius:16px;padding:24px;margin-bottom:24px}
     .tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-right:8px}
-    .tag-peak{background:#fef2f2;color:#e11d48}
-    .tag-low{background:#f0fdf4;color:#16a34a}
-    .cta{display:block;width:100%;padding:16px;border-radius:12px;background:#f43f5e;color:#fff;font-weight:800;font-size:16px;text-align:center;text-decoration:none;margin-top:24px}
-    .cta:hover{background:#e11d48}
-    .lock-banner{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px;text-align:center;margin:16px 0}
-    footer{text-align:center;color:#94a3b8;font-size:13px;margin-top:48px;padding-top:24px;border-top:1px solid #e2e8f0}
-    footer a{color:#94a3b8;margin:0 8px}
+    .tag-peak{background:#fbf2ec;color:#a04e30}
+    .tag-low{background:#f0f6f1;color:#5f8b6f}
+    .cta{display:block;width:100%;padding:16px;border-radius:12px;background:#b25936;color:#fff;font-weight:800;font-size:16px;text-align:center;text-decoration:none;margin-top:24px}
+    .cta:hover{background:#a04e30}
+    .lock-banner{background:#fdf6ef;border:1px solid #f7d7c3;border-radius:12px;padding:16px;text-align:center;margin:16px 0}
+    footer{text-align:center;color:#a79e94;font-size:13px;margin-top:48px;padding-top:24px;border-top:1px solid #ece7e0}
+    footer a{color:#a79e94;margin:0 8px}
   </style>
 </head>
 <body>
@@ -142,7 +142,7 @@ export function buildRoutePage(data: RouteData): string {
   <h1>從${escHtml(data.fromDisplay)}飛${escHtml(data.toDisplay)}（${escHtml(data.fromCode)} → ${escHtml(data.toCode)}）<br>台灣旅人搜尋熱度分析</h1>
   <p class="subtitle">根據果凍漫遊用戶的真實搜尋行為，整理各月份熱度</p>
 
-  <p style="font-size:15px;line-height:1.7;color:#334155;background:#fff;border:1px solid #e2e8f0;border-left:4px solid #f43f5e;border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:24px;">${escHtml(answerLead)}</p>
+  <p style="font-size:15px;line-height:1.7;color:#493d36;background:#fff;border:1px solid #ece7e0;border-left:4px solid #b25936;border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:24px;">${escHtml(answerLead)}</p>
 
   <div class="card">
     <h2 style="font-size:16px;font-weight:700;margin-bottom:16px;">出發時機建議</h2>
@@ -150,7 +150,7 @@ export function buildRoutePage(data: RouteData): string {
       <span class="tag tag-peak">旺季 ${escHtml(peakText)}</span>
       <span class="tag tag-low">淡季 ${escHtml(lowText)}</span>
     </p>
-    <p style="margin-top:12px;font-size:14px;color:#475569;">
+    <p style="margin-top:12px;font-size:14px;color:#5d5249;">
       過去 12 個月，果凍漫遊用戶共搜尋此航線 <strong>${data.totalSearches}</strong> 次。
     </p>
   </div>
@@ -161,7 +161,7 @@ export function buildRoutePage(data: RouteData): string {
 
     <div class="lock-banner">
       <strong>🔒 登入查看完整 12 個月資料</strong><br>
-      <span style="font-size:13px;color:#78716c;">免費建立帳號，解鎖完整熱度分析與行程規劃功能</span>
+      <span style="font-size:13px;color:#7b7167;">免費建立帳號，解鎖完整熱度分析與行程規劃功能</span>
     </div>
     <div style="position:relative;overflow:hidden;border-radius:8px;">
       ${lockedRows}
@@ -174,17 +174,17 @@ export function buildRoutePage(data: RouteData): string {
   <div class="card">
     <h2 style="font-size:16px;font-weight:700;margin-bottom:12px;">常見問題</h2>
     ${faqs.map((f) => `
-      <div style="padding:12px 0;border-bottom:1px solid #f1f5f9;">
-        <h3 style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:6px;">${escHtml(f.q)}</h3>
-        <p style="font-size:14px;line-height:1.7;color:#475569;">${escHtml(f.a)}</p>
+      <div style="padding:12px 0;border-bottom:1px solid #f7f4ef;">
+        <h3 style="font-size:15px;font-weight:700;color:#1f1511;margin-bottom:6px;">${escHtml(f.q)}</h3>
+        <p style="font-size:14px;line-height:1.7;color:#5d5249;">${escHtml(f.a)}</p>
       </div>`).join('')}
   </div>
 
   <div class="card">
     <h2 style="font-size:16px;font-weight:700;margin-bottom:12px;">相關航線</h2>
     <ul style="list-style:none;display:flex;flex-wrap:wrap;gap:8px;">
-      <li><a href="/fly/" style="color:#f43f5e;text-decoration:none;font-size:14px;">← 所有航線分析</a></li>
-      ${data.destinationSlug ? `<li><a href="/trips/${data.destinationSlug}/" style="color:#f43f5e;text-decoration:none;font-size:14px;">${escHtml(data.toDisplay)} 旅遊行程 →</a></li>` : ''}
+      <li><a href="/fly/" style="color:#b25936;text-decoration:none;font-size:14px;">← 所有航線分析</a></li>
+      ${data.destinationSlug ? `<li><a href="/trips/${data.destinationSlug}/" style="color:#b25936;text-decoration:none;font-size:14px;">${escHtml(data.toDisplay)} 旅遊行程 →</a></li>` : ''}
     </ul>
   </div>
 

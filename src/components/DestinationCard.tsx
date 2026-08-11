@@ -265,7 +265,7 @@ export default function DestinationCard({
             <span className="rounded-md bg-slate-950/60 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur-md font-mono tracking-wider">
               {rawArr || "TYO"}
             </span>
-            <span className="rounded-md bg-pink-500/90 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur-md whitespace-nowrap">
+            <span className="rounded-md bg-pink-700/90 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur-md whitespace-nowrap">
               {meta.flag} {meta.country}
             </span>
           </div>
@@ -301,7 +301,7 @@ export default function DestinationCard({
                 onToggleSave(e);
               }}
               aria-label={isSaved ? "取消收藏" : "收藏"}
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-100 dark:border-white/5 backdrop-blur-md transition-all ios-press ${isSaved ? "bg-pink-500 text-white border-none shadow-sm" : "bg-white/80 text-slate-500 hover:bg-white hover:text-pink-500 shadow-sm"}`}
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-100 dark:border-white/5 backdrop-blur-md transition-all ios-press ${isSaved ? "bg-pink-600 text-white border-none shadow-sm" : "bg-white/80 text-slate-500 hover:bg-white hover:text-pink-500 shadow-sm"}`}
             >
               <Heart
                 size={11}
@@ -364,7 +364,7 @@ export default function DestinationCard({
                 e.stopPropagation();
                 onPress();
               }}
-              className="flex-1 h-8 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-500 px-3 text-[10px] font-black text-white hover:brightness-105 ios-press transition-all flex items-center justify-center"
+              className="flex-1 h-8 rounded-full bg-gradient-to-r from-rose-700 to-fuchsia-700 px-3 text-[10px] font-black text-white hover:brightness-105 ios-press transition-all flex items-center justify-center"
             >
               Explore
             </button>

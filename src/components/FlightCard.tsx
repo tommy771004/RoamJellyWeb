@@ -236,7 +236,7 @@ export default function FlightCard({
                 e.stopPropagation();
                 onPress();
               }}
-              className={`h-11 px-5 rounded-[10px] bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_10px_20px_rgba(244,114,182,0.16)] ${subtlePressableClass} ${raisedHoverClass}`}
+              className={`h-11 px-5 rounded-[10px] bg-gradient-to-r from-pink-600 to-orange-600 text-white font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_10px_20px_rgba(244,114,182,0.16)] ${subtlePressableClass} ${raisedHoverClass}`}
             >
               <span className="text-[11px] uppercase tracking-widest leading-none">
                 {t('str_119f3b')}</span>

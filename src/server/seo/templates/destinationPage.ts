@@ -12,24 +12,24 @@ function renderTrip(trip: PublicTrip): string {
 
   const dayHtml = days.map(([day, nodes]) => `
     <div style="margin:12px 0;">
-      <div style="font-size:13px;font-weight:700;color:#f43f5e;margin-bottom:8px;">第 ${day} 天</div>
+      <div style="font-size:13px;font-weight:700;color:#b25936;margin-bottom:8px;">第 ${day} 天</div>
       <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
         ${nodes.map((n) => `
           <li style="display:flex;gap:8px;align-items:flex-start;">
-            <span style="font-size:12px;color:#94a3b8;width:40px;flex-shrink:0;">${escHtml(n.time ?? '')}</span>
-            <span style="font-size:14px;color:#0f172a;">${escHtml(n.title)}</span>
+            <span style="font-size:12px;color:#a79e94;width:40px;flex-shrink:0;">${escHtml(n.time ?? '')}</span>
+            <span style="font-size:14px;color:#1f1511;">${escHtml(n.title)}</span>
           </li>`).join('')}
       </ul>
     </div>`).join('');
 
   return `
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;margin-bottom:16px;">
+    <div style="background:#fff;border:1px solid #ece7e0;border-radius:16px;padding:20px;margin-bottom:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <h3 style="font-size:15px;font-weight:700;">${escHtml(trip.name)}</h3>
-        <span style="font-size:12px;color:#94a3b8;">🍴 ${trip.forkCount} 人使用</span>
+        <span style="font-size:12px;color:#a79e94;">🍴 ${trip.forkCount} 人使用</span>
       </div>
       ${dayHtml}
-      ${trip.nodes.length > 6 ? `<p style="font-size:13px;color:#94a3b8;margin-top:8px;">+ 更多景點...</p>` : ''}
+      ${trip.nodes.length > 6 ? `<p style="font-size:13px;color:#a79e94;margin-top:8px;">+ 更多景點...</p>` : ''}
     </div>`;
 }
 
@@ -64,9 +64,9 @@ export function buildDestinationPage(data: DestinationData): string {
 
   const spotsHtml = data.popularSpots.length > 0
     ? `<ul style="list-style:none;display:flex;flex-wrap:wrap;gap:8px;">
-        ${data.popularSpots.map((s) => `<li style="background:#fef2f2;color:#e11d48;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;">${escHtml(s)}</li>`).join('')}
+        ${data.popularSpots.map((s) => `<li style="background:#fbf2ec;color:#a04e30;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;">${escHtml(s)}</li>`).join('')}
       </ul>`
-    : '<p style="color:#94a3b8;font-size:14px;">暫無資料</p>';
+    : '<p style="color:#a79e94;font-size:14px;">暫無資料</p>';
 
   return `<!DOCTYPE html>
 <html lang="zh-TW">
@@ -119,18 +119,18 @@ export function buildDestinationPage(data: DestinationData): string {
   })}</script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fafafa;color:#0f172a}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fbfaf7;color:#1f1511}
     .container{max-width:800px;margin:0 auto;padding:24px 16px}
     nav{display:flex;align-items:center;gap:12px;margin-bottom:32px}
-    nav a{color:#f43f5e;text-decoration:none;font-weight:700;font-size:18px}
-    nav span{color:#94a3b8;font-size:14px}
+    nav a{color:#b25936;text-decoration:none;font-weight:700;font-size:18px}
+    nav span{color:#a79e94;font-size:14px}
     h1{font-size:clamp(20px,4vw,28px);font-weight:800;line-height:1.3;margin-bottom:8px}
-    .subtitle{color:#64748b;font-size:15px;margin-bottom:32px}
+    .subtitle{color:#7b7167;font-size:15px;margin-bottom:32px}
     h2{font-size:18px;font-weight:700;margin-bottom:16px}
-    .cta{display:block;width:100%;padding:16px;border-radius:12px;background:#f43f5e;color:#fff;font-weight:800;font-size:16px;text-align:center;text-decoration:none;margin:24px 0}
-    .cta:hover{background:#e11d48}
-    footer{text-align:center;color:#94a3b8;font-size:13px;margin-top:48px;padding-top:24px;border-top:1px solid #e2e8f0}
-    footer a{color:#94a3b8;margin:0 8px}
+    .cta{display:block;width:100%;padding:16px;border-radius:12px;background:#b25936;color:#fff;font-weight:800;font-size:16px;text-align:center;text-decoration:none;margin:24px 0}
+    .cta:hover{background:#a04e30}
+    footer{text-align:center;color:#a79e94;font-size:13px;margin-top:48px;padding-top:24px;border-top:1px solid #ece7e0}
+    footer a{color:#a79e94;margin:0 8px}
   </style>
 </head>
 <body>
@@ -146,31 +146,31 @@ export function buildDestinationPage(data: DestinationData): string {
   <h1>${escHtml(data.displayName)}旅遊行程推薦</h1>
   <p class="subtitle">果凍漫遊用戶分享的真實行程規劃，免費複製使用</p>
 
-  <p style="font-size:15px;line-height:1.7;color:#334155;background:#fff;border:1px solid #e2e8f0;border-left:4px solid #f43f5e;border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:24px;">${escHtml(answerLead)}</p>
+  <p style="font-size:15px;line-height:1.7;color:#493d36;background:#fff;border:1px solid #ece7e0;border-left:4px solid #b25936;border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:24px;">${escHtml(answerLead)}</p>
 
-  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:24px;">
+  <div style="background:#fff;border:1px solid #ece7e0;border-radius:16px;padding:24px;margin-bottom:24px;">
     <h2>熱門景點</h2>
     ${spotsHtml}
   </div>
 
   <h2>精選旅遊行程</h2>
-  ${tripsHtml.length > 0 ? tripsHtml : '<p style="color:#94a3b8;">目前還沒有公開行程，成為第一個分享者吧！</p>'}
+  ${tripsHtml.length > 0 ? tripsHtml : '<p style="color:#a79e94;">目前還沒有公開行程，成為第一個分享者吧！</p>'}
 
   <a class="cta" href="/">免費複製行程，開始規劃你的${escHtml(data.displayName)}之旅 →</a>
 
-  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;margin-bottom:24px;">
+  <div style="background:#fff;border:1px solid #ece7e0;border-radius:16px;padding:24px;margin-bottom:24px;">
     <h2 style="font-size:18px;margin-bottom:16px;">常見問題</h2>
     ${faqs.map((f) => `
-      <div style="padding:14px 0;border-bottom:1px solid #f1f5f9;">
-        <h3 style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:6px;">${escHtml(f.q)}</h3>
-        <p style="font-size:14px;line-height:1.7;color:#475569;">${escHtml(f.a)}</p>
+      <div style="padding:14px 0;border-bottom:1px solid #f7f4ef;">
+        <h3 style="font-size:15px;font-weight:700;color:#1f1511;margin-bottom:6px;">${escHtml(f.q)}</h3>
+        <p style="font-size:14px;line-height:1.7;color:#5d5249;">${escHtml(f.a)}</p>
       </div>`).join('')}
   </div>
 
-  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;">
+  <div style="background:#fff;border:1px solid #ece7e0;border-radius:16px;padding:24px;">
     <h2 style="font-size:16px;margin-bottom:12px;">相關資源</h2>
     <ul style="list-style:none;display:flex;flex-wrap:wrap;gap:8px;">
-      <li><a href="/trips/" style="color:#f43f5e;text-decoration:none;font-size:14px;">← 所有目的地</a></li>
+      <li><a href="/trips/" style="color:#b25936;text-decoration:none;font-size:14px;">← 所有目的地</a></li>
     </ul>
   </div>
 

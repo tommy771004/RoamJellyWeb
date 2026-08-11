@@ -99,7 +99,7 @@ export default function SettlementHistorySection({ className }: { className?: st
                       </div>
                       
                       {matchingExpenses.length === 0 ? (
-                        <div className="text-slate-500 dark:text-slate-400 text-[12.5px] italic pl-1">
+                        <div className="text-slate-500 dark:text-slate-400 text-[12.5px] pl-1">
                           無對應花費明細紀錄。
                         </div>
                       ) : (

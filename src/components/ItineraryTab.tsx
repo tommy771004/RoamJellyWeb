@@ -2047,7 +2047,7 @@ export default function ItineraryTab() {
                               e.stopPropagation();
                               setIsPlanningNew(true);
                             }}
-                            className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-400 to-orange-400 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors hover:from-pink-500 hover:to-orange-500"
+                            className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-700 to-orange-700 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors hover:from-pink-800 hover:to-orange-800"
                           >
                             <GlowingIcon icon={Sparkles} size={18} glowColor="bg-yellow-300" iconColor="text-white" />
                             {t('str_770014d2')}</button>
@@ -2087,7 +2087,7 @@ export default function ItineraryTab() {
                 {t('str_2f5a1b96')}</p>
               <button
                 onClick={() => setIsPlanningNew(true)}
-                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:from-pink-500 hover:to-rose-500 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)]"
+                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-700 to-rose-700 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:from-pink-800 hover:to-rose-800 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)]"
               >
                 <Sparkles size={18} />
                 {t('str_56785280')}</button>
@@ -2116,7 +2116,7 @@ export default function ItineraryTab() {
                     <button
                       title={t('str_342d0416')}
                       aria-label={t('delete_itinerary_label', 'Delete Itinerary "{{name}}"', { name: trip.name })}
-                      className="delete-trip-btn w-11 h-11 bg-white/60 hover:bg-red-500 hover:text-white text-slate-800 flex items-center justify-center rounded-full backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                      className="delete-trip-btn w-11 h-11 bg-white/60 hover:bg-red-600 hover:text-white text-slate-800 flex items-center justify-center rounded-full backdrop-blur-md shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
                       onClick={async (e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -2266,7 +2266,7 @@ export default function ItineraryTab() {
               {t('str_58ab6740')}</span>
             <button
               onClick={() => window.dispatchEvent(new CustomEvent('request-login'))}
-              className="px-5 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 text-white rounded-full text-[13px] font-black uppercase tracking-widest shadow-md transition-all ios-press shrink-0 w-full sm:w-auto"
+              className="px-5 py-2.5 bg-gradient-to-r from-sky-700 to-indigo-700 hover:from-sky-800 hover:to-indigo-800 text-white rounded-full text-[13px] font-black uppercase tracking-widest shadow-md transition-all ios-press shrink-0 w-full sm:w-auto"
             >
               {t('str_4ca18424')}</button>
           </div>
@@ -2748,7 +2748,7 @@ export default function ItineraryTab() {
 
               <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-500 to-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-700 to-indigo-700 text-white flex items-center justify-center font-black text-sm shadow-md shrink-0">
                     <Sparkles size={18} />
                   </div>
                   <div>
@@ -2797,7 +2797,7 @@ export default function ItineraryTab() {
                       onClick={() => setSelectedDay(day)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black transition-all shrink-0 cursor-pointer ${
                         isCurrent
-                          ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md shadow-pink-500/25 scale-105 border border-pink-300/40"
+                          ? "bg-gradient-to-r from-pink-700 to-rose-700 text-white shadow-md shadow-pink-500/25 scale-105 border border-pink-300/40"
                           : isPast
                           ? "bg-white/15 text-purple-200 hover:bg-white/25 border border-white/10"
                           : "bg-white/5 text-slate-400 hover:bg-white/10 border border-white/5"
@@ -2971,7 +2971,7 @@ export default function ItineraryTab() {
                       <GlassCard className="!p-6 !rounded-[32px] border border-white/80 shadow-xl overflow-hidden">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                           <div className="flex items-center gap-5">
-                            <div className="w-16 h-16 rounded-[22px] bg-gradient-to-tr from-pink-500 to-fuchsia-600 flex items-center justify-center text-white shadow-lg shadow-pink-200">
+                            <div className="w-16 h-16 rounded-[22px] bg-gradient-to-tr from-pink-600 to-fuchsia-600 flex items-center justify-center text-white shadow-lg shadow-pink-200">
                               <Sparkles size={28} />
                             </div>
                             <div>
@@ -3384,7 +3384,7 @@ export default function ItineraryTab() {
                                   onClick={() => void handleAiSuggest()}
                                   disabled={aiLoading}
                                   aria-busy={aiLoading}
-                                  className="w-full py-5 px-4 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 ios-press transition-all whitespace-nowrap overflow-hidden text-ellipsis"
+                                  className="w-full py-5 px-4 rounded-full bg-gradient-to-r from-pink-700 via-fuchsia-600 to-indigo-700 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 ios-press transition-all whitespace-nowrap overflow-hidden text-ellipsis"
                                 >
                                   <span className="shrink-0">
                                     {aiLoading ? (
@@ -3550,7 +3550,7 @@ export default function ItineraryTab() {
             onClick={handleInviteCollaborators}
             className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl ios-press transition-all shadow-indigo-200/50"
           >
-            <div className="bg-gradient-to-tr from-indigo-500 to-sky-500 w-12 h-12 rounded-full flex items-center justify-center shadow-inner text-white relative">
+            <div className="bg-gradient-to-tr from-indigo-600 to-sky-600 w-12 h-12 rounded-full flex items-center justify-center shadow-inner text-white relative">
               <UserPlus size={22} className="drop-shadow-sm" />
             </div>
           </button>
@@ -3566,7 +3566,7 @@ export default function ItineraryTab() {
               <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center shadow-inner text-fuchsia-500 relative">
                 <div className="absolute inset-0 bg-fuchsia-500/10 rounded-full" />
                 <Bookmark size={22} className="drop-shadow-sm" />
-                <span className="absolute -top-1 -right-1 bg-fuchsia-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                <span className="absolute -top-1 -right-1 bg-fuchsia-700 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                   {favorites.length}
                 </span>
               </div>
@@ -3772,7 +3772,7 @@ export default function ItineraryTab() {
                       setContextualLoginPrompt({ show: false, itemName: '' });
                       window.dispatchEvent(new CustomEvent('request-login'));
                     }}
-                    className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 shadow-md shadow-indigo-200 text-white font-bold text-[15px] transition-all ios-press"
+                    className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-sky-700 to-indigo-700 hover:from-sky-800 hover:to-indigo-800 shadow-md shadow-indigo-200 text-white font-bold text-[15px] transition-all ios-press"
                   >
                     {t('str_4ed4b27a')}</button>
                   <button
@@ -3834,7 +3834,7 @@ export default function ItineraryTab() {
                       setShowInviteModal(false);
                       window.dispatchEvent(new CustomEvent('request-login'));
                     }}
-                    className="w-full h-12 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-[20px] font-black tracking-widest text-[13px] uppercase shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5 transition-all ios-press flex items-center justify-center gap-2"
+                    className="w-full h-12 bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-800 hover:to-purple-800 text-white rounded-[20px] font-black tracking-widest text-[13px] uppercase shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5 transition-all ios-press flex items-center justify-center gap-2"
                   >
                     <span>{t('str_239a6e5f')}</span>
                     <Sparkles size={14} className="opacity-70" />

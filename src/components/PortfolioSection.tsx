@@ -43,7 +43,7 @@ export default function PortfolioSection() {
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex flex-col p-5 bg-white/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-[28px] hover:shadow-xl hover:bg-white dark:hover:bg-slate-800 hover:border-sky-300 transition-all duration-300 backdrop-blur-md relative overflow-hidden"
+            className="group flex flex-col p-5 bg-white/60 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-[28px] hover:shadow-xl hover:bg-white dark:hover:bg-slate-900 hover:border-sky-300 transition-all duration-300 backdrop-blur-md relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-sky-200/20 dark:bg-sky-900/20 rounded-bl-[100px] -z-10 transition-transform duration-500 group-hover:scale-110"></div>
             

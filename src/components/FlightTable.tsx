@@ -202,7 +202,7 @@ export default function FlightTable({
                       e.stopPropagation();
                       onImportToTrip(e, flight);
                     }}
-                    className="h-8 px-4 rounded bg-sky-500 text-white font-bold text-xs hover:bg-sky-600 transition-colors shadow-sm"
+                    className="h-8 px-4 rounded bg-sky-700 text-white font-bold text-xs hover:bg-sky-800 transition-colors shadow-sm"
                   >
                     {t('str_11d25e')}</button>
                 </div>

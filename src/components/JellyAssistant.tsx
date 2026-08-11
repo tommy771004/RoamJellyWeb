@@ -328,7 +328,7 @@ export default function JellyAssistant() {
                     setIsOpen(false);
                     window.dispatchEvent(new CustomEvent('open-login'));
                   }}
-                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-sky-500 via-fuchsia-500 to-orange-400 text-white font-black text-[13.5px] shadow-[0_8px_20px_rgba(14,165,233,0.25)] hover:shadow-[0_10px_24px_rgba(14,165,233,0.35)] ios-press transition-all outline-none focus:ring-2 focus:ring-fuchsia-400"
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-sky-700 via-fuchsia-500 to-orange-700 text-white font-black text-[13.5px] shadow-[0_8px_20px_rgba(14,165,233,0.25)] hover:shadow-[0_10px_24px_rgba(14,165,233,0.35)] ios-press transition-all outline-none focus:ring-2 focus:ring-fuchsia-400"
                 >
                   {t('str_4b99fd4e')}</button>
               </div>
@@ -345,7 +345,7 @@ export default function JellyAssistant() {
                       <div className={`max-w-[85%] flex flex-col gap-2 ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
                         <div className={`rounded-[22px] px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.03)] ${
                           message.role === 'user'
-                            ? 'rounded-tr-sm bg-gradient-to-br from-sky-500 to-orange-400 text-white shadow-[0_8px_20px_rgba(14,165,233,0.18)]'
+                            ? 'rounded-tr-sm bg-gradient-to-br from-sky-600 to-orange-600 text-white shadow-[0_8px_20px_rgba(14,165,233,0.18)]'
                             : 'rounded-tl-sm border border-white/60 bg-white/94 text-slate-800 dark:border-white/5 dark:bg-white/10 dark:text-white'
                         }`}>
                           <p className="text-[14px] font-semibold leading-[1.62] tracking-normal whitespace-pre-wrap">{message.text}</p>
@@ -410,7 +410,7 @@ export default function JellyAssistant() {
                               <button
                                 onClick={() => handleImportPackingList(message.packingList || [], message.id)}
                                 disabled={isSyncing[message.id]}
-                                className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-orange-600 hover:bg-orange-700 ios-press py-2.5 text-[12.5px] font-black text-white shadow-md shadow-orange-600/14 transition-all disabled:opacity-50"
+                                className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-orange-700 hover:bg-orange-800 ios-press py-2.5 text-[12.5px] font-black text-white shadow-md shadow-orange-700/14 transition-all disabled:opacity-50"
                               >
                                 {isSyncing[message.id] ? (
                                   <Loader2 size={15} className="animate-spin" />
