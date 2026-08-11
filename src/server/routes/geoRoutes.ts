@@ -59,31 +59,132 @@ export function registerGeoRoutes(app: Express, deps: GeoRoutesDeps): void {
 
   app.get('/api/spots/enrich', async (req, res) => {
     const name = String(req.query.name ?? '').trim();
-    if (!name) { res.json({}); return; }
+    if (!name) { res.json({ candidates: [] }); return; }
 
-    // Check if the query contains Chinese characters to prioritize Traditional/Simplified Chinese Wikipedia
     const containsChinese = /[一-龥]/.test(name);
     const wikis = containsChinese ? ['zh', 'en'] : ['en', 'zh'];
+    const headers = { 'User-Agent': 'RoamJelly/1.0 (https://roamjelly.com)' };
+
+    let description: string | null = null;
+    let wikiUrl: string | null = null;
+    let primaryThumbnail: string | null = null;
+    const candidates: Array<{ url: string; title: string; source: string; description?: string }> = [];
 
     for (const lang of wikis) {
       try {
-        const wikiRes = await fetch(
-          `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`
-        );
-        if (wikiRes.ok) {
-          const data: any = await wikiRes.json();
-          if (data.thumbnail?.source || data.extract) {
-            res.json({
-              description: data.extract ? String(data.extract).slice(0, 220) : null,
-              wiki_url: data.content_urls?.desktop?.page ?? null,
-              thumbnail: data.thumbnail?.source ?? null,
+        // 1. Direct page summary lookup
+        const sumRes = await fetch(
+          `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`,
+          { headers, signal: AbortSignal.timeout(4000) }
+        ).catch(() => null);
+
+        if (sumRes && sumRes.ok) {
+          const data: any = await sumRes.json();
+          if (data.extract) description = String(data.extract).slice(0, 220);
+          if (data.content_urls?.desktop?.page) wikiUrl = data.content_urls.desktop.page;
+          if (data.thumbnail?.source && !data.thumbnail.source.toLowerCase().includes('.svg')) {
+            const highRes = data.thumbnail.source.replace(/\/\d+px-/, '/800px-');
+            primaryThumbnail = highRes;
+            candidates.push({
+              url: highRes,
+              title: data.title || name,
+              source: `維基百科 (${lang.toUpperCase()})`,
+              description: data.description || (data.extract ? String(data.extract).slice(0, 80) : undefined),
             });
-            return;
+          }
+        }
+
+        // 2. Wikipedia Search API for candidates
+        const searchUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(name)}&utf8=1&format=json`;
+        const searchRes = await fetch(searchUrl, { headers, signal: AbortSignal.timeout(4000) }).catch(() => null);
+
+        if (searchRes && searchRes.ok) {
+          const searchData: any = await searchRes.json();
+          const results = searchData?.query?.search || [];
+          for (const item of results.slice(0, 4)) {
+            if (candidates.some((c) => c.title === item.title)) continue;
+            try {
+              const itemSumRes = await fetch(
+                `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(item.title)}`,
+                { headers, signal: AbortSignal.timeout(3000) }
+              ).catch(() => null);
+
+              if (itemSumRes && itemSumRes.ok) {
+                const itemData: any = await itemSumRes.json();
+                if (itemData.thumbnail?.source && !itemData.thumbnail.source.toLowerCase().includes('.svg')) {
+                  const highRes = itemData.thumbnail.source.replace(/\/\d+px-/, '/800px-');
+                  if (!primaryThumbnail) primaryThumbnail = highRes;
+                  if (!description && itemData.extract) description = String(itemData.extract).slice(0, 220);
+                  if (!wikiUrl && itemData.content_urls?.desktop?.page) wikiUrl = itemData.content_urls.desktop.page;
+
+                  candidates.push({
+                    url: highRes,
+                    title: itemData.title || item.title,
+                    source: `維基百科 (${lang.toUpperCase()})`,
+                    description: itemData.description || (itemData.extract ? String(itemData.extract).slice(0, 80) : undefined),
+                  });
+                }
+              }
+            } catch { /* ignore individual item errors */ }
           }
         }
       } catch { /* try next language on failure */ }
+      if (candidates.length >= 3) break;
     }
-    res.json({});
+
+    res.json({
+      description,
+      wiki_url: wikiUrl,
+      thumbnail: primaryThumbnail || (candidates[0] ? candidates[0].url : null),
+      candidates,
+    });
+  });
+
+  app.get('/api/spots/image-search', async (req, res) => {
+    const query = String(req.query.query ?? '').trim();
+    if (!query) { res.json({ candidates: [] }); return; }
+
+    const containsChinese = /[一-龥]/.test(query);
+    const wikis = containsChinese ? ['zh', 'en'] : ['en', 'zh'];
+    const headers = { 'User-Agent': 'RoamJelly/1.0 (https://roamjelly.com)' };
+    const candidates: Array<{ url: string; title: string; source: string; description?: string }> = [];
+
+    for (const lang of wikis) {
+      try {
+        const searchUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&utf8=1&format=json`;
+        const searchRes = await fetch(searchUrl, { headers, signal: AbortSignal.timeout(4000) }).catch(() => null);
+
+        if (searchRes && searchRes.ok) {
+          const searchData: any = await searchRes.json();
+          const results = searchData?.query?.search || [];
+          for (const item of results.slice(0, 6)) {
+            if (candidates.some((c) => c.title === item.title)) continue;
+            try {
+              const itemSumRes = await fetch(
+                `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(item.title)}`,
+                { headers, signal: AbortSignal.timeout(3000) }
+              ).catch(() => null);
+
+              if (itemSumRes && itemSumRes.ok) {
+                const itemData: any = await itemSumRes.json();
+                if (itemData.thumbnail?.source && !itemData.thumbnail.source.toLowerCase().includes('.svg')) {
+                  const highRes = itemData.thumbnail.source.replace(/\/\d+px-/, '/800px-');
+                  candidates.push({
+                    url: highRes,
+                    title: itemData.title || item.title,
+                    source: `維基百科 (${lang.toUpperCase()})`,
+                    description: itemData.description || (itemData.extract ? String(itemData.extract).slice(0, 80) : undefined),
+                  });
+                }
+              }
+            } catch { /* ignore */ }
+          }
+        }
+      } catch { /* ignore */ }
+      if (candidates.length >= 5) break;
+    }
+
+    res.json({ candidates });
   });
 
   app.get('/api/weather', async (req, res) => {
