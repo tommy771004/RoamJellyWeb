@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Navigation2, AlertTriangle } from "lucide-react";
 import { ItineraryNode } from "../../types/workflow";
-import { haversineKm, estimateTransport, formatMinutes } from "../../lib/geoUtils";
+import { haversineKm, estimateTransport, formatMinutes, checkUnrealisticTravelTime, UnrealisticTravelCheckResult } from "../../lib/geoUtils";
 import { fetchDirections } from "../../lib/workflowApi";
 import { sortNodesForDisplay } from "../../lib/itineraryUtils";
 import { extractMinutes } from "../../lib/itineraryText";
@@ -28,6 +28,24 @@ export default function SelectedNodeTransportDetails({
     currentIndex !== -1 && currentIndex < dayNodes.length - 1
       ? dayNodes[currentIndex + 1]
       : null;
+
+  let timeGapMinutes = 0;
+  if (selectedNode.time && nextItem?.time) {
+    const parseTime = (t: string) => {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    };
+    const t1 = parseTime(selectedNode.time);
+    const t2 = parseTime(nextItem.time);
+    if (t2 > t1) {
+      timeGapMinutes = t2 - t1;
+    }
+  }
+
+  const unrealisticCheck: UnrealisticTravelCheckResult = nextItem
+    ? checkUnrealisticTravelTime(selectedNode, nextItem, timeGapMinutes)
+    : { isUnrealistic: false, distanceKm: 0, estimatedMinutes: 0 };
+
 
   const km =
     selectedNode.lat && selectedNode.lng && nextItem?.lat && nextItem?.lng
@@ -89,24 +107,12 @@ export default function SelectedNodeTransportDetails({
     return null;
   })();
 
-  let timeGapMinutes = 0;
-  if (selectedNode.time && nextItem?.time) {
-    const parseTime = (t: string) => {
-      const [h, m] = t.split(":").map(Number);
-      return h * 60 + m;
-    };
-    const t1 = parseTime(selectedNode.time);
-    const t2 = parseTime(nextItem.time);
-    if (t2 > t1) {
-      timeGapMinutes = t2 - t1;
-    }
-  }
-
   const hasTransitConflict = Boolean(
     (displayTransport &&
       timeGapMinutes > 0 &&
       displayTransport.minutes > timeGapMinutes) ||
-    (displayTransport && displayTransport.minutes > 90 && !displayTransport.isFlight),
+    (displayTransport && displayTransport.minutes > 90 && !displayTransport.isFlight) ||
+    unrealisticCheck.isUnrealistic
   );
 
   if (!displayTransport) return null;
@@ -154,7 +160,18 @@ export default function SelectedNodeTransportDetails({
             )}
           </span>
 
-          {hasTransitConflict && (
+          {unrealisticCheck.isUnrealistic && unrealisticCheck.message ? (
+            <div className="mt-2 text-[11px] font-bold text-red-700 bg-red-100/50 p-2.5 rounded-2xl flex items-start gap-2 shadow-sm border border-red-100">
+              <AlertTriangle
+                size={15}
+                className="shrink-0 mt-0.5"
+                strokeWidth={2.5}
+              />
+              <span className="leading-relaxed">
+                {unrealisticCheck.message}
+              </span>
+            </div>
+          ) : hasTransitConflict && (
             <div className="mt-2 text-[11px] font-bold text-red-700 bg-red-100/50 p-2.5 rounded-2xl flex items-start gap-2 shadow-sm border border-red-100">
               <AlertTriangle
                 size={15}
@@ -179,3 +196,4 @@ export default function SelectedNodeTransportDetails({
     </div>
   );
 }
+
