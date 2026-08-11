@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Clock } from "lucide-react";
+import { Clock, AlertTriangle } from "lucide-react";
 import type { ItineraryNode } from "../../types/workflow";
-import { haversineKm, estimateTransport, formatMinutes } from "../../lib/geoUtils";
+import { haversineKm, estimateTransport, formatMinutes, checkUnrealisticTravelTime } from "../../lib/geoUtils";
 import { extractMinutes } from "../../lib/itineraryText";
 import { fetchDirections } from "../../lib/workflowApi";
 
@@ -17,6 +17,8 @@ export default function TransportGapIndicator({
   timeGapStr: string;
 }) {
   const [apiDuration, setApiDuration] = useState<number | null>(null);
+
+  const unrealisticCheck = checkUnrealisticTravelTime(item, nextItem, timeGapMinutes);
 
   const km =
     item.lat && item.lng && nextItem.lat && nextItem.lng
@@ -84,13 +86,13 @@ export default function TransportGapIndicator({
     displayTransport.minutes > timeGapMinutes,
   );
   const isTooLong = Boolean(displayTransport && displayTransport.minutes > 90 && !displayTransport.isFlight);
-  const hasWarning = hasTransitConflict || isTooLong;
-  const showBadge = timeGapStr || displayTransport;
+  const hasWarning = hasTransitConflict || isTooLong || unrealisticCheck.isUnrealistic;
+  const showBadge = timeGapStr || displayTransport || unrealisticCheck.isUnrealistic;
 
   return showBadge ? (
     <div className="flex justify-start sm:pl-[70px] pl-[50px] lg:pl-[80px] my-2 relative z-0">
       <div className="w-[3px] min-h-[2rem] sm:min-h-[2.5rem] bg-gradient-to-b from-slate-200 to-slate-200" />
-      <div className="flex flex-col justify-center ml-4 sm:ml-5 -mt-2 sm:-mt-1">
+      <div className="flex flex-col justify-center ml-4 sm:ml-5 -mt-2 sm:-mt-1 gap-1.5">
         <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
           {timeGapStr && (
             <span className="px-3.5 py-1.5 bg-white rounded-full text-[11px] sm:text-xs font-black text-slate-500 uppercase tracking-widest border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 transition-transform hover:scale-105">
@@ -111,19 +113,39 @@ export default function TransportGapIndicator({
               )}
             </span>
           )}
-          {hasTransitConflict && (
+          {unrealisticCheck.isUnrealistic && (
+            <span
+              className={`px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-black uppercase tracking-widest border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2 ${
+                unrealisticCheck.severity === 'error'
+                  ? "bg-rose-500 text-white border-rose-600 animate-bounce"
+                  : "bg-amber-500 text-white border-amber-600"
+              }`}
+            >
+              <AlertTriangle size={13} className="shrink-0" />
+              <span>不合理交通警告</span>
+            </span>
+          )}
+          {!unrealisticCheck.isUnrealistic && hasTransitConflict && (
             <span className="px-3.5 py-1.5 bg-amber-50/90 rounded-full text-[11px] sm:text-xs font-black text-amber-600 uppercase tracking-widest border border-amber-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2">
               <span>⚠️</span>
               行程太緊湊
             </span>
           )}
-          {isTooLong && !hasTransitConflict && (
+          {!unrealisticCheck.isUnrealistic && isTooLong && !hasTransitConflict && (
             <span className="px-3.5 py-1.5 bg-rose-50/90 rounded-full text-[11px] sm:text-xs font-black text-rose-500 uppercase tracking-widest border border-rose-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2">
               <span>🚨</span>
               交通時間過長
             </span>
           )}
         </div>
+
+        {/* Detailed warning message if unrealistic */}
+        {unrealisticCheck.isUnrealistic && unrealisticCheck.message && (
+          <div className="text-[11px] font-bold text-rose-800 dark:text-rose-200 bg-rose-50/90 dark:bg-rose-900/40 border border-rose-200/80 dark:border-rose-800/60 p-2.5 rounded-2xl flex items-start gap-2 shadow-xs max-w-md">
+            <AlertTriangle size={14} className="text-rose-500 shrink-0 mt-0.5" />
+            <span>{unrealisticCheck.message}</span>
+          </div>
+        )}
       </div>
     </div>
   ) : (
@@ -132,3 +154,4 @@ export default function TransportGapIndicator({
     </div>
   );
 }
+
