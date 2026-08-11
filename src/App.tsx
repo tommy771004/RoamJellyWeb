@@ -1,5 +1,5 @@
-import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY, SPRING_MODAL, getTabVariants } from './lib/motionTokens';
-import { useState, useEffect, useCallback, useRef, lazy, Suspense, type ComponentType } from 'react';
+import { SPRING_SNAPPY, SPRING_MODAL } from './lib/motionTokens';
+import { useState, useEffect, useRef, lazy, Suspense, type ComponentType } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 const HomeTab = lazy(() => import('./components/HomeTab'));
 import RedirectModal from './components/RedirectModal';
