@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from "motion/react";
 import {
   Bell,
@@ -29,6 +28,7 @@ import {
   Eye,
   AlertCircle,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import GlassCard from "./GlassCard";
 import EditorialSectionIntro from "./EditorialSectionIntro";
@@ -40,6 +40,7 @@ import {
   SearchServiceUnavailableError,
   SearchTimeoutError,
   fetchHandbooks,
+  fetchUserTrips,
   getDealsFeed,
   getDestinationAlerts,
   createTripFact,
@@ -283,6 +284,7 @@ export default function HomeTab({
     showToast,
     setActiveTab,
     activeTripId,
+    setActiveTripId,
   } = useAppStore();
 
   const [dateError, setDateError] = useState<string | null>(null);
@@ -342,6 +344,39 @@ export default function HomeTab({
     }
     loadNews();
   }, []);
+
+  const [myTrips, setMyTrips] = useState<any[]>([]);
+  const [tripSearchQuery, setTripSearchQuery] = useState("");
+  const [loadingTrips, setLoadingTrips] = useState(false);
+
+  const loadUserTrips = async () => {
+    setLoadingTrips(true);
+    try {
+      const fetched = await fetchUserTrips();
+      if (Array.isArray(fetched)) {
+        setMyTrips(fetched);
+      }
+    } catch (err) {
+      console.error("Failed to load user trips:", err);
+    } finally {
+      setLoadingTrips(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUserTrips();
+  }, [isLoggedIn, activeTripId]);
+
+  const filteredMyTrips = useMemo(() => {
+    if (!tripSearchQuery.trim()) return myTrips;
+    const q = tripSearchQuery.trim().toLowerCase();
+    return myTrips.filter((t) => {
+      const name = (t.name || "").toLowerCase();
+      const dest = (t.destination || "").toLowerCase();
+      const id = (t.tripId || t.id || "").toLowerCase();
+      return name.includes(q) || dest.includes(q) || id.includes(q);
+    });
+  }, [myTrips, tripSearchQuery]);
   const [searchProgress, setSearchProgress] = useState(0);
   const [progressMsgIdx, setProgressMsgIdx] = useState(0);
   const prefersReducedMotion = useReducedMotion() ?? false;
@@ -2869,6 +2904,130 @@ export default function HomeTab({
               )}
             </div>
           </div>
+
+          {/* 搜尋現有行程 (Search Existing Trips) Section */}
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-12 px-2">
+            <div className="p-6 md:p-8 rounded-[36px] bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-indigo-950/90 text-white shadow-2xl backdrop-blur-xl border border-white/10 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="text-pink-400" size={20} />
+                    <span className="text-[11px] font-black tracking-[0.2em] uppercase text-pink-300">
+                      TRIP PLANNER SEARCH
+                    </span>
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white font-heading">
+                    搜尋並快速切換行程
+                  </h2>
+                  <p className="text-xs md:text-sm text-slate-300 font-bold mt-1">
+                    輸入行程名稱、目的地或關鍵字，即時搜尋並切換旅程計畫
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-[11px] font-black text-slate-200 shadow-sm">
+                    共 {myTrips.length} 個已建立行程
+                  </span>
+                </div>
+              </div>
+
+              {/* Search Bar Input */}
+              <div className="relative z-10 mb-6">
+                <div className="relative flex items-center">
+                  <SearchIcon size={18} className="absolute left-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={tripSearchQuery}
+                    onChange={(e) => setTripSearchQuery(e.target.value)}
+                    placeholder="搜尋我的行程（例如：東京5日遊、大阪賞楓、京都古都...）"
+                    className="w-full pl-11 pr-10 py-3.5 bg-white/10 hover:bg-white/15 focus:bg-white/20 border border-white/20 rounded-2xl text-white placeholder-slate-400 text-sm font-bold outline-none transition-all shadow-inner"
+                  />
+                  {tripSearchQuery && (
+                    <button
+                      onClick={() => setTripSearchQuery("")}
+                      className="absolute right-3 p-1 rounded-full bg-white/10 text-slate-300 hover:text-white hover:bg-white/20 transition-all text-xs"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Trips Grid / List */}
+              <div className="relative z-10">
+                {loadingTrips ? (
+                  <div className="flex items-center justify-center py-8 text-slate-400 text-sm font-bold gap-2">
+                    <Loader2 className="animate-spin text-pink-400" size={18} />
+                    載入行程列表中...
+                  </div>
+                ) : filteredMyTrips.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    {filteredMyTrips.slice(0, 6).map((trip) => {
+                      const isCurrent = activeTripId === (trip.tripId || trip.id);
+                      return (
+                        <div
+                          key={trip.tripId || trip.id}
+                          onClick={() => {
+                            const targetId = trip.tripId || trip.id;
+                            setActiveTripId(targetId);
+                            setActiveTab("itinerary");
+                            showToast(`✨ 已切換至行程：「${trip.name || trip.destination || '客製化行程'}」`, "success");
+                          }}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between gap-3 ${
+                            isCurrent
+                              ? "bg-pink-500/20 border-pink-400/60 shadow-lg shadow-pink-500/10"
+                              : "bg-white/5 hover:bg-white/12 border-white/10 hover:border-white/25"
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-pink-300 px-2 py-0.5 rounded-full bg-pink-500/20 border border-pink-400/30 truncate max-w-[130px]">
+                                📍 {trip.destination || "自訂景點"}
+                              </span>
+                              {isCurrent && (
+                                <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30">
+                                  目前開啟中
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="text-base font-black text-white group-hover:text-pink-200 transition-colors line-clamp-1">
+                              {trip.name || trip.destination || "未命名行程"}
+                            </h3>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs font-bold text-slate-300 pt-2 border-t border-white/10">
+                            <span className="text-[11px] text-slate-400 font-mono">
+                              ID: {(trip.tripId || trip.id || "").slice(0, 8)}...
+                            </span>
+                            <span className="flex items-center gap-1 text-pink-400 group-hover:translate-x-1 transition-transform font-black">
+                              進入行程 <ArrowRight size={13} />
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-300 bg-white/5 rounded-2xl border border-white/10 p-4">
+                    <p className="font-bold text-sm">
+                      {tripSearchQuery ? `找不到符合「${tripSearchQuery}」的行程` : "您目前尚未建立任何行程"}
+                    </p>
+                    <button
+                      onClick={() => {
+                        setActiveTab("itinerary");
+                      }}
+                      className="mt-3 px-5 py-2 bg-gradient-to-r from-pink-500 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 text-white rounded-full font-black text-xs shadow-md transition-all ios-press"
+                    >
+                      前往行程分頁建立新旅程
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </HomeTabContentFocusBlock>
 
           {communityTrips.length > 0 && (
             <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2">
