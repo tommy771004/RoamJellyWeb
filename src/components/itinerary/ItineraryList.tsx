@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
-import { Calendar, CheckCircle2, Clock, ExternalLink, GripVertical, Instagram, Link, Loader2, MapPin, Navigation2, Pencil, Plane, RefreshCw, Trash2, X, ZoomIn } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, ExternalLink, GripVertical, Image as ImageIcon, Instagram, Link, Loader2, MapPin, Navigation2, Pencil, Plane, RefreshCw, Sparkles, Trash2, X, ZoomIn } from "lucide-react";
 import type { ItineraryNode, ItineraryAttachment, FavoriteSpot } from "../../types/workflow";
 import { useTypewriter } from "../../lib/useTypewriter";
 import GlassCard from "../GlassCard";
@@ -11,6 +11,7 @@ import { WikiPreviewCard } from "../WikiPreviewCard";
 import CollapsibleNotes from "./CollapsibleNotes";
 import TransportGapIndicator from "./TransportGapIndicator";
 import ManualAddNode from "./ManualAddNode";
+import SpotImageSearchModal from "./SpotImageSearchModal";
 import { CATEGORY_META, CATEGORY_OPTIONS, EMOJI_OPTIONS, getCategoryMeta, getNodeEmoji, getDateForDay, getDayForDate, buildTimestampFromDateTime } from "../../lib/itineraryUtils";
 import { normalizeClockInput } from "../../lib/itineraryText";
 import { getFlightRouteSummary } from "../../lib/flightFormat";
@@ -102,6 +103,7 @@ const ItineraryListItem = React.memo(
     );
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showImageSearchModal, setShowImageSearchModal] = useState(false);
 
     const facts = useTripFactsStore((s) => s.facts);
     const linkedFact = item.linkedFactId
@@ -703,36 +705,71 @@ const ItineraryListItem = React.memo(
                 )}
               </div>
 
-              {item.image_url && (
-                <button
-                  type="button"
-                  aria-label={`放大查看 ${item.title} 圖片`}
-                  className="p-0 w-full h-20 sm:h-28 md:h-36 mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md bg-slate-100 group/img relative cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPreviewImage && onPreviewImage(item.image_url!);
-                  }}
-                >
-                  <img
-                    src={item.image_url}
-                    alt={item.title}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).onerror = null;
-                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+              {item.image_url ? (
+                <div className="relative mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md group/img bg-slate-100 dark:bg-slate-800">
+                  <button
+                    type="button"
+                    aria-label={`放大查看 ${item.title} 圖片`}
+                    className="p-0 w-full h-24 sm:h-32 md:h-40 relative cursor-pointer block text-left"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPreviewImage && onPreviewImage(item.image_url!);
                     }}
-                    className="w-full h-full object-cover rounded-[12px] sm:rounded-[16px] group-hover:scale-105 transition-transform duration-1000 transform-gpu"
-                    loading="lazy"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <ZoomIn
-                      className="text-white drop-shadow-md"
-                      size={32}
-                      strokeWidth={1.5}
+                  >
+                    <img
+                      src={item.image_url}
+                      alt={item.title}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).onerror = null;
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                      }}
+                      className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700 transform-gpu"
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                     />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <ZoomIn
+                        className="text-white drop-shadow-md"
+                        size={28}
+                        strokeWidth={2}
+                      />
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!collaboratingLock) setShowImageSearchModal(true);
+                    }}
+                    disabled={Boolean(collaboratingLock)}
+                    className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-slate-900/80 hover:bg-slate-900 backdrop-blur-md text-white text-[10px] font-black tracking-wide flex items-center gap-1 shadow-md transition-all hover:scale-105 active:scale-95 z-10 disabled:opacity-40"
+                    title="檢索/更換景點代表圖"
+                  >
+                    <Sparkles size={11} className="text-amber-300 animate-pulse" />
+                    <span>更換美照</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-2 sm:p-2.5 mb-2 sm:mb-2.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-900/40 border border-dashed border-slate-200/90 dark:border-white/10 text-xs">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon size={14} className="text-slate-400" />
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">尚未設定景點美照</span>
                   </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!collaboratingLock) setShowImageSearchModal(true);
+                    }}
+                    disabled={Boolean(collaboratingLock)}
+                    className="px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 text-[10px] font-black flex items-center gap-1 transition-all shadow-2xs hover:scale-105 active:scale-95 disabled:opacity-40"
+                    title="根據景點名稱自動搜尋美照"
+                  >
+                    <Sparkles size={11} className="text-indigo-500 animate-pulse" />
+                    <span>檢索代表美照</span>
+                  </button>
+                </div>
               )}
 
               {item.attachments && item.attachments.length > 0 && (
@@ -989,6 +1026,28 @@ const ItineraryListItem = React.memo(
                       </div>
                       <div className="flex flex-col gap-2">
                         <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
+                          景點代表圖網址 (Image URL)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editImageUrl}
+                            onChange={(e) => setEditImageUrl(e.target.value)}
+                            placeholder="https://images.unsplash.com/..."
+                            className="outline-none flex-1 text-xs font-mono text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-2xl px-4 py-2.5 hover:bg-white/80 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-pink-500/30 transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowImageSearchModal(true)}
+                            className="px-3.5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm transition-all"
+                          >
+                            <Sparkles size={13} />
+                            <span>搜尋圖片</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
                           詳細說明 / 備註 (Description)
                         </label>
                         <textarea
@@ -1110,6 +1169,21 @@ const ItineraryListItem = React.memo(
             </AnimatePresence>,
             document.body,
           )}
+
+        <SpotImageSearchModal
+          isOpen={showImageSearchModal}
+          onClose={() => setShowImageSearchModal(false)}
+          initialQuery={item.title}
+          currentImageUrl={item.image_url}
+          onSelectImage={(selectedUrl) => {
+            setEditImageUrl(selectedUrl);
+            onUpdate({
+              ...item,
+              image_url: selectedUrl,
+            });
+            useAppStore.getState().showToast(`✨ 已替換「${item.title}」的景點代表圖！`, "success");
+          }}
+        />
       </div>
     );
   },
@@ -1287,6 +1361,34 @@ export default function ItineraryList({
   const [isFavoriteDragOver, setIsFavoriteDragOver] = useState(false);
   const [manualAddTrigger, setManualAddTrigger] = useState(0);
   const [aiQuoteIndex, setAiQuoteIndex] = useState(0);
+  const [batchImageFetching, setBatchImageFetching] = useState(false);
+
+  const handleBatchFetchSpotImages = async () => {
+    if (batchImageFetching || !items || items.length === 0) return;
+    setBatchImageFetching(true);
+    useAppStore.getState().showToast("🔍 正在檢索並自動補全今日景點美照...", "info");
+
+    let fetchedCount = 0;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.image_url && item.title) {
+        try {
+          const res = await fetchSpotEnrichment(item.title);
+          if (res.thumbnail) {
+            onUpdate({ ...item, image_url: res.thumbnail });
+            fetchedCount++;
+          }
+        } catch { /* ignore */ }
+      }
+    }
+
+    setBatchImageFetching(false);
+    if (fetchedCount > 0) {
+      useAppStore.getState().showToast(`✨ 成功補全 ${fetchedCount} 個景點的代表美照！`, "success");
+    } else {
+      useAppStore.getState().showToast("今日景點已全數擁有代表圖或未找到新圖像", "info");
+    }
+  };
   const { displayed: aiQuoteDisplayed, done: aiQuoteDone } = useTypewriter(
     AI_LOADING_QUOTES[aiQuoteIndex],
     40,
@@ -1432,18 +1534,34 @@ export default function ItineraryList({
                   <span className="text-pink-500">第 {day} 天</span>
                 </div>
               )}
-              {onOptimizeRoute && items.length >= 2 && (
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
-                  onClick={onOptimizeRoute}
-                  disabled={isOffline}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-700 hover:to-indigo-700 text-white rounded-full shadow-md hover:shadow-lg text-[11px] font-black tracking-wide transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-                  title="智慧重排景點順序，減少不必要的來回奔波距離"
+                  onClick={handleBatchFetchSpotImages}
+                  disabled={isOffline || batchImageFetching || items.length === 0}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-slate-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-slate-200/80 dark:border-white/10 rounded-full shadow-2xs hover:shadow text-[11px] font-black tracking-wide transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                  title="為今日所有景點自動檢索並補全代表性景點美照"
                 >
-                  <Navigation2 size={13} className="rotate-45" />
-                  <span>一鍵最佳化路線</span>
+                  {batchImageFetching ? (
+                    <Loader2 size={13} className="animate-spin text-indigo-600" />
+                  ) : (
+                    <Sparkles size={13} className="text-indigo-500 animate-pulse" />
+                  )}
+                  <span>補全景點美照</span>
                 </button>
-              )}
+                {onOptimizeRoute && items.length >= 2 && (
+                  <button
+                    type="button"
+                    onClick={onOptimizeRoute}
+                    disabled={isOffline}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-700 hover:to-indigo-700 text-white rounded-full shadow-md hover:shadow-lg text-[11px] font-black tracking-wide transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                    title="智慧重排景點順序，減少不必要的來回奔波距離"
+                  >
+                    <Navigation2 size={13} className="rotate-45" />
+                    <span>一鍵最佳化路線</span>
+                  </button>
+                )}
+              </div>
             </div>
           );
         })()}
