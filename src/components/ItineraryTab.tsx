@@ -4,6 +4,7 @@ import React, {
   Suspense,
   lazy,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -125,6 +126,7 @@ import {
 } from "../lib/itineraryUtils";
 import { triggerHapticFeedback } from "../lib/haptics";
 import { parseCsvInput, normalizeClockInput, formatCurrentTime } from "../lib/itineraryText";
+import { useModalAccessibility } from "../lib/useModalAccessibility";
 import { buildIcsCalendar } from "../lib/icsExport";
 import { readCachedItinerary, writeCachedItineraryForLoadedDays, summarizeItineraryDiff, buildReconnectSummaryMessage } from "../lib/itinerarySync";
 import { extractFlightSegments } from "../lib/flightFormat";
@@ -190,15 +192,42 @@ import {
 } from "../lib/itineraryUtils";
 import { useTranslation } from "react-i18next";
 
+const VIEW_MODES = ["list", "map", "calendar"] as const;
+type ViewMode = (typeof VIEW_MODES)[number];
+
 export default function ItineraryTab() {
   const { t, i18n } = useTranslation();
   const prefersReducedMotion = useReducedMotion() ?? false;
-  const [viewMode, setViewMode] = useState<"list" | "map" | "calendar">("list");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const viewTabsId = useId().replace(/:/g, "");
+  const mobileFavoritesId = useId().replace(/:/g, "");
+  const mobileFavoritesTitleId = `mobile-favorites-${mobileFavoritesId}-title`;
+  const mobileFavoritesInputId = `mobile-favorites-${mobileFavoritesId}-input`;
+  const getViewTabId = (mode: ViewMode) => `itinerary-view-${viewTabsId}-${mode}-tab`;
+  const getViewPanelId = (mode: ViewMode) => `itinerary-view-${viewTabsId}-${mode}-panel`;
+  const handleViewModeKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, mode: ViewMode) => {
+    const currentIndex = VIEW_MODES.indexOf(mode);
+    const nextIndex = event.key === "ArrowRight"
+      ? (currentIndex + 1) % VIEW_MODES.length
+      : event.key === "ArrowLeft"
+        ? (currentIndex - 1 + VIEW_MODES.length) % VIEW_MODES.length
+        : event.key === "Home"
+          ? 0
+          : event.key === "End"
+            ? VIEW_MODES.length - 1
+            : -1;
+    if (nextIndex === -1) return;
+    event.preventDefault();
+    const nextMode = VIEW_MODES[nextIndex];
+    setViewMode(nextMode);
+    requestAnimationFrame(() => document.getElementById(getViewTabId(nextMode))?.focus());
+  };
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [tip, setTip] = useState("");
   const [aiLoading, setAiLoading] = useState<boolean>(false);
+  const [aiError, setAiError] = useState("");
   const [isSocketConnected, setIsSocketConnected] = useState<boolean>(false);
   const [localThemeGradient, setLocalThemeGradient] = useState<string | null>(null);
   const formatDuration = (minutes: number) => {
@@ -210,6 +239,12 @@ export default function ItineraryTab() {
         : t("itinerary_day.duration_hours_only", { hours })
       : t("itinerary_day.duration_minutes", { minutes: remainingMinutes });
   };
+  const itineraryDayDateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.language, { month: "short", day: "numeric" }),
+    [i18n.language],
+  );
+  const formatItineraryDayDate = (dateValue: string) =>
+    itineraryDayDateFormatter.format(new Date(`${dateValue}T12:00:00`));
 
   // Project List states
   const [userTrips, setUserTrips] = useState<any[]>([]);
@@ -240,6 +275,10 @@ export default function ItineraryTab() {
   const [isAiHeroExpanded, setIsAiHeroExpanded] = useState<boolean>(false);
   const [showMobileFavorites, setShowMobileFavorites] =
     useState<boolean>(false);
+  const mobileFavoritesSheetRef = useModalAccessibility(
+    () => setShowMobileFavorites(false),
+    showMobileFavorites,
+  );
   const [isFavoritesCollapsed, setIsFavoritesCollapsed] = useState<boolean>(false);
   const [draggingFavorite, setDraggingFavorite] = useState<FavoriteSpot | null>(
     null,
@@ -396,6 +435,7 @@ export default function ItineraryTab() {
 
   const handleAiFormSubmit = async (formData: AiFormData) => {
     if (!handleEditPermissionCheck()) return;
+    setAiError("");
     setAiLoading(true);
     showToast(t("generating_journey", { destination: formData.destination }));
     try {
@@ -579,6 +619,10 @@ export default function ItineraryTab() {
       setIsPlanningNew(false);
       useAppStore.getState().setActiveTab("ai_result");
     } catch (err) {
+      const message = err instanceof AiRateLimitedError
+        ? t("itinerary_feedback.ai_rate_limited")
+        : t("itinerary_feedback.ai_generation_failed");
+      setAiError(message);
       if (err instanceof AiRateLimitedError) {
         showToast(t("itinerary_feedback.ai_rate_limited"), "warning");
       } else {
@@ -1590,13 +1634,18 @@ export default function ItineraryTab() {
 
   const handleAiSuggest = async (modeOverride?: AiGenerateMode) => {
     if (isOffline) {
-      showToast("離線中無法使用 AI 功能 📴");
+      const message = t("itinerary_feedback.ai_offline");
+      setAiError(message);
+      showToast(message, "warning");
       return;
     }
     if (!activeTripId) {
-      showToast("缺少行程 ID，無法生成行程");
+      const message = t("itinerary_feedback.ai_trip_missing");
+      setAiError(message);
+      showToast(message, "warning");
       return;
     }
+    setAiError("");
     setAiLoading(true);
     try {
       const destination = tripInfo?.destination || "您的目的地";
@@ -1857,7 +1906,9 @@ export default function ItineraryTab() {
         );
       }
     } catch {
-      showToast("AI 規劃失敗，請確認 OpenRouter API Key 是否設定。");
+      const message = t("itinerary_feedback.ai_generation_failed");
+      setAiError(message);
+      showToast(message, "warning");
     } finally {
       setAiLoading(false);
     }
@@ -1878,7 +1929,11 @@ export default function ItineraryTab() {
               <ArrowLeft size={14} />
               {t('str_66f9470e')}</button>
             <div className="flex-1">
-              <AiForm onSubmit={handleAiFormSubmit} />
+              <AiForm
+                onSubmit={handleAiFormSubmit}
+                isSubmitting={aiLoading}
+                errorMessage={aiError}
+              />
             </div>
             {/* Mobile bottom nav spacer */}
             <div className="h-28 md:hidden shrink-0" aria-hidden="true" />
@@ -2426,22 +2481,44 @@ export default function ItineraryTab() {
               label={t('str_7f1df301')}
               className="flex-1 min-w-0"
               contentClassName="gap-1.5 md:gap-2 rounded-[24px] md:rounded-full border border-white/50 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 md:bg-white/70 md:dark:bg-slate-900/70 p-1.5 md:p-2 shadow-sm md:shadow-md backdrop-blur-xl dark-transition"
+              contentProps={{ role: "tablist", "aria-label": t("str_7f1df301") }}
               controlsVisibilityClass="flex"
               buttonClassName="border-white/30 dark:border-white/10 bg-white/20 dark:bg-slate-800/20 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white shadow-none hover:bg-white/40 dark:hover:bg-slate-700/40 backdrop-blur-sm size-11 ml-0.5 mr-0.5 flex"
             >
               <button
+                id={getViewTabId("list")}
+                type="button"
+                role="tab"
                 onClick={() => setViewMode("list")}
-                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "list" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md scale-[0.98] md:scale-100 border border-transparent" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
+                onKeyDown={(event) => handleViewModeKeyDown(event, "list")}
+                aria-selected={viewMode === "list"}
+                aria-controls={getViewPanelId("list")}
+                tabIndex={viewMode === "list" ? 0 : -1}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-semibold text-[13px] md:text-sm tracking-normal transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 ${viewMode === "list" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm border border-transparent" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
               >
                 {t('str_3fc9a0b0')}</button>
               <button
+                id={getViewTabId("map")}
+                type="button"
+                role="tab"
                 onClick={() => setViewMode("map")}
-                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "map" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md scale-[0.98] md:scale-100 border border-transparent" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
+                onKeyDown={(event) => handleViewModeKeyDown(event, "map")}
+                aria-selected={viewMode === "map"}
+                aria-controls={getViewPanelId("map")}
+                tabIndex={viewMode === "map" ? 0 : -1}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-semibold text-[13px] md:text-sm tracking-normal transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 ${viewMode === "map" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm border border-transparent" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
               >
                 {t('str_30ef9475')}</button>
               <button
+                id={getViewTabId("calendar")}
+                type="button"
+                role="tab"
                 onClick={() => setViewMode("calendar")}
-                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-black text-[13px] md:text-sm tracking-widest uppercase transition-all whitespace-nowrap ${viewMode === "calendar" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md scale-[0.98] md:scale-100 border border-transparent" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
+                onKeyDown={(event) => handleViewModeKeyDown(event, "calendar")}
+                aria-selected={viewMode === "calendar"}
+                aria-controls={getViewPanelId("calendar")}
+                tabIndex={viewMode === "calendar" ? 0 : -1}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-3 md:py-3.5 rounded-[18px] md:rounded-full font-semibold text-[13px] md:text-sm tracking-normal transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 ${viewMode === "calendar" ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm border border-transparent" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-800/80 border border-transparent"}`}
               >
                 {t('str_cd0c6')}</button>
             </HorizontalScrollRail>
@@ -2453,7 +2530,7 @@ export default function ItineraryTab() {
           <aside className="hidden lg:flex lg:col-span-1 flex-col gap-6 sticky top-24 h-fit max-h-sidebar-dvh overflow-y-auto pr-2 no-scrollbar">
             <GlassCard className="!p-6 glass-card dark-transition shadow-xl shadow-slate-200/40 dark:shadow-black/40 overflow-hidden rounded-[32px]">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
-                <h3 className="font-black text-[11px] xl:text-[11px] uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <h3 className="font-semibold text-sm tracking-normal text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <span>{t('str_30185cd5')}</span> <span className="text-sm">📅</span>
                 </h3>
                 <div className="w-7 h-7 xl:w-8 xl:h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0">
@@ -2470,10 +2547,7 @@ export default function ItineraryTab() {
                     const dateStr =
                       getDateForDay(day, tripInfo?.startDate) || "";
                     const displayDate = dateStr
-                      ? new Date(dateStr).toLocaleDateString("zh-TW", {
-                          month: "short",
-                          day: "numeric",
-                        })
+                      ? formatItineraryDayDate(dateStr)
                       : "";
 
                     return (
@@ -2504,11 +2578,11 @@ export default function ItineraryTab() {
                           )}
                         </span>
                         {displayDate && (
-                          <span className="text-[9px] xl:text-[11px] opacity-70 tracking-tighter truncate w-full text-center px-1 relative z-10 transition-colors">
+                          <span className="text-xs opacity-70 tracking-normal truncate w-full text-center px-1 relative z-10 transition-colors">
                             {displayDate}
                           </span>
                         )}
-                        <span className="text-[9px] xl:text-[11px] font-bold opacity-60 uppercase tracking-tighter truncate relative z-10 transition-colors">
+                        <span className="text-xs font-medium opacity-60 tracking-normal truncate relative z-10 transition-colors">
                           {count}{" "}
                           <span className="hidden xl:inline">SPOTS</span>
                           <span className="inline xl:hidden">{t('str_7ad9')}</span>
@@ -2521,7 +2595,7 @@ export default function ItineraryTab() {
               {totalDays > actualDaysLimit && (
                 <button
                   onClick={() => setVisibleDaysLimit((l) => l + 14)}
-                  className="w-full mt-4 py-2 border-2 border-dashed border-slate-200 rounded-3xl text-xs font-black tracking-widest text-slate-500 dark:text-slate-300 hover:text-slate-700 hover:border-slate-300 transition-colors uppercase"
+                  className="w-full mt-4 py-2 border-2 border-dashed border-slate-200 rounded-3xl text-sm font-semibold tracking-normal text-slate-500 dark:text-slate-300 hover:text-slate-700 hover:border-slate-300 transition-colors"
                 >
                   {t('str_6db9a2dd')}</button>
               )}
@@ -2530,11 +2604,11 @@ export default function ItineraryTab() {
             {/* Collaborators with presence */}
             <GlassCard className="!p-4 xl:!p-6 overflow-hidden">
               <div className="flex items-center justify-between mb-4 xl:mb-5 flex-wrap gap-2">
-                <span className="font-black text-[11px] xl:text-xs uppercase tracking-[0.2em] text-slate-500">
+                <span className="font-semibold text-sm tracking-normal text-slate-500">
                   {t('str_374ff911')}</span>
                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 shrink-0">
                   <div className="w-1 h-1 xl:w-1.5 xl:h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[8px] xl:text-[11px] font-black text-emerald-600 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-emerald-600 tracking-normal">
                     LIVE
                   </span>
                 </div>
@@ -2558,7 +2632,7 @@ export default function ItineraryTab() {
                 className="flex items-center justify-between w-full text-left focus:outline-none group"
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-black text-xs uppercase tracking-[0.2em] text-slate-500 group-hover:text-slate-800 transition-colors">
+                  <span className="font-semibold text-sm tracking-normal text-slate-500 group-hover:text-slate-800 transition-colors">
                     {t('str_2ece57ef')}{favorites.length})
                   </span>
                   <ChevronDown
@@ -2784,10 +2858,7 @@ export default function ItineraryTab() {
                     const dateStr =
                       getDateForDay(day, tripInfo?.startDate) || "";
                     const displayDate = dateStr
-                      ? new Date(dateStr).toLocaleDateString("zh-TW", {
-                          month: "short",
-                          day: "numeric",
-                        })
+                      ? formatItineraryDayDate(dateStr)
                       : "";
 
                     return (
@@ -2868,6 +2939,10 @@ export default function ItineraryTab() {
               ) : viewMode === "list" ? (
                 <motion.div
                   key="list"
+                  id={getViewPanelId("list")}
+                  role="tabpanel"
+                  aria-labelledby={getViewTabId("list")}
+                  tabIndex={0}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -2902,13 +2977,13 @@ export default function ItineraryTab() {
                             <div>
                               <h3 className="font-black text-xl text-slate-800 leading-tight">
                                 {t('str_7028f9a6')}{safeSelectedDay} {t('str_15a15fa')}</h3>
-                              <p className="text-sm font-bold text-slate-500 mt-1 uppercase tracking-wider">
+                              <p className="text-sm font-medium text-slate-500 mt-1 tracking-normal">
                                 {t('str_6db8a14d')}</p>
                             </div>
                           </div>
                           <button
                             onClick={() => setShowPlanner(!showPlanner)}
-                            className={`w-full sm:w-auto px-10 py-4 rounded-full font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${showPlanner ? "bg-slate-100 text-slate-500" : "bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 ios-press"}`}
+                            className={`w-full sm:w-auto px-10 py-4 rounded-full font-semibold text-sm tracking-normal transition-all flex items-center justify-center gap-3 ${showPlanner ? "bg-slate-100 text-slate-500" : "bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 ios-press"}`}
                           >
                             {showPlanner ? t('ai_planner.hide', '收起助理') : t('ai_planner.show', '召喚 AI')}
                             {showPlanner ? (
@@ -3288,8 +3363,10 @@ export default function ItineraryTab() {
                                 )}
 
                                 <button
+                                  type="button"
                                   onClick={() => void handleAutoFetchFlights()}
                                   disabled={flightsLoading || aiLoading}
+                                  aria-busy={flightsLoading}
                                   className="w-full py-3 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 disabled:opacity-40 ios-press transition-all hover:bg-slate-100"
                                 >
                                   {flightsLoading ? (
@@ -3303,8 +3380,10 @@ export default function ItineraryTab() {
                                   {t('str_18c6ffc3')}</button>
 
                                 <button
+                                  type="button"
                                   onClick={() => void handleAiSuggest()}
                                   disabled={aiLoading}
+                                  aria-busy={aiLoading}
                                   className="w-full py-5 px-4 rounded-full bg-gradient-to-r from-pink-500 via-fuchsia-600 to-indigo-600 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 ios-press transition-all whitespace-nowrap overflow-hidden text-ellipsis"
                                 >
                                   <span className="shrink-0">
@@ -3320,6 +3399,11 @@ export default function ItineraryTab() {
                                       : t('ai_planner.start_tuning', '開始智慧微調行程')}
                                   </span>
                                 </button>
+                                {aiError && (
+                                  <p role="alert" className="text-sm font-medium leading-6 text-red-700">
+                                    {aiError}
+                                  </p>
+                                )}
                               </div>
                             </motion.div>
                           )}
@@ -3374,6 +3458,10 @@ export default function ItineraryTab() {
               ) : viewMode === "map" ? (
                 <motion.div
                   key="map"
+                  id={getViewPanelId("map")}
+                  role="tabpanel"
+                  aria-labelledby={getViewTabId("map")}
+                  tabIndex={0}
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
@@ -3399,7 +3487,7 @@ export default function ItineraryTab() {
                     <div className="relative h-[65vh] md:h-[600px] w-full rounded-[2.5rem] overflow-hidden shadow-[inset_0_2px_12px_rgba(15,23,42,0.06)] border border-slate-100 dark:border-white/10 dark:shadow-[inset_0_2px_12px_rgba(255,255,255,0.05)] bg-slate-50">
                       {(aiLoading || loadingDay === safeSelectedDay) && (
                         <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-md rounded-[2.5rem] transition-all duration-300">
-                          <div className="bg-white/80 backdrop-blur-xl px-10 py-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-5 border border-white/60">
+                          <div role="status" aria-live="polite" aria-atomic="true" className="bg-white/80 backdrop-blur-xl px-10 py-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-5 border border-white/60">
                             <div className="relative">
                               <div className="absolute inset-0 bg-pink-400 rounded-full blur-xl opacity-20 animate-pulse"></div>
                               <Loader2
@@ -3408,7 +3496,7 @@ export default function ItineraryTab() {
                               />
                             </div>
                             <div className="text-center">
-                              <p className="text-sm font-black tracking-widest text-slate-800 uppercase">
+                              <p className="text-sm font-bold tracking-wide text-slate-800">
                                 {aiLoading
                                   ? t('ai_planner.analyzing_places', 'AI 正在分析景點')
                                   : t('ai_planner.loading_map', '正在載入地圖資料')}
@@ -3429,6 +3517,10 @@ export default function ItineraryTab() {
               ) : (
                 <motion.div
                   key="calendar"
+                  id={getViewPanelId("calendar")}
+                  role="tabpanel"
+                  aria-labelledby={getViewTabId("calendar")}
+                  tabIndex={0}
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
@@ -3446,7 +3538,7 @@ export default function ItineraryTab() {
         </div>
 
         {tip ? (
-          <span className="fixed bottom-28 left-0 right-0 w-full text-center text-xs font-black text-slate-500 pointer-events-none animate-pulse">
+          <span role="status" aria-live="polite" aria-atomic="true" className="fixed bottom-28 left-0 right-0 w-full text-center text-xs font-black text-slate-500 pointer-events-none animate-pulse">
             {tip}
           </span>
         ) : null}
@@ -3464,7 +3556,10 @@ export default function ItineraryTab() {
           </button>
           {!loading && favorites.length > 0 && (
             <button
-              aria-label={`口袋名單 (${favorites.length} 個景點)`}
+              type="button"
+              aria-label={t("itinerary_feedback.mobile_favorites_aria", {
+                count: favorites.length,
+              })}
               onClick={() => setShowMobileFavorites(true)}
               className="p-1 rounded-full bg-white/30 backdrop-blur-xl border border-white/60 shadow-2xl ios-press transition-all group overflow-hidden shadow-fuchsia-200/50 relative"
             >
@@ -3498,13 +3593,19 @@ export default function ItineraryTab() {
                 exit={{ opacity: 0 }}
                 transition={overlayTransition}
                 onClick={() => setShowMobileFavorites(false)}
+                aria-hidden="true"
                 className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-sheet lg:hidden"
               />
               <motion.div
+                ref={mobileFavoritesSheetRef}
                 initial={sheetMotion.initial}
                 animate={sheetMotion.animate}
                 exit={sheetMotion.exit}
                 transition={sheetMotion.transition}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={mobileFavoritesTitleId}
+                tabIndex={-1}
                 className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white dark:bg-slate-950 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-sheet-above flex flex-col lg:hidden dark-transition border-t border-white/5"
               >
                 <div className="shrink-0 p-6 pb-2 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl rounded-t-[32px] sticky top-0 z-10 dark-transition">
@@ -3513,14 +3614,16 @@ export default function ItineraryTab() {
                       <Bookmark size={20} strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h3 className="font-black text-xl text-slate-800 tracking-tight">
+                      <h3 id={mobileFavoritesTitleId} className="font-black text-xl text-slate-800 tracking-tight">
                         {t('str_282d1249')}</h3>
-                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">
-                        Saved Spots
+                      <p className="text-sm font-medium text-slate-500 leading-none mt-1">
+                        {t("itinerary_feedback.mobile_favorites_subtitle")}
                       </p>
                     </div>
                   </div>
                   <button
+                    type="button"
+                    data-autofocus
                     aria-label={t('str_1ce46ef6')}
                     onClick={() => setShowMobileFavorites(false)}
                     className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
@@ -3532,8 +3635,12 @@ export default function ItineraryTab() {
                 {/* Mobile Quick Add Row */}
                 {!isOffline && (
                   <div className="shrink-0 px-6 py-3.5 bg-slate-50 border-b border-slate-100 flex flex-col gap-2.5">
+                    <label htmlFor={mobileFavoritesInputId} className="text-sm font-semibold text-slate-700">
+                      {t("itinerary_feedback.mobile_favorites_add_label")}
+                    </label>
                     <div className="flex gap-2.5">
                       <button
+                        type="button"
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                         aria-label={t('str_43315073')}
                         className="w-11 h-11 shrink-0 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center ios-press transition-all text-xl shadow-sm"
@@ -3541,19 +3648,23 @@ export default function ItineraryTab() {
                         <IconImg value={newSpotEmoji} size={20} />
                       </button>
                       <input
+                        id={mobileFavoritesInputId}
                         value={newSpotTitle}
                         onChange={(e) => setNewSpotTitle(e.target.value)}
                         placeholder={t('str_7ae1c22f')}
-                        className="flex-1 bg-white border border-slate-200/80 rounded-xl px-3.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-fuchsia-200 transition-all shadow-sm"
+                        className="h-11 flex-1 bg-white border border-slate-200/80 rounded-xl px-3.5 text-base font-medium text-slate-700 outline-none focus:ring-2 focus:ring-fuchsia-500 focus:ring-offset-2 transition-colors shadow-sm"
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") {
+                          if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                            e.preventDefault();
                             void handleAddFavorite();
                           }
                         }}
                       />
                       <button
+                        type="button"
                         onClick={() => void handleAddFavorite()}
                         disabled={addingFavorite || !newSpotTitle.trim()}
+                        aria-label={t('str_2f92ecc7')}
                         className="w-11 h-11 shrink-0 rounded-xl bg-slate-900 text-white flex items-center justify-center disabled:opacity-30 ios-press transition-all shadow-sm"
                       >
                         <Plus size={18} />
@@ -3565,6 +3676,7 @@ export default function ItineraryTab() {
                         {EMOJI_OPTIONS.map((em) => (
                           <button
                             key={em}
+                            type="button"
                             onClick={() => {
                               setNewSpotEmoji(em);
                               setShowEmojiPicker(false);
@@ -3578,8 +3690,8 @@ export default function ItineraryTab() {
                     )}
 
                     {addingFavorite && (
-                      <p className="text-[10px] font-black text-fuchsia-500 animate-pulse uppercase tracking-[0.15em] text-center">
-                        🎯 GEOCODING SPOT LOCATION...
+                      <p role="status" aria-live="polite" className="text-sm font-medium text-fuchsia-600 animate-pulse text-center">
+                        {t("itinerary_feedback.mobile_favorites_locating")}
                       </p>
                     )}
                   </div>

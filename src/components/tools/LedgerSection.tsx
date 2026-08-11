@@ -754,7 +754,7 @@ export default function LedgerSection({ className }: { className?: string }) {
                     handleAddMember();
                   }
                 }}
-                className="h-10 text-[13px] rounded-full border-slate-200/80 px-4 bg-slate-50/50 focus:bg-white"
+                className="h-11 rounded-full border-slate-200/80 px-4 bg-slate-50/50 focus:bg-white"
               />
             </div>
             <Button

@@ -154,7 +154,7 @@ export const MultiSelectPill: React.FC<{
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`min-h-[42px] px-3.5 sm:px-4.5 py-2.5 rounded-[20px] text-[12px] sm:text-[14px] font-bold transition-all duration-[200ms] relative overflow-hidden flex items-center justify-center gap-2 ${
+      className={`min-h-[44px] px-3.5 sm:px-4.5 py-2.5 rounded-[20px] text-sm font-semibold tracking-normal transition-all duration-[200ms] relative overflow-hidden flex items-center justify-center gap-2 ${
         selected
           ? `${selectedClasses[accentColor]} translate-y-[2px] !shadow-[3px_3px_0_rgba(15,23,42,0.08),inset_2px_2px_4px_rgba(0,0,0,0.06)] dark:!shadow-[3px_3px_0_rgba(2,6,23,0.4),inset_2px_2px_4px_rgba(0,0,0,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.08)] border-[3px]`
           : "clay-btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-white/80 dark:border-white/20"
@@ -169,9 +169,13 @@ export const MultiSelectPill: React.FC<{
 export default function AiForm({
   onSubmit,
   onCancel,
+  isSubmitting = false,
+  errorMessage,
 }: {
   onSubmit: (data: AiFormData) => void;
   onCancel?: () => void;
+  isSubmitting?: boolean;
+  errorMessage?: string;
 }) {
   const { t } = useTranslation();
   const { aiProfile, saveAiProfile } = useSearchStore();
@@ -246,6 +250,7 @@ export default function AiForm({
   };
 
   const handleSubmit = () => {
+    if (isSubmitting) return;
     void saveAiProfile({
       departure: formData.departure,
       companions: formData.companions,
@@ -285,11 +290,21 @@ export default function AiForm({
                 {t('ai_plan_first')}
               </h2>
             </div>
+            {isSubmitting && (
+              <p role="status" aria-live="polite" className="max-w-xl text-sm font-medium leading-6 text-sky-700">
+                {t("ai_form.generating_status")}
+              </p>
+            )}
+            {errorMessage && (
+              <p role="alert" className="max-w-xl text-sm font-medium leading-6 text-red-700">
+                {errorMessage}
+              </p>
+            )}
             <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2 pb-1 -mx-3.5 px-3.5 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
               {AI_FORM_ENTRY_PILLS.map((pill) => (
                 <span
                   key={pill}
-                  className="shrink-0 inline-flex items-center rounded-full border border-white/84 bg-white/84 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-600 shadow-[0_8px_16px_rgba(15,23,42,0.05)]"
+                  className="shrink-0 inline-flex items-center rounded-full border border-white/84 bg-white/84 px-3 py-1 text-xs font-semibold tracking-normal text-slate-600 shadow-[0_8px_16px_rgba(15,23,42,0.05)]"
                 >
                   {t('ai_preferences_options.' + pill, pill)}
                 </span>
@@ -298,7 +313,9 @@ export default function AiForm({
           </div>
           {onCancel && (
             <button
+              type="button"
               onClick={onCancel}
+              disabled={isSubmitting}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/84 bg-white/88 text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-colors ios-press hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 sm:h-11 sm:w-11"
               aria-label={t('str_a9472')}
             >
@@ -338,7 +355,7 @@ export default function AiForm({
                 <div className="flex flex-col gap-4 p-4 shadow-card hover:shadow-floating transition-shadow duration-300 glass-panel !rounded-[28px] sm:gap-5 sm:p-6">
                   {/* Departure */}
                   <div className="flex flex-col gap-2.5">
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                       <MapPin size={16} className="text-sky-500" />
                       {t('str_1426bae')}</label>
                     <button
@@ -393,7 +410,7 @@ export default function AiForm({
 
                   {/* Destination */}
                   <div className="flex flex-col gap-2.5">
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                       <MapPin size={16} className="text-orange-500" />
                       {t('str_1cd249a')}</label>
                     <button
@@ -420,7 +437,7 @@ export default function AiForm({
 
                   {/* Days */}
                   <div className="flex flex-col gap-2.5 pt-1">
-                    <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                       <Calendar size={16} className="text-sky-500" />
                       {t('str_47310767')}</label>
                     <div className="flex min-h-[56px] items-center justify-between rounded-[32px] border border-white/84 bg-white/86 p-2 shadow-[0_8px_18px_rgba(15,23,42,0.05)]">
@@ -459,7 +476,7 @@ export default function AiForm({
 
                 {/* Right Column: Companions */}
                 <div className="flex flex-col gap-4 p-4 shadow-card hover:shadow-floating transition-shadow duration-300 glass-panel !rounded-[28px] sm:gap-5 sm:p-6">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                     <Users size={16} className="text-orange-500" />
                     {t('str_68aa5f36')}</label>
                   <div className="grid h-full grid-cols-2 content-start gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
@@ -519,7 +536,7 @@ export default function AiForm({
                       !formData.destination ||
                       !formData.companions
                     }
-                    className={`flex h-14 w-full items-center justify-center gap-3 rounded-full text-[13px] font-black uppercase tracking-[0.16em] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:h-[3.8rem] sm:text-[14px] sm:shadow-md ${
+                    className={`flex h-14 w-full items-center justify-center gap-3 rounded-full text-sm font-semibold tracking-normal transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:h-[3.8rem] sm:shadow-md ${
                       !formData.departure ||
                       !formData.destination ||
                       !formData.companions
@@ -567,8 +584,11 @@ export default function AiForm({
                     {t('str_7632b257')}</p>
                 </div>
                 <button
+                  type="button"
                   onClick={handleSubmit}
-                  className="flex shrink-0 items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-2.5 text-[12px] font-black uppercase tracking-[0.12em] text-sky-700 transition-colors hover:bg-sky-100 hover:text-sky-800 ios-press"
+                  disabled={isSubmitting}
+                  aria-busy={isSubmitting}
+                  className="flex shrink-0 items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-4 py-2.5 text-sm font-semibold tracking-normal text-sky-700 transition-colors hover:bg-sky-100 hover:text-sky-800 ios-press"
                 >
                   {t('str_63143efd')}<Sparkles size={16} />
                 </button>
@@ -576,7 +596,7 @@ export default function AiForm({
 
               <div className="relative flex flex-col gap-5 p-4 transition-shadow duration-300 shadow-card hover:shadow-floating glass-panel !rounded-[40px] sm:gap-6 sm:p-6">
                 <div className="flex flex-col gap-3.5">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                     <Coffee size={16} className="text-amber-600" />
                     {t('str_30700374')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -594,7 +614,7 @@ export default function AiForm({
                 </div>
 
                 <div className="flex flex-col gap-3.5">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                     <Heart size={16} className="text-rose-500" />
                     {t('str_3d39a4e9')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -612,7 +632,7 @@ export default function AiForm({
                 </div>
 
                 <div className="flex flex-col gap-3.5">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                     <Settings2 size={16} className="text-emerald-600" />
                     {t('str_47d35d58')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -630,7 +650,7 @@ export default function AiForm({
                 </div>
 
                 <div className="flex flex-col gap-3.5">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                     <Car size={16} className="text-blue-500" />
                     {t('str_25e920ec')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -648,7 +668,7 @@ export default function AiForm({
                 </div>
 
                 <div className="flex flex-col gap-3.5">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                     <DollarSign size={16} className="text-teal-600" />
                     {t('str_7204d7e1')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -671,7 +691,7 @@ export default function AiForm({
                 </div>
 
                 <div className="flex flex-col gap-3.5">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                     <Footprints size={16} className="text-sky-600" />
                     {t('str_4cdcffe')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -694,7 +714,7 @@ export default function AiForm({
                 </div>
 
                 <div className="flex flex-col gap-3.5">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <label className="flex items-center gap-2 text-sm font-semibold tracking-normal text-slate-600">
                     <MapPin size={16} className="text-rose-600" />
                     {t('str_256fb55e')}</label>
                   <div className="flex overflow-x-auto hide-scrollbar scrollbar-hide gap-2.5 pt-1 pb-1 -mx-4 px-4 sm:flex-wrap sm:mx-0 sm:px-0 sm:pb-0">
@@ -721,15 +741,20 @@ export default function AiForm({
                 <div className="mx-auto max-w-4xl px-1 sm:px-0">
                   <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
                     <button
+                      type="button"
                       onClick={handleBack}
+                      disabled={isSubmitting}
                       className="h-14 w-full shrink-0 rounded-2xl border border-white/84 bg-white/86 px-6 text-[14px] font-bold text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.05)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 ios-press sm:h-[3.8rem] sm:w-auto"
                     >
                       {t('str_11c18a')}</button>
                     <button
+                      type="button"
                       onClick={handleSubmit}
-                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 clay-btn bg-gradient-to-r from-sky-400 to-blue-500 text-[14px] font-black tracking-[0.08em] text-white ios-press sm:h-[3.8rem] sm:text-[15px]"
+                      disabled={isSubmitting}
+                      aria-busy={isSubmitting}
+                      className="group flex h-14 w-full flex-1 items-center justify-center gap-3 clay-btn bg-gradient-to-r from-sky-400 to-blue-500 text-sm font-semibold tracking-normal text-white ios-press sm:h-[3.8rem]"
                     >
-                      {t('str_36be9bd0')}<Sparkles
+                      {isSubmitting ? t("ai_form.generating_button") : t('str_36be9bd0')}<Sparkles
                         size={20}
                         className="group-hover:animate-cute-bounce"
                       />

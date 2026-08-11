@@ -233,7 +233,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
                   placeholder={t('str_729f08be')}
                   name="nickname"
                   autoComplete="nickname"
-                  className="h-12 rounded-[20px] border-white/84 bg-white/86 text-[14px] font-bold text-slate-900 shadow-[0_8px_18px_rgba(15,23,42,0.05)] focus-visible:ring-sky-300"
+                  className="rounded-[20px] border-white/84 bg-white/86 text-slate-900 shadow-[0_8px_18px_rgba(15,23,42,0.05)] focus-visible:ring-sky-300"
                   maxLength={32}
                 />
               </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from "react";
+import React, { useState, useEffect, useId, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
 import { Calendar, CheckCircle2, Clock, ExternalLink, GripVertical, Image as ImageIcon, Instagram, Link, Loader2, MapPin, Navigation2, Pencil, Plane, RefreshCw, Sparkles, Trash2, X, ZoomIn } from "lucide-react";
@@ -400,7 +400,7 @@ const ItineraryListItem = React.memo(
           <div className="flex flex-col gap-2 sm:gap-3 w-full">
             <div className="flex items-center justify-between gap-2 mb-0.5">
               <div className="flex items-center gap-1.5">
-                <span className={`text-[9px] font-black uppercase tracking-[0.22em] ${isFlightCard ? "text-slate-300" : isHotelCard ? "text-indigo-200" : "text-slate-500 dark:text-slate-400"}`}>
+                <span className={`text-xs font-semibold tracking-normal ${isFlightCard ? "text-slate-300" : isHotelCard ? "text-indigo-200" : "text-slate-500 dark:text-slate-400"}`}>
                   {isFlightCard ? t("itinerary_card.transit") : isHotelCard ? t("itinerary_card.stay") : t("itinerary_card.day_note")}
                 </span>
                   <span
@@ -423,7 +423,7 @@ const ItineraryListItem = React.memo(
                   <div className="mb-1.5 w-full">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
+                        <div className="text-sm font-semibold tracking-normal text-slate-500">
                           {t("itinerary_card.departure")}
                         </div>
                         <div className="truncate text-lg font-black leading-none sm:text-xl">
@@ -439,12 +439,12 @@ const ItineraryListItem = React.memo(
                           />
                           <div className="h-px flex-1 border-t border-dashed border-slate-600" />
                         </div>
-                        <div className="mt-1 text-center text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 truncate">
+                        <div className="mt-1 text-center text-xs font-medium tracking-normal text-slate-500 truncate">
                           {flightRoute.flightNumber}
                         </div>
                       </div>
                       <div className="min-w-0 text-right">
-                        <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
+                        <div className="text-sm font-semibold tracking-normal text-slate-500">
                           {t("itinerary_card.arrival")}
                         </div>
                         <div className="truncate text-lg font-black leading-none sm:text-xl">
@@ -458,7 +458,7 @@ const ItineraryListItem = React.memo(
                   <div className="mb-1.5 w-full">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <div className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-400">
+                        <div className="text-sm font-semibold tracking-normal text-indigo-400">
                           {t("itinerary_card.tonight_stay")}
                         </div>
                         <div
@@ -473,7 +473,7 @@ const ItineraryListItem = React.memo(
                           {item.title}
                         </div>
                       </div>
-                      <span className="shrink-0 rounded-full border border-indigo-400/30 bg-indigo-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-100">
+                      <span className="shrink-0 rounded-full border border-indigo-400/30 bg-indigo-500/20 px-3 py-1 text-xs font-semibold tracking-normal text-indigo-100">
                         {t("itinerary_card.rest_anchor")}
                       </span>
                     </div>
@@ -495,7 +495,7 @@ const ItineraryListItem = React.memo(
                 )}
                 {isAnchorCard && (
                   <p
-                    className={`mb-1 text-[11px] sm:text-xs font-black uppercase tracking-[0.18em] ${isFlightCard ? "text-slate-500" : "text-indigo-400/80"}`}
+                    className={`mb-1 text-xs font-semibold tracking-normal ${isFlightCard ? "text-slate-500" : "text-indigo-400/80"}`}
                   >
                     {isFlightCard ? t("itinerary_card.transport_anchor") : t("itinerary_card.tonight_stay")}
                   </p>
@@ -507,7 +507,7 @@ const ItineraryListItem = React.memo(
                   <div className="relative">
                     <div className="relative flex">
                       <div
-                        className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-widest flex items-center gap-0.5 transition-colors border ${isFlightCard ? "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white" : isHotelCard ? "bg-indigo-800 hover:bg-indigo-700 border-indigo-700 text-white" : "bg-slate-800 hover:bg-slate-700 text-white border-slate-900"} relative z-0`}
+                        className={`px-2 py-1 rounded-full text-lg font-semibold tabular-nums tracking-normal flex items-center gap-1 transition-colors border ${isFlightCard ? "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white" : isHotelCard ? "bg-indigo-800 hover:bg-indigo-700 border-indigo-700 text-white" : "bg-slate-800 hover:bg-slate-700 text-white border-slate-900"} relative z-0`}
                       >
                         <Clock size={11} className="sm:w-[13px] sm:h-[13px]" />
                         {item.time || t("itinerary_card.time_unset")}
@@ -532,12 +532,12 @@ const ItineraryListItem = React.memo(
                       )}
                     </div>
                   </div>
-                  <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-700 border border-pink-100/70">
+                  <span className="px-2 py-1 rounded-full bg-pink-50 text-xs font-semibold tracking-normal text-pink-700 border border-pink-100/70">
                     {t(`itinerary_category.${meta.key}`)}
                   </span>
                   
                   {linkedFact && (
-                    <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-0.5">
+                    <span className="px-2 py-1 rounded-full bg-cyan-50 text-xs font-semibold tracking-normal text-cyan-600 border border-cyan-100/50 flex items-center gap-1">
                       <Link size={11} className="sm:w-[13px] sm:h-[13px]" />
                       {t("itinerary_card.linked_fact", { title: linkedFact.title })}
                     </span>
@@ -546,7 +546,7 @@ const ItineraryListItem = React.memo(
                     <motion.span
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-fuchsia-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-fuchsia-700 border border-fuchsia-200 shadow-sm shadow-fuchsia-200/50"
+                      className="flex items-center gap-1 px-2 py-1 rounded-full bg-fuchsia-100 text-xs font-semibold tracking-normal text-fuchsia-700 border border-fuchsia-200 shadow-sm shadow-fuchsia-200/50"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 shadow-[0_0_6px_#d946ef] inline-block" />
                       {t("itinerary_card.editing_by", { name: collaboratingLock.userName })}
@@ -556,7 +556,7 @@ const ItineraryListItem = React.memo(
                     <motion.span
                       initial={{ scale: 0.85, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700 border border-emerald-200 shadow-sm"
+                      className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-xs font-semibold tracking-normal text-emerald-700 border border-emerald-200 shadow-sm"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
                       {t("itinerary_card.just_synced")}
@@ -575,7 +575,7 @@ const ItineraryListItem = React.memo(
                     onClick={() =>
                       onUpdate({ ...item, is_visited: !item.is_visited })
                     }
-                    className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black uppercase tracking-[0.15em] transition-all border ${item.is_visited ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"}`}
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 py-1 rounded-full text-xs font-semibold tracking-normal transition-all border ${item.is_visited ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"}`}
                   >
                     {item.is_visited ? (
                       <CheckCircle2 size={13} className="text-emerald-500" />
@@ -815,7 +815,7 @@ const ItineraryListItem = React.memo(
               )}
 
               {item.transport_to_next && (
-                <div className="inline-flex items-center gap-1 mb-2 sm:mb-2.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-800 text-[11px] sm:text-xs font-black text-white uppercase tracking-widest shadow-sm shadow-slate-200">
+                <div className="inline-flex items-center gap-1 mb-2 sm:mb-2.5 px-2.5 py-1 rounded-full bg-slate-800 text-sm font-semibold text-white tracking-normal shadow-sm shadow-slate-200">
                   <Navigation2
                     size={10}
                     strokeWidth={3}
@@ -830,10 +830,10 @@ const ItineraryListItem = React.memo(
                 <CollapsibleNotes text={detailCopy} label={t("itinerary_card.notes")} />
               ) : (
                 <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
-                  <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                  <p className="mb-1 text-xs font-semibold tracking-normal text-slate-500 dark:text-slate-400">
                     {t("itinerary_card.notes")}
                   </p>
-                  <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity leading-5">
+                  <p className="text-sm font-medium text-slate-500 italic opacity-80 transition-opacity leading-6">
                     {t("itinerary_card.empty_notes")}
                   </p>
                 </div>
@@ -1375,11 +1375,15 @@ export default function ItineraryList({
   onPreviewImage?: (url: string) => void;
   onRequireLogin?: (itemName?: string) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isFavoriteDragOver, setIsFavoriteDragOver] = useState(false);
   const [manualAddTrigger, setManualAddTrigger] = useState(0);
   const [aiQuoteIndex, setAiQuoteIndex] = useState(0);
   const [batchImageFetching, setBatchImageFetching] = useState(false);
+  const itineraryDateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.language, { month: "short", day: "numeric" }),
+    [i18n.language],
+  );
 
   const handleBatchFetchSpotImages = async () => {
     if (batchImageFetching || !items || items.length === 0) return;
@@ -1550,7 +1554,10 @@ export default function ItineraryList({
 
         {/* 當天日期顯示在天氣預報卡片底下 */}
         {(() => {
-          const formattedDate = (tripStartDate && day) ? getDateForDay(day, tripStartDate) : null;
+          const rawDate = (tripStartDate && day) ? getDateForDay(day, tripStartDate) : null;
+          const formattedDate = rawDate
+            ? itineraryDateFormatter.format(new Date(`${rawDate}T12:00:00`))
+            : null;
           return (
             <div className="flex items-center justify-between gap-2 pl-2 pr-4 flex-wrap">
               {formattedDate && (
@@ -1566,6 +1573,7 @@ export default function ItineraryList({
                   type="button"
                   onClick={handleBatchFetchSpotImages}
                   disabled={isOffline || batchImageFetching || items.length === 0}
+                  aria-busy={batchImageFetching}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-slate-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-slate-200/80 dark:border-white/10 rounded-full shadow-2xs hover:shadow text-[11px] font-black tracking-wide transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                   title={t("itinerary_day.batch_images_title")}
                 >
@@ -1576,6 +1584,11 @@ export default function ItineraryList({
                   )}
                   <span>{t("itinerary_day.batch_images")}</span>
                 </button>
+                {batchImageFetching && (
+                  <p role="status" aria-live="polite" className="w-full text-sm font-medium text-indigo-700">
+                    {t("itinerary_day.batch_images_searching")}
+                  </p>
+                )}
                 {onOptimizeRoute && items.length >= 2 && (
                   <button
                     type="button"
@@ -1596,6 +1609,10 @@ export default function ItineraryList({
 
       {isDayLoading && (
         <div className="flex flex-col gap-5 mt-4">
+          <p role="status" aria-live="polite" className="flex items-center gap-2 text-sm font-medium text-slate-600">
+            <Loader2 size={16} className="animate-spin text-fuchsia-600" />
+            {t("itinerary_feedback.day_loading", { day })}
+          </p>
           {[0, 1, 2].map((i) => (
             <motion.div
               key={`day-loading-${i}`}
@@ -1660,12 +1677,18 @@ export default function ItineraryList({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             className="rounded-[28px] border border-indigo-100 bg-white/90 px-5 py-4 shadow-lg shadow-indigo-100/50"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
           >
+            <span className="sr-only">
+              {t("itinerary_day.ai_planning_status", { day })}
+            </span>
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-3xl bg-gradient-to-br from-fuchsia-500 to-indigo-600 text-xl text-white shadow-lg shadow-fuchsia-200/50">
                 ✨
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0" aria-hidden="true">
                 <p className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-500">
                   {t("itinerary_day.ai_planning")}
                 </p>

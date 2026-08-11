@@ -13,6 +13,7 @@ interface HorizontalScrollRailProps {
   className?: string;
   viewportClassName?: string;
   contentClassName?: string;
+  contentProps?: React.HTMLAttributes<HTMLDivElement>;
   controlsVisibilityClass?: string;
   buttonClassName?: string;
 }
@@ -23,6 +24,7 @@ export default function HorizontalScrollRail({
   className,
   viewportClassName,
   contentClassName,
+  contentProps,
   controlsVisibilityClass = "flex",
   buttonClassName,
 }: HorizontalScrollRailProps) {
@@ -100,7 +102,7 @@ export default function HorizontalScrollRail({
           viewportClassName,
         )}
       >
-        <div className={cn("flex min-w-max gap-6", contentClassName)}>
+        <div {...contentProps} className={cn("flex min-w-max gap-6", contentClassName, contentProps?.className)}>
           {children}
         </div>
       </div>

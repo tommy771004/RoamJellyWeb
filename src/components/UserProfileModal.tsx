@@ -281,7 +281,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                             placeholder={t('str_66b63351')} 
                             value={profile.departure}
                             onChange={(e) => setProfile(p => ({ ...p, departure: e.target.value }))}
-                            className="h-11 rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-4 !text-[14px] font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:bg-white/60 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                            className="bg-white/85 dark:bg-slate-950/40"
                           />
                         </div>
                         
@@ -293,7 +293,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                             placeholder={t('str_69b5daea')} 
                             value={profile.companions}
                             onChange={(e) => setProfile(p => ({ ...p, companions: e.target.value }))}
-                            className="h-11 rounded-2xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-4 !text-[14px] font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:bg-white/60 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
+                            className="bg-white/85 dark:bg-slate-950/40"
                           />
                         </div>
                       </div>
