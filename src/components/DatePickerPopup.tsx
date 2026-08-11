@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { useTranslation } from "react-i18next";
+import { useModalAccessibility } from '../lib/useModalAccessibility';
 
 interface DatePickerPopupProps {
   selectedDate: string;
@@ -15,7 +16,9 @@ interface DatePickerPopupProps {
 }
 
 export default function DatePickerPopup({ selectedDate, onSelect, onClose, allowPast = false, minDate }: DatePickerPopupProps) {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
+  const dialogRef = useModalAccessibility(onClose);
+  const titleId = useId();
   const today = new Date();
   const [viewDate, setViewDate] = useState(selectedDate ? new Date(selectedDate) : new Date());
   const prefersReducedMotion = useReducedMotion() ?? false;
@@ -63,22 +66,27 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
           onClick={onClose}
         />
         <motion.div
+          ref={dialogRef}
           initial={modalMotion.initial}
           animate={modalMotion.animate}
           exit={modalMotion.exit}
           transition={modalMotion.transition}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
           className="relative z-popup-above w-[92vw] max-w-[480px] min-w-[300px] shrink-0 overflow-hidden rounded-[28px] border border-white/86 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] p-4 shadow-[0_24px_56px_rgba(15,23,42,0.18)] md:w-[480px] md:p-6"
         >
           <div className="mb-6 flex flex-row items-center justify-between">
             <div className="flex flex-col">
-              <span className="fluid-title font-black text-slate-800">{year}{t('str_5e74')}{monthNames[month]}</span>
+              <h2 id={titleId} className="fluid-title font-black text-slate-800">{year}{t('str_5e74')}{monthNames[month]}</h2>
               <span className="fluid-kicker mt-0.5 font-black uppercase text-slate-500">Select Date</span>
             </div>
             <div className="flex gap-x-3">
-              <button onClick={() => changeMonth(-1)} aria-label={t('str_12f0be7')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
+              <button data-autofocus type="button" onClick={() => changeMonth(-1)} aria-label={t('str_12f0be7')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                 <ChevronLeft size={24} className="text-slate-600" />
               </button>
-              <button onClick={() => changeMonth(1)} aria-label={t('str_12f0fa8')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
+              <button type="button" onClick={() => changeMonth(1)} aria-label={t('str_12f0fa8')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                 <ChevronRight size={24} className="text-slate-600" />
               </button>
             </div>
@@ -102,6 +110,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
               return (
                 <button
                   key={i}
+                  type="button"
                   disabled={disabled}
                   onClick={() => { if (!disabled) { onSelect(dateStr); onClose(); } }}
                   className={`
@@ -123,6 +132,7 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
 
           <div className="mt-6 flex justify-center">
             <button
+              type="button"
               onClick={onClose}
               className="fluid-kicker font-black uppercase text-slate-500 transition-colors hover:text-pink-500"
             >

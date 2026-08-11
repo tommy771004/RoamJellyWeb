@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Navigation2, AlertTriangle } from "lucide-react";
 import { ItineraryNode } from "../../types/workflow";
-import { haversineKm, estimateTransport, formatMinutes, checkUnrealisticTravelTime, UnrealisticTravelCheckResult } from "../../lib/geoUtils";
+import { haversineKm, estimateTransport, checkUnrealisticTravelTime, UnrealisticTravelCheckResult } from "../../lib/geoUtils";
 import { fetchDirections } from "../../lib/workflowApi";
 import { sortNodesForDisplay } from "../../lib/itineraryUtils";
 import { extractMinutes } from "../../lib/itineraryText";
+import { useTranslation } from "react-i18next";
 
 interface SelectedNodeTransportDetailsProps {
   selectedNode: ItineraryNode;
@@ -15,7 +16,23 @@ export default function SelectedNodeTransportDetails({
   selectedNode,
   nodes,
 }: SelectedNodeTransportDetailsProps) {
+  const { t } = useTranslation();
   const [apiDuration, setApiDuration] = useState<number | null>(null);
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = Math.round(minutes % 60);
+    return hours > 0
+      ? remainingMinutes > 0
+        ? t("itinerary_day.duration_hours", { hours, minutes: remainingMinutes })
+        : t("itinerary_day.duration_hours_only", { hours })
+      : t("itinerary_day.duration_minutes", { minutes: remainingMinutes });
+  };
+  const getTransportLabel = (minutes: number, isFlight = false) => {
+    if (isFlight) return t("transport.estimated_flight", { duration: formatDuration(minutes) });
+    if (minutes <= 10) return t("transport.estimated_walk", { duration: formatDuration(minutes) });
+    if (minutes <= 25) return t("transport.estimated_public", { duration: formatDuration(minutes) });
+    return t("transport.estimated_drive", { duration: formatDuration(minutes) });
+  };
 
   const dayNodes = useMemo(
     () => sortNodesForDisplay(nodes.filter((n) => n.day === selectedNode.day)),
@@ -96,13 +113,13 @@ export default function SelectedNodeTransportDetails({
       if (apiDuration && km > 2 && !autoTransport.isFlight) {
         return {
           emoji: "🚗",
-          label: `預計車程 ${formatMinutes(apiDuration)}`,
+          label: t("transport.estimated_drive", { duration: formatDuration(apiDuration) }),
           minutes: apiDuration,
           isApi: true,
           isFlight: false,
         };
       }
-      return { ...autoTransport, isApi: false };
+      return { ...autoTransport, label: getTransportLabel(autoTransport.minutes, autoTransport.isFlight), isApi: false };
     }
     return null;
   })();
@@ -139,7 +156,7 @@ export default function SelectedNodeTransportDetails({
               hasTransitConflict ? "text-red-400" : "text-indigo-400"
             }`}
           >
-            前往下一站 {nextItem?.title ? `(${nextItem.title})` : ""}
+            {nextItem?.title ? t("transport.to_next", { title: nextItem.title }) : ""}
           </span>
           <span
             className={`text-[13px] font-bold flex items-center gap-2 ${
@@ -155,7 +172,7 @@ export default function SelectedNodeTransportDetails({
                     : "bg-indigo-100 text-indigo-700"
                 }`}
               >
-                API估計
+                {t("transport.api_estimate")}
               </span>
             )}
           </span>
@@ -168,7 +185,13 @@ export default function SelectedNodeTransportDetails({
                 strokeWidth={2.5}
               />
               <span className="leading-relaxed">
-                {unrealisticCheck.message}
+                {unrealisticCheck.reason === "impossible_speed"
+                  ? unrealisticCheck.requiredSpeedKmH && unrealisticCheck.requiredSpeedKmH > 900
+                    ? t("transport.impossible_flight", { distance: Math.round(unrealisticCheck.distanceKm), available: formatDuration(unrealisticCheck.availableMinutes ?? 0) })
+                    : t("transport.impossible_ground", { distance: unrealisticCheck.distanceKm, available: formatDuration(unrealisticCheck.availableMinutes ?? 0), speed: unrealisticCheck.requiredSpeedKmH ?? 0 })
+                  : unrealisticCheck.reason === "insufficient_time"
+                    ? t("transport.insufficient_time", { estimated: formatDuration(unrealisticCheck.estimatedMinutes), available: formatDuration(unrealisticCheck.availableMinutes ?? 0) })
+                    : t("transport.excessive_distance", { distance: Math.round(unrealisticCheck.distanceKm) })}
               </span>
             </div>
           ) : hasTransitConflict && (
@@ -180,14 +203,8 @@ export default function SelectedNodeTransportDetails({
               />
               <span className="leading-relaxed">
                 {displayTransport.minutes > timeGapMinutes && timeGapMinutes > 0
-                  ? `預估需 ${formatMinutes(
-                      displayTransport.minutes,
-                    )}，但距離下一行程 (${
-                      nextItem?.time || ""
-                    }) 僅剩 ${formatMinutes(timeGapMinutes)}，時間有衝突！`
-                  : `預估交通高達 ${formatMinutes(
-                      displayTransport.minutes,
-                    )}，車程較長，建議調整或留意休息。`}
+                  ? t("transport.conflict_time", { duration: formatDuration(displayTransport.minutes), nextTime: nextItem?.time || "", available: formatDuration(timeGapMinutes) })
+                  : t("transport.conflict_long", { duration: formatDuration(displayTransport.minutes) })}
               </span>
             </div>
           )}
@@ -196,4 +213,3 @@ export default function SelectedNodeTransportDetails({
     </div>
   );
 }
-

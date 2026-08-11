@@ -1,9 +1,10 @@
-import { useEffect, type ComponentType } from "react";
+import { useId, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { getModalMotion, getOverlayTransition } from "../lib/motionTokens";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useModalAccessibility } from "../lib/useModalAccessibility";
 
 type PeekIcon = ComponentType<{
   size?: number;
@@ -62,25 +63,10 @@ const TONE_STYLES: Record<InfoPeekTone, { badge: string; icon: string; chip: str
 };
 
 export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalProps) {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
+  const dialogRef = useModalAccessibility(onClose, open && Boolean(content));
+  const titleId = useId();
   const prefersReducedMotion = useReducedMotion() ?? false;
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open, onClose]);
 
   if (typeof document === "undefined") return null;
 
@@ -103,9 +89,11 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
           />
 
           <motion.div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="info-peek-title"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             initial={getModalMotion(prefersReducedMotion).initial}
             animate={getModalMotion(prefersReducedMotion).animate}
             exit={getModalMotion(prefersReducedMotion).exit}
@@ -126,7 +114,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
                   <p className={`fluid-kicker inline-flex rounded-full border px-3 py-1 font-black uppercase ${tone.badge} dark:bg-slate-800/80 dark:border-white/10 dark:text-sky-300`}>
                     {content.eyebrow}
                   </p>
-                  <h2 id="info-peek-title" className="fluid-title mt-3 text-balance font-black text-slate-900 dark:text-white sm:text-[28px]">
+                  <h2 id={titleId} className="fluid-title mt-3 text-balance font-black text-slate-900 dark:text-white sm:text-[28px]">
                     {content.title}
                   </h2>
                 </div>
@@ -134,6 +122,7 @@ export default function InfoPeekModal({ open, onClose, content }: InfoPeekModalP
 
               <button
                 type="button"
+                data-autofocus
                 onClick={onClose}
                 aria-label={t('str_4661d491')}
                 className="flex size-10 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-white/10 text-slate-500 dark:text-slate-300 shadow-sm transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-700 dark:hover:text-white"

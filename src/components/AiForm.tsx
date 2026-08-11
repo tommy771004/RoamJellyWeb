@@ -151,6 +151,8 @@ export const MultiSelectPill: React.FC<{
 
   return (
     <button
+      type="button"
+      aria-pressed={selected}
       onClick={onClick}
       className={`min-h-[42px] px-3.5 sm:px-4.5 py-2.5 rounded-[20px] text-[12px] sm:text-[14px] font-bold transition-all duration-[200ms] relative overflow-hidden flex items-center justify-center gap-2 ${
         selected
@@ -158,7 +160,7 @@ export const MultiSelectPill: React.FC<{
           : "clay-btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-white/80 dark:border-white/20"
       }`}
     >
-      {selected && <Check size={16} strokeWidth={3} className="shrink-0" />}
+      {selected && <Check size={16} strokeWidth={3} aria-hidden="true" className="shrink-0" />}
       <span className="relative z-10">{t('ai_preferences_options.' + label, label)}</span>
     </button>
   );

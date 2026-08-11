@@ -1,10 +1,11 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, MapPin, Calendar, Clock, Download } from 'lucide-react';
 import { EXPERT_HANDBOOKS } from '../data/expertHandbooks';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { useTranslation } from "react-i18next";
+import { useModalAccessibility } from '../lib/useModalAccessibility';
 
 interface ExpertHandbookModalProps {
   open: boolean;
@@ -44,6 +45,8 @@ function useLocalizedHandbook(handbook: typeof EXPERT_HANDBOOKS[0] | null) {
 export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPath }: ExpertHandbookModalProps) {
   const { t } = useTranslation();
   const localizedHandbook = useLocalizedHandbook(handbook);
+  const dialogRef = useModalAccessibility(onClose, open && Boolean(localizedHandbook));
+  const titleId = useId();
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);
@@ -100,11 +103,16 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
 
           {/* Modal panel */}
           <motion.div
+            ref={dialogRef}
             key="ehm-panel"
             initial={modalMotion.initial}
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             className="relative flex max-h-modal-dvh w-full flex-col overflow-hidden rounded-t-[32px] sm:rounded-[32px] border border-white/72 dark:border-white/10 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(30,41,59,0.98),rgba(15,23,42,0.96),rgba(2,6,23,0.94))] shadow-[0_28px_64px_rgba(15,23,42,0.16)] dark:shadow-[0_28px_64px_rgba(0,0,0,0.6)] sm:max-w-3xl sm:rounded-[32px] md:max-w-4xl outline-none"
             onClick={(e) => e.stopPropagation()}
           >
@@ -116,9 +124,9 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                     <img src={localizedHandbook.image} alt={localizedHandbook.title} width={64} height={64} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h1 className="fluid-title line-clamp-2 font-extrabold text-slate-900 dark:text-white sm:text-[30px]">
+                    <h2 id={titleId} className="fluid-title line-clamp-2 font-extrabold text-slate-900 dark:text-white sm:text-[30px]">
                       {localizedHandbook.title}
-                    </h1>
+                    </h2>
                     <div className="flex items-center overflow-x-auto scrollbar-hide snap-x gap-x-3 gap-y-1 mt-2">
                        <span className="fluid-caption flex-shrink-0 snap-start rounded-md bg-slate-100 px-2 py-0.5 font-black tracking-[0.04em] text-slate-500">
                          {localizedHandbook.author}
@@ -131,6 +139,8 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                   </div>
                 </div>
                 <button
+                  type="button"
+                  data-autofocus
                   onClick={handleClose}
                   aria-label={t('str_46619f2c')}
                   className="w-10 h-10 rounded-full bg-slate-100/50 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
@@ -204,6 +214,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
               <p className="fluid-caption font-medium text-slate-500">
                 {t('str_40c626c8')}</p>
               <button
+                type="button"
                 onClick={() => {
                   onCopyPath(handbook);
                   handleClose();

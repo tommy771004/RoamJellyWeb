@@ -8,6 +8,7 @@ import GlassCard from './GlassCard';
 import type { ItineraryNode } from '../types/workflow';
 import { openNativeMap } from '../lib/workflowApi';
 import { useTranslation } from "react-i18next";
+import { getCategoryMeta } from '../lib/itineraryUtils';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -246,7 +247,7 @@ export default function ItineraryMapView({
                   <p className="font-black text-slate-800 text-[15px] truncate">{selectedNode.title}</p>
                   <div className="flex items-center gap-2 mt-0.5 max-w-full overflow-x-auto no-scrollbar shrink-0">
                     {selectedNode.time && <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest shrink-0">{selectedNode.time}</span>}
-                    {selectedNode.category && <span className="text-[11px] font-bold text-fuchsia-500 bg-fuchsia-50/80 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 border border-fuchsia-100/50">{selectedNode.category}</span>}
+                  {selectedNode.category && <span className="text-[11px] font-bold text-fuchsia-500 bg-fuchsia-50/80 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 border border-fuchsia-100/50">{t(`itinerary_category.${getCategoryMeta(selectedNode.category).key}`)}</span>}
                   </div>
                   {selectedNode.description && <p className="text-[12px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{selectedNode.description}</p>}
                 </div>

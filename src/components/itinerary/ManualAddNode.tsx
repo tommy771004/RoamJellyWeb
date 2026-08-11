@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Calendar, ChevronDown, Clock, MapPin, Pencil, Plus, X } from "lucide-react";
 import type { ItineraryNode } from "../../types/workflow";
 import IconImg from "../ui/IconImg";
 import MapSelectorModal from "../MapSelectorModal";
-import { EMOJI_OPTIONS, CATEGORY_META, CATEGORY_OPTIONS, getDateForDay, getDayForDate } from "../../lib/itineraryUtils";
+import { EMOJI_OPTIONS, CATEGORY_OPTIONS, getDateForDay, getDayForDate } from "../../lib/itineraryUtils";
 import { getModalMotion, getOverlayTransition } from "../../lib/motionTokens";
 import { useTripFactsStore } from "../../store/useTripFactsStore";
+import { useModalAccessibility } from "../../lib/useModalAccessibility";
+import { useTranslation } from "react-i18next";
 
 export default function ManualAddNode({
   onAdd,
@@ -22,7 +24,20 @@ export default function ManualAddNode({
   tripStartDate?: string | null;
   openTrigger?: number;
 }) {
+  const { t } = useTranslation();
   const [isAdding, setIsAdding] = useState(false);
+  const dialogRef = useModalAccessibility(() => setIsAdding(false), isAdding);
+  const titleId = useId();
+  const itemNameId = useId();
+  const dateInputId = useId();
+  const timeInputId = useId();
+  const locationInputId = useId();
+  const descriptionInputId = useId();
+  const transportInputId = useId();
+  const imageUrlInputId = useId();
+  const emojiInputId = useId();
+  const categoryInputId = useId();
+  const factInputId = useId();
   const [title, setTitle] = useState("");
   const [locationName, setLocationName] = useState("");
   const [date, setDate] = useState(getDateForDay(day, tripStartDate) || "");
@@ -64,7 +79,10 @@ export default function ManualAddNode({
       time,
       emoji,
       category,
-      description: [locationName ? `地點：${locationName}` : "", description]
+      description: [
+        locationName ? t("manual_add.location_prefix", { location: locationName }) : "",
+        description,
+      ]
         .filter(Boolean)
         .join("\n"),
       transport_to_next: transportToNext || undefined,
@@ -99,7 +117,7 @@ export default function ManualAddNode({
         <div className="w-11 h-11 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-500 dark:text-slate-300 group-hover:bg-pink-100 group-hover:text-pink-400 transition-colors">
           <Plus size={20} />
         </div>
-        新增行程節點
+        {t("manual_add.add_item")}
       </motion.button>
     );
   }
@@ -116,10 +134,15 @@ export default function ManualAddNode({
           onClick={() => setIsAdding(false)}
         />
         <motion.div
+          ref={dialogRef}
           initial={getModalMotion().initial}
           animate={getModalMotion().animate}
           exit={getModalMotion().exit}
           transition={getModalMotion().transition}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
           className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl z-sheet-above overflow-hidden flex flex-col max-h-90dvh"
         >
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 z-10" />
@@ -131,11 +154,11 @@ export default function ManualAddNode({
                     🗓️
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-slate-800 tracking-tight">
-                      新增行程節點
-                    </h3>
+                    <h2 id={titleId} className="text-xl font-black text-slate-800 tracking-tight">
+                      {t("manual_add.add_item")}
+                    </h2>
                     <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                      Day {getDayForDate(date, tripStartDate, day)}{" "}
+                      {t("manual_add.day", { day: getDayForDate(date, tripStartDate, day) })}{" "}
                       {date ? `• ${date}` : ""}
                     </p>
                   </div>
@@ -143,6 +166,7 @@ export default function ManualAddNode({
                 <button
                   type="button"
                   onClick={() => setIsAdding(false)}
+                  aria-label={t("a11y.close_manual_add")}
                   className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                 >
                   <X size={20} />
@@ -150,8 +174,8 @@ export default function ManualAddNode({
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                  行程名稱
+                <label htmlFor={itemNameId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                  {t("manual_add.item_name")}
                 </label>
                 <div className="relative group">
                   <Pencil
@@ -159,11 +183,12 @@ export default function ManualAddNode({
                     size={18}
                   />
                   <input
-                    autoFocus
+                    id={itemNameId}
+                    data-autofocus
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="例如：參觀東京鐵塔"
+                    placeholder={t("manual_add.item_name_placeholder")}
                     className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   />
                 </div>
@@ -171,8 +196,8 @@ export default function ManualAddNode({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-3">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                    日期
+                  <label htmlFor={dateInputId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                    {t("manual_add.date")}
                   </label>
                   <div className="relative group">
                     <Calendar
@@ -180,6 +205,7 @@ export default function ManualAddNode({
                       className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 group-focus-within:text-pink-400 transition-colors"
                     />
                     <input
+                      id={dateInputId}
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
@@ -188,8 +214,8 @@ export default function ManualAddNode({
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                    時間
+                  <label htmlFor={timeInputId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                    {t("manual_add.time")}
                   </label>
                   <div className="relative group">
                     <Clock
@@ -197,6 +223,7 @@ export default function ManualAddNode({
                       className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300 group-focus-within:text-pink-400 transition-colors"
                     />
                     <input
+                      id={timeInputId}
                       type="time"
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
@@ -207,8 +234,8 @@ export default function ManualAddNode({
               </div>
 
               <div className="flex flex-col gap-3">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                  地點
+                <label htmlFor={locationInputId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                  {t("manual_add.location")}
                 </label>
                 <div className="flex gap-2">
                   <div className="relative group flex-1">
@@ -217,9 +244,10 @@ export default function ManualAddNode({
                       size={18}
                     />
                     <input
+                      id={locationInputId}
                       value={locationName}
                       onChange={(e) => setLocationName(e.target.value)}
-                      placeholder="文字輸入地點名稱或地址"
+                      placeholder={t("manual_add.location_placeholder")}
                       className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 pl-12 pr-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                     />
                   </div>
@@ -229,40 +257,43 @@ export default function ManualAddNode({
                     className="shrink-0 px-4 py-4 rounded-3xl bg-white border border-fuchsia-200 text-fuchsia-600 font-bold text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-fuchsia-50 hover:shadow-sm ios-press transition-all"
                   >
                     <MapPin size={16} />
-                    {coords ? "已選取座標" : "地圖選取"}
+                    {coords ? t("manual_add.coordinates_selected") : t("manual_add.map_select")}
                   </button>
                 </div>
               </div>
 
                   <div className="flex flex-col gap-3">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                  詳細說明 / 備註 (Description)
+                <label htmlFor={descriptionInputId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                  {t("manual_add.description")}
                 </label>
                 <textarea
+                  id={descriptionInputId}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="補充行程細節、提醒或預約資訊..."
+                  placeholder={t("manual_add.description_placeholder")}
                   className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 min-h-[92px] resize-y"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-3">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                    前往下一站交通
+                  <label htmlFor={transportInputId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                    {t("manual_add.transport")}
                   </label>
                   <input
+                    id={transportInputId}
                     value={transportToNext}
                     onChange={(e) => setTransportToNext(e.target.value)}
-                    placeholder="例如：地鐵約 20 分鐘"
+                    placeholder={t("manual_add.transport_placeholder")}
                     className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50"
                   />
                 </div>
                 <div className="flex flex-col gap-3">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                    照片網址
+                  <label htmlFor={imageUrlInputId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                    {t("manual_add.image_url")}
                   </label>
                   <input
+                    id={imageUrlInputId}
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://images..."
@@ -273,13 +304,16 @@ export default function ManualAddNode({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-3">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                    圖標 Emoji
+                  <label htmlFor={emojiInputId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                    {t("manual_add.emoji")}
                   </label>
                   <div className="relative">
                     <button
+                      id={emojiInputId}
                       type="button"
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      aria-label={t("manual_add.emoji_picker")}
+                      aria-expanded={showEmojiPicker}
                       className="w-full py-4 rounded-3xl bg-slate-50/50 border border-slate-100 flex items-center justify-center shadow-sm hover:border-pink-200 transition-all ios-press"
                     >
                       <IconImg value={emoji} size={28} />
@@ -294,6 +328,7 @@ export default function ManualAddNode({
                               setEmoji(em);
                               setShowEmojiPicker(false);
                             }}
+                            aria-label={t("manual_add.emoji_option", { emoji: em })}
                             className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${emoji === em ? "bg-pink-100 scale-110 shadow-sm" : "hover:bg-slate-50"}`}
                           >
                             <IconImg value={em} size={24} />
@@ -304,18 +339,19 @@ export default function ManualAddNode({
                   </div>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                    分類
+                  <label htmlFor={categoryInputId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                    {t("manual_add.category")}
                   </label>
                   <div className="relative">
                     <select
+                      id={categoryInputId}
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
                       className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg px-5 py-4 font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all appearance-none shadow-sm shadow-slate-100/50 dark:shadow-black/50 h-full"
                     >
                       {CATEGORY_OPTIONS.map((opt) => (
                         <option key={opt} value={opt}>
-                          {CATEGORY_META[opt].label}
+                          {t(`itinerary_category.${opt}`)}
                         </option>
                       ))}
                     </select>
@@ -328,16 +364,17 @@ export default function ManualAddNode({
 
               {facts && facts.length > 0 && (
                 <div className="flex flex-col gap-3">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
-                    關聯 Travel Fact
+                  <label htmlFor={factInputId} className="text-[11px] font-black text-slate-500 uppercase tracking-widest pl-2">
+                    {t("manual_add.travel_fact")}
                   </label>
                   <div className="relative">
                     <select
+                      id={factInputId}
                       value={linkedFactId}
                       onChange={(e) => setLinkedFactId(e.target.value)}
                       className="w-full rounded-3xl border border-white/60 dark:border-white/20 bg-white/40 dark:bg-black/35 backdrop-blur-md dark:backdrop-blur-lg py-4 px-5 font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500 transition-all shadow-sm shadow-slate-100/50 dark:shadow-black/50 appearance-none"
                     >
-                      <option value="">無關聯 (未選擇)</option>
+                      <option value="">{t("manual_add.no_related_fact")}</option>
                       {facts.map((f) => (
                         <option key={f.id} value={f.id}>
                           {f.title} ({f.factType})
@@ -358,7 +395,7 @@ export default function ManualAddNode({
                   onChange={(e) => setIsVisited(e.target.checked)}
                   className="accent-emerald-500 w-4 h-4"
                 />
-                標記為已完成 / 已打卡
+                {t("manual_add.completed")}
               </label>
 
               <button
@@ -366,7 +403,7 @@ export default function ManualAddNode({
                 className="w-full py-5 rounded-3xl bg-slate-900 text-white font-black text-[13px] uppercase tracking-[0.15em] shadow-lg hover:bg-slate-800 ios-press transition-all flex items-center justify-center gap-2 mt-2"
               >
                 <Plus size={18} strokeWidth={3} />
-                確認新增至 Day {getDayForDate(date, tripStartDate, day)}
+                {t("manual_add.submit", { day: getDayForDate(date, tripStartDate, day) })}
               </button>
             </form>
           </div>

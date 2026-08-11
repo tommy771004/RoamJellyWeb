@@ -31,7 +31,7 @@ export default function CalendarView({
   nodes,
   tripStartDate,
 }: CalendarViewProps) {
-    const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   // Calculate start date
@@ -64,6 +64,18 @@ export default function CalendarView({
 
   const [currentMonth, setCurrentMonth] = useState(
     new Date(viewYear, viewMonth, 1),
+  );
+  const monthFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }),
+    [i18n.language],
+  );
+  const weekdayFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.language, { weekday: "short", timeZone: "UTC" }),
+    [i18n.language],
+  );
+  const weekdays = useMemo(
+    () => Array.from({ length: 7 }, (_, offset) => weekdayFormatter.format(new Date(Date.UTC(2023, 0, 1 + offset)))),
+    [weekdayFormatter],
   );
 
   // build calendar grid
@@ -115,7 +127,8 @@ export default function CalendarView({
             <ChevronLeft size={20} />
           </button>
           <h2 className="text-xl font-black text-slate-700 tracking-widest">
-            {currentMonth.getFullYear()}{t('str_5e74')}{currentMonth.getMonth() + 1}{t('str_6708')}</h2>
+            {monthFormatter.format(currentMonth)}
+          </h2>
           <button
             onClick={() =>
               setCurrentMonth(
@@ -135,7 +148,7 @@ export default function CalendarView({
         </div>
 
         <div className="grid grid-cols-7 gap-px bg-pink-100/50 flex-1 overflow-y-auto">
-          {["日", "一", "二", "三", "四", "五", "六"].map((d) => (
+          {weekdays.map((d) => (
             <div
               key={d}
               className="bg-white/70 backdrop-blur-md text-center py-3 text-xs font-black text-pink-400 capitalize tracking-widest sticky top-0 z-10 shadow-sm"
@@ -174,6 +187,8 @@ export default function CalendarView({
                     <button
                       key={node.node_id}
                       onClick={() => setSelectedNodeId(node.node_id)}
+                      aria-label={t("calendar.open_item", { title: node.title, time: node.time || t("itinerary_card.time_unset") })}
+                      aria-pressed={selectedNodeId === node.node_id}
                       className={`text-left px-2 py-1.5 rounded-xl text-[11px] font-bold transition-all border border-transparent flex gap-1.5 shadow-sm ios-press ${
                         selectedNodeId === node.node_id
                           ? "bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white shadow-pink-200/50 scale-105"
@@ -235,7 +250,7 @@ export default function CalendarView({
               <div className="w-full h-48 bg-slate-100 rounded-[2rem] overflow-hidden shadow-inner border border-white relative group">
                 <img
                   src={selectedNode.image_url}
-                  alt={selectedNode.title || '景點圖片'}
+                  alt={t("calendar.spot_image", { title: selectedNode.title || t("default_spot") })}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   referrerPolicy="no-referrer"
                 />
@@ -323,7 +338,7 @@ export default function CalendarView({
                             <Clock size={14} className="text-slate-500" />
                             <span>
                               {fact.startAt || "--"}{" "}
-                              {fact.endAt ? `至 ${fact.endAt}` : ""}
+                              {fact.endAt ? t("calendar.time_until", { time: fact.endAt }) : ""}
                             </span>
                           </div>
                         )}

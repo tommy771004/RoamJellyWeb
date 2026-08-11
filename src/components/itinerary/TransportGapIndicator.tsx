@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Clock, AlertTriangle } from "lucide-react";
 import type { ItineraryNode } from "../../types/workflow";
-import { haversineKm, estimateTransport, formatMinutes, checkUnrealisticTravelTime } from "../../lib/geoUtils";
+import { haversineKm, estimateTransport, checkUnrealisticTravelTime } from "../../lib/geoUtils";
 import { extractMinutes } from "../../lib/itineraryText";
 import { fetchDirections } from "../../lib/workflowApi";
+import { useTranslation } from "react-i18next";
 
 export default function TransportGapIndicator({
   item,
@@ -16,7 +17,23 @@ export default function TransportGapIndicator({
   timeGapMinutes: number;
   timeGapStr: string;
 }) {
+  const { t } = useTranslation();
   const [apiDuration, setApiDuration] = useState<number | null>(null);
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = Math.round(minutes % 60);
+    return hours > 0
+      ? remainingMinutes > 0
+        ? t("itinerary_day.duration_hours", { hours, minutes: remainingMinutes })
+        : t("itinerary_day.duration_hours_only", { hours })
+      : t("itinerary_day.duration_minutes", { minutes: remainingMinutes });
+  };
+  const getTransportLabel = (minutes: number, isFlight = false) => {
+    if (isFlight) return t("transport.estimated_flight", { duration: formatDuration(minutes) });
+    if (minutes <= 10) return t("transport.estimated_walk", { duration: formatDuration(minutes) });
+    if (minutes <= 25) return t("transport.estimated_public", { duration: formatDuration(minutes) });
+    return t("transport.estimated_drive", { duration: formatDuration(minutes) });
+  };
 
   const unrealisticCheck = checkUnrealisticTravelTime(item, nextItem, timeGapMinutes);
 
@@ -69,13 +86,13 @@ export default function TransportGapIndicator({
       if (apiDuration && km > 2 && !autoTransport.isFlight) {
         return {
           emoji: "🚗",
-          label: `預計車程 ${formatMinutes(apiDuration)}`,
+          label: t("transport.estimated_drive", { duration: formatDuration(apiDuration) }),
           minutes: apiDuration,
           isApi: true,
           isFlight: false,
         };
       }
-      return { ...autoTransport, isApi: false };
+      return { ...autoTransport, label: getTransportLabel(autoTransport.minutes, autoTransport.isFlight), isApi: false };
     }
     return null;
   })();
@@ -96,7 +113,7 @@ export default function TransportGapIndicator({
         <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
           {timeGapStr && (
             <span className="px-3.5 py-1.5 bg-white rounded-full text-[11px] sm:text-xs font-black text-slate-500 uppercase tracking-widest border border-slate-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 transition-transform hover:scale-105">
-              <Clock size={12} className="text-slate-500" />約 {timeGapStr}
+              <Clock size={12} className="text-slate-500" />{t("transport.approximate", { duration: timeGapStr })}
             </span>
           )}
           {displayTransport && (
@@ -122,19 +139,19 @@ export default function TransportGapIndicator({
               }`}
             >
               <AlertTriangle size={13} className="shrink-0" />
-              <span>不合理交通警告</span>
+              <span>{t("transport.warning_unrealistic")}</span>
             </span>
           )}
           {!unrealisticCheck.isUnrealistic && hasTransitConflict && (
             <span className="px-3.5 py-1.5 bg-amber-50/90 rounded-full text-[11px] sm:text-xs font-black text-amber-600 uppercase tracking-widest border border-amber-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2">
               <span>⚠️</span>
-              行程太緊湊
+              {t("transport.warning_tight")}
             </span>
           )}
           {!unrealisticCheck.isUnrealistic && isTooLong && !hasTransitConflict && (
             <span className="px-3.5 py-1.5 bg-rose-50/90 rounded-full text-[11px] sm:text-xs font-black text-rose-500 uppercase tracking-widest border border-rose-200 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2">
               <span>🚨</span>
-              交通時間過長
+              {t("transport.warning_long")}
             </span>
           )}
         </div>
@@ -143,7 +160,15 @@ export default function TransportGapIndicator({
         {unrealisticCheck.isUnrealistic && unrealisticCheck.message && (
           <div className="text-[11px] font-bold text-rose-800 dark:text-rose-200 bg-rose-50/90 dark:bg-rose-900/40 border border-rose-200/80 dark:border-rose-800/60 p-2.5 rounded-2xl flex items-start gap-2 shadow-xs max-w-md">
             <AlertTriangle size={14} className="text-rose-500 shrink-0 mt-0.5" />
-            <span>{unrealisticCheck.message}</span>
+            <span>
+              {unrealisticCheck.reason === "impossible_speed"
+                ? unrealisticCheck.requiredSpeedKmH && unrealisticCheck.requiredSpeedKmH > 900
+                  ? t("transport.impossible_flight", { distance: Math.round(unrealisticCheck.distanceKm), available: formatDuration(unrealisticCheck.availableMinutes ?? 0) })
+                  : t("transport.impossible_ground", { distance: unrealisticCheck.distanceKm, available: formatDuration(unrealisticCheck.availableMinutes ?? 0), speed: unrealisticCheck.requiredSpeedKmH ?? 0 })
+                : unrealisticCheck.reason === "insufficient_time"
+                  ? t("transport.insufficient_time", { estimated: formatDuration(unrealisticCheck.estimatedMinutes), available: formatDuration(unrealisticCheck.availableMinutes ?? 0) })
+                  : t("transport.excessive_distance", { distance: Math.round(unrealisticCheck.distanceKm) })}
+            </span>
           </div>
         )}
       </div>
@@ -154,4 +179,3 @@ export default function TransportGapIndicator({
     </div>
   );
 }
-

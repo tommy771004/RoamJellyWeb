@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import { Check, X } from 'lucide-react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { useTranslation } from "react-i18next";
+import { useModalAccessibility } from '../lib/useModalAccessibility';
 
 const selectIcon = L.divIcon({
   html: `
@@ -37,7 +38,9 @@ export interface MapSelectorModalProps {
 }
 
 export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat = 25.0330, initialLng = 121.5654 }: MapSelectorModalProps) {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
+  const dialogRef = useModalAccessibility(onClose, isOpen);
+  const titleId = useId();
   const [selectedPos, setSelectedPos] = useState<{lat: number, lng: number} | null>(
     (initialLat && initialLng) ? { lat: initialLat, lng: initialLng } : null
   );
@@ -56,22 +59,28 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
           onClick={onClose}
         />
         <motion.div
+          ref={dialogRef}
           initial={getModalMotion().initial}
           animate={getModalMotion().animate}
           exit={getModalMotion().exit}
           transition={getModalMotion().transition}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
           className="relative z-modal-above flex h-[72vh] w-full max-w-2xl flex-col overflow-hidden rounded-[32px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,250,251,0.94),rgba(241,248,255,0.92))] shadow-[0_24px_56px_rgba(15,23,42,0.16)] sm:rounded-[32px]"
         >
           <div className="absolute top-0 left-0 z-10 h-1.5 w-full bg-gradient-to-r from-sky-400 via-fuchsia-400 to-orange-300" />
           
           <div className="z-10 flex shrink-0 items-center justify-between bg-white/84 p-4 pb-3.5 shadow-sm backdrop-blur-xl sm:p-5">
             <div className="flex flex-col">
-              <h3 className="fluid-title font-black text-slate-800">{t('str_57c7bc9a')}</h3>
+              <h2 id={titleId} className="fluid-title font-black text-slate-800">{t('str_57c7bc9a')}</h2>
               <p className="fluid-body mt-1 font-medium text-slate-500">
                 {t('str_16f74770')}</p>
             </div>
             <button 
               type="button" 
+              data-autofocus
               onClick={onClose}
               aria-label={t('str_1db23371')}
               className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60 ios-press"
@@ -98,6 +107,7 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
 
           <div className="z-10 shrink-0 bg-white/86 p-4 shadow-[0_-10px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl sm:p-5">
             <button
+              type="button"
               onClick={() => {
                 if (selectedPos) {
                   onSelect(selectedPos.lat, selectedPos.lng);

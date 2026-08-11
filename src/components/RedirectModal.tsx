@@ -1,8 +1,10 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { Plane, Clock, Heart, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
+import { useId } from 'react';
 import GlassCard from './GlassCard';
 import { getModalMotion, getOverlayTransition, subtlePressableClass } from '../lib/motionTokens';
 import { useTranslation } from "react-i18next";
+import { useModalAccessibility } from '../lib/useModalAccessibility';
 
 interface RedirectModalProps {
   provider: string;
@@ -32,7 +34,9 @@ export default function RedirectModal({
   onConfirm,
   onSave 
 }: RedirectModalProps) {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
+  const titleId = useId();
+  const dialogRef = useModalAccessibility(onClose);
   const airlineInitial = (airline || provider || '?').charAt(0).toUpperCase();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
@@ -48,10 +52,15 @@ export default function RedirectModal({
       onClick={onClose}
     >
       <motion.div
+        ref={dialogRef}
         initial={modalMotion.initial}
         animate={modalMotion.animate}
         exit={modalMotion.exit}
         transition={modalMotion.transition}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         className="w-full max-w-[520px]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -68,8 +77,8 @@ export default function RedirectModal({
                   {airlineInitial}
                 </div>
                 <div className="flex flex-col">
-                  <span className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] leading-none text-sky-600">Affiliate Link Out</span>
-                  <span className="text-[18px] sm:text-[20px] font-black tracking-[-0.03em] text-slate-800 leading-none">{airline || provider}</span>
+                  <span className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] leading-none text-sky-600">{t("redirect_modal.affiliate")}</span>
+                  <h2 id={titleId} className="text-[18px] sm:text-[20px] font-black tracking-[-0.03em] text-slate-800 leading-none">{airline || provider}</h2>
                 </div>
               </div>
               <div className="flex flex-col items-end">
@@ -97,9 +106,9 @@ export default function RedirectModal({
                      <Plane size={17} strokeWidth={3} />
                    </div>
                    <div className="flex flex-col items-center">
-                     <span className="whitespace-nowrap text-[12px] font-black text-slate-700 sm:text-[13px]">{duration || '3h 30m'}</span>
+                     <span className="whitespace-nowrap text-[12px] font-black text-slate-700 sm:text-[13px]">{duration || t("redirect_modal.duration_unavailable")}</span>
                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                      {stops === 0 ? '直飛' : `轉機 ${stops} 次`}
+                      {stops === 0 ? t("redirect_modal.direct") : t("redirect_modal.stops", { count: stops ?? 0 })}
                      </span>
                    </div>
                 </div>
@@ -143,23 +152,25 @@ export default function RedirectModal({
               <div className="mb-5 rounded-2xl border border-sky-100 bg-sky-50/50 p-4 flex items-start gap-3 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8)] backdrop-blur-md">
                 <ShieldCheck size={18} className="text-sky-500 shrink-0 mt-0.5" strokeWidth={2.4} />
                 <p className="text-[11px] leading-[1.62] text-sky-800 font-bold font-sans">
-                  Safety Guarantee: All bookings remain encrypted under partner agency policies. Clickout logged for support.
+                  {t("redirect_modal.safety_notice")}
                 </p>
               </div>
 
               <div className="flex w-full flex-col space-y-3.5">
                 <button
+                  type="button"
                   onClick={onConfirm}
                   className={`group relative flex w-full items-center justify-center overflow-hidden rounded-[22px] border-none bg-gradient-to-r from-orange-500 to-amber-500 py-4 shadow-[0_12px_28px_rgba(249,115,22,0.18)] hover:from-orange-600 hover:to-orange-500 transition-all ${subtlePressableClass}`}
                 >
                   <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <span className="relative z-10 flex items-center gap-2.5 whitespace-nowrap text-[16px] font-black tracking-[0.04em] text-white">
-                    Proceed to Booking Partner <ArrowRight size={18} strokeWidth={3} className="shrink-0 transition-transform group-hover:translate-x-1" />
+                    {t("redirect_modal.proceed")} <ArrowRight size={18} strokeWidth={3} className="shrink-0 transition-transform group-hover:translate-x-1" />
                   </span>
                 </button>
                 
                 <div className="flex gap-3">
                   <button
+                    type="button"
                     onClick={onSave}
                     className={`group flex flex-1 items-center justify-center gap-2 rounded-[20px] border border-slate-200 bg-white py-3.5 shadow-sm whitespace-nowrap hover:border-pink-200 hover:bg-pink-50 ${subtlePressableClass}`}
                   >
@@ -167,10 +178,12 @@ export default function RedirectModal({
                     <span className="text-[14px] font-bold text-slate-600 group-hover:text-pink-600">{t('str_30050ec8')}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={onClose}
+                    aria-label={t("redirect_modal.close")}
                     className={`flex-1 rounded-[20px] border border-sky-200/90 bg-sky-50/15 text-sky-700 py-3.5 whitespace-nowrap hover:bg-sky-50 transition-all ${subtlePressableClass}`}
                   >
-                    <span className="text-[14px] font-bold">Decline and Return</span>
+                    <span className="text-[14px] font-bold">{t("redirect_modal.return")}</span>
                   </button>
                 </div>
               </div>

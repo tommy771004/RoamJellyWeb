@@ -191,7 +191,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 export default function ItineraryTab() {
-    const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const [viewMode, setViewMode] = useState<"list" | "map" | "calendar">("list");
   const [selectedDay, setSelectedDay] = useState<number>(1);
@@ -201,6 +201,15 @@ export default function ItineraryTab() {
   const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [isSocketConnected, setIsSocketConnected] = useState<boolean>(false);
   const [localThemeGradient, setLocalThemeGradient] = useState<string | null>(null);
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = Math.round(minutes % 60);
+    return hours > 0
+      ? remainingMinutes > 0
+        ? t("itinerary_day.duration_hours", { hours, minutes: remainingMinutes })
+        : t("itinerary_day.duration_hours_only", { hours })
+      : t("itinerary_day.duration_minutes", { minutes: remainingMinutes });
+  };
 
   // Project List states
   const [userTrips, setUserTrips] = useState<any[]>([]);
@@ -388,7 +397,7 @@ export default function ItineraryTab() {
   const handleAiFormSubmit = async (formData: AiFormData) => {
     if (!handleEditPermissionCheck()) return;
     setAiLoading(true);
-    showToast(`正在為您生成旅程：${formData.destination}...`);
+    showToast(t("generating_journey", { destination: formData.destination }));
     try {
       // Sync plannerForm.days so totalDays reflects user's selection immediately (e.g. 4 days)
       setPlannerForm((prev) => ({ ...prev, days: formData.days }));
@@ -425,7 +434,7 @@ export default function ItineraryTab() {
             node_id: `ai_${Date.now()}_${Math.random().toString(36).substring(2, 8)}_${dayData.day}_${i}`,
             day: dayData.day || 1,
             time: normalizeClockInput(spot.time || "10:00"),
-            title: spot.name || "景點",
+            title: spot.name || t("default_spot"),
             emoji: getNodeEmoji({ emoji: spot.emoji, category: cat }),
             category: cat,
             description: spot.ai_note || "",
@@ -571,9 +580,9 @@ export default function ItineraryTab() {
       useAppStore.getState().setActiveTab("ai_result");
     } catch (err) {
       if (err instanceof AiRateLimitedError) {
-        showToast(err.message, "warning");
+        showToast(t("itinerary_feedback.ai_rate_limited"), "warning");
       } else {
-        showToast("AI 規劃失敗，請稍後再試。", "warning");
+        showToast(t("generate_failed"), "warning");
       }
     } finally {
       setAiLoading(false);
@@ -600,7 +609,7 @@ export default function ItineraryTab() {
       };
       socketRef.current?.emit("sync_itinerary", payload);
       void syncItinerary(payload).catch(() => {
-        setTip("排序同步失敗，重新整理後可回到最後儲存版本。");
+        setTip(t("itinerary_feedback.reorder_sync_failed"));
         setTimeout(() => setTip(""), 2500);
       });
     }
@@ -653,21 +662,26 @@ export default function ItineraryTab() {
   const handleOptimizeRoute = () => {
     if (!handleEditPermissionCheck()) return;
     if (selectedDayNodes.length <= 1) {
-      setTip("當天景點數量至少需要 2 個以上才能進行路線最佳化！");
+      setTip(t("itinerary_feedback.optimize_min_items"));
       setTimeout(() => setTip(""), 2500);
       return;
     }
 
     const { ordered, savedKm, savedMinutes } = optimizeSpotOrder(selectedDayNodes);
     if (savedKm <= 0.1) {
-      setTip("目前的景點順序已是極佳的移動路線，無需調整！");
+      setTip(t("itinerary_feedback.optimize_no_change"));
       setTimeout(() => setTip(""), 2500);
       return;
     }
 
     handleReorder(ordered);
-    const timeSavedText = savedMinutes > 0 ? `（約可省下 ${formatMinutes(savedMinutes)} 交通時間）` : '';
-    const message = `✨ 已完成路線最佳化！預計為您省下約 ${savedKm.toFixed(1)} km 移動距離${timeSavedText}。`;
+    const timeSaved = savedMinutes > 0
+      ? t("itinerary_feedback.optimize_time_saved", { duration: formatDuration(savedMinutes) })
+      : "";
+    const message = t("itinerary_feedback.optimize_complete", {
+      distance: new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 1 }).format(savedKm),
+      timeSaved,
+    });
     setTip(message);
     showToast(message, "success");
     setTimeout(() => setTip(""), 4000);
@@ -932,7 +946,7 @@ export default function ItineraryTab() {
         if (!event?.payload) return;
         if (event.action === "remove_node") {
           removeNode((event.payload as { node_id: string }).node_id);
-          addNotification("協作者刪除了一個行程節點");
+          addNotification(t("itinerary_feedback.collab_node_removed"));
         } else if (event.action === "patch_node") {
           const patch = event.payload as {
             node_id: string;
@@ -945,16 +959,18 @@ export default function ItineraryTab() {
               window.clearTimeout(remoteReorderToastTimerRef.current);
             }
             remoteReorderToastTimerRef.current = window.setTimeout(() => {
-              showToast("📍 協作者已最佳化並更新今日行程路線順序！", "info");
-              addNotification("協作者更新了行程路線與地點順序");
+              showToast(t("itinerary_feedback.collab_route_updated"), "info");
+              addNotification(t("itinerary_feedback.collab_route_updated"));
             }, 500);
           } else {
-            addNotification("協作者更新了一個行程節點");
+            addNotification(t("itinerary_feedback.collab_node_updated"));
           }
         } else if (event.action === "add_node") {
           const node = event.payload as ItineraryNode;
           addNode({ ...node, source: "remote" });
-          addNotification(`協作者新增了「${node.title ?? "行程節點"}」`);
+          addNotification(t("itinerary_feedback.collab_node_added", {
+            title: node.title ?? t("default_spot"),
+          }));
         }
       });
 
@@ -992,7 +1008,9 @@ export default function ItineraryTab() {
             }));
           }
           showToast(
-            `${data?.userName ?? "旅伴"} 正在編輯這個景點，請稍後再試。`,
+            t("itinerary_feedback.collab_edit_denied", {
+              name: data?.userName ?? t("itinerary_feedback.collaborator_fallback"),
+            }),
             "warning",
           );
         },
@@ -1018,7 +1036,7 @@ export default function ItineraryTab() {
       setIsSocketConnected(false);
       setNodeEditingLocks({});
     };
-  }, [isOffline, addNode, patchNode, removeNode, activeTripId, showToast]);
+  }, [isOffline, addNode, patchNode, removeNode, activeTripId, showToast, t]);
 
   const maxNodeDay = useMemo(() => {
     if (nodes.length === 0) return 1;
@@ -1135,7 +1153,7 @@ export default function ItineraryTab() {
   const handleExportIcs = () => {
     if (!tripInfo) return;
     const icsContent = buildIcsCalendar(
-      tripInfo.name || tripInfo.destination || "RoamJelly Trip",
+      tripInfo.name || tripInfo.destination || t("itinerary_feedback.ics_title_fallback"),
       nodes,
     );
     const blob = new Blob([icsContent], {
@@ -1150,7 +1168,7 @@ export default function ItineraryTab() {
     link.remove();
     window.URL.revokeObjectURL(url);
     showToast(
-      "已匯出 ICS，可加入 Apple Calendar 或 Google Calendar。",
+      t("itinerary_feedback.ics_exported"),
       "success",
     );
   };
@@ -1164,13 +1182,13 @@ export default function ItineraryTab() {
         destination: newTripDest,
       });
       const newTripId = newTrip?.data?.id || newTrip?.id;
-      showToast("成功建立新旅程！", "success");
+      showToast(t("itinerary_feedback.trip_created"), "success");
       setNewTripName("");
       setNewTripDest("");
       setShowCreateTrip(false);
       if (newTripId) setActiveTripId(newTripId);
-    } catch (e) {
-      showToast("建立行程失敗，請稍後再試");
+    } catch {
+      showToast(t("itinerary_feedback.trip_create_failed"), "warning");
     }
   };
 
@@ -1193,15 +1211,15 @@ export default function ItineraryTab() {
 
   const handleShare = async () => {
     if (!activeTripId) {
-      showToast("缺少行程 ID，無法分享旅程");
+      showToast(t("itinerary_feedback.share_trip_missing"), "warning");
       return;
     }
     const shareUrl = `${window.location.origin}/share/trip/${activeTripId}`;
     const shareTitle =
-      tripInfo?.name || tripInfo?.destination || "RoamJelly 行程";
+      tripInfo?.name || tripInfo?.destination || t("itinerary_feedback.share_title_fallback");
     const shareText = tripInfo?.destination
-      ? `一起看 ${tripInfo.destination} 的旅程安排`
-      : "一起打開這份 RoamJelly 旅程";
+      ? t("itinerary_feedback.share_destination_text", { destination: tripInfo.destination })
+      : t("itinerary_feedback.share_text_fallback");
     try {
       if (
         typeof navigator !== "undefined" &&
@@ -1213,16 +1231,16 @@ export default function ItineraryTab() {
           url: shareUrl,
         });
         triggerHapticFeedback([20]);
-        showToast("已開啟分享面板，快傳給旅伴吧。", "success");
+        showToast(t("itinerary_feedback.share_opened"), "success");
         return;
       }
 
       await navigator.clipboard.writeText(shareUrl);
       triggerHapticFeedback([20]);
-      showToast("🎉 可預覽的分享連結已複製！邀請朋友加入吧", "success");
+      showToast(t("itinerary_feedback.share_link_copied"), "success");
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
-      showToast("分享失敗，請手動複製網址", "warning");
+      showToast(t("itinerary_feedback.share_link_failed"), "warning");
     }
   };
 
@@ -1254,11 +1272,13 @@ export default function ItineraryTab() {
           : prev,
       );
       showToast(
-        nextPublicState ? "已發布到公開分享行程。" : "已從公開分享行程移除。",
+        nextPublicState
+          ? t("itinerary_feedback.public_published")
+          : t("itinerary_feedback.public_unpublished"),
         "success",
       );
-    } catch (error: any) {
-      showToast(error?.message || "更新公開分享行程狀態失敗。", "warning");
+    } catch {
+      showToast(t("itinerary_feedback.public_update_failed"), "warning");
     } finally {
       setIsUpdatingPublicState(false);
     }
@@ -1357,7 +1377,7 @@ export default function ItineraryTab() {
     );
 
     if (candidateFavorites.length === 0) {
-      showToast("口袋名單暫時沒有新的景點可以抽進今天。", "warning");
+      showToast(t("itinerary_feedback.favorites_no_new_spots"), "warning");
       return;
     }
 
@@ -1365,7 +1385,7 @@ export default function ItineraryTab() {
     const picks = shuffled.slice(0, Math.min(3, shuffled.length));
     picks.forEach((spot) => addSpotToDay(spot, day, { silent: true }));
     showToast(
-      `已從口袋名單替 Day ${day} 補上 ${picks.length} 個靈感景點。`,
+      t("itinerary_feedback.favorites_filled_day", { day, count: picks.length }),
       "success",
     );
   };
@@ -1382,7 +1402,7 @@ export default function ItineraryTab() {
         newSpotEmoji,
       );
       if (!result || result.error) {
-        showToast(result?.error ?? "新增收藏失敗，請稍後再試。", "warning");
+        showToast(t("itinerary_feedback.favorite_add_failed"), "warning");
         return;
       }
       setFavorites((prev: FavoriteSpot[]) => [...prev, result.spot]);
@@ -1390,10 +1410,10 @@ export default function ItineraryTab() {
       setNewSpotEmoji("📍");
       setShowEmojiPicker(false);
       showToast(
-        `${result.spot.emoji} ${result.spot.title} 已加入收藏（座標已自動定位）`,
+        t("itinerary_feedback.favorite_added", { title: result.spot.title }),
       );
     } catch {
-      showToast("新增收藏失敗，請稍後再試。");
+      showToast(t("itinerary_feedback.favorite_add_failed"), "warning");
     } finally {
       setAddingFavorite(false);
     }
@@ -1408,7 +1428,7 @@ export default function ItineraryTab() {
     try {
       await deleteFavorite(id);
     } catch {
-      showToast("刪除收藏失敗，請稍後再試。");
+      showToast(t("itinerary_feedback.favorite_delete_failed"), "warning");
     }
   };
 
@@ -3730,7 +3750,6 @@ export default function ItineraryTab() {
 // ─── Constants & Helpers ────────────────────────────────────────────────────────
 
 const getCategoryStyle = (category: string) => {
-    const { t } = useTranslation();
   switch (category) {
     case "food":
     case "restaurant":

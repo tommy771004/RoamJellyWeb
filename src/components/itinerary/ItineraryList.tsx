@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
 import { Calendar, CheckCircle2, Clock, ExternalLink, GripVertical, Image as ImageIcon, Instagram, Link, Loader2, MapPin, Navigation2, Pencil, Plane, RefreshCw, Sparkles, Trash2, X, ZoomIn } from "lucide-react";
@@ -12,7 +12,7 @@ import CollapsibleNotes from "./CollapsibleNotes";
 import TransportGapIndicator from "./TransportGapIndicator";
 import ManualAddNode from "./ManualAddNode";
 import SpotImageSearchModal from "./SpotImageSearchModal";
-import { CATEGORY_META, CATEGORY_OPTIONS, EMOJI_OPTIONS, getCategoryMeta, getNodeEmoji, getDateForDay, getDayForDate, buildTimestampFromDateTime } from "../../lib/itineraryUtils";
+import { CATEGORY_OPTIONS, EMOJI_OPTIONS, getCategoryMeta, getNodeEmoji, getDateForDay, getDayForDate, buildTimestampFromDateTime } from "../../lib/itineraryUtils";
 import { normalizeClockInput } from "../../lib/itineraryText";
 import { getFlightRouteSummary } from "../../lib/flightFormat";
 import { getTravelFactBookingLabel, getTravelFactRedirectPayload } from "../../lib/travelFact";
@@ -21,16 +21,8 @@ import { geocodeSpot, fetchSpotEnrichment, regenerateItinerarySpot } from "../..
 import { useAppStore } from "../../store/useAppStore";
 import { useTripFactsStore } from "../../store/useTripFactsStore";
 import { getModalMotion, getOverlayTransition, SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY, pressableSurfaceClass, subtlePressableClass, raisedHoverClass } from "../../lib/motionTokens";
-
-const AI_LOADING_QUOTES = [
-  "正在打包行李，替今天塞進剛剛好的節奏...",
-  "正在幫你喬靠窗座位，也順便避開太硬的移動路線...",
-  "正在請教在地老饕，看看哪一站最值得停久一點...",
-  "正在替你把交通、景點與休息點排成順手的旅途節拍...",
-  "正在翻閱地圖，尋找那些不該被錯過的私房秘境...",
-  "正在衡量步調，確保每天都有足夠的發呆時間...",
-  "再等一下，完美的假期即將躍然紙上...",
-];
+import { useModalAccessibility } from "../../lib/useModalAccessibility";
+import { useTranslation } from "react-i18next";
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -79,6 +71,7 @@ const ItineraryListItem = React.memo(
     onRequireLogin?: (itemName?: string) => void;
     key?: string;
   }) {
+    const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
     const [regenerating, setRegenerating] = useState(false);
     const [isTitleExpanded, setIsTitleExpanded] = useState(false);
@@ -104,6 +97,19 @@ const ItineraryListItem = React.memo(
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showImageSearchModal, setShowImageSearchModal] = useState(false);
+    const editorTitleId = useId();
+    const editorPlaceId = useId();
+    const editorDateId = useId();
+    const editorTimeId = useId();
+    const editorImageUrlId = useId();
+    const editorDescriptionId = useId();
+    const editorFactId = useId();
+
+    const closeEditor = () => {
+      setIsEditing(false);
+      onEditingChange?.(item.node_id, item.day, false);
+    };
+    const editorDialogRef = useModalAccessibility(closeEditor, isEditing);
 
     const facts = useTripFactsStore((s) => s.facts);
     const linkedFact = item.linkedFactId
@@ -164,11 +170,11 @@ const ItineraryListItem = React.memo(
         useAppStore
           .getState()
           .showToast(
-            `${collaboratingLock.userName} 取得了編輯權限。`,
+            t("itinerary_feedback.lock_acquired", { name: collaboratingLock.userName }),
             "warning",
           );
       }
-    }, [collaboratingLock, isEditing]);
+    }, [collaboratingLock, isEditing, t]);
 
     const handleSave = () => {
       onUpdate({
@@ -200,17 +206,14 @@ const ItineraryListItem = React.memo(
       if (collaboratingLock && !isEditing) {
         useAppStore
           .getState()
-          .showToast(
-            `${collaboratingLock.userName} 正在編輯這個景點。`,
-            "warning",
-          );
+          .showToast(t("itinerary_feedback.lock_editing", { name: collaboratingLock.userName }), "warning");
         return;
       }
       if (isGuestAuth) {
         if (onRequireLogin) {
           onRequireLogin(item.title);
         } else {
-          useAppStore.getState().showToast("此為檢視模式，登入後即可編輯", "warning");
+          useAppStore.getState().showToast(t("itinerary_feedback.view_only"), "warning");
           window.dispatchEvent(new CustomEvent('request-login'));
         }
         return;
@@ -244,7 +247,7 @@ const ItineraryListItem = React.memo(
       }
 
       if (!lat || !lng) {
-        useAppStore.getState().showToast("無法取得景點座標", "warning");
+        useAppStore.getState().showToast(t("itinerary_feedback.coordinates_unavailable"), "warning");
         return;
       }
 
@@ -260,10 +263,13 @@ const ItineraryListItem = React.memo(
       e.stopPropagation();
       if (collaboratingLock) return;
 
-      const shortDest = destination ? destination.split(",")[0].trim() : "旅行";
+      const shortDest = destination ? destination.split(",")[0].trim() : t("itinerary_feedback.share_destination_fallback");
       const safeTitle = item.title.trim().replace(/\s+/g, "");
-      const tags = `#${shortDest} #${safeTitle} #旅遊日記`;
-      const text = `剛踩點了 ${item.title}！🤩\n${item.image_url ? `\n查看美照：\n${item.image_url}\n` : ""}\n${tags}`;
+      const tags = t("itinerary_feedback.share_tags", { destination: shortDest, title: safeTitle });
+      const imageSection = item.image_url
+        ? t("itinerary_feedback.share_image_section", { url: item.image_url })
+        : "";
+      const text = t("itinerary_feedback.share_text", { title: item.title, imageSection, tags });
 
       if (navigator.share) {
         try {
@@ -280,11 +286,11 @@ const ItineraryListItem = React.memo(
           useAppStore
             .getState()
             .showToast?.(
-              "分享文案已複製到剪貼簿，可直接貼上字體到 Instagram！",
+              t("itinerary_feedback.share_copied"),
               "success",
             );
         } catch (err) {
-          useAppStore.getState().showToast?.("不支援分享且複製失敗", "warning");
+          useAppStore.getState().showToast?.(t("itinerary_feedback.share_failed"), "warning");
         }
       }
     };
@@ -349,10 +355,10 @@ const ItineraryListItem = React.memo(
             item.timestamp,
         });
 
-        useAppStore.getState().showToast?.(`✨ 已重新規劃此景點節點！已即時同步予共編協作者...`, "success");
+        useAppStore.getState().showToast?.(t("itinerary_feedback.regenerated"), "success");
       } catch (err) {
         console.error("Regenerate failed:", err);
-        useAppStore.getState().showToast?.("AI 替換景點失敗，請確認網路連線或 OpenRouter 金鑰設定。", "warning");
+        useAppStore.getState().showToast?.(t("itinerary_feedback.regenerate_failed"), "warning");
       } finally {
         setRegenerating(false);
       }
@@ -395,7 +401,7 @@ const ItineraryListItem = React.memo(
             <div className="flex items-center justify-between gap-2 mb-0.5">
               <div className="flex items-center gap-1.5">
                 <span className={`text-[9px] font-black uppercase tracking-[0.22em] ${isFlightCard ? "text-slate-300" : isHotelCard ? "text-indigo-200" : "text-slate-500 dark:text-slate-400"}`}>
-                  {isFlightCard ? "Transit" : isHotelCard ? "Stay" : "Day Note"}
+                  {isFlightCard ? t("itinerary_card.transit") : isHotelCard ? t("itinerary_card.stay") : t("itinerary_card.day_note")}
                 </span>
                   <span
                     className={`w-1.5 h-1.5 rounded-full inline-block ${item.source === "remote" ? "bg-emerald-500" : "bg-amber-500"}`}
@@ -418,7 +424,7 @@ const ItineraryListItem = React.memo(
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
-                          Departure
+                          {t("itinerary_card.departure")}
                         </div>
                         <div className="truncate text-lg font-black leading-none sm:text-xl">
                           {flightRoute.from}
@@ -439,7 +445,7 @@ const ItineraryListItem = React.memo(
                       </div>
                       <div className="min-w-0 text-right">
                         <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
-                          Arrival
+                          {t("itinerary_card.arrival")}
                         </div>
                         <div className="truncate text-lg font-black leading-none sm:text-xl">
                           {flightRoute.to}
@@ -453,7 +459,7 @@ const ItineraryListItem = React.memo(
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-400">
-                          Tonight's Stay
+                          {t("itinerary_card.tonight_stay")}
                         </div>
                         <div
                           onClick={(e) => {
@@ -468,7 +474,7 @@ const ItineraryListItem = React.memo(
                         </div>
                       </div>
                       <span className="shrink-0 rounded-full border border-indigo-400/30 bg-indigo-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-100">
-                        休息錨點
+                        {t("itinerary_card.rest_anchor")}
                       </span>
                     </div>
                   </div>
@@ -491,7 +497,7 @@ const ItineraryListItem = React.memo(
                   <p
                     className={`mb-1 text-[11px] sm:text-xs font-black uppercase tracking-[0.18em] ${isFlightCard ? "text-slate-500" : "text-indigo-400/80"}`}
                   >
-                    {isFlightCard ? "跨區交通錨點" : "今晚住宿錨點"}
+                    {isFlightCard ? t("itinerary_card.transport_anchor") : t("itinerary_card.tonight_stay")}
                   </p>
                 )}
 
@@ -504,7 +510,7 @@ const ItineraryListItem = React.memo(
                         className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-black tracking-widest flex items-center gap-0.5 transition-colors border ${isFlightCard ? "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white" : isHotelCard ? "bg-indigo-800 hover:bg-indigo-700 border-indigo-700 text-white" : "bg-slate-800 hover:bg-slate-700 text-white border-slate-900"} relative z-0`}
                       >
                         <Clock size={11} className="sm:w-[13px] sm:h-[13px]" />
-                        {item.time || "設定時間"}
+                        {item.time || t("itinerary_card.time_unset")}
                       </div>
                       {!isOffline && !collaboratingLock && (
                         <input
@@ -527,13 +533,13 @@ const ItineraryListItem = React.memo(
                     </div>
                   </div>
                   <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-pink-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-pink-700 border border-pink-100/70">
-                    {meta.label}
+                    {t(`itinerary_category.${meta.key}`)}
                   </span>
                   
                   {linkedFact && (
                     <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-cyan-600 border border-cyan-100/50 flex items-center gap-0.5">
                       <Link size={11} className="sm:w-[13px] sm:h-[13px]" />
-                      已綁定: {linkedFact.title}
+                      {t("itinerary_card.linked_fact", { title: linkedFact.title })}
                     </span>
                   )}
                   {collaboratingLock && (
@@ -543,7 +549,7 @@ const ItineraryListItem = React.memo(
                       className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-fuchsia-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-fuchsia-700 border border-fuchsia-200 shadow-sm shadow-fuchsia-200/50"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 shadow-[0_0_6px_#d946ef] inline-block" />
-                      {collaboratingLock.userName} 編輯中
+                      {t("itinerary_card.editing_by", { name: collaboratingLock.userName })}
                     </motion.span>
                   )}
                   {isRecentlySynced && (
@@ -553,18 +559,18 @@ const ItineraryListItem = React.memo(
                       className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-100 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700 border border-emerald-200 shadow-sm"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                      剛同步
+                      {t("itinerary_card.just_synced")}
                     </motion.span>
                   )}
                   {item.title.includes("Cebu") && (
                     <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-rose-50 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-rose-600 border border-rose-100 flex items-center gap-0.5">
-                      📌 必去景點
+                      📌 {t("itinerary_card.must_see")}
                     </span>
                   )}
                   <button
                     type="button"
                     aria-label={
-                      item.is_visited ? "標記為未打卡" : "標記為已打卡"
+                      item.is_visited ? t("itinerary_card.mark_unvisited") : t("itinerary_card.mark_visited")
                     }
                     onClick={() =>
                       onUpdate({ ...item, is_visited: !item.is_visited })
@@ -576,12 +582,12 @@ const ItineraryListItem = React.memo(
                     ) : (
                       <div className="w-3 h-3 rounded-full border-2 border-slate-300" />
                     )}
-                    {item.is_visited ? "已打卡" : "未打卡"}
+                    {item.is_visited ? t("itinerary_card.visited") : t("itinerary_card.not_visited")}
                   </button>
                   {item.category === "flight" && (
                     <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.15em] text-indigo-500 flex items-center gap-1 animate-pulse">
                       <div className="w-1 h-1 rounded-full bg-indigo-500" />
-                      CONFIRMED
+                      {t("itinerary_card.confirmed")}
                     </span>
                   )}
                 </div>
@@ -592,8 +598,8 @@ const ItineraryListItem = React.memo(
               <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-slate-200/70 flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <button
                   type="button"
-                  aria-label={`導航至 ${item.title}`}
-                  title={`導航至 ${item.title}`}
+                  aria-label={t("itinerary_card.navigate", { title: item.title })}
+                  title={t("itinerary_card.navigate", { title: item.title })}
                   onClick={handleNavigate}
                   disabled={isNavigating}
                   className="w-11 h-11 sm:w-11 sm:h-11 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 hover:bg-sky-100 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-50"
@@ -619,8 +625,8 @@ const ItineraryListItem = React.memo(
                       }}
                       disabled={Boolean(collaboratingLock)}
                       className="w-11 h-11 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:border-slate-300 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-40 disabled:cursor-not-allowed"
-                      title="編輯此節點"
-                      aria-label="編輯此節點"
+                      title={t("itinerary_card.edit")}
+                      aria-label={t("itinerary_card.edit")}
                     >
                       <Pencil
                         size={14}
@@ -638,8 +644,8 @@ const ItineraryListItem = React.memo(
                         }}
                         disabled={Boolean(collaboratingLock)}
                         className="w-11 h-11 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-100 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-40 disabled:cursor-not-allowed"
-                        title="快速記一筆"
-                        aria-label="快速記一筆"
+                        title={t("itinerary_card.quick_expense")}
+                        aria-label={t("itinerary_card.quick_expense")}
                       >
                         <span className="text-sm sm:text-lg">💸</span>
                       </button>
@@ -653,8 +659,8 @@ const ItineraryListItem = React.memo(
                       }}
                       disabled={Boolean(collaboratingLock) || regenerating}
                       className="w-11 h-11 rounded-full bg-gradient-to-tr from-fuchsia-500/10 via-pink-500/5 to-white/90 border border-fuchsia-200/80 flex items-center justify-center text-fuchsia-700 hover:from-fuchsia-500 hover:to-pink-500 hover:text-white hover:border-transparent hover:shadow-lg hover:shadow-fuchsia-200/40 transition-all duration-300 ios-press disabled:opacity-40 disabled:cursor-not-allowed transform-gpu animate-none"
-                      title="AI 重新規劃景點"
-                      aria-label="AI 重新規劃景點"
+                      title={t("itinerary_card.regenerate")}
+                      aria-label={t("itinerary_card.regenerate")}
                     >
                       {regenerating ? (
                         <Loader2
@@ -674,8 +680,8 @@ const ItineraryListItem = React.memo(
                       onClick={handleShareToIGStory}
                       disabled={Boolean(collaboratingLock)}
                       className="w-11 h-11 rounded-full bg-pink-50 border border-orange-200 flex items-center justify-center text-pink-600 hover:opacity-80 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-40 disabled:cursor-not-allowed"
-                      title="分享至 IG Story"
-                      aria-label="分享至 IG Story"
+                      title={t("itinerary_card.share")}
+                      aria-label={t("itinerary_card.share")}
                     >
                       <Instagram
                         size={14}
@@ -692,8 +698,8 @@ const ItineraryListItem = React.memo(
                       }}
                       disabled={Boolean(collaboratingLock)}
                       className="w-11 h-11 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 hover:bg-rose-100 hover:shadow-md transition-[transform,shadow,background-color] ios-press disabled:opacity-40 disabled:cursor-not-allowed"
-                      title="刪除此節點"
-                      aria-label="刪除此節點"
+                      title={t("itinerary_card.delete")}
+                      aria-label={t("itinerary_card.delete")}
                     >
                       <Trash2
                         size={14}
@@ -709,7 +715,7 @@ const ItineraryListItem = React.memo(
                 <div className="relative mb-2 sm:mb-2.5 rounded-[12px] sm:rounded-[16px] overflow-hidden shadow-md group/img bg-slate-100 dark:bg-slate-800">
                   <button
                     type="button"
-                    aria-label={`放大查看 ${item.title} 圖片`}
+                    aria-label={t("itinerary_card.preview_image", { title: item.title })}
                     className="p-0 w-full h-24 sm:h-32 md:h-40 relative cursor-pointer block text-left"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -744,17 +750,18 @@ const ItineraryListItem = React.memo(
                     }}
                     disabled={Boolean(collaboratingLock)}
                     className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-slate-900/80 hover:bg-slate-900 backdrop-blur-md text-white text-[10px] font-black tracking-wide flex items-center gap-1 shadow-md transition-all hover:scale-105 active:scale-95 z-10 disabled:opacity-40"
-                    title="檢索/更換景點代表圖"
+                    title={t("itinerary_card.replace_image")}
+                    aria-label={t("itinerary_card.replace_image")}
                   >
                     <Sparkles size={11} className="text-amber-300 animate-pulse" />
-                    <span>更換美照</span>
+                    <span>{t("itinerary_card.change_image")}</span>
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-between p-2 sm:p-2.5 mb-2 sm:mb-2.5 rounded-[12px] bg-slate-50/80 dark:bg-slate-900/40 border border-dashed border-slate-200/90 dark:border-white/10 text-xs">
                   <div className="flex items-center gap-2">
                     <ImageIcon size={14} className="text-slate-400" />
-                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">尚未設定景點美照</span>
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{t("itinerary_card.no_image")}</span>
                   </div>
                   <button
                     type="button"
@@ -764,10 +771,11 @@ const ItineraryListItem = React.memo(
                     }}
                     disabled={Boolean(collaboratingLock)}
                     className="px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 text-[10px] font-black flex items-center gap-1 transition-all shadow-2xs hover:scale-105 active:scale-95 disabled:opacity-40"
-                    title="根據景點名稱自動搜尋美照"
+                    title={t("itinerary_card.search_image_title")}
+                    aria-label={t("itinerary_card.search_image_title")}
                   >
                     <Sparkles size={11} className="text-indigo-500 animate-pulse" />
-                    <span>檢索代表美照</span>
+                    <span>{t("itinerary_card.search_image")}</span>
                   </button>
                 </div>
               )}
@@ -813,20 +821,20 @@ const ItineraryListItem = React.memo(
                     strokeWidth={3}
                     className="text-indigo-400"
                   />
-                  <span className="opacity-60 mr-1">MOVE:</span>
+                  <span className="opacity-60 mr-1">{t("itinerary_card.move")}:</span>
                   {item.transport_to_next}
                 </div>
               )}
 
               {detailCopy ? (
-                <CollapsibleNotes text={detailCopy} label="NOTES" />
+                <CollapsibleNotes text={detailCopy} label={t("itinerary_card.notes")} />
               ) : (
                 <div className="editorial-card-soft mt-2 rounded-[20px] px-3.5 py-3">
                   <p className="mb-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                    Notes
+                    {t("itinerary_card.notes")}
                   </p>
                   <p className="text-[12px] font-bold text-slate-500 italic opacity-80 transition-opacity leading-5">
-                    點擊卡片編輯行程細節或備註...
+                    {t("itinerary_card.empty_notes")}
                   </p>
                 </div>
               )}
@@ -860,7 +868,7 @@ const ItineraryListItem = React.memo(
                 <div className="mt-2 p-2 rounded-xl bg-sky-50/50 border border-sky-100 flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-1 duration-500">
                   <div className="flex items-center gap-1.5 text-[11px] font-black text-sky-700 uppercase tracking-widest">
                     <Link size={10} />
-                    <span>ASSOCIATED TRAVEL FACT</span>
+                    <span>{t("itinerary_card.related_fact")}</span>
                   </div>
                   <div className="text-[11px] font-bold text-slate-700">
                     {linkedFact.title}
@@ -929,23 +937,26 @@ const ItineraryListItem = React.memo(
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md"
-                  onClick={() => {
-                    setIsEditing(false);
-                    onEditingChange?.(item.node_id, item.day, false);
-                  }}
+                  onClick={closeEditor}
                 />
                 {/* Modal Content */}
                 <motion.div
+                  ref={editorDialogRef}
                   layoutId={`modal-${item.node_id}`}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby={editorTitleId}
+                  tabIndex={-1}
                   className="relative w-[calc(100vw-2rem)] md:w-full min-w-[300px] sm:min-w-[480px] max-w-lg max-h-[85vh] overflow-y-auto hide-scrollbar bg-white/95 dark:bg-slate-950/80 backdrop-blur-3xl rounded-[32px] sm:rounded-[36px] shadow-2xl dark:shadow-black/55 border border-white/50 dark:border-white/10 flex flex-col pointer-events-auto"
                 >
                   {/* Header */}
                   <div className="sticky top-0 z-20 bg-white/60 dark:bg-slate-950/70 backdrop-blur-xl border-b border-white dark:border-white/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between dark-transition">
-                    <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-3">
+                    <h2 id={editorTitleId} className="text-lg sm:text-xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-3">
                       <div className="relative">
                         <button
                           type="button"
-                          aria-label="選擇景點表情"
+                          aria-label={t("itinerary_editor.choose_emoji")}
+                          aria-expanded={showEmojiPicker}
                           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                           className="w-11 h-11 flex items-center justify-center bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-white/10 hover:bg-pink-50 dark:hover:bg-pink-950/30 rounded-[12px] transition-colors"
                         >
@@ -957,7 +968,7 @@ const ItineraryListItem = React.memo(
                               <button
                                 key={e}
                                 type="button"
-                                title={`使用 ${e}`}
+                                aria-label={t("itinerary_editor.emoji_option", { emoji: e })}
                                 onClick={() => {
                                   setEditEmoji(e);
                                   setShowEmojiPicker(false);
@@ -970,13 +981,12 @@ const ItineraryListItem = React.memo(
                           </div>
                         )}
                       </div>
-                      編輯行程節點
+                      {t("itinerary_editor.title")}
                     </h2>
                     <button
-                      onClick={() => {
-                        setIsEditing(false);
-                        onEditingChange?.(item.node_id, item.day, false);
-                      }}
+                      type="button"
+                      onClick={closeEditor}
+                      aria-label={t("itinerary_editor.close")}
                       className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-100/80 dark:bg-white/10 hover:text-rose-500 text-slate-500 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/55 transition-colors"
                     >
                       <X size={16} />
@@ -987,23 +997,25 @@ const ItineraryListItem = React.memo(
                   <div className="p-4 sm:p-6 pb-6 sm:pb-8 w-full flex-shrink-0 min-w-0">
                     <div className="flex flex-col gap-3 w-full">
                       <div className="flex flex-col gap-2">
-                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
-                          地點名稱 (Place)
+                        <label htmlFor={editorPlaceId} className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
+                          {t("itinerary_editor.place")}
                         </label>
                         <input
-                          autoFocus
+                          id={editorPlaceId}
+                          data-autofocus
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
-                          placeholder="修改地點名稱"
+                          placeholder={t("itinerary_editor.place_placeholder")}
                           className="outline-none w-full text-lg font-black text-slate-900 dark:text-slate-100 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-3xl px-5 py-2.5 hover:bg-white/80 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-pink-500/30 transition-all font-sans"
                         />
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="flex flex-col gap-2">
-                          <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
-                            日期 (Date)
+                          <label htmlFor={editorDateId} className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
+                            {t("itinerary_editor.date")}
                           </label>
                           <input
+                            id={editorDateId}
                             type="date"
                             value={editDate}
                             onChange={(e) => setEditDate(e.target.value)}
@@ -1011,10 +1023,11 @@ const ItineraryListItem = React.memo(
                           />
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
-                            時間 (Time)
+                          <label htmlFor={editorTimeId} className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
+                            {t("itinerary_editor.time")}
                           </label>
                           <input
+                            id={editorTimeId}
                             type="time"
                             inputMode="numeric"
                             step={300}
@@ -1025,11 +1038,12 @@ const ItineraryListItem = React.memo(
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
-                          景點代表圖網址 (Image URL)
+                        <label htmlFor={editorImageUrlId} className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
+                          {t("itinerary_editor.image_url")}
                         </label>
                         <div className="flex items-center gap-2">
                           <input
+                            id={editorImageUrlId}
                             type="text"
                             value={editImageUrl}
                             onChange={(e) => setEditImageUrl(e.target.value)}
@@ -1042,29 +1056,30 @@ const ItineraryListItem = React.memo(
                             className="px-3.5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm transition-all"
                           >
                             <Sparkles size={13} />
-                            <span>搜尋圖片</span>
+                            <span>{t("itinerary_editor.search_image")}</span>
                           </button>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
-                          詳細說明 / 備註 (Description)
+                        <label htmlFor={editorDescriptionId} className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">
+                          {t("itinerary_editor.description")}
                         </label>
                         <textarea
+                          id={editorDescriptionId}
                           value={editDescription}
                           onChange={(e) => setEditDescription(e.target.value)}
-                          placeholder="補充行程細節、提醒或預約資訊..."
+                          placeholder={t("itinerary_editor.description_placeholder")}
                           rows={5}
                           className="outline-none w-full text-sm font-bold text-slate-700 dark:text-slate-300 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-3xl px-5 py-3 hover:bg-white/80 dark:hover:bg-black/50 focus:bg-white/95 dark:focus:bg-black/60 focus:ring-2 focus:ring-pink-500/30 transition-all min-h-[140px] resize-y"
                         />
                       </div>
                       <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-black/20 px-4 py-4">
                         <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                            附件 / 票券
-                          </label>
+                          <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                            {t("itinerary_editor.attachments")}
+                          </span>
                           <label className="px-3 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-[11px] font-black uppercase tracking-widest cursor-pointer hover:opacity-95 transition-colors">
-                            上傳圖片或 PDF
+                            {t("itinerary_editor.upload")}
                             <input
                               type="file"
                               accept="image/*,.pdf,application/pdf"
@@ -1109,8 +1124,8 @@ const ItineraryListItem = React.memo(
                                   </button>
                                   <button
                                     type="button"
-                                    aria-label={`移除附件 ${attachment.name}`}
-                                    title={`移除附件 ${attachment.name}`}
+                                    aria-label={t("itinerary_editor.remove_attachment", { name: attachment.name })}
+                                    title={t("itinerary_editor.remove_attachment", { name: attachment.name })}
                                     onClick={() =>
                                       removeAttachment(attachment.id)
                                     }
@@ -1124,17 +1139,19 @@ const ItineraryListItem = React.memo(
                           </div>
                         ) : (
                           <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                            可放電子票、QR code 截圖或 PDF 憑證。
+                            {t("itinerary_editor.no_attachments")}
                           </p>
                         )}
                       </div>
                       {facts && facts.length > 0 && (
                         <select
+                          id={editorFactId}
+                          aria-label={t("itinerary_editor.related_fact")}
                           value={editLinkedFactId}
                           onChange={(e) => setEditLinkedFactId(e.target.value)}
                           className="outline-none w-full text-sm font-bold text-slate-700 dark:text-slate-100 bg-white/70 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl px-4 py-2 focus:ring-2 focus:ring-pink-500/30 transition-all shadow-sm"
                         >
-                          <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">無關聯 Travel Fact (未選擇)</option>
+                          <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t("itinerary_editor.no_related_fact")}</option>
                           {facts.map((f) => (
                             <option key={f.id} value={f.id} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
                               {f.title} ({f.factType})
@@ -1148,7 +1165,7 @@ const ItineraryListItem = React.memo(
                           onClick={handleSave}
                           className="px-6 py-2 rounded-full bg-gradient-to-r from-pink-400 to-rose-400 text-white text-[11px] font-black uppercase tracking-widest shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_4px_12px_rgba(244,63,94,0.3)] hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_8px_20px_rgba(244,63,94,0.4)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press"
                         >
-                          保存
+                          {t("itinerary_editor.save")}
                         </button>
                         <button
                           type="button"
@@ -1159,7 +1176,7 @@ const ItineraryListItem = React.memo(
                           }}
                           className="px-6 py-2 rounded-full bg-slate-100 text-slate-600 text-[11px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-200 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press"
                         >
-                          取消
+                          {t("itinerary_editor.cancel")}
                         </button>
                       </div>
                     </div>
@@ -1181,7 +1198,7 @@ const ItineraryListItem = React.memo(
               ...item,
               image_url: selectedUrl,
             });
-            useAppStore.getState().showToast(`✨ 已替換「${item.title}」的景點代表圖！`, "success");
+            useAppStore.getState().showToast(t("itinerary_feedback.image_replaced", { title: item.title }), "success");
           }}
         />
       </div>
@@ -1358,6 +1375,7 @@ export default function ItineraryList({
   onPreviewImage?: (url: string) => void;
   onRequireLogin?: (itemName?: string) => void;
 }) {
+  const { t } = useTranslation();
   const [isFavoriteDragOver, setIsFavoriteDragOver] = useState(false);
   const [manualAddTrigger, setManualAddTrigger] = useState(0);
   const [aiQuoteIndex, setAiQuoteIndex] = useState(0);
@@ -1366,7 +1384,7 @@ export default function ItineraryList({
   const handleBatchFetchSpotImages = async () => {
     if (batchImageFetching || !items || items.length === 0) return;
     setBatchImageFetching(true);
-    useAppStore.getState().showToast("🔍 正在檢索並自動補全今日景點美照...", "info");
+    useAppStore.getState().showToast(t("itinerary_day.batch_images_searching"), "info");
 
     let fetchedCount = 0;
     for (let i = 0; i < items.length; i++) {
@@ -1384,13 +1402,22 @@ export default function ItineraryList({
 
     setBatchImageFetching(false);
     if (fetchedCount > 0) {
-      useAppStore.getState().showToast(`✨ 成功補全 ${fetchedCount} 個景點的代表美照！`, "success");
+      useAppStore.getState().showToast(t("itinerary_day.batch_images_completed", { count: fetchedCount }), "success");
     } else {
-      useAppStore.getState().showToast("今日景點已全數擁有代表圖或未找到新圖像", "info");
+      useAppStore.getState().showToast(t("itinerary_day.batch_images_no_changes"), "info");
     }
   };
+  const aiLoadingQuotes = [
+    t("itinerary_day.quote_1"),
+    t("itinerary_day.quote_2"),
+    t("itinerary_day.quote_3"),
+    t("itinerary_day.quote_4"),
+    t("itinerary_day.quote_5"),
+    t("itinerary_day.quote_6"),
+    t("itinerary_day.quote_7"),
+  ];
   const { displayed: aiQuoteDisplayed, done: aiQuoteDone } = useTypewriter(
-    AI_LOADING_QUOTES[aiQuoteIndex],
+    aiLoadingQuotes[aiQuoteIndex],
     40,
   );
 
@@ -1407,13 +1434,13 @@ export default function ItineraryList({
     }
 
     const timer = window.setInterval(() => {
-      setAiQuoteIndex((prev) => (prev + 1) % AI_LOADING_QUOTES.length);
+      setAiQuoteIndex((prev) => (prev + 1) % aiLoadingQuotes.length);
     }, 1600);
 
     return () => {
       window.clearInterval(timer);
     };
-  }, [aiLoading]);
+  }, [aiLoading, aiLoadingQuotes.length]);
 
   const getDailyWeather = () => {
     if (!weather || !weather.length) return null;
@@ -1458,10 +1485,10 @@ export default function ItineraryList({
             className="mx-2 sm:mx-0 rounded-[28px] border-2 border-dashed border-fuchsia-300 bg-white/80 px-5 py-4 text-center shadow-lg shadow-fuchsia-100/50"
           >
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-fuchsia-500">
-              拖放加入 Day {day}
+              {t("itinerary_day.drop_title", { day })}
             </p>
             <p className="mt-1 text-sm font-bold text-slate-700">
-              將「{draggingFavorite.title}」加入今天的行程
+              {t("itinerary_day.drop_description", { title: draggingFavorite.title })}
             </p>
           </motion.div>
         )}
@@ -1531,7 +1558,7 @@ export default function ItineraryList({
                   <Calendar size={12} className="text-pink-400" />
                   <span>{formattedDate}</span>
                   <span className="w-1 h-1 rounded-full bg-slate-300 mx-0.5" />
-                  <span className="text-pink-500">第 {day} 天</span>
+                  <span className="text-pink-500">{t("itinerary_day.day", { day })}</span>
                 </div>
               )}
               <div className="flex items-center gap-2 flex-wrap">
@@ -1540,14 +1567,14 @@ export default function ItineraryList({
                   onClick={handleBatchFetchSpotImages}
                   disabled={isOffline || batchImageFetching || items.length === 0}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-slate-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-slate-200/80 dark:border-white/10 rounded-full shadow-2xs hover:shadow text-[11px] font-black tracking-wide transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-                  title="為今日所有景點自動檢索並補全代表性景點美照"
+                  title={t("itinerary_day.batch_images_title")}
                 >
                   {batchImageFetching ? (
                     <Loader2 size={13} className="animate-spin text-indigo-600" />
                   ) : (
                     <Sparkles size={13} className="text-indigo-500 animate-pulse" />
                   )}
-                  <span>補全景點美照</span>
+                  <span>{t("itinerary_day.batch_images")}</span>
                 </button>
                 {onOptimizeRoute && items.length >= 2 && (
                   <button
@@ -1555,10 +1582,10 @@ export default function ItineraryList({
                     onClick={onOptimizeRoute}
                     disabled={isOffline}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-700 hover:to-indigo-700 text-white rounded-full shadow-md hover:shadow-lg text-[11px] font-black tracking-wide transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-                    title="智慧重排景點順序，減少不必要的來回奔波距離"
+                    title={t("itinerary_day.optimize_title")}
                   >
                     <Navigation2 size={13} className="rotate-45" />
-                    <span>一鍵最佳化路線</span>
+                    <span>{t("itinerary_day.optimize")}</span>
                   </button>
                 )}
               </div>
@@ -1588,10 +1615,10 @@ export default function ItineraryList({
             🏝️
           </div>
           <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 sm:mb-3 tracking-tight">
-            新增行程
+            {t("itinerary_day.empty_title")}
           </h3>
           <p className="text-slate-600 font-bold max-w-[360px] leading-relaxed text-[12px] tracking-[0.06em] px-4 text-center">
-            不知道從哪開始？讓 AI 給你點靈感，或是從收藏隨機加入。
+            {t("itinerary_day.empty_description")}
           </p>
           <div className="mt-8 flex w-full max-w-[340px] flex-col gap-3.5 sm:gap-4">
             <button
@@ -1600,7 +1627,7 @@ export default function ItineraryList({
               disabled={isOffline}
               className="w-full rounded-[32px] bg-gradient-to-r from-fuchsia-600 to-indigo-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(192,38,211,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(192,38,211,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
-              ✨ AI 助手幫我填滿
+              ✨ {t("itinerary_day.ask_ai")}
             </button>
             <button
               type="button"
@@ -1608,7 +1635,7 @@ export default function ItineraryList({
               disabled={isOffline || !favoriteSuggestions?.length}
               className="w-full rounded-[32px] bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(14,165,233,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(14,165,233,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
-              📌 從口袋名單挑選
+              📌 {t("itinerary_day.choose_favorites")}
             </button>
             <button
               type="button"
@@ -1616,7 +1643,7 @@ export default function ItineraryList({
               disabled={isOffline}
               className="w-full rounded-[32px] bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(16,185,129,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
-              ➕ 手動新增
+              ➕ {t("itinerary_day.add_manually")}
             </button>
           </div>
         </GlassCard>
@@ -1640,7 +1667,7 @@ export default function ItineraryList({
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-500">
-                  AI 正在排今天的節奏
+                  {t("itinerary_day.ai_planning")}
                 </p>
                 <p className="mt-1 text-sm font-bold text-slate-700">
                   {aiQuoteDisplayed}
@@ -1689,8 +1716,10 @@ export default function ItineraryList({
                   const m = diff % 60;
                   timeGapStr =
                     h > 0
-                      ? `${h} 小時 ${m > 0 ? m + " 分鐘" : ""}`
-                      : `${m} 分鐘`;
+                      ? m > 0
+                        ? t("itinerary_day.duration_hours", { hours: h, minutes: m })
+                        : t("itinerary_day.duration_hours_only", { hours: h })
+                      : t("itinerary_day.duration_minutes", { minutes: m });
                 }
               }
             }

@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, MapPin } from 'lucide-react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { useTranslation } from "react-i18next";
+import { useModalAccessibility } from '../lib/useModalAccessibility';
 
 interface JapanGuideModalProps {
   open: boolean;
@@ -58,6 +59,8 @@ const REGION_CARDS = [
 
 export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps) {
   const { t } = useTranslation();
+  const dialogRef = useModalAccessibility(onClose, open);
+  const titleId = React.useId();
   const localizedInfoCards = React.useMemo(() => {
     return INFO_CARDS.map(card => ({
       ...card,
@@ -95,11 +98,16 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
 
           {/* Modal panel */}
           <motion.div
+            ref={dialogRef}
             key="japan-modal-panel"
             initial={modalMotion.initial}
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             className="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(16,18,30,0.98),rgba(17,20,36,0.96),rgba(12,14,24,0.96))] shadow-[0_28px_64px_rgba(0,0,0,0.32)] sm:max-h-[85vh] sm:max-w-2xl sm:rounded-[32px]"
             onClick={(e) => e.stopPropagation()}
           >
@@ -112,7 +120,7 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">🇯🇵</span>
                   <div>
-                    <h2 className="fluid-title font-black text-white">
+                    <h2 id={titleId} className="fluid-title font-black text-white">
                       {t('str_46bb94a7')}</h2>
                     <p className="fluid-kicker mt-0.5 flex items-center gap-1 font-medium uppercase text-white/60">
                       <MapPin size={10} />
@@ -120,6 +128,8 @@ export default function JapanGuideModal({ open, onClose }: JapanGuideModalProps)
                   </div>
                 </div>
                 <button
+                  type="button"
+                  data-autofocus
                   onClick={onClose}
                   className="flex size-11 items-center justify-center rounded-full bg-white/8 hover:bg-white/16 text-white/60 hover:text-white transition-all shrink-0"
                 >

@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { X, ExternalLink, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import type { CountryGuide, GuidePlace, AreaColor } from '../data/countryGuideData';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { useTranslation } from "react-i18next";
+import { useModalAccessibility } from '../lib/useModalAccessibility';
 
 // ─── Color helpers ────────────────────────────────────────────────────────────
 
@@ -38,6 +39,8 @@ function AreaTabs({ areas, active, onChange }: { areas: string[]; active: string
         {areas.map((area) => (
           <button
             key={area}
+            type="button"
+            aria-pressed={active === area}
             onClick={() => onChange(area)}
             className={`fluid-caption relative snap-start flex-shrink-0 rounded-full px-4 py-2 font-black transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press ${
               active === area
@@ -246,8 +249,10 @@ function useLocalizedCountryGuide(guide: CountryGuide | undefined) {
 }
 
 export default function CountryGuideModal({ open, onClose, guide }: CountryGuideModalProps) {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const localizedGuide = useLocalizedCountryGuide(guide);
+  const dialogRef = useModalAccessibility(onClose, open && Boolean(localizedGuide));
+  const titleId = useId();
   const [activeArea, setActiveArea] = useState('all');
   const prefersReducedMotion = useReducedMotion();
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
@@ -286,11 +291,16 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
 
           {/* Modal panel */}
           <motion.div
+            ref={dialogRef}
             key="cgm-panel"
             initial={modalMotion.initial}
             animate={modalMotion.animate}
             exit={modalMotion.exit}
             transition={modalMotion.transition}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             className="relative flex max-h-modal-dvh w-full flex-col overflow-hidden rounded-t-[32px] border border-white/72 dark:border-white/10 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(30,41,59,0.98),rgba(15,23,42,0.96),rgba(2,6,23,0.94))] shadow-[0_28px_64px_rgba(15,23,42,0.16)] dark:shadow-[0_28px_64px_rgba(0,0,0,0.6)] sm:max-w-4xl sm:rounded-[32px] md:max-w-5xl outline-none"
             onClick={(e) => e.stopPropagation()}
           >
@@ -300,10 +310,10 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                 <div className="flex items-center gap-4">
                   <span className="text-5xl drop-shadow-sm">{localizedGuide.flag}</span>
                   <div>
-                    <h1 className="fluid-title font-extrabold text-slate-900 sm:text-3xl">
+                    <h2 id={titleId} className="fluid-title font-extrabold text-slate-900 sm:text-3xl">
                       {localizedGuide.name}
                       <span className="ml-2 text-[0.82em] font-medium text-slate-500">{t('str_cb78a')}</span>
-                    </h1>
+                    </h2>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-500">
                          <MapPin size={11} strokeWidth={2.5}/>
@@ -314,6 +324,8 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                   </div>
                 </div>
                 <button
+                  type="button"
+                  data-autofocus
                   onClick={handleClose}
                   className="w-10 h-10 rounded-full bg-slate-100/50 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors flex-shrink-0"
                 >
