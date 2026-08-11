@@ -1,5 +1,4 @@
-import React, { createContext, use, useEffect, useMemo, useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine, Cell } from "recharts";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import {
   CloudRain,
@@ -30,9 +29,6 @@ import ExpandableText from "./ExpandableText";
 import HorizontalScrollRail from "./HorizontalScrollRail";
 import InfoPeekModal, { type InfoPeekContent } from "./InfoPeekModal";
 import IconImg from "./ui/IconImg";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Button } from "./ui/button";
 import {
   fetchChecklist,
   fetchCollaborators,
@@ -63,13 +59,12 @@ import { useHideNavOnScroll } from "../hooks/useHideNavOnScroll";
 import { cn } from "../lib/utils";
 import { getCurrencyFromDestination } from "../lib/currency";
 import { getCurrentSeason, guessCategoryFromItem } from "../lib/checklist";
-import { ToolsTabContext, useToolsTabContext, type ExpenseForm, type FormErrors, type ToolsTabState, type ToolsTabActions, type ToolsTabContextValue } from "./tools/toolsTabContext";
+import { ToolsTabContext, useToolsTabContext, type ExpenseForm, type FormErrors, type ToolsTabState, type ToolsTabActions } from "./tools/toolsTabContext";
 import WeatherCard from "./tools/WeatherCard";
 import ChecklistSection from "./tools/ChecklistSection";
 import LedgerSection from "./tools/LedgerSection";
 import SettlementsSection from "./tools/SettlementsSection";
 import SettlementHistorySection from "./tools/SettlementHistorySection";
-import { GlowingIcon } from "./ui/GlowingIcon";
 
 
 const TOOLS_ENTRY_PILLARS = [
