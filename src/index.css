@@ -789,6 +789,34 @@ select {
  * hues under every surface — and the blurred-multiplied-blob look is the
  * generic "soft gradient orbs" backdrop. Light is now directional with real
  * falloff, and the texture is substrate rather than decoration. */
+/* The hero owns the first screen.
+ *
+ * Without a floor the hero is content-sized, so the top edge of the next
+ * section — which carries its own background — peeked in above the fold and
+ * the page read as unfinished before any scrolling.
+ *
+ * The box is a full viewport tall so nothing below it can show. It is NOT
+ * shortened by the height of the bottom tab bar: that bar is a centred
+ * floating pill, so trimming the hero would expose the next section in the
+ * gaps either side of it. Instead the content is centred inside padding that
+ * clears the pill, keeping the composition balanced in the band that is
+ * actually visible under the fixed header. */
+.hero-fold {
+  /* Must match the header spacer in src/App.tsx (the `pt-[calc(56px+...)]
+   * sm:pt-[calc(80px+...)]` wrapper). The scroll container starts below that
+   * spacer, so a plain 100dvh overshoots the fold by its height and pushes the
+   * centred content off the optical centre. Keep the two in sync. */
+  --hero-header-offset: calc(56px + env(safe-area-inset-top, 0px));
+  min-height: calc(100vh - var(--hero-header-offset));
+  min-height: calc(100dvh - var(--hero-header-offset));
+}
+
+@media (min-width: 640px) {
+  .hero-fold {
+    --hero-header-offset: calc(80px + env(safe-area-inset-top, 0px));
+  }
+}
+
 .jelly-bg {
   background-color: oklch(98.4% 0.004 88);
   position: relative;

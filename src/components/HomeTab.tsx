@@ -1312,7 +1312,7 @@ export default function HomeTab({
     >
       {/* === HERO SECTION with gradient background === */}
       <div
-        className={`relative z-10 w-full pt-5 sm:pt-[55px] ${!isHeroExpanded ? "pb-2" : "pb-6 sm:pb-10"} px-3 sm:px-6 overflow-visible`}
+        className={`hero-fold relative z-10 flex w-full shrink-0 flex-col justify-center pt-5 sm:pt-[55px] ${!isHeroExpanded ? "pb-2" : "pb-tab-safe md:pb-10"} px-3 sm:px-6 overflow-visible`}
       >
         <motion.div 
           style={{ willChange: 'transform, opacity' }}
@@ -1330,7 +1330,7 @@ export default function HomeTab({
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute -bottom-12 right-[18%] h-64 w-64 rounded-full bg-orange-200/30 blur-[90px] pointer-events-none transform-gpu" />
 
-        <div className="relative z-20 mx-auto w-full max-w-[1120px]">
+        <div className="relative z-20 mx-auto w-full max-w-[1120px] shrink-0">
           {/* Hero title */}
           <motion.div
             initial={prefersReducedMotion ? undefined : { opacity: 0, y: 18 }}
@@ -1340,22 +1340,6 @@ export default function HomeTab({
             className={`group relative mx-auto mb-5 max-w-[900px] space-y-3 overflow-hidden px-4 text-center sm:mb-8 sm:px-6 cursor-pointer transition-colors duration-300 ${!isHeroExpanded ? " hidden sm:block" : ""}`}
           >
             <div className="relative space-y-3 sm:space-y-4 flex flex-col items-center">
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 120, damping: 14 }}
-                className="relative mb-2 select-none group/mascot"
-              >
-                <div className="absolute inset-0 bg-pink-400/20 blur-xl rounded-full scale-90 group-hover/mascot:scale-105 transition-transform duration-500" />
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-white/40 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/20 shadow-md flex items-center justify-center overflow-hidden animate-cute-bounce">
-                  <img
-                    src="/src/assets/images/jelly_brand_asset_1783589988704.jpg"
-                    alt="RoamJelly Mascot"
-                    className="w-full h-full object-cover rounded-full"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              </motion.div>
               <p className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400 flex items-center gap-2 transition-all duration-300">
                 <span className="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>
                 RoamJelly Trip Planner
