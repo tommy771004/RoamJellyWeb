@@ -75,8 +75,8 @@ export default function BottomTabs() {
         }`}
         style={{
           width: "100%",
-          maxWidth: isExpanded ? "340px" : "48px",
-          height: isExpanded ? "3.5rem" : "48px",
+          maxWidth: isExpanded ? "280px" : "48px",
+          height: isExpanded ? "3.25rem" : "48px",
           willChange: "transform, opacity",
         }}
         transition={prefersReducedMotion ? { duration: 0.2 } : SPRING_SNAPPY}
@@ -106,7 +106,7 @@ export default function BottomTabs() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18, delay: 0.08 }}
-              className="flex justify-between items-center w-full relative h-full"
+              className="flex justify-between items-center w-full relative h-full px-1"
             >
               {isAiFlow && (
                 <button
@@ -131,17 +131,18 @@ export default function BottomTabs() {
                         setIsExpanded(false);
                       }
                     }}
-                    className={`flex flex-col items-center justify-center flex-1 min-w-0 h-full rounded-full relative ios-press ${
+                    className={`flex items-center justify-center flex-1 min-w-0 h-full rounded-full relative ios-press ${
                       isActive
                         ? "text-pink-500"
                         : "opacity-70 hover:opacity-100 text-slate-500 dark:text-slate-400"
                     }`}
+                    aria-label={t(`tab_${tab.id}`)}
                     aria-current={isActive ? "page" : undefined}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="tab-pill"
-                        className="absolute inset-0 bg-white dark:bg-slate-800 rounded-[20px] -z-10 clay-btn border-pink-100 dark:border-slate-700"
+                        className="absolute inset-0 bg-white dark:bg-slate-800 rounded-full -z-10 clay-btn border-pink-100 dark:border-slate-700"
                         transition={prefersReducedMotion ? { duration: 0.12 } : PILL_SPRING}
                       />
                     )}
@@ -149,23 +150,22 @@ export default function BottomTabs() {
                       <motion.div
                         className="transform-gpu flex items-center justify-center relative"
                         animate={
-                          isActive ? { y: -2, scale: 1.15 } : { y: 0, scale: 1 }
+                          isActive ? { scale: 1.15 } : { scale: 1 }
                         }
                         transition={prefersReducedMotion ? { duration: 0.12 } : SPRING_SNAPPY}
                       >
                         {isActive ? (
                           <GlowingIcon
                             icon={Icon}
-                            size={20}
+                            size={22}
                             glowColor="bg-pink-400"
                             iconColor="text-pink-500 fill-pink-500/10"
-                            className="mb-0.5"
                           />
                         ) : (
                           <Icon
-                            size={18}
+                            size={20}
                             strokeWidth={2.2}
-                            className="mb-0.5 text-slate-400 dark:text-slate-400"
+                            className="text-slate-400 dark:text-slate-400"
                           />
                         )}
                         {isActive && (
@@ -178,11 +178,6 @@ export default function BottomTabs() {
                         )}
                       </motion.div>
                     ) : null}
-                    <span
-                      className={`text-[9px] font-black tracking-widest whitespace-nowrap z-10 ${isActive ? "text-pink-600 dark:text-pink-400" : "opacity-80"}`}
-                    >
-                      {t(`tab_${tab.id}`)}
-                    </span>
                   </button>
                 );
               })}
