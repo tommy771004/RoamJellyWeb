@@ -88,6 +88,7 @@ import FlightCard from "./FlightCard";
 import FlightTable from "./FlightTable";
 import DestinationCard from "./DestinationCard";
 import PortfolioSection from "./PortfolioSection";
+import FaqSection from "./FaqSection";
 import {
   layoutIndicatorTransition,
   pressableSurfaceClass,
@@ -344,6 +345,57 @@ export default function HomeTab({
     }
     loadNews();
   }, []);
+
+  // Dynamically update document title and meta description based on user trip context preferences
+  useEffect(() => {
+    const destination = searchForm.to.trim();
+    const origin = searchForm.from.trim();
+    const date = searchForm.date.trim();
+    const isRoundTrip = searchForm.tripType === 'roundtrip';
+    const returnDate = searchForm.returnDate.trim();
+
+    let title = 'RoamJelly 果凍漫遊 — AI 智慧行程規劃與機票比價';
+    let description =
+      'RoamJelly 果凍漫遊：全方位 AI 自由行行程規劃工具，整合秒級 AI 景點路線、即時機票比價、多人實時協作共編與旅遊多幣別記帳分帳。';
+
+    if (destination) {
+      if (origin) {
+        title = `${origin}至${destination}自由行行程規劃與機票比價｜RoamJelly 果凍漫遊`;
+        description = `正在規劃${origin}往返${destination}的自由行？RoamJelly AI 秒級生成${destination}專屬路線行程，搜尋比價機票與飯店優惠，支援多人線上協作與旅遊記帳。`;
+      } else {
+        title = `${destination}自由行行程規劃與旅遊攻略｜RoamJelly 果凍漫遊`;
+        description = `正在規劃${destination}自由行？使用 RoamJelly AI 秒級打造${destination}專屬景點路線，比價優惠機票飯店，多人實時線上共編與分帳工具。`;
+      }
+    }
+
+    if (date) {
+      description += ` 出發日期：${date}${isRoundTrip && returnDate ? ` 至 ${returnDate}` : ''}。`;
+    }
+
+    document.title = title;
+
+    const setMeta = (selector: string, attr: string, key: string, content: string) => {
+      let el = document.querySelector(selector) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+
+    setMeta('meta[name="description"]', 'name', 'description', description);
+    setMeta('meta[property="og:title"]', 'property', 'og:title', title);
+    setMeta('meta[property="og:description"]', 'property', 'og:description', description);
+    setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', title);
+    setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+  }, [
+    searchForm.to,
+    searchForm.from,
+    searchForm.date,
+    searchForm.returnDate,
+    searchForm.tripType,
+  ]);
 
   const [myTrips, setMyTrips] = useState<any[]>([]);
   const [tripSearchQuery, setTripSearchQuery] = useState("");
@@ -1407,6 +1459,62 @@ export default function HomeTab({
 
                 {/* Search card */}
                 <div className="flex flex-col gap-2 rounded-[32px] sm:rounded-[40px] glass-card dark-transition p-3 sm:gap-2.5 sm:p-4">
+                  {/* 跑馬燈容器 */}
+                  <div className="relative group/dests-row w-full flex items-center mb-1 pb-0.5 overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_16px,_black_calc(100%-16px),transparent_100%)]">
+                    <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase shrink-0 select-none pl-1 pr-3 z-10 bg-gradient-to-r from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 border-r-transparent">
+                      <span className="relative flex h-2 w-2">
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 shadow-[0_0_6px_#0ea5e9] flex-shrink-0"></span>
+                      </span>
+                    </div>
+
+                    <div className="flex animate-marquee w-max py-1">
+                      {/* 第一組 */}
+                      <div className="flex items-center gap-2 pr-2 shrink-0">
+                        {HOT_DESTINATIONS.map((dest) => (
+                          <button
+                            key={`m1-${dest.name}`}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              updateField("to", dest.name);
+                              setShowDestinationPicker(false);
+                              if (typeof triggerHapticFeedback === 'function') {
+                                triggerHapticFeedback([10]);
+                              }
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 transition-all duration-300 hover:-translate-y-0.5 ios-press hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
+                          >
+                            <span className="text-[13px] sm:text-[14px]">{dest.flag}</span>
+                            <span className="tracking-wide">{dest.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* 第二組 (為了無縫循環) */}
+                      <div className="flex items-center gap-2 pr-2 shrink-0" aria-hidden="true">
+                        {HOT_DESTINATIONS.map((dest) => (
+                          <button
+                            key={`m2-${dest.name}`}
+                            type="button"
+                            tabIndex={-1}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              updateField("to", dest.name);
+                              setShowDestinationPicker(false);
+                              if (typeof triggerHapticFeedback === 'function') {
+                                triggerHapticFeedback([10]);
+                              }
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 transition-all duration-300 hover:-translate-y-0.5 ios-press hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
+                          >
+                            <span className="text-[13px] sm:text-[14px]">{dest.flag}</span>
+                            <span className="tracking-wide">{dest.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* FROM / TO row */}
                   <div className="relative grid grid-cols-2 gap-2 sm:gap-3">
                     {/* FROM cell */}
@@ -1482,62 +1590,6 @@ export default function HomeTab({
                         placeholder={t('str_2760232d')}
                         autoComplete="off"
                       />
-                    </div>
-                  </div>
-
-                  <div className="relative group/dests-row w-full flex items-center my-1.5 pb-0.5 overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_16px,_black_calc(100%-16px),transparent_100%)]">
-                    <div className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase shrink-0 select-none pl-1 pr-3 z-10 bg-gradient-to-r from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 border-r-transparent">
-                      <span className="relative flex h-2 w-2">
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500 shadow-[0_0_6px_#0ea5e9] flex-shrink-0"></span>
-                      </span>
-                    </div>
-
-                    {/* 跑馬燈容器 */}
-                    <div className="flex animate-marquee w-max py-1">
-                      {/* 第一組 */}
-                      <div className="flex items-center gap-2 pr-2 shrink-0">
-                        {HOT_DESTINATIONS.map((dest) => (
-                          <button
-                            key={`m1-${dest.name}`}
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              updateField("to", dest.name);
-                              setShowDestinationPicker(false);
-                              if (typeof triggerHapticFeedback === 'function') {
-                                triggerHapticFeedback([10]);
-                              }
-                            }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 transition-all duration-300 hover:-translate-y-0.5 ios-press hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
-                          >
-                            <span className="text-[13px] sm:text-[14px]">{dest.flag}</span>
-                            <span className="tracking-wide">{dest.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                      
-                      {/* 第二組 (為了無縫循環) */}
-                      <div className="flex items-center gap-2 pr-2 shrink-0" aria-hidden="true">
-                        {HOT_DESTINATIONS.map((dest) => (
-                          <button
-                            key={`m2-${dest.name}`}
-                            type="button"
-                            tabIndex={-1}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              updateField("to", dest.name);
-                              setShowDestinationPicker(false);
-                              if (typeof triggerHapticFeedback === 'function') {
-                                triggerHapticFeedback([10]);
-                              }
-                            }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 transition-all duration-300 hover:-translate-y-0.5 ios-press hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
-                          >
-                            <span className="text-[13px] sm:text-[14px]">{dest.flag}</span>
-                            <span className="tracking-wide">{dest.name}</span>
-                          </button>
-                        ))}
-                      </div>
                     </div>
                   </div>
 
@@ -3584,6 +3636,9 @@ export default function HomeTab({
 
       {/* Portfolio Section */}
       <PortfolioSection />
+
+      {/* FAQ Q&A Section */}
+      <FaqSection />
 
       {/* Animation Overlay for Flying Card */}
       <AnimatePresence>
