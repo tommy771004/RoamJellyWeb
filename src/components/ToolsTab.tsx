@@ -682,7 +682,7 @@ function ToolsTabContent() {
     return (
       <div className="flex-1 overflow-y-auto bg-transparent px-3 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] scroll-smooth sm:px-6 sm:py-6">
         <motion.div
-          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
+          initial={prefersReducedMotion ? undefined : { y: 12 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: "easeOut" }}
           className="mx-auto my-auto w-full max-w-5xl overflow-hidden rounded-[32px] glass-panel sm:rounded-[40px] sm:p-8 md:p-10"
@@ -916,7 +916,7 @@ function ToolsTabContent() {
         ) : (
         <div className="flex flex-col gap-y-6 sm:gap-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <motion.section
-          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 16, scale: 0.985 }}
+          initial={prefersReducedMotion ? undefined : { y: 16, scale: 0.985 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="relative overflow-hidden rounded-[30px] glass-panel sm:p-5"

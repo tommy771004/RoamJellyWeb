@@ -1,5 +1,8 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <title>RoamJelly</title>
+  <!-- Single source of truth for the app icon. public/icon-app-maskable.svg and
+       every icon PNG are generated from this file by scripts/generate-icons.mjs;
+       edit here and re-run that script rather than editing the outputs. -->
   <defs>
     <!-- Warm paper tile, tonal within one hue (never a cross-hue gradient). -->
     <linearGradient id="tile" x1="86" y1="52" x2="430" y2="470" gradientUnits="userSpaceOnUse">
@@ -50,13 +53,13 @@
     </radialGradient>
   </defs>
 
-  <rect width="512" height="512" rx="120" fill="url(#tile)"/>
+  <rect id="tile-rect" width="512" height="512" rx="120" fill="url(#tile)"/>
 
   <!-- Outer transform centres the drawn mass (measured at 255.7, 264.2, i.e. 8px
        low) on the tile and scales it from 51% to ~60% tile coverage, which is
        where an app-icon mark wants to sit. The cast shadow is excluded from
        that measurement on purpose: it reads as ground, not as object mass. -->
-  <g transform="translate(256 256) scale(1.18) translate(-255.7 -264.2)">
+  <g id="mark" transform="translate(256 256) scale(1.18) translate(-255.7 -264.2)">
   <!-- The whole object tilts as one, the way it is presented. -->
   <g transform="rotate(-9 256 268)">
     <ellipse cx="256" cy="402" rx="122" ry="24" fill="url(#contact)"/>

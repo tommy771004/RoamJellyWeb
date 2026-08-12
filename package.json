@@ -15,6 +15,9 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:generate": "drizzle-kit generate",
     "sync:travel-guide": "node scripts/sync-travel-guide.mjs",
+    "gen:icons": "node scripts/generate-icons.mjs",
+    "gen:og": "node scripts/generate-og.mjs",
+    "gen:brand": "npm run gen:icons && npm run gen:og",
     "test:integration:staging": "tsx scripts/staging-integration-test.ts"
   },
   "dependencies": {

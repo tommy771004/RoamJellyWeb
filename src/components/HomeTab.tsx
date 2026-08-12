@@ -1357,14 +1357,14 @@ export default function HomeTab({
     <motion.div
       ref={scrollRef}
       onScroll={onScroll}
-      initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12, scale: 0.985 }}
+      initial={prefersReducedMotion ? undefined : { y: 12, scale: 0.985 }}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-tab-safe md:pb-14"
     >
       {/* === HERO SECTION with gradient background === */}
       <div
-        className={`hero-fold relative z-10 flex w-full shrink-0 flex-col justify-center pt-5 sm:pt-[55px] ${!isHeroExpanded ? "pb-2" : "pb-tab-safe md:pb-10"} px-3 sm:px-6 overflow-visible`}
+        className={`relative z-10 flex w-full shrink-0 flex-col pt-5 sm:pt-[55px] ${isHeroExpanded ? "hero-fold justify-center pb-tab-safe md:pb-10" : "pb-2"} px-3 sm:px-6 overflow-visible`}
       >
         <motion.div 
           style={{ willChange: 'transform, opacity' }}
@@ -1385,7 +1385,7 @@ export default function HomeTab({
         <div className="relative z-20 mx-auto w-full max-w-[1120px] shrink-0">
           {/* Hero title */}
           <motion.div
-            initial={prefersReducedMotion ? undefined : { opacity: 0, y: 18 }}
+            initial={prefersReducedMotion ? undefined : { y: 18 }}
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
             onClick={() => setIsHeroIntroCollapsed((prev) => !prev)}

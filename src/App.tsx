@@ -947,7 +947,12 @@ export default function App() {
             key={isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
             variants={{
-              enter: (dir: number) => prefersReducedMotion ? ({ opacity: 0 }) : ({ opacity: 0, scale: 0.984, x: dir * 24 }),
+              // No opacity in `enter`: this wrapper holds every tab, and on first
+              // mount `initial="enter"` would start the whole app transparent. A
+              // hidden tab throttles rAF, so it can be stranded there and render
+              // blank. The outgoing tab still fades via `exit`; the incoming one
+              // slides and scales in, which reads the same but can never hide content.
+              enter: (dir: number) => prefersReducedMotion ? ({}) : ({ scale: 0.984, x: dir * 24 }),
               center: { opacity: 1, scale: 1, x: 0 },
               exit: { opacity: 0, transition: { duration: 0.15, ease: "easeOut" } },
             }}
