@@ -510,6 +510,11 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
   const coverMatch = DEST_COVERS.find(([k]) => destLower.includes(k));
   const coverImage = `https://images.unsplash.com/${coverMatch ? coverMatch[1] : DEST_COVERS[0][1]}?w=1200&auto=format&fit=crop`;
 
+  const topSpotTitles = nodes
+    .map((n) => n.title?.trim())
+    .filter((t): t is string => Boolean(t))
+    .slice(0, 6);
+
   return {
     trip_id: trip.id,
     id: trip.id,
@@ -517,6 +522,7 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
     destination: trip.destination ?? '',
     days: finalDays,
     totalSpots: nodes.length,
+    topSpotTitles,
     startDate,
     endDate,
     coverImage,
@@ -1416,9 +1422,16 @@ async function startServer() {
         html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
       }
 
-      const title = `${tripInfo.name} - RoamJelly`;
-      const description = `這是一段由漫遊果凍建立的公開旅遊行程：${tripInfo.name}。`;
+      const destName = tripInfo.destination || '熱門目的地';
+      const spotsCount = tripInfo.totalSpots || 0;
+      const spotHighlights = Array.isArray(tripInfo.topSpotTitles) && tripInfo.topSpotTitles.length > 0
+        ? `。精選景點包括：${tripInfo.topSpotTitles.join('、')}`
+        : '';
+
+      const title = `${tripInfo.name} — ${destName} ${tripInfo.days} 天自由行行程指南｜RoamJelly`;
+      const description = `【RoamJelly 公開旅遊行程】${tripInfo.name}：包含 ${destName} ${tripInfo.days} 天自由行完整規劃與離線地圖${spotHighlights}。共 ${spotsCount} 個精選景點美食，提供實時交通與行程複製共編。`;
       const coverImage = tripInfo.coverImage;
+      const canonicalUrl = `https://roam-jelly-web.vercel.app/trips/${tripId}`;
 
       html = html.replace(/<title>.*?<\/title>/is, `<title>${title}</title>`);
       html = html.replace(/<meta property="og:title" content=".*?"\s*\/>/is, `<meta property="og:title" content="${title}" />`);
@@ -1429,13 +1442,26 @@ async function startServer() {
         html = html.replace(/<meta name="twitter:image" content=".*?"\s*\/>/is, `<meta name="twitter:image" content="${coverImage}" />`);
       }
 
+      const canonicalTag = `\n    <link rel="canonical" href="${canonicalUrl}" />`;
+      html = html.replace('</head>', `${canonicalTag}\n  </head>`);
+
       // 4. 結構化資料 (Schema Markup) 導入
       const schemaMarkup = {
         "@context": "https://schema.org",
         "@type": "Trip",
         "name": tripInfo.name,
         "description": description,
-        "url": `https://roam-jelly-web.vercel.app/trips/${tripId}`
+        "url": canonicalUrl,
+        "image": coverImage,
+        "itinerary": {
+          "@type": "ItemList",
+          "numberOfItems": spotsCount,
+          "itemListElement": (tripInfo.topSpotTitles || []).map((spotName: string, idx: number) => ({
+            "@type": "ListItem",
+            "position": idx + 1,
+            "name": spotName,
+          })),
+        },
       };
       
       const schemaScript = `\n    <script type="application/ld+json">\n    ${JSON.stringify(schemaMarkup, null, 2)}\n    </script>`;
