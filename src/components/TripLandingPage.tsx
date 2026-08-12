@@ -63,6 +63,30 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
   const requiresNickname = !getStoredToken();
 
   useEffect(() => {
+    if (tripInfo) {
+      const title = `${tripInfo.name} — ${tripInfo.destination || '旅遊'} ${tripInfo.days} 天自由行行程｜RoamJelly 果凍漫遊`;
+      const description = `【RoamJelly 公開行程】${tripInfo.name}：${tripInfo.destination} ${tripInfo.days} 天自由行精選指南。查看景點路線地圖、機票比價與團隊實時線上共編。`;
+      document.title = title;
+
+      const setMeta = (selector: string, attr: string, key: string, content: string) => {
+        let el = document.querySelector(selector) as HTMLMetaElement | null;
+        if (!el) {
+          el = document.createElement('meta');
+          el.setAttribute(attr, key);
+          document.head.appendChild(el);
+        }
+        el.setAttribute('content', content);
+      };
+
+      setMeta('meta[name="description"]', 'name', 'description', description);
+      setMeta('meta[property="og:title"]', 'property', 'og:title', title);
+      setMeta('meta[property="og:description"]', 'property', 'og:description', description);
+      setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', title);
+      setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+    }
+  }, [tripInfo]);
+
+  useEffect(() => {
     void (async () => {
       try {
         const data = await fetchTripPreview(tripId);
