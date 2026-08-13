@@ -19,14 +19,14 @@ function getJwtSecret(): string {
   return secret;
 }
 
-export function signAccessToken(user: AuthUser): string {
+export function signAccessToken(user: AuthUser, overrideExpiresIn?: jwt.SignOptions['expiresIn']): string {
   const payload: AccessTokenPayload = {
     sub: user.userId,
     type: 'access',
   };
 
   return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: (process.env.JWT_EXPIRES_IN ?? DEFAULT_EXPIRES_IN) as jwt.SignOptions['expiresIn'],
+    expiresIn: overrideExpiresIn ?? (process.env.JWT_EXPIRES_IN ?? DEFAULT_EXPIRES_IN) as jwt.SignOptions['expiresIn'],
   });
 }
 

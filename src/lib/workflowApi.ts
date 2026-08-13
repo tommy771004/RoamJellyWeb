@@ -250,30 +250,57 @@ export function clearClientSession() {
   localStorage?.removeItem(LAST_ACTIVITY_KEY);
 }
 
-export async function loginUser(username: string, password: string): Promise<any> {
+export async function loginUser(
+  email: string,
+  password: string,
+  options?: { rememberMe?: boolean; requestId?: string },
+): Promise<any> {
   const res = await fetch('/api/auth/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options?.requestId ? { 'X-Request-Id': options.requestId } : {}),
+    },
+    body: JSON.stringify({ email, password, remember_me: options?.rememberMe ?? false }),
   });
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.message || 'Login failed');
+    if (res.status === 401) throw new Error('電子郵件或密碼不正確。');
+    if (res.status === 429) throw new Error('嘗試次數過多，請稍後再試。');
+    throw new Error(data.message || '目前無法登入，請稍後再試。');
   }
   return data;
 }
 
-export async function registerUser(username: string, password: string, display_name: string, avatar?: string): Promise<any> {
+export async function registerUser(email: string, password: string, display_name: string, avatar?: string): Promise<any> {
   const res = await fetch('/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, display_name, avatar })
+    body: JSON.stringify({ email, password, display_name, avatar }),
   });
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data.message || 'Registration failed');
   }
   return data;
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const res = await fetch('/api/auth/password/forgot', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    throw await parseApiError(res, '目前無法寄送重設密碼連結，請稍後再試。');
+  }
+}
+
+export async function resetPassword(token: string, password: string): Promise<void> {
+  const res = await fetch('/api/auth/password/reset', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, password }),
+  });
+  if (!res.ok) throw await parseApiError(res, '無法更新密碼，請重新申請重設連結。');
 }
 
 export async function fetchCollaborators(tripId: string): Promise<any> {

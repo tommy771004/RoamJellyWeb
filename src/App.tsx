@@ -41,12 +41,13 @@ import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, ensureClientAccessToken, geocodeSpot, geocodeSpotWithAI, getNativeMapUrl, createGuestSession, clearClientSession, fetchDirections } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, setClientAccessToken, ensureClientAccessToken, geocodeSpot, geocodeSpotWithAI, getNativeMapUrl, createGuestSession, clearClientSession, fetchDirections } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
 import { haversineKm, estimateTransport, formatMinutes } from './lib/geoUtils';
 import { getCategoryMeta } from './lib/itineraryUtils';
 import { JellyToast } from './components/JellyToast';
 import { useTranslation } from 'react-i18next';
+import { logoutAppSession, refreshAppSession } from './features/auth/authClient';
 type LoginPromptMode = 'default' | 'guest-first';
 
 const AUTO_GUEST_TABS = new Set(['ai_form', 'itinerary', 'tools']);
@@ -98,7 +99,9 @@ export default function App() {
 
   // Auth state
   const [authReady, setAuthReady] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+  const [showLogin, setShowLogin] = useState(
+    () => typeof window !== 'undefined' && ['/auth/callback', '/forgot-password', '/reset-password'].includes(window.location.pathname),
+  );
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -179,22 +182,30 @@ export default function App() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    // Initial check on load
-    const storedUserId = localStorage.getItem('user_id');
-    const storedLastActivity = localStorage.getItem('last_activity');
-    const storedToken = getStoredToken();
-    
-    if (storedUserId && storedLastActivity && storedToken) {
+    let cancelled = false;
+    const restore = async () => {
+      const storedUserId = localStorage.getItem('user_id');
+      const storedLastActivity = localStorage.getItem('last_activity');
+      const storedToken = getStoredToken();
       const now = Date.now();
-      if (now - parseInt(storedLastActivity, 10) < SESSION_TIMEOUT) {
-        setAuthenticated(storedUserId);
+      if (storedUserId && storedLastActivity && storedToken
+        && now - parseInt(storedLastActivity, 10) < SESSION_TIMEOUT) {
+        if (!cancelled) setAuthenticated(storedUserId);
       } else {
-        clearClientSession();
+        const session = await refreshAppSession();
+        const token = session?.accessToken || session?.access_token;
+        if (session?.user?.id && token) {
+          setClientAccessToken(token);
+          localStorage.setItem('user_id', session.user.id);
+          localStorage.setItem('last_activity', now.toString());
+          if (!cancelled) setAuthenticated(session.user.id);
+        } else {
+          clearClientSession();
+        }
       }
-    } else if (storedUserId || storedLastActivity || storedToken) {
-      clearClientSession();
-    }
-    setAuthReady(true);
+      if (!cancelled) setAuthReady(true);
+    };
+    void restore();
     const match = typeof window !== 'undefined' ? window.location.pathname.match(/^\/trips\/([^\/]+)$/) : null;
     if (match) {
       setActiveTripId(match[1]);
@@ -205,7 +216,7 @@ export default function App() {
       setShowLogin(true);
     };
     window.addEventListener('request-login', handleLoginRequest);
-    return () => window.removeEventListener('request-login', handleLoginRequest);
+    return () => { cancelled = true; window.removeEventListener('request-login', handleLoginRequest); };
   }, [setAuthenticated]);
 
   useEffect(() => {
@@ -235,7 +246,9 @@ export default function App() {
   }, [isDarkMode]);
 
   useEffect(() => {
-    setShowLogin(false);
+    if (typeof window === 'undefined' || !['/auth/callback', '/forgot-password', '/reset-password'].includes(window.location.pathname)) {
+      setShowLogin(false);
+    }
   }, [activeTab]);
 
   const handleLogin = (loggedInUserId: string) => {
@@ -250,6 +263,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    void logoutAppSession();
     clearClientSession();
     setAuthenticated(null);
     setShowLogoutModal(false);

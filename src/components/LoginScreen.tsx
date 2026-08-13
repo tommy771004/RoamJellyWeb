@@ -1,9 +1,28 @@
-import { useEffect, useState, type ComponentType } from 'react';
-import { createGuestSession, loginUser, registerUser, setClientAccessToken } from '../lib/workflowApi';
-import { pressableSurfaceClass, subtlePressableClass } from '../lib/motionTokens';
-import { ArrowRight, ChevronDown, Compass, LockKeyhole, Luggage, NotebookText, Sparkles } from 'lucide-react';
-import InfoPeekModal, { type InfoPeekContent, type InfoPeekTone } from './InfoPeekModal';
-import { useTranslation } from "react-i18next";
+import { useEffect, useId, useRef, useState } from 'react';
+import { Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, PlaneTakeoff, X } from 'lucide-react';
+import {
+  clearPendingAuthTransaction,
+  AuthClientError,
+  confirmAccountLink,
+  disabledSocialProviders,
+  exchangeSocialCallback,
+  getSocialProviderAvailability,
+  openAuthorizationUrl,
+  readPendingAuthTransaction,
+  SOCIAL_PROVIDERS,
+  startSocialAuth,
+} from '../features/auth/authClient';
+import OAuthProgressPanel from '../features/auth/components/OAuthProgressPanel';
+import SocialLoginButton from '../features/auth/components/SocialLoginButton';
+import type { AuthProvider, LoginStatus, PendingAuthTransaction } from '../features/auth/types';
+import {
+  createGuestSession,
+  loginUser,
+  requestPasswordReset,
+  resetPassword,
+  registerUser,
+  setClientAccessToken,
+} from '../lib/workflowApi';
 
 interface Props {
   onLogin: (userId: string) => void;
@@ -15,476 +34,548 @@ interface Props {
   guestCtaLabel?: string;
 }
 
-type Mode = 'login' | 'register';
+type Mode = 'login' | 'register' | 'forgot-password' | 'reset-password';
 
-const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const OAUTH_WAIT_TIMEOUT_MS = 90_000;
 
-type GuestPreviewItem = {
-  label: string;
-  title: string;
-  meta: string;
-  value: string;
-  toneClass: string;
-};
-
-type PreviewIcon = ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
-
-const GUEST_PREVIEW_LOOKUP: Record<string, { eyebrow: string; panelLabel: string; icon: PreviewIcon; items: GuestPreviewItem[] }> = {
-  'AI 旅程規劃': {
-    eyebrow: '先起草旅程，再決定何時同步帳號',
-    panelLabel: 'AI Draft Preview',
-    icon: Sparkles,
-    items: [
-      { label: 'Draft', title: '東京 5 天・城市散步與咖啡店', meta: '建立初步節奏與大綱，細節之後再慢慢補。', value: 'AI First', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
-      { label: 'Focus', title: '慢節奏 / 雨備 / 一人旅行', meta: '先確認大方向，隨時可以保存與同步。', value: '3 tags', toneClass: 'border-white/15 bg-white/10 text-slate-100' },
-      { label: 'Output', title: '自動生成草稿，彈性調整', meta: '後續能繼續拖拉排序、補上航班或與旅伴共編。', value: 'Editable', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
-    ],
-  },
-  '你的行程': {
-    eyebrow: '先接回旅程主線，再決定何時保存同步',
-    panelLabel: 'Trip Notebook Preview',
-    icon: NotebookText,
-    items: [
-      { label: 'Notebook', title: 'Day 2 ・ 淺草 -> 上野 -> 神保町', meta: '透過拖拉順序，輕鬆排定流暢的路線。', value: '3 stops', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
-      { label: 'Pocket List', title: '旅遊事實與口袋名單', meta: '收藏與 AI 建議，全都集中於同一份行程草稿。', value: 'Ready', toneClass: 'border-emerald-300/30 bg-emerald-400/16 text-emerald-100' },
-      { label: 'Collab', title: '跨裝置登入，隨時同步', meta: '先將主線確立，需要跨裝置或共編時再登入雲端。', value: 'Sync later', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
-    ],
-  },
-  '旅途工具包': {
-    eyebrow: '先綁一趟旅程，工具包才有完整上下文',
-    panelLabel: 'Tools Preview',
-    icon: Luggage,
-    items: [
-      { label: 'Weather', title: '東京 24°C ・ 降雨機率 20%', meta: '掌握即時天氣，輕鬆決定出門穿搭與裝備。', value: 'Live', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
-      { label: 'Checklist', title: '行李清單 6 / 9 完成', meta: '快速勾選待辦事項，確保不會遺漏任何物品。', value: '6/9', toneClass: 'border-emerald-300/30 bg-emerald-400/16 text-emerald-100' },
-      { label: 'Split', title: '晚餐與車資已拆帳', meta: '隨手紀錄旅伴花費與分帳，事後結算不遺漏。', value: 'TWD 1,250', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
-    ],
-  },
-  '快速體驗': {
-    eyebrow: '不用先註冊，先把整條旅程流程跑順',
-    panelLabel: 'Quick Preview',
-    icon: Compass,
-    items: [
-      { label: 'Explore', title: '探索各項功能與示範行程', meta: '快速確認是否符合你的旅遊規劃習慣。', value: 'Start', toneClass: 'border-sky-300/30 bg-sky-400/16 text-sky-100' },
-      { label: 'Draft', title: '免登入即刻起草', meta: '訪客模式直接體驗行程規劃與旅途工具。', value: 'Flow', toneClass: 'border-white/15 bg-white/10 text-slate-100' },
-      { label: 'Save', title: '覺得滿意再綁定保存', meta: '無需馬上註冊，確定好用再登入同步資料。', value: 'Later', toneClass: 'border-orange-300/30 bg-orange-300/16 text-orange-100' },
-    ],
-  },
-};
-
-const getPreviewTone = (toneClass: string): InfoPeekTone => {
-    const { t } = useTranslation();
-  if (toneClass.includes('emerald')) return 'emerald';
-  if (toneClass.includes('orange')) return 'orange';
-  if (toneClass.includes('pink')) return 'pink';
-  if (toneClass.includes('cyan')) return 'cyan';
-  return 'sky';
-};
-
-const buildPreviewDetails = (context: string, item: GuestPreviewItem): string[] => {
-    const { t } = useTranslation();
-  if (context === '旅途工具包') {
-    return [
-      item.meta,
-      '先用訪客旅程把流程跑順，真的要保存歷史或同步時再接上帳號。',
-    ];
+function userFacingError(error: unknown, fallback: string): string {
+  if (!(error instanceof Error)) return fallback;
+  if (/failed to fetch|network|load failed/i.test(error.message)) {
+    return '目前無法連線，請檢查網路後再試一次。';
   }
-  if (context === '你的行程') {
-    return [
-      item.meta,
-      '主線順手之後，再決定要不要同步裝置與保留編修紀錄。',
-    ];
-  }
-  if (context === 'AI 旅程規劃') {
-    return [
-      item.meta,
-      '先讓 AI 起草一版，再看要不要把這份草稿正式保存下來。',
-    ];
-  }
-  return [
-    item.meta,
-    '先把整條旅程流程摸順，再決定要不要進入註冊與同步。',
-  ];
-};
+  return error.message || fallback;
+}
 
-export default function LoginScreen({ onLogin, onCancel, guestFirst = false, contextLabel, title, description, guestCtaLabel }: Props) {
-    const { t } = useTranslation();
-  const shouldShowGuestHero = guestFirst || Boolean(title) || Boolean(description);
-  const [mode, setMode] = useState<Mode>('login');
-  const [username, setUsername] = useState('');
+export default function LoginScreen({
+  onLogin,
+  onCancel,
+  guestFirst = false,
+  contextLabel,
+  title,
+  description,
+  guestCtaLabel,
+}: Props) {
+  const emailId = useId();
+  const passwordId = useId();
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const [mode, setMode] = useState<Mode>(() => window.location.pathname === '/forgot-password' ? 'forgot-password' : window.location.pathname === '/reset-password' ? 'reset-password' : 'login');
+  const [email, setEmail] = useState(() => new URLSearchParams(window.location.search).get('email') ?? '');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [avatar, setAvatar] = useState('🐶');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isAuthCardExpanded, setIsAuthCardExpanded] = useState(!shouldShowGuestHero);
-  const [isPreviewItemsExpanded, setIsPreviewItemsExpanded] = useState<boolean>(
-    () => typeof window !== 'undefined' && window.innerWidth >= 768
-  );
-  const [activePreviewInfo, setActivePreviewInfo] = useState<InfoPeekContent | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [capsLockOn, setCapsLockOn] = useState(false);
+  const [status, setStatus] = useState<LoginStatus>('idle');
+  const [activeProvider, setActiveProvider] = useState<AuthProvider | null>(null);
+  const [pendingAuth, setPendingAuth] = useState<PendingAuthTransaction | null>(() => readPendingAuthTransaction());
+  const [oauthTimedOut, setOauthTimedOut] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [forgotSubmitted, setForgotSubmitted] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [linkTicket, setLinkTicket] = useState<string | null>(null);
+  const [resetCompleted, setResetCompleted] = useState(false);
+
+  const [providerEnabled, setProviderEnabled] = useState(disabledSocialProviders);
+  const isBusy = status !== 'idle' && status !== 'error';
+  const isOauthWaiting = status === 'waiting-oauth' && activeProvider && pendingAuth;
+  const resolvedGuestCtaLabel = guestCtaLabel || '先用訪客身分體驗';
 
   useEffect(() => {
-    setIsAuthCardExpanded(!shouldShowGuestHero);
-  }, [shouldShowGuestHero]);
+    if (!email) emailInputRef.current?.focus();
+  }, []);
 
-  const switchMode = (next: Mode) => {
-    setMode(next);
-    setError('');
-    setIsAuthCardExpanded(true);
+  useEffect(() => {
+    let cancelled = false;
+    void getSocialProviderAvailability().then((availability) => {
+      if (!cancelled) setProviderEnabled(availability);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timeout = window.setTimeout(() => setNotice(''), 2400);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
+
+  useEffect(() => {
+    if (!isOauthWaiting) return;
+    const remaining = Math.max(0, Math.min(OAUTH_WAIT_TIMEOUT_MS, pendingAuth.expiresAt - Date.now()));
+    const timeout = window.setTimeout(() => setOauthTimedOut(true), remaining);
+    return () => window.clearTimeout(timeout);
+  }, [isOauthWaiting, pendingAuth]);
+
+  useEffect(() => {
+    if (!isOauthWaiting) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') cancelOauth();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOauthWaiting]);
+
+  useEffect(() => {
+    const completeCallback = (callbackUrl: string) => {
+    setStatus('exchanging-session');
+    const pending = readPendingAuthTransaction();
+    setPendingAuth(pending);
+    setActiveProvider(pending?.provider ?? null);
+
+    void exchangeSocialCallback(callbackUrl, rememberMe)
+      .then((session) => {
+        const token = session.accessToken || session.access_token;
+        if (!token || !session.user?.id) throw new Error('登入服務回應不完整，請重新登入。');
+        setClientAccessToken(token);
+        window.history.replaceState({}, '', '/');
+        setStatus('success');
+        onLogin(session.user.id);
+      })
+      .catch((error) => {
+        window.history.replaceState({}, '', '/');
+        setStatus('error');
+        if (error instanceof AuthClientError && error.code === 'ACCOUNT_LINK_REQUIRED') {
+          const ticket = String(error.details?.linkTicket ?? '');
+          if (ticket) {
+            setLinkTicket(ticket);
+            setMode('login');
+            setFormError('此電子郵件已有帳號。請用原密碼登入，完成第三方帳號連結。');
+            return;
+          }
+        }
+        setFormError(userFacingError(error, '登入驗證失敗，請重新登入。'));
+      });
+    };
+    if (window.location.pathname === '/auth/callback') completeCallback(window.location.href);
+  }, [onLogin, rememberMe]);
+
+  const resetMessages = () => {
+    setEmailError('');
+    setPasswordError('');
+    setFormError('');
+    setNotice('');
   };
 
-  const handleSubmit = async () => {
-    setError('');
-    setIsAuthCardExpanded(true);
-    const trimmedUser = username.trim();
+  const validateEmail = (showError = true): boolean => {
+    const trimmed = email.trim();
+    let nextError = '';
+    if (!trimmed) nextError = '請輸入電子郵件。';
+    else if (!EMAIL_RE.test(trimmed)) nextError = '電子郵件格式不正確。';
+    if (showError) setEmailError(nextError);
+    return !nextError;
+  };
 
-    if (!trimmedUser || !password) {
-      setError('請輸入使用者名稱和密碼');
-      return;
-    }
-    if (!USERNAME_RE.test(trimmedUser)) {
-      setError('使用者名稱需為 3–30 個英數字或底線');
-      return;
-    }
-    if (password.length < 8) {
-      setError('密碼至少需要 8 個字元');
-      return;
-    }
+  const validatePassword = (): boolean => {
+    const nextError = !password ? '請輸入密碼。' : password.length < 8 ? '密碼至少需要 8 個字元。' : '';
+    setPasswordError(nextError);
+    return !nextError;
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    resetMessages();
+    const emailValid = validateEmail();
+    const passwordValid = validatePassword();
+    if (!emailValid || !passwordValid) return;
     if (mode === 'register' && password !== confirmPassword) {
-      setError('兩次輸入的密碼不一致');
+      setPasswordError('兩次輸入的密碼不一致。');
       return;
     }
 
-    setLoading(true);
+    setStatus('submitting-password');
     try {
-      const result =
-        mode === 'login'
-          ? await loginUser(trimmedUser, password)
-          : await registerUser(trimmedUser, password, displayName.trim() || trimmedUser, avatar);
-          
+      const normalizedEmail = email.trim().toLowerCase();
+      const requestId = crypto.randomUUID();
+      const result = mode === 'login'
+        ? await loginUser(normalizedEmail, password, { rememberMe, requestId })
+        : await registerUser(normalizedEmail, password, displayName.trim() || normalizedEmail.split('@')[0]);
       const token = result?.access_token || result?.token;
-      if (!token) throw new Error('Token missing in response');
-      const userId = result?.user?.id || result?.user_id || trimmedUser;
-      
+      if (!token) throw new Error('登入服務回應不完整，請重新登入。');
       setClientAccessToken(token);
-      onLogin(userId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '發生錯誤，請再試一次');
-    } finally {
-      setLoading(false);
+      if (linkTicket) {
+        await confirmAccountLink(linkTicket);
+        setLinkTicket(null);
+      }
+      setStatus('success');
+      onLogin(result?.user?.id || result?.user_id || normalizedEmail);
+    } catch (error) {
+      setStatus('error');
+      setFormError(
+        userFacingError(
+          error,
+          mode === 'login' ? '電子郵件或密碼不正確。' : '目前無法建立帳號，請稍後再試。',
+        ),
+      );
     }
+  };
+
+  const handleSocialLogin = async (provider: AuthProvider) => {
+    if (!providerEnabled[provider]) return;
+    resetMessages();
+    setActiveProvider(provider);
+    setOauthTimedOut(false);
+    setStatus('starting-oauth');
+    try {
+      const pending = await startSocialAuth(provider);
+      setPendingAuth(pending);
+      await openAuthorizationUrl(pending);
+      setStatus('waiting-oauth');
+    } catch (error) {
+      setStatus('error');
+      setActiveProvider(null);
+      setFormError(userFacingError(error, `${provider} 登入暫時無法使用，請稍後再試。`));
+    }
+  };
+
+  const cancelOauth = () => {
+    clearPendingAuthTransaction();
+    setPendingAuth(null);
+    setActiveProvider(null);
+    setOauthTimedOut(false);
+    setStatus('idle');
+    setNotice('已取消登入。');
   };
 
   const handleGuestLogin = async () => {
-    setError('');
-    setLoading(true);
+    resetMessages();
+    setStatus('submitting-password');
     try {
-      const guest = await createGuestSession(displayName.trim() || username.trim() || undefined);
+      const guest = await createGuestSession(displayName.trim() || undefined);
+      setStatus('success');
       onLogin(guest.user_id);
-    } catch (err) {
-      setIsAuthCardExpanded(true);
-      setError(err instanceof Error ? err.message : '訪客登入失敗，請再試一次');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      setStatus('error');
+      setFormError(userFacingError(error, '訪客登入失敗，請再試一次。'));
     }
   };
 
-  const resolvedGuestCtaLabel = guestCtaLabel || '先用訪客身分體驗';
-  const previewContent = GUEST_PREVIEW_LOOKUP[contextLabel || '快速體驗'] || GUEST_PREVIEW_LOOKUP['快速體驗'];
-  const HeroIcon = previewContent.icon;
+  const submitForgotPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setForgotSubmitted(false);
+    setFormError('');
+    if (!validateEmail()) return;
+    setForgotLoading(true);
+    try {
+      await requestPasswordReset(email.trim().toLowerCase());
+      setForgotSubmitted(true);
+    } catch (error) {
+      setFormError(userFacingError(error, '目前無法寄送重設密碼連結，請稍後再試。'));
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const submitNewPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setFormError('');
+    if (!validatePassword()) return;
+    if (password !== confirmPassword) { setPasswordError('兩次輸入的密碼不一致。'); return; }
+    const token = new URLSearchParams(window.location.search).get('token') ?? '';
+    setForgotLoading(true);
+    try { await resetPassword(token, password); setResetCompleted(true); }
+    catch (error) { setFormError(userFacingError(error, '無法更新密碼，請重新申請重設連結。')); }
+    finally { setForgotLoading(false); }
+  };
+
+  if (status === 'exchanging-session') {
+    return (
+      <div className="flex min-h-full w-full flex-1 items-center justify-center bg-slate-50 p-6 dark:bg-slate-950" aria-live="polite">
+        <div className="text-center">
+          <LoaderCircle className="mx-auto animate-spin text-sky-600" size={30} />
+          <p className="mt-4 text-sm font-extrabold text-slate-800 dark:text-white">正在完成登入…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative flex-1 w-full overflow-y-auto overflow-x-hidden bg-gradient-to-tr from-slate-50 via-[#fdfcfd] to-sky-50/50 dark:bg-gradient-to-br dark:from-[#030712] dark:via-slate-950 dark:to-[#0f172a] transition-colors duration-500">
+    <main className="relative min-h-full w-full flex-1 overflow-y-auto overflow-x-hidden bg-[radial-gradient(circle_at_18%_14%,rgba(125,211,252,0.38),transparent_34%),radial-gradient(circle_at_84%_22%,rgba(244,114,182,0.25),transparent_32%),linear-gradient(145deg,#f8fafc_0%,#fdf4ff_48%,#eff6ff_100%)] px-4 py-7 text-slate-900 dark:bg-[radial-gradient(circle_at_16%_10%,rgba(14,116,144,0.20),transparent_34%),radial-gradient(circle_at_86%_20%,rgba(157,23,77,0.16),transparent_30%),linear-gradient(145deg,#020617_0%,#111827_55%,#172033_100%)] dark:text-white sm:px-6">
+      <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-white/35 blur-3xl dark:bg-sky-500/5" />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-20 bottom-12 h-80 w-80 rounded-full bg-pink-100/45 blur-3xl dark:bg-fuchsia-500/5" />
+
       {onCancel && (
         <button
+          type="button"
           onClick={onCancel}
-          aria-label={t('str_2bd5c038')}
-          className="absolute top-4 right-4 z-50 flex h-[34px] w-[34px] items-center justify-center rounded-full bg-slate-900/5 dark:bg-white/10 text-slate-500 dark:text-slate-400 backdrop-blur-md transition-all hover:bg-slate-900/10 dark:hover:bg-white/20"
+          aria-label="關閉登入"
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/60 text-slate-600 shadow-sm backdrop-blur-xl transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/35 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          <X size={18} />
         </button>
       )}
-      {/* Drifting backdrop spheres with variable speeds and directions */}
-      <div className="pointer-events-none absolute top-[-10%] left-[-15%] h-[36rem] w-[36rem] rounded-full bg-sky-200/35 dark:bg-sky-500/5 blur-[120px] animate-cute-bounce [animation-duration:18s]" />
-      <div className="pointer-events-none absolute right-[-10%] top-[10%] h-[30rem] w-[30rem] rounded-full bg-pink-200/40 dark:bg-fuchsia-500/5 blur-[110px] animate-cute-bounce [animation-delay:3s] [animation-duration:22s]" />
-      <div className="pointer-events-none absolute bottom-[-15%] left-[15%] h-[28rem] w-[28rem] rounded-full bg-orange-100/35 dark:bg-orange-600/5 blur-[100px] animate-cute-bounce [animation-delay:6s] [animation-duration:26s]" />
 
-      <div className={`relative z-10 mx-auto flex min-h-full w-full max-w-[1040px] flex-col justify-center px-3 pt-5 pb-7 sm:px-6 sm:py-9 ${shouldShowGuestHero ? 'lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-5 lg:items-center' : 'max-w-[430px]'}`}>
-        {shouldShowGuestHero && (
-          <section className="mb-4 rounded-[32px] glass-panel border border-white/70 dark:border-white/10 p-4 shadow-[0_24px_50px_rgba(15,23,42,0.06)] backdrop-blur-[24px] sm:p-5 lg:mb-0">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-[17px] bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-[0_8px_18px_rgba(15,23,42,0.16)]">
-                  <HeroIcon size={20} strokeWidth={2.35} />
-                </div>
+      <div className="relative z-10 mx-auto flex min-h-full w-full max-w-[420px] items-center justify-center">
+        <section className="w-full rounded-[28px] border border-white/75 bg-white/65 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.14)] backdrop-blur-[28px] backdrop-saturate-150 dark:border-white/12 dark:bg-slate-950/72 sm:p-8">
+          <header className="text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[19px] bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.22)] dark:bg-white dark:text-slate-950">
+              <PlaneTakeoff aria-hidden="true" size={25} strokeWidth={2.4} />
+            </div>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.28em] text-sky-700 dark:text-sky-300">RoamJelly</p>
+            <h1 className="mt-2 text-[28px] font-black tracking-[-0.045em] text-slate-900 dark:text-white">
+              {mode === 'forgot-password' ? '找回帳號' : mode === 'reset-password' ? '設定新密碼' : mode === 'register' ? '建立帳號' : '歡迎回來'}
+            </h1>
+            <p className="mt-2 text-[13px] font-semibold leading-6 text-slate-600 dark:text-slate-300">
+              {mode === 'forgot-password'
+                ? '輸入你的電子郵件，我們會協助你找回帳號。'
+                : mode === 'reset-password'
+                  ? '請設定至少 8 個字元的新密碼。'
+                : guestFirst
+                  ? description || `${contextLabel || '這項功能'}需要帳號同步；你也可以先用訪客身分體驗。`
+                  : '登入後繼續使用。'}
+            </p>
+          </header>
+
+          {notice && (
+            <div role="status" className="mt-5 rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-center text-[12px] font-bold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+              {notice}
+            </div>
+          )}
+
+          {isOauthWaiting && activeProvider && pendingAuth ? (
+            <div className="mt-6">
+              <OAuthProgressPanel
+                provider={activeProvider}
+                timedOut={oauthTimedOut}
+                onReopen={() => { void openAuthorizationUrl(pendingAuth); }}
+                onCancel={cancelOauth}
+              />
+            </div>
+          ) : mode === 'reset-password' ? (
+            <form className="mt-6 space-y-4" onSubmit={submitNewPassword} noValidate>
+              {resetCompleted ? (
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-[0.26em] text-slate-500 dark:text-slate-400">RoamJelly</div>
-                  <div className="mt-1 text-[17px] font-black tracking-[-0.03em] text-slate-900 dark:text-white">{contextLabel || '快速體驗'}</div>
+                  <p role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm font-bold text-emerald-800">密碼已更新，請使用新密碼登入。</p>
+                  <button type="button" onClick={() => { window.history.replaceState({}, '', '/'); setMode('login'); setResetCompleted(false); }} className="mt-4 min-h-12 w-full rounded-[15px] bg-slate-900 text-sm font-black text-white">返回登入</button>
                 </div>
-              </div>
-              <div className="rounded-full border border-sky-200/80 dark:border-sky-500/20 bg-sky-50/90 dark:bg-sky-950/40 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-sky-700 dark:text-sky-300">
-                Guest First
-              </div>
-            </div>
-
-            <div className="relative mt-4 overflow-hidden rounded-[26px] border border-white/8 bg-[linear-gradient(135deg,#0b2940_0%,#101827_54%,#5b2c24_100%)] p-4 sm:p-4.5 text-white shadow-[0_15px_34px_rgba(15,23,42,0.18)]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.16),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(251,191,36,0.12),transparent_38%)]" />
-              <div className="relative">
-                <div className="text-[10px] font-black uppercase tracking-[0.26em] text-sky-200/90">
-                  {previewContent.eyebrow}
-                </div>
-                <h1 className="mt-2 text-[23px] sm:text-[27px] leading-[1.08] font-black tracking-[-0.04em] text-balance">
-                  {title || '先用訪客身分開始，喜歡再註冊也不遲'}
-                </h1>
-                <p className="mt-2.5 max-w-[44ch] text-[13px] font-medium leading-[1.68] text-slate-300">
-                  {description || '不用先設定正式帳號，先進去看功能、跑流程，覺得順手再把進度留下。'}
-                </p>
-
-                                {/* Cute replacement for the old accordion */}
-                <div className="mt-5 flex items-center justify-center p-3 sm:p-5 rounded-[22px] border border-white/10 bg-white/5 backdrop-blur-sm">
-                  <div className="text-center space-y-2">
-                    <p className="text-[14px] sm:text-[15px] font-black tracking-wide text-white">
-                      {t('str_3bcc79a9')}</p>
-                    <p className="text-[12px] opacity-80 text-sky-100 font-medium tracking-wide">
-                      {t('str_5a5191ad')}</p>
-                  </div>
-                </div>
-              </div>
-
-              {guestFirst && (
-                  <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
-                    <button
-                      onClick={() => void handleGuestLogin()}
-                      disabled={loading}
-                      className={`flex w-full items-center justify-center gap-2 clay-btn bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-5 py-3.5 disabled:opacity-70 sm:flex-1 transition-all duration-300 ios-press`}
-                    >
-                      <span className="text-[13px] font-black tracking-[0.04em]">{resolvedGuestCtaLabel}</span>
-                      <ArrowRight size={16} strokeWidth={2.5} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsAuthCardExpanded(true)}
-                      className={`flex items-center justify-center rounded-[20px] border border-white/12 bg-white/[0.06] px-5 py-3.5 text-white hover:-translate-y-0.5 hover:bg-white/[0.12] sm:flex-1 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press`}
-                    >
-                      <span className="text-[12px] font-black tracking-[0.06em]">{t('str_5a81abf4')}</span>
-                    </button>
-                  </div>
-                )}
-
-                <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold text-slate-400">
-                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">{t('str_34c202c5')}</span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">{t('str_64e70f4f')}</span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5">{t('str_84a8f10')}</span>
-                </div>
-              </div>
-          </section>
-        )}
-
-        <div
-          className={`rounded-[30px] glass-panel border border-white/70 dark:border-white/10 p-6 shadow-[0_24px_50px_rgba(15,23,42,0.06)] flex flex-col relative overflow-hidden ${shouldShowGuestHero ? '' : 'mt-0'} ${pressableSurfaceClass}`}
-        >
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[linear-gradient(180deg,rgba(255,255,255,0.15),transparent)]" />
-          <div className="relative z-10 mb-5 flex items-start justify-between gap-4">
-            <div>
-              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                {shouldShowGuestHero ? '同步帳號' : '登入 / 註冊'}
-              </div>
-              <div className="mt-2 text-[24px] font-black tracking-[-0.04em] text-slate-900 dark:text-white">
-                {shouldShowGuestHero ? '保存進度與跨裝置同步' : '登入果凍漫遊'}
-              </div>
-              <div className="mt-2 text-[13px] font-semibold leading-[1.62] text-slate-500 dark:text-slate-400">
-                {shouldShowGuestHero ? '需要保存、同步或共編時再登入即可，前面的體驗不用重跑。' : '建立帳號後即可保存旅程、同步裝置與多人共編。'}
-              </div>
-            </div>
-            <div className="flex h-11 w-11 items-center justify-center rounded-[17px] border border-slate-200/90 dark:border-white/10 bg-slate-50/95 dark:bg-white/10 text-slate-700 dark:text-slate-200 shadow-[0_8px_18px_rgba(15,23,42,0.06)] dark:shadow-none">
-              <LockKeyhole size={20} strokeWidth={2.3} />
-            </div>
-          </div>
-
-          {shouldShowGuestHero ? (
-            <button
-              type="button"
-              onClick={() => setIsAuthCardExpanded((current) => !current)}
-              className={`mb-1 flex items-center justify-between rounded-[22px] border border-white/70 dark:border-white/10 bg-white/78 dark:bg-black/20 px-4 py-3.5 text-left hover:bg-white/90 dark:hover:bg-black/30 ${subtlePressableClass}`}
-            >
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                  {t('str_421de3b3')}</div>
-                <div className="mt-1 text-[14px] font-black tracking-[-0.03em] text-slate-800 dark:text-white">
-                  {isAuthCardExpanded ? '收起登入 / 註冊' : '展開登入 / 註冊'}
-                </div>
-                <div className="mt-1 text-[12px] font-semibold leading-[1.55] text-slate-500 dark:text-slate-400">
-                  {t('str_242b905')}</div>
-              </div>
-              <span
-                className="ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 transition-transform shrink-0 shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
-                style={{ transform: isAuthCardExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
-              >
-                <ArrowRight size={16} strokeWidth={2.8} />
-              </span>
-            </button>
-          ) : null}
-
-          {(!shouldShowGuestHero || isAuthCardExpanded) && (
-            <>
-              {shouldShowGuestHero && (
-                <div className="mb-5 mt-4 h-px w-full bg-white/70 dark:bg-white/10" />
+              ) : (
+                <>
+                  <label className="block text-[12px] font-extrabold text-slate-700 dark:text-slate-200">新密碼
+                    <input type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 min-h-12 w-full rounded-[15px] border border-slate-200 bg-white/75 px-4 text-sm dark:border-white/15 dark:bg-black/20 dark:text-white" />
+                  </label>
+                  <label className="block text-[12px] font-extrabold text-slate-700 dark:text-slate-200">再次輸入新密碼
+                    <input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="mt-2 min-h-12 w-full rounded-[15px] border border-slate-200 bg-white/75 px-4 text-sm dark:border-white/15 dark:bg-black/20 dark:text-white" />
+                  </label>
+                  {passwordError && <p role="alert" className="text-xs font-bold text-rose-600">{passwordError}</p>}
+                  {formError && <p role="alert" className="rounded-2xl bg-rose-50 px-4 py-3 text-xs font-bold text-rose-700">{formError}</p>}
+                  <button disabled={forgotLoading} type="submit" className="min-h-12 w-full rounded-[15px] bg-slate-900 text-sm font-black text-white disabled:opacity-60">{forgotLoading ? '更新中…' : '更新密碼'}</button>
+                </>
               )}
-
-              {/* Mode tabs */}
-              <div className="mb-6 flex flex-row rounded-full border border-white/60 dark:border-white/10 bg-white/40 dark:bg-black/30 backdrop-blur-md p-1 shadow-[inset_0_1px_2.5px_rgba(255,255,255,0.4)] dark:shadow-none transition-colors">
-                {(['login', 'register'] as Mode[]).map((m) => {
-                  const isActive = mode === m;
-                  return (
-                    <button
-                      key={m}
-                      onClick={() => switchMode(m)}
-                      className={`flex-1 flex justify-center items-center py-2 rounded-full appearance-none outline-none border-none cursor-pointer transition-all duration-300 ${
-                        isActive
-                          ? 'bg-white dark:bg-white/12 text-sky-700 dark:text-sky-300 shadow-[0_4px_12px_rgba(15,23,42,0.06)] dark:shadow-none'
-                          : 'bg-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
-                      }`}
-                    >
-                      <span className="text-[13px] font-black tracking-[0.08em]">
-                        {m === 'login' ? '登入' : '註冊'}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Username */}
-              <div className="mb-4 flex flex-col">
-                <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_6894b3a0')}</span>
+            </form>
+          ) : mode === 'forgot-password' ? (
+            <form className="mt-6" onSubmit={submitForgotPassword} noValidate>
+              <label htmlFor={emailId} className="mb-2 block text-[12px] font-extrabold text-slate-700 dark:text-slate-200">電子郵件</label>
+              <div className="relative">
+                <Mail aria-hidden="true" size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
-                  className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
-                  placeholder={t('str_9dd3433')}
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  ref={emailInputRef}
+                  id={emailId}
+                  type="email"
+                  value={email}
+                  onChange={(event) => { setEmail(event.target.value); if (emailError) setEmailError(''); }}
+                  onBlur={() => validateEmail()}
+                  aria-invalid={Boolean(emailError)}
+                  aria-describedby={emailError ? `${emailId}-error` : undefined}
                   autoComplete="username"
-                  autoCapitalize="none"
-                  autoCorrect="off"
+                  placeholder="name@example.com"
+                  className="min-h-12 w-full rounded-[15px] border border-slate-200 bg-white/76 py-3 pl-11 pr-4 text-sm font-semibold outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-400/25 dark:border-white/14 dark:bg-black/20 dark:text-white"
                 />
               </div>
-
-              {/* Display name and Avatar – register only */}
-              {mode === 'register' && (
-                <div className="flex flex-col">
-                  <div className="mb-4 flex flex-col">
-                    <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_4240bc60')}</span>
-                    <div className="flex flex-wrap gap-2 rounded-[20px] border border-white/50 dark:border-white/10 bg-white/30 dark:bg-black/20 p-2 backdrop-blur-sm">
-                      {['🐶', '🐱', '🦊', '🐰', '🐼', '🐨', '🐻', '🐯'].map(emoji => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          onClick={() => setAvatar(emoji)}
-                          aria-label={`選擇 ${emoji} 作為旅伴頭像`}
-                          aria-pressed={avatar === emoji}
-                          className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all ${avatar === emoji ? 'bg-sky-100/80 dark:bg-sky-950/60 ring-2 ring-sky-400 dark:ring-sky-400 scale-110 shadow-sm' : 'hover:bg-white/40 dark:hover:bg-white/5 hover:scale-105'}`}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
+              {emailError && <p id={`${emailId}-error`} className="mt-2 text-[12px] font-bold text-rose-600 dark:text-rose-400">{emailError}</p>}
+              {forgotSubmitted && (
+                <p role="status" className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-[12px] font-bold leading-5 text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-950/30 dark:text-emerald-200">
+                  如果此 Email 已註冊，我們會寄送重設密碼連結。
+                </p>
+              )}
+              {formError && (
+                <p role="alert" className="mt-4 rounded-2xl border border-rose-200 bg-rose-50/85 px-4 py-3 text-[12px] font-bold text-rose-700 dark:border-rose-400/20 dark:bg-rose-950/30 dark:text-rose-300">
+                  {formError}
+                </p>
+              )}
+              <button disabled={forgotLoading} type="submit" className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[15px] bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-65 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/40 dark:bg-white dark:text-slate-950">
+                {forgotLoading && <LoaderCircle aria-hidden="true" size={17} className="animate-spin" />}
+                {forgotLoading ? '寄送中…' : '寄送重設連結'}
+              </button>
+              <button type="button" onClick={() => { setMode('login'); setForgotSubmitted(false); resetMessages(); }} className="mt-3 min-h-10 w-full text-[12px] font-black text-sky-700 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30 dark:text-sky-300">
+                返回登入
+              </button>
+            </form>
+          ) : (
+            <>
+              {SOCIAL_PROVIDERS.some((provider) => providerEnabled[provider]) && (
+                <>
+                  <div className="mt-6 grid grid-cols-1 gap-2.5 min-[520px]:grid-cols-3">
+                    {SOCIAL_PROVIDERS.filter((provider) => providerEnabled[provider]).map((provider) => (
+                      <SocialLoginButton
+                        key={provider}
+                        provider={provider}
+                        loading={status === 'starting-oauth' && activeProvider === provider}
+                        disabled={isBusy}
+                        onClick={() => void handleSocialLogin(provider)}
+                      />
+                    ))}
                   </div>
-                  <div className="mb-4 flex flex-col">
-                    <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_6c57640e')}</span>
+
+                  <div className="my-6 flex items-center gap-3" aria-hidden="true">
+                    <div className="h-px flex-1 bg-slate-200/90 dark:bg-white/12" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">或</span>
+                    <div className="h-px flex-1 bg-slate-200/90 dark:bg-white/12" />
+                  </div>
+                </>
+              )}
+
+              <form onSubmit={handleSubmit} noValidate>
+                {mode === 'register' && (
+                  <div className="mb-4">
+                    <label htmlFor="display-name" className="mb-2 block text-[12px] font-extrabold text-slate-700 dark:text-slate-200">顯示名稱</label>
                     <input
-                      className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
-                      placeholder={t('str_1de61a3c')}
+                      id="display-name"
                       value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
+                      onChange={(event) => setDisplayName(event.target.value)}
                       autoComplete="name"
                       maxLength={50}
+                      placeholder="旅人名稱"
+                      className="min-h-12 w-full rounded-[15px] border border-slate-200 bg-white/76 px-4 py-3 text-sm font-semibold outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-400/25 dark:border-white/14 dark:bg-black/20 dark:text-white"
                     />
                   </div>
-                </div>
-              )}
-
-              {/* Password */}
-              <div className="mb-4 flex flex-col">
-                <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_b95b6')}</span>
-                <input
-                  type="password"
-                  className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
-                  placeholder={t('str_721a1ff3')}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                />
-              </div>
-
-              {/* Confirm password – register only */}
-              {mode === 'register' && (
-                <div className="mb-4 flex flex-col">
-                  <span className="mb-1.5 ml-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{t('str_38f4c609')}</span>
-                  <input
-                    type="password"
-                    className="outline-none w-full bg-white/40 dark:bg-black/35 backdrop-blur-md rounded-[20px] border border-white/60 dark:border-white/20 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white/60 dark:hover:bg-black/45 focus:bg-white/70 dark:focus:bg-black/45 focus:ring-4 focus:ring-sky-400/30 dark:focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-400/60 transition-all px-[18px] py-[13px] text-sm font-bold shadow-sm shadow-slate-100/50 dark:shadow-black/50"
-                    placeholder={t('str_512138d7')}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    autoComplete="new-password"
-                  />
-                </div>
-              )}
-
-              {/* Error message */}
-              {error ? (
-                <div
-                  className="mb-4 flex items-center rounded-[18px] border border-rose-200 dark:border-rose-900/50 bg-rose-50/80 dark:bg-rose-950/30 px-4 py-3"
-                >
-                  <span className="text-rose-600 dark:text-rose-400 text-[13px] font-bold">{error}</span>
-                </div>
-              ) : null}
-
-              {/* Submit */}
-              <button
-                onClick={() => void handleSubmit()}
-                disabled={loading}
-                className={`flex justify-center items-center py-3.5 mt-2 clay-btn appearance-none cursor-pointer transition-all duration-300 ios-press focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45 ${loading ? "bg-sky-800 dark:bg-sky-950 text-white/70" : "bg-gradient-to-r from-sky-700 to-sky-800 hover:opacity-95"}`}
-              >
-                {loading ? (
-                  <span className="text-white font-[800]">{t('str_3ecd7faa')}</span>
-                ) : (
-                  <span className="text-white font-[900] text-sm sm:text-base tracking-[0.06em]">
-                    {mode === 'login' ? '登入' : '建立帳號'}
-                  </span>
                 )}
-              </button>
 
-              {!guestFirst && (
+                <div className="mb-4">
+                  <label htmlFor={emailId} className="mb-2 block text-[12px] font-extrabold text-slate-700 dark:text-slate-200">電子郵件</label>
+                  <div className="relative">
+                    <Mail aria-hidden="true" size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      ref={emailInputRef}
+                      id={emailId}
+                      type="email"
+                      value={email}
+                      onChange={(event) => { setEmail(event.target.value); if (emailError) setEmailError(''); }}
+                      onBlur={() => validateEmail()}
+                      aria-invalid={Boolean(emailError)}
+                      aria-describedby={emailError ? `${emailId}-error` : undefined}
+                      autoComplete="username"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      placeholder="name@example.com"
+                      className="min-h-12 w-full rounded-[15px] border border-slate-200 bg-white/76 py-3 pl-11 pr-4 text-sm font-semibold outline-none transition hover:border-slate-300 focus:border-sky-400 focus:ring-4 focus:ring-sky-400/25 aria-[invalid=true]:border-rose-400 aria-[invalid=true]:ring-4 aria-[invalid=true]:ring-rose-400/15 dark:border-white/14 dark:bg-black/20 dark:text-white"
+                    />
+                  </div>
+                  {emailError && <p id={`${emailId}-error`} className="mt-2 text-[12px] font-bold text-rose-600 dark:text-rose-400">{emailError}</p>}
+                </div>
+
+                <div className="mb-3">
+                  <label htmlFor={passwordId} className="mb-2 block text-[12px] font-extrabold text-slate-700 dark:text-slate-200">密碼</label>
+                  <div className="relative">
+                    <LockKeyhole aria-hidden="true" size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      id={passwordId}
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(event) => { setPassword(event.target.value); if (passwordError) setPasswordError(''); }}
+                      onKeyUp={(event) => setCapsLockOn(event.getModifierState('CapsLock'))}
+                      onKeyDown={(event) => setCapsLockOn(event.getModifierState('CapsLock'))}
+                      aria-invalid={Boolean(passwordError)}
+                      aria-describedby={passwordError ? `${passwordId}-error` : capsLockOn ? `${passwordId}-caps` : undefined}
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                      placeholder="輸入密碼"
+                      className="min-h-12 w-full rounded-[15px] border border-slate-200 bg-white/76 py-3 pl-11 pr-12 text-sm font-semibold outline-none transition hover:border-slate-300 focus:border-sky-400 focus:ring-4 focus:ring-sky-400/25 aria-[invalid=true]:border-rose-400 aria-[invalid=true]:ring-4 aria-[invalid=true]:ring-rose-400/15 dark:border-white/14 dark:bg-black/20 dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((current) => !current)}
+                      aria-label={showPassword ? '隱藏密碼' : '顯示密碼'}
+                      className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-900/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30 dark:text-slate-300 dark:hover:bg-white/10"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  {passwordError && <p id={`${passwordId}-error`} className="mt-2 text-[12px] font-bold text-rose-600 dark:text-rose-400">{passwordError}</p>}
+                  {!passwordError && capsLockOn && <p id={`${passwordId}-caps`} className="mt-2 text-[11px] font-bold text-amber-700 dark:text-amber-300">Caps Lock 已開啟</p>}
+                </div>
+
+                {mode === 'register' && (
+                  <div className="mb-4">
+                    <label htmlFor="confirm-password" className="mb-2 block text-[12px] font-extrabold text-slate-700 dark:text-slate-200">確認密碼</label>
+                    <input
+                      id="confirm-password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      autoComplete="new-password"
+                      placeholder="再次輸入密碼"
+                      className="min-h-12 w-full rounded-[15px] border border-slate-200 bg-white/76 px-4 py-3 text-sm font-semibold outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-400/25 dark:border-white/14 dark:bg-black/20 dark:text-white"
+                    />
+                  </div>
+                )}
+
+                {mode === 'login' && (
+                  <div className="mb-5 flex items-center justify-between gap-3">
+                    <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 text-[12px] font-bold text-slate-600 dark:text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(event) => setRememberMe(event.target.checked)}
+                        className="h-4 w-4 rounded border-slate-300 accent-sky-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30"
+                      />
+                      記住我
+                    </label>
+                    <button type="button" onClick={() => { setMode('forgot-password'); resetMessages(); }} className="min-h-10 text-[12px] font-black text-sky-700 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30 dark:text-sky-300">
+                      忘記密碼？
+                    </button>
+                  </div>
+                )}
+
+                {formError && (
+                  <div role="alert" aria-live="polite" className="mb-4 rounded-[16px] border border-rose-200 bg-rose-50/85 px-4 py-3 text-[12px] font-bold leading-5 text-rose-700 dark:border-rose-400/20 dark:bg-rose-950/30 dark:text-rose-300">
+                    {formError}
+                  </div>
+                )}
+
                 <button
-                  onClick={() => void handleGuestLogin()}
-                  disabled={loading}
-                  className="mt-3 flex w-full justify-center items-center py-3 rounded-[22px] border border-slate-200 dark:border-white/10 appearance-none cursor-pointer transition-all ios-press bg-white/70 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/45"
+                  type="submit"
+                  disabled={isBusy}
+                  aria-busy={status === 'submitting-password'}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[15px] bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-65 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/40 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100"
                 >
-                  <span className="font-[900] text-xs sm:text-sm tracking-[0.05em]">
-                    {resolvedGuestCtaLabel}
-                  </span>
+                  {status === 'submitting-password' && <LoaderCircle aria-hidden="true" size={17} className="animate-spin" />}
+                  {status === 'submitting-password' ? (mode === 'login' ? '登入中…' : '建立中…') : (mode === 'login' ? '登入' : '建立帳號')}
                 </button>
-              )}
+              </form>
 
-              {onCancel && (
+              <p className="mt-5 text-center text-[12px] font-semibold text-slate-500 dark:text-slate-400">
+                {mode === 'login' ? '還沒有帳號？' : '已經有帳號？'}{' '}
                 <button
-                  onClick={onCancel}
-                  disabled={loading}
-                  className="mt-2.5 flex justify-center items-center py-3 rounded-[22px] border-none appearance-none cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all ios-press bg-transparent text-slate-500 dark:text-slate-400"
+                  type="button"
+                  onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); resetMessages(); }}
+                  className="font-black text-sky-700 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30 dark:text-sky-300"
                 >
-                  <span className="font-[800] text-sm tracking-[0.05em]">{t('str_a9472')}</span>
+                  {mode === 'login' ? '註冊' : '返回登入'}
+                </button>
+              </p>
+
+              {guestFirst && (
+                <button
+                  type="button"
+                  disabled={isBusy}
+                  onClick={() => void handleGuestLogin()}
+                  className="mt-4 min-h-11 w-full rounded-[14px] border border-slate-200 bg-white/55 px-4 text-[12px] font-black text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+                >
+                  {resolvedGuestCtaLabel}
                 </button>
               )}
             </>
           )}
-        </div>
 
-        <InfoPeekModal
-          open={!!activePreviewInfo}
-          content={activePreviewInfo}
-          onClose={() => setActivePreviewInfo(null)}
-        />
+          <p className="mt-6 text-center text-[10px] font-semibold leading-5 text-slate-400 dark:text-slate-500">
+            登入即表示你同意服務條款與隱私權政策。系統不會在此裝置儲存你的密碼。
+          </p>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

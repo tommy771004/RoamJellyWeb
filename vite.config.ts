@@ -182,6 +182,11 @@ export default defineConfig(() => {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
+      watch: {
+        // Tooling output changes while development is running and must not
+        // trigger a full reload of the application.
+        ignored: ['**/.codebase-memory/**'],
+      },
     },
     build: {
       rollupOptions: {

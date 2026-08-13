@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
-import { X, Save, Loader2, Sparkles, User, MapPin, Users, Heart, Coffee, Car, DollarSign, Check, Bell, Trash2 } from 'lucide-react';
+import { X, Save, Loader2, Sparkles, User, MapPin, Users, Heart, Coffee, Car, DollarSign, Check, Bell, Trash2, ShieldCheck, Link2, Unlink } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
@@ -11,6 +11,16 @@ import type { AiPreferenceProfile } from '../types/workflow';
 import { PulsingIndicator } from './ui/PulsingIndicator';
 import { useTranslation } from "react-i18next";
 import { useModalAccessibility } from '../lib/useModalAccessibility';
+import {
+  disabledSocialProviders,
+  disconnectIdentity,
+  getSocialProviderAvailability,
+  listConnectedIdentities,
+  openAuthorizationUrl,
+  SOCIAL_PROVIDERS,
+  startSocialAuth,
+} from '../features/auth/authClient';
+import type { AuthProvider, SocialProviderAvailability } from '../features/auth/types';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -98,11 +108,17 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
   const notificationsTabId = useId();
   const profilePanelId = useId();
   const notificationsPanelId = useId();
+  const securityTabId = useId();
+  const securityPanelId = useId();
   const dialogRef = useModalAccessibility(onClose, isOpen);
   const { showToast, notifications, clearNotifications } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'notifications'>('profile');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security' | 'notifications'>('profile');
+  const [identities, setIdentities] = useState<Array<{ provider: AuthProvider; providerEmail?: string | null }>>([]);
+  const [providerAvailability, setProviderAvailability] = useState<SocialProviderAvailability>(disabledSocialProviders);
+  const [securityLoading, setSecurityLoading] = useState(false);
+  const [securityError, setSecurityError] = useState('');
   
   const [profile, setProfile] = useState<AiPreferenceProfile>({
     departure: '',
@@ -119,6 +135,41 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
       loadProfile();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || activeSubTab !== 'security') return;
+    setSecurityLoading(true);
+    setSecurityError('');
+    void Promise.all([listConnectedIdentities(), getSocialProviderAvailability()])
+      .then(([nextIdentities, availability]) => {
+        setIdentities(nextIdentities);
+        setProviderAvailability(availability);
+      })
+      .catch((error) => setSecurityError(error instanceof Error ? error.message : '無法讀取已連結帳號。'))
+      .finally(() => setSecurityLoading(false));
+  }, [isOpen, activeSubTab]);
+
+  const connectProvider = async (provider: AuthProvider) => {
+    if (!providerAvailability[provider]) return;
+    try {
+      setSecurityError('');
+      const pending = await startSocialAuth(provider, { link: true });
+      await openAuthorizationUrl(pending);
+      onClose();
+    } catch (error) {
+      setSecurityError(error instanceof Error ? error.message : '無法開始帳號連結。');
+    }
+  };
+
+  const removeProvider = async (provider: AuthProvider) => {
+    if (!window.confirm(`確定要解除 ${provider === 'apple' ? 'Apple' : provider === 'google' ? 'Google' : 'LINE'} 連結嗎？`)) return;
+    try {
+      await disconnectIdentity(provider);
+      setIdentities((current) => current.filter((item) => item.provider !== provider));
+    } catch (error) {
+      setSecurityError(error instanceof Error ? error.message : '無法解除連結。');
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -233,6 +284,21 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                   >
                     {t('str_53d34552')}</button>
                   <button
+                    id={securityTabId}
+                    type="button"
+                    onClick={() => setActiveSubTab('security')}
+                    role="tab"
+                    aria-selected={activeSubTab === 'security'}
+                    aria-controls={activeSubTab === 'security' ? securityPanelId : undefined}
+                    className={`flex-1 py-2 text-[12px] font-black rounded-[12px] transition-all duration-200 ios-press ${
+                      activeSubTab === 'security'
+                        ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-[0_2px_8px_rgba(15,23,42,0.06)]'
+                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    }`}
+                  >
+                    安全性
+                  </button>
+                  <button
                     id={notificationsTabId}
                     type="button"
                     onClick={() => setActiveSubTab('notifications')}
@@ -257,9 +323,9 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
               </div>
 
               <div
-                id={activeSubTab === 'profile' ? profilePanelId : notificationsPanelId}
+                id={activeSubTab === 'profile' ? profilePanelId : activeSubTab === 'security' ? securityPanelId : notificationsPanelId}
                 role="tabpanel"
-                aria-labelledby={activeSubTab === 'profile' ? profileTabId : notificationsTabId}
+                aria-labelledby={activeSubTab === 'profile' ? profileTabId : activeSubTab === 'security' ? securityTabId : notificationsTabId}
                 className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5"
               >
                 {activeSubTab === 'profile' ? (
@@ -424,6 +490,56 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                       <div className="h-4"></div>
                     </React.Fragment>
                   )
+                ) : activeSubTab === 'security' ? (
+                  <div className="space-y-4">
+                    <div className="rounded-3xl border border-white/80 bg-white/75 p-5 shadow-sm dark:border-white/10 dark:bg-black/35">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300">
+                          <ShieldCheck size={20} />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-800 dark:text-white">已連結的登入方式</h3>
+                          <p className="mt-1 text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">連結多種登入方式，避免因單一 Provider 無法使用而失去帳號存取權。</p>
+                        </div>
+                      </div>
+                    </div>
+                    {securityError && <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-bold text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">{securityError}</div>}
+                    {securityLoading ? (
+                      <div className="flex justify-center py-12"><Loader2 className="animate-spin text-sky-600" /></div>
+                    ) : (
+                      <div className="space-y-3">
+                        {SOCIAL_PROVIDERS.filter((provider) => (
+                          providerAvailability[provider] || identities.some((item) => item.provider === provider)
+                        )).map((provider) => {
+                          const identity = identities.find((item) => item.provider === provider);
+                          const label = provider === 'apple' ? 'Apple' : provider === 'google' ? 'Google' : 'LINE';
+                          return (
+                            <div key={provider} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-4 dark:border-white/10 dark:bg-white/5">
+                              <div className="min-w-0">
+                                <p className="text-sm font-black text-slate-800 dark:text-white">{label}</p>
+                                <p className="truncate text-[11px] font-semibold text-slate-500 dark:text-slate-400">{identity?.providerEmail || (identity ? '已連結' : '尚未連結')}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => identity ? void removeProvider(provider) : void connectProvider(provider)}
+                                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black ${identity ? 'bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-950/30 dark:text-red-300' : 'bg-sky-600 text-white hover:bg-sky-700'}`}
+                              >
+                                {identity ? <Unlink size={14} /> : <Link2 size={14} />}
+                                {identity ? '解除' : '連結'}
+                              </button>
+                            </div>
+                          );
+                        })}
+                        {!SOCIAL_PROVIDERS.some((provider) => (
+                          providerAvailability[provider] || identities.some((item) => item.provider === provider)
+                        )) && (
+                          <p className="rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-5 text-center text-xs font-semibold text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
+                            目前沒有可用的第三方登入方式。
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   /* notifications subtab view */
                   notifications.length === 0 ? (
@@ -495,7 +611,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                   )}
                   <span className="relative z-10">{saving ? t('profile_modal.saving') : t('profile_modal.save')}</span>
                 </Button>
-              ) : (
+              ) : activeSubTab === 'notifications' ? (
                 <div className="flex gap-3 w-full">
                   {notifications.length > 0 && (
                     <button 
@@ -513,6 +629,8 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                   >
                     {t('str_4661c7ae')}</button>
                 </div>
+              ) : (
+                <button type="button" onClick={onClose} className="flex h-14 w-full items-center justify-center rounded-2xl bg-slate-900 text-[14px] font-black text-white hover:bg-slate-800">完成</button>
               )}
             </div>
           </motion.div>

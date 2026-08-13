@@ -16,6 +16,7 @@ import { createClient, type RedisClientType } from 'redis';
 import { AppRepository } from './src/server/repositories/appRepository';
 import { pool, db } from './src/server/db/client';
 import { signAccessToken, type AuthUser, verifyAccessToken } from './src/server/auth/jwt';
+import { AuthRepository } from './src/server/auth/authRepository';
 import { hashPassword, verifyPassword } from './src/server/auth/password';
 import {
   type TripRole,
@@ -1022,6 +1023,7 @@ Reply ONLY with the GPS latitude,longitude (e.g. 25.0343,121.5649 or 35.6762,139
 
 async function startServer() {
   const repo = new AppRepository(db);
+  const authRepo = new AuthRepository(db);
 
   if (REDIS_URL) {
     const candidate = createClient({ url: REDIS_URL });
@@ -1070,6 +1072,7 @@ async function startServer() {
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     next();
   });
+  app.use(express.urlencoded({ extended: false, limit: '64kb' }));
   app.use(express.json({ limit: '1mb' }));
 
   app.get('/health', async (_req, res) => {
@@ -1097,6 +1100,14 @@ async function startServer() {
         req.path !== '/api/auth/guest' &&
         req.path !== '/api/auth/register' &&
         req.path !== '/api/auth/login' &&
+        req.path !== '/api/auth/password/forgot' &&
+        req.path !== '/api/auth/password/reset' &&
+        req.path !== '/api/auth/social/providers' &&
+        req.path !== '/api/auth/social/start' &&
+        req.path !== '/api/auth/social/session/exchange' &&
+        req.path !== '/api/auth/session/refresh' &&
+        req.path !== '/api/auth/logout' &&
+        !req.path.startsWith('/api/auth/social/callback/') &&
         !req.path.startsWith('/api/search') &&
         req.path !== '/api/weather' &&
         req.path !== '/api/handbooks'
@@ -1158,6 +1169,7 @@ async function startServer() {
 
   registerAuthRoutes(app, {
     repo,
+    authRepo,
     guestAuthLimiter,
     loginLimiter,
     registerLimiter,
@@ -1576,7 +1588,7 @@ async function startServer() {
     } catch {
       // ignore shutdown error
     }
-    await pool.end();
+    await pool?.end();
     process.exit(0);
   };
 

@@ -1,13 +1,101 @@
-import { pgTable, text, varchar, timestamp, uuid, integer, real, boolean, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, varchar, timestamp, uuid, integer, real, boolean, jsonb, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   userId: varchar('user_id', { length: 128 }).primaryKey(),
   username: varchar('username', { length: 128 }).notNull().unique(),
+  primaryEmail: varchar('primary_email', { length: 320 }),
+  emailVerified: boolean('email_verified').default(false).notNull(),
+  status: varchar('status', { length: 32 }).default('active').notNull(),
   displayName: varchar('display_name', { length: 128 }).notNull(),
   passwordHash: varchar('password_hash', { length: 256 }),
   avatar: text('avatar'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('users_primary_email_unique').on(table.primaryEmail),
+]);
+
+export const authIdentities = pgTable('auth_identities', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: varchar('user_id', { length: 128 }).notNull().references(() => users.userId),
+  provider: varchar('provider', { length: 32 }).notNull(),
+  providerSubject: varchar('provider_subject', { length: 255 }).notNull(),
+  providerEmail: varchar('provider_email', { length: 320 }),
+  providerEmailVerified: boolean('provider_email_verified').default(false).notNull(),
+  displayName: varchar('display_name', { length: 128 }),
+  avatarUrl: text('avatar_url'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lastLoginAt: timestamp('last_login_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('auth_identities_provider_subject_unique').on(table.provider, table.providerSubject),
+  index('auth_identities_user_id_idx').on(table.userId),
+]);
+
+export const authTransactions = pgTable('auth_transactions', {
+  id: uuid('id').primaryKey(),
+  provider: varchar('provider', { length: 32 }).notNull(),
+  stateHash: varchar('state_hash', { length: 64 }).notNull(),
+  nonceHash: varchar('nonce_hash', { length: 64 }).notNull(),
+  appCodeChallenge: varchar('app_code_challenge', { length: 128 }).notNull(),
+  providerCodeVerifierEncrypted: text('provider_code_verifier_encrypted'),
+  appRedirectUri: text('app_redirect_uri').notNull(),
+  linkUserId: varchar('link_user_id', { length: 128 }).references(() => users.userId),
+  expiresAt: timestamp('expires_at').notNull(),
+  consumedAt: timestamp('consumed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('auth_transactions_state_hash_unique').on(table.stateHash),
+  index('auth_transactions_expires_at_idx').on(table.expiresAt),
+]);
+
+export const authLoginTickets = pgTable('auth_login_tickets', {
+  id: uuid('id').primaryKey(),
+  transactionId: uuid('transaction_id').notNull().references(() => authTransactions.id),
+  userId: varchar('user_id', { length: 128 }).notNull().references(() => users.userId),
+  ticketHash: varchar('ticket_hash', { length: 64 }).notNull(),
+  kind: varchar('kind', { length: 16 }).default('login').notNull(),
+  provider: varchar('provider', { length: 32 }).notNull(),
+  providerSubject: varchar('provider_subject', { length: 255 }).notNull(),
+  providerEmail: varchar('provider_email', { length: 320 }),
+  providerEmailVerified: boolean('provider_email_verified').default(false).notNull(),
+  displayName: varchar('display_name', { length: 128 }),
+  avatarUrl: text('avatar_url'),
+  expiresAt: timestamp('expires_at').notNull(),
+  consumedAt: timestamp('consumed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('auth_login_tickets_ticket_hash_unique').on(table.ticketHash),
+  index('auth_login_tickets_expires_at_idx').on(table.expiresAt),
+]);
+
+export const authSessions = pgTable('auth_sessions', {
+  id: uuid('id').primaryKey(),
+  userId: varchar('user_id', { length: 128 }).notNull().references(() => users.userId),
+  familyId: uuid('family_id').notNull(),
+  tokenHash: varchar('token_hash', { length: 64 }).notNull(),
+  rememberMe: boolean('remember_me').default(false).notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  consumedAt: timestamp('consumed_at'),
+  revokedAt: timestamp('revoked_at'),
+  lastUsedAt: timestamp('last_used_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('auth_sessions_token_hash_unique').on(table.tokenHash),
+  index('auth_sessions_family_id_idx').on(table.familyId),
+  index('auth_sessions_user_id_idx').on(table.userId),
+]);
+
+export const authPasswordResetTokens = pgTable('auth_password_reset_tokens', {
+  id: uuid('id').primaryKey(),
+  userId: varchar('user_id', { length: 128 }).notNull().references(() => users.userId),
+  tokenHash: varchar('token_hash', { length: 64 }).notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  consumedAt: timestamp('consumed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('auth_password_reset_token_hash_unique').on(table.tokenHash),
+  index('auth_password_reset_expires_at_idx').on(table.expiresAt),
+]);
 
 export const trips = pgTable('trips', {
   id: varchar('id', { length: 128 }).primaryKey(),

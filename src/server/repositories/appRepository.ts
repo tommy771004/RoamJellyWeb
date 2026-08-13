@@ -159,6 +159,9 @@ function withNormalizedAttachments<T extends Record<string, any>>(row: T) {
 type MemoryUser = {
   userId: string;
   username: string;
+  primaryEmail?: string | null;
+  emailVerified: boolean;
+  status: string;
   displayName: string;
   name: string;
   avatar?: string | null;
@@ -221,12 +224,18 @@ export class AppRepository {
     name?: string;
     avatar?: string | null;
     passwordHash?: string;
+    primaryEmail?: string | null;
+    emailVerified?: boolean;
+    status?: string;
   }) {
     const existing = this.memoryUsers.get(user.userId);
     const displayName = user.displayName ?? user.name ?? existing?.displayName ?? user.username ?? user.userId;
     const next: MemoryUser = {
       userId: user.userId,
       username: user.username ?? existing?.username ?? user.userId,
+      primaryEmail: user.primaryEmail ?? existing?.primaryEmail ?? null,
+      emailVerified: user.emailVerified ?? existing?.emailVerified ?? false,
+      status: user.status ?? existing?.status ?? 'active',
       displayName,
       name: user.name ?? displayName,
       avatar: user.avatar ?? existing?.avatar ?? null,
@@ -268,31 +277,77 @@ export class AppRepository {
     return user || null;
   }
 
+  async getUserByEmail(email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!this.db) {
+      return Array.from(this.memoryUsers.values()).find(
+        (user) => user.primaryEmail?.toLowerCase() === normalizedEmail,
+      ) ?? null;
+    }
+    const [user] = await this.db.select().from(schema.users).where(eq(schema.users.primaryEmail, normalizedEmail));
+    return user || null;
+  }
+
   async getUserById(userId: string) {
     if (!this.db) return this.memoryUsers.get(userId) ?? null;
     const [user] = await this.db.select().from(schema.users).where(eq(schema.users.userId, userId));
     return user || null;
   }
 
-  async createUserWithPassword(username: string, displayName: string, passwordHash: string, avatar?: string) {
+  async createUserWithPassword(
+    username: string,
+    displayName: string,
+    passwordHash: string,
+    avatar?: string,
+    email?: string,
+    userId = username,
+  ) {
+    const primaryEmail = email?.trim().toLowerCase() || null;
     if (!this.db) {
       this.upsertMemoryUser({
-        userId: username,
+        userId,
         username,
         displayName,
         name: displayName,
         avatar: avatar ?? null,
         passwordHash,
+        primaryEmail,
       });
       return;
     }
     await this.db.insert(schema.users).values({
-      userId: username, // using username as ID for simplicity
+      userId,
       username,
       displayName,
       passwordHash,
       avatar,
+      primaryEmail,
     }).onConflictDoNothing();
+  }
+
+  async createSocialUser(userId: string, email: string | null, displayName: string, avatar?: string | null) {
+    const username = `social_${userId}`;
+    if (!this.db) {
+      return this.upsertMemoryUser({
+        userId, username, displayName, name: displayName, avatar,
+        primaryEmail: email?.trim().toLowerCase() || null, emailVerified: Boolean(email),
+      });
+    }
+    const [user] = await this.db.insert(schema.users).values({
+      userId, username, displayName, avatar,
+      primaryEmail: email?.trim().toLowerCase() || null,
+      emailVerified: Boolean(email),
+    }).returning();
+    return user;
+  }
+
+  async updateUserPassword(userId: string, passwordHash: string) {
+    if (!this.db) {
+      const user = this.memoryUsers.get(userId);
+      if (user) user.passwordHash = passwordHash;
+      return;
+    }
+    await this.db.update(schema.users).set({ passwordHash, updatedAt: new Date() }).where(eq(schema.users.userId, userId));
   }
 
   async ensureUser(userId: string, username: string, displayName?: string) {
