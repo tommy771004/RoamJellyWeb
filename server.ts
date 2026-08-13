@@ -14,8 +14,9 @@ import path from 'path';
 import Parser from 'rss-parser';
 import { createClient, type RedisClientType } from 'redis';
 import { AppRepository } from './src/server/repositories/appRepository';
+import { AiJobRepository } from './src/server/repositories/aiJobRepository';
 import { pool, db } from './src/server/db/client';
-import { signAccessToken, type AuthUser, verifyAccessToken } from './src/server/auth/jwt';
+import { assertJwtSecretConfigured, signAccessToken, type AuthUser, verifyAccessToken } from './src/server/auth/jwt';
 import { AuthRepository } from './src/server/auth/authRepository';
 import { hashPassword, verifyPassword } from './src/server/auth/password';
 import {
@@ -44,6 +45,7 @@ import { registerItineraryRoutes } from './src/server/routes/itineraryRoutes';
 import { registerDiscoveryRoutes } from './src/server/routes/discoveryRoutes';
 import { registerGeoRoutes } from './src/server/routes/geoRoutes';
 import { registerAiRoutes } from './src/server/routes/aiRoutes';
+import { registerAiJobRoutes } from './src/server/routes/aiJobRoutes';
 import { registerScrapingRoutes } from './src/server/routes/scrapingRoutes';
 import { registerSocketHandlers } from './src/server/realtime/socketHandlers';
 import * as schema from './src/server/db/schema';
@@ -1022,8 +1024,11 @@ Reply ONLY with the GPS latitude,longitude (e.g. 25.0343,121.5649 or 35.6762,139
 }
 
 async function startServer() {
+  assertJwtSecretConfigured();
+
   const repo = new AppRepository(db);
   const authRepo = new AuthRepository(db);
+  const aiJobRepo = new AiJobRepository(db);
 
   if (REDIS_URL) {
     const candidate = createClient({ url: REDIS_URL });
@@ -1077,6 +1082,7 @@ async function startServer() {
 
   app.get('/health', async (_req, res) => {
     try {
+      if (!db) throw new Error('DATABASE_NOT_CONFIGURED');
       await repo.healthCheck();
       res.json({
         status: 'ok',
@@ -1086,7 +1092,15 @@ async function startServer() {
         },
       });
     } catch (error) {
-      res.status(503).json({ status: 'error', message: 'health check failed', error: String(error) });
+      console.error('[Health] readiness check failed', error);
+      res.status(503).json({
+        status: 'error',
+        message: 'health check failed',
+        checks: {
+          database: db ? 'error' : 'not_configured',
+          redis: redisClient?.isOpen ? 'ok' : 'fallback',
+        },
+      });
     }
   });
 
@@ -1205,6 +1219,12 @@ async function startServer() {
     isCoordValidForCity,
     normalizeDateOnlyInput,
     formatDateOnly,
+  });
+
+  registerAiJobRoutes(app, {
+    aiJobRepo,
+    ensureTripRole,
+    aiLimiter,
   });
 
   app.post('/api/dev/generate-handbooks', async (req, res) => {

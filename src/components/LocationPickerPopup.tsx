@@ -60,19 +60,19 @@ export const LocationPickerPopup = ({
   const isKeyboardOpen = vv.height < 520 && window.innerWidth < 1024;
 
   const content = (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       <div className="fixed inset-x-0 z-popup flex items-center justify-center p-3 md:p-4 transition-all duration-100" style={{ top: vv.offsetTop, height: vv.height }}>
         <motion.div 
-          initial={{ opacity: 0 }}
+          initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={getOverlayTransition()}
-          className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
+          className="absolute inset-0 bg-[#17221c]/55" 
           onClick={onClose}
         />
         <motion.div
           ref={dialogRef}
-          initial={{ opacity: 0, y: 50, scale: 0.95 }}
+          initial={{ opacity: 1, y: 0, scale: 1 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.95 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
@@ -80,22 +80,18 @@ export const LocationPickerPopup = ({
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="relative z-popup-above flex h-[calc(100%-1.5rem)] sm:h-[85%] w-full flex-col overflow-hidden rounded-t-[24px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,1))] shadow-[0_-12px_36px_rgba(15,23,42,0.14)] md:h-auto md:max-h-[85vh] md:w-[600px] md:max-w-2xl md:min-w-[600px] md:rounded-[30px] md:shadow-[0_28px_60px_rgba(15,23,42,0.16)]"
+          className="relative z-popup-above flex h-[calc(100%-1.5rem)] w-full flex-col overflow-hidden rounded-t-[16px] bg-[#f8faf7] shadow-[0_10px_24px_rgba(23,34,28,0.18)] sm:h-[85%] md:h-auto md:max-h-[85vh] md:w-[600px] md:max-w-2xl md:min-w-[600px] md:rounded-[16px]"
         >
-          <div className={`sticky top-0 z-20 bg-white/95 px-4 ${isKeyboardOpen ? 'pb-2 pt-2' : 'pb-3 mt-2 pt-4'} border-b border-slate-100 bg-white/80 backdrop-blur-lg md:px-6 md:pb-4 md:pt-6`}>
-            <div className={`mx-auto rounded-full bg-slate-200 md:hidden ${isKeyboardOpen ? 'mb-1 h-1 w-10' : 'mb-4 h-1.5 w-12'}`} />
+          <div className={`sticky top-0 z-20 bg-[#f8faf7] px-4 ${isKeyboardOpen ? 'pb-2 pt-2' : 'pb-3 mt-2 pt-4'} md:px-6 md:pb-4 md:pt-6`}>
             <div className={`flex flex-row items-center justify-between pl-1 ${isKeyboardOpen ? 'mb-1.5' : 'mb-5'}`}>
               <div className="flex flex-col">
                 <h2 id={titleId} className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">{title}</h2>
-                {!isKeyboardOpen && (
-                  <span className="text-[10px] md:text-xs mt-0.5 font-bold uppercase tracking-wider text-slate-400">Select Destination</span>
-                )}
               </div>
               <button 
                 type="button"
                 onClick={onClose}
                 aria-label={t('str_12bb2d')}
-                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 ios-press transition-all"
+                className="flex h-12 w-12 shrink-0 items-center justify-center text-[#59665e] transition-colors hover:text-[#9a452e] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20"
               >
                 <X size={isKeyboardOpen ? 18 : 20} className="text-slate-500" strokeWidth={2.5} />
               </button>
@@ -109,7 +105,7 @@ export const LocationPickerPopup = ({
                 aria-label={t('str_dafacd0')}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('str_1426bb2')}
-                className="w-full rounded-[16px] border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-bold text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-sky-300 focus:bg-white focus:ring-4 focus:ring-sky-100"
+                className="w-full rounded-[12px] bg-[#e8ede7] py-3.5 pl-11 pr-4 text-[15px] font-bold text-[#435047] outline-none transition-colors placeholder:text-[#7b877f] focus:bg-white focus:ring-4 focus:ring-[#a3472b]/20"
                 autoCapitalize="none"
                 autoCorrect="off"
                 onFocus={() => {
@@ -126,10 +122,10 @@ export const LocationPickerPopup = ({
                   <button
                     type="button"
                     onClick={() => setSelectedRegion('全部地區')}
-                    className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap ios-press ${
+                    className={`min-h-11 rounded-[10px] px-4 py-2 text-[13px] font-bold transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 ${
                       selectedRegion === '全部地區' 
-                        ? 'bg-sky-700 text-white shadow-md shadow-sky-100' 
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                        ? 'bg-[#26342d] text-white' 
+                        : 'bg-[#e8ede7] text-[#526159] hover:bg-[#dce4dc]'
                     }`}
                   >
                     {t('region.全部地區', '全部地區')}</button>
@@ -138,10 +134,10 @@ export const LocationPickerPopup = ({
                       type="button"
                       key={region}
                       onClick={() => setSelectedRegion(region)}
-                      className={`rounded-full px-4 py-2 text-[13px] font-bold transition-all whitespace-nowrap ios-press ${
+                      className={`min-h-11 rounded-[10px] px-4 py-2 text-[13px] font-bold transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 ${
                         selectedRegion === region 
-                          ? 'bg-sky-700 text-white shadow-md shadow-sky-100' 
-                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                          ? 'bg-[#26342d] text-white' 
+                          : 'bg-[#e8ede7] text-[#526159] hover:bg-[#dce4dc]'
                       }`}
                     >
                       {t('region.' + region, region)}
@@ -157,7 +153,7 @@ export const LocationPickerPopup = ({
               <div className="flex flex-col gap-5 md:gap-7">
                 {groupedDestinations.map(([country, dests]) => (
                   <div key={country} className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-2 border-l-2 border-sky-400 pl-2">
+                    <div className="flex items-center gap-2">
                       <span className="text-[14px] md:text-[15px] font-black tracking-wider text-slate-700">{t('countries.' + country, country)}</span>
                     </div>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
@@ -240,21 +236,13 @@ export const LocationPickerPopup = ({
                             type="button"
                             key={dest.id}
                             onClick={() => onSelect(dest)}
-                            className="group relative flex flex-col items-center justify-center gap-1.5 rounded-[22px] border border-slate-100 bg-white/70 backdrop-blur-md py-4 px-2 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-300 hover:bg-sky-50/25 hover:shadow-lg hover:shadow-sky-100/40 ios-press overflow-hidden"
+                            className="group relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] bg-[#e8ede7] px-2 py-3 transition-colors hover:bg-[#dce4dc] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20"
                           >
-                            {/* Subtle premium decorative color band indicators */}
-                            <span className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-sky-400 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            
-                            {/* Cute pink pulsing dot for domestic Taiwan spots as visual feedback */}
-                            {dest.country === '台灣' && (
-                              <span className="absolute top-3 right-3 size-1.5 rounded-full bg-pink-500 shadow-sm shadow-pink-300 animate-pulse" />
-                            )}
-                            
-                            <span className="w-full text-center text-[13px] sm:text-[14px] font-black tracking-tight text-slate-800 group-hover:text-sky-600 transition-colors truncate">
+                            <span className="w-full truncate text-center text-[13px] font-black tracking-tight text-[#26342d] sm:text-[14px]">
                               {display.main}
                             </span>
                             
-                            <span className="text-[10px] font-bold text-slate-400 group-hover:text-indigo-500/85 transition-colors truncate max-w-full">
+                            <span className="max-w-full truncate text-[10px] font-bold text-[#7b877f]">
                               {display.sub}
                             </span>
                           </button>
@@ -266,7 +254,7 @@ export const LocationPickerPopup = ({
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16">
-                <span className="text-[48px] mb-4 grayscale opacity-30">✈️</span>
+                <Search size={28} className="mb-4 text-[#7b877f]" aria-hidden="true" />
                 <span className="text-[15px] font-bold text-slate-500">{t('str_499a902f')}</span>
               </div>
             )}

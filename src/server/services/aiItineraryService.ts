@@ -931,7 +931,17 @@ function parseChunkText(text: string, isFirst: boolean): any {
 
 // ─── Main export ─────────────────────────────────────────────────────────────
 
-export async function generateItinerary(body: any) {
+export type ItineraryTextGenerator = (prompt: string) => Promise<string>;
+
+export type GenerateItineraryOptions = {
+  strictFailure?: boolean;
+};
+
+export async function generateItineraryWithTextGenerator(
+  body: any,
+  generateText: ItineraryTextGenerator,
+  options: GenerateItineraryOptions = {},
+) {
   const { destination, planner, aiMode } = body;
   const days = planner?.days || 3;
 
@@ -944,19 +954,6 @@ export async function generateItinerary(body: any) {
     } else if (aiMode.mode === "overwrite_all") {
       generationContext = `\n【重要指示】我們將全局重新規劃整趟 ${days} 天的行程。`;
     }
-  }
-
-  if (!apiKey) {
-    // Artificial delay for fallback
-    await new Promise((r) => setTimeout(r, 2000));
-    return [
-      { day: 1, time: "10:00", title: `Arrival at ${destination}`, category: "flight", emoji: "✈️" },
-      { day: 1, time: "12:00", title: "Hotel Check-in", category: "hotel", emoji: "🏨" },
-      { day: 1, time: "13:30", title: "Local Lunch", category: "food", emoji: "🍜" },
-      { day: 1, time: "15:00", title: "City Center Walk", category: "landmark", emoji: "🏯" },
-      { day: 2, time: "09:00", title: "Morning Market", category: "food", emoji: "🍱" },
-      { day: 2, time: "11:00", title: "Main Attraction", category: "landmark", emoji: "📸" },
-    ];
   }
 
   const fallback = [{ day: 1, time: "10:00", title: "系統繁忙: 這是一筆備用資料", category: "other", emoji: "📍" }];
@@ -977,10 +974,11 @@ export async function generateItinerary(body: any) {
     // ── Single call ──────────────────────────────────────────────────────────
     const prompt = buildChunkPrompt(destination, days, planner, generationContext, true, 1, days, destinationContext);
     try {
-      const text = await fetchOpenRouterWithFallback(apiKey, prompt);
+      const text = await generateText(prompt);
       parsed = robustJSONParse(text, false);
     } catch (err) {
       console.error("Failed to generate AI itinerary", err);
+      if (options.strictFailure) throw err;
       return fallback;
     }
   } else {
@@ -1006,7 +1004,7 @@ export async function generateItinerary(body: any) {
             destinationContext
           );
           const attempt = () =>
-            fetchOpenRouterWithFallback(apiKey!, prompt).then((text) =>
+            generateText(prompt).then((text) =>
               parseChunkText(text, isFirst)
             );
           return attempt().catch((err) => {
@@ -1034,6 +1032,7 @@ export async function generateItinerary(body: any) {
       parsed = { ...firstChunk, itinerary: mergedItinerary };
     } catch (err) {
       console.error("Failed to generate parallel AI itinerary", err);
+      if (options.strictFailure) throw err;
       return fallback;
     }
   }
@@ -1049,6 +1048,26 @@ export async function generateItinerary(body: any) {
   }
 
   return fallback;
+}
+
+export async function generateItinerary(body: any) {
+  if (!apiKey) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    return [
+      { day: 1, time: "10:00", title: `Arrival at ${body?.destination ?? ""}`, category: "flight", emoji: "✈️" },
+      { day: 1, time: "12:00", title: "Hotel Check-in", category: "hotel", emoji: "🏨" },
+      { day: 1, time: "13:30", title: "Local Lunch", category: "food", emoji: "🍜" },
+      { day: 1, time: "15:00", title: "City Center Walk", category: "landmark", emoji: "🏯" },
+      { day: 2, time: "09:00", title: "Morning Market", category: "food", emoji: "🍱" },
+      { day: 2, time: "11:00", title: "Main Attraction", category: "landmark", emoji: "📸" },
+    ];
+  }
+
+  return generateItineraryWithTextGenerator(
+    body,
+    (prompt) => fetchOpenRouterWithFallback(apiKey, prompt),
+    { strictFailure: false },
+  );
 }
 
 /**

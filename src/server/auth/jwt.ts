@@ -19,6 +19,10 @@ function getJwtSecret(): string {
   return secret;
 }
 
+export function assertJwtSecretConfigured(): void {
+  getJwtSecret();
+}
+
 export function signAccessToken(user: AuthUser, overrideExpiresIn?: jwt.SignOptions['expiresIn']): string {
   const payload: AccessTokenPayload = {
     sub: user.userId,

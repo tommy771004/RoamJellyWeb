@@ -295,32 +295,30 @@ export default function LoginScreen({
   }
 
   return (
-    <main className="relative min-h-full w-full flex-1 overflow-y-auto overflow-x-hidden bg-[radial-gradient(circle_at_18%_14%,rgba(125,211,252,0.38),transparent_34%),radial-gradient(circle_at_84%_22%,rgba(244,114,182,0.25),transparent_32%),linear-gradient(145deg,#f8fafc_0%,#fdf4ff_48%,#eff6ff_100%)] px-4 py-7 text-slate-900 dark:bg-[radial-gradient(circle_at_16%_10%,rgba(14,116,144,0.20),transparent_34%),radial-gradient(circle_at_86%_20%,rgba(157,23,77,0.16),transparent_30%),linear-gradient(145deg,#020617_0%,#111827_55%,#172033_100%)] dark:text-white sm:px-6">
-      <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-white/35 blur-3xl dark:bg-sky-500/5" />
-      <div aria-hidden="true" className="pointer-events-none absolute -right-20 bottom-12 h-80 w-80 rounded-full bg-pink-100/45 blur-3xl dark:bg-fuchsia-500/5" />
+    <main className="relative min-h-full w-full flex-1 overflow-y-auto overflow-x-hidden bg-[#eef2ed] px-4 py-8 text-[#26342d] dark:bg-[#17221c] dark:text-white sm:px-6 sm:py-12">
 
       {onCancel && (
         <button
           type="button"
           onClick={onCancel}
           aria-label="關閉登入"
-          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/60 text-slate-600 shadow-sm backdrop-blur-xl transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/35 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
+          className="absolute right-4 top-4 z-20 flex h-11 w-11 items-center justify-center text-[#526159] transition-colors hover:text-[#9a452e] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#c8d2cb]"
         >
           <X size={18} />
         </button>
       )}
 
-      <div className="relative z-10 mx-auto flex min-h-full w-full max-w-[420px] items-center justify-center">
-        <section className="w-full rounded-[28px] border border-white/75 bg-white/65 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.14)] backdrop-blur-[28px] backdrop-saturate-150 dark:border-white/12 dark:bg-slate-950/72 sm:p-8">
-          <header className="text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[19px] bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.22)] dark:bg-white dark:text-slate-950">
-              <PlaneTakeoff aria-hidden="true" size={25} strokeWidth={2.4} />
+      <div className="relative z-10 mx-auto flex min-h-full w-full max-w-3xl items-center justify-center">
+        <section className="w-full bg-white/85 p-6 [clip-path:polygon(18px_0,100%_0,100%_calc(100%_-_18px),calc(100%_-_18px)_100%,0_100%,0_18px)] dark:bg-[#243229] sm:p-10">
+          <header className="text-left">
+            <div className="flex items-center gap-2 text-sm font-bold text-[#8a4935] dark:text-[#d59a85]">
+              <PlaneTakeoff aria-hidden="true" size={19} strokeWidth={2.2} />
+              <span>RoamJelly</span>
             </div>
-            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.28em] text-sky-700 dark:text-sky-300">RoamJelly</p>
-            <h1 className="mt-2 text-[28px] font-black tracking-[-0.045em] text-slate-900 dark:text-white">
+            <h1 className="mt-4 font-heading text-[34px] font-black leading-tight tracking-[-0.035em] text-[#26342d] dark:text-white sm:text-[44px]">
               {mode === 'forgot-password' ? '找回帳號' : mode === 'reset-password' ? '設定新密碼' : mode === 'register' ? '建立帳號' : '歡迎回來'}
             </h1>
-            <p className="mt-2 text-[13px] font-semibold leading-6 text-slate-600 dark:text-slate-300">
+            <p className="mt-3 w-full text-sm font-semibold leading-6 text-[#5b675f] dark:text-[#c8d2cb] sm:max-w-[36rem]">
               {mode === 'forgot-password'
                 ? '輸入你的電子郵件，我們會協助你找回帳號。'
                 : mode === 'reset-password'
@@ -330,6 +328,20 @@ export default function LoginScreen({
                   : '登入後繼續使用。'}
             </p>
           </header>
+
+          {guestFirst && mode === 'login' && !isOauthWaiting && (
+            <div className="mt-6">
+              <button
+                type="button"
+                disabled={isBusy}
+                onClick={() => void handleGuestLogin()}
+                className="flex min-h-14 w-full items-center justify-center bg-[#26342d] px-6 text-sm font-bold text-white [clip-path:polygon(0_0,calc(100%_-_14px)_0,100%_14px,100%_100%,14px_100%,0_calc(100%_-_14px))] transition-colors hover:bg-[#394a40] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/25 disabled:cursor-wait disabled:bg-[#819087]"
+              >
+                {resolvedGuestCtaLabel}
+              </button>
+              <p className="mt-3 text-center text-xs font-semibold text-[#77827b] dark:text-[#aebbb2]">或使用帳號登入並跨裝置保存</p>
+            </div>
+          )}
 
           {notice && (
             <div role="status" className="mt-5 rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-center text-[12px] font-bold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
@@ -397,7 +409,7 @@ export default function LoginScreen({
                   {formError}
                 </p>
               )}
-              <button disabled={forgotLoading} type="submit" className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[15px] bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-65 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/40 dark:bg-white dark:text-slate-950">
+              <button disabled={forgotLoading} type="submit" className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[#8a4935] px-4 text-sm font-black text-white transition-colors hover:bg-[#713b2c] disabled:cursor-not-allowed disabled:opacity-65 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/30 dark:bg-[#d59a85] dark:text-[#17221c]">
                 {forgotLoading && <LoaderCircle aria-hidden="true" size={17} className="animate-spin" />}
                 {forgotLoading ? '寄送中…' : '寄送重設連結'}
               </button>
@@ -421,11 +433,7 @@ export default function LoginScreen({
                     ))}
                   </div>
 
-                  <div className="my-6 flex items-center gap-3" aria-hidden="true">
-                    <div className="h-px flex-1 bg-slate-200/90 dark:bg-white/12" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">或</span>
-                    <div className="h-px flex-1 bg-slate-200/90 dark:bg-white/12" />
-                  </div>
+                  <p className="my-5 text-center text-xs font-semibold text-slate-400" aria-hidden="true">或</p>
                 </>
               )}
 
@@ -462,7 +470,7 @@ export default function LoginScreen({
                       autoCapitalize="none"
                       autoCorrect="off"
                       placeholder="name@example.com"
-                      className="min-h-12 w-full rounded-[15px] border border-slate-200 bg-white/76 py-3 pl-11 pr-4 text-sm font-semibold outline-none transition hover:border-slate-300 focus:border-sky-400 focus:ring-4 focus:ring-sky-400/25 aria-[invalid=true]:border-rose-400 aria-[invalid=true]:ring-4 aria-[invalid=true]:ring-rose-400/15 dark:border-white/14 dark:bg-black/20 dark:text-white"
+                      className="min-h-12 w-full rounded-[12px] bg-[#eef2ed] py-3 pl-11 pr-4 text-sm font-semibold outline-none transition-colors hover:bg-[#e5ebe5] focus:ring-4 focus:ring-[#a3472b]/20 aria-[invalid=true]:ring-4 aria-[invalid=true]:ring-[#a3472b]/30 dark:bg-black/20 dark:text-white"
                     />
                   </div>
                   {emailError && <p id={`${emailId}-error`} className="mt-2 text-[12px] font-bold text-rose-600 dark:text-rose-400">{emailError}</p>}
@@ -483,13 +491,13 @@ export default function LoginScreen({
                       aria-describedby={passwordError ? `${passwordId}-error` : capsLockOn ? `${passwordId}-caps` : undefined}
                       autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                       placeholder="輸入密碼"
-                      className="min-h-12 w-full rounded-[15px] border border-slate-200 bg-white/76 py-3 pl-11 pr-12 text-sm font-semibold outline-none transition hover:border-slate-300 focus:border-sky-400 focus:ring-4 focus:ring-sky-400/25 aria-[invalid=true]:border-rose-400 aria-[invalid=true]:ring-4 aria-[invalid=true]:ring-rose-400/15 dark:border-white/14 dark:bg-black/20 dark:text-white"
+                      className="min-h-12 w-full rounded-[12px] bg-[#eef2ed] py-3 pl-11 pr-12 text-sm font-semibold outline-none transition-colors hover:bg-[#e5ebe5] focus:ring-4 focus:ring-[#a3472b]/20 aria-[invalid=true]:ring-4 aria-[invalid=true]:ring-[#a3472b]/30 dark:bg-black/20 dark:text-white"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((current) => !current)}
                       aria-label={showPassword ? '隱藏密碼' : '顯示密碼'}
-                      className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-900/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30 dark:text-slate-300 dark:hover:bg-white/10"
+                      className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-900/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/25 dark:text-slate-300 dark:hover:bg-white/10"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -515,16 +523,16 @@ export default function LoginScreen({
 
                 {mode === 'login' && (
                   <div className="mb-5 flex items-center justify-between gap-3">
-                    <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 text-[12px] font-bold text-slate-600 dark:text-slate-300">
+                    <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-[12px] font-bold text-slate-600 dark:text-slate-300">
                       <input
                         type="checkbox"
                         checked={rememberMe}
                         onChange={(event) => setRememberMe(event.target.checked)}
-                        className="h-4 w-4 rounded border-slate-300 accent-sky-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30"
+                        className="h-4 w-4 rounded border-slate-300 accent-[#8a4935] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/25"
                       />
                       記住我
                     </label>
-                    <button type="button" onClick={() => { setMode('forgot-password'); resetMessages(); }} className="min-h-10 text-[12px] font-black text-sky-700 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30 dark:text-sky-300">
+                    <button type="button" onClick={() => { setMode('forgot-password'); resetMessages(); }} className="min-h-11 text-[12px] font-black text-[#8a4935] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/25 dark:text-[#d59a85]">
                       忘記密碼？
                     </button>
                   </div>
@@ -540,7 +548,7 @@ export default function LoginScreen({
                   type="submit"
                   disabled={isBusy}
                   aria-busy={status === 'submitting-password'}
-                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[15px] bg-slate-900 px-4 text-sm font-black text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-65 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/40 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[#8a4935] px-4 text-sm font-black text-white transition-colors hover:bg-[#713b2c] disabled:cursor-not-allowed disabled:opacity-65 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/30 dark:bg-[#d59a85] dark:text-[#17221c]"
                 >
                   {status === 'submitting-password' && <LoaderCircle aria-hidden="true" size={17} className="animate-spin" />}
                   {status === 'submitting-password' ? (mode === 'login' ? '登入中…' : '建立中…') : (mode === 'login' ? '登入' : '建立帳號')}
@@ -552,22 +560,12 @@ export default function LoginScreen({
                 <button
                   type="button"
                   onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); resetMessages(); }}
-                  className="font-black text-sky-700 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30 dark:text-sky-300"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center px-2 font-black text-[#8a4935] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/25 dark:text-[#d59a85]"
                 >
                   {mode === 'login' ? '註冊' : '返回登入'}
                 </button>
               </p>
 
-              {guestFirst && (
-                <button
-                  type="button"
-                  disabled={isBusy}
-                  onClick={() => void handleGuestLogin()}
-                  className="mt-4 min-h-11 w-full rounded-[14px] border border-slate-200 bg-white/55 px-4 text-[12px] font-black text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/30 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
-                >
-                  {resolvedGuestCtaLabel}
-                </button>
-              )}
             </>
           )}
 

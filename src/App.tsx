@@ -41,8 +41,9 @@ import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, setClientAccessToken, ensureClientAccessToken, geocodeSpot, geocodeSpotWithAI, getNativeMapUrl, createGuestSession, clearClientSession, fetchDirections } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, setClientAccessToken, ensureClientAccessToken, geocodeSpot, geocodeSpotWithAI, getNativeMapUrl, createGuestSession, clearClientSession, fetchDirections, createTrip, fetchItinerary } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
+import { startItineraryAiJob, waitForAiJob, type AiJobState } from './lib/aiJobApi';
 import { haversineKm, estimateTransport, formatMinutes } from './lib/geoUtils';
 import { getCategoryMeta } from './lib/itineraryUtils';
 import { JellyToast } from './components/JellyToast';
@@ -51,6 +52,7 @@ import { logoutAppSession, refreshAppSession } from './features/auth/authClient'
 type LoginPromptMode = 'default' | 'guest-first';
 
 const AUTO_GUEST_TABS = new Set(['ai_form', 'itinerary', 'tools']);
+const AI_ASYNC_JOB_ENABLED = import.meta.env.VITE_AI_ASYNC_JOB_ENABLED === 'true';
 
 /** Extract /trip/:tripId from the current URL path, null if no match. */
 function getTripLandingId(): string | null {
@@ -106,6 +108,7 @@ export default function App() {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [newAiJobState, setNewAiJobState] = useState<AiJobState | 'preparing' | 'sync-fallback' | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [loginPromptMode, setLoginPromptMode] = useState<LoginPromptMode>('default');
   const [guestBootstrapState, setGuestBootstrapState] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -460,33 +463,79 @@ export default function App() {
     }
     if (activeTab === 'ai_form') {
       if (isGenerating) {
-        return <AiLoadingState />;
+        return <AiLoadingState jobState={newAiJobState} />;
       }
       return <AiForm onSubmit={async (data) => {
+        setNewAiJobState('preparing');
         setIsGenerating(true);
         showToast(t('generating_journey', { destination: data.destination }));
         try {
-          const suggestions = await suggestItineraryWithForm({
-            destination: data.destination,
-            planner: {
-              days: data.days,
-              departureFrom: data.departure,
-              arrivalTo: data.destination,
-              flightDate: '',
-              countries: [],
-              mustVisitSpots: [],
-              mustEatFoods: [],
-              autoFlightSegments: [],
-              travelFactsContext: '',
-              notes: '',
-              companions: data.companions,
-              vibes: data.vibes,
-              interests: data.interests,
-              budget: data.budget,
-              dietary: data.dietary,
-              transport: data.transport,
+          const planner = {
+            days: data.days,
+            departureFrom: data.departure,
+            arrivalTo: data.destination,
+            flightDate: '',
+            countries: [],
+            mustVisitSpots: [],
+            mustEatFoods: [],
+            autoFlightSegments: [],
+            travelFactsContext: '',
+            notes: '',
+            companions: data.companions,
+            vibes: data.vibes,
+            interests: data.interests,
+            budget: data.budget,
+            dietary: data.dietary,
+            transport: data.transport,
+            pace: data.pace,
+            accommodation: data.accommodation,
+          };
+
+          let suggestions: any;
+          let generatedTripId = '';
+          let persistedByAsyncJob = false;
+
+          if (AI_ASYNC_JOB_ENABLED) {
+            try {
+              const draftTrip = await createTrip({
+                name: `${data.destination} ${t('travel_itinerary')}`,
+                destination: data.destination,
+              });
+              generatedTripId = String(draftTrip?.data?.id || draftTrip?.id || '');
+              if (!generatedTripId) throw new Error('AI_DRAFT_TRIP_ID_MISSING');
+
+              const startedJob = await startItineraryAiJob({
+                tripId: generatedTripId,
+                destination: data.destination,
+                planner,
+                aiMode: { mode: 'overwrite_all' },
+              });
+              setNewAiJobState(startedJob.status);
+              const completedJob = await waitForAiJob(startedJob.jobId, {
+                timeoutMs: 10 * 60_000,
+                onStatus: (job) => setNewAiJobState(job.status),
+              });
+              setNewAiJobState('completed');
+              suggestions = completedJob.result;
+              if (!suggestions?.itinerary) throw new Error('AI_ASYNC_RESULT_MISSING');
+              persistedByAsyncJob = true;
+              setActiveTripId(generatedTripId);
+            } catch (asyncError) {
+              console.warn('[AI Job] New-trip async generation unavailable, using synchronous rollback path.', asyncError);
+              setNewAiJobState('sync-fallback');
+              showToast(t('ai_job.sync_fallback_notice'), 'warning');
+              suggestions = await suggestItineraryWithForm({
+                destination: data.destination,
+                planner,
+              });
+              if (generatedTripId) setActiveTripId(generatedTripId);
             }
-          });
+          } else {
+            suggestions = await suggestItineraryWithForm({
+              destination: data.destination,
+              planner,
+            });
+          }
 
           // Convert AiResponse itinerary to ItineraryNode[]
           const nodes: any[] = [];
@@ -629,13 +678,16 @@ export default function App() {
              fullResponse: suggestions,
              title: suggestions?.summary?.title || data.destination || t('itinerary_planning'),
              destination: data.destination,
-             rawSuggestions: finalNodes
+             rawSuggestions: finalNodes,
+             persistedByAsyncJob,
+             generatedTripId,
           });
           setActiveTab('ai_result');
         } catch (e) {
           showToast(t('generate_failed'), 'warning');
         } finally {
           setIsGenerating(false);
+          setNewAiJobState(null);
         }
       }} />;
     }
@@ -657,6 +709,19 @@ export default function App() {
             
             const { setNodes, addNode } = useItineraryStore.getState();
             const { activeTripId, setActiveTripId } = useAppStore.getState();
+
+            if (result.persistedByAsyncJob && result.generatedTripId) {
+              const persistedNodes = await fetchItinerary(result.generatedTripId);
+              if (!Array.isArray(persistedNodes) || persistedNodes.length === 0) {
+                throw new Error('ASYNC_ITINERARY_RELOAD_EMPTY');
+              }
+              setNodes(persistedNodes);
+              setActiveTripId(result.generatedTripId);
+              showToast(t('itinerary_ready'), 'success');
+              setActiveTab('itinerary');
+              return;
+            }
+
             let TRIP_ID = activeTripId || (new URLSearchParams(window.location.search).get('trip_id')) || '';
             let canEdit = true;
             let nodesToProcess = result.rawSuggestions || [];
@@ -757,9 +822,7 @@ export default function App() {
       <header className={`fixed top-0 w-full z-50 px-3 sm:px-6 pt-[calc(0.5rem+env(safe-area-inset-top,0px))] sm:pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-2 sm:pb-4 flex justify-between items-center jelly-surface !rounded-none !border-x-0 !border-t-0 !shadow-sm transition-transform duration-500 transform-gpu ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Left: Logo */}
         <div className="flex items-center gap-2 z-20 hover:animate-none">
-          <div className="flex items-center justify-center bg-white/80 dark:bg-slate-800/80 shadow-[0_2px_6px_-1px_rgba(49,38,32,0.10)] dark:shadow-none border border-transparent dark:border-white/10 rounded-[18px] w-9 h-9 sm:w-11 sm:h-11 rotate-[-8deg] hover:rotate-[8deg] transition-all duration-300 animate-cute-bounce">
-            <span className="text-[20px] sm:text-[24px] drop-shadow-sm">🍓</span>
-          </div>
+          <img src="/icon-app.svg" alt="" className="h-10 w-10 rounded-[11px] sm:h-11 sm:w-11" />
           <h1 className="text-primary dark:text-accent text-[22px] sm:text-3xl font-black italic tracking-tighter font-heading pr-2">RoamJelly</h1>
         </div>
         
@@ -772,10 +835,10 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex flex-row items-center gap-2 px-5 py-2.5 transition-all duration-300 rounded-[24px] border ios-press ${
+                className={`flex min-h-11 flex-row items-center gap-2 px-4 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 ${
                   isActive 
-                    ? 'border-white/90 dark:border-white/10 bg-white dark:bg-slate-800 shadow-sm text-pink-600 dark:text-pink-400' 
-                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:bg-white/75 dark:hover:bg-slate-900/80 hover:border-white/80 dark:hover:border-white/10 hover:text-pink-500 dark:hover:text-pink-400'
+                    ? 'font-black text-[#9a452e] dark:text-[#d59a85]' 
+                    : 'text-slate-500 dark:text-slate-400 hover:text-[#26342d] dark:hover:text-white'
                 }`}
               >
                 {Icon && <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'opacity-100' : 'opacity-60'} />}
@@ -790,7 +853,7 @@ export default function App() {
           {isLoggedIn && (
             <button
               onClick={() => setShowUserProfile(true)}
-              className="w-10 h-10 hidden sm:flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-orange-400"
+              className="hidden h-11 w-11 items-center justify-center text-[#8a4935] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#d59a85] sm:flex"
               aria-label={t('preferences')}
             >
               <Settings2 size={20} />
@@ -798,14 +861,14 @@ export default function App() {
           )}
           <button
             onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'zh' : 'en')}
-            className="w-10 h-10 flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-indigo-500 font-bold text-sm"
+            className="flex h-11 w-11 items-center justify-center text-sm font-bold text-[#6b756e] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#c8d2cb] dark:hover:text-white"
             aria-label={t('language_toggle_label')}
           >
             {t('language_toggle')}
           </button>
           <button
             onClick={() => setDarkMode(!isDarkMode)}
-            className="w-10 h-10 flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-sky-500"
+            className="flex h-11 w-11 items-center justify-center text-[#8a4935] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#d59a85] dark:hover:text-white"
             aria-label={isDarkMode ? t('switch_light_mode') : t('switch_dark_mode')}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -813,7 +876,7 @@ export default function App() {
           <div className="relative hidden sm:block">
             <button
               onClick={() => setShowNotifications(v => !v)}
-              className="w-10 h-10 flex items-center justify-center rounded-full clay-btn bg-white dark:bg-slate-800 ios-press text-pink-400 relative"
+              className="relative flex h-11 w-11 items-center justify-center text-[#8a4935] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#d59a85] dark:hover:text-white"
               aria-label={t('notifications')}
               aria-expanded={showNotifications}
             >
@@ -878,12 +941,12 @@ export default function App() {
               type="button"
               aria-label={t('account_menu')}
               onClick={() => setShowUserMenu(v => !v)}
-              className={`flex items-center gap-3 group rounded-full border shadow-sm transition-colors pl-3 pr-1 py-1 ${isLoggedIn ? 'border-white/90 bg-[linear-gradient(135deg,rgba(254,242,248,0.95),rgba(240,249,255,0.88))] hover:bg-white/95' : 'border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(248,250,252,0.88),rgba(254,242,248,0.76))] hover:bg-white/95'}`}
+              className="group flex min-h-11 items-center gap-2 px-2 text-[#59665e] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#c8d2cb] dark:hover:text-white"
             >
-              <span className={`text-[13px] font-black tracking-wide hidden sm:block whitespace-nowrap pl-1 ${isLoggedIn ? 'text-pink-700' : 'text-slate-600'}`}>
+              <span className="hidden whitespace-nowrap pl-1 text-[13px] font-black tracking-wide sm:block">
                 {isLoggedIn ? t('hello_user', { userId }) : t('not_logged_in')}
               </span>
-              <div className={`relative w-11 h-11 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 group-active:scale-[0.97] shadow-inner ${isLoggedIn ? 'bg-[linear-gradient(135deg,#fce7f3,#e0f2fe)] text-pink-500' : 'bg-[linear-gradient(135deg,#f8fafc,#fce7f3)] text-sky-500'}`}>
+              <div className="relative flex h-11 w-11 items-center justify-center text-[#8a4935] dark:text-[#d59a85]">
                 {isLoggedIn ? <UserRound size={17} strokeWidth={2.4} /> : <SparklesIcon size={16} strokeWidth={2.4} />}
               </div>
             </button>

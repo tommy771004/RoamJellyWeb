@@ -96,6 +96,11 @@ import {
   suggestItineraryWithForm,
   AiRateLimitedError,
 } from "../lib/openrouterApi";
+import {
+  startItineraryAiJob,
+  waitForAiJob,
+  type AiJobState,
+} from "../lib/aiJobApi";
 import { haversineKm, estimateTransport, formatMinutes, optimizeSpotOrder } from "../lib/geoUtils";
 import { useItineraryStore } from "../store/useItineraryStore";
 import { useSearchStore } from "../store/useSearchStore";
@@ -161,6 +166,12 @@ type AiGenerateMode =
   | "selected_day"
   | "overwrite_all"
   | "generate_for_selected_days";
+const AI_ASYNC_JOB_ENABLED = import.meta.env.VITE_AI_ASYNC_JOB_ENABLED === "true";
+const plannerChoiceClass = (selected: boolean) =>
+  `min-h-11 cursor-pointer px-3 py-2 rounded-[10px] text-sm font-semibold transition-colors border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2 ${selected
+    ? "bg-[#cfddd3] text-[#243b30] border-[#b4c6ba]"
+    : "bg-[#e9f0eb] text-[#536b5d] border-transparent hover:bg-[#dce8df]"
+  }`;
 const NO_TRIP_ENTRY_PILLARS = [
   {
     icon: Sparkles,
@@ -228,6 +239,10 @@ export default function ItineraryTab() {
   const [tip, setTip] = useState("");
   const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [aiError, setAiError] = useState("");
+  const [aiJobState, setAiJobState] = useState<AiJobState | null>(null);
+  const [aiSyncFallbackAvailable, setAiSyncFallbackAvailable] = useState(false);
+  const aiJobAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => aiJobAbortRef.current?.abort(), []);
   const [isSocketConnected, setIsSocketConnected] = useState<boolean>(false);
   const [localThemeGradient, setLocalThemeGradient] = useState<string | null>(null);
   const formatDuration = (minutes: number) => {
@@ -1632,7 +1647,10 @@ export default function ItineraryTab() {
     }
   };
 
-  const handleAiSuggest = async (modeOverride?: AiGenerateMode) => {
+  const handleAiSuggest = async (
+    modeOverride?: AiGenerateMode,
+    forceSynchronous = false,
+  ) => {
     if (isOffline) {
       const message = t("itinerary_feedback.ai_offline");
       setAiError(message);
@@ -1646,7 +1664,11 @@ export default function ItineraryTab() {
       return;
     }
     setAiError("");
+    setAiJobState(null);
+    setAiSyncFallbackAvailable(false);
     setAiLoading(true);
+    let usedAsyncJob = false;
+    let asyncAbortController: AbortController | null = null;
     try {
       const destination = tripInfo?.destination || "您的目的地";
       const effectiveMode = modeOverride ?? aiGenerateMode;
@@ -1679,6 +1701,51 @@ export default function ItineraryTab() {
         notes: extraNotes,
         travelFactsContext,
       };
+
+      if (
+        AI_ASYNC_JOB_ENABLED &&
+        effectiveMode === "overwrite_all" &&
+        !forceSynchronous
+      ) {
+        usedAsyncJob = true;
+        aiJobAbortRef.current?.abort();
+        asyncAbortController = new AbortController();
+        aiJobAbortRef.current = asyncAbortController;
+        const startedJob = await startItineraryAiJob({
+          tripId: activeTripId,
+          destination,
+          planner: formToSend,
+          aiMode: { mode: "overwrite_all" },
+        });
+        setAiJobState(startedJob.status);
+
+        const completedJob = await waitForAiJob(startedJob.jobId, {
+          timeoutMs: 10 * 60_000,
+          signal: asyncAbortController.signal,
+          onStatus: (job) => setAiJobState(job.status),
+        });
+        setAiJobState("completed");
+
+        const itineraryResult = await fetchItinerary(activeTripId);
+        if (!Array.isArray(itineraryResult) || itineraryResult.length === 0) {
+          throw new Error("ASYNC_ITINERARY_RELOAD_EMPTY");
+        }
+        const assignedNodes = assignDaysBasedOnTimeAndOrder(
+          itineraryResult,
+          tripInfo?.startDate || plannerForm.flightDate || "2026-06-15",
+        );
+        setNodes(assignedNodes);
+        setLoadedDays(getLoadedDaysFromNodes(assignedNodes));
+
+        const rootThemeGradient = completedJob.result?.ui_state?.theme_gradient ||
+          completedJob.result?.ui_config?.bg_gradient ||
+          completedJob.result?.theme_gradient ||
+          completedJob.result?.bg_gradient;
+        if (rootThemeGradient) setLocalThemeGradient(rootThemeGradient);
+
+        showToast(`已更新完整行程，共 ${assignedNodes.length} 個節點`, "success");
+        return;
+      }
 
       const suggestionsRaw = await suggestItineraryWithForm({
         destination,
@@ -1905,12 +1972,20 @@ export default function ItineraryTab() {
           `✨ 已重建 Day ${selectedDay}，共 ${finalNodes.length} 個節點`,
         );
       }
-    } catch {
-      const message = t("itinerary_feedback.ai_generation_failed");
+    } catch (error) {
+      console.error("AI itinerary generation failed", error);
+      const message = usedAsyncJob
+        ? "背景規劃暫時未完成，可改用即時 AI 重試。"
+        : t("itinerary_feedback.ai_generation_failed");
       setAiError(message);
+      setAiSyncFallbackAvailable(usedAsyncJob);
       showToast(message, "warning");
     } finally {
       setAiLoading(false);
+      if (!usedAsyncJob) setAiJobState(null);
+      if (aiJobAbortRef.current === asyncAbortController) {
+        aiJobAbortRef.current = null;
+      }
     }
   };
 
@@ -1996,7 +2071,7 @@ export default function ItineraryTab() {
                 <AnimatePresence initial={false}>
                   {isAiHeroExpanded && (
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
+                      initial={false}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -2047,9 +2122,9 @@ export default function ItineraryTab() {
                               e.stopPropagation();
                               setIsPlanningNew(true);
                             }}
-                            className="flex min-h-12 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-700 to-orange-700 px-5 py-3 text-sm font-black text-white shadow-sm transition-colors hover:from-pink-800 hover:to-orange-800"
+                            className="flex min-h-12 cursor-pointer items-center justify-center gap-3 rounded-[14px] bg-[#243b2f] px-5 py-3 text-sm font-bold text-[#f5faf6] transition-colors hover:bg-[#304c3d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2"
                           >
-                            <GlowingIcon icon={Sparkles} size={18} glowColor="bg-yellow-300" iconColor="text-white" />
+                            <Sparkles size={18} />
                             {t('str_770014d2')}</button>
                         </div>
                       </div>
@@ -2060,12 +2135,9 @@ export default function ItineraryTab() {
             </motion.div>
           </div>
 
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-px flex-1 bg-slate-100" />
-            <span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest px-4">
-              {t('str_1dd553ed')}</span>
-            <div className="h-px flex-1 bg-slate-100" />
-          </div>
+          <p className="mb-8 text-sm font-bold text-slate-600 dark:text-slate-300">
+            {t('str_1dd553ed')}
+          </p>
 
           {isTripsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2077,17 +2149,15 @@ export default function ItineraryTab() {
               ))}
             </div>
           ) : userTrips.length === 0 ? (
-            <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-[32px] border border-slate-200/80 bg-white/70 px-5 py-8 text-center shadow-sm backdrop-blur-sm sm:px-6 sm:py-10">
-              <div className="mb-4 flex size-16 items-center justify-center rounded-[32px] bg-gradient-to-br from-pink-50 to-rose-50 text-pink-600 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(244,63,94,0.1)]">
-                <Navigation2 size={28} />
-              </div>
+            <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-[28px] border border-[#cddbd1] bg-[#f1f6f2] px-5 py-8 text-center sm:px-6 sm:py-10">
+              <Navigation2 size={34} className="mb-5 text-[#3e5849]" strokeWidth={1.8} />
               <h3 className="text-balance text-[22px] sm:text-2xl font-black text-slate-900">
                 {t('str_1a71f905')}</h3>
               <p className="mt-2 max-w-md text-pretty text-[13px] sm:text-sm font-bold leading-6 text-slate-500">
                 {t('str_2f5a1b96')}</p>
               <button
                 onClick={() => setIsPlanningNew(true)}
-                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-700 to-rose-700 px-6 py-3 text-[13px] sm:text-sm font-black text-white shadow-[inset_0_2px_4px_rgba(255,255,255,0.3),0_8px_20px_rgba(244,63,94,0.3)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ios-press hover:-translate-y-1 hover:from-pink-800 hover:to-rose-800 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_12px_28px_rgba(244,63,94,0.4)]"
+                className="mt-6 inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-[14px] bg-[#243b2f] px-6 py-3 text-[13px] font-bold text-[#f5faf6] transition-colors hover:bg-[#304c3d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2 sm:text-sm"
               >
                 <Sparkles size={18} />
                 {t('str_56785280')}</button>
@@ -2229,7 +2299,7 @@ export default function ItineraryTab() {
                   {[0, 1, 2, 3].map((i) => (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, y: 16 }}
+                      initial={{ opacity: 1, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
                         delay: i * 0.08,
@@ -2651,7 +2721,7 @@ export default function ItineraryTab() {
               <AnimatePresence initial={false}>
                 {!isFavoritesCollapsed && (
                   <motion.div
-                    initial={{ height: 0, opacity: 0 }}
+                    initial={false}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
@@ -2916,7 +2986,7 @@ export default function ItineraryTab() {
               {loading ? (
                 <motion.div
                   key="loading"
-                  initial={{ opacity: 0 }}
+                  initial={{ opacity: 1 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="relative pl-6 mt-4 flex flex-col gap-6"
@@ -2924,7 +2994,7 @@ export default function ItineraryTab() {
                   {[0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 1, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
                         delay: i * 0.1,
@@ -2943,7 +3013,7 @@ export default function ItineraryTab() {
                   role="tabpanel"
                   aria-labelledby={getViewTabId("list")}
                   tabIndex={0}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 1, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
@@ -2966,62 +3036,56 @@ export default function ItineraryTab() {
 
                   {/* AI Assistant Quick Trigger */}
                   {nodes.length > 0 && (
-                    <div className="group relative">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 rounded-[32px] blur-2xl opacity-10 group-hover:opacity-20 transition-opacity duration-1000" />
-                      <GlassCard className="!p-6 !rounded-[32px] border border-white/80 shadow-xl overflow-hidden">
+                    <section className="relative overflow-hidden rounded-[28px] border border-[#cddbd1] bg-[#f1f6f2]/95 p-6 shadow-[0_4px_8px_rgba(32,55,42,0.12)]">
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                           <div className="flex items-center gap-5">
-                            <div className="w-16 h-16 rounded-[22px] bg-gradient-to-tr from-pink-600 to-fuchsia-600 flex items-center justify-center text-white shadow-lg shadow-pink-200">
-                              <Sparkles size={28} />
-                            </div>
+                            <Sparkles size={34} className="shrink-0 text-[#3e5849]" strokeWidth={1.8} />
                             <div>
-                              <h3 className="font-black text-xl text-slate-800 leading-tight">
+                              <h3 className="font-black text-xl text-[#20352a] leading-tight">
                                 {t('str_7028f9a6')}{safeSelectedDay} {t('str_15a15fa')}</h3>
-                              <p className="text-sm font-medium text-slate-500 mt-1 tracking-normal">
+                              <p className="text-sm font-medium text-[#536b5d] mt-1 tracking-normal">
                                 {t('str_6db8a14d')}</p>
                             </div>
                           </div>
                           <button
                             onClick={() => setShowPlanner(!showPlanner)}
-                            className={`w-full sm:w-auto px-10 py-4 rounded-full font-semibold text-sm tracking-normal transition-all flex items-center justify-center gap-3 ${showPlanner ? "bg-slate-100 text-slate-500" : "bg-slate-800 text-white hover:bg-slate-900 shadow-xl shadow-slate-200 ios-press"}`}
+                            aria-expanded={showPlanner}
+                            aria-controls="ai-planner-controls"
+                            className={`w-full sm:w-auto min-h-12 cursor-pointer px-7 py-3 rounded-[14px] font-semibold text-sm tracking-normal transition-colors flex items-center justify-center ${showPlanner ? "bg-[#dce8df] text-[#40584a]" : "bg-[#243b2f] text-[#f5faf6] hover:bg-[#304c3d]"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2`}
                           >
                             {showPlanner ? t('ai_planner.hide', '收起助理') : t('ai_planner.show', '召喚 AI')}
-                            {showPlanner ? (
-                              <X size={18} />
-                            ) : (
-                              <ArrowRight size={18} />
-                            )}
                           </button>
                         </div>
 
                         <AnimatePresence>
-                          {showPlanner && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
+                            {showPlanner && (
+                              <motion.div
+                                id="ai-planner-controls"
+                                initial={false}
+                              animate={{ height: "auto" }}
+                              exit={{ height: 0 }}
                               className="overflow-hidden"
                             >
                               <div className="pt-10 flex flex-col gap-6">
-                                <div className="h-px bg-slate-100 w-full" />
                                 <div className="flex flex-col gap-3">
-                                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-1">
+                                  <label htmlFor="ai-planner-notes" className="text-sm font-bold text-[#40584a] px-1 mb-1">
                                     {t('str_6db96ee9')}</label>
                                   <textarea
+                                    id="ai-planner-notes"
                                     placeholder={t('str_62f8045f')}
                                     value={plannerForm.notes}
                                     onChange={(e) =>
                                       setPlannerField("notes", e.target.value)
                                     }
-                                    className="w-full bg-white/50 border border-slate-100 rounded-3xl px-6 py-5 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-pink-100 transition-all min-h-[140px] shadow-inner text-base resize-none"
+                                    className="w-full bg-[#f1f6f2] border border-[#c8d7cd] rounded-[16px] px-5 py-4 font-semibold text-[#293f34] outline-none focus:ring-2 focus:ring-[#6e8979] focus:border-transparent transition-colors min-h-[140px] text-base resize-y"
                                   />
                                 </div>
 
                                 {/* Travel Preferences */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                   <div className="flex flex-col gap-2">
-                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                      {t('str_ca20f')}</label>
+                                    <p className="text-sm font-bold text-[#40584a] px-1">
+                                      {t('str_ca20f')}</p>
                                     <div className="flex flex-wrap gap-2">
                                       {[
                                         "獨行俠",
@@ -3033,6 +3097,7 @@ export default function ItineraryTab() {
                                         <button
                                           key={opt}
                                           type="button"
+                                          aria-pressed={plannerForm.companions === opt}
                                           onClick={() =>
                                             setPlannerField(
                                               "companions",
@@ -3041,7 +3106,7 @@ export default function ItineraryTab() {
                                                 : opt,
                                             )
                                           }
-                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${plannerForm.companions === opt ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                          className={plannerChoiceClass(plannerForm.companions === opt)}
                                         >
                                           {t('ai_preferences_options.' + opt, opt)}
                                         </button>
@@ -3049,8 +3114,8 @@ export default function ItineraryTab() {
                                     </div>
                                   </div>
                                   <div className="flex flex-col gap-2">
-                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                      {t('str_12e587')}</label>
+                                    <p className="text-sm font-bold text-[#40584a] px-1">
+                                      {t('str_12e587')}</p>
                                     <div className="flex flex-wrap gap-2">
                                       {[
                                         "窮遊背包客",
@@ -3061,6 +3126,7 @@ export default function ItineraryTab() {
                                         <button
                                           key={opt}
                                           type="button"
+                                          aria-pressed={plannerForm.budget === opt}
                                           onClick={() =>
                                             setPlannerField(
                                               "budget",
@@ -3069,7 +3135,7 @@ export default function ItineraryTab() {
                                                 : opt,
                                             )
                                           }
-                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${plannerForm.budget === opt ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                          className={plannerChoiceClass(plannerForm.budget === opt)}
                                         >
                                           {t('ai_preferences_options.' + opt, opt)}
                                         </button>
@@ -3079,8 +3145,8 @@ export default function ItineraryTab() {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    {t('str_30700374')}</label>
+                                  <p className="text-sm font-bold text-[#40584a] px-1">
+                                    {t('str_30700374')}</p>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "特種兵式",
@@ -3095,6 +3161,7 @@ export default function ItineraryTab() {
                                         <button
                                           key={opt}
                                           type="button"
+                                          aria-pressed={selected}
                                           onClick={() =>
                                             setPlannerField(
                                               "vibes",
@@ -3105,7 +3172,7 @@ export default function ItineraryTab() {
                                                 : [...vibes, opt],
                                             )
                                           }
-                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-fuchsia-100 text-fuchsia-600 border-fuchsia-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                          className={plannerChoiceClass(selected)}
                                         >
                                           {t('ai_preferences_options.' + opt, opt)}
                                         </button>
@@ -3115,8 +3182,8 @@ export default function ItineraryTab() {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    {t('str_3d39a4e9')}</label>
+                                  <p className="text-sm font-bold text-[#40584a] px-1">
+                                    {t('str_3d39a4e9')}</p>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "大自然",
@@ -3133,6 +3200,7 @@ export default function ItineraryTab() {
                                         <button
                                           key={opt}
                                           type="button"
+                                          aria-pressed={selected}
                                           onClick={() =>
                                             setPlannerField(
                                               "interests",
@@ -3143,7 +3211,7 @@ export default function ItineraryTab() {
                                                 : [...interests, opt],
                                             )
                                           }
-                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-indigo-100 text-indigo-600 border-indigo-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                          className={plannerChoiceClass(selected)}
                                         >
                                           {t('ai_preferences_options.' + opt, opt)}
                                         </button>
@@ -3153,8 +3221,8 @@ export default function ItineraryTab() {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    {t('str_47d6fc2f')}</label>
+                                  <p className="text-sm font-bold text-[#40584a] px-1">
+                                    {t('str_47d6fc2f')}</p>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "無限制",
@@ -3169,6 +3237,7 @@ export default function ItineraryTab() {
                                         <button
                                           key={opt}
                                           type="button"
+                                          aria-pressed={selected}
                                           onClick={() =>
                                             setPlannerField(
                                               "dietary",
@@ -3179,7 +3248,7 @@ export default function ItineraryTab() {
                                                 : [...dietary, opt],
                                             )
                                           }
-                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-amber-100 text-amber-600 border-amber-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                          className={plannerChoiceClass(selected)}
                                         >
                                           {t('ai_preferences_options.' + opt, opt)}
                                         </button>
@@ -3189,8 +3258,8 @@ export default function ItineraryTab() {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    {t('str_25e68384')}</label>
+                                  <p className="text-sm font-bold text-[#40584a] px-1">
+                                    {t('str_25e68384')}</p>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "大眾運輸",
@@ -3205,6 +3274,7 @@ export default function ItineraryTab() {
                                         <button
                                           key={opt}
                                           type="button"
+                                          aria-pressed={selected}
                                           onClick={() =>
                                             setPlannerField(
                                               "transport",
@@ -3215,7 +3285,7 @@ export default function ItineraryTab() {
                                                 : [...transport, opt],
                                             )
                                           }
-                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-teal-100 text-teal-600 border-teal-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                          className={plannerChoiceClass(selected)}
                                         >
                                           {t('ai_preferences_options.' + opt, opt)}
                                         </button>
@@ -3225,14 +3295,15 @@ export default function ItineraryTab() {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    {t('str_3fccb379')}</label>
+                                  <p className="text-sm font-bold text-[#40584a] px-1">
+                                    {t('str_3fccb379')}</p>
                                   <div className="flex flex-wrap gap-2">
                                     {["緊湊特種兵", "適中", "悠閒慢活"].map(
                                       (opt) => (
                                         <button
                                           key={opt}
                                           type="button"
+                                          aria-pressed={plannerForm.pace === opt}
                                           onClick={() =>
                                             setPlannerField(
                                               "pace",
@@ -3241,7 +3312,7 @@ export default function ItineraryTab() {
                                                 : opt,
                                             )
                                           }
-                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${plannerForm.pace === opt ? "bg-amber-100 text-amber-600 border-amber-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                          className={plannerChoiceClass(plannerForm.pace === opt)}
                                         >
                                           {t('ai_preferences_options.' + opt, opt)}
                                         </button>
@@ -3251,8 +3322,8 @@ export default function ItineraryTab() {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">
-                                    {t('str_256fb55e')}</label>
+                                  <p className="text-sm font-bold text-[#40584a] px-1">
+                                    {t('str_256fb55e')}</p>
                                   <div className="flex flex-wrap gap-2">
                                     {[
                                       "青旅",
@@ -3269,6 +3340,7 @@ export default function ItineraryTab() {
                                         <button
                                           key={opt}
                                           type="button"
+                                          aria-pressed={selected}
                                           onClick={() =>
                                             setPlannerField(
                                               "accommodation",
@@ -3279,7 +3351,7 @@ export default function ItineraryTab() {
                                                 : [...accommodation, opt],
                                             )
                                           }
-                                          className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all border ${selected ? "bg-indigo-100 text-indigo-600 border-indigo-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                          className={plannerChoiceClass(selected)}
                                         >
                                           {t('ai_preferences_options.' + opt, opt)}
                                         </button>
@@ -3293,7 +3365,8 @@ export default function ItineraryTab() {
                                     onClick={() =>
                                       setAiGenerateMode("selected_day")
                                     }
-                                    className={`flex-1 py-4.5 rounded-[22px] font-black text-[11px] uppercase tracking-widest transition-all border ${aiGenerateMode === "selected_day" ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                    aria-pressed={aiGenerateMode === "selected_day"}
+                                    className={`flex-1 min-h-12 cursor-pointer px-3 py-3 rounded-[14px] font-bold text-sm transition-colors border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2 ${aiGenerateMode === "selected_day" ? "bg-[#cfddd3] text-[#243b30] border-[#b4c6ba]" : "bg-[#e9f0eb] text-[#536b5d] border-transparent hover:bg-[#dce8df]"}`}
                                   >
                                     {t('str_6f76fa9')}{safeSelectedDay}
                                   </button>
@@ -3307,22 +3380,24 @@ export default function ItineraryTab() {
                                         Math.min(totalDays, selectedDay + 1),
                                       );
                                     }}
-                                    className={`flex-1 py-4.5 rounded-[22px] font-black text-[11px] uppercase tracking-widest transition-all border ${aiGenerateMode === "generate_for_selected_days" ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                    aria-pressed={aiGenerateMode === "generate_for_selected_days"}
+                                    className={`flex-1 min-h-12 cursor-pointer px-3 py-3 rounded-[14px] font-bold text-sm transition-colors border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2 ${aiGenerateMode === "generate_for_selected_days" ? "bg-[#cfddd3] text-[#243b30] border-[#b4c6ba]" : "bg-[#e9f0eb] text-[#536b5d] border-transparent hover:bg-[#dce8df]"}`}
                                   >
                                     {t('str_309ba3f5')}</button>
                                   <button
                                     onClick={() =>
                                       setAiGenerateMode("overwrite_all")
                                     }
-                                    className={`flex-1 py-4.5 rounded-[22px] font-black text-[11px] uppercase tracking-widest transition-all border ${aiGenerateMode === "overwrite_all" ? "bg-pink-100 text-pink-600 border-pink-200" : "bg-slate-50 text-slate-500 border-slate-100 hover:bg-white"}`}
+                                    aria-pressed={aiGenerateMode === "overwrite_all"}
+                                    className={`flex-1 min-h-12 cursor-pointer px-3 py-3 rounded-[14px] font-bold text-sm transition-colors border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2 ${aiGenerateMode === "overwrite_all" ? "bg-[#cfddd3] text-[#243b30] border-[#b4c6ba]" : "bg-[#e9f0eb] text-[#536b5d] border-transparent hover:bg-[#dce8df]"}`}
                                   >
                                     {t('str_41d03f6f')}</button>
                                 </div>
 
                                 {aiGenerateMode ===
                                   "generate_for_selected_days" && (
-                                  <div className="flex gap-4 items-center justify-center bg-white/50 py-3 px-4 rounded-[22px] border border-slate-100 shadow-inner my-2">
-                                    <span className="font-bold text-xs text-slate-600">
+                                  <div className="flex gap-3 items-center justify-center bg-[#e9f0eb] py-3 px-4 rounded-[16px] border border-[#cbd9d0] my-2">
+                                    <span className="font-bold text-sm text-[#40584a]">
                                       {t('str_386a7818')}{" "}
                                     </span>
                                     <select
@@ -3330,7 +3405,7 @@ export default function ItineraryTab() {
                                       onChange={(e) =>
                                         setRangeStartDay(Number(e.target.value))
                                       }
-                                      className="bg-white border-slate-200 rounded-xl px-3 py-2 outline-none font-bold text-slate-700 focus:ring-2 focus:ring-pink-200 shadow-sm"
+                                      className="bg-[#f1f6f2] border border-[#bdcec3] rounded-[10px] px-3 py-2 outline-none font-bold text-[#293f34] focus:ring-2 focus:ring-[#6e8979]"
                                     >
                                       {Array.from(
                                         { length: totalDays },
@@ -3341,14 +3416,14 @@ export default function ItineraryTab() {
                                         ),
                                       )}
                                     </select>
-                                    <span className="text-slate-500 font-bold px-1">
+                                    <span className="text-[#536b5d] font-bold px-1">
                                       {t('str_81f3')}</span>
                                     <select
                                       value={rangeEndDay}
                                       onChange={(e) =>
                                         setRangeEndDay(Number(e.target.value))
                                       }
-                                      className="bg-white border-slate-200 rounded-xl px-3 py-2 outline-none font-bold text-slate-700 focus:ring-2 focus:ring-pink-200 shadow-sm"
+                                      className="bg-[#f1f6f2] border border-[#bdcec3] rounded-[10px] px-3 py-2 outline-none font-bold text-[#293f34] focus:ring-2 focus:ring-[#6e8979]"
                                     >
                                       {Array.from(
                                         { length: totalDays },
@@ -3367,7 +3442,7 @@ export default function ItineraryTab() {
                                   onClick={() => void handleAutoFetchFlights()}
                                   disabled={flightsLoading || aiLoading}
                                   aria-busy={flightsLoading}
-                                  className="w-full py-3 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 disabled:opacity-40 ios-press transition-all hover:bg-slate-100"
+                                  className="w-full min-h-11 cursor-pointer px-4 py-3 rounded-[16px] bg-[#e3ece6] border border-[#cbd9d0] text-[#40584a] font-bold text-sm flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-40 transition-colors hover:bg-[#dce8df] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2"
                                 >
                                   {flightsLoading ? (
                                     <Loader2
@@ -3384,7 +3459,7 @@ export default function ItineraryTab() {
                                   onClick={() => void handleAiSuggest()}
                                   disabled={aiLoading}
                                   aria-busy={aiLoading}
-                                  className="w-full py-5 px-4 rounded-full bg-gradient-to-r from-pink-700 via-fuchsia-600 to-indigo-700 text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-pink-200/50 flex flex-nowrap items-center justify-center gap-3 disabled:opacity-50 ios-press transition-all whitespace-nowrap overflow-hidden text-ellipsis"
+                                  className="w-full min-h-14 cursor-pointer px-5 py-4 rounded-[18px] border border-[#314a3d] bg-[#243b2f] text-[#f5faf6] font-bold text-sm flex flex-nowrap items-center justify-center gap-3 disabled:cursor-not-allowed disabled:opacity-55 transition-colors hover:bg-[#304c3d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2 whitespace-nowrap overflow-hidden text-ellipsis"
                                 >
                                   <span className="shrink-0">
                                     {aiLoading ? (
@@ -3395,21 +3470,37 @@ export default function ItineraryTab() {
                                   </span>
                                   <span className="truncate">
                                     {aiLoading
-                                      ? t('ai_planner.processing', 'AI 分析處理中...')
+                                      ? aiJobState === "queued"
+                                        ? "已送出，等待規劃資源"
+                                        : aiJobState === "running"
+                                          ? "AI 正在規劃並驗證行程"
+                                          : aiJobState === "completed"
+                                            ? "正在載入完成的行程"
+                                            : t('ai_planner.processing', 'AI 分析處理中...')
                                       : t('ai_planner.start_tuning', '開始智慧微調行程')}
                                   </span>
                                 </button>
                                 {aiError && (
-                                  <p role="alert" className="text-sm font-medium leading-6 text-red-700">
-                                    {aiError}
-                                  </p>
+                                  <div className="space-y-2" role="alert">
+                                    <p className="text-sm font-semibold leading-6 text-red-800">
+                                      {aiError}
+                                    </p>
+                                    {aiSyncFallbackAvailable && (
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleAiSuggest("overwrite_all", true)}
+                                        className="min-h-11 cursor-pointer text-left text-sm font-bold text-[#3e5849] transition-colors hover:text-[#17271f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2 rounded-md"
+                                      >
+                                        改用即時 AI 重試
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </motion.div>
                           )}
                         </AnimatePresence>
-                      </GlassCard>
-                    </div>
+                    </section>
                   )}
 
                   <ItineraryList
@@ -3462,7 +3553,7 @@ export default function ItineraryTab() {
                   role="tabpanel"
                   aria-labelledby={getViewTabId("map")}
                   tabIndex={0}
-                  initial={{ opacity: 0, scale: 0.98 }}
+                  initial={{ opacity: 1, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.4 }}
@@ -3486,22 +3577,25 @@ export default function ItineraryTab() {
                   >
                     <div className="relative h-[65vh] md:h-[600px] w-full rounded-[2.5rem] overflow-hidden shadow-[inset_0_2px_12px_rgba(15,23,42,0.06)] border border-slate-100 dark:border-white/10 dark:shadow-[inset_0_2px_12px_rgba(255,255,255,0.05)] bg-slate-50">
                       {(aiLoading || loadingDay === safeSelectedDay) && (
-                        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-md rounded-[2.5rem] transition-all duration-300">
-                          <div role="status" aria-live="polite" aria-atomic="true" className="bg-white/80 backdrop-blur-xl px-10 py-8 rounded-[32px] shadow-2xl flex flex-col items-center gap-5 border border-white/60">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-pink-400 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#e3ece6]/90 rounded-[2.5rem] transition-colors duration-200">
+                          <div role="status" aria-live="polite" aria-atomic="true" className="bg-[#f1f6f2] px-8 py-7 rounded-[22px] flex flex-col items-center gap-4 border border-[#cddbd1] shadow-[0_3px_6px_rgba(32,55,42,0.12)]">
+                            <div className="flex h-10 w-10 items-center justify-center">
                               <Loader2
-                                className="animate-spin text-pink-500 relative z-10"
-                                size={36}
+                                className="animate-spin text-[#3e5849]"
+                                size={32}
                               />
                             </div>
                             <div className="text-center">
-                              <p className="text-sm font-bold tracking-wide text-slate-800">
+                              <p className="text-sm font-bold text-[#20352a]">
                                 {aiLoading
-                                  ? t('ai_planner.analyzing_places', 'AI 正在分析景點')
+                                  ? aiJobState === "queued"
+                                    ? "等待背景規劃開始"
+                                    : aiJobState === "running"
+                                      ? "AI 正在規劃並驗證行程"
+                                      : t('ai_planner.analyzing_places', 'AI 正在分析景點')
                                   : t('ai_planner.loading_map', '正在載入地圖資料')}
                               </p>
-                              <p className="text-xs font-bold text-slate-500 mt-1">
+                              <p className="text-xs font-medium text-[#536b5d] mt-1">
                                 {t('str_2371cd35')}</p>
                             </div>
                           </div>
@@ -3521,7 +3615,7 @@ export default function ItineraryTab() {
                   role="tabpanel"
                   aria-labelledby={getViewTabId("calendar")}
                   tabIndex={0}
-                  initial={{ opacity: 0, scale: 0.98 }}
+                  initial={{ opacity: 1, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.4 }}
@@ -3588,7 +3682,7 @@ export default function ItineraryTab() {
           {showMobileFavorites && (
             <>
               <motion.div
-                initial={{ opacity: 0 }}
+                initial={{ opacity: 1 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={overlayTransition}
@@ -3736,14 +3830,14 @@ export default function ItineraryTab() {
         <AnimatePresence>
           {contextualLoginPrompt.show && (
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 1 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
               onClick={() => setContextualLoginPrompt({ show: false, itemName: '' })}
             >
               <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                initial={{ scale: 0.95, opacity: 1, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
@@ -3798,34 +3892,29 @@ export default function ItineraryTab() {
         <AnimatePresence>
           {showInviteModal && (
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 1 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/55 p-4"
               onClick={() => setShowInviteModal(false)}
             >
               <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                initial={{ scale: 0.95, opacity: 1, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-sm bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/50 dark:border-white/10 rounded-[32px] p-8 shadow-[0_24px_60px_rgba(15,23,42,0.15)] relative overflow-hidden"
+                className="relative w-full max-w-sm overflow-hidden rounded-[28px] border border-[#cddbd1] bg-[#f1f6f2] p-8 shadow-[0_12px_28px_rgba(20,35,27,0.18)]"
               >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-400 via-indigo-400 to-sky-400 opacity-80" />
                 <button
                   onClick={() => setShowInviteModal(false)}
-                  className="absolute top-4 right-4 flex size-11 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors z-10"
+                  aria-label={t('str_251683b3')}
+                  className="absolute right-4 top-4 z-10 flex size-11 cursor-pointer items-center justify-center rounded-[12px] text-[#536b5d] transition-colors hover:bg-[#dce8df] hover:text-[#20352a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364]"
                 >
                   <X size={16} />
                 </button>
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-[24px] bg-[linear-gradient(135deg,#e0e7ff,#fae8ff)] dark:bg-[linear-gradient(135deg,#312e81,#701a75)] flex items-center justify-center mb-6 shadow-inner mx-auto transform -rotate-6 transition-transform">
-                    <UserPlus size={28} className="text-indigo-500 dark:text-indigo-300" strokeWidth={2.5} />
-                  </div>
-                  <div className="absolute top-0 right-1/4 w-3 h-3 rounded-full bg-pink-400 shadow-[0_0_6px_#f472b6] hidden sm:block" />
-                </div>
-                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 text-center mb-3 tracking-tight">{t('str_1daa6def')}</h3>
-                <p className="text-sm font-bold text-slate-500 dark:text-slate-400 text-center leading-relaxed mb-8 text-balance">
+                <UserPlus size={34} className="mx-auto mb-6 text-[#3e5849]" strokeWidth={1.8} />
+                <h3 className="mb-3 text-center text-xl font-black tracking-tight text-[#20352a]">{t('str_1daa6def')}</h3>
+                <p className="mb-8 text-balance text-center text-sm font-bold leading-relaxed text-[#536b5d]">
                   {t('str_2694a74d')}</p>
                 <div className="flex flex-col gap-3">
                   <button
@@ -3834,14 +3923,13 @@ export default function ItineraryTab() {
                       setShowInviteModal(false);
                       window.dispatchEvent(new CustomEvent('request-login'));
                     }}
-                    className="w-full h-12 bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-800 hover:to-purple-800 text-white rounded-[20px] font-black tracking-widest text-[13px] uppercase shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5 transition-all ios-press flex items-center justify-center gap-2"
+                    className="flex h-12 w-full cursor-pointer items-center justify-center rounded-[14px] bg-[#243b2f] text-[13px] font-bold text-[#f5faf6] transition-colors hover:bg-[#304c3d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364] focus-visible:ring-offset-2"
                   >
                     <span>{t('str_239a6e5f')}</span>
-                    <Sparkles size={14} className="opacity-70" />
                   </button>
                   <button
                     onClick={() => setShowInviteModal(false)}
-                    className="w-full h-12 bg-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-[20px] font-bold text-[13px] transition-colors"
+                    className="h-12 w-full cursor-pointer rounded-[14px] bg-transparent text-[13px] font-bold text-[#536b5d] transition-colors hover:bg-[#dce8df] hover:text-[#20352a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5a7364]"
                   >
                     {t('str_251683b3')}</button>
                 </div>

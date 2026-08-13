@@ -32,7 +32,7 @@
 - 後端: Express 4 + Socket.io 4
 - DB: PostgreSQL + Drizzle ORM
 - Cache/Log: Redis (可選)
-- AI: OpenRouter chat completions (在 src/lib/geminiApi.ts，檔名為歷史命名)
+- AI: 非同步 AI job 以 ChatGPT Web 為 primary、OpenRouter 為 fallback；既有同步流程保留作為功能旗標回滾路徑
 
 ### 1.2 重要特性
 
@@ -84,6 +84,10 @@
   - OpenRouter chat completions 直接呼叫層（前端側，用於 AI 規劃功能）
   - 注意：此檔取代歷史命名的 geminiApi.ts，兩者功能相同
 
+- src/lib/aiJobApi.ts
+  - 建立與輪詢非同步 AI 行程工作
+  - 支援取消、暫時性錯誤重試與 10 分鐘上限
+
 ### 2.4 後端
 
 - server.ts
@@ -100,6 +104,16 @@
 
 - src/server/db/schema.ts
   - Drizzle schema 定義
+
+- src/server/routes/aiJobRoutes.ts
+  - AI job 建立、權限驗證與狀態查詢
+
+- src/server/repositories/aiJobRepository.ts
+  - active job 去重、claim、狀態轉換與行程原子寫入
+
+- scripts/ai-itinerary-worker.ts
+  - GitHub Actions worker 入口
+  - Provider 選擇與完成/失敗回寫
 
 ---
 
@@ -208,6 +222,13 @@
 - POST /api/user/tracks
 - DELETE /api/user/tracks/:item_id
 - GET /api/user/trips
+
+### 4.6 AI Jobs
+
+- POST /api/ai/jobs/itinerary
+- GET /api/ai/jobs/:jobId
+
+完整部署、secret、驗證與回滾流程見 `docs/AI-PROVIDER-MIGRATION.md`。
 
 ---
 

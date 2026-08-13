@@ -92,22 +92,34 @@ export function registerAuthRoutes(app: Express, deps: AuthRoutesDeps): void {
 
   if (enableGuest) {
     app.post('/api/auth/guest', guestAuthLimiter, async (req, res) => {
-      const rawDisplayName = String(req.body?.display_name ?? '').trim();
-      const displayName = (rawDisplayName || '訪客旅人').slice(0, 32);
-      const suffix = Math.random().toString(36).slice(2, 8);
-      const userId = `guest_${Date.now().toString(36)}_${suffix}`;
-      const username = userId;
+      try {
+        const rawDisplayName = String(req.body?.display_name ?? '').trim();
+        const displayName = (rawDisplayName || '訪客旅人').slice(0, 32);
+        const suffix = Math.random().toString(36).slice(2, 8);
+        const userId = `guest_${Date.now().toString(36)}_${suffix}`;
+        const username = userId;
+        const token = signAccessToken({ userId });
 
-      await repo.ensureUser(userId, username, displayName);
+        await repo.ensureUser(userId, username, displayName);
 
-      const token = signAccessToken({ userId });
-      res.status(201).json({
-        status: 'success',
-        token,
-        user_id: userId,
-        user: { id: userId, display_name: displayName },
-        expires_in: expiresIn(),
-      });
+        res.status(201).json({
+          status: 'success',
+          token,
+          user_id: userId,
+          user: { id: userId, display_name: displayName },
+          expires_in: expiresIn(),
+        });
+      } catch (error) {
+        console.error(
+          '[Auth] guest session creation failed',
+          error instanceof Error ? error.message : String(error),
+        );
+        res.status(503).json({
+          status: 'error',
+          code: 'AUTH_GUEST_UNAVAILABLE',
+          message: '訪客登入暫時無法使用，請稍後再試。',
+        });
+      }
     });
   }
 

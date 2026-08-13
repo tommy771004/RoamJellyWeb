@@ -15,3 +15,9 @@ graphify-out/*
 .audit/*
 archive/
 agent/*
+migrations/*
+# AI worker browser session - credential material
+.worker-secrets/
+chatgpt-storage-state.json
+*chatgpt-storage-state*.json
+migrations/meta/_journal.json

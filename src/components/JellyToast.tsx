@@ -16,15 +16,15 @@ export interface ToastProps {
 }
 
 const TOAST_ICONS = {
-  success: { Icon: CheckCircle2, bg: 'bg-emerald-100/80', color: 'text-emerald-600' },
-  warning: { Icon: AlertCircle,  bg: 'bg-orange-100/80',  color: 'text-orange-600'  },
-  info:    { Icon: Info,         bg: 'bg-sky-100/80',     color: 'text-sky-600'     },
+  success: { Icon: CheckCircle2, color: 'text-[#355948]' },
+  warning: { Icon: AlertCircle, color: 'text-[#a44932]' },
+  info: { Icon: Info, color: 'text-[#5b655f]' },
 };
 
 const TOAST_STYLES = {
-  success: 'bg-[rgba(240,253,244,0.92)] border-emerald-200/70 text-emerald-950',
-  warning: 'bg-[rgba(255,247,237,0.92)] border-orange-200/70  text-orange-950',
-  info:    'bg-[rgba(240,249,255,0.92)] border-sky-200/70     text-slate-800',
+  success: 'bg-[#eef4ef] text-[#21342b]',
+  warning: 'bg-[#f6eee9] text-[#562d22]',
+  info: 'bg-[#f1f3ef] text-[#27332d]',
 };
 
 export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], removeToast: (id: string) => void }) {
@@ -38,21 +38,19 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
     >
       <AnimatePresence mode="sync">
         {toasts.map((toast) => {
-          const { Icon, bg, color } = TOAST_ICONS[toast.type];
+          const { Icon, color } = TOAST_ICONS[toast.type];
           return (
             <motion.div
               key={toast.id}
               layout
-              initial={{ opacity: 0, y: 16, scale: 0.92 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 40, scale: 0.94 }}
+              initial={{ opacity: 1, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 1, x: 24 }}
               transition={SPRING_SNAPPY}
-              className={`pointer-events-auto flex items-center gap-3 rounded-full border px-5 py-3 max-w-sm shrink-0 shadow-[0_8px_32px_rgba(15,23,42,0.10)] backdrop-blur-2xl backdrop-saturate-[180%] ${TOAST_STYLES[toast.type]}`}
+              className={`pointer-events-auto flex w-full max-w-md shrink-0 items-start gap-3 rounded-lg px-4 py-3 shadow-[0_5px_12px_rgba(47,61,53,0.12)] ${TOAST_STYLES[toast.type]}`}
             >
-              <div className={`p-1 rounded-full shrink-0 flex items-center justify-center ${bg} ${color}`}>
-                <Icon size={16} />
-              </div>
-              <span className="text-[13px] font-bold tracking-tight text-slate-800 leading-none translate-y-px whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px] sm:max-w-[260px]">
+              <Icon aria-hidden="true" className={`mt-0.5 shrink-0 ${color}`} size={18} />
+              <span className="min-w-0 flex-1 text-[13px] font-bold leading-5">
                 {toast.message}
               </span>
               {toast.actionLabel && toast.onAction && (
@@ -61,7 +59,7 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
                     toast.onAction?.();
                     removeToast(toast.id);
                   }}
-                  className="shrink-0 rounded-full bg-slate-900 hover:bg-slate-950 text-white px-3 py-1 text-[11px] font-black tracking-wider uppercase ios-press shadow-sm ml-1"
+                  className="min-h-11 shrink-0 rounded-md bg-[#23372e] px-3 text-[12px] font-bold text-white transition-colors hover:bg-[#314a3f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a44932] focus-visible:ring-offset-2"
                 >
                   {toast.actionLabel}
                 </button>
@@ -69,7 +67,7 @@ export function JellyToast({ toasts, removeToast }: { toasts: ToastProps[], remo
               <button
                 onClick={() => removeToast(toast.id)}
                 aria-label={t('str_46628ef8')}
-                className="p-1.5 hover:bg-slate-200/60 rounded-full ios-press text-slate-400 hover:text-slate-600 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 ml-0.5"
+                className="-my-2 -mr-2 flex size-11 shrink-0 items-center justify-center rounded-md text-current opacity-60 transition-colors hover:bg-black/5 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a44932] focus-visible:ring-offset-2"
               >
                 <X size={14} />
               </button>

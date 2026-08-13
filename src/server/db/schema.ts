@@ -1,4 +1,5 @@
-import { pgTable, text, varchar, timestamp, uuid, integer, real, boolean, jsonb, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { pgTable, text, varchar, timestamp, uuid, integer, real, boolean, jsonb, index, uniqueIndex, check } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   userId: varchar('user_id', { length: 128 }).primaryKey(),
@@ -145,6 +146,35 @@ export const itineraryNodes = pgTable('itinerary_nodes', {
   index('itinerary_nodes_trip_id_idx').on(table.tripId),
   index('itinerary_nodes_trip_day_idx').on(table.tripId, table.day),
   index('itinerary_nodes_trip_sort_idx').on(table.tripId, table.sortOrder)
+]);
+
+export const aiGenerationJobs = pgTable('ai_generation_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: varchar('user_id', { length: 128 }).references(() => users.userId, { onDelete: 'set null' }),
+  tripId: varchar('trip_id', { length: 128 }).notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 32 }).default('itinerary').notNull(),
+  status: varchar('status', { length: 32 }).default('queued').notNull(),
+  request: jsonb('request').notNull(),
+  result: jsonb('result'),
+  provider: varchar('provider', { length: 64 }),
+  fallbackUsed: boolean('fallback_used').default(false).notNull(),
+  primaryError: text('primary_error'),
+  error: text('error'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+}, (table) => [
+  index('ai_generation_jobs_trip_id_idx').on(table.tripId),
+  index('ai_generation_jobs_user_id_idx').on(table.userId),
+  index('ai_generation_jobs_status_created_idx').on(table.status, table.createdAt),
+  uniqueIndex('ai_generation_jobs_active_trip_type_unique')
+    .on(table.tripId, table.type)
+    .where(sql`${table.status} in ('queued', 'running')`),
+  check(
+    'ai_generation_jobs_status_check',
+    sql`${table.status} in ('queued', 'running', 'completed', 'failed')`,
+  ),
 ]);
 
 export const flights = pgTable('flights', {
