@@ -85,9 +85,11 @@ export default function LoginScreen({
   const isOauthWaiting = status === 'waiting-oauth' && activeProvider && pendingAuth;
   const resolvedGuestCtaLabel = guestCtaLabel || '先用訪客身分體驗';
 
-  useEffect(() => {
-    if (!email) emailInputRef.current?.focus();
-  }, []);
+  // Deliberately no autofocus on the email field. Focusing it on mount made the
+  // mobile keyboard open the instant the login screen appeared, covering the
+  // social-login buttons and the guest CTA — which are the paths most people
+  // take — and shoving the layout around before anyone had chosen anything.
+  // `emailInputRef` is kept as a plain DOM handle for the field.
 
   useEffect(() => {
     let cancelled = false;

@@ -99,8 +99,14 @@ export const LocationPickerPopup = ({
 
             <div className="relative mb-3">
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              {/* No `data-autofocus` here on purpose. useModalAccessibility
+                  focuses `[data-autofocus]` on open, and focusing a text input
+                  makes the mobile keyboard spring up over the destination list
+                  the moment the picker appears. Without it, focus falls to the
+                  first focusable element — the close button above — which still
+                  satisfies the "focus moves into the dialog" contract in
+                  docs/ui/Dialog and Sheet.md without opening the keyboard. */}
               <input
-                data-autofocus
                 value={searchQuery}
                 aria-label={t('str_dafacd0')}
                 onChange={(e) => setSearchQuery(e.target.value)}
