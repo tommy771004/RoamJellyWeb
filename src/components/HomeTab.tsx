@@ -296,6 +296,40 @@ export default function HomeTab({
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [showReturnDatePicker, setShowReturnDatePicker] =
     useState<boolean>(false);
+  const suppressPickerFocusRef = useRef<"from" | "to" | null>(null);
+
+  const closeLocationPicker = (field: "from" | "to") => {
+    suppressPickerFocusRef.current = field;
+    if (field === "from") setShowDeparturePicker(false);
+    if (field === "to") setShowDestinationPicker(false);
+  };
+
+  const closeActiveLocationPicker = () => {
+    if (showDeparturePicker) {
+      closeLocationPicker("from");
+    } else if (showDestinationPicker) {
+      closeLocationPicker("to");
+    }
+  };
+
+  const handleLocationPickerFocus = (field: "from" | "to") => {
+    if (suppressPickerFocusRef.current === field) {
+      suppressPickerFocusRef.current = null;
+      return;
+    }
+
+    if (field === "from") {
+      setShowDeparturePicker(true);
+      setShowDestinationPicker(false);
+      setShowDatePicker(false);
+      setShowReturnDatePicker(false);
+    } else {
+      setShowDestinationPicker(true);
+      setShowDeparturePicker(false);
+      setShowDatePicker(false);
+      setShowReturnDatePicker(false);
+    }
+  };
 
   const [flyingCard, setFlyingCard] = useState<{
     id: number;
@@ -1146,8 +1180,7 @@ export default function HomeTab({
     // 根據選好的地方 僅顯示中文，不含任何英文縮寫或機場代碼
     const displayValue = destination.place;
     updateField(field, displayValue);
-    if (field === "from") setShowDeparturePicker(false);
-    if (field === "to") setShowDestinationPicker(false);
+    closeLocationPicker(field);
   };
 
   const selectDate = (dateStr: string) => {
@@ -1521,6 +1554,7 @@ export default function HomeTab({
                     <div
                       className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-text ${searchFieldSurfaceClass}`}
                       onClick={() => {
+                        if (showDestinationPicker) closeLocationPicker("to");
                         setShowDeparturePicker(true);
                         setShowDestinationPicker(false);
                         setShowDatePicker(false);
@@ -1533,11 +1567,7 @@ export default function HomeTab({
                         aria-label={t('str_1426bae')}
                         className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.from}
-                        onFocus={() => {
-                          setShowDeparturePicker(true);
-                          setShowDestinationPicker(false);
-                          setShowDatePicker(false);
-                        }}
+                        onFocus={() => handleLocationPickerFocus("from")}
                         onChange={(e) => updateField("from", e.target.value)}
                         placeholder={t('str_7d05f8dd')}
                         autoComplete="off"
@@ -1569,6 +1599,7 @@ export default function HomeTab({
                     <div
                       className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-text ${searchFieldSurfaceClass}`}
                       onClick={() => {
+                        if (showDeparturePicker) closeLocationPicker("from");
                         setShowDestinationPicker(true);
                         setShowDeparturePicker(false);
                         setShowDatePicker(false);
@@ -1581,11 +1612,7 @@ export default function HomeTab({
                         aria-label={t('str_1cd249a')}
                         className="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 w-full outline-none focus-visible:outline-none leading-none"
                         value={searchForm.to}
-                        onFocus={() => {
-                          setShowDestinationPicker(true);
-                          setShowDeparturePicker(false);
-                          setShowDatePicker(false);
-                        }}
+                        onFocus={() => handleLocationPickerFocus("to")}
                         onChange={(e) => updateField("to", e.target.value)}
                         placeholder={t('str_2760232d')}
                         autoComplete="off"
@@ -1601,6 +1628,7 @@ export default function HomeTab({
                       aria-label={`去程日期：${searchForm.date || "尚未選擇"}`}
                       className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-left w-full ${searchFieldSurfaceClass}`}
                       onClick={() => {
+                        closeActiveLocationPicker();
                         setShowDatePicker(!showDatePicker);
                         setShowDeparturePicker(false);
                         setShowDestinationPicker(false);
@@ -1627,6 +1655,7 @@ export default function HomeTab({
                           : "bg-slate-50/60 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700"
                       } ${searchFieldSurfaceClass}`}
                       onClick={() => {
+                        closeActiveLocationPicker();
                         if (searchForm.tripType === "oneway")
                           updateField("tripType", "roundtrip");
                         setShowReturnDatePicker(!showReturnDatePicker);
@@ -3603,7 +3632,7 @@ export default function HomeTab({
         <LocationPickerPopup
           title={t('str_1426bae')}
           query={searchForm.from}
-          onClose={() => setShowDeparturePicker(false)}
+          onClose={() => closeLocationPicker("from")}
           onSelect={(dest) => applyGuideDestination(dest, "from")}
         />
       )}
@@ -3612,7 +3641,7 @@ export default function HomeTab({
         <LocationPickerPopup
           title={t('str_781f2fb5')}
           query={searchForm.to}
-          onClose={() => setShowDestinationPicker(false)}
+          onClose={() => closeLocationPicker("to")}
           onSelect={(dest) => applyGuideDestination(dest, "to")}
         />
       )}

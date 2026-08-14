@@ -5,15 +5,12 @@ import './index.css';
 import './i18n';
 import { registerSW } from 'virtual:pwa-register';
 
-// Register PWA service worker.
-// autoUpdate mode: the SW calls skipWaiting() internally; workbox-window sends a
-// SKIP_WAITING message and waits for acknowledgement. If the page reloads before
-// the acknowledgement arrives Chrome logs "message channel closed" — catch it here
-// so it doesn't surface as an unhandled promise rejection.
+// Register the PWA service worker in prompt mode so an update never reloads the
+// page while a user is filling a form. App.tsx surfaces the update action.
 if ('serviceWorker' in navigator) {
-  registerSW({
+  const updateSW = registerSW({
     onNeedRefresh() {
-      // New version available; autoUpdate reloads automatically — nothing to do.
+      window.dispatchEvent(new CustomEvent('pwa-update-available'));
     },
     onOfflineReady() {
       // PWA ready for offline use.
@@ -22,6 +19,12 @@ if ('serviceWorker' in navigator) {
       // Log but do not rethrow — a failed SW registration must not break the app.
       console.warn('[PWA] Service worker registration failed:', error);
     },
+  });
+
+  window.addEventListener('pwa-apply-update', () => {
+    void updateSW(true).catch((error) => {
+      console.warn('[PWA] Failed to apply service worker update:', error);
+    });
   });
 }
 

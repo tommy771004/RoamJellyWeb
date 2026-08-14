@@ -96,6 +96,18 @@ export default function App() {
     return () => window.removeEventListener('open-login', handleOpenLogin);
   }, []);
 
+  useEffect(() => {
+    const handlePwaUpdateAvailable = () => {
+      showToast(t('pwa_update_available', '有新版可用'), 'info', {
+        actionLabel: t('pwa_update_now', '立即更新'),
+        onAction: () => window.dispatchEvent(new CustomEvent('pwa-apply-update')),
+      });
+    };
+
+    window.addEventListener('pwa-update-available', handlePwaUpdateAvailable);
+    return () => window.removeEventListener('pwa-update-available', handlePwaUpdateAvailable);
+  }, [showToast, t]);
+
   // Detect trip landing URL once on mount (before any auth check)
   const [tripLandingId] = useState<string | null>(getTripLandingId);
 

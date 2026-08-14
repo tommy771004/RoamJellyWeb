@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { fetchUserPreferences, updateUserAiProfile } from '../lib/workflowApi';
 import type { AiPreferenceProfile, SearchItem } from '../types/workflow';
 
@@ -39,50 +40,58 @@ interface SearchStore {
   loadPreferences: () => Promise<void>;
 }
 
-export const useSearchStore = create<SearchStore>((set, get) => ({
-  searchForm: { from: '', to: '', date: '', tripType: 'oneway', returnDate: '' },
-  updateField: (field, value) => 
-    set((state) => ({ searchForm: { ...state.searchForm, [field]: value } })),
+export const useSearchStore = create<SearchStore>()(
+  persist(
+    (set, get) => ({
+      searchForm: { from: '', to: '', date: '', tripType: 'oneway', returnDate: '' },
+      updateField: (field, value) =>
+        set((state) => ({ searchForm: { ...state.searchForm, [field]: value } })),
 
-  results: [],
-  setResults: (results) => set({ results }),
+      results: [],
+      setResults: (results) => set({ results }),
 
-  loading: false,
-  setLoading: (loading) => set({ loading }),
+      loading: false,
+      setLoading: (loading) => set({ loading }),
 
-  searchError: null,
-  setSearchError: (error) => set({ searchError: error }),
+      searchError: null,
+      setSearchError: (error) => set({ searchError: error }),
 
-  savedItems: [],
-  toggleSave: (id) => set((state) => ({ 
-    savedItems: state.savedItems.includes(id) 
-      ? state.savedItems.filter(i => i !== id) 
-      : [...state.savedItems, id] 
-  })),
+      savedItems: [],
+      toggleSave: (id) => set((state) => ({
+        savedItems: state.savedItems.includes(id)
+          ? state.savedItems.filter(i => i !== id)
+          : [...state.savedItems, id]
+      })),
 
-  trackedPrices: [],
-  toggleTrack: (id) => set((state) => ({
-    trackedPrices: state.trackedPrices.includes(id)
-      ? state.trackedPrices.filter(i => i !== id)
-      : [...state.trackedPrices, id]
-  })),
+      trackedPrices: [],
+      toggleTrack: (id) => set((state) => ({
+        trackedPrices: state.trackedPrices.includes(id)
+          ? state.trackedPrices.filter(i => i !== id)
+          : [...state.trackedPrices, id]
+      })),
 
-  aiProfile: null,
-  saveAiProfile: async (profile) => {
-    const savedProfile = await updateUserAiProfile(profile);
-    set({ aiProfile: savedProfile });
-  },
+      aiProfile: null,
+      saveAiProfile: async (profile) => {
+        const savedProfile = await updateUserAiProfile(profile);
+        set({ aiProfile: savedProfile });
+      },
 
-  loadPreferences: async () => {
-    try {
-      const data = await fetchUserPreferences();
-      set({
-        savedItems: data?.saved_items ?? [],
-        trackedPrices: data?.tracked_prices ?? [],
-        aiProfile: data?.ai_profile ?? null,
-      });
-    } catch (error) {
-      console.error('loadPreferences failed', error);
-    }
-  }
-}));
+      loadPreferences: async () => {
+        try {
+          const data = await fetchUserPreferences();
+          set({
+            savedItems: data?.saved_items ?? [],
+            trackedPrices: data?.tracked_prices ?? [],
+            aiProfile: data?.ai_profile ?? null,
+          });
+        } catch (error) {
+          console.error('loadPreferences failed', error);
+        }
+      }
+    }),
+    {
+      name: 'search-store',
+      partialize: (state) => ({ searchForm: state.searchForm }),
+    },
+  ),
+);

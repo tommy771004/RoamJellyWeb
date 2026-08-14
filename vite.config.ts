@@ -101,15 +101,15 @@ export default defineConfig(() => {
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         manifestFilename: 'manifest.json',
         includeAssets: [
           'favicon.ico', 'icon-app.svg', 'icon-app-maskable.svg',
           'icon-180.png', 'icon-192.png', 'icon-app-512.png', 'icon-maskable-512.png',
         ],
         workbox: {
-          skipWaiting: true,
-          clientsClaim: true,
+          skipWaiting: false,
+          clientsClaim: false,
           cleanupOutdatedCaches: true,
           navigateFallbackDenylist: [
             /^\/api\//,

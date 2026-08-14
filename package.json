@@ -14,6 +14,7 @@
     "test:seo": "tsx --test src/server/seo/__tests__/*.test.ts",
     "test:auth": "tsx --test src/server/auth/__tests__/*.test.ts",
     "test:ai-jobs": "tsx --test src/server/ai-jobs/__tests__/*.test.ts",
+    "test:flight-ui": "node scripts/flight-search-regression.mjs",
     "test": "npm run test:seo && npm run test:auth && npm run test:ai-jobs",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:generate": "drizzle-kit generate",
