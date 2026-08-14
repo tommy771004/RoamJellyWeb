@@ -908,13 +908,48 @@ select {
 }
 
 /* Dark mode colour transition — only applies the slow ease to colour properties,
-   leaving transform/opacity/shadow free for spring-driven animations. */
+   leaving transform/opacity/shadow free for spring-driven animations.
+
+   "Free" means *untransitioned*, and that is deliberate: this is the `transition`
+   shorthand with !important on every descendant, so transform is absent from the
+   property list entirely. motion/react writes transforms per frame, and a CSS
+   transition on transform would rubber-band every spring in these subtrees.
+   Do not add transform here. */
 .dark-transition,
 .dark-transition * {
   transition:
     background-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
     border-color     0.4s cubic-bezier(0.22, 1, 0.36, 1),
     color            0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* …but press feedback is CSS-driven, not spring-driven, and the rule above was
+   silently killing it: `ios-press` sets `transition: transform …`, which the
+   blanket !important shorthand overrode, so every pressable inside a
+   `.dark-transition` subtree snapped to 0.97 instead of easing.
+
+   Narrowly re-state the colour entries plus transform for pressables only.
+   Specificity (0,2,0) beats the blanket rule's (0,1,0), and this must stay
+   un-layered — the blanket rule is un-layered too, so it outranks Tailwind's
+   layered utilities no matter what they declare. */
+.dark-transition .ios-press,
+.dark-transition.ios-press {
+  transition:
+    background-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color     0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    color            0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform        200ms cubic-bezier(0.22, 1, 0.36, 1),
+    scale            200ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+/* Fast in, slow out — the asymmetry that reads as a physical press. */
+.dark-transition .ios-press:active,
+.dark-transition.ios-press:active {
+  transition:
+    background-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color     0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    color            0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform        80ms cubic-bezier(0.22, 1, 0.36, 1),
+    scale            80ms cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 /* Custom dark mode card overrides for high contrast and consistency */
@@ -1539,15 +1574,36 @@ select {
 
 /* ios-press: immediate scale-down on tap, spring-back on release.
    Use on any tappable surface for tactile feedback. */
-@utility ios-press {
+/* Written as a plain un-layered rule rather than `@utility` on purpose.
+   Tailwind emits `@utility` output into the `utilities` layer — where
+   `transition-colors` and `transition-all` also live, and being later in that
+   layer they replaced this `transition` shorthand wholesale, dropping transform
+   from the property list. Every pressable that also carried a `transition-*`
+   class therefore snapped to 0.97 instead of easing, which was most of them.
+   Un-layered rules outrank every layered one, so this now wins wherever the two
+   are combined. Colour properties are listed here so pairing with
+   `transition-colors` still animates colour the way the author intended. */
+.ios-press {
   transform-origin: center;
   transform: translateZ(0);
   will-change: transform;
-  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
-  &:active {
-    transform: scale(0.97) translateZ(0);
-    transition-duration: 80ms;
-  }
+  transition:
+    transform        200ms cubic-bezier(0.22, 1, 0.36, 1),
+    scale            200ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color     200ms cubic-bezier(0.22, 1, 0.36, 1),
+    color            200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ios-press:active {
+  transform: scale(0.97) translateZ(0);
+  transition-duration: 80ms;
+}
+/* A control that cannot act must not answer the touch. Lives here rather than as
+   a `disabled:active:` utility because this rule is un-layered and would outrank
+   any utility trying to cancel it. */
+.ios-press:disabled:active,
+.ios-press[aria-disabled='true']:active {
+  transform: translateZ(0);
 }
 
 /* card-lift: desktop hover uplift.

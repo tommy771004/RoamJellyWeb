@@ -18,6 +18,7 @@ RoamJelly 有大量偏好、旅伴、篩選與檢視選擇。它們必須清楚�
 - Tabs 以 `tablist`、`tab`、`tabpanel` 管理，Arrow key 行為需全組一致；不要以一般 button + `aria-current` 取代內容視圖切換。
 - 每個觸控目標至少 44px；長旅伴名稱與多語文案能換行而不覆蓋相鄰項目。
 - 選取回饋不位移、不跳動；reduced motion 下取消非必要動畫。
+- **例外：按壓與選取態允許縮放。** 同 [Button.md](./Button.md) 的決議——按壓縮放 0.97 依 [design-guidelines-apple-hig.md](../design-guidelines-apple-hig.md) §3.1 辦理；分頁列等選取態的 icon 縮放與指示器位移由 spring 驅動，屬原生化的必要回饋，不在此限。
 
 ## 實作方向
 

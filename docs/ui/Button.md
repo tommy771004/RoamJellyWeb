@@ -30,7 +30,8 @@ Button 執行動作；RoamJelly 的按鈕必須讓人立即知道會建立、儲
 - `disabled` 不只降低 opacity；原因無法從上下文得知時，要在附近可見說明。
 - 只有持續狀態使用 `aria-pressed`，例如旅伴分攤與偏好選項；分享、儲存、重試不可誤用。
 - icon-only button 必須有目前語系的 accessible name，觸控範圍至少 44px。
-- focus-visible 完整包住目標；hover／pressed 不位移、不縮放，reduced motion 下停用非必要動效。
+- focus-visible 完整包住目標；hover 不位移、不縮放，reduced motion 下停用非必要動效。
+- **例外：pressed 允許縮放至 0.97。** 這一條與 [design-guidelines-apple-hig.md](../design-guidelines-apple-hig.md) §3.1「Interactive Press States: Scale shrinks to 0.97 dynamically on active press」直接衝突，決議以 HIG 為準——按壓縮放是原生觸感的一部分。實作統一走 `index.css` 的 `.ios-press`，不要在各元件的 `className` 內重寫按壓狀態。
 
 ## 共用契約
 

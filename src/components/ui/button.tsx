@@ -12,10 +12,12 @@ const buttonVariants = cva(
   // Press feedback mirrors SwiftUI's default button style: the scale-down is
   // near-instant on touch-down (80ms) and eases back out slowly on release,
   // rather than using one symmetric duration for both directions.
-  // `scale` is listed explicitly: Tailwind v4 compiles `scale-*` to the standalone
-  // CSS `scale` property, not to `transform`, so a transition list naming only
-  // `transform` would let the press snap instantly instead of animating.
-  "inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transform-gpu transition-[color,background-color,border-color,box-shadow,scale] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] active:duration-[80ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100",
+  // Press feedback comes from `ios-press` rather than being re-inlined here, so
+  // Button presses the same way as the ~100 other tappable surfaces in the app
+  // and there is one place to tune it. Suppressing the press while disabled is
+  // handled in the `ios-press` rule itself — a Tailwind `disabled:active:` variant
+  // cannot do it, because `ios-press` is un-layered and outranks every utility.
+  "ios-press inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
   {
     variants: {
       variant: {
