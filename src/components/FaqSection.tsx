@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, HelpCircle, Sparkles, MessageCircleQuestion } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { IOS_EASE } from '../lib/motionTokens';
 
 export interface FaqItem {
   id: string;
@@ -152,7 +153,7 @@ export default function FaqSection() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.28, ease: IOS_EASE }}
                     className="overflow-hidden"
                   >
                     <div className="px-4 pb-5 sm:px-5 sm:pb-6 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800/60 mt-1 pl-15">

@@ -1,8 +1,9 @@
-import { SPRING_SNAPPY, bottomBarTransition } from '../lib/motionTokens';
+import { SPRING_SNAPPY, bottomBarTransition, layoutIndicatorTransition } from '../lib/motionTokens';
 import { useState, useEffect } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "motion/react";
 import { Home, Sparkles, CalendarDays, Luggage, X } from "lucide-react";
 import { useAppStore } from "../store/useAppStore";
+import { triggerHapticFeedback } from "../lib/haptics";
 import { useTranslation } from "react-i18next";
 
 const TAB_ICONS = {
@@ -117,12 +118,19 @@ export default function BottomTabs() {
                   <button
                     key={tab.id}
                     onClick={() => {
+                      // Selection feedback fires on the tap itself, not after the
+                      // tab has rendered — that ordering is what makes it read as
+                      // native rather than as a reaction to a finished navigation.
+                      // Only on an actual change of selection, the way
+                      // UISelectionFeedbackGenerator behaves: re-tapping the tab
+                      // you are already on moves nothing and so buzzes nothing.
+                      if (activeTab !== tab.id) triggerHapticFeedback(12);
                       setActiveTab(tab.id as any);
                       if (tab.id === "ai_form") {
                         setIsExpanded(false);
                       }
                     }}
-                    className={`relative flex h-full min-w-0 flex-1 items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 ${
+                    className={`ios-press relative flex h-full min-w-0 flex-1 items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 ${
                       isActive
                         ? "text-[#9a452e] dark:text-[#d59a85]"
                         : "text-slate-500 hover:text-[#26342d] dark:text-slate-400 dark:hover:text-white"
@@ -130,8 +138,26 @@ export default function BottomTabs() {
                     aria-label={t(`tab_${tab.id}`)}
                     aria-current={isActive ? "page" : undefined}
                   >
+                    {/* Shared layoutId: the pill springs across to the new tab
+                        instead of disappearing here and reappearing there. */}
+                    {isActive && (
+                      <motion.span
+                        layoutId="bottom-tab-indicator"
+                        className="absolute inset-y-1 inset-x-1 z-0 rounded-[12px] bg-[#9a452e]/10 dark:bg-[#d59a85]/15"
+                        transition={prefersReducedMotion ? { duration: 0.15 } : layoutIndicatorTransition}
+                        aria-hidden="true"
+                      />
+                    )}
                     {Icon ? (
-                      <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.6 : 2.2} />
+                      // Fixed glyph size + animated scale: changing the `size` prop
+                      // resizes the SVG in one hard step, which no native tab bar does.
+                      <motion.span
+                        className="relative z-10 flex items-center justify-center"
+                        animate={{ scale: isActive ? 1 : 0.92 }}
+                        transition={prefersReducedMotion ? { duration: 0.15 } : SPRING_SNAPPY}
+                      >
+                        <Icon size={22} strokeWidth={isActive ? 2.6 : 2.2} />
+                      </motion.span>
                     ) : null}
                   </button>
                 );

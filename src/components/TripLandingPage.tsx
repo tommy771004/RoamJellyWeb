@@ -165,7 +165,7 @@ export default function TripLandingPage({ tripId, onJoined }: Props) {
           </p>
           <a
             href="/"
-            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm ios-press transition-colors hover:border-sky-200 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
           >
             {t('str_42bab835')}</a>
         </motion.div>

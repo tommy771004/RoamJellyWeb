@@ -189,7 +189,7 @@ export default function FlightTable({
                       onToggleSave(e, flight.id);
                     }}
                     aria-label={isSaved ? "取消收藏" : "收藏航班"}
-                    className={`h-11 w-11 rounded-full flex items-center justify-center transition-colors border ${
+                    className={`h-11 w-11 rounded-full flex items-center justify-center ios-press transition-colors border ${
                       isSaved
                         ? "bg-rose-50 border-rose-100 text-rose-500"
                         : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-400 hover:text-rose-500"

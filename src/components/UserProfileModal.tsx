@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
+import { useSheetDismiss } from '../lib/useSheetDismiss';
 import { X, Save, Loader2, Sparkles, User, MapPin, Users, Heart, Coffee, Car, DollarSign, Check, Bell, Trash2, ShieldCheck, Link2, Unlink } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -111,6 +112,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
   const securityTabId = useId();
   const securityPanelId = useId();
   const dialogRef = useModalAccessibility(onClose, isOpen);
+  const { sheetProps, handleProps } = useSheetDismiss(onClose);
   const { showToast, notifications, clearNotifications } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -236,12 +238,24 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: '100%', opacity: 0, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            {...sheetProps}
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
             tabIndex={-1}
             className="fixed bottom-0 left-0 right-0 z-modal-above flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[32px] border border-white/72 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(9,15,30,0.97),rgba(15,23,42,0.95))] dark:border-white/10 dark:text-slate-100 shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:shadow-black/60 md:inset-0 md:m-auto md:h-[85vh] md:max-w-2xl md:rounded-[32px]"
           >
+            {/* Grab handle — mobile only. Above `md` this surface is a centred
+                dialog, not a sheet, and iOS does not drag-dismiss those. With
+                the handle gone the drag can never start (dragListener={false}),
+                so the drag props above are inert on desktop. */}
+            <div
+              {...handleProps}
+              className="shrink-0 flex justify-center pt-3 pb-2 md:hidden"
+            >
+              <div className="h-1.5 w-10 rounded-full bg-slate-300/80 dark:bg-white/15" />
+            </div>
+
             {/* Header */}
             <div className="z-10 flex shrink-0 items-center justify-between rounded-t-[32px] border-b border-white/78 bg-white/78 dark:bg-slate-900/90 dark:border-white/10 px-5 py-4 backdrop-blur-xl sm:px-7 sm:py-5 md:rounded-t-[32px]">
               <div className="flex items-center gap-4">
@@ -257,7 +271,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100/90 text-slate-500 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100/90 text-slate-500 ios-press transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                 aria-label={t('str_12bb2d')}
               >
                 <X size={18} />
@@ -617,7 +631,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                     <button 
                       type="button"
                       onClick={clearNotifications} 
-                      className="flex-shrink-0 flex items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50/40 px-5 text-[14px] font-bold text-red-600 hover:bg-red-55 transition-colors"
+                      className="flex-shrink-0 flex items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50/40 px-5 text-[14px] font-bold text-red-600 hover:bg-red-55 ios-press transition-colors"
                     >
                       <Trash2 size={16} />
                       {t('str_33e0c6e0')}</button>

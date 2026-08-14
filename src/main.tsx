@@ -25,6 +25,13 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// iOS (Safari + the WKWebView the native app wraps us in) only delivers `:active`
+// to elements while a touch listener exists somewhere on the document. Without
+// this no-op listener every `ios-press` / `active:` press state in the app is
+// silently dead on iOS — taps land with zero visual feedback. Passive so it
+// never blocks scrolling.
+document.addEventListener('touchstart', () => {}, { passive: true });
+
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

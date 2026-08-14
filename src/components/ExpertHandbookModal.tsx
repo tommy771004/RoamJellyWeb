@@ -143,7 +143,7 @@ export default function ExpertHandbookModal({ open, onClose, handbook, onCopyPat
                   data-autofocus
                   onClick={handleClose}
                   aria-label={t('str_46619f2c')}
-                  className="w-10 h-10 rounded-full bg-slate-100/50 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
+                  className="w-10 h-10 rounded-full bg-slate-100/50 hover:bg-slate-200 flex items-center justify-center text-slate-500 ios-press transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
                 >
                   <X size={18} />
                 </button>

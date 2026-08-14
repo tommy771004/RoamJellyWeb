@@ -149,6 +149,7 @@ import {
   getOverlayTransition,
   getSheetMotion,
 } from "../lib/motionTokens";
+import { useSheetDismiss } from "../lib/useSheetDismiss";
 
 // Split itinerary components
 import CollapsibleNotes from "./itinerary/CollapsibleNotes";
@@ -310,6 +311,7 @@ export default function ItineraryTab() {
   const [visibleDaysLimit, setVisibleDaysLimit] = useState<number>(14);
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const sheetMotion = getSheetMotion(prefersReducedMotion);
+  const favoritesSheetDrag = useSheetDismiss(() => setShowMobileFavorites(false));
   const { onScroll } = useHideNavOnScroll();
 
   const userId = useAppStore((state) => state.userId);
@@ -1999,7 +2001,7 @@ export default function ItineraryTab() {
           <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
             <button
               onClick={() => setIsPlanningNew(false)}
-              className="mb-4 sm:mb-8 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-600 font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:border-sky-200 hover:text-sky-700 w-max transition-colors"
+              className="mb-4 sm:mb-8 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-600 font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:border-sky-200 hover:text-sky-700 w-max ios-press transition-colors"
             >
               <ArrowLeft size={14} />
               {t('str_66f9470e')}</button>
@@ -3696,13 +3698,23 @@ export default function ItineraryTab() {
                 animate={sheetMotion.animate}
                 exit={sheetMotion.exit}
                 transition={sheetMotion.transition}
+                {...favoritesSheetDrag.sheetProps}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={mobileFavoritesTitleId}
                 tabIndex={-1}
                 className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white dark:bg-slate-950 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-sheet-above flex flex-col lg:hidden dark-transition border-t border-white/5"
               >
-                <div className="shrink-0 p-6 pb-2 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl rounded-t-[32px] sticky top-0 z-10 dark-transition">
+                {/* Grab handle — the drag surface for interactive dismissal.
+                    The list below scrolls, so the drag cannot live on the sheet
+                    itself without hijacking every scroll. See useSheetDismiss. */}
+                <div
+                  {...favoritesSheetDrag.handleProps}
+                  className="shrink-0 flex justify-center pt-3 pb-2.5 bg-white/90 dark:bg-slate-950/90 rounded-t-[32px] dark-transition"
+                >
+                  <div className="h-1.5 w-10 rounded-full bg-slate-300/80 dark:bg-white/15" />
+                </div>
+                <div className="shrink-0 px-6 pb-2 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl sticky top-0 z-10 dark-transition">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-3xl bg-fuchsia-50 flex items-center justify-center text-fuchsia-500 shadow-sm border border-fuchsia-100/50">
                       <Bookmark size={20} strokeWidth={2.5} />
@@ -3720,7 +3732,7 @@ export default function ItineraryTab() {
                     data-autofocus
                     aria-label={t('str_1ce46ef6')}
                     onClick={() => setShowMobileFavorites(false)}
-                    className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+                    className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-200 ios-press transition-colors"
                   >
                     <X size={20} />
                   </button>
@@ -3846,7 +3858,7 @@ export default function ItineraryTab() {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-sky-400 via-indigo-400 to-pink-400 opacity-80" />
                 <button
                   onClick={() => setContextualLoginPrompt({ show: false, itemName: '' })}
-                  className="absolute top-4 right-4 flex size-11 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors z-10"
+                  className="absolute top-4 right-4 flex size-11 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 ios-press transition-colors z-10"
                 >
                   <X size={16} />
                 </button>

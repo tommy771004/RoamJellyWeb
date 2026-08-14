@@ -327,7 +327,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                   type="button"
                   data-autofocus
                   onClick={handleClose}
-                  className="w-10 h-10 rounded-full bg-slate-100/50 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors flex-shrink-0"
+                  className="w-10 h-10 rounded-full bg-slate-100/50 hover:bg-slate-200 flex items-center justify-center text-slate-500 ios-press transition-colors flex-shrink-0"
                 >
                   <X size={18} />
                 </button>
@@ -381,7 +381,7 @@ export default function CountryGuideModal({ open, onClose, guide }: CountryGuide
                 href={localizedGuide.guideUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fluid-caption flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 font-black text-slate-700 transition-colors hover:bg-slate-200 hover:text-slate-900 whitespace-nowrap"
+                className="fluid-caption flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 font-black text-slate-700 ios-press transition-colors hover:bg-slate-200 hover:text-slate-900 whitespace-nowrap"
               >
                 <ExternalLink size={13} strokeWidth={2.5} />
                 {t('str_310388b7')}</a>

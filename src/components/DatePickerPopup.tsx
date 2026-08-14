@@ -83,10 +83,10 @@ export default function DatePickerPopup({ selectedDate, onSelect, onClose, allow
               <span className="fluid-kicker mt-0.5 font-black uppercase text-slate-500">Select Date</span>
             </div>
             <div className="flex gap-x-3">
-              <button data-autofocus type="button" onClick={() => changeMonth(-1)} aria-label={t('str_12f0be7')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
+              <button data-autofocus type="button" onClick={() => changeMonth(-1)} aria-label={t('str_12f0be7')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full ios-press transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                 <ChevronLeft size={24} className="text-slate-600" />
               </button>
-              <button type="button" onClick={() => changeMonth(1)} aria-label={t('str_12f0fa8')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
+              <button type="button" onClick={() => changeMonth(1)} aria-label={t('str_12f0fa8')} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full ios-press transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60">
                 <ChevronRight size={24} className="text-slate-600" />
               </button>
             </div>

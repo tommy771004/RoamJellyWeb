@@ -239,7 +239,7 @@ export default function CalendarView({
             <button
               onClick={() => setSelectedNodeId(null)}
               aria-label={t('str_358701bc')}
-              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-50 hover:bg-slate-200 text-slate-500 hover:text-slate-600 transition-colors shadow-sm cursor-pointer border border-slate-200/50"
+              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-50 hover:bg-slate-200 text-slate-500 hover:text-slate-600 ios-press transition-colors shadow-sm cursor-pointer border border-slate-200/50"
             >
               <X size={16} strokeWidth={3} />
             </button>

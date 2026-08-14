@@ -987,7 +987,7 @@ const ItineraryListItem = React.memo(
                       type="button"
                       onClick={closeEditor}
                       aria-label={t("itinerary_editor.close")}
-                      className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-100/80 dark:bg-white/10 hover:text-rose-500 text-slate-500 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/55 transition-colors"
+                      className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-100/80 dark:bg-white/10 hover:text-rose-500 text-slate-500 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/55 ios-press transition-colors"
                     >
                       <X size={16} />
                     </button>
@@ -1078,7 +1078,7 @@ const ItineraryListItem = React.memo(
                           <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                             {t("itinerary_editor.attachments")}
                           </span>
-                          <label className="px-3 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-[11px] font-black uppercase tracking-widest cursor-pointer hover:opacity-95 transition-colors">
+                          <label className="px-3 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-[11px] font-black uppercase tracking-widest cursor-pointer hover:opacity-95 ios-press transition-colors">
                             {t("itinerary_editor.upload")}
                             <input
                               type="file"

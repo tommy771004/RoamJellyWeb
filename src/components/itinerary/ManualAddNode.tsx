@@ -167,7 +167,7 @@ export default function ManualAddNode({
                   type="button"
                   onClick={() => setIsAdding(false)}
                   aria-label={t("a11y.close_manual_add")}
-                  className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                  className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-600 ios-press transition-colors"
                 >
                   <X size={20} />
                 </button>

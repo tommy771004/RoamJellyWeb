@@ -1,4 +1,4 @@
-import { SPRING_SNAPPY, SPRING_MODAL } from './lib/motionTokens';
+import { SPRING_SNAPPY, SPRING_MODAL, IOS_EASE } from './lib/motionTokens';
 import { useState, useEffect, useRef, lazy, Suspense, type ComponentType } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 const HomeTab = lazy(() => import('./components/HomeTab'));
@@ -1019,7 +1019,14 @@ export default function App() {
       </AnimatePresence>
       
       <div className="flex-1 relative z-10 w-full overflow-hidden flex flex-col">
-        <AnimatePresence mode="wait" custom={tabSlideDir}>
+        {/*
+          popLayout, not "wait": `mode="wait"` runs the exit to completion before
+          the incoming tab starts, so every tab switch showed an empty frame gap —
+          the single biggest tell that this is a web view and not a native one.
+          popLayout pulls the outgoing tab out of flow (the parent is `relative`)
+          so both move at once, the way a UIKit/SwiftUI push does.
+        */}
+        <AnimatePresence mode="popLayout" custom={tabSlideDir}>
           <motion.div
             key={isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
@@ -1031,7 +1038,12 @@ export default function App() {
               // slides and scales in, which reads the same but can never hide content.
               enter: (dir: number) => prefersReducedMotion ? ({}) : ({ scale: 0.984, x: dir * 24 }),
               center: { opacity: 1, scale: 1, x: 0 },
-              exit: { opacity: 0, transition: { duration: 0.15, ease: "easeOut" } },
+              // Parallax: the outgoing tab drifts the opposite way at roughly a
+              // third of the incoming tab's travel, which is the depth cue iOS
+              // uses on a navigation push.
+              exit: (dir: number) => prefersReducedMotion
+                ? ({ opacity: 0, transition: { duration: 0.12 } })
+                : ({ opacity: 0, scale: 0.992, x: dir * -8, transition: { duration: 0.22, ease: IOS_EASE } }),
             }}
             initial="enter"
             animate="center"
@@ -1128,13 +1140,13 @@ export default function App() {
               <div className="flex flex-row w-full gap-3 sm:gap-4">
                 <button
                   onClick={() => setShowLogoutModal(false)}
-                  className="flex-1 py-3 sm:py-3.5 px-2 sm:px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-colors whitespace-nowrap text-[15px]"
+                  className="flex-1 py-3 sm:py-3.5 px-2 sm:px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold ios-press transition-colors whitespace-nowrap text-[15px]"
                 >
                   {t('stay_longer')}
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="flex-1 py-3 sm:py-3.5 px-2 sm:px-4 rounded-full bg-gradient-to-r from-orange-700 to-amber-700 hover:opacity-90 text-white font-bold transition-colors shadow-md shadow-orange-500/30 whitespace-nowrap text-[15px]"
+                  className="flex-1 py-3 sm:py-3.5 px-2 sm:px-4 rounded-full bg-gradient-to-r from-orange-700 to-amber-700 hover:opacity-90 text-white font-bold ios-press transition-colors shadow-md shadow-orange-500/30 whitespace-nowrap text-[15px]"
                 >
                   {t('confirm_logout')}
                 </button>

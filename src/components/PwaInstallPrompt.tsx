@@ -90,7 +90,7 @@ export default function PwaInstallPrompt() {
       >
         <button
           onClick={dismiss}
-          className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-colors"
+          className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white ios-press transition-colors"
           aria-label={t('str_12bb2d')}
         >
           <X size={14} strokeWidth={3} />

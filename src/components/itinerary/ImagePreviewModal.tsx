@@ -44,7 +44,7 @@ export default function ImagePreviewModal({
           type="button"
           data-autofocus
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center hover:bg-white hover:text-slate-800 transition-colors shadow-sm"
+          className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center hover:bg-white hover:text-slate-800 ios-press transition-colors shadow-sm"
           aria-label={t("str_12bb2d")}
         >
           <X size={20} strokeWidth={2.5} />

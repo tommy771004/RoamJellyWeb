@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Sparkles, X, Send, PlusCircle, Plane, Luggage, Loader2, ArrowUp } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { getOverlayTransition, getSheetMotion, subtlePressableClass } from '../lib/motionTokens';
+import { useSheetDismiss } from '../lib/useSheetDismiss';
 import { suggestChatAssistantResponse, ChatResponseData } from '../lib/openrouterApi';
 import { getStoredToken, addFavorite } from '../lib/workflowApi';
 import { getCategoryEmoji } from '../lib/categoryEmoji';
@@ -48,6 +49,7 @@ export default function JellyAssistant() {
   const prefersReducedMotion = useReducedMotion() ?? false;
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const sheetMotion = getSheetMotion(prefersReducedMotion);
+  const { sheetProps, handleProps } = useSheetDismiss(() => setIsOpen(false));
 
   const { showToast, activeTripId, userId } = useAppStore();
   const isLoggedIn = !!userId;
@@ -283,11 +285,18 @@ export default function JellyAssistant() {
             animate={sheetMotion.animate}
             exit={sheetMotion.exit}
             transition={sheetMotion.transition}
+            {...sheetProps}
             className="fixed bottom-0 left-0 right-0 z-sheet-above mx-auto flex h-[82dvh] w-full max-w-[600px] flex-col overflow-hidden rounded-t-[30px] border-t border-white/52 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,250,251,0.88),rgba(241,248,255,0.85))] shadow-[0_-12px_44px_rgba(15,23,42,0.18)] overscroll-contain dark:border-white/10 dark:bg-black/62 sm:rounded-t-[34px]"
             style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}
             id="jelly-ai-sheet"
           >
-            <div className="flex justify-center pt-2 pb-1 bg-white/36 dark:bg-black/24">
+            {/* The grab handle is the drag surface — see useSheetDismiss. The
+                visible pill is 6px tall, so the row is padded out to ~30px to
+                give the gesture something to land on. */}
+            <div
+              {...handleProps}
+              className="flex justify-center pt-3 pb-2.5 bg-white/36 dark:bg-black/24"
+            >
               <div className="h-1.5 w-10 rounded-full bg-slate-300/80 dark:bg-white/15" />
             </div>
 
@@ -307,7 +316,7 @@ export default function JellyAssistant() {
                 onClick={() => setIsOpen(false)}
                 aria-label={t('str_21499df3')}
                 id="jelly-ai-close-btn"
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100/50 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/20 ios-press transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/60"
               >
                 <X size={20} />
               </button>

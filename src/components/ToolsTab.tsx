@@ -937,7 +937,7 @@ function ToolsTabContent() {
               {!isUtilityLayerExpanded && (
                 <button
                   onClick={() => setActiveTab("itinerary")}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white bg-white/70 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-white hover:text-sky-700"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white bg-white/70 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-slate-600 shadow-sm ios-press transition-colors hover:bg-white hover:text-sky-700"
                 >
                   {t('str_28c255d1')}<ArrowRight size={12} strokeWidth={2.6} />
                 </button>
@@ -976,7 +976,7 @@ function ToolsTabContent() {
                       />
                       <button
                         onClick={() => setActiveTab("itinerary")}
-                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/92 bg-white/90 px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition-colors hover:border-sky-200 hover:text-sky-700"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/92 bg-white/90 px-5 py-3 text-sm font-black text-slate-700 shadow-sm ios-press transition-colors hover:border-sky-200 hover:text-sky-700"
                       >
                         {t('str_28c255d1')}<ArrowRight size={16} strokeWidth={2.6} />
                       </button>

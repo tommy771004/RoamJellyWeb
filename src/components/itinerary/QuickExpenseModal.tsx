@@ -165,7 +165,7 @@ export default function QuickExpenseModal({
                 type="button"
                 onClick={onClose}
                 aria-label={t("a11y.close_quick_expense")}
-                className="w-10 h-10 rounded-full bg-slate-50 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/15 transition-colors flex items-center justify-center"
+                className="w-10 h-10 rounded-full bg-slate-50 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/15 ios-press transition-colors flex items-center justify-center"
               >
                 <X size={18} />
               </button>
