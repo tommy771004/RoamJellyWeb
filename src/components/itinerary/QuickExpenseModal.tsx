@@ -183,7 +183,6 @@ export default function QuickExpenseModal({
               </label>
               <input
                 id={expenseNameId}
-                data-autofocus
                 value={title}
                 onChange={(event) => {
                   setTitle(event.target.value);

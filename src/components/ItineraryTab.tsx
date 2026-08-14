@@ -129,7 +129,7 @@ import {
   getDayForDate,
   sortNodesForDisplay,
 } from "../lib/itineraryUtils";
-import { triggerHapticFeedback } from "../lib/haptics";
+import { impactHaptic } from "../lib/haptics";
 import { parseCsvInput, normalizeClockInput, formatCurrentTime } from "../lib/itineraryText";
 import { useModalAccessibility } from "../lib/useModalAccessibility";
 import { buildIcsCalendar } from "../lib/icsExport";
@@ -149,7 +149,7 @@ import {
   getOverlayTransition,
   getSheetMotion,
 } from "../lib/motionTokens";
-import { useSheetDismiss } from "../lib/useSheetDismiss";
+import { SheetGrabHandle, useSheetDismiss } from "../lib/useSheetDismiss";
 
 // Split itinerary components
 import CollapsibleNotes from "./itinerary/CollapsibleNotes";
@@ -1291,13 +1291,13 @@ export default function ItineraryTab() {
           text: shareText,
           url: shareUrl,
         });
-        triggerHapticFeedback([20]);
+        impactHaptic([20]);
         showToast(t("itinerary_feedback.share_opened"), "success");
         return;
       }
 
       await navigator.clipboard.writeText(shareUrl);
-      triggerHapticFeedback([20]);
+      impactHaptic([20]);
       showToast(t("itinerary_feedback.share_link_copied"), "success");
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
@@ -1505,7 +1505,7 @@ export default function ItineraryTab() {
     }
 
     removeNode(node_id);
-    triggerHapticFeedback([18, 40, 18]);
+    impactHaptic([18, 40, 18]);
 
     pendingDeleteTimersRef.current[node_id] = window.setTimeout(() => {
       void (async () => {
@@ -3705,15 +3705,10 @@ export default function ItineraryTab() {
                 tabIndex={-1}
                 className="fixed bottom-0 left-0 right-0 w-full max-h-[85vh] bg-white dark:bg-slate-950 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-sheet-above flex flex-col lg:hidden dark-transition border-t border-white/5"
               >
-                {/* Grab handle — the drag surface for interactive dismissal.
-                    The list below scrolls, so the drag cannot live on the sheet
-                    itself without hijacking every scroll. See useSheetDismiss. */}
-                <div
-                  {...favoritesSheetDrag.handleProps}
-                  className="shrink-0 flex justify-center pt-3 pb-2.5 bg-white/90 dark:bg-slate-950/90 rounded-t-[32px] dark-transition"
-                >
-                  <div className="h-1.5 w-10 rounded-full bg-slate-300/80 dark:bg-white/15" />
-                </div>
+                <SheetGrabHandle
+                  handleProps={favoritesSheetDrag.handleProps}
+                  className="bg-white/90 dark:bg-slate-950/90 rounded-t-[32px] dark-transition"
+                />
                 <div className="shrink-0 px-6 pb-2 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl sticky top-0 z-10 dark-transition">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-3xl bg-fuchsia-50 flex items-center justify-center text-fuchsia-500 shadow-sm border border-fuchsia-100/50">

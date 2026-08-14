@@ -1,11 +1,12 @@
 import { SPRING_SMOOTH, SPRING_SNAPPY, SPRING_BOUNCY } from '../lib/motionTokens';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useId, useRef } from 'react';
 import { SearchComponent } from './ui/animated-glowing-search-bar';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Sparkles, X, Send, PlusCircle, Plane, Luggage, Loader2, ArrowUp } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { getOverlayTransition, getSheetMotion, subtlePressableClass } from '../lib/motionTokens';
-import { useSheetDismiss } from '../lib/useSheetDismiss';
+import { SheetGrabHandle, useSheetDismiss } from '../lib/useSheetDismiss';
+import { useModalAccessibility } from '../lib/useModalAccessibility';
 import { suggestChatAssistantResponse, ChatResponseData } from '../lib/openrouterApi';
 import { getStoredToken, addFavorite } from '../lib/workflowApi';
 import { getCategoryEmoji } from '../lib/categoryEmoji';
@@ -50,6 +51,12 @@ export default function JellyAssistant() {
   const overlayTransition = getOverlayTransition(prefersReducedMotion);
   const sheetMotion = getSheetMotion(prefersReducedMotion);
   const { sheetProps, handleProps } = useSheetDismiss(() => setIsOpen(false));
+  const sheetTitleId = useId();
+  // Supplies the rest of the Dialog contract from docs/ui/Dialog and Sheet.md:
+  // Escape-to-close, focus trap, focus restored to the launcher, body scroll
+  // lock. This sheet previously had a drag gesture and a close button but none
+  // of that — it was reachable only by pointer.
+  const sheetRef = useModalAccessibility(() => setIsOpen(false), isOpen);
 
   const { showToast, activeTripId, userId } = useAppStore();
   const isLoggedIn = !!userId;
@@ -281,24 +288,21 @@ export default function JellyAssistant() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            ref={sheetRef}
             initial={sheetMotion.initial}
             animate={sheetMotion.animate}
             exit={sheetMotion.exit}
             transition={sheetMotion.transition}
             {...sheetProps}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={sheetTitleId}
+            tabIndex={-1}
             className="fixed bottom-0 left-0 right-0 z-sheet-above mx-auto flex h-[82dvh] w-full max-w-[600px] flex-col overflow-hidden rounded-t-[30px] border-t border-white/52 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,250,251,0.88),rgba(241,248,255,0.85))] shadow-[0_-12px_44px_rgba(15,23,42,0.18)] overscroll-contain dark:border-white/10 dark:bg-black/62 sm:rounded-t-[34px]"
             style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}
             id="jelly-ai-sheet"
           >
-            {/* The grab handle is the drag surface — see useSheetDismiss. The
-                visible pill is 6px tall, so the row is padded out to ~30px to
-                give the gesture something to land on. */}
-            <div
-              {...handleProps}
-              className="flex justify-center pt-3 pb-2.5 bg-white/36 dark:bg-black/24"
-            >
-              <div className="h-1.5 w-10 rounded-full bg-slate-300/80 dark:bg-white/15" />
-            </div>
+            <SheetGrabHandle handleProps={handleProps} className="bg-white/36 dark:bg-black/24" />
 
             <div className="flex items-center justify-between border-b border-slate-100 bg-white/52 px-5 py-4 dark:border-white/5 dark:bg-black/40">
               <div className="flex items-center gap-3">
@@ -306,7 +310,7 @@ export default function JellyAssistant() {
                   {assistantAvatar}
                 </div>
                 <div>
-                  <h3 className="text-[16px] font-black tracking-[-0.03em] text-slate-800 dark:text-white">{t('str_81415cf')}</h3>
+                  <h3 id={sheetTitleId} className="text-[16px] font-black tracking-[-0.03em] text-slate-800 dark:text-white">{t('str_81415cf')}</h3>
                   <p className="fluid-kicker text-sky-600 dark:text-sky-400 flex items-center gap-1.5 font-bold">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block shadow-[0_0_6px_#10b981]" />
                     {t('str_63e3164e')}</p>

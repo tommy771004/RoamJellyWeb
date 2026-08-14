@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useEffect, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
-import { useSheetDismiss } from '../lib/useSheetDismiss';
+import { SheetGrabHandle, useSheetDismiss } from '../lib/useSheetDismiss';
 import { X, Save, Loader2, Sparkles, User, MapPin, Users, Heart, Coffee, Car, DollarSign, Check, Bell, Trash2, ShieldCheck, Link2, Unlink } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -111,8 +111,35 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
   const notificationsPanelId = useId();
   const securityTabId = useId();
   const securityPanelId = useId();
-  const dialogRef = useModalAccessibility(onClose, isOpen);
-  const { sheetProps, handleProps } = useSheetDismiss(onClose);
+  // Serialised copy of the profile as last loaded or saved, so we can tell an
+  // untouched form from an edited one.
+  const savedProfileRef = useRef<string | null>(null);
+  const discardWarnedRef = useRef(false);
+
+  /**
+   * Closing with unsaved edits warns once, then lets the second attempt through.
+   *
+   * docs/ui/Dialog and Sheet.md requires 「有未提交變更時，需保存 draft、詢問確認
+   * 或明確告知離開後果」. This takes the third option. It warns rather than blocks
+   * because a hard block would leave someone unable to abandon a form they never
+   * meant to edit; the warning makes the consequence explicit and the repeat
+   * gesture confirms it.
+   */
+  const requestClose = () => {
+    const isDirty =
+      savedProfileRef.current !== null && JSON.stringify(profile) !== savedProfileRef.current;
+    if (isDirty && !discardWarnedRef.current) {
+      discardWarnedRef.current = true;
+      showToast(t('profile_modal.unsaved_warning'), 'warning');
+      return;
+    }
+    onClose();
+  };
+
+  const dialogRef = useModalAccessibility(requestClose, isOpen);
+  // The drag gesture is the likeliest accidental exit, so it routes through the
+  // same guard; when requestClose declines, framer springs the sheet back.
+  const { sheetProps, handleProps } = useSheetDismiss(requestClose);
   const { showToast, notifications, clearNotifications } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -178,7 +205,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
       setLoading(true);
       const data = await fetchUserPreferences();
       if (data?.ai_profile) {
-        setProfile({
+        const loaded: AiPreferenceProfile = {
           departure: data.ai_profile.departure || '',
           companions: data.ai_profile.companions || '',
           vibes: Array.isArray(data.ai_profile.vibes) ? data.ai_profile.vibes : [],
@@ -186,8 +213,11 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
           dietary: Array.isArray(data.ai_profile.dietary) ? data.ai_profile.dietary : [],
           transport: Array.isArray(data.ai_profile.transport) ? data.ai_profile.transport : [],
           budget: data.ai_profile.budget || '',
-        });
+        };
+        setProfile(loaded);
+        savedProfileRef.current = JSON.stringify(loaded);
       }
+      discardWarnedRef.current = false;
     } catch (err) {
       console.error(err);
       showToast(t('profile_modal.load_failed'), 'info');
@@ -200,6 +230,10 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
     try {
       setSaving(true);
       await updateUserAiProfile(profile);
+      // New baseline: what is on screen is now what is stored, so closing after
+      // this is not a discard.
+      savedProfileRef.current = JSON.stringify(profile);
+      discardWarnedRef.current = false;
       showToast(t('profile_modal.saved'));
       onClose();
     } catch (err) {
@@ -229,7 +263,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={requestClose}
             transition={getOverlayTransition()}
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-modal"
           />
@@ -245,16 +279,11 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
             tabIndex={-1}
             className="fixed bottom-0 left-0 right-0 z-modal-above flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[32px] border border-white/72 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,250,251,0.96),rgba(241,248,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(9,15,30,0.97),rgba(15,23,42,0.95))] dark:border-white/10 dark:text-slate-100 shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:shadow-black/60 md:inset-0 md:m-auto md:h-[85vh] md:max-w-2xl md:rounded-[32px]"
           >
-            {/* Grab handle — mobile only. Above `md` this surface is a centred
-                dialog, not a sheet, and iOS does not drag-dismiss those. With
-                the handle gone the drag can never start (dragListener={false}),
-                so the drag props above are inert on desktop. */}
-            <div
-              {...handleProps}
-              className="shrink-0 flex justify-center pt-3 pb-2 md:hidden"
-            >
-              <div className="h-1.5 w-10 rounded-full bg-slate-300/80 dark:bg-white/15" />
-            </div>
+            {/* Mobile only. Above `md` this surface is a centred dialog, not a
+                sheet, and iOS does not drag-dismiss those. With the handle gone
+                the drag can never start (dragListener={false}), so the drag
+                props above are inert on desktop. */}
+            <SheetGrabHandle handleProps={handleProps} className="md:hidden" />
 
             {/* Header */}
             <div className="z-10 flex shrink-0 items-center justify-between rounded-t-[32px] border-b border-white/78 bg-white/78 dark:bg-slate-900/90 dark:border-white/10 px-5 py-4 backdrop-blur-xl sm:px-7 sm:py-5 md:rounded-t-[32px]">
@@ -270,7 +299,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
               </div>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={requestClose}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100/90 text-slate-500 ios-press transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                 aria-label={t('str_12bb2d')}
               >
@@ -638,13 +667,13 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                   )}
                   <button 
                     type="button"
-                    onClick={onClose} 
+                    onClick={requestClose} 
                     className="flex-1 flex h-14 items-center justify-center rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-[14px] font-black tracking-wide shadow-md transition-all duration-200"
                   >
                     {t('str_4661c7ae')}</button>
                 </div>
               ) : (
-                <button type="button" onClick={onClose} className="flex h-14 w-full items-center justify-center rounded-2xl bg-slate-900 text-[14px] font-black text-white hover:bg-slate-800">完成</button>
+                <button type="button" onClick={requestClose} className="flex h-14 w-full items-center justify-center rounded-2xl bg-slate-900 text-[14px] font-black text-white hover:bg-slate-800">完成</button>
               )}
             </div>
           </motion.div>

@@ -81,7 +81,7 @@ import { getCountryGuide } from "../data/countryGuideData";
 import type { CountryGuide } from "../data/countryGuideData";
 import { EXPERT_HANDBOOKS } from "../data/expertHandbooks";
 import DatePickerPopup from "./DatePickerPopup";
-import { triggerHapticFeedback } from "../lib/haptics";
+import { impactHaptic, selectionHaptic } from "../lib/haptics";
 import { extractAirportCode, getIataCode, getSafetyStatus } from "../lib/airport";
 import AirlineLogo from "./AirlineLogo";
 import FlightCard from "./FlightCard";
@@ -1093,7 +1093,7 @@ export default function HomeTab({
 
   const handleCloneTrip = async (e: React.MouseEvent, trip: any) => {
     e.stopPropagation();
-    triggerHapticFeedback([18]);
+    impactHaptic([18]);
 
     if (!isLoggedIn && onRequireLogin) {
       onRequireLogin();
@@ -1478,8 +1478,8 @@ export default function HomeTab({
                               e.preventDefault();
                               updateField("to", dest.name);
                               setShowDestinationPicker(false);
-                              if (typeof triggerHapticFeedback === 'function') {
-                                triggerHapticFeedback([10]);
+                              if (typeof selectionHaptic === 'function') {
+                                selectionHaptic();
                               }
                             }}
                             className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 transition-all duration-300 hover:-translate-y-0.5 ios-press hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
@@ -1501,8 +1501,8 @@ export default function HomeTab({
                               e.preventDefault();
                               updateField("to", dest.name);
                               setShowDestinationPicker(false);
-                              if (typeof triggerHapticFeedback === 'function') {
-                                triggerHapticFeedback([10]);
+                              if (typeof selectionHaptic === 'function') {
+                                selectionHaptic();
                               }
                             }}
                             className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 text-[12px] sm:text-[13px] font-extrabold shadow-[0_1px_2px_rgba(0,0,0,0.02)] shrink-0 transition-all duration-300 hover:-translate-y-0.5 ios-press hover:border-sky-400/80 dark:hover:border-sky-500/80 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer`}
@@ -1552,7 +1552,7 @@ export default function HomeTab({
                         const tempFrom = searchForm.from;
                         updateField("from", searchForm.to);
                         updateField("to", tempFrom);
-                        triggerHapticFeedback([10]);
+                        selectionHaptic();
                       }}
                         title={t('str_9e9b7')}
                         aria-label={t('str_7dc97fb6')}
@@ -2721,7 +2721,7 @@ export default function HomeTab({
                               <div
                                 key={handbook.id}
                                 onClick={() => {
-                                  triggerHapticFeedback([16]);
+                                  impactHaptic([16]);
                                   setActiveHandbook(handbook);
                                 }}
                                 className="relative overflow-hidden w-[320px] xs:w-[350px] sm:w-[410px] h-[255px] sm:h-[275px] shrink-0 rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-200 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo ios-press"
@@ -2780,7 +2780,7 @@ export default function HomeTab({
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        triggerHapticFeedback([16]);
+                                        impactHaptic([16]);
                                         handleCopyExpertItinerary(e, handbook);
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white shadow-md ios-press"
@@ -2791,7 +2791,7 @@ export default function HomeTab({
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        triggerHapticFeedback([16]);
+                                        impactHaptic([16]);
                                         setActiveHandbook(handbook);
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 ios-press transition-all"
@@ -2810,7 +2810,7 @@ export default function HomeTab({
                               <div
                                 key={handbook.id}
                                 onClick={() => {
-                                  triggerHapticFeedback([16]);
+                                  impactHaptic([16]);
                                   setActiveHandbook(handbook);
                                 }}
                                 className="relative overflow-hidden w-full h-[255px] sm:h-[275px] rounded-[30px] flex flex-col justify-between cursor-pointer border border-slate-200 dark:border-white/10 shadow-md hover:shadow-xl transition-all group/demo ios-press"
@@ -2869,7 +2869,7 @@ export default function HomeTab({
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        triggerHapticFeedback([16]);
+                                        impactHaptic([16]);
                                         handleCopyExpertItinerary(e, handbook);
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black transition-all bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white shadow-md ios-press"
@@ -2880,7 +2880,7 @@ export default function HomeTab({
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        triggerHapticFeedback([16]);
+                                        impactHaptic([16]);
                                         setActiveHandbook(handbook);
                                       }}
                                       className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-full text-[10px] font-black border border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 ios-press transition-all"

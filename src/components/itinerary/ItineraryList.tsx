@@ -16,7 +16,7 @@ import { CATEGORY_OPTIONS, EMOJI_OPTIONS, getCategoryMeta, getNodeEmoji, getDate
 import { normalizeClockInput } from "../../lib/itineraryText";
 import { getFlightRouteSummary } from "../../lib/flightFormat";
 import { getTravelFactBookingLabel, getTravelFactRedirectPayload } from "../../lib/travelFact";
-import { triggerHapticFeedback } from "../../lib/haptics";
+import { impactHaptic, selectionHaptic } from "../../lib/haptics";
 import { geocodeSpot, fetchSpotEnrichment, regenerateItinerarySpot } from "../../lib/workflowApi";
 import { useAppStore } from "../../store/useAppStore";
 import { useTripFactsStore } from "../../store/useTripFactsStore";
@@ -251,7 +251,7 @@ const ItineraryListItem = React.memo(
         return;
       }
 
-      triggerHapticFeedback([18]);
+      impactHaptic([18]);
       window.dispatchEvent(
         new CustomEvent("open-map", {
           detail: { lat, lng, title: item.title },
@@ -1002,7 +1002,6 @@ const ItineraryListItem = React.memo(
                         </label>
                         <input
                           id={editorPlaceId}
-                          data-autofocus
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
                           placeholder={t("itinerary_editor.place_placeholder")}
@@ -1270,8 +1269,8 @@ const ReorderableItineraryItem = ({
         mass: 0.8,
         delay: Math.min(idx * 0.04, 0.3),
       }}
-      onDragStart={() => triggerHapticFeedback([14])}
-      onDragEnd={() => triggerHapticFeedback([10, 32, 12])}
+      onDragStart={() => selectionHaptic()}
+      onDragEnd={() => impactHaptic([10, 32, 12])}
       className="flex flex-col w-full relative group/reorder"
     >
       <ItineraryListItem

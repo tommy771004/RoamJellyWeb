@@ -184,7 +184,6 @@ export default function ManualAddNode({
                   />
                   <input
                     id={itemNameId}
-                    data-autofocus
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}

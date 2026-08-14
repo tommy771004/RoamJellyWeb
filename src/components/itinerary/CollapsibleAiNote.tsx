@@ -1,12 +1,9 @@
 import { useId, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Lightbulb, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { IOS_EASE } from '../../lib/motionTokens';
 
 export default function CollapsibleAiNote({ text, label }: { text: string; label: string }) {
   const { t } = useTranslation();
-  const prefersReducedMotion = useReducedMotion();
   const [isExpanded, setIsExpanded] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -37,35 +34,27 @@ export default function CollapsibleAiNote({ text, label }: { text: string; label
       >
         <Lightbulb size={12} aria-hidden="true" className="opacity-70" />
         <span>{isExpanded ? t('disclosure.hide_label', { label }) : t('disclosure.show_label', { label })}</span>
-        <ChevronDown size={12} aria-hidden="true" className={`opacity-70 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${isExpanded ? 'rotate-180' : ''}`} />
+        {/* No duration class: Tailwind's 150ms default sits under the 160ms cap
+            in docs/ui/Toggle.md. An earlier pass set duration-300 here, which
+            broke that cap. */}
+        <ChevronDown size={12} aria-hidden="true" className={`opacity-70 transition-transform motion-reduce:transition-none ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
-      {/*
-        Previously this panel used the `hidden` attribute, so the note appeared
-        and vanished in a single frame while the chevron animated — the two halves
-        of one disclosure moving at different speeds. Same height transition as
-        FaqSection so every disclosure in the app opens identically.
-      */}
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div
-            key="panel"
-            ref={panelRef}
-            id={panelId}
-            aria-labelledby={triggerId}
-            initial={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-            animate={prefersReducedMotion ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0.15 } : { duration: 0.28, ease: IOS_EASE }}
-            className="overflow-hidden"
-          >
-            <div className="mt-3 rounded-2xl border border-white/40 bg-white/50 p-3 text-sm text-slate-700 shadow-inner">
-              <p className="text-base leading-6 text-slate-700 whitespace-pre-line text-pretty">
-                {text}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* docs/ui/Toggle.md is explicit for this component: 「不用 `opacity: 0` 或
+          不穩定的 height 動畫隱藏可互動內容」, and its ARIA snippet prescribes
+          `hidden`. An animated height/opacity panel was tried here and reverted —
+          it leaves interactive content in the tree while visually gone, which is
+          exactly what the rule exists to prevent. */}
+      <div
+        ref={panelRef}
+        id={panelId}
+        aria-labelledby={triggerId}
+        hidden={!isExpanded}
+        className="mt-3 rounded-2xl border border-white/40 bg-white/50 p-3 text-sm text-slate-700 shadow-inner"
+      >
+        <p className="text-base leading-6 text-slate-700 whitespace-pre-line text-pretty">
+          {text}
+        </p>
+      </div>
     </div>
   );
 }

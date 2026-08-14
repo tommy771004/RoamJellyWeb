@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "motion/react";
 import { Home, Sparkles, CalendarDays, Luggage, X } from "lucide-react";
 import { useAppStore } from "../store/useAppStore";
-import { triggerHapticFeedback } from "../lib/haptics";
+import { selectionHaptic } from "../lib/haptics";
 import { useTranslation } from "react-i18next";
 
 const TAB_ICONS = {
@@ -124,7 +124,7 @@ export default function BottomTabs() {
                       // Only on an actual change of selection, the way
                       // UISelectionFeedbackGenerator behaves: re-tapping the tab
                       // you are already on moves nothing and so buzzes nothing.
-                      if (activeTab !== tab.id) triggerHapticFeedback(12);
+                      if (activeTab !== tab.id) selectionHaptic();
                       setActiveTab(tab.id as any);
                       if (tab.id === "ai_form") {
                         setIsExpanded(false);

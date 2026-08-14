@@ -142,7 +142,6 @@ export default function SpotImageSearchModal({
               />
               <input
                 id={searchInputId}
-                data-autofocus
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}

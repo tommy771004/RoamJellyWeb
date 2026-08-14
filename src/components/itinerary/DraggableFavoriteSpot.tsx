@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { Plus, Trash2 } from "lucide-react";
 import type { FavoriteSpot } from "../../types/workflow";
 import IconImg from "../ui/IconImg";
-import { triggerHapticFeedback } from "../../lib/haptics";
+import { impactHaptic, selectionHaptic } from "../../lib/haptics";
 import { fetchSpotEnrichment } from "../../lib/workflowApi";
 
 export default function DraggableFavoriteSpot({
@@ -49,11 +49,11 @@ export default function DraggableFavoriteSpot({
         if (isOffline) return;
         event.dataTransfer.effectAllowed = "copy";
         event.dataTransfer.setData("text/plain", spot.id);
-        triggerHapticFeedback([14]);
+        selectionHaptic();
         onDragStart?.(spot);
       }}
       onDragEnd={() => {
-        triggerHapticFeedback([10, 32, 12]);
+        impactHaptic([10, 32, 12]);
         onDragEnd?.();
       }}
       className="group relative flex flex-col gap-2 p-3 bg-white/40 backdrop-blur-xl border border-white/60 sm:border sm:border-white/60 rounded-[20px] shadow-sm hover:shadow-xl transition-all"
