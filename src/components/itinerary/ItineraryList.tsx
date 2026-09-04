@@ -1643,7 +1643,7 @@ export default function ItineraryList({
               disabled={isOffline}
               className="w-full rounded-[32px] bg-gradient-to-r from-fuchsia-700 to-indigo-700 px-5 py-4 sm:py-5 text-[15px] sm:text-[16px] font-black tracking-widest text-white shadow-[0_8px_20px_rgba(192,38,211,0.25)] transition-[transform,shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(192,38,211,0.35)] ios-press disabled:opacity-40 flex justify-center items-center gap-2 whitespace-nowrap transform-gpu"
             >
-              ✨ {t("itinerary_day.ask_ai")}
+              {t("itinerary_day.ask_ai")}
             </button>
             <button
               type="button"
@@ -1685,7 +1685,7 @@ export default function ItineraryList({
             </span>
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-3xl bg-gradient-to-br from-fuchsia-700 to-indigo-700 text-xl text-white shadow-lg shadow-fuchsia-200/50">
-                ✨
+                <Sparkles className="h-5 w-5" />
               </div>
               <div className="min-w-0" aria-hidden="true">
                 <p className="text-[11px] font-black uppercase tracking-[0.22em] text-indigo-500">

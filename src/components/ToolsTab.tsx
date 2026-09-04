@@ -323,7 +323,7 @@ function ToolsTabProvider({ children }: { children: React.ReactNode }) {
             // non-blocking fallback if background api failed
           });
         }
-        showToast(`✨ AI 行李推薦新增了 ${newItems.length} 項物品！`, "success");
+        showToast(`AI 行李推薦新增了 ${newItems.length} 項物品。`, "success");
       } catch (err) {
         if (err instanceof AiRateLimitedError) {
           showToast(err.message, "warning");

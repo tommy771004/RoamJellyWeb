@@ -22,7 +22,7 @@ export default function PortfolioSection() {
       title: "台鐵/高鐵時刻",
       url: "https://taiwanrail.vercel.app/",
       desc1: "快速查詢雙鐵班次與誤點。",
-      desc2: "極簡介面完美支援通勤規劃。",
+      desc2: "介面支援通勤規劃。",
       icon: "🚄",
     },
   ];

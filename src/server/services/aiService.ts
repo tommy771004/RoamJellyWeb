@@ -183,7 +183,7 @@ Ensure:
       suggestedType: 'activities',
       activities: [
         { title: '國立故宮博物院', time: '09:30 - 12:30', description: '世界頂級的中華文物收藏館，室內空間寬敞，非常適合在雨天靜靜欣賞歷史的溫度。', category: 'landmark' },
-        { title: '北投老爺酒店大眾湯 / 日勝生加賀屋', time: '14:00 - 16:30', description: '搭乘捷運至新北投站，在淅淅瀝瀝的雨聲中，沐浴在硫磺溫泉中享受最極致的療癒。', category: 'activity' },
+        { title: '北投老爺酒店大眾湯 / 日勝生加賀屋', time: '14:00 - 16:30', description: '搭乘捷運至新北投站，在淅淅瀝瀝的雨聲中，沐浴在硫磺溫泉中享受放鬆療癒。', category: 'activity' },
         { title: '青田街日式老屋與文青咖啡館', time: '17:00 - 18:30', description: '拜訪青田茶館或學校咖啡館，在綠意環繞的日式宿舍中點一杯暖心茶飲聽雨。', category: 'food' },
         { title: '誠品生活南西店 & 中山地下街', time: '19:00 - 21:30', description: '中山站一帶最棒的室內購物空間，從文創設計商品、精品書店到下午茶甜點一應俱全。', category: 'shopping' }
       ]
@@ -192,7 +192,7 @@ Ensure:
 
   if (hasTaipeiKeyword) {
     return {
-      text: `台北是一座完美融合傳統廟宇文化與現代極致摩天大樓的魅力都市！推薦必玩景點像是信義區的台北101、文青齊聚的華山/松菸文創園區，以及美食天堂饒河街與士林夜市。以下是精選的台北一日推薦：`,
+      text: `台北融合傳統廟宇文化與現代摩天大樓。推薦必玩景點像是信義區的台北101、華山/松菸文創園區，以及饒河街與士林夜市。以下是精選的台北一日推薦：`,
       suggestedType: 'activities',
       activities: [
         { title: '華山1914文化創意產業園區', time: '10:00 - 12:30', description: '由百年酒廠改建而成的文創園區，有當期展覽、獨立書店，及許多極具特色的設計小店。', category: 'landmark' },

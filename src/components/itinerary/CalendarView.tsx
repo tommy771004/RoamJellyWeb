@@ -308,9 +308,6 @@ export default function CalendarView({
             {selectedNode.linkedFactId &&
               facts.find((f: any) => f.id === selectedNode.linkedFactId) && (
                 <div className="mt-4 p-4 rounded-[1.5rem] bg-gradient-to-br from-cyan-50 to-blue-50/50 border border-white shadow-sm flex flex-col gap-2 relative overflow-hidden">
-                  <div className="absolute -top-6 -right-6 p-4 opacity-10 text-6xl pointer-events-none">
-                    ✨
-                  </div>
 
                   <div className="flex items-center gap-2 mb-1">
                     <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-cyan-500 shadow-sm shrink-0 relative z-10">

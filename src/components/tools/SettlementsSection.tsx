@@ -121,7 +121,7 @@ export default function SettlementsSection({ className }: { className?: string }
               </div>
               <h4 className="text-base font-black text-slate-900 tracking-tight">款項已全部結清！</h4>
               <p className="text-[12px] font-bold text-slate-500 max-w-[280px] mt-1.5 leading-relaxed">
-                太棒了！所有旅途花費或拆帳細項均已兩清，目前無任何未清款項。
+                所有旅途花費或拆帳細項皆已結清，無未清款項。
               </p>
             </div>
           )}

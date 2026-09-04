@@ -613,7 +613,7 @@ export default function HomeTab({
   const FLIGHT_PLATFORMS = useMemo(() => [
     {
       name: "Trip.com 攜程機票",
-      badge: "最推薦 ✨",
+      badge: "最推薦",
       logoColor: "from-blue-500 to-sky-400",
       category: "flights" as const,
       url: buildTripComFlightUrl(),
@@ -637,7 +637,7 @@ export default function HomeTab({
   const HOTEL_PLATFORMS = useMemo(() => [
     {
       name: "Agoda 雅高達訂房",
-      badge: "亞洲首選 ✨",
+      badge: "亞洲首選",
       logoColor: "from-purple-500 to-pink-500",
       category: "hotels" as const,
       url: buildAgodaUrl(),
@@ -661,7 +661,7 @@ export default function HomeTab({
   const TICKET_PLATFORMS = useMemo(() => [
     {
       name: "Klook 客路門票",
-      badge: "亞洲首選 ✨",
+      badge: "亞洲首選",
       logoColor: "from-orange-500 to-amber-500",
       category: "tickets" as const,
       url: buildKlookUrl('', 'nav-tickets'),
@@ -2687,7 +2687,7 @@ export default function HomeTab({
                             toggleTrack(flight.id);
                             showToast(
                               !isCurrentlyTracked
-                                ? `✨ 已開啟 ${flight.provider} 的降價提醒！`
+                                ? `已開啟 ${flight.provider} 的降價提醒`
                                 : `🔕 已關閉降價提醒`,
                             );
                           }}
@@ -2800,7 +2800,7 @@ export default function HomeTab({
                                     {handbook.title.includes("東京") 
                                       ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
                                       : handbook.title.includes("大阪")
-                                      ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
+                                      ? "環球影城與美食的關西規劃。"
                                       : "免等待免登入！專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
                                   </p>
 
@@ -2889,7 +2889,7 @@ export default function HomeTab({
                                     {handbook.title.includes("東京") 
                                       ? "梅雨季最佳晴雨備案！由達人親研，不畏天氣，一次打包東京經典與潮牌地標。"
                                       : handbook.title.includes("大阪")
-                                      ? "親自肉測！最省時的環球影城與極致美食，高含金量的保姆級關西規劃。"
+                                      ? "環球影城與美食的關西規劃。"
                                       : "免等待免登入！專為新朋友準備的起跑暖身路線，體驗共編與豐富工具。"}
                                   </p>
 
@@ -3040,7 +3040,7 @@ export default function HomeTab({
                             const targetId = trip.tripId || trip.id;
                             setActiveTripId(targetId);
                             setActiveTab("itinerary");
-                            showToast(`✨ 已切換至行程：「${trip.name || trip.destination || '客製化行程'}」`, "success");
+                            showToast(`已切換至行程：「${trip.name || trip.destination || '客製化行程'}」`, "success");
                           }}
                           className={`p-4 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between gap-3 ${
                             isCurrent

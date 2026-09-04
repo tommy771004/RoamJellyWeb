@@ -801,7 +801,7 @@ export default function ItineraryTab() {
       removeNode(normalized.node_id);
       showToast("新增行程失敗，已還原。", "warning");
     });
-    showToast(`✨ 已新增：${normalized.title}`);
+    showToast(`已新增：${normalized.title}`);
   };
 
   // Persist itinerary to localStorage for offline reading whenever it changes while online
@@ -1966,12 +1966,12 @@ export default function ItineraryTab() {
       }
 
       if (effectiveMode === "overwrite_all") {
-        showToast(`✨ 已一鍵覆蓋行程，共 ${finalNodes.length} 個新節點`);
+        showToast(`已覆蓋行程，共 ${finalNodes.length} 個新節點`);
       } else if (effectiveMode === "generate_for_selected_days") {
-        showToast(`✨ 已重建 Day ${rangeStartDay} 到 Day ${rangeEndDay}`);
+        showToast(`已重建 Day ${rangeStartDay} 到 Day ${rangeEndDay}`);
       } else {
         showToast(
-          `✨ 已重建 Day ${selectedDay}，共 ${finalNodes.length} 個節點`,
+          `已重建 Day ${selectedDay}，共 ${finalNodes.length} 個節點`,
         );
       }
     } catch (error) {
@@ -2485,7 +2485,7 @@ export default function ItineraryTab() {
                     {tripInfo?.name || tripInfo?.destination || t('unnamed_destination', '未命名目的地')}
                   </span>
                   <span className="text-4xl lg:text-5xl group-hover/title:scale-125 transition-transform duration-300">
-                    ✨
+                    <Sparkles className="h-8 w-8 text-fuchsia-500" />
                   </span>
                 </div>
               </h1>
@@ -3859,7 +3859,6 @@ export default function ItineraryTab() {
                 </button>
                 <div className="flex flex-col items-center text-center mt-2">
                   <div className="w-16 h-16 bg-sky-50 rounded-full flex items-center justify-center mb-5 border border-sky-100 shadow-sm relative">
-                     <span className="absolute -top-1 -right-1 text-2xl">✨</span>
                     <Sparkles size={28} className="text-sky-500" strokeWidth={2} />
                   </div>
                   <h2 className="text-[22px] font-black text-slate-800 mb-2 font-display leading-tight">

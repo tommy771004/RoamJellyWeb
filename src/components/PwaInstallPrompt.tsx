@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
-import { X } from 'lucide-react';
+import { X, Download } from 'lucide-react';
 import { isStandaloneDisplayMode, isIosMobileSafari } from '../lib/pwa';
 import { useTranslation } from "react-i18next";
 
@@ -97,8 +97,8 @@ export default function PwaInstallPrompt() {
         </button>
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-rose-400 text-xl shadow-lg shadow-pink-500/20">
-              ✨
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-rose-400 text-xl shadow-lg shadow-pink-500/20 text-white">
+              <Download className="h-5 w-5" />
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-black uppercase tracking-[0.2em] text-fuchsia-300">{t('str_4d758a13')}</p>

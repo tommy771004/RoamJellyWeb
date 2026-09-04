@@ -84,7 +84,7 @@ export default function ChecklistSection({ className }: { className?: string }) 
         selected: true,
       }));
       setSuggestedItems(modeled);
-      showToast(`✨ AI 推薦行李產生成功！共有 ${suggestions.length} 項精選物品。`, "success");
+      showToast(`AI 推薦行李產生成功，共有 ${suggestions.length} 項物品。`, "success");
     } catch (err: any) {
       if (err instanceof AiRateLimitedError) {
         showToast(err.message, "warning");
@@ -126,7 +126,7 @@ export default function ChecklistSection({ className }: { className?: string }) 
         // non-blocking
       });
     }
-    showToast(`✨ 已成功匯入 ${newItems.length} 項行李物品！`, "success");
+    showToast(`已成功匯入 ${newItems.length} 項行李物品。`, "success");
     setSuggestedItems(null);
   };
 
