@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { FREE_MODELS, fetchOpenRouterWithFallback, resetOpenRouterModelState } from './openrouterHelper';
 
-type Behaviour = { status?: number; text?: string; delayMs?: number };
+type Behaviour = { status?: number; text?: string; delayMs?: number; reasoningMandatory?: boolean };
 
 const realFetch = globalThis.fetch;
 let calls: Array<{ model: string; body: any }> = [];
@@ -14,6 +14,9 @@ function stubOpenRouter(behaviours: Record<string, Behaviour>) {
     const body = JSON.parse(String(init?.body));
     calls.push({ model: body.model, body });
     const b = behaviours[body.model] ?? { status: 404 };
+    if (b.reasoningMandatory && body.reasoning?.effort === 'none') {
+      return new Response(JSON.stringify({ error: { message: 'Reasoning is mandatory for this endpoint and cannot be disabled.', code: 400 } }), { status: 400 });
+    }
     if (b.delayMs) {
       await new Promise<void>((resolve, reject) => {
         const t = setTimeout(resolve, b.delayMs);
@@ -51,10 +54,19 @@ test('the model list holds the requested free models and the backups', () => {
   assert.ok(FREE_MODELS.every((m) => m.endsWith(':free')));
 });
 
-test('asks for low-effort, hidden reasoning', async () => {
+test('turns hidden reasoning off so it cannot use up max_tokens', async () => {
   stubOpenRouter({ [M1]: { text: 'ok' } });
   assert.equal(await fetchOpenRouterWithFallback('k', 'hi', FAST), 'ok');
-  assert.deepEqual(calls[0].body.reasoning, { effort: 'low', exclude: true });
+  assert.deepEqual(calls[0].body.reasoning, { effort: 'none', exclude: true });
+});
+
+test('a model that cannot turn reasoning off is retried with low effort, and remembered', async () => {
+  stubOpenRouter({ [M1]: { text: 'ok', reasoningMandatory: true } });
+  assert.equal(await fetchOpenRouterWithFallback('k', 'hi', FAST), 'ok');
+  assert.deepEqual(calls.map((c) => c.body.reasoning.effort), ['none', 'low']);
+  calls = [];
+  assert.equal(await fetchOpenRouterWithFallback('k', 'hi', FAST), 'ok');
+  assert.deepEqual(calls.map((c) => c.body.reasoning.effort), ['low']);
 });
 
 test('skips a missing model and does not try it again on the next call', async () => {

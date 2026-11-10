@@ -91,30 +91,49 @@ function orderModels(now = Date.now()): string[] {
   return ordered;
 }
 
+/** Models that rejected `effort: 'none'` (reasoning they cannot turn off); they get `low` instead. */
+const reasoningRequired = new Set<string>();
+
+async function postCompletion(model: string, apiKey: string, prompt: string, signal: AbortSignal, effort: 'none' | 'low'): Promise<Response> {
+  return fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    signal,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': 'https://roamjelly.app',
+      'X-Title': 'RoamJelly',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      // Reasoning tokens count against max_tokens. With `effort: 'low'` the
+      // free models still reasoned until all 4000 tokens were gone and
+      // returned empty content (finish_reason=length), so reasoning is turned
+      // off; the headroom is for models that reason regardless.
+      max_tokens: 8000,
+      reasoning: { effort, exclude: true },
+    }),
+  });
+}
+
 async function callModel(model: string, apiKey: string, prompt: string, signal: AbortSignal): Promise<string> {
   let response: Response;
   try {
-    response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://roamjelly.app',
-        'X-Title': 'RoamJelly',
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 4000,
-        // Every free model here is a reasoning model. Long hidden reasoning
-        // made answers slow and sometimes used up max_tokens before any
-        // content; low effort keeps answers quick, and excluding it keeps the
-        // reply to the content the callers parse.
-        reasoning: { effort: 'low', exclude: true },
-      }),
-    });
+    const effort = reasoningRequired.has(model) ? 'low' : 'none';
+    response = await postCompletion(model, apiKey, prompt, signal, effort);
+    if (response.status === 400 && effort === 'none') {
+      const errText = await response.text().catch(() => '');
+      if (/reason|think/i.test(errText)) {
+        // This model cannot run without reasoning; remember and retry once.
+        reasoningRequired.add(model);
+        response = await postCompletion(model, apiKey, prompt, signal, 'low');
+      } else {
+        throw new ModelAttemptError('failed', `OpenRouter API Error (${model}): 400 ${errText.slice(0, 300)}`);
+      }
+    }
   } catch (err: any) {
+    if (err instanceof ModelAttemptError) throw err;
     if (signal.aborted) throw new ModelAttemptError('failed', `${model} timed out or was cancelled`);
     throw new ModelAttemptError('failed', `${model} network error: ${err?.message ?? err}`);
   }
@@ -272,5 +291,6 @@ export async function fetchOpenRouterWithFallback(
 /** Test hook: forget runtime model health and preference. */
 export function resetOpenRouterModelState(): void {
   modelHealth.clear();
+  reasoningRequired.clear();
   preferredModel = null;
 }
