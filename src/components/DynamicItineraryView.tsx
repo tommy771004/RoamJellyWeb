@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { ArrowLeft, ArrowUpRight, Clock, MapPin, Navigation2 } from 'lucide-react';
 import type { ItineraryNode } from '../types/workflow';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +37,32 @@ export default function DynamicItineraryView({
     return grouped;
   }, [result?.rawSuggestions]);
 
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const activeIndex = Math.min(selectedIndex, Math.max(itinerary.length - 1, 0));
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const dayNumberAt = (index: number) => Number(itinerary[index]?.day || index + 1);
+
+  const selectDay = (index: number) => {
+    setSelectedIndex(index);
+    tabRefs.current[index]?.focus();
+    tabRefs.current[index]?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  };
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const last = itinerary.length - 1;
+    const next =
+      event.key === 'ArrowRight' ? (index === last ? 0 : index + 1)
+      : event.key === 'ArrowLeft' ? (index === 0 ? last : index - 1)
+      : event.key === 'Home' ? 0
+      : event.key === 'End' ? last
+      : null;
+    if (next === null) return;
+    event.preventDefault();
+    selectDay(next);
+  };
+
+  const visibleDays = itinerary.length > 1 ? [itinerary[activeIndex]] : itinerary;
+
   return (
     <main className="h-full w-full overflow-y-auto bg-[#eef2ed] text-[#26342d] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       <div className="mx-auto w-full max-w-5xl px-4 pb-32 pt-page sm:px-8">
@@ -65,15 +91,53 @@ export default function DynamicItineraryView({
           )}
         </header>
 
+        {itinerary.length > 1 && (
+          <div
+            role="tablist"
+            aria-label={t('ai_result.day_tabs', '依天數查看行程')}
+            className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0"
+          >
+            {itinerary.map((dayData: any, dayIndex: number) => {
+              const dayNumber = Number(dayData.day || dayIndex + 1);
+              const selected = dayIndex === activeIndex;
+              return (
+                <button
+                  key={dayNumber}
+                  ref={(el) => { tabRefs.current[dayIndex] = el; }}
+                  id={`ai-result-day-tab-${dayNumber}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  aria-controls={`ai-result-day-panel-${dayNumber}`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => selectDay(dayIndex)}
+                  onKeyDown={(event) => handleTabKeyDown(event, dayIndex)}
+                  className={`min-h-11 shrink-0 whitespace-nowrap px-5 text-sm font-black tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/25 [clip-path:polygon(10px_0,100%_0,100%_calc(100%_-_10px),calc(100%_-_10px)_100%,0_100%,0_10px)] ${
+                    selected
+                      ? 'bg-[#26342d] text-white'
+                      : 'bg-white/85 text-[#526159] hover:bg-white hover:text-[#26342d]'
+                  }`}
+                >
+                  Day {dayNumber}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="space-y-5">
-          {itinerary.map((dayData: any, dayIndex: number) => {
-            const dayNumber = Number(dayData.day || dayIndex + 1);
+          {visibleDays.map((dayData: any, visibleIndex: number) => {
+            const dayIndex = itinerary.length > 1 ? activeIndex : visibleIndex;
+            const dayNumber = dayNumberAt(dayIndex);
             const rawNodes = rawByDay[dayNumber] || [];
             const spots = Array.isArray(dayData.spots) ? dayData.spots : [];
 
             return (
               <article
                 key={dayNumber}
+                {...(itinerary.length > 1
+                  ? { id: `ai-result-day-panel-${dayNumber}`, role: 'tabpanel', 'aria-labelledby': `ai-result-day-tab-${dayNumber}`, tabIndex: 0 }
+                  : {})}
                 className="grid bg-white/85 [clip-path:polygon(18px_0,100%_0,100%_calc(100%_-_18px),calc(100%_-_18px)_100%,0_100%,0_18px)] sm:grid-cols-[10rem_1fr]"
               >
                 <header className="bg-[#26342d] px-6 py-6 text-white sm:px-7 sm:py-8">

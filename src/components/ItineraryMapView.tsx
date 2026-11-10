@@ -9,6 +9,7 @@ import type { ItineraryNode } from '../types/workflow';
 import { openNativeMap } from '../lib/workflowApi';
 import { useTranslation } from "react-i18next";
 import { getCategoryMeta } from '../lib/itineraryUtils';
+import { BASE_TILE_ATTRIBUTION, BASE_TILE_MAX_ZOOM, BASE_TILE_URL } from '../lib/mapTiles';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -165,8 +166,9 @@ export default function ItineraryMapView({
           touchZoom={true}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            attribution={BASE_TILE_ATTRIBUTION}
+            url={BASE_TILE_URL}
+            maxZoom={BASE_TILE_MAX_ZOOM}
           />
           <MapUpdater
             selectedLat={selectedNode?.lat}

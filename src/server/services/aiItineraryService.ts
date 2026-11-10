@@ -32,27 +32,51 @@ function isCoordValidForCity(
 }
 
 const cityCoordsCache = new Map<string, { lat: number; lng: number }>();
+/** Names that resolved to nothing, so each costs at most one lookup chain. */
+const unresolvableCities = new Set<string>();
+
+async function resolveCityCoords(city: string): Promise<{ lat: number; lng: number } | null> {
+  const cleanCity = city.trim();
+  if (!cleanCity) return null;
+  if (cityCoordsCache.has(cleanCity)) return cityCoordsCache.get(cleanCity) || null;
+  if (unresolvableCities.has(cleanCity)) return null;
+  const resolved = await geocodeSpot(cleanCity, "", "");
+  if (resolved) cityCoordsCache.set(cleanCity, resolved);
+  else unresolvableCities.add(cleanCity);
+  return resolved;
+}
+
+const MEAL_OR_STAY_PREFIX = /^(?:早餐|早午餐|午餐|晚餐|宵夜|下午茶|點心|住宿|入住|飯店|酒店)\s*[：:]\s*/;
+
+/**
+ * Turns an itinerary title into a place-search query: drops a leading
+ * "晚餐：" style label and keeps the first of several alternatives
+ * ("博多燒鹵飯 / 博多拉麵", "小筑 或 嘉麻"). Geocoders find nothing for the
+ * full title, which sent every such spot to the slow AI fallback.
+ */
+export function placeQueryName(title: string): string {
+  let name = title.trim().replace(MEAL_OR_STAY_PREFIX, "");
+  name = name.split(/\s*[\/／]\s*|\s+或\s+/)[0] ?? name;
+  return name.trim() || title.trim();
+}
+
+/** Categories that describe moving between places; an AI-guessed pin for them is noise. */
+const NON_PLACE_CATEGORIES = new Set(["transport", "flight"]);
 
 async function geocodeSpot(
   name: string,
   city: string,
-  localName?: string
+  localName?: string,
+  options: { allowAiFallback?: boolean } = {},
 ): Promise<{ lat: number; lng: number } | null> {
   const cleanName = name.trim();
   const cleanCity = city.trim();
+  const allowAiFallback = options.allowAiFallback ?? true;
 
   let biasCoords: { lat: number; lng: number } | null = null;
 
   if (cleanCity && cleanCity.toLowerCase() !== cleanName.toLowerCase()) {
-    if (cityCoordsCache.has(cleanCity)) {
-      biasCoords = cityCoordsCache.get(cleanCity) || null;
-    } else {
-      const resolved = await geocodeSpot(cleanCity, "", "");
-      if (resolved) {
-        cityCoordsCache.set(cleanCity, resolved);
-        biasCoords = resolved;
-      }
-    }
+    biasCoords = await resolveCityCoords(cleanCity);
   }
 
   const searchName = localName && localName !== cleanName ? `${localName} ${cleanName}` : cleanName;
@@ -138,7 +162,7 @@ async function geocodeSpot(
   } catch { /* swallow */ }
 
   // ── AI Fallback (Third Fallback) ──────────────────────────────────────────
-  if (apiKey && (cleanName || cleanCity)) {
+  if (allowAiFallback && apiKey && (cleanName || cleanCity)) {
     try {
       const prompt = `Please find the GPS coordinates (latitude,longitude) for the spot: "${cleanName}" inside the destination: "${cleanCity}".
 You MUST strictly return coordinates that are physically located within or extremely close to "${cleanCity}". If the spot matches a location outside of "${cleanCity}", you MUST find and return a matching attraction or coordinates inside "${cleanCity}" instead.
@@ -257,6 +281,24 @@ async function getOSRMMinutes(
 }
 
 /**
+ * The AI's per-spot `city` is sometimes not a city at all ("出發點") or one
+ * that resolves to the wrong country ("福岡機場" → Taoyuan). Use it only when
+ * it lies near the destination; otherwise search around the destination.
+ */
+async function chooseSpotCity(
+  spotCity: unknown,
+  destination: string,
+  destinationCoords: { lat: number; lng: number } | null,
+): Promise<string> {
+  const city = typeof spotCity === "string" ? spotCity.trim() : "";
+  if (!city || city === destination) return destination || city;
+  if (!destinationCoords) return city;
+  const coords = await resolveCityCoords(city);
+  if (coords && distanceInKm(coords.lat, coords.lng, destinationCoords.lat, destinationCoords.lng) <= 200) return city;
+  return destination;
+}
+
+/**
  * Enrich itinerary spots after AI generation:
  *  1. Geocode (Photon → Nominatim fallback) + Wikipedia thumbnail — parallel across all days
  *  2. OSRM transport_to_next — days run in parallel; spots within a day are sequential
@@ -274,11 +316,14 @@ async function enrichItinerary(parsed: any, destination: string): Promise<any> {
       const enrichedSpots = await Promise.all(
         dayData.spots.map(async (spot: any) => {
           const name: string = spot.name || spot.title || "";
-          const spotCity: string = spot.city || destination || "";
+          const spotCity = await chooseSpotCity(spot.city, destination, biasCoords);
           const spotLocalName: string = spot.local_name || "";
+          const queryName = placeQueryName(name);
           const [coords, thumbnail] = await Promise.all([
-            geocodeSpot(name, spotCity, spotLocalName),
-            getWikiThumbnail(name),
+            geocodeSpot(queryName, spotCity, spotLocalName, {
+              allowAiFallback: !NON_PLACE_CATEGORIES.has(spot.category),
+            }),
+            getWikiThumbnail(queryName),
           ]);
 
           let finalLat = coords ? coords.lat : spot.lat;

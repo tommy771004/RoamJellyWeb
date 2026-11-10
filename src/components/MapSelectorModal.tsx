@@ -8,6 +8,7 @@ import { Check, X } from 'lucide-react';
 import { getModalMotion, getOverlayTransition } from '../lib/motionTokens';
 import { useTranslation } from "react-i18next";
 import { useModalAccessibility } from '../lib/useModalAccessibility';
+import { BASE_TILE_ATTRIBUTION, BASE_TILE_MAX_ZOOM, BASE_TILE_URL } from '../lib/mapTiles';
 
 const selectIcon = L.divIcon({
   html: `
@@ -94,10 +95,9 @@ export default function MapSelectorModal({ isOpen, onClose, onSelect, initialLat
               center={[selectedPos?.lat || initialLat, selectedPos?.lng || initialLng]} 
               zoom={13} 
               style={{ height: '100%', width: '100%', zIndex: 0 }}
-              attributionControl={false}
               zoomControl={false}
             >
-              <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+              <TileLayer url={BASE_TILE_URL} attribution={BASE_TILE_ATTRIBUTION} maxZoom={BASE_TILE_MAX_ZOOM} />
               <MapClickHandler onLocationSelect={(lat, lng) => setSelectedPos({ lat, lng })} />
               {selectedPos && (
                 <Marker position={[selectedPos.lat, selectedPos.lng]} icon={selectIcon} />

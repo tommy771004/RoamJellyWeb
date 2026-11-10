@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildRegenerateSpotPrompt } from './aiItineraryService';
+import { buildRegenerateSpotPrompt, placeQueryName } from './aiItineraryService';
 
 test('buildRegenerateSpotPrompt includes scheduling context, neighbors, and travel facts', () => {
   const prompt = buildRegenerateSpotPrompt({
@@ -24,4 +24,14 @@ test('buildRegenerateSpotPrompt includes scheduling context, neighbors, and trav
   assert.match(prompt, /淺草晚餐/);
   assert.match(prompt, /Shinjuku Hotel/);
   assert.match(prompt, /盡量保留原本時間窗/);
+});
+
+test('placeQueryName strips meal/stay labels and keeps the first alternative', () => {
+  assert.equal(placeQueryName('晚餐：博多燒鹵飯 / 博多拉麵'), '博多燒鹵飯');
+  assert.equal(placeQueryName('住宿：福岡早良區溫泉民宿'), '福岡早良區溫泉民宿');
+  assert.equal(placeQueryName('晚餐：小筑 或 嘉麻'), '小筑');
+  assert.equal(placeQueryName('午餐: 一蘭拉麵'), '一蘭拉麵');
+  assert.equal(placeQueryName('桃園國際機場 / 中部國際機場出發'), '桃園國際機場');
+  assert.equal(placeQueryName('警固八幡宮'), '警固八幡宮');
+  assert.equal(placeQueryName('博多祇園山笠 Museum'), '博多祇園山笠 Museum');
 });

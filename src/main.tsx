@@ -4,6 +4,10 @@ import App from './App';
 import './index.css';
 import './i18n';
 import { registerSW } from 'virtual:pwa-register';
+import { installAuthRefresh } from './lib/installAuthRefresh';
+
+// Refresh expired 15-minute access tokens transparently (before any request runs).
+installAuthRefresh();
 
 // Register the PWA service worker in prompt mode so an update never reloads the
 // page while a user is filling a form. App.tsx surfaces the update action.

@@ -91,6 +91,7 @@ import {
   submitLedgerExpense,
   deleteTripApi,
   openNativeMap,
+  getStoredToken,
 } from "../lib/workflowApi";
 import {
   suggestItineraryWithForm,
@@ -995,7 +996,12 @@ export default function ItineraryTab() {
 
       const socket = io("/", {
         transports: ["websocket", "polling"],
-        auth: token ? { token: `Bearer ${token}` } : undefined,
+        // A function, so reconnects send the current token rather than the
+        // one from mount time, which expires after 15 minutes.
+        auth: (cb) => {
+          const current = getStoredToken() || token;
+          cb(current ? { token: `Bearer ${current}` } : {});
+        },
       });
 
       socket.on("connect", () => {
