@@ -5,7 +5,7 @@ import type { RouteFlightSnapshot } from '../server/seo/routeFlightFacts';
 export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
   "tpe-bkk": {
     "slug": "tpe-bkk",
-    "fetchedAt": "2026-11-10T08:48:29.824Z",
+    "fetchedAt": "2026-11-10T09:36:06.957Z",
     "flights": [
       {
         "airline": "中華航空",
@@ -13,7 +13,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:00",
         "arrival": "09:50",
         "durationMin": 230,
-        "price": 9550,
+        "price": 9173,
         "departureDate": "2026-12-01"
       },
       {
@@ -22,7 +22,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:40",
         "arrival": "10:45",
         "durationMin": 245,
-        "price": 17210,
+        "price": 16052,
         "departureDate": "2026-12-01"
       },
       {
@@ -31,7 +31,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:55",
         "arrival": "10:50",
         "durationMin": 235,
-        "price": 14696,
+        "price": 13521,
         "departureDate": "2026-12-01"
       },
       {
@@ -40,7 +40,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:05",
         "arrival": "11:10",
         "durationMin": 245,
-        "price": 16774,
+        "price": 15687,
         "departureDate": "2026-12-01"
       },
       {
@@ -49,7 +49,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:25",
         "arrival": "11:30",
         "durationMin": 245,
-        "price": 14044,
+        "price": 13194,
         "departureDate": "2026-12-01"
       },
       {
@@ -58,7 +58,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:25",
         "arrival": "12:35",
         "durationMin": 250,
-        "price": 6936,
+        "price": 6690,
         "departureDate": "2026-12-01"
       },
       {
@@ -67,7 +67,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:05",
         "arrival": "13:05",
         "durationMin": 240,
-        "price": 9623,
+        "price": 9173,
         "departureDate": "2026-12-01"
       },
       {
@@ -76,7 +76,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:25",
         "arrival": "16:30",
         "durationMin": 245,
-        "price": 6329,
+        "price": 5910,
         "departureDate": "2026-12-01"
       },
       {
@@ -85,7 +85,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:50",
         "arrival": "16:45",
         "durationMin": 235,
-        "price": 6966,
+        "price": 7309,
         "departureDate": "2026-12-01"
       },
       {
@@ -94,8 +94,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:55",
         "arrival": "16:50",
         "durationMin": 235,
-        "price": 14219,
-        "departureDate": "2026-12-25"
+        "price": 13521,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "泰國越捷航空",
@@ -103,7 +103,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:15",
         "arrival": "18:10",
         "durationMin": 235,
-        "price": 4086,
+        "price": 3737,
         "departureDate": "2026-12-01"
       },
       {
@@ -112,8 +112,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "18:50",
         "arrival": "21:45",
         "durationMin": 235,
-        "price": 14475,
-        "departureDate": "2026-12-25"
+        "price": 13521,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "泰國越捷航空",
@@ -121,7 +121,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:00",
         "arrival": "22:00",
         "durationMin": 240,
-        "price": 3410,
+        "price": 3321,
         "departureDate": "2026-12-01"
       },
       {
@@ -130,7 +130,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:50",
         "arrival": "22:50",
         "durationMin": 240,
-        "price": 3439,
+        "price": 3321,
         "departureDate": "2026-12-01"
       },
       {
@@ -139,7 +139,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "20:45",
         "arrival": "23:40",
         "durationMin": 235,
-        "price": 7390,
+        "price": 7151,
         "departureDate": "2026-12-25"
       },
       {
@@ -148,7 +148,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "22:30",
         "arrival": "01:35",
         "durationMin": 245,
-        "price": 6157,
+        "price": 5970,
         "departureDate": "2026-12-01"
       },
       {
@@ -157,14 +157,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "22:30",
         "arrival": "01:25",
         "durationMin": 235,
-        "price": 6437,
+        "price": 6269,
         "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-ceb": {
     "slug": "tpe-ceb",
-    "fetchedAt": "2026-11-10T08:55:03.959Z",
+    "fetchedAt": "2026-11-10T09:43:14.561Z",
     "flights": [
       {
         "airline": "中華航空",
@@ -172,7 +172,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:05",
         "arrival": "11:10",
         "durationMin": 185,
-        "price": 6749,
+        "price": 6742,
         "departureDate": "2026-12-01"
       },
       {
@@ -181,7 +181,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:20",
         "arrival": "11:15",
         "durationMin": 175,
-        "price": 5608,
+        "price": 5627,
         "departureDate": "2026-12-01"
       },
       {
@@ -190,14 +190,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:40",
         "arrival": "18:35",
         "durationMin": 175,
-        "price": 8611,
-        "departureDate": "2026-12-25"
+        "price": 8565,
+        "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-cts": {
     "slug": "tpe-cts",
-    "fetchedAt": "2026-11-10T08:51:30.325Z",
+    "fetchedAt": "2026-11-10T09:39:52.104Z",
     "flights": [
       {
         "airline": "中華航空",
@@ -205,7 +205,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "05:00",
         "arrival": "09:40",
         "durationMin": 220,
-        "price": 20827,
+        "price": 19287,
         "departureDate": "2026-12-25"
       },
       {
@@ -214,7 +214,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "05:40",
         "arrival": "10:25",
         "durationMin": 225,
-        "price": 5618,
+        "price": 5552,
         "departureDate": "2026-12-01"
       },
       {
@@ -223,7 +223,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "05:55",
         "arrival": "10:40",
         "durationMin": 225,
-        "price": 6245,
+        "price": 5825,
         "departureDate": "2026-12-01"
       },
       {
@@ -232,7 +232,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:15",
         "arrival": "10:55",
         "durationMin": 220,
-        "price": 5885,
+        "price": 5477,
         "departureDate": "2026-12-01"
       },
       {
@@ -241,7 +241,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:15",
         "arrival": "11:00",
         "durationMin": 225,
-        "price": 13929,
+        "price": 13029,
         "departureDate": "2026-12-01"
       },
       {
@@ -250,7 +250,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:35",
         "arrival": "13:20",
         "durationMin": 225,
-        "price": 13799,
+        "price": 12836,
         "departureDate": "2026-12-01"
       },
       {
@@ -259,7 +259,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:15",
         "arrival": "14:05",
         "durationMin": 230,
-        "price": 13507,
+        "price": 12771,
         "departureDate": "2026-12-01"
       },
       {
@@ -268,7 +268,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:30",
         "arrival": "14:05",
         "durationMin": 215,
-        "price": 17511,
+        "price": 16467,
         "departureDate": "2026-12-01"
       },
       {
@@ -277,14 +277,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:15",
         "arrival": "17:00",
         "durationMin": 225,
-        "price": 6902,
+        "price": 6369,
         "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-dad": {
     "slug": "tpe-dad",
-    "fetchedAt": "2026-11-10T08:52:20.180Z",
+    "fetchedAt": "2026-11-10T09:40:51.120Z",
     "flights": [
       {
         "airline": "長榮航空",
@@ -292,8 +292,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:45",
         "arrival": "11:40",
         "durationMin": 175,
-        "price": 10682,
-        "departureDate": "2026-12-25"
+        "price": 10748,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "中華航空",
@@ -301,7 +301,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:30",
         "arrival": "16:25",
         "durationMin": 175,
-        "price": 7984,
+        "price": 8076,
         "departureDate": "2026-12-01"
       },
       {
@@ -310,7 +310,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:20",
         "arrival": "17:15",
         "durationMin": 175,
-        "price": 7745,
+        "price": 7514,
         "departureDate": "2026-12-01"
       },
       {
@@ -319,14 +319,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:50",
         "arrival": "18:25",
         "durationMin": 155,
-        "price": 5430,
+        "price": 5335,
         "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-fuk": {
     "slug": "tpe-fuk",
-    "fetchedAt": "2026-11-10T08:51:01.497Z",
+    "fetchedAt": "2026-11-10T09:39:13.550Z",
     "flights": [
       {
         "airline": "臺灣虎航",
@@ -334,7 +334,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:45",
         "arrival": "10:00",
         "durationMin": 135,
-        "price": 5618,
+        "price": 5280,
         "departureDate": "2026-12-01"
       },
       {
@@ -343,7 +343,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:50",
         "arrival": "10:00",
         "durationMin": 130,
-        "price": 8987,
+        "price": 8540,
         "departureDate": "2026-12-01"
       },
       {
@@ -352,7 +352,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:45",
         "arrival": "11:00",
         "durationMin": 135,
-        "price": 8893,
+        "price": 8568,
         "departureDate": "2026-12-01"
       },
       {
@@ -361,7 +361,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:00",
         "arrival": "11:15",
         "durationMin": 135,
-        "price": 9064,
+        "price": 8562,
         "departureDate": "2026-12-01"
       },
       {
@@ -370,7 +370,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "11:45",
         "arrival": "15:10",
         "durationMin": 145,
-        "price": 3884,
+        "price": 3528,
         "departureDate": "2026-12-01"
       },
       {
@@ -379,17 +379,17 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:35",
         "arrival": "15:55",
         "durationMin": 140,
-        "price": 8954,
+        "price": 8562,
         "departureDate": "2026-12-01"
       },
       {
-        "airline": "全日空航空",
-        "flightNumber": "NH6615",
+        "airline": "臺灣虎航",
+        "flightNumber": "IT720",
         "departure": "13:40",
         "arrival": "16:55",
         "durationMin": 135,
-        "price": 34572,
-        "departureDate": "2026-12-25"
+        "price": 4795,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "中華航空",
@@ -397,7 +397,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:15",
         "arrival": "17:30",
         "durationMin": 135,
-        "price": 9333,
+        "price": 8765,
         "departureDate": "2026-12-01"
       },
       {
@@ -406,7 +406,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:45",
         "arrival": "18:00",
         "durationMin": 135,
-        "price": 8266,
+        "price": 7901,
         "departureDate": "2026-12-01"
       },
       {
@@ -415,7 +415,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:25",
         "arrival": "19:55",
         "durationMin": 150,
-        "price": 9205,
+        "price": 8562,
         "departureDate": "2026-12-01"
       },
       {
@@ -424,14 +424,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:25",
         "arrival": "19:35",
         "durationMin": 130,
-        "price": 9407,
+        "price": 8699,
         "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-han": {
     "slug": "tpe-han",
-    "fetchedAt": "2026-11-10T08:53:20.922Z",
+    "fetchedAt": "2026-11-10T09:41:50.569Z",
     "flights": [
       {
         "airline": "越南航空",
@@ -439,7 +439,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:35",
         "arrival": "09:50",
         "durationMin": 195,
-        "price": 6340,
+        "price": 6407,
         "departureDate": "2026-12-01"
       },
       {
@@ -448,8 +448,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:15",
         "arrival": "10:35",
         "durationMin": 200,
-        "price": 16397,
-        "departureDate": "2026-12-01"
+        "price": 16398,
+        "departureDate": "2026-12-25"
       },
       {
         "airline": "長榮航空",
@@ -457,7 +457,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:15",
         "arrival": "11:35",
         "durationMin": 200,
-        "price": 6334,
+        "price": 6220,
         "departureDate": "2026-12-01"
       },
       {
@@ -466,7 +466,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:35",
         "arrival": "11:55",
         "durationMin": 200,
-        "price": 6115,
+        "price": 6165,
         "departureDate": "2026-12-01"
       },
       {
@@ -475,7 +475,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:10",
         "arrival": "14:10",
         "durationMin": 180,
-        "price": 3063,
+        "price": 3068,
         "departureDate": "2026-12-01"
       },
       {
@@ -484,7 +484,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:10",
         "arrival": "15:25",
         "durationMin": 195,
-        "price": 4679,
+        "price": 4608,
         "departureDate": "2026-12-01"
       },
       {
@@ -493,7 +493,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:10",
         "arrival": "16:30",
         "durationMin": 200,
-        "price": 12811,
+        "price": 12705,
         "departureDate": "2026-12-01"
       },
       {
@@ -502,7 +502,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:50",
         "arrival": "17:15",
         "durationMin": 205,
-        "price": 6234,
+        "price": 6279,
         "departureDate": "2026-12-01"
       },
       {
@@ -511,22 +511,22 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:00",
         "arrival": "20:55",
         "durationMin": 175,
-        "price": 4160,
+        "price": 4140,
         "departureDate": "2026-12-25"
       }
     ]
   },
   "tpe-hkg": {
     "slug": "tpe-hkg",
-    "fetchedAt": "2026-11-10T08:49:21.807Z",
+    "fetchedAt": "2026-11-10T09:37:12.820Z",
     "flights": [
       {
-        "airline": "長榮航空",
-        "flightNumber": "BR891",
+        "airline": "香港航空",
+        "flightNumber": "HX1819",
         "departure": "07:00",
         "arrival": "09:00",
         "durationMin": 120,
-        "price": 5395,
+        "price": 5092,
         "departureDate": "2026-12-01"
       },
       {
@@ -535,7 +535,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:15",
         "arrival": "09:15",
         "durationMin": 120,
-        "price": 5252,
+        "price": 5106,
         "departureDate": "2026-12-01"
       },
       {
@@ -544,16 +544,16 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:00",
         "arrival": "10:10",
         "durationMin": 130,
-        "price": 5188,
+        "price": 5106,
         "departureDate": "2026-12-01"
       },
       {
-        "airline": "長榮航空",
-        "flightNumber": "BR851",
+        "airline": "香港航空",
+        "flightNumber": "HX1821",
         "departure": "08:10",
         "arrival": "10:10",
         "durationMin": 120,
-        "price": 5257,
+        "price": 5092,
         "departureDate": "2026-12-01"
       },
       {
@@ -562,7 +562,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:20",
         "arrival": "10:30",
         "durationMin": 130,
-        "price": 5612,
+        "price": 5367,
         "departureDate": "2026-12-01"
       },
       {
@@ -571,16 +571,16 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:40",
         "arrival": "10:45",
         "durationMin": 125,
-        "price": 4970,
+        "price": 4886,
         "departureDate": "2026-12-01"
       },
       {
-        "airline": "長榮航空",
-        "flightNumber": "BR867",
+        "airline": "香港航空",
+        "flightNumber": "HX1823",
         "departure": "09:50",
         "arrival": "11:50",
         "durationMin": 120,
-        "price": 5257,
+        "price": 5092,
         "departureDate": "2026-12-01"
       },
       {
@@ -589,7 +589,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:45",
         "arrival": "13:00",
         "durationMin": 135,
-        "price": 5566,
+        "price": 5367,
         "departureDate": "2026-12-01"
       },
       {
@@ -598,7 +598,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:50",
         "arrival": "13:00",
         "durationMin": 130,
-        "price": 5207,
+        "price": 5106,
         "departureDate": "2026-12-01"
       },
       {
@@ -607,7 +607,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "11:35",
         "arrival": "13:40",
         "durationMin": 125,
-        "price": 2905,
+        "price": 2875,
         "departureDate": "2026-12-01"
       },
       {
@@ -616,16 +616,16 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "11:45",
         "arrival": "13:55",
         "durationMin": 130,
-        "price": 3636,
+        "price": 3597,
         "departureDate": "2026-12-01"
       },
       {
-        "airline": "長榮航空",
-        "flightNumber": "BR869",
+        "airline": "香港航空",
+        "flightNumber": "HX1825",
         "departure": "12:25",
         "arrival": "14:20",
         "durationMin": 115,
-        "price": 5395,
+        "price": 5092,
         "departureDate": "2026-12-01"
       },
       {
@@ -634,7 +634,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:25",
         "arrival": "14:30",
         "durationMin": 125,
-        "price": 5573,
+        "price": 5359,
         "departureDate": "2026-12-01"
       },
       {
@@ -643,7 +643,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:20",
         "arrival": "15:25",
         "durationMin": 125,
-        "price": 6089,
+        "price": 5801,
         "departureDate": "2026-12-25"
       },
       {
@@ -652,7 +652,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:55",
         "arrival": "16:00",
         "durationMin": 125,
-        "price": 2402,
+        "price": 1798,
         "departureDate": "2026-12-01"
       },
       {
@@ -661,7 +661,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:30",
         "arrival": "16:35",
         "durationMin": 125,
-        "price": 5187,
+        "price": 5106,
         "departureDate": "2026-12-01"
       },
       {
@@ -670,7 +670,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:50",
         "arrival": "16:55",
         "durationMin": 125,
-        "price": 1848,
+        "price": 1798,
         "departureDate": "2026-12-01"
       },
       {
@@ -679,7 +679,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:45",
         "arrival": "17:55",
         "durationMin": 130,
-        "price": 5598,
+        "price": 5367,
         "departureDate": "2026-12-01"
       },
       {
@@ -688,7 +688,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:20",
         "arrival": "18:30",
         "durationMin": 130,
-        "price": 4936,
+        "price": 4886,
         "departureDate": "2026-12-01"
       },
       {
@@ -697,16 +697,16 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:30",
         "arrival": "18:40",
         "durationMin": 130,
-        "price": 3673,
+        "price": 3597,
         "departureDate": "2026-12-01"
       },
       {
-        "airline": "長榮航空",
-        "flightNumber": "BR871",
+        "airline": "香港航空",
+        "flightNumber": "HX1831",
         "departure": "16:35",
         "arrival": "18:30",
         "durationMin": 115,
-        "price": 5237,
+        "price": 5092,
         "departureDate": "2026-12-01"
       },
       {
@@ -715,7 +715,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:55",
         "arrival": "19:00",
         "durationMin": 125,
-        "price": 5188,
+        "price": 5106,
         "departureDate": "2026-12-01"
       },
       {
@@ -724,7 +724,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "17:00",
         "arrival": "19:05",
         "durationMin": 125,
-        "price": 5573,
+        "price": 5367,
         "departureDate": "2026-12-01"
       },
       {
@@ -733,7 +733,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "17:40",
         "arrival": "19:45",
         "durationMin": 125,
-        "price": 2076,
+        "price": 2043,
         "departureDate": "2026-12-01"
       },
       {
@@ -742,16 +742,16 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "18:00",
         "arrival": "20:10",
         "durationMin": 130,
-        "price": 5212,
+        "price": 5106,
         "departureDate": "2026-12-01"
       },
       {
-        "airline": "長榮航空",
-        "flightNumber": "BR857",
+        "airline": "香港航空",
+        "flightNumber": "HX1833",
         "departure": "18:10",
         "arrival": "20:05",
         "durationMin": 115,
-        "price": 5276,
+        "price": 5092,
         "departureDate": "2026-12-01"
       },
       {
@@ -760,7 +760,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "18:40",
         "arrival": "20:45",
         "durationMin": 125,
-        "price": 5543,
+        "price": 5367,
         "departureDate": "2026-12-01"
       },
       {
@@ -769,7 +769,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:00",
         "arrival": "20:50",
         "durationMin": 110,
-        "price": 5395,
+        "price": 5039,
         "departureDate": "2026-12-01"
       },
       {
@@ -778,7 +778,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:20",
         "arrival": "21:25",
         "durationMin": 125,
-        "price": 4017,
+        "price": 3893,
         "departureDate": "2026-12-25"
       },
       {
@@ -787,7 +787,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:35",
         "arrival": "21:40",
         "durationMin": 125,
-        "price": 5657,
+        "price": 5367,
         "departureDate": "2026-12-01"
       },
       {
@@ -796,7 +796,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:40",
         "arrival": "21:45",
         "durationMin": 125,
-        "price": 5602,
+        "price": 5367,
         "departureDate": "2026-12-01"
       },
       {
@@ -805,7 +805,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "20:15",
         "arrival": "22:25",
         "durationMin": 130,
-        "price": 5637,
+        "price": 5367,
         "departureDate": "2026-12-01"
       },
       {
@@ -814,7 +814,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "21:15",
         "arrival": "23:25",
         "durationMin": 130,
-        "price": 2056,
+        "price": 2043,
         "departureDate": "2026-12-01"
       },
       {
@@ -823,7 +823,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "21:15",
         "arrival": "23:15",
         "durationMin": 120,
-        "price": 5598,
+        "price": 5359,
         "departureDate": "2026-12-01"
       },
       {
@@ -832,7 +832,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "21:40",
         "arrival": "23:45",
         "durationMin": 125,
-        "price": 3212,
+        "price": 3156,
         "departureDate": "2026-12-01"
       },
       {
@@ -841,7 +841,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "22:25",
         "arrival": "00:20",
         "durationMin": 115,
-        "price": 5568,
+        "price": 5367,
         "departureDate": "2026-12-01"
       },
       {
@@ -850,14 +850,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "23:55",
         "arrival": "01:55",
         "durationMin": 120,
-        "price": 4757,
+        "price": 4496,
         "departureDate": "2026-12-25"
       }
     ]
   },
   "tpe-hnd": {
     "slug": "tpe-hnd",
-    "fetchedAt": "2026-11-10T08:47:36.933Z",
+    "fetchedAt": "2026-11-10T09:34:59.720Z",
     "flights": [
       {
         "airline": "臺灣虎航",
@@ -865,7 +865,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "00:10",
         "arrival": "04:00",
         "durationMin": 170,
-        "price": 7549,
+        "price": 6932,
         "departureDate": "2026-12-01"
       },
       {
@@ -874,14 +874,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "20:55",
         "arrival": "00:50",
         "durationMin": 175,
-        "price": 5745,
+        "price": 5191,
         "departureDate": "2026-12-25"
       }
     ]
   },
   "tpe-icn": {
     "slug": "tpe-icn",
-    "fetchedAt": "2026-11-10T08:48:00.360Z",
+    "fetchedAt": "2026-11-10T09:35:27.446Z",
     "flights": [
       {
         "airline": "長榮航空",
@@ -889,7 +889,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:05",
         "arrival": "10:30",
         "durationMin": 145,
-        "price": 8788,
+        "price": 8514,
         "departureDate": "2026-12-01"
       },
       {
@@ -898,7 +898,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:50",
         "arrival": "11:20",
         "durationMin": 150,
-        "price": 10669,
+        "price": 9972,
         "departureDate": "2026-12-01"
       },
       {
@@ -907,7 +907,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:45",
         "arrival": "14:20",
         "durationMin": 155,
-        "price": 8861,
+        "price": 8293,
         "departureDate": "2026-12-25"
       },
       {
@@ -916,7 +916,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "11:05",
         "arrival": "14:40",
         "durationMin": 155,
-        "price": 10102,
+        "price": 9187,
         "departureDate": "2026-12-01"
       },
       {
@@ -925,7 +925,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:25",
         "arrival": "15:50",
         "durationMin": 145,
-        "price": 10633,
+        "price": 9972,
         "departureDate": "2026-12-01"
       },
       {
@@ -934,7 +934,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:40",
         "arrival": "16:00",
         "durationMin": 140,
-        "price": 8180,
+        "price": 7744,
         "departureDate": "2026-12-01"
       },
       {
@@ -943,7 +943,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:35",
         "arrival": "17:00",
         "durationMin": 145,
-        "price": 4650,
+        "price": 4472,
         "departureDate": "2026-12-01"
       },
       {
@@ -952,7 +952,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:15",
         "arrival": "18:45",
         "durationMin": 150,
-        "price": 7133,
+        "price": 6934,
         "departureDate": "2026-12-01"
       },
       {
@@ -961,17 +961,17 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:40",
         "arrival": "19:15",
         "durationMin": 155,
-        "price": 10794,
+        "price": 9972,
         "departureDate": "2026-12-01"
       },
       {
-        "airline": "韓亞航空",
-        "flightNumber": "OZ714",
+        "airline": "大韓航空",
+        "flightNumber": "KE5664",
         "departure": "17:05",
         "arrival": "20:30",
         "durationMin": 145,
-        "price": 7031,
-        "departureDate": "2026-12-25"
+        "price": 21515,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "酷航",
@@ -979,7 +979,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "18:10",
         "arrival": "21:40",
         "durationMin": 150,
-        "price": 4234,
+        "price": 4106,
         "departureDate": "2026-12-25"
       },
       {
@@ -988,7 +988,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:25",
         "arrival": "22:55",
         "durationMin": 150,
-        "price": 6517,
+        "price": 6273,
         "departureDate": "2026-12-01"
       },
       {
@@ -997,14 +997,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "20:00",
         "arrival": "23:30",
         "durationMin": 150,
-        "price": 3439,
+        "price": 3313,
         "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-kix": {
     "slug": "tpe-kix",
-    "fetchedAt": "2026-11-10T08:49:41.485Z",
+    "fetchedAt": "2026-11-10T09:37:46.448Z",
     "flights": [
       {
         "airline": "捷星日本",
@@ -1012,7 +1012,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "02:30",
         "arrival": "06:00",
         "durationMin": 150,
-        "price": 4061,
+        "price": 3846,
         "departureDate": "2026-12-01"
       },
       {
@@ -1021,7 +1021,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:30",
         "arrival": "09:55",
         "durationMin": 145,
-        "price": 9949,
+        "price": 9474,
         "departureDate": "2026-12-01"
       },
       {
@@ -1030,7 +1030,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:55",
         "arrival": "10:25",
         "durationMin": 150,
-        "price": 6728,
+        "price": 6739,
         "departureDate": "2026-12-01"
       },
       {
@@ -1039,7 +1039,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:30",
         "arrival": "11:00",
         "durationMin": 150,
-        "price": 3599,
+        "price": 3714,
         "departureDate": "2026-12-01"
       },
       {
@@ -1048,7 +1048,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:40",
         "arrival": "11:10",
         "durationMin": 150,
-        "price": 9460,
+        "price": 9021,
         "departureDate": "2026-12-01"
       },
       {
@@ -1057,7 +1057,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:05",
         "arrival": "11:35",
         "durationMin": 150,
-        "price": 10409,
+        "price": 9943,
         "departureDate": "2026-12-01"
       },
       {
@@ -1066,7 +1066,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:20",
         "arrival": "11:55",
         "durationMin": 155,
-        "price": 9949,
+        "price": 9474,
         "departureDate": "2026-12-01"
       },
       {
@@ -1075,7 +1075,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:00",
         "arrival": "12:20",
         "durationMin": 140,
-        "price": 5035,
+        "price": 4826,
         "departureDate": "2026-12-01"
       },
       {
@@ -1084,7 +1084,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:20",
         "arrival": "12:50",
         "durationMin": 150,
-        "price": 9496,
+        "price": 9021,
         "departureDate": "2026-12-01"
       },
       {
@@ -1093,8 +1093,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:40",
         "arrival": "13:10",
         "durationMin": 150,
-        "price": 7227,
-        "departureDate": "2026-12-25"
+        "price": 6727,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "中華航空",
@@ -1102,7 +1102,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:45",
         "arrival": "13:20",
         "durationMin": 155,
-        "price": 9889,
+        "price": 9461,
         "departureDate": "2026-12-01"
       },
       {
@@ -1111,8 +1111,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "11:15",
         "arrival": "14:45",
         "durationMin": 150,
-        "price": 11594,
-        "departureDate": "2026-12-25"
+        "price": 11010,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "長榮航空",
@@ -1120,7 +1120,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:30",
         "arrival": "16:55",
         "durationMin": 145,
-        "price": 9656,
+        "price": 9206,
         "departureDate": "2026-12-01"
       },
       {
@@ -1129,7 +1129,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:40",
         "arrival": "17:10",
         "durationMin": 150,
-        "price": 5894,
+        "price": 5524,
         "departureDate": "2026-12-01"
       },
       {
@@ -1138,7 +1138,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:20",
         "arrival": "17:50",
         "durationMin": 150,
-        "price": 9451,
+        "price": 8951,
         "departureDate": "2026-12-01"
       },
       {
@@ -1147,7 +1147,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:40",
         "arrival": "17:55",
         "durationMin": 135,
-        "price": 6145,
+        "price": 5766,
         "departureDate": "2026-12-01"
       },
       {
@@ -1156,7 +1156,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:40",
         "arrival": "19:30",
         "durationMin": 170,
-        "price": 4535,
+        "price": 4673,
         "departureDate": "2026-12-01"
       },
       {
@@ -1165,7 +1165,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "18:15",
         "arrival": "21:45",
         "durationMin": 150,
-        "price": 3898,
+        "price": 3548,
         "departureDate": "2026-12-01"
       },
       {
@@ -1174,14 +1174,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "18:50",
         "arrival": "22:20",
         "durationMin": 150,
-        "price": 4876,
+        "price": 4321,
         "departureDate": "2026-12-25"
       }
     ]
   },
   "tpe-kul": {
     "slug": "tpe-kul",
-    "fetchedAt": "2026-11-10T08:53:47.338Z",
+    "fetchedAt": "2026-11-10T09:42:19.118Z",
     "flights": [
       {
         "airline": "馬來西亞亞洲航空公司",
@@ -1189,8 +1189,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "00:30",
         "arrival": "05:10",
         "durationMin": 280,
-        "price": 10682,
-        "departureDate": "2026-12-25"
+        "price": 6821,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "長榮航空",
@@ -1198,7 +1198,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:00",
         "arrival": "11:45",
         "durationMin": 285,
-        "price": 14293,
+        "price": 14255,
         "departureDate": "2026-12-25"
       },
       {
@@ -1207,7 +1207,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:25",
         "arrival": "13:25",
         "durationMin": 300,
-        "price": 7238,
+        "price": 7307,
         "departureDate": "2026-12-01"
       },
       {
@@ -1216,7 +1216,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:20",
         "arrival": "14:15",
         "durationMin": 295,
-        "price": 10060,
+        "price": 10265,
         "departureDate": "2026-12-01"
       },
       {
@@ -1225,7 +1225,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:15",
         "arrival": "15:15",
         "durationMin": 300,
-        "price": 7105,
+        "price": 7025,
         "departureDate": "2026-12-01"
       },
       {
@@ -1234,7 +1234,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:10",
         "arrival": "20:05",
         "durationMin": 295,
-        "price": 16032,
+        "price": 16191,
         "departureDate": "2026-12-01"
       },
       {
@@ -1243,14 +1243,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:55",
         "arrival": "20:50",
         "durationMin": 295,
-        "price": 4941,
+        "price": 4874,
         "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-mfm": {
     "slug": "tpe-mfm",
-    "fetchedAt": "2026-11-10T08:55:52.352Z",
+    "fetchedAt": "2026-11-10T09:43:59.802Z",
     "flights": [
       {
         "airline": "星宇航空",
@@ -1258,7 +1258,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:45",
         "arrival": "10:35",
         "durationMin": 110,
-        "price": 7401,
+        "price": 7394,
         "departureDate": "2026-12-01"
       },
       {
@@ -1267,7 +1267,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:00",
         "arrival": "11:55",
         "durationMin": 115,
-        "price": 10276,
+        "price": 10212,
         "departureDate": "2026-12-01"
       },
       {
@@ -1276,7 +1276,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:35",
         "arrival": "12:35",
         "durationMin": 120,
-        "price": 9165,
+        "price": 9301,
         "departureDate": "2026-12-25"
       },
       {
@@ -1285,7 +1285,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:40",
         "arrival": "16:35",
         "durationMin": 115,
-        "price": 5360,
+        "price": 5266,
         "departureDate": "2026-12-01"
       },
       {
@@ -1294,7 +1294,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:20",
         "arrival": "18:20",
         "durationMin": 120,
-        "price": 4748,
+        "price": 4763,
         "departureDate": "2026-12-01"
       },
       {
@@ -1303,7 +1303,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:30",
         "arrival": "18:25",
         "durationMin": 115,
-        "price": 5331,
+        "price": 5395,
         "departureDate": "2026-12-01"
       },
       {
@@ -1312,7 +1312,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "20:10",
         "arrival": "22:05",
         "durationMin": 115,
-        "price": 10471,
+        "price": 10484,
         "departureDate": "2026-12-25"
       },
       {
@@ -1321,23 +1321,32 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "21:30",
         "arrival": "23:25",
         "durationMin": 115,
-        "price": 4110,
+        "price": 4105,
         "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-mnl": {
     "slug": "tpe-mnl",
-    "fetchedAt": "2026-11-10T08:54:36.165Z",
+    "fetchedAt": "2026-11-10T09:42:47.265Z",
     "flights": [
+      {
+        "airline": "菲律賓亞洲航空公司",
+        "flightNumber": "Z2129",
+        "departure": "01:25",
+        "arrival": "03:40",
+        "durationMin": 135,
+        "price": 5503,
+        "departureDate": "2026-12-25"
+      },
       {
         "airline": "宿霧太平洋航空",
         "flightNumber": "5J311",
         "departure": "03:15",
         "arrival": "05:50",
         "durationMin": 155,
-        "price": 5520,
-        "departureDate": "2026-12-25"
+        "price": 4989,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "中華航空",
@@ -1345,7 +1354,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:35",
         "arrival": "09:55",
         "durationMin": 140,
-        "price": 9081,
+        "price": 9113,
         "departureDate": "2026-12-25"
       },
       {
@@ -1354,8 +1363,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:15",
         "arrival": "10:40",
         "durationMin": 145,
-        "price": 6309,
-        "departureDate": "2026-12-25"
+        "price": 5464,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "長榮航空",
@@ -1363,7 +1372,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:10",
         "arrival": "11:45",
         "durationMin": 155,
-        "price": 7040,
+        "price": 7039,
         "departureDate": "2026-12-25"
       },
       {
@@ -1372,8 +1381,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:45",
         "arrival": "12:10",
         "durationMin": 145,
-        "price": 5524,
-        "departureDate": "2026-12-25"
+        "price": 4999,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "菲律賓航空",
@@ -1381,8 +1390,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:10",
         "arrival": "12:40",
         "durationMin": 150,
-        "price": 8375,
-        "departureDate": "2026-12-25"
+        "price": 7958,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "宿霧太平洋航空",
@@ -1390,8 +1399,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:20",
         "arrival": "13:05",
         "durationMin": 165,
-        "price": 6115,
-        "departureDate": "2026-12-25"
+        "price": 5710,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "中華航空",
@@ -1399,8 +1408,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:45",
         "arrival": "17:05",
         "durationMin": 140,
-        "price": 9486,
-        "departureDate": "2026-12-25"
+        "price": 9513,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "長榮航空",
@@ -1408,8 +1417,17 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:30",
         "arrival": "17:50",
         "durationMin": 140,
-        "price": 5666,
-        "departureDate": "2026-12-25"
+        "price": 5622,
+        "departureDate": "2026-12-01"
+      },
+      {
+        "airline": "菲律賓亞洲航空公司",
+        "flightNumber": "Z2127",
+        "departure": "20:25",
+        "arrival": "22:55",
+        "durationMin": 150,
+        "price": 4209,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "長榮航空",
@@ -1417,7 +1435,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "20:30",
         "arrival": "22:50",
         "durationMin": 140,
-        "price": 5668,
+        "price": 5708,
         "departureDate": "2026-12-25"
       },
       {
@@ -1426,14 +1444,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "21:55",
         "arrival": "00:20",
         "durationMin": 145,
-        "price": 7764,
-        "departureDate": "2026-12-25"
+        "price": 7352,
+        "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-ngo": {
     "slug": "tpe-ngo",
-    "fetchedAt": "2026-11-10T08:51:53.063Z",
+    "fetchedAt": "2026-11-10T09:40:20.087Z",
     "flights": [
       {
         "airline": "樂桃航空",
@@ -1441,7 +1459,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "02:55",
         "arrival": "06:25",
         "durationMin": 150,
-        "price": 5721,
+        "price": 5616,
         "departureDate": "2026-12-01"
       },
       {
@@ -1450,7 +1468,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:40",
         "arrival": "11:10",
         "durationMin": 150,
-        "price": 9760,
+        "price": 9751,
         "departureDate": "2026-12-01"
       },
       {
@@ -1459,7 +1477,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:45",
         "arrival": "12:25",
         "durationMin": 160,
-        "price": 5203,
+        "price": 5128,
         "departureDate": "2026-12-01"
       },
       {
@@ -1468,7 +1486,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:00",
         "arrival": "15:35",
         "durationMin": 155,
-        "price": 13591,
+        "price": 13142,
         "departureDate": "2026-12-01"
       },
       {
@@ -1477,7 +1495,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:55",
         "arrival": "18:30",
         "durationMin": 155,
-        "price": 9219,
+        "price": 9375,
         "departureDate": "2026-12-01"
       },
       {
@@ -1486,7 +1504,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:50",
         "arrival": "19:25",
         "durationMin": 155,
-        "price": 7974,
+        "price": 7903,
         "departureDate": "2026-12-01"
       },
       {
@@ -1495,14 +1513,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "17:15",
         "arrival": "20:50",
         "durationMin": 155,
-        "price": 7953,
+        "price": 8104,
         "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-nrt": {
     "slug": "tpe-nrt",
-    "fetchedAt": "2026-11-10T08:47:11.190Z",
+    "fetchedAt": "2026-11-10T09:34:35.442Z",
     "flights": [
       {
         "airline": "樂桃航空",
@@ -1510,7 +1528,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "02:25",
         "arrival": "06:30",
         "durationMin": 185,
-        "price": 5686,
+        "price": 5253,
         "departureDate": "2026-12-01"
       },
       {
@@ -1519,7 +1537,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "02:30",
         "arrival": "06:35",
         "durationMin": 185,
-        "price": 5800,
+        "price": 5215,
         "departureDate": "2026-12-01"
       },
       {
@@ -1528,7 +1546,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:35",
         "arrival": "10:35",
         "durationMin": 180,
-        "price": 5721,
+        "price": 5376,
         "departureDate": "2026-12-01"
       },
       {
@@ -1537,7 +1555,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:50",
         "arrival": "10:55",
         "durationMin": 185,
-        "price": 5039,
+        "price": 4928,
         "departureDate": "2026-12-01"
       },
       {
@@ -1546,7 +1564,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:55",
         "arrival": "12:00",
         "durationMin": 185,
-        "price": 10300,
+        "price": 9883,
         "departureDate": "2026-12-01"
       },
       {
@@ -1555,7 +1573,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:25",
         "arrival": "12:35",
         "durationMin": 190,
-        "price": 12883,
+        "price": 12065,
         "departureDate": "2026-12-01"
       },
       {
@@ -1564,7 +1582,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:50",
         "arrival": "12:55",
         "durationMin": 185,
-        "price": 10383,
+        "price": 9884,
         "departureDate": "2026-12-01"
       },
       {
@@ -1573,7 +1591,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:30",
         "arrival": "13:30",
         "durationMin": 180,
-        "price": 10478,
+        "price": 9891,
         "departureDate": "2026-12-01"
       },
       {
@@ -1582,7 +1600,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:10",
         "arrival": "14:20",
         "durationMin": 190,
-        "price": 9945,
+        "price": 9318,
         "departureDate": "2026-12-01"
       },
       {
@@ -1591,7 +1609,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:40",
         "arrival": "14:55",
         "durationMin": 195,
-        "price": 7207,
+        "price": 6648,
         "departureDate": "2026-12-01"
       },
       {
@@ -1600,7 +1618,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:40",
         "arrival": "14:40",
         "durationMin": 180,
-        "price": 9806,
+        "price": 9294,
         "departureDate": "2026-12-01"
       },
       {
@@ -1609,7 +1627,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:10",
         "arrival": "16:25",
         "durationMin": 195,
-        "price": 8609,
+        "price": 8290,
         "departureDate": "2026-12-25"
       },
       {
@@ -1618,7 +1636,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:35",
         "arrival": "16:35",
         "durationMin": 180,
-        "price": 9787,
+        "price": 9282,
         "departureDate": "2026-12-01"
       },
       {
@@ -1627,7 +1645,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:50",
         "arrival": "16:55",
         "durationMin": 185,
-        "price": 5187,
+        "price": 4884,
         "departureDate": "2026-12-01"
       },
       {
@@ -1636,7 +1654,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "12:50",
         "arrival": "16:50",
         "durationMin": 180,
-        "price": 11707,
+        "price": 10911,
         "departureDate": "2026-12-01"
       },
       {
@@ -1645,7 +1663,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:30",
         "arrival": "17:30",
         "durationMin": 180,
-        "price": 6996,
+        "price": 6633,
         "departureDate": "2026-12-25"
       },
       {
@@ -1654,7 +1672,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:25",
         "arrival": "18:30",
         "durationMin": 185,
-        "price": 9369,
+        "price": 9015,
         "departureDate": "2026-12-01"
       },
       {
@@ -1663,7 +1681,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:00",
         "arrival": "19:00",
         "durationMin": 180,
-        "price": 9465,
+        "price": 9047,
         "departureDate": "2026-12-01"
       },
       {
@@ -1672,8 +1690,8 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:20",
         "arrival": "19:20",
         "durationMin": 180,
-        "price": 9588,
-        "departureDate": "2026-12-25"
+        "price": 9063,
+        "departureDate": "2026-12-01"
       },
       {
         "airline": "中華航空",
@@ -1681,7 +1699,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:25",
         "arrival": "20:30",
         "durationMin": 185,
-        "price": 9450,
+        "price": 9016,
         "departureDate": "2026-12-01"
       },
       {
@@ -1690,14 +1708,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "17:15",
         "arrival": "21:30",
         "durationMin": 195,
-        "price": 6195,
+        "price": 4966,
         "departureDate": "2026-12-25"
       }
     ]
   },
   "tpe-oka": {
     "slug": "tpe-oka",
-    "fetchedAt": "2026-11-10T08:50:30.380Z",
+    "fetchedAt": "2026-11-10T09:38:41.694Z",
     "flights": [
       {
         "airline": "臺灣虎航",
@@ -1705,7 +1723,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:35",
         "arrival": "08:55",
         "durationMin": 80,
-        "price": 2501,
+        "price": 2442,
         "departureDate": "2026-12-01"
       },
       {
@@ -1714,7 +1732,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "06:55",
         "arrival": "09:15",
         "durationMin": 80,
-        "price": 7590,
+        "price": 7332,
         "departureDate": "2026-12-01"
       },
       {
@@ -1723,7 +1741,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:10",
         "arrival": "10:50",
         "durationMin": 100,
-        "price": 8478,
+        "price": 8112,
         "departureDate": "2026-12-01"
       },
       {
@@ -1732,7 +1750,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:00",
         "arrival": "11:15",
         "durationMin": 75,
-        "price": 8301,
+        "price": 7622,
         "departureDate": "2026-12-25"
       },
       {
@@ -1741,7 +1759,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:45",
         "arrival": "12:25",
         "durationMin": 100,
-        "price": 3750,
+        "price": 3450,
         "departureDate": "2026-12-01"
       },
       {
@@ -1750,7 +1768,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "10:15",
         "arrival": "12:45",
         "durationMin": 90,
-        "price": 7546,
+        "price": 6804,
         "departureDate": "2026-12-01"
       },
       {
@@ -1759,7 +1777,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "11:40",
         "arrival": "14:15",
         "durationMin": 95,
-        "price": 6888,
+        "price": 6579,
         "departureDate": "2026-12-01"
       },
       {
@@ -1768,7 +1786,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:30",
         "arrival": "15:55",
         "durationMin": 85,
-        "price": 2980,
+        "price": 2735,
         "departureDate": "2026-12-01"
       },
       {
@@ -1777,7 +1795,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:45",
         "arrival": "17:10",
         "durationMin": 85,
-        "price": 2683,
+        "price": 2710,
         "departureDate": "2026-12-01"
       },
       {
@@ -1786,7 +1804,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "15:20",
         "arrival": "17:50",
         "durationMin": 90,
-        "price": 2955,
+        "price": 2365,
         "departureDate": "2026-12-01"
       },
       {
@@ -1795,7 +1813,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:50",
         "arrival": "19:25",
         "durationMin": 95,
-        "price": 6395,
+        "price": 6232,
         "departureDate": "2026-12-01"
       },
       {
@@ -1804,7 +1822,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "16:50",
         "arrival": "19:10",
         "durationMin": 80,
-        "price": 7338,
+        "price": 7009,
         "departureDate": "2026-12-01"
       },
       {
@@ -1813,7 +1831,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "18:20",
         "arrival": "20:40",
         "durationMin": 80,
-        "price": 2526,
+        "price": 2367,
         "departureDate": "2026-12-01"
       },
       {
@@ -1822,7 +1840,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "18:20",
         "arrival": "20:50",
         "durationMin": 90,
-        "price": 2930,
+        "price": 2365,
         "departureDate": "2026-12-01"
       },
       {
@@ -1831,14 +1849,14 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:40",
         "arrival": "22:10",
         "durationMin": 90,
-        "price": 5795,
+        "price": 5304,
         "departureDate": "2026-12-01"
       }
     ]
   },
   "tpe-sgn": {
     "slug": "tpe-sgn",
-    "fetchedAt": "2026-11-10T08:52:54.430Z",
+    "fetchedAt": "2026-11-10T09:41:25.557Z",
     "flights": [
       {
         "airline": "中華航空",
@@ -1846,7 +1864,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:30",
         "arrival": "10:00",
         "durationMin": 210,
-        "price": 10624,
+        "price": 10933,
         "departureDate": "2026-12-25"
       },
       {
@@ -1855,7 +1873,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:40",
         "arrival": "10:30",
         "durationMin": 230,
-        "price": 6981,
+        "price": 6923,
         "departureDate": "2026-12-01"
       },
       {
@@ -1864,7 +1882,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:40",
         "arrival": "10:15",
         "durationMin": 215,
-        "price": 17366,
+        "price": 17545,
         "departureDate": "2026-12-25"
       },
       {
@@ -1873,7 +1891,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:45",
         "arrival": "10:25",
         "durationMin": 220,
-        "price": 4654,
+        "price": 4624,
         "departureDate": "2026-12-01"
       },
       {
@@ -1882,7 +1900,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:10",
         "arrival": "11:35",
         "durationMin": 205,
-        "price": 6028,
+        "price": 6076,
         "departureDate": "2026-12-01"
       },
       {
@@ -1891,7 +1909,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "13:35",
         "arrival": "16:15",
         "durationMin": 220,
-        "price": 5978,
+        "price": 6036,
         "departureDate": "2026-12-01"
       },
       {
@@ -1900,7 +1918,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:00",
         "arrival": "16:50",
         "durationMin": 230,
-        "price": 5889,
+        "price": 5899,
         "departureDate": "2026-12-01"
       },
       {
@@ -1909,7 +1927,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:00",
         "arrival": "21:25",
         "durationMin": 205,
-        "price": 4289,
+        "price": 4223,
         "departureDate": "2026-12-01"
       },
       {
@@ -1918,22 +1936,22 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:30",
         "arrival": "22:00",
         "durationMin": 210,
-        "price": 5984,
+        "price": 5972,
         "departureDate": "2026-12-25"
       }
     ]
   },
   "tpe-sin": {
     "slug": "tpe-sin",
-    "fetchedAt": "2026-11-10T08:49:00.904Z",
+    "fetchedAt": "2026-11-10T09:36:40.891Z",
     "flights": [
       {
-        "airline": "酷航",
-        "flightNumber": "TR875",
+        "airline": "新加坡航空",
+        "flightNumber": "SQ8523",
         "departure": "00:10",
         "arrival": "04:50",
         "durationMin": 280,
-        "price": 6817,
+        "price": 11984,
         "departureDate": "2026-12-01"
       },
       {
@@ -1942,7 +1960,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "01:50",
         "arrival": "06:30",
         "durationMin": 280,
-        "price": 9257,
+        "price": 9116,
         "departureDate": "2026-12-25"
       },
       {
@@ -1951,7 +1969,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "07:25",
         "arrival": "12:05",
         "durationMin": 280,
-        "price": 6570,
+        "price": 6651,
         "departureDate": "2026-12-01"
       },
       {
@@ -1960,7 +1978,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:20",
         "arrival": "13:05",
         "durationMin": 285,
-        "price": 6570,
+        "price": 6618,
         "departureDate": "2026-12-01"
       },
       {
@@ -1969,7 +1987,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "08:25",
         "arrival": "13:25",
         "durationMin": 300,
-        "price": 8935,
+        "price": 8867,
         "departureDate": "2026-12-01"
       },
       {
@@ -1978,7 +1996,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "09:35",
         "arrival": "14:30",
         "durationMin": 295,
-        "price": 11189,
+        "price": 10877,
         "departureDate": "2026-12-01"
       },
       {
@@ -1987,16 +2005,16 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "14:10",
         "arrival": "18:55",
         "durationMin": 285,
-        "price": 12592,
+        "price": 11856,
         "departureDate": "2026-12-01"
       },
       {
-        "airline": "酷航",
-        "flightNumber": "TR867",
+        "airline": "新加坡航空",
+        "flightNumber": "SQ8647",
         "departure": "16:40",
         "arrival": "21:15",
         "durationMin": 275,
-        "price": 7805,
+        "price": 11984,
         "departureDate": "2026-12-01"
       },
       {
@@ -2005,7 +2023,7 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "17:35",
         "arrival": "22:20",
         "durationMin": 285,
-        "price": 11018,
+        "price": 10494,
         "departureDate": "2026-12-01"
       },
       {
@@ -2014,16 +2032,16 @@ export const ROUTE_FLIGHT_SNAPSHOTS: Record<string, RouteFlightSnapshot> = {
         "departure": "19:55",
         "arrival": "00:40",
         "durationMin": 285,
-        "price": 7751,
+        "price": 7837,
         "departureDate": "2026-12-01"
       },
       {
-        "airline": "酷航",
-        "flightNumber": "TR893",
+        "airline": "新加坡航空",
+        "flightNumber": "SQ8385",
         "departure": "23:10",
         "arrival": "04:00",
         "durationMin": 290,
-        "price": 4318,
+        "price": 9644,
         "departureDate": "2026-12-01"
       }
     ]
