@@ -144,10 +144,15 @@ async function callModel(model: string, apiKey: string, prompt: string, signal: 
 export async function fetchOpenRouterWithFallback(
   apiKey: string,
   prompt: string,
-  timing: { hedgeAfterMs?: number; attemptTimeoutMs?: number } = {},
+  timing: {
+    hedgeAfterMs?: number;
+    attemptTimeoutMs?: number;
+    /** Give up on all models after this long (rejects with 'AI_TIME_BUDGET_EXCEEDED'). */
+    totalBudgetMs?: number;
+  } = {},
 ): Promise<string> {
   const hedgeAfterMs = timing.hedgeAfterMs ?? HEDGE_AFTER_MS;
-  const attemptTimeoutMs = timing.attemptTimeoutMs ?? ATTEMPT_TIMEOUT_MS;
+  const attemptTimeoutMs = Math.min(timing.attemptTimeoutMs ?? ATTEMPT_TIMEOUT_MS, timing.totalBudgetMs ?? Infinity);
   const models = orderModels();
   const controllers = new Set<AbortController>();
   let nextIndex = 0;
@@ -158,9 +163,11 @@ export async function fetchOpenRouterWithFallback(
   let lastError: Error | null = null;
 
   return new Promise<string>((resolve, reject) => {
+    let budgetTimer: ReturnType<typeof setTimeout> | undefined;
     const finish = (settle: () => void) => {
       if (settled) return;
       settled = true;
+      clearTimeout(budgetTimer);
       for (const c of controllers) c.abort();
       settle();
     };
@@ -218,6 +225,14 @@ export async function fetchOpenRouterWithFallback(
           launchNext();
         });
     };
+
+    const { totalBudgetMs } = timing;
+    if (totalBudgetMs !== undefined) {
+      budgetTimer = setTimeout(() => {
+        console.warn(`[openrouter] No answer within ${totalBudgetMs / 1000}s; giving up.`);
+        finish(() => reject(new Error('AI_TIME_BUDGET_EXCEEDED')));
+      }, totalBudgetMs);
+    }
 
     launchNext();
   });

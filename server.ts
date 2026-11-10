@@ -706,11 +706,40 @@ function toAirportCode(place: string): string | null {
   return /^[A-Z]{3}$/.test(code) ? code : null;
 }
 
+/**
+ * Time budget for one direction of a flight search. Vercel cuts the API off
+ * at maxDuration (60s in vercel.json); production searches used to run until
+ * the platform killed them (504 after 300s) with no results at all. Scraping
+ * and the AI fallback each get a slice, and the static data always answers.
+ */
+const FLIGHT_SEARCH_BUDGET_MS = process.env.VERCEL
+  ? { scrape: 35_000, ai: 15_000 }
+  : { scrape: 50_000, ai: 25_000 };
+
+/** Resolves to `fallback` if `work` has not settled within `ms`. */
+function withDeadline<T>(work: Promise<T>, ms: number, fallback: T, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<T>((resolve) => {
+    timer = setTimeout(() => {
+      console.warn(`[flights] ${label} exceeded ${ms / 1000}s; moving on.`);
+      resolve(fallback);
+    }, ms);
+  });
+  return Promise.race([work, deadline]).finally(() => clearTimeout(timer));
+}
+
 async function fetchFlightOffers(from: string, to: string, date: string): Promise<SearchItem[] | null> {
   // Use Trip.com Scraper as primary flight provider
   try {
     console.log(`Fetching flights from Trip.com scraper for ${from} -> ${to} on ${date}`);
-    const scrapedFlights = await scrapeTripFlights(from, to, date);
+    const startedAt = Date.now();
+    const scrapedFlights = await withDeadline(
+      scrapeTripFlights(from, to, date),
+      FLIGHT_SEARCH_BUDGET_MS.scrape,
+      [],
+      `Trip.com scrape ${from} -> ${to}`,
+    );
+    console.log(`[flights] Trip.com ${from} -> ${to}: ${scrapedFlights.length} rows in ${((Date.now() - startedAt) / 1000).toFixed(1)}s`);
     if (scrapedFlights && scrapedFlights.length > 0) {
       return scrapedFlights;
     }
@@ -766,7 +795,9 @@ Return ONLY a valid JSON array of objects, with NO markdown code wrappers or for
   - duration: typical flight duration format (e.g. "3h 45m")
 
 Return ONLY the raw JSON string starting with [ and ending with ].`;
-      const resText = await fetchOpenRouterWithFallback(openrouterApiKey, prompt);
+      const resText = await fetchOpenRouterWithFallback(openrouterApiKey, prompt, {
+        totalBudgetMs: FLIGHT_SEARCH_BUDGET_MS.ai,
+      });
       if (resText) {
         const jsonStart = resText.indexOf("[");
         const jsonEnd = resText.lastIndexOf("]");

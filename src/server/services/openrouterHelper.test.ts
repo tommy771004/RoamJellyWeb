@@ -99,3 +99,13 @@ test('empty answers count as failures', async () => {
   stubOpenRouter({ [M1]: { text: '   ' }, [M2]: { text: 'real' } });
   assert.equal(await fetchOpenRouterWithFallback('k', 'hi', FAST), 'real');
 });
+
+test('gives up after the total time budget, cancelling running models', async () => {
+  stubOpenRouter(Object.fromEntries(FREE_MODELS.map((m) => [m, { text: 'late', delayMs: 1000 }])));
+  const started = Date.now();
+  await assert.rejects(
+    fetchOpenRouterWithFallback('k', 'hi', { hedgeAfterMs: 20, attemptTimeoutMs: 5000, totalBudgetMs: 120 }),
+    /AI_TIME_BUDGET_EXCEEDED/,
+  );
+  assert.ok(Date.now() - started < 400, 'returned at the budget, not when the models finished');
+});
