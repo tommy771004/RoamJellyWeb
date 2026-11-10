@@ -4,7 +4,7 @@ import type { AppRepository } from '../repositories/appRepository';
 import { getRequestUserId } from './requestAuth';
 import { encryptSecret, pkceChallenge, randomToken, sha256 } from './authCrypto';
 import type { AuthProvider, AuthRepository, AuthTransactionRecord, ProviderIdentity } from './authRepository';
-import { buildProviderAuthorizationUrl, exchangeProviderCode, providerConfig, type SocialProviderConfig } from './providerAuth';
+import { buildProviderAuthorizationUrl, exchangeProviderCode, providerConfig, socialProviderDiagnostics, type SocialProviderConfig } from './providerAuth';
 import { issueAppSession, revokeRefreshSession, rotateRefreshSession } from './sessionService';
 
 const TRANSACTION_TTL_SECONDS = 600;
@@ -77,6 +77,12 @@ export function registerSocialAuthBrokerRoutes(
   limiter: RequestHandler,
   deps?: { repo: AppRepository; authRepo: AuthRepository },
 ): void {
+  // Log once per server instance why a provider someone tried to configure is
+  // still off. Env var names only — values never reach the log.
+  const diagnostics = socialProviderDiagnostics();
+  for (const [provider, problems] of Object.entries(diagnostics)) {
+    console.warn(`[social-auth] ${provider} login disabled: ${problems.join('; ')}`);
+  }
   app.get('/api/auth/social/providers', (_req, res) => {
     res.json({ providers: socialProviderAvailability() });
   });

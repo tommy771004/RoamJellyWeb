@@ -1,5 +1,5 @@
 import { createRemoteJWKSet, importPKCS8, jwtVerify, SignJWT } from 'jose';
-import { decryptSecret, readSecret, sha256 } from './authCrypto';
+import { decryptSecret, envValue, readSecret, sha256 } from './authCrypto';
 import type { AuthProvider, AuthTransactionRecord, ProviderIdentity } from './authRepository';
 
 export interface SocialProviderConfig {
@@ -10,44 +10,102 @@ export interface SocialProviderConfig {
   scopes: string[];
 }
 
-function configuredSecret(direct: string, ...references: string[]): string {
+interface SecretLookup {
+  value: string;
+  /** Why the secret could not be read (env var names only — never values). */
+  problems: string[];
+}
+
+function lookupSecret(direct: string, ...references: string[]): SecretLookup {
+  const problems: string[] = [];
   for (const reference of references) {
     try {
       const value = readSecret(direct, reference);
-      if (value) return value;
+      if (value) return { value, problems: [] };
+      const ref = envValue(reference);
+      if (ref.startsWith('env://')) problems.push(`${reference} points to ${ref.slice(6)}, which is empty or unset`);
     } catch {
       // An absent or unreadable secret disables only this provider.
+      const ref = envValue(reference);
+      problems.push(ref.startsWith('file://')
+        ? `${reference} file could not be read`
+        : `${reference} must start with env:// or file:// (put a raw secret in ${direct} instead)`);
     }
   }
-  return '';
+  if (problems.length === 0) problems.push(`${direct} (or ${references.join(' / ')}) is not set`);
+  return { value: '', problems };
+}
+
+export function socialAuthCallbackEnabled(): boolean {
+  return envValue('SOCIAL_AUTH_CALLBACK_ENABLED').toLowerCase() === 'true';
+}
+
+interface ProviderResolution {
+  config: SocialProviderConfig | null;
+  /** Empty when enabled. Each entry names the env var at fault; values are never included. */
+  problems: string[];
+  /** True when at least one of this provider's own env vars is set (i.e. someone tried to configure it). */
+  attempted: boolean;
+}
+
+function resolveProvider(provider: AuthProvider): ProviderResolution {
+  const required = (names: string[]) => names.filter((name) => !envValue(name)).map((name) => `${name} is not set`);
+  const anySet = (names: string[]) => names.some((name) => envValue(name) !== '');
+
+  let config: SocialProviderConfig | null = null;
+  let problems: string[];
+  let attempted: boolean;
+
+  if (provider === 'apple') {
+    const names = ['APPLE_CLIENT_ID', 'APPLE_REDIRECT_URI', 'APPLE_TEAM_ID', 'APPLE_KEY_ID'];
+    const secretNames = ['APPLE_PRIVATE_KEY', 'APPLE_PRIVATE_KEY_REF', 'APPLE_PRIVATE_KEY_SECRET_REF'];
+    const key = lookupSecret('APPLE_PRIVATE_KEY', 'APPLE_PRIVATE_KEY_REF', 'APPLE_PRIVATE_KEY_SECRET_REF');
+    problems = [...required(names), ...key.problems];
+    attempted = anySet([...names, ...secretNames]);
+    if (problems.length === 0) {
+      config = { clientId: envValue('APPLE_CLIENT_ID'), redirectUri: envValue('APPLE_REDIRECT_URI'), clientSecret: '', authorizationEndpoint: 'https://appleid.apple.com/auth/authorize', scopes: ['name', 'email'] };
+    }
+  } else if (provider === 'google') {
+    const names = ['GOOGLE_CLIENT_ID', 'GOOGLE_REDIRECT_URI'];
+    const secretNames = ['GOOGLE_CLIENT_SECRET', 'GOOGLE_CLIENT_SECRET_REF', 'GOOGLE_CLIENT_SECRET_SECRET_REF'];
+    const secret = lookupSecret('GOOGLE_CLIENT_SECRET', 'GOOGLE_CLIENT_SECRET_REF', 'GOOGLE_CLIENT_SECRET_SECRET_REF');
+    problems = [...required(names), ...secret.problems];
+    attempted = anySet([...names, ...secretNames]);
+    if (problems.length === 0) {
+      config = { clientId: envValue('GOOGLE_CLIENT_ID'), redirectUri: envValue('GOOGLE_REDIRECT_URI'), clientSecret: secret.value, authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth', scopes: ['openid', 'email', 'profile'] };
+    }
+  } else {
+    const names = ['LINE_CHANNEL_ID', 'LINE_REDIRECT_URI'];
+    const secretNames = ['LINE_CHANNEL_SECRET', 'LINE_CHANNEL_SECRET_REF', 'LINE_CHANNEL_SECRET_SECRET_REF'];
+    const secret = lookupSecret('LINE_CHANNEL_SECRET', 'LINE_CHANNEL_SECRET_REF', 'LINE_CHANNEL_SECRET_SECRET_REF');
+    problems = [...required(names), ...secret.problems];
+    attempted = anySet([...names, ...secretNames]);
+    if (problems.length === 0) {
+      config = { clientId: envValue('LINE_CHANNEL_ID'), redirectUri: envValue('LINE_REDIRECT_URI'), clientSecret: secret.value, authorizationEndpoint: 'https://access.line.me/oauth2/v2.1/authorize', scopes: ['openid', 'profile', 'email'] };
+    }
+  }
+
+  if (!socialAuthCallbackEnabled()) {
+    return { config: null, problems: ['SOCIAL_AUTH_CALLBACK_ENABLED is not "true"', ...problems], attempted };
+  }
+  return { config, problems, attempted };
 }
 
 export function providerConfig(provider: AuthProvider): SocialProviderConfig | null {
-  if (process.env.SOCIAL_AUTH_CALLBACK_ENABLED !== 'true') return null;
-  if (provider === 'apple') {
-    const clientId = process.env.APPLE_CLIENT_ID?.trim() ?? '';
-    const redirectUri = process.env.APPLE_REDIRECT_URI?.trim() ?? '';
-    const privateKey = configuredSecret('APPLE_PRIVATE_KEY', 'APPLE_PRIVATE_KEY_REF', 'APPLE_PRIVATE_KEY_SECRET_REF');
-    const teamId = process.env.APPLE_TEAM_ID?.trim() ?? '';
-    const keyId = process.env.APPLE_KEY_ID?.trim() ?? '';
-    return clientId && redirectUri && privateKey && teamId && keyId
-      ? { clientId, redirectUri, clientSecret: '', authorizationEndpoint: 'https://appleid.apple.com/auth/authorize', scopes: ['name', 'email'] }
-      : null;
+  return resolveProvider(provider).config;
+}
+
+/**
+ * Why each provider is disabled — env var names only, safe to log.
+ * Providers nobody tried to configure (no env var set at all) are omitted.
+ */
+export function socialProviderDiagnostics(): Partial<Record<AuthProvider, string[]>> {
+  const out: Partial<Record<AuthProvider, string[]>> = {};
+  for (const provider of ['apple', 'google', 'line'] as const) {
+    const { config, problems, attempted } = resolveProvider(provider);
+    if (!config && attempted) out[provider] = problems;
   }
-  if (provider === 'google') {
-    const clientId = process.env.GOOGLE_CLIENT_ID?.trim() ?? '';
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI?.trim() ?? '';
-    const clientSecret = configuredSecret('GOOGLE_CLIENT_SECRET', 'GOOGLE_CLIENT_SECRET_REF', 'GOOGLE_CLIENT_SECRET_SECRET_REF');
-    return clientId && redirectUri && clientSecret
-      ? { clientId, redirectUri, clientSecret, authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth', scopes: ['openid', 'email', 'profile'] }
-      : null;
-  }
-  const clientId = process.env.LINE_CHANNEL_ID?.trim() ?? '';
-  const redirectUri = process.env.LINE_REDIRECT_URI?.trim() ?? '';
-  const clientSecret = configuredSecret('LINE_CHANNEL_SECRET', 'LINE_CHANNEL_SECRET_REF', 'LINE_CHANNEL_SECRET_SECRET_REF');
-  return clientId && redirectUri && clientSecret
-    ? { clientId, redirectUri, clientSecret, authorizationEndpoint: 'https://access.line.me/oauth2/v2.1/authorize', scopes: ['openid', 'profile', 'email'] }
-    : null;
+  return out;
 }
 
 export function buildProviderAuthorizationUrl(
@@ -82,10 +140,10 @@ function assertNonce(value: unknown, transaction: AuthTransactionRecord) {
 }
 
 async function appleClientSecret(config: SocialProviderConfig): Promise<string> {
-  const key = await importPKCS8(configuredSecret('APPLE_PRIVATE_KEY', 'APPLE_PRIVATE_KEY_REF', 'APPLE_PRIVATE_KEY_SECRET_REF'), 'ES256');
+  const key = await importPKCS8(lookupSecret('APPLE_PRIVATE_KEY', 'APPLE_PRIVATE_KEY_REF', 'APPLE_PRIVATE_KEY_SECRET_REF').value, 'ES256');
   return new SignJWT({})
-    .setProtectedHeader({ alg: 'ES256', kid: process.env.APPLE_KEY_ID!.trim() })
-    .setIssuer(process.env.APPLE_TEAM_ID!.trim())
+    .setProtectedHeader({ alg: 'ES256', kid: envValue('APPLE_KEY_ID') })
+    .setIssuer(envValue('APPLE_TEAM_ID'))
     .setAudience('https://appleid.apple.com')
     .setSubject(config.clientId)
     .setIssuedAt()

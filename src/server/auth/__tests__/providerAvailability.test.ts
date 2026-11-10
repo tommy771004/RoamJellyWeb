@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { providerConfig } from '../providerAuth';
+import { providerConfig, socialProviderDiagnostics } from '../providerAuth';
 import { socialProviderAvailability } from '../socialAuthBroker';
 
 const AUTH_ENV_NAMES = [
@@ -83,5 +83,45 @@ test('global callback switch and unreadable secret references fail closed', () =
     process.env.GOOGLE_CLIENT_SECRET_REF = 'file:///path/that/does/not/exist';
     assert.doesNotThrow(() => socialProviderAvailability());
     assert.equal(socialProviderAvailability().google, false);
+  });
+});
+
+test('values pasted with quotes or whitespace from .env.example still work', () => {
+  withoutSocialAuthEnvironment(() => {
+    process.env.SOCIAL_AUTH_CALLBACK_ENABLED = ' "true" ';
+    process.env.GOOGLE_CLIENT_ID = '"google-client"';
+    process.env.GOOGLE_REDIRECT_URI = "'https://api.example.com/callback/google'";
+    process.env.GOOGLE_CLIENT_SECRET_REF = '"env://GOOGLE_CLIENT_SECRET_VALUE"';
+    process.env.GOOGLE_CLIENT_SECRET_VALUE = 'google-secret';
+    try {
+      const config = providerConfig('google');
+      assert.equal(config?.clientId, 'google-client');
+      assert.equal(config?.redirectUri, 'https://api.example.com/callback/google');
+      assert.equal(config?.clientSecret, 'google-secret');
+    } finally {
+      delete process.env.GOOGLE_CLIENT_SECRET_VALUE;
+    }
+  });
+});
+
+test('diagnostics name the env var at fault without leaking values', () => {
+  withoutSocialAuthEnvironment(() => {
+    process.env.SOCIAL_AUTH_CALLBACK_ENABLED = 'true';
+    process.env.GOOGLE_CLIENT_ID = 'google-client';
+    process.env.GOOGLE_REDIRECT_URI = 'https://api.example.com/callback/google';
+    process.env.GOOGLE_CLIENT_SECRET_REF = 'GOCSPX-raw-secret-pasted-into-ref';
+    const diag = socialProviderDiagnostics();
+    assert.equal(providerConfig('google'), null);
+    assert.ok(diag.google?.some((p) => p.includes('GOOGLE_CLIENT_SECRET_REF must start with env://')));
+    assert.ok(!JSON.stringify(diag).includes('GOCSPX'), 'secret value must not appear');
+    assert.equal(diag.line, undefined, 'unconfigured providers are not reported');
+    assert.equal(diag.apple, undefined);
+
+    process.env.GOOGLE_CLIENT_SECRET_REF = 'env://MISSING_SECRET_VAR';
+    assert.ok(socialProviderDiagnostics().google?.some((p) => p.includes('MISSING_SECRET_VAR')));
+
+    process.env.SOCIAL_AUTH_CALLBACK_ENABLED = 'false';
+    process.env.GOOGLE_CLIENT_SECRET = 'google-secret';
+    assert.deepEqual(socialProviderDiagnostics().google, ['SOCIAL_AUTH_CALLBACK_ENABLED is not "true"']);
   });
 });

@@ -13,10 +13,21 @@ export function pkceChallenge(verifier: string): string {
   return sha256(verifier);
 }
 
+/**
+ * Reads an env var, trimming whitespace and one pair of surrounding quotes —
+ * values copied from .env.example (`KEY="value"`) into a hosting dashboard
+ * otherwise keep the literal quotes and silently fail comparisons.
+ */
+export function envValue(name: string): string {
+  const raw = process.env[name]?.trim() ?? '';
+  const unquoted = /^(["'])([\s\S]*)\1$/.exec(raw);
+  return (unquoted ? unquoted[2] : raw).trim();
+}
+
 export function readSecret(directName: string, referenceName?: string): string {
-  const direct = process.env[directName]?.trim();
+  const direct = envValue(directName);
   if (direct) return direct.replace(/\\n/g, '\n');
-  const reference = referenceName ? process.env[referenceName]?.trim() : '';
+  const reference = referenceName ? envValue(referenceName) : '';
   if (!reference) return '';
   if (reference.startsWith('env://')) return (process.env[reference.slice(6)] ?? '').replace(/\\n/g, '\n');
   if (reference.startsWith('file://')) return readFileSync(reference.slice(7), 'utf8').trim();
