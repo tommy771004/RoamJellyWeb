@@ -30,7 +30,8 @@ interface AppStore {
   setAuthenticated: (userId: string | null) => void;
 
   toasts: ToastProps[];
-  showToast: (message: string, type?: ToastType, options?: { actionLabel?: string; onAction?: () => void }) => void;
+  /** `persistent` toasts stay until dismissed — use for actions the user must not miss. */
+  showToast: (message: string, type?: ToastType, options?: { actionLabel?: string; onAction?: () => void; persistent?: boolean }) => void;
   removeToast: (id: string) => void;
 
   toastMessage: string | null;
@@ -91,7 +92,9 @@ export const useAppStore = create<AppStore>()(
       setActiveTripId: (id) => set({ activeTripId: id }),
       showToast: (message, type = 'info', options) => {
         const id = Math.random().toString(36).substring(2, 9);
-        set((state) => ({ toasts: [...state.toasts, { id, message, type, ...options }] }));
+        const { persistent, ...toastOptions } = options ?? {};
+        set((state) => ({ toasts: [...state.toasts, { id, message, type, ...toastOptions }] }));
+        if (persistent) return;
         setTimeout(() => {
           set((state) => ({ toasts: state.toasts.filter(t => t.id !== id) }));
         }, 4000);

@@ -81,6 +81,7 @@ export default function App() {
       showToast(t('pwa_update_available', '有新版可用'), 'info', {
         actionLabel: t('pwa_update_now', '立即更新'),
         onAction: () => window.dispatchEvent(new CustomEvent('pwa-apply-update')),
+        persistent: true,
       });
     };
 

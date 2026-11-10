@@ -15,6 +15,23 @@ if ('serviceWorker' in navigator) {
     onOfflineReady() {
       // PWA ready for offline use.
     },
+    // Browsers only re-check sw.js on a full navigation, and iOS keeps tabs and
+    // home-screen apps alive for days without one — users stayed on old builds
+    // long after a deploy. Re-check whenever the app returns to the foreground,
+    // and hourly while it stays open.
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+      const checkForUpdate = () => {
+        if (!navigator.onLine) return;
+        void registration.update().catch(() => {
+          // Offline or transient network error: try again on the next trigger.
+        });
+      };
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      });
+      window.setInterval(checkForUpdate, 60 * 60 * 1000);
+    },
     onRegisterError(error) {
       // Log but do not rethrow — a failed SW registration must not break the app.
       console.warn('[PWA] Service worker registration failed:', error);
