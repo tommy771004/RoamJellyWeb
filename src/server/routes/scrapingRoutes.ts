@@ -130,16 +130,16 @@ export function registerScrapingRoutes(app: Express, deps: ScrapingRoutesDeps): 
   // Authentic Popular Activities Directory
   const POPULAR_ACTIVITIES: Record<string, Array<{title: string, img: string, rating: number, reviews: string, price: number}>> = {
     tokyo: [
-      { title: "SHIBUYA SKY 展望台觀景門票", img: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "12,450", price: 540 },
+      { title: "SHIBUYA SKY 展望台觀景門票", img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "12,450", price: 540 },
       { title: "東京迪士尼樂園 / 迪士尼海洋一日護照", img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=300", rating: 4.9, reviews: "34,810", price: 1890 },
       { title: "teamLab Planets TOKYO 豐洲新型態數位美術館門票", img: "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "21,080", price: 850 },
       { title: "東京地鐵乘車券 (24 / 48 / 72 小時)", img: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&q=80&w=300", rating: 4.7, reviews: "45,190", price: 180 },
       { title: "東京華納兄弟哈利波特影城門票", img: "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?auto=format&fit=crop&q=80&w=300", rating: 4.9, reviews: "8,920", price: 1450 }
     ],
     osaka: [
-      { title: "日本環球影城門票 1日券 / 1.5日券 / 2日券", img: "https://images.unsplash.com/photo-1590484512398-33fb39eff960?auto=format&fit=crop&q=80&w=300", rating: 4.9, reviews: "88,240", price: 1950 },
-      { title: "關西樂享周遊券 (Have Fun in Kansai 1週通行寶)", img: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&q=80&w=300", rating: 4.6, reviews: "9,530", price: 620 },
-      { title: "大阪周遊卡 (1日券 / 2日券) - 贈熱門觀光景點免費入場", img: "https://images.unsplash.com/photo-1542640244-7e672d6cef21?auto=format&fit=crop&q=80&w=300", rating: 4.7, reviews: "32,120", price: 640 },
+      { title: "日本環球影城門票 1日券 / 1.5日券 / 2日券", img: "https://images.unsplash.com/photo-1632715421433-d618491f9fca?auto=format&fit=crop&q=80&w=300", rating: 4.9, reviews: "88,240", price: 1950 },
+      { title: "關西樂享周遊券 (Have Fun in Kansai 1週通行寶)", img: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=300", rating: 4.6, reviews: "9,530", price: 620 },
+      { title: "大阪周遊卡 (1日券 / 2日券) - 贈熱門觀光景點免費入場", img: "https://images.unsplash.com/photo-1584505489290-96eb4e406d08?auto=format&fit=crop&q=80&w=300", rating: 4.7, reviews: "32,120", price: 640 },
       { title: "大阪空庭溫泉 OSAKA BAY TOWER 門票", img: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "5,410", price: 520 }
     ],
     kyoto: [
@@ -154,18 +154,18 @@ export function registerScrapingRoutes(app: Express, deps: ScrapingRoutesDeps): 
       { title: "首爾仁川機場 AREX 直通列車車票 (單程)", img: "https://images.unsplash.com/photo-1549488344-1f9b8d2bd1f3?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "25,110", price: 210 }
     ],
     bangkok: [
-      { title: "曼谷王權 Mahanakhon SkyWalk 觀景台門票", img: "https://images.unsplash.com/photo-1508009603885-50cf7c8dd0d5?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "14,500", price: 680 },
+      { title: "曼谷王權 Mahanakhon SkyWalk 觀景台門票", img: "https://images.unsplash.com/photo-1732723876878-91e3e8133181?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "14,500", price: 680 },
       { title: "曼谷野生動物世界 Safari World 門票", img: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&q=80&w=300", rating: 4.7, reviews: "10,800", price: 720 },
       { title: "曼谷大皇宮＆玉佛寺半日遊（中文導覽）", img: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&q=80&w=300", rating: 4.6, reviews: "6,920", price: 950 }
     ],
     paris: [
       { title: "羅浮宮快速通關門票＆導覽", img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=300", rating: 4.7, reviews: "24,180", price: 680 },
       { title: "艾菲爾鐵塔攀登門票", img: "https://images.unsplash.com/photo-1431274172761-fca41d930114?auto=format&fit=crop&q=80&w=300", rating: 4.6, reviews: "11,500", price: 1120 },
-      { title: "塞納河觀光遊船船票", img: "https://images.unsplash.com/photo-1509060464153-4466739f78ad?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "18,400", price: 420 }
+      { title: "塞納河觀光遊船船票", img: "https://images.unsplash.com/photo-1504896287989-ff1fbde00199?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "18,400", price: 420 }
     ],
     london: [
       { title: "倫敦眼摩天輪門票 (快速通關可選)", img: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=300", rating: 4.7, reviews: "22,500", price: 1250 },
-      { title: "西敏寺門票 (含多國語言導覽)", img: "https://images.unsplash.com/photo-1513026705753-bc31c4ade3ac?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "9,630", price: 980 },
+      { title: "西敏寺門票 (含多國語言導覽)", img: "https://images.unsplash.com/photo-1541577391996-b0d75a4ebaaf?auto=format&fit=crop&q=80&w=300", rating: 4.8, reviews: "9,630", price: 980 },
       { title: "巨石陣＆溫莎堡＆巴斯羅馬浴場一日遊 (倫敦出發)", img: "https://images.unsplash.com/photo-1515586838455-8f8f940d6853?auto=format&fit=crop&q=80&w=300", rating: 4.6, reviews: "14,800", price: 2950 }
     ]
   };

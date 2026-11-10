@@ -4,6 +4,7 @@ import type { SearchItem } from "../types/workflow";
 import AirlineLogo from "./AirlineLogo";
 import { useTranslation } from "react-i18next";
 import ArrivalDayOffset from "./ArrivalDayOffset";
+import { responsiveImageProps } from "../lib/imageUrl";
 
 // Destination metadata lookup by IATA code
 const DEST_META: Record<
@@ -86,7 +87,7 @@ const DEST_META: Record<
     flag: "🇯🇵",
     tagline: "Fresh seafood and winter wonderland",
     image:
-      "https://images.unsplash.com/photo-1553031977-03959cc47ac4?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1598176314960-249219ed5409?w=600&auto=format&fit=crop",
   },
   CDG: {
     name: "Paris",
@@ -158,7 +159,7 @@ const DEST_META: Record<
     flag: "🇹🇼",
     tagline: "Night markets and mountain getaways",
     image:
-      "https://images.unsplash.com/photo-1541243440-2e0abf7e0de4?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1552993873-0dd1110e025f?w=600&auto=format&fit=crop",
   },
   DPS: {
     name: "Bali",
@@ -182,7 +183,7 @@ const DEST_META: Record<
     flag: "🇳🇱",
     tagline: "Canals, tulips and freedom",
     image:
-      "https://images.unsplash.com/photo-1534351590666-13e3e96b5702?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584003564911-a7a321c84e1c?w=600&auto=format&fit=crop",
   },
   BCN: {
     name: "Barcelona",
@@ -249,10 +250,11 @@ export default function DestinationCard({
         {/* Left Section: Adaptive Destination image with high contrast */}
         <div className="relative w-32 xs:w-36 sm:w-40 shrink-0 overflow-hidden font-sans">
           <img
-            src={meta.image}
+            {...responsiveImageProps(meta.image, [180, 360], "(min-width: 640px) 160px, 128px", 1.5)}
             alt={title}
             onError={(e) => {
               (e.target as HTMLImageElement).onerror = null;
+              (e.target as HTMLImageElement).removeAttribute("srcset");
               (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&auto=format&fit=crop";
             }}
             referrerPolicy="no-referrer"

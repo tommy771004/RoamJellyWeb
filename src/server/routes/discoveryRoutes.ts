@@ -113,8 +113,8 @@ export function registerDiscoveryRoutes(app: Express, deps: DiscoveryRoutesDeps)
       }
 
       const destinations = [
-        { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", defaultPrice: "NT$ 9,800起" },
-        { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", defaultPrice: "NT$ 8,900起" },
+        { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=300&q=80", defaultPrice: "NT$ 9,800起" },
+        { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1596240748549-6ec0f32d4c95?auto=format&fit=crop&w=300&q=80", defaultPrice: "NT$ 8,900起" },
         { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", defaultPrice: "本島漫遊" },
         { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", defaultPrice: "NT$ 24,500起" }
       ];

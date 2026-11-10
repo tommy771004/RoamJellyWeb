@@ -23,7 +23,7 @@ export default {
       },
       fontFamily: {
         heading: ["Sentient", "Noto Serif TC", "Georgia", "serif"],
-        body: ["system-ui", "-apple-system", "Segoe UI", "Noto Sans TC", "sans-serif"],
+        body: ["system-ui", "-apple-system", "Segoe UI", "PingFang TC", "Microsoft JhengHei", "sans-serif"],
         display: ["Sentient", "Noto Serif TC", "Georgia", "serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
       },

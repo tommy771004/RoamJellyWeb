@@ -83,6 +83,7 @@ import InfoPeekModal, { type InfoPeekContent } from "./InfoPeekModal";
 import { getCountryGuide } from "../data/countryGuideData";
 import type { CountryGuide } from "../data/countryGuideData";
 import { EXPERT_HANDBOOKS } from "../data/expertHandbooks";
+import { responsiveImageProps } from "../lib/imageUrl";
 import DatePickerPopup from "./DatePickerPopup";
 import { impactHaptic, selectionHaptic } from "../lib/haptics";
 import { extractAirportCode, getIataCode, getSafetyStatus } from "../lib/airport";
@@ -101,6 +102,15 @@ import {
 import { GlowingIcon } from "./ui/GlowingIcon";
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+// Rendered widths per image slot, so Unsplash serves ~display-size files
+// instead of the stored w=800 originals. `aspect` (height / width) matches each
+// object-cover slot's shape, so tall slots get a crop that covers them rather
+// than a landscape photo upscaled to fill the height.
+const IMG_POLAROID = { widths: [160, 280], sizes: "(min-width: 640px) 140px, 110px", aspect: 1 } as const;
+const IMG_HANDBOOK_RAIL = { widths: [400, 640, 820], sizes: "(min-width: 640px) 410px, 350px", aspect: 0.82 } as const;
+const IMG_HANDBOOK_GRID = { widths: [400, 640, 820], sizes: "(min-width: 768px) 33vw, 100vw", aspect: 0.82 } as const;
+const IMG_DEST_ROW = { widths: [160, 300], sizes: "(min-width: 640px) 144px, 128px", aspect: 1.5 } as const;
 
 type RoundTripLegView = "outbound" | "return";
 
@@ -354,8 +364,8 @@ export default function HomeTab({
   const [newsFeed, setNewsFeed] = useState<any[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [destinationAlerts, setDestinationAlerts] = useState<any[]>([
-    { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
-    { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1590253187631-6f9aa4563a57?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+    { name: "東京 Tokyo", code: "NRT", image: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
+    { name: "大阪 Osaka", code: "KIX", image: "https://images.unsplash.com/photo-1596240748549-6ec0f32d4c95?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
     { name: "台北 Taipei", code: "TPE", image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
     { name: "倫敦 London", code: "LHR", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80", price: "登入後更新", health: "💡 可訂閱", advisory: "登入後開啟即時優惠與目的地警示。", tagColor: "bg-slate-50 text-slate-700 font-extrabold" },
   ]);
@@ -1473,7 +1483,7 @@ export default function HomeTab({
                 RoamJelly Trip Planner
                 <span className="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>
               </p>
-              <h1 className="mx-auto max-w-4xl text-balance text-[32px] font-black tracking-[-0.04em] text-slate-800 dark:text-slate-100 sm:text-[46px] md:text-[56px] leading-[1.15] sm:leading-[1.1] font-heading">
+              <h1 className="mx-auto max-w-4xl text-balance text-[32px] font-black tracking-[-0.02em] text-slate-800 dark:text-slate-100 sm:text-[46px] md:text-[56px] leading-[1.15] sm:leading-[1.1] font-body">
                 <span>{t('home_hero_title', '一鍵規劃專屬自由行')}</span>
               </h1>
             </div>
@@ -1668,7 +1678,7 @@ export default function HomeTab({
                     {/* Departure date */}
                     <button
                       type="button"
-                      aria-label={`去程日期：${searchForm.date || "尚未選擇"}`}
+                      aria-label={`${t('str_27e6af8a')} ${searchForm.date || "選擇日期"}`}
                       className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-pointer bg-slate-50/60 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-left w-full ${searchFieldSurfaceClass}`}
                       onClick={() => {
                         closeActiveLocationPicker();
@@ -1691,7 +1701,7 @@ export default function HomeTab({
                     {/* Return date — always visible; clicking in oneway mode auto-switches to roundtrip */}
                     <button
                       type="button"
-                      aria-label={`回程日期：${searchForm.returnDate || (searchForm.tripType === "oneway" ? "單程（點擊切換來回）" : "尚未選擇")}`}
+                      aria-label={`${t('str_2953b587')} ${searchForm.returnDate || (searchForm.tripType === "oneway" ? "+ 加回程（目前單程，點擊切換來回）" : "選擇回程")}`}
                       className={`flex flex-col gap-1 sm:gap-2 px-4 py-3.5 sm:px-6 sm:py-4 rounded-[24px] sm:rounded-[28px] cursor-pointer border text-left w-full ${
                         searchForm.tripType === "oneway"
                           ? "bg-slate-50/50 border-dashed border-slate-200 dark:border-slate-600 opacity-80"
@@ -2806,8 +2816,8 @@ export default function HomeTab({
                       <div className="relative z-10 w-full max-w-5xl mb-10">
                         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                           <div>
-                            <h4 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                              {t('str_23b668d')}</h4>
+                            <h2 className="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                              {t('str_23b668d')}</h2>
                           </div>
                           <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400">
                             {t('str_c0e005')}</p>
@@ -2832,12 +2842,13 @@ export default function HomeTab({
                                 {/* Absolute Background Image */}
                                 <div className="absolute inset-0 z-0">
                                   <img
-                                    src={handbook.image}
+                                    {...responsiveImageProps(handbook.image, IMG_HANDBOOK_RAIL.widths, IMG_HANDBOOK_RAIL.sizes, IMG_HANDBOOK_RAIL.aspect)}
                                     alt={handbook.title}
                                     loading="lazy"
                                     onError={(e) => {
                                       (e.target as HTMLImageElement).onerror = null;
-                                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                      (e.target as HTMLImageElement).removeAttribute("srcset");
+                                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=60&auto=format&fit=crop";
                                     }}
                                     referrerPolicy="no-referrer"
                                     className="h-full w-full object-cover transition-transform duration-750 group-hover/demo:scale-105"
@@ -2921,12 +2932,13 @@ export default function HomeTab({
                                 {/* Absolute Background Image */}
                                 <div className="absolute inset-0 z-0">
                                   <img
-                                    src={handbook.image}
+                                    {...responsiveImageProps(handbook.image, IMG_HANDBOOK_GRID.widths, IMG_HANDBOOK_GRID.sizes, IMG_HANDBOOK_GRID.aspect)}
                                     alt={handbook.title}
                                     loading="lazy"
                                     onError={(e) => {
                                       (e.target as HTMLImageElement).onerror = null;
-                                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                      (e.target as HTMLImageElement).removeAttribute("srcset");
+                                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=60&auto=format&fit=crop";
                                     }}
                                     referrerPolicy="no-referrer"
                                     className="h-full w-full object-cover transition-transform duration-750 group-hover/demo:scale-105"
@@ -3218,11 +3230,12 @@ export default function HomeTab({
                             <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-800 p-2 sm:p-2.5 pb-6 sm:pb-8 rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-700 ${polaroidRotation} group-hover/trip:scale-102 transition-transform duration-300 flex flex-col`}>
                               <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
                                 <img
-                                  src={trip.cover}
+                                  {...responsiveImageProps(trip.cover, IMG_POLAROID.widths, IMG_POLAROID.sizes, IMG_POLAROID.aspect)}
                                   alt={trip.title}
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).onerror = null;
-                                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                    (e.target as HTMLImageElement).removeAttribute("srcset");
+                                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=60&auto=format&fit=crop";
                                   }}
                                   loading="lazy"
                                   className="h-full w-full object-cover"
@@ -3292,8 +3305,8 @@ export default function HomeTab({
           <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-section px-2 text-left">
             <div className="flex items-center gap-2 mb-2">
               <BellRing size={20} className="text-pink-500 animate-pulse" />
-              <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                {t('str_497b0ec5')}</h4>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                {t('str_497b0ec5')}</h2>
             </div>
             <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
               {t('str_4e2be4eb')}</p>
@@ -3313,11 +3326,13 @@ export default function HomeTab({
                     <div key={dest.name} className="flex flex-row items-stretch w-[290px] xs:w-[325px] sm:w-[365px] shrink-0 rounded-[22px] border border-slate-100 dark:border-white/5 bg-slate-50/42 dark:bg-slate-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all">
                       <div className="relative w-28 xs:w-32 sm:w-36 shrink-0 overflow-hidden font-sans">
                         <img
-                          src={dest.image}
+                          {...responsiveImageProps(dest.image, IMG_DEST_ROW.widths, IMG_DEST_ROW.sizes, IMG_DEST_ROW.aspect)}
                           alt={dest.name}
+                          loading="lazy"
                           onError={(e) => {
                             (e.target as HTMLImageElement).onerror = null;
-                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                            (e.target as HTMLImageElement).removeAttribute("srcset");
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=60&auto=format&fit=crop";
                           }}
                           referrerPolicy="no-referrer"
                           className="h-full w-full object-cover"
@@ -3332,7 +3347,7 @@ export default function HomeTab({
                           </span>
                         </div>
                         <div className="absolute bottom-2.5 left-2.5 text-white pr-2">
-                          <h5 className="font-extrabold text-[13.5px] leading-tight">{dest.name}</h5>
+                          <h3 className="font-extrabold text-[13.5px] leading-tight">{dest.name}</h3>
                         </div>
                       </div>
                       
@@ -3377,8 +3392,8 @@ export default function HomeTab({
             <div className="rounded-3xl border border-dashed border-slate-200 dark:border-white/10 p-4 bg-white/20 dark:bg-slate-950/20">
               <div className="flex items-center gap-2 mb-3">
                 <Rss size={16} className="text-pink-500 animate-pulse" />
-                <h5 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                  {t('str_6083175a')}</h5>
+                <h3 className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                  {t('str_6083175a')}</h3>
               </div>
 
               {newsLoading ? (
@@ -3481,11 +3496,12 @@ export default function HomeTab({
                           <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-800 p-1.5 sm:p-2.5 pb-4 sm:pb-8 rounded-[12px] sm:rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-700 ${polaroidRotation} group-hover/dest:scale-102 transition-transform duration-300 flex flex-col`}>
                             <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
                               <img
-                                src={dest.image}
+                                {...responsiveImageProps(dest.image, IMG_POLAROID.widths, IMG_POLAROID.sizes, IMG_POLAROID.aspect)}
                                 alt={dest.name}
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).onerror = null;
-                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                  (e.target as HTMLImageElement).removeAttribute("srcset");
+                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=60&auto=format&fit=crop";
                                 }}
                                 loading="lazy"
                                 className="h-full w-full object-cover"
@@ -3596,11 +3612,12 @@ export default function HomeTab({
                           <div className={`w-full aspect-[4/5] sm:h-[185px] bg-white dark:bg-slate-800 p-1.5 sm:p-2.5 pb-4 sm:pb-8 rounded-[12px] sm:rounded-[16px] shadow-md border border-slate-200/40 dark:border-slate-700 ${polaroidRotation} group-hover/handbook:scale-102 transition-transform duration-300 flex flex-col`}>
                             <div className="flex-1 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-[10px] relative">
                               <img
-                                src={handbook.image}
+                                {...responsiveImageProps(handbook.image, IMG_POLAROID.widths, IMG_POLAROID.sizes, IMG_POLAROID.aspect)}
                                 alt={handbook.title}
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).onerror = null;
-                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                                  (e.target as HTMLImageElement).removeAttribute("srcset");
+                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=60&auto=format&fit=crop";
                                 }}
                                 loading="lazy"
                                 className="h-full w-full object-cover"
@@ -3795,7 +3812,8 @@ export default function HomeTab({
                   alt={flyingCard.handbook.title || "行程預覽"}
                   onError={(e) => {
                     (e.target as HTMLImageElement).onerror = null;
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop";
+                    (e.target as HTMLImageElement).removeAttribute("srcset");
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&q=60&auto=format&fit=crop";
                   }}
                   referrerPolicy="no-referrer"
                   className="w-full h-2/3 object-cover"

@@ -504,13 +504,13 @@ async function buildTripInfo(repo: AppRepository, tripId: string) {
 
   const DEST_COVERS: [string, string][] = [
     ['tokyo', 'photo-1542051841857-5f90071e7989'],
-    ['osaka', 'photo-1590484512398-33fb39eff960'],
+    ['osaka', 'photo-1596240748549-6ec0f32d4c95'],
     ['kyoto', 'photo-1493976040374-85c8e12f0c0e'],
     ['seoul', 'photo-1538669715315-155098f0fb1d'],
     ['paris', 'photo-1502602898657-3e91760cbb34'],
     ['bali',  'photo-1537996194471-e657df975ab4'],
     ['singapore', 'photo-1525625293386-3f8f99389edd'],
-    ['bangkok', 'photo-1508009603885-50cf7c8dd0d5'],
+    ['bangkok', 'photo-1544944019-7f85ab6f4018'],
     ['new york', 'photo-1485871981521-5b1fd3805eee'],
     ['london', 'photo-1513635269975-59663e0ac1ad'],
   ];

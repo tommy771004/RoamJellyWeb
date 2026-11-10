@@ -1,7 +1,10 @@
 import { SPRING_SNAPPY, SPRING_MODAL, IOS_EASE } from './lib/motionTokens';
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-const HomeTab = lazy(() => import('./components/HomeTab'));
+// Static, not lazy: HomeTab is the landing tab and holds the hero (the LCP
+// element). Behind React.lazy it suspended on every visit, and React 19 keeps
+// a Suspense fallback up for >=300ms once shown, delaying the hero by ~300ms.
+import HomeTab from './components/HomeTab';
 import RedirectModal from './components/RedirectModal';
 import { assignDaysBasedOnTimeAndOrder } from './lib/itineraryUtils';
 
@@ -432,7 +435,10 @@ export default function App() {
   // Show nothing while checking localStorage (avoids flash)
   if (!authReady) {
     return (
-      <div className="flex-1 justify-center items-center bg-purple-50 flex h-full w-full">
+      // Distinct key from the app shell below: if React reused this node, the
+      // shell's blanket `dark-transition` colour ease would animate every
+      // element from this screen's black text on first paint (~850 transitions).
+      <div key="auth-loading" className="flex-1 justify-center items-center bg-purple-50 flex h-full w-full">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80">
           <PlaneTakeoff size={22} className="text-pink-500 animate-pulse" strokeWidth={2.5} />
         </div>
@@ -861,7 +867,7 @@ export default function App() {
   };
 
   return (
-    <div className="dark-transition flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100">
+    <div key="app-shell" className="dark-transition flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100">
       <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-500 bg-gradient-to-br from-[#030712] via-[#090b18] to-[#0f172a] ${isDarkMode ? 'opacity-[0.93]' : 'opacity-0'}`} />
       <div className="noise-overlay absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20 transition-opacity duration-500" />
       {/* Dev Mode Switches (bottom left, clear of the header menu button and the tab capsule) */}
@@ -954,7 +960,8 @@ export default function App() {
       {/* Floating tab capsule (all widths) */}
       <BottomTabs />
       <PwaInstallPrompt />
-      {shouldShowAssistant ? <JellyAssistant /> : null}
+      {/* Own boundary: without it this lazy chunk suspends the whole shell (hero included) until it loads. */}
+      {shouldShowAssistant ? <Suspense fallback={null}><JellyAssistant /></Suspense> : null}
 
       <AnimatePresence>
         {showLogin && (
@@ -966,6 +973,7 @@ export default function App() {
             className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-2 sm:p-4 backdrop-blur-sm shadow-2xl"
           >
             <div className="relative w-full max-w-[420px] max-h-full overflow-y-auto rounded-[28px] bg-white shadow-xl no-scrollbar dark:bg-[#243229]">
+              <Suspense fallback={null}>
               <LoginScreen
                 presentation="dialog"
                 onLogin={(id) => {
@@ -980,6 +988,7 @@ export default function App() {
                 guestFirst={loginPromptMode === 'guest-first'}
                 {...(loginPromptMode === 'guest-first' ? getGuestLoginCopy(activeTab) : {})}
               />
+              </Suspense>
             </div>
           </motion.div>
         )}

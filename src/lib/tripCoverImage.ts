@@ -5,7 +5,7 @@ const DESTINATION_IMAGES: Array<{ keywords: string[]; url: string }> = [
   },
   {
     keywords: ["九份", "jiufen"],
-    url: "https://images.unsplash.com/photo-1548468787-56de8ce95253?w=800&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1728835804487-db019450bb07?w=800&auto=format&fit=crop",
   },
   {
     keywords: ["太魯閣", "taroko", "花蓮", "hualien"],
@@ -21,7 +21,7 @@ const DESTINATION_IMAGES: Array<{ keywords: string[]; url: string }> = [
   },
   {
     keywords: ["高雄", "kaohsiung"],
-    url: "https://images.unsplash.com/photo-1605552490120-dba5cfe84eac?w=800&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1677607221983-630ffb5ea1d8?w=800&auto=format&fit=crop",
   },
   {
     keywords: ["墾丁", "kenting"],

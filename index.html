@@ -135,7 +135,11 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- Noto Serif TC (CJK headings only) loads without blocking first paint:
+         headings render in the system serif first, then swap. Body text uses
+         the system CJK font, so it needs no web font. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap" /></noscript>
   </head>
   <style>
     html, body, #root { height: 100%; display: flex; flex-direction: column; overflow: hidden; margin: 0; }

@@ -1,7 +1,7 @@
-/* Latin signature face (Sentient) is self-hosted below; only the CJK families
- * still come from Google. The previous Inter / Space Grotesk / JetBrains Mono /
- * Playfair Display stack has been removed. */
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;700;900&display=swap");
+/* Latin signature face (Sentient) is self-hosted below. The only web CJK font
+ * is Noto Serif TC for headings, loaded non-blocking from index.html (an
+ * @import here would chain a second render-blocking stylesheet). Body text
+ * uses the system CJK font. */
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
@@ -15,6 +15,9 @@
   font-weight: 200 700;
   font-style: normal;
   font-display: swap;
+  /* Latin-only face: without this range the browser downloads it for
+   * all-Chinese headings too, delaying LCP for no visible glyph. */
+  unicode-range: U+0000-024F, U+2000-206F, U+20AC, U+2122;
 }
 @font-face {
   font-family: "Sentient";
@@ -22,6 +25,7 @@
   font-weight: 200 700;
   font-style: italic;
   font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+20AC, U+2122;
 }
 
 @theme {
@@ -349,20 +353,21 @@
 
   /* ===== Typography =====
    * Signature: Sentient (self-hosted, real italics) over Noto Serif TC.
-   * Body: a genuinely neutral system stack over Noto Sans TC.
+   * Body: a genuinely neutral system stack; CJK falls to the OS font
+   * (PingFang TC / Microsoft JhengHei / Noto Sans CJK on Android).
    * Note: CJK has no true italic, so Chinese emphasis is carried by the
    * serif/weight shift rather than a synthesised slant. */
   --font-heading: 'Sentient', 'Noto Serif TC', Georgia, serif;
-  --font-body: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-serif: 'Sentient', 'Noto Serif TC', Georgia, serif;
 
   --font-h1: 'Sentient', 'Noto Serif TC', Georgia, serif;
   --font-h2: 'Sentient', 'Noto Serif TC', Georgia, serif;
-  --font-body-lg: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
-  --font-body-md: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
-  --font-label-caps: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
+  --font-body-lg: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --font-body-md: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --font-label-caps: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
 
   /* Fluid type scale (design_exp.md Pattern 2): clamp(min, preferred, max)
    * Range: 320px (mobile) → 1280px (desktop) */
@@ -1320,23 +1325,6 @@ select {
     backdrop-filter: blur(var(--glass-blur-soft));
     -webkit-backdrop-filter: blur(var(--glass-blur-soft));
   }
-}
-
-.material-icons-outlined {
-  font-family: "Material Symbols Outlined";
-  font-weight: normal;
-  font-style: normal;
-  display: inline-block;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  white-space: nowrap;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "liga";
 }
 
 /* ── Responsive Table (designUI.md compliant) ────────────────────────────────
