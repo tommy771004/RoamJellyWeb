@@ -18,6 +18,11 @@ export default function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [isDelayedVisible, setIsDelayedVisible] = useState(false);
+  // Only after the visitor has tapped, scrolled or typed. Besides waiting for
+  // engagement, this keeps the prompt out of LCP: Chrome stops recording LCP at
+  // the first input, and a prompt popping up untouched at 6s was large enough
+  // to replace the hero as the LCP element (LCP 6.3s, score 66 in one run).
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -44,20 +49,29 @@ export default function PwaInstallPrompt() {
       setIsDelayedVisible(true);
     }, 6000);
 
+    // Capture phase so scrolls inside the app's inner scroll containers count too.
+    const interactionEvents = ['pointerdown', 'keydown', 'scroll'] as const;
+    const onInteract = () => {
+      setHasInteracted(true);
+      interactionEvents.forEach((e) => window.removeEventListener(e, onInteract, true));
+    };
+    interactionEvents.forEach((e) => window.addEventListener(e, onInteract, { capture: true, passive: true }));
+
     return () => {
       window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
       window.removeEventListener('appinstalled', onAppInstalled);
+      interactionEvents.forEach((e) => window.removeEventListener(e, onInteract, true));
       clearTimeout(timer);
     };
   }, []);
 
   const showPrompt = useMemo(() => {
-    if (dismissed || !isDelayedVisible || isStandaloneDisplayMode()) return false;
+    if (dismissed || !isDelayedVisible || !hasInteracted || isStandaloneDisplayMode()) return false;
     if (typeof window === 'undefined' || window.innerWidth > 1024) return false;
     // Do not automatically show the fake prompt on iOS Safari as it annoys users.
     // We only rely on actual PWA deferred prompts now.
     return Boolean(deferredPrompt);
-  }, [deferredPrompt, dismissed, isDelayedVisible]);
+  }, [deferredPrompt, dismissed, isDelayedVisible, hasInteracted]);
 
   if (!showPrompt) return null;
 

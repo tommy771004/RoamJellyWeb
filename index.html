@@ -146,6 +146,124 @@
   </style>
   <body class="jelly-bg">
     <div id="root"></div>
+    <!--
+      Static copy of the home hero (header bar, eyebrow, title), painted as soon
+      as the CSS arrives instead of after the JS bundle runs. It is the page's
+      LCP element. KEEP IN SYNC with the hero in src/components/HomeTab.tsx and
+      the shell wrappers in src/App.tsx: every class below is copied from there,
+      so the title lands on the exact pixels React later paints it on. The
+      .boot-hero-form spacer stands in for the search form (heights measured
+      per breakpoint and input type; re-measure if the form changes).
+      Shown only on "/" in the default state (empty persisted search form,
+      online); any other state would put the real title elsewhere. Removed in
+      the same frame React mounts the app shell (see the observer below), and
+      src/lib/bootHero.ts skips the entrance motion of that first mount.
+    -->
+    <style>
+      #boot-hero { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; overflow: hidden; }
+      /* App.tsx toggles this layer between opacity-0 and opacity-[0.93] from isDarkMode. */
+      #boot-hero .boot-hero-wash { opacity: 0; }
+      .dark #boot-hero .boot-hero-wash { opacity: 0.93; }
+      /* Search form height = a fixed remainder + one origin/destination input.
+         The input's height comes from the platform CJK font's ascent/descent
+         (21px with PingFang, taller with Noto Sans CJK on Android), so a hidden
+         clone of it carries that part and the total tracks every platform.
+         Remainders measured as form height minus input height (21 / 23px).
+         Touch devices are taller: index.css gives buttons a 44px minimum under
+         (hover: none) and (pointer: coarse). */
+      #boot-hero .boot-hero-form { display: flex; flex-direction: column; }
+      #boot-hero .boot-hero-form input { visibility: hidden; display: block; }
+      #boot-hero .boot-hero-form-rest { height: 380px; }
+      @media (min-width: 40rem) { #boot-hero .boot-hero-form-rest { height: 432.5px; } }
+      @media (hover: none) and (pointer: coarse) {
+        #boot-hero .boot-hero-form-rest { height: 402px; }
+      }
+      @media (hover: none) and (pointer: coarse) and (min-width: 40rem) {
+        #boot-hero .boot-hero-form-rest { height: 449px; }
+      }
+    </style>
+    <template id="boot-hero-tpl">
+      <div id="boot-hero" aria-hidden="true">
+        <div class="flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100">
+          <!-- The shell's full-page layers: navy wash (dark mode only) and noise. -->
+          <div class="boot-hero-wash absolute inset-0 z-0 pointer-events-none bg-gradient-to-br from-[#030712] via-[#090b18] to-[#0f172a]"></div>
+          <div class="noise-overlay absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20"></div>
+          <div class="fixed top-0 z-50 flex h-header w-full items-center justify-between gap-2 pt-safe px-1 md:px-3 jelly-surface !rounded-none !border-x-0 !border-t-0 !shadow-sm"></div>
+          <div class="flex-1 relative z-10 w-full overflow-hidden flex flex-col">
+            <div class="w-full pt-header pb-0" style="width: 100%; height: 100%; display: flex; flex-direction: column">
+              <div class="relative flex flex-col flex-1 w-full min-h-full overflow-hidden pb-tab-safe">
+                <div class="relative z-10 flex w-full shrink-0 flex-col pt-5 sm:pt-[55px] hero-fold justify-center pb-tab-safe md:pb-10 px-3 sm:px-6 overflow-visible">
+                  <!-- Hero colour blobs at their first animation keyframe (clearly visible in dark mode). -->
+                  <div class="absolute -top-10 right-6 h-72 w-72 rounded-full bg-sky-200/30 blur-[100px] pointer-events-none transform-gpu" style="opacity: 0.15"></div>
+                  <div class="absolute top-10 left-[-1rem] h-60 w-60 rounded-full bg-pink-200/30 blur-[90px] pointer-events-none transform-gpu" style="opacity: 0.15"></div>
+                  <div class="absolute -bottom-12 right-[18%] h-64 w-64 rounded-full bg-orange-200/30 blur-[90px] pointer-events-none transform-gpu" style="opacity: 0.18"></div>
+                  <div class="relative z-20 mx-auto w-full max-w-[1120px] shrink-0">
+                    <div class="group relative mx-auto mb-5 max-w-[900px] space-y-3 overflow-hidden px-4 text-center sm:mb-8 sm:px-6">
+                      <div class="relative space-y-3 sm:space-y-4 flex flex-col items-center">
+                        <p class="text-[11px] font-black uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400 flex items-center gap-2"><span class="w-8 h-px bg-slate-300 dark:bg-slate-700"></span>RoamJelly Trip Planner<span class="w-8 h-px bg-slate-300 dark:bg-slate-700"></span></p>
+                        <div class="mx-auto max-w-4xl text-balance text-[32px] font-black tracking-[-0.02em] text-slate-800 dark:text-slate-100 sm:text-[46px] md:text-[56px] leading-[1.15] sm:leading-[1.1] font-body"><span>一鍵規劃專屬自由行</span></div>
+                      </div>
+                    </div>
+                    <div class="boot-hero-form">
+                      <div class="boot-hero-form-rest"></div>
+                      <input type="text" tabindex="-1" disabled class="bg-transparent border-none p-0 text-[18px] sm:text-[20px] font-black tracking-tight w-full outline-none leading-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    <script>
+    (function () {
+      try {
+        var store = function (key) {
+          try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
+        };
+        // Same source App.tsx reads the theme from, applied before first paint.
+        var app = store('app-store');
+        if (app && app.state && app.state.isDarkMode) document.documentElement.classList.add('dark');
+
+        if (location.pathname !== '/') return;
+        // Built pages link the app CSS here; under the Vite dev server CSS is
+        // injected by JS, so the overlay would paint unstyled. Skip it there.
+        if (!document.querySelector('link[rel="stylesheet"][href*="/assets/"]')) return;
+        // Spacer heights are px but the form is partly rem: skip if the visitor changed the root size.
+        if (getComputedStyle(document.documentElement).fontSize !== '16px') return;
+        var params = new URLSearchParams(location.search);
+        if (params.has('trip_id') || params.has('template')) return;
+        if (navigator.onLine === false) return;
+        var search = store('search-store');
+        var form = search && search.state && search.state.searchForm;
+        if (form && (form.from || form.to || form.date || form.returnDate || (form.tripType && form.tripType !== 'oneway'))) return;
+
+        var tpl = document.getElementById('boot-hero-tpl');
+        var root = document.getElementById('root');
+        if (!tpl || !root || !('content' in tpl)) return;
+        document.body.appendChild(tpl.content.cloneNode(true));
+
+        // Remove as soon as React commits anything other than its auth-loading
+        // screen (marked data-app-loading in App.tsx): the app shell, or any
+        // other screen such as an error page. MutationObserver callbacks run
+        // before the next paint, so the static and real title swap within one
+        // frame. This lives here, not in the bundle, so the overlay can never
+        // outlive a mismatched bundle.
+        var observer = new MutationObserver(function () {
+          var first = root.firstElementChild;
+          if (!first || first.hasAttribute('data-app-loading')) return;
+          var hero = document.getElementById('boot-hero');
+          if (hero) hero.remove();
+          observer.disconnect();
+        });
+        observer.observe(root, { childList: true, subtree: true });
+      } catch (e) {
+        var stray = document.getElementById('boot-hero');
+        if (stray) stray.remove();
+      }
+    })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

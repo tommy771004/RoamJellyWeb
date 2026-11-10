@@ -84,6 +84,7 @@ import { getCountryGuide } from "../data/countryGuideData";
 import type { CountryGuide } from "../data/countryGuideData";
 import { EXPERT_HANDBOOKS } from "../data/expertHandbooks";
 import { responsiveImageProps } from "../lib/imageUrl";
+import { markHomeMounted, shouldSkipHomeEntrance } from "../lib/bootHero";
 import DatePickerPopup from "./DatePickerPopup";
 import { impactHaptic, selectionHaptic } from "../lib/haptics";
 import { extractAirportCode, getIataCode, getSafetyStatus } from "../lib/airport";
@@ -482,6 +483,9 @@ export default function HomeTab({
   // Leaving the page cancels a search still in flight.
   useEffect(() => () => searchAbortRef.current?.abort(), []);
   const prefersReducedMotion = useReducedMotion() ?? false;
+  // First mount after index.html's static hero: render at rest so the swap is invisible.
+  const [skipEntrance] = useState(shouldSkipHomeEntrance);
+  useEffect(() => markHomeMounted(), []);
   const { onScroll } = useHideNavOnScroll();
 
   const [showFlightsDropdown, setShowFlightsDropdown] = useState(false);
@@ -1443,7 +1447,7 @@ export default function HomeTab({
     <motion.div
       ref={scrollRef}
       onScroll={onScroll}
-      initial={prefersReducedMotion ? undefined : { y: 12, scale: 0.985 }}
+      initial={prefersReducedMotion || skipEntrance ? undefined : { y: 12, scale: 0.985 }}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-tab-safe"
@@ -1471,7 +1475,7 @@ export default function HomeTab({
         <div className="relative z-20 mx-auto w-full max-w-[1120px] shrink-0">
           {/* Hero title */}
           <motion.div
-            initial={prefersReducedMotion ? undefined : { y: 18 }}
+            initial={prefersReducedMotion || skipEntrance ? undefined : { y: 18 }}
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
             onClick={() => setIsHeroIntroCollapsed((prev) => !prev)}

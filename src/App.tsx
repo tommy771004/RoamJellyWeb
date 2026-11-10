@@ -7,6 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import HomeTab from './components/HomeTab';
 import RedirectModal from './components/RedirectModal';
 import { assignDaysBasedOnTimeAndOrder } from './lib/itineraryUtils';
+import { bootHeroShown } from './lib/bootHero';
 
 const ItineraryTab = lazy(() => import('./components/ItineraryTab'));
 const ToolsTab = lazy(() => import('./components/ToolsTab'));
@@ -438,7 +439,8 @@ export default function App() {
       // Distinct key from the app shell below: if React reused this node, the
       // shell's blanket `dark-transition` colour ease would animate every
       // element from this screen's black text on first paint (~850 transitions).
-      <div key="auth-loading" className="flex-1 justify-center items-center bg-purple-50 flex h-full w-full">
+      // data-app-loading: index.html keeps its static hero up while this shows.
+      <div key="auth-loading" data-app-loading="" className="flex-1 justify-center items-center bg-purple-50 flex h-full w-full">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80">
           <PlaneTakeoff size={22} className="text-pink-500 animate-pulse" strokeWidth={2.5} />
         </div>
@@ -924,7 +926,8 @@ export default function App() {
           popLayout pulls the outgoing tab out of flow (the parent is `relative`)
           so both move at once, the way a UIKit/SwiftUI push does.
         */}
-        <AnimatePresence mode="popLayout" custom={tabSlideDir}>
+        {/* initial: no slide-in for the first tab when index.html's static hero is up (see lib/bootHero). */}
+        <AnimatePresence mode="popLayout" custom={tabSlideDir} initial={!bootHeroShown}>
           <motion.div
             key={isAuthSurfaceVisible ? `login-${activeTab}` : (activeTab === 'ai_form' && isGenerating) ? 'ai_form_loading' : activeTab}
             custom={tabSlideDir}
