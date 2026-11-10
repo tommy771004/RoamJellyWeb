@@ -19,6 +19,8 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:generate": "drizzle-kit generate",
     "sync:travel-guide": "node scripts/sync-travel-guide.mjs",
+    "sync:route-facts": "tsx scripts/refresh-route-facts.ts",
+    "sync:tw-calendar": "tsx scripts/sync-tw-calendar.ts",
     "gen:icons": "node scripts/generate-icons.mjs",
     "gen:og": "node scripts/generate-og.mjs",
     "gen:brand": "npm run gen:icons && npm run gen:og",

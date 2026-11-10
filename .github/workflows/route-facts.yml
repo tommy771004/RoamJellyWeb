@@ -1,0 +1,67 @@
+name: Refresh route flight facts
+
+# Scrapes nonstop flights for every /fly/{route}/ SEO page and commits
+# src/data/routeFlightFacts.ts when it changed. The push to main redeploys
+# the site on Vercel, so the pages show the new facts.
+on:
+  schedule:
+    - cron: '0 18 * * 0' # Mondays 02:00 Asia/Taipei
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Comma-separated route slugs (empty = all routes)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: route-facts
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Scrape routes
+        env:
+          ONLY: ${{ github.event.inputs.only }}
+        run: |
+          if [ -n "$ONLY" ]; then
+            npm run sync:route-facts -- "--only=$ONLY"
+          else
+            npm run sync:route-facts
+          fi
+
+      - name: Check the data still compiles
+        run: npm run lint
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- src/data/routeFlightFacts.ts; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add src/data/routeFlightFacts.ts
+          git commit -m "chore(seo): refresh route flight facts"
+          git push

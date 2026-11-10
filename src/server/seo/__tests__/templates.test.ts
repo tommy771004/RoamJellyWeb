@@ -67,13 +67,13 @@ const sampleDest: DestinationData = {
 };
 
 test('buildDestinationPage returns valid HTML with destination name', () => {
-  const html = buildDestinationPage(sampleDest);
+  const html = buildDestinationPage(sampleDest, { itineraries: [], transfers: [], routes: [] });
   assert.ok(html.startsWith('<!DOCTYPE html>'));
   assert.ok(html.includes('東京'));
   assert.ok(html.includes('淺草寺'));
 });
 
 test('buildDestinationPage includes registration CTA', () => {
-  const html = buildDestinationPage(sampleDest);
+  const html = buildDestinationPage(sampleDest, { itineraries: [], transfers: [], routes: [] });
   assert.ok(html.includes('免費') || html.includes('登入'));
 });

@@ -29,6 +29,7 @@ import { getCategoryMeta } from './lib/itineraryUtils';
 import { JellyToast } from './components/JellyToast';
 import { useTranslation } from 'react-i18next';
 import { logoutAppSession, refreshAppSession } from './features/auth/authClient';
+import { clearTemplateRequest, copySampleItinerary, deferTemplateRequest, takeTemplateRequest } from './lib/copySampleItinerary';
 type LoginPromptMode = 'default' | 'guest-first';
 
 const AUTO_GUEST_TABS = new Set(['ai_form', 'itinerary', 'tools']);
@@ -254,6 +255,32 @@ export default function App() {
     };
     void bootstrap();
   }, [isLoggedIn]); // Re-run pref loading when login state changes
+
+  // "複製到我的行程" from a sample-itinerary SEO page: /?template={id}.
+  // Signed-out visitors sign in first; the request waits in sessionStorage.
+  const templateCopyStarted = useRef(false);
+  useEffect(() => {
+    if (!authReady || templateCopyStarted.current) return;
+    const templateId = takeTemplateRequest();
+    if (!templateId) return;
+    if (!isLoggedIn) {
+      deferTemplateRequest(templateId);
+      setShowLogin(true);
+      return;
+    }
+    templateCopyStarted.current = true;
+    clearTemplateRequest();
+    setShowLogin(false);
+    showToast(t('template_copy.copying', '正在複製範例行程…'), 'info');
+    void copySampleItinerary(templateId)
+      .then((copied) => {
+        if (!copied) return;
+        setActiveTripId(copied.tripId);
+        setActiveTab('itinerary');
+        showToast(t('template_copy.done', '已複製到你的行程，可以開始調整'), 'success');
+      })
+      .catch(() => showToast(t('template_copy.failed', '複製行程失敗，請稍後再試'), 'warning'));
+  }, [authReady, isLoggedIn]);
 
   useEffect(() => {
     if (isDarkMode) {

@@ -1,7 +1,11 @@
 // src/server/seo/router.ts
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { AppRepository } from '../repositories/appRepository.js';
-import { buildRouteData, buildDestinationData } from './seoDataService.js';
+import { buildRouteData, buildDestinationData, buildHolidayPageData, HOLIDAY_YEARS } from './seoDataService.js';
+import { buildHolidayPage } from './templates/holidayPage.js';
+import { buildItineraryPage } from './templates/itineraryPage.js';
+import { buildAirportHubPage, buildAirportPage } from './templates/airportPage.js';
+import { getDestinationContent, getItineraryByPath, getTransferBySlug } from './destinationContent.js';
 import { buildRoutePage } from './templates/routePage.js';
 import { buildDestinationPage } from './templates/destinationPage.js';
 import { buildRouteHubPage, buildDestinationHubPage } from './templates/hubPage.js';
@@ -69,6 +73,61 @@ export function createSeoRouter(repo: AppRepository): Router {
     res.send(html);
   });
 
+  // Long weekends: /holidays/ → the newest year with a calendar; /holidays/2027/
+  router.get('/holidays/', (_req: Request, res: Response) => {
+    const latest = HOLIDAY_YEARS[HOLIDAY_YEARS.length - 1];
+    if (!latest) { res.status(404).send('Not found'); return; }
+    res.redirect(302, `/holidays/${latest}/`);
+  });
+
+  router.get('/holidays/:year/', (req: Request, res: Response) => {
+    const year = Number(req.params.year);
+    if (!/^\d{4}$/.test(req.params.year) || !HOLIDAY_YEARS.includes(year)) {
+      res.status(404).send('Not found');
+      return;
+    }
+    if (!req.path.endsWith('/')) { res.redirect(308, `/holidays/${year}/`); return; }
+    const cacheKey = `holidays:${year}`;
+    const cached = getCached(cacheKey);
+    if (cached) { res.setHeader('Cache-Control', 'public, max-age=3600'); res.send(cached); return; }
+    const data = buildHolidayPageData(year);
+    if (!data) { res.status(404).send('Not found'); return; }
+    const html = buildHolidayPage(data);
+    setCached(cacheKey, html);
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(html);
+  });
+
+  function sendHtml(res: Response, cacheKey: string, build: () => string): void {
+    let html = getCached(cacheKey);
+    if (!html) {
+      html = build();
+      setCached(cacheKey, html);
+    }
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(html);
+  }
+
+  // Airport transfers: /airport/ and /airport/fukuoka-airport-to-hakata/
+  router.get('/airport/', (_req: Request, res: Response) => {
+    sendHtml(res, '__airport_hub__', buildAirportHubPage);
+  });
+
+  router.get('/airport/:slug/', (req: Request, res: Response) => {
+    const transfer = getTransferBySlug(req.params.slug);
+    if (!transfer) { res.status(404).send('Not found'); return; }
+    if (!req.path.endsWith('/')) { res.redirect(308, `/airport/${transfer.slug}/`); return; }
+    sendHtml(res, `airport:${transfer.slug}`, () => buildAirportPage(transfer, getDestinationContent(transfer.destinationSlug)));
+  });
+
+  // Sample itineraries: /trips/fukuoka/3-days/
+  router.get('/trips/:slug/:plan/', (req: Request, res: Response) => {
+    const itinerary = getItineraryByPath(req.params.slug, req.params.plan);
+    if (!itinerary) { res.status(404).send('Not found'); return; }
+    if (!req.path.endsWith('/')) { res.redirect(308, `/trips/${itinerary.destinationSlug}/${itinerary.days}-days/`); return; }
+    sendHtml(res, `itinerary:${itinerary.id}`, () => buildItineraryPage(itinerary, getDestinationContent(itinerary.destinationSlug)));
+  });
+
   // Route detail: /fly/tpe-nrt/
   router.get('/fly/:slug/', async (req: Request, res: Response) => {
     const { slug } = req.params;
@@ -116,7 +175,7 @@ export function createSeoRouter(repo: AppRepository): Router {
       const data = await buildDestinationData(slug, repo);
       if (!data) { res.status(404).send('Not found'); return; }
 
-      const html = buildDestinationPage(data);
+      const html = buildDestinationPage(data, getDestinationContent(slug));
       setCached(cacheKey, html);
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.send(html);

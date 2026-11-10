@@ -4,12 +4,21 @@
 // site once it learns the values are not trustworthy (e.g. "always today"), so
 // pages whose content has no tracked modification time get no lastmod at all.
 //   - guides:               the page's own JSON-LD dateModified (GUIDE_LASTMOD)
-//   - /fly/{route}/:        newest search for that route in the 12-month window
+//   - /fly/{route}/:        when the route's flight facts were scraped; else the newest
+//                           search for that route in the 12-month window
+//   - /airport/{slug}/:     the transfer data's verifiedAt
+//   - /trips/{city}/{n}-days/: the itinerary's reviewedAt (drafts are left out)
 //   - /trips/{city}/:       newest change among public trips for that destination
 //   - /trips/trip_*:        newest of trip creation / itinerary-node creation
-//   - /, hubs, guide index: omitted (static or untracked)
+//   - /, hubs, guide index, /holidays/{year}/: omitted (static or untracked)
 // /pricing is deliberately absent: it has no pricing content of its own yet.
 import { KNOWN_ROUTES, KNOWN_DESTINATIONS } from '../cities.js';
+import { HOLIDAY_YEARS } from '../longWeekends.js';
+import { AIRPORT_TRANSFERS } from '../../../data/airportTransfers.js';
+import { ROUTE_FLIGHT_SNAPSHOTS } from '../../../data/routeFlightFacts.js';
+import { SAMPLE_ITINERARIES } from '../../../data/sampleItineraries.js';
+import { itineraryPath, transferPath } from '../destinationContent.js';
+import { summarizeRouteFlights, type RouteFlightSnapshot } from '../routeFlightFacts.js';
 import { SITE_ORIGIN } from '../utils.js';
 import type { AppRepository } from '../../repositories/appRepository.js';
 
@@ -42,6 +51,8 @@ export interface PublicTripLastModified {
 export interface SitemapLastmodSource {
   routeSearches: RouteSearchLastSeen[];
   publicTrips: PublicTripLastModified[];
+  /** Flight-fact snapshots per route slug; defaults to the committed data file. */
+  routeFacts?: Record<string, RouteFlightSnapshot>;
 }
 
 export function toLastmod(value: Date | string | null | undefined): string | undefined {
@@ -68,10 +79,24 @@ export function buildSitemapEntries(source: SitemapLastmodSource): SitemapEntry[
     })),
     { loc: `${base}/fly/`, changefreq: 'weekly', priority: '0.9' },
     { loc: `${base}/trips/`, changefreq: 'weekly', priority: '0.9' },
+    ...HOLIDAY_YEARS.map((year): SitemapEntry => ({ loc: `${base}/holidays/${year}/`, changefreq: 'monthly', priority: '0.8' })),
   ];
 
+  if (AIRPORT_TRANSFERS.length > 0) {
+    entries.push({ loc: `${base}/airport/`, changefreq: 'monthly', priority: '0.7' });
+    for (const t of AIRPORT_TRANSFERS) {
+      entries.push({ loc: `${base}${transferPath(t)}`, lastmod: t.verifiedAt, changefreq: 'monthly', priority: '0.8' });
+    }
+  }
+
+  for (const it of SAMPLE_ITINERARIES) {
+    if (!it.reviewedAt) continue;
+    entries.push({ loc: `${base}${itineraryPath(it)}`, lastmod: it.reviewedAt, changefreq: 'monthly', priority: '0.8' });
+  }
+
   for (const r of KNOWN_ROUTES) {
-    const lastmod = maxDate(
+    const facts = summarizeRouteFlights((source.routeFacts ?? ROUTE_FLIGHT_SNAPSHOTS)[r.slug]);
+    const lastmod = facts ? toLastmod(facts.fetchedAt) : maxDate(
       source.routeSearches
         .filter((s) => r.fromVariants.includes(s.from) && r.toVariants.includes(s.to))
         .map((s) => toLastmod(s.lastSeen)),

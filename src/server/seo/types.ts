@@ -1,4 +1,5 @@
 // src/server/seo/types.ts
+import type { RouteFlightSummary } from './routeFlightFacts.js';
 
 export interface MonthlyDemand {
   month: number;  // 1–12
@@ -16,6 +17,10 @@ export interface RouteData {
   peakMonth: number | null;   // month with highest count, null if no data
   lowMonth: number | null;    // month with lowest count, null if no data
   destinationSlug: string;
+  /** Nonstop-flight facts from the weekly scrape; null/absent = no snapshot, old layout. */
+  flightSummary?: RouteFlightSummary | null;
+  /** "比台灣快 1 小時" etc.; null when the airport's offset is unknown. */
+  timeDifference?: string | null;
 }
 
 export interface TripNode {

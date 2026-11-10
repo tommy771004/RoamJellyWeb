@@ -1199,6 +1199,7 @@ export function parseJourneyResponses(
   origin: string,
   destination: string,
   date: string,
+  maxFlights = MAX_FLIGHTS,
 ): FlightData[] {
   const fromList = captured.flatMap(({ data }) => flightsFromItineraryList(data));
   const flights = fromList.length > 0
@@ -1239,7 +1240,7 @@ export function parseJourneyResponses(
     });
   }
 
-  return [...byFlight.values()].slice(0, MAX_FLIGHTS);
+  return [...byFlight.values()].slice(0, maxFlights);
 }
 
 // ---------------------------------------------------------------------------
@@ -1496,12 +1497,17 @@ function buildDomParserScript(_originIATA: string, _destIATA: string): string {
  *  2. DOM extraction, only when no usable API data arrived.
  *
  * Concurrent calls (both legs of a round trip) share one browser.
+ *
+ * `opts` lets offline jobs (scripts/refresh-route-facts.ts) read a route's
+ * whole schedule instead of the first few cheapest results.
  */
 export async function scrapeTripFlights(
   origin: string,
   destination: string,
   date: string,
+  opts: { maxFlights?: number; scrollCapMs?: number } = {},
 ): Promise<FlightData[]> {
+  const maxFlights = opts.maxFlights ?? MAX_FLIGHTS;
   const originIATA = getIata(origin);
   const destIATA = getIata(destination);
   const url = `https://tw.trip.com/flights/${originIATA}-to-${destIATA}/tickets-${originIATA}-${destIATA}/?flighttype=ow&dcity=${originIATA}&acity=${destIATA}&ddate=${date}`;
@@ -1516,7 +1522,7 @@ export async function scrapeTripFlights(
   let browser: playwrightCore.Browser | undefined;
   let context: playwrightCore.BrowserContext | undefined;
 
-  const parsedFromApi = () => parseJourneyResponses(capturedApiData, url, origin, destination, date);
+  const parsedFromApi = () => parseJourneyResponses(capturedApiData, url, origin, destination, date, maxFlights);
 
   try {
     browser = await acquireBrowser();
@@ -1618,11 +1624,11 @@ export async function scrapeTripFlights(
       // timer. Stop at MAX_FLIGHTS, when nothing new arrives for a while, or
       // at the overall cap.
       const QUIET_MS = 2500;
-      const CAP_MS = isVercel ? 8000 : 12000;
+      const CAP_MS = opts.scrollCapMs ?? (isVercel ? 8000 : 12000);
       const scrollStart = Date.now();
       await humanMouseMove(page, 350, 400, 900, 500);
       while (
-        parsedFromApi().length < MAX_FLIGHTS &&
+        parsedFromApi().length < maxFlights &&
         Date.now() - lastCaptureAt < QUIET_MS &&
         Date.now() - scrollStart < CAP_MS
       ) {
@@ -1674,7 +1680,7 @@ export async function scrapeTripFlights(
       arrival: string; price: number; duration: string; stops: number;
     }> = await page.evaluate(domScript) as any;
 
-    const valid = (rawFlights ?? []).filter(f => f?.price > 0).slice(0, MAX_FLIGHTS);
+    const valid = (rawFlights ?? []).filter(f => f?.price > 0).slice(0, maxFlights);
     console.log(`[tripParser] DOM extraction found ${valid.length} flights (${elapsed()}).`);
 
     return valid.map(f => ({

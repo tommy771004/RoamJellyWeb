@@ -4,8 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { buildSitemapEntries, renderSitemapXml, GUIDE_LASTMOD, toLastmod } from '../templates/sitemap.js';
 import { SITE_ORIGIN } from '../utils.js';
+import { AIRPORT_TRANSFERS } from '../../../data/airportTransfers.js';
 
-const empty = { routeSearches: [], publicTrips: [] };
+const empty = { routeSearches: [], publicTrips: [], routeFacts: {} };
 const find = (entries: ReturnType<typeof buildSitemapEntries>, p: string) => entries.find((e) => e.loc === `${SITE_ORIGIN}${p}`);
 
 test('/pricing is not in the sitemap', () => {
@@ -15,13 +16,20 @@ test('/pricing is not in the sitemap', () => {
 test('no entry claims today as lastmod without data', () => {
   const today = new Date().toISOString().slice(0, 10);
   const entries = buildSitemapEntries(empty);
+  // Airport pages carry their own verifiedAt, which can legitimately be today.
+  const transferLastmod = new Map(AIRPORT_TRANSFERS.map((t) => [`${SITE_ORIGIN}/airport/${t.slug}/`, t.verifiedAt]));
   for (const e of entries) {
+    if (transferLastmod.has(e.loc)) {
+      assert.equal(e.lastmod, transferLastmod.get(e.loc));
+      continue;
+    }
     if (e.lastmod) assert.notEqual(e.lastmod, today, `${e.loc} has today's date with no data`);
   }
   assert.equal(find(entries, '/')?.lastmod, undefined);
   assert.equal(find(entries, '/fly/tpe-nrt/')?.lastmod, undefined);
   assert.equal(find(entries, '/trips/tokyo/')?.lastmod, undefined);
-  assert.ok(!renderSitemapXml(entries).includes(`<lastmod>${today}</lastmod>`));
+  const others = entries.filter((e) => !transferLastmod.has(e.loc));
+  assert.ok(!renderSitemapXml(others).includes(`<lastmod>${today}</lastmod>`));
 });
 
 test('guide lastmod matches each page\'s JSON-LD dateModified', () => {
@@ -41,8 +49,25 @@ test('route lastmod is the newest search across that route\'s variants', () => {
       { from: 'Nowhere', to: 'NRT', lastSeen: '2026-11-01T00:00:00Z' },
     ],
     publicTrips: [],
+    routeFacts: {},
   });
   assert.equal(find(entries, '/fly/tpe-nrt/')?.lastmod, '2026-10-20');
+});
+
+test('a route with current flight facts uses the scrape date as lastmod', () => {
+  const fetchedAt = new Date(Date.now() - 3 * 864e5).toISOString();
+  const entries = buildSitemapEntries({
+    routeSearches: [{ from: 'TPE', to: 'NRT', lastSeen: '2026-01-01T00:00:00Z' }],
+    publicTrips: [],
+    routeFacts: {
+      'tpe-nrt': {
+        slug: 'tpe-nrt',
+        fetchedAt,
+        flights: [{ airline: '中華航空', flightNumber: 'CI100', departure: '08:00', arrival: '12:00', durationMin: 180, price: 9000, departureDate: '2027-01-01' }],
+      },
+    },
+  });
+  assert.equal(find(entries, '/fly/tpe-nrt/')?.lastmod, fetchedAt.slice(0, 10));
 });
 
 test('destination and trip lastmod come from public trip changes', () => {

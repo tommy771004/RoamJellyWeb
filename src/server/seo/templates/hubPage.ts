@@ -1,6 +1,7 @@
 // src/server/seo/templates/hubPage.ts
 import { KNOWN_ROUTES, KNOWN_DESTINATIONS } from '../cities.js';
 import { escHtml, safeJsonLd, SITE_ORIGIN } from '../utils.js';
+import { holidayFooterLink } from '../longWeekends.js';
 
 function hubHead(opts: {
   title: string;
@@ -98,6 +99,7 @@ ${hubHead({
   <footer>
     <a href="/">果凍漫遊</a>
     <a href="/trips/">目的地行程</a>
+    ${holidayFooterLink()}
     <br><br>
     <span>© ${new Date().getFullYear()} RoamJelly 果凍漫遊</span>
   </footer>
@@ -136,6 +138,7 @@ ${hubHead({
   <footer>
     <a href="/">果凍漫遊</a>
     <a href="/fly/">航線分析</a>
+    ${holidayFooterLink()}
     <br><br>
     <span>© ${new Date().getFullYear()} RoamJelly 果凍漫遊</span>
   </footer>

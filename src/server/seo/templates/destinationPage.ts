@@ -1,6 +1,18 @@
 // src/server/seo/templates/destinationPage.ts
+// /trips/{city}/ — a destination overview built from fixed content (sample
+// itineraries, airport transfers, nonstop flights) with travellers' public
+// trips as an extra. Title, sections and FAQ follow what actually exists.
 import type { DestinationData, PublicTrip } from '../types.js';
-import { escHtml, safeJsonLd, SITE_ORIGIN } from '../utils.js';
+import { escHtml, SITE_ORIGIN } from '../utils.js';
+import { daysNightsZh, itineraryPath, transferPath, type DestinationContent } from '../destinationContent.js';
+import { formatDurationRangeZh, formatDurationZh } from '../routeFlightFacts.js';
+import { formatFare, transferHighlights } from './airportPage.js';
+import { faqSection, renderPage, type Faq } from './layout.js';
+
+/** Trips with fewer stops than this are placeholders (e.g. seeded demo trips), not itineraries. */
+export const MIN_TRIP_STOPS = 3;
+
+const ntd = (n: number) => `NT$${n.toLocaleString('en-US')}`;
 
 function renderTrip(trip: PublicTrip): string {
   const byDay = new Map<number, typeof trip.nodes>();
@@ -9,179 +21,184 @@ function renderTrip(trip: PublicTrip): string {
     byDay.get(node.day)!.push(node);
   }
   const days = [...byDay.entries()].sort(([a], [b]) => a - b).slice(0, 3);
-
-  const dayHtml = days.map(([day, nodes]) => `
-    <div style="margin:12px 0;">
-      <div style="font-size:13px;font-weight:700;color:#b25936;margin-bottom:8px;">第 ${day} 天</div>
-      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
-        ${nodes.map((n) => `
-          <li style="display:flex;gap:8px;align-items:flex-start;">
-            <span style="font-size:12px;color:#a79e94;width:40px;flex-shrink:0;">${escHtml(n.time ?? '')}</span>
-            <span style="font-size:14px;color:#1f1511;">${escHtml(n.title)}</span>
-          </li>`).join('')}
-      </ul>
-    </div>`).join('');
-
   return `
-    <div style="background:#fff;border:1px solid #ece7e0;border-radius:16px;padding:20px;margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h3 style="font-size:15px;font-weight:700;">${escHtml(trip.name)}</h3>
-        <span style="font-size:12px;color:#a79e94;">🍴 ${trip.forkCount} 人使用</span>
-      </div>
-      ${dayHtml}
-      ${trip.nodes.length > 6 ? `<p style="font-size:13px;color:#a79e94;margin-top:8px;">+ 更多景點...</p>` : ''}
+    <div class="faq">
+      <h3>${escHtml(trip.name)} <span class="muted">· ${trip.forkCount} 人複製</span></h3>
+      ${days
+        .map(
+          ([day, nodes]) => `<p><strong>第 ${day} 天</strong>：${nodes.map((n) => escHtml(n.title)).join(' → ')}</p>`,
+        )
+        .join('')}
+      ${trip.id.startsWith('trip_') ? `<p class="muted" style="margin-top:4px"><a href="/trips/${encodeURIComponent(trip.id)}">查看完整行程</a></p>` : ''}
     </div>`;
 }
 
-export function buildDestinationPage(data: DestinationData): string {
-  const title = `${data.displayName}旅遊行程推薦 — 真實旅人規劃的行程 | 果凍漫遊`;
-  const description = `果凍漫遊用戶分享的${data.displayName}旅遊行程，包含景點安排、天數規劃與行程細節，免費複製使用。`;
-  const canonical = `${SITE_ORIGIN}/trips/${data.slug}/`;
+export function buildDestinationPage(data: DestinationData, content: DestinationContent): string {
+  const city = data.displayName;
+  const path = `/trips/${data.slug}/`;
+  const trips = data.trips.filter((t) => t.nodes.length >= MIN_TRIP_STOPS);
+  const { itineraries, transfers } = content;
+  const flights = content.routes.filter((r) => r.summary);
 
-  const spotsLead = data.popularSpots.length > 0 ? data.popularSpots.slice(0, 5).join('、') : '';
-  // Answer-first lead for AI citation / featured snippets.
-  const answerLead = data.trips.length > 0
-    ? `${data.displayName}有 ${data.trips.length} 份果凍漫遊旅人公開分享的行程可免費複製${spotsLead ? `，熱門景點包含${spotsLead}` : ''}。每份行程都標註天數、時段與景點順序，可直接複製後依出發日期調整。`
-    : `${data.displayName}的公開行程仍在累積中。你可以在果凍漫遊免費建立${data.displayName}行程，AI 會依天數與偏好生成初稿，並支援旅伴即時共編。`;
+  const dayList = itineraries.map((s) => `${s.days} 天`).join('、');
+  let title: string;
+  if (itineraries.length > 0) {
+    title = `${city}自由行行程｜${dayList}行程範例${transfers.length > 0 ? '與機場交通' : ''} | 果凍漫遊`;
+  } else if (transfers.length > 0 || flights.length > 0) {
+    title = `${city}自由行攻略｜${[transfers.length > 0 ? '機場交通' : '', flights.length > 0 ? '直飛航班' : ''].filter(Boolean).join('、')}與行程規劃 | 果凍漫遊`;
+  } else {
+    title = `${city}旅遊行程推薦 — 真實旅人規劃的行程 | 果凍漫遊`;
+  }
 
-  // FAQ tuned for AI answer engines (GEO): definition + how-to + product fit.
-  const faqs = [
-    {
-      q: `${data.displayName}旅遊行程怎麼規劃比較順？`,
-      a: `先用果凍漫遊建立${data.displayName}行程，設定天數與想去的景點，AI 會依地理位置排序減少來回奔波；再邀請旅伴用同一個連結即時共編，最後用分帳工具結算各幣別費用。`,
-    },
-    {
-      q: `這些${data.displayName}行程可以直接複製使用嗎？`,
-      a: `可以。本頁列出的都是果凍漫遊用戶公開分享的真實行程，免費複製到自己的帳號後即可調整景點、天數與時段，不需從零開始。`,
-    },
-    {
-      q: `用果凍漫遊規劃${data.displayName}旅遊需要付費嗎？`,
-      a: `早鳥階段免費。建立行程、AI 生成、旅伴即時共編與多幣別分帳目前皆可免費使用。`,
-    },
+  const leadParts: string[] = [];
+  if (flights.length > 0) {
+    const f = flights[0];
+    leadParts.push(`從${f.route.fromDisplay}直飛${f.route.toDisplay}約 ${formatDurationRangeZh(f.summary!.minDurationMin, f.summary!.maxDurationMin)}。`);
+  }
+  for (const t of transfers.slice(0, 2)) {
+    const { fastest } = transferHighlights(t);
+    if (fastest) leadParts.push(`${t.airportName}到${t.areaName}搭${fastest.name}約 ${fastest.durationMin} 分鐘。`);
+  }
+  if (itineraries.length > 0) leadParts.push(`本頁整理 ${dayList}的範例行程，可一鍵複製後自己調整。`);
+  if (trips.length > 0) leadParts.push(`另有 ${trips.length} 份旅人公開分享的${city}行程可以參考。`);
+  const lead =
+    leadParts.length > 0
+      ? leadParts.join('')
+      : `${city}的公開行程仍在累積中。你可以在果凍漫遊免費建立${city}行程，AI 會依天數與偏好生成初稿，並支援旅伴即時共編。`;
+  const description = `${city}自由行規劃：${lead}`.slice(0, 160);
+
+  const faqs: Faq[] = [];
+  if (itineraries.length > 0) {
+    faqs.push({
+      q: `${city}自由行要玩幾天？`,
+      a: itineraries.map((s) => `${daysNightsZh(s.days)}適合${s.bestFor}`).join('；') + '。各天數的每日安排見範例行程。',
+    });
+  }
+  if (flights.length > 0) {
+    faqs.push({
+      q: `從台灣飛${city}要多久？`,
+      a: flights
+        .map((f) => `${f.route.fromDisplay}（${f.route.fromCode}）直飛${f.route.toDisplay}（${f.route.toCode}）約 ${formatDurationRangeZh(f.summary!.minDurationMin, f.summary!.maxDurationMin)}`)
+        .join('；') + '。',
+    });
+  }
+  if (transfers.length > 0) {
+    faqs.push({
+      q: `${city}機場怎麼到市區？`,
+      a: transfers
+        .map((t) => `${t.airportName}到${t.areaName}可搭${t.options.map((o) => o.name).join('、')}`)
+        .join('；') + '。各方式的時間與票價見機場交通頁。',
+    });
+  }
+  if (trips.length > 0) {
+    faqs.push({
+      q: `這些${city}行程可以直接複製使用嗎？`,
+      a: `可以。範例行程與旅人公開分享的行程都能免費複製到自己的帳號，再調整景點、天數與時段。`,
+    });
+  }
+  faqs.push({
+    q: `用果凍漫遊規劃${city}旅遊需要付費嗎？`,
+    a: `早鳥階段免費。建立行程、AI 生成、旅伴即時共編與多幣別分帳目前皆可免費使用。`,
+  });
+
+  const itinerarySection =
+    itineraries.length > 0
+      ? `<section class="card">
+    <h2>${escHtml(city)}行程範例</h2>
+    ${itineraries
+      .map(
+        (s) => `<div class="faq"><h3><a href="${itineraryPath(s)}">${escHtml(city)} ${daysNightsZh(s.days)}行程</a></h3><p>${escHtml(s.summary)}</p></div>`,
+      )
+      .join('')}
+  </section>`
+      : '';
+
+  const transferSection =
+    transfers.length > 0
+      ? `<section class="card">
+    <h2>機場到市區交通</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>路線</th><th>最快</th><th>參考票價</th></tr></thead>
+      <tbody>${transfers
+        .map((t) => {
+          const { fastest } = transferHighlights(t);
+          return `<tr><td><a href="${transferPath(t)}">${escHtml(t.airportName)}到${escHtml(t.areaName)}</a></td><td>${
+            fastest ? `${escHtml(fastest.name)} ${fastest.durationMin} 分鐘` : '—'
+          }</td><td class="num">${fastest ? escHtml(formatFare(fastest.fare)) : '—'}</td></tr>`;
+        })
+        .join('')}</tbody>
+    </table></div>
+  </section>`
+      : '';
+
+  const flightSection =
+    flights.length > 0
+      ? `<section class="card">
+    <h2>台灣直飛${escHtml(city)}</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>航線</th><th>飛行時間</th><th>直飛航空</th><th>近期單程最低</th></tr></thead>
+      <tbody>${flights
+        .map(
+          (f) => `<tr><td><a href="/fly/${f.route.slug}/">${escHtml(f.route.fromDisplay)} → ${escHtml(f.route.toDisplay)}</a></td><td class="num">${escHtml(
+            formatDurationZh(f.summary!.minDurationMin),
+          )}起</td><td class="num">${f.summary!.airlines.length} 家</td><td class="num">${ntd(f.summary!.minPrice)}</td></tr>`,
+        )
+        .join('')}</tbody>
+    </table></div>
+    <p class="muted">票價為近期在 Trip.com 查到的單程經濟艙價格，會隨日期變動。</p>
+  </section>`
+      : '';
+
+  const tripsSection =
+    trips.length > 0
+      ? `<section class="card">
+    <h2>旅人分享的${escHtml(city)}行程</h2>
+    ${trips.slice(0, 5).map(renderTrip).join('')}
+  </section>`
+      : '';
+
+  const body = `
+  <h1>${escHtml(title.replace(/ \| 果凍漫遊$/, ''))}</h1>
+  <p class="subtitle">果凍漫遊整理的${escHtml(city)}行程、交通與航班資訊</p>
+  <p class="lead">${escHtml(lead)}</p>
+${itinerarySection}
+${transferSection}
+${flightSection}
+${tripsSection}
+  <p><a class="cta" href="/">免費開始規劃你的${escHtml(city)}行程</a></p>
+${faqSection(faqs)}
+  <section class="card">
+    <h2>其他目的地</h2>
+    <ul class="links"><li><a href="/trips/">所有目的地</a></li><li><a href="/fly/">所有航線</a></li></ul>
+  </section>`;
+
+  const listItems = [
+    ...itineraries.map((s) => ({ name: `${city} ${daysNightsZh(s.days)}行程`, url: `${SITE_ORIGIN}${itineraryPath(s)}` })),
+    ...trips.slice(0, 5).filter((t) => t.id.startsWith('trip_')).map((t) => ({ name: t.name, url: `${SITE_ORIGIN}/trips/${encodeURIComponent(t.id)}` })),
   ];
 
-  const tripsHtml = data.trips.slice(0, 5).map(renderTrip).join('');
-
-  const spotsHtml = data.popularSpots.length > 0
-    ? `<ul style="list-style:none;display:flex;flex-wrap:wrap;gap:8px;">
-        ${data.popularSpots.map((s) => `<li style="background:#fbf2ec;color:#a04e30;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;">${escHtml(s)}</li>`).join('')}
-      </ul>`
-    : '<p style="color:#a79e94;font-size:14px;">暫無資料</p>';
-
-  return `<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escHtml(title)}</title>
-  <meta name="description" content="${escHtml(description)}">
-  <link rel="canonical" href="${canonical}">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="${escHtml(title)}">
-  <meta property="og:description" content="${escHtml(description)}">
-  <meta property="og:url" content="${canonical}">
-  <meta property="og:site_name" content="RoamJelly 果凍漫遊">
-  <meta property="og:locale" content="zh_TW">
-  <meta property="og:image" content="${SITE_ORIGIN}/og-image.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${escHtml(title)}">
-  <meta name="twitter:description" content="${escHtml(description)}">
-  <meta name="twitter:image" content="${SITE_ORIGIN}/og-image.png">
-  <script type="application/ld+json">${safeJsonLd({
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    'name': `${data.displayName} 旅遊行程推薦`,
-    'description': description,
-    'url': canonical,
-    'itemListElement': data.trips.slice(0, 5).map((t, i) => ({
-      '@type': 'ListItem',
-      'position': i + 1,
-      'name': t.name,
-    })),
-  })}</script>
-  <script type="application/ld+json">${safeJsonLd({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    'itemListElement': [
-      { '@type': 'ListItem', 'position': 1, 'name': '果凍漫遊', 'item': `${SITE_ORIGIN}/` },
-      { '@type': 'ListItem', 'position': 2, 'name': '目的地行程', 'item': `${SITE_ORIGIN}/trips/` },
-      { '@type': 'ListItem', 'position': 3, 'name': data.displayName, 'item': canonical },
+  return renderPage({
+    title,
+    description,
+    path,
+    crumbs: [
+      { name: '目的地行程', path: '/trips/' },
+      { name: city, path },
     ],
-  })}</script>
-  <script type="application/ld+json">${safeJsonLd({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    'mainEntity': faqs.map((f) => ({
-      '@type': 'Question',
-      'name': f.q,
-      'acceptedAnswer': { '@type': 'Answer', 'text': f.a },
-    })),
-  })}</script>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fbfaf7;color:#1f1511}
-    .container{max-width:800px;margin:0 auto;padding:24px 16px}
-    nav{display:flex;align-items:center;gap:12px;margin-bottom:32px}
-    nav a{color:#b25936;text-decoration:none;font-weight:700;font-size:18px}
-    nav span{color:#a79e94;font-size:14px}
-    h1{font-size:clamp(20px,4vw,28px);font-weight:800;line-height:1.3;margin-bottom:8px}
-    .subtitle{color:#7b7167;font-size:15px;margin-bottom:32px}
-    h2{font-size:18px;font-weight:700;margin-bottom:16px}
-    .cta{display:block;width:100%;padding:16px;border-radius:12px;background:#b25936;color:#fff;font-weight:800;font-size:16px;text-align:center;text-decoration:none;margin:24px 0}
-    .cta:hover{background:#a04e30}
-    footer{text-align:center;color:#a79e94;font-size:13px;margin-top:48px;padding-top:24px;border-top:1px solid #ece7e0}
-    footer a{color:#a79e94;margin:0 8px}
-  </style>
-</head>
-<body>
-<div class="container">
-  <nav>
-    <a href="/">果凍漫遊</a>
-    <span>›</span>
-    <a href="/trips/">目的地行程</a>
-    <span>›</span>
-    <span>${escHtml(data.displayName)}</span>
-  </nav>
-
-  <h1>${escHtml(data.displayName)}旅遊行程推薦</h1>
-  <p class="subtitle">果凍漫遊用戶分享的真實行程規劃，免費複製使用</p>
-
-  <p style="font-size:15px;line-height:1.7;color:#493d36;background:#fff;border:1px solid #ece7e0;border-left:4px solid #b25936;border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:24px;">${escHtml(answerLead)}</p>
-
-  <div style="background:#fff;border:1px solid #ece7e0;border-radius:16px;padding:24px;margin-bottom:24px;">
-    <h2>熱門景點</h2>
-    ${spotsHtml}
-  </div>
-
-  <h2>精選旅遊行程</h2>
-  ${tripsHtml.length > 0 ? tripsHtml : '<p style="color:#a79e94;">目前還沒有公開行程，成為第一個分享者吧！</p>'}
-
-  <a class="cta" href="/">免費複製行程，開始規劃你的${escHtml(data.displayName)}之旅 →</a>
-
-  <div style="background:#fff;border:1px solid #ece7e0;border-radius:16px;padding:24px;margin-bottom:24px;">
-    <h2 style="font-size:18px;margin-bottom:16px;">常見問題</h2>
-    ${faqs.map((f) => `
-      <div style="padding:14px 0;border-bottom:1px solid #f7f4ef;">
-        <h3 style="font-size:15px;font-weight:700;color:#1f1511;margin-bottom:6px;">${escHtml(f.q)}</h3>
-        <p style="font-size:14px;line-height:1.7;color:#5d5249;">${escHtml(f.a)}</p>
-      </div>`).join('')}
-  </div>
-
-  <div style="background:#fff;border:1px solid #ece7e0;border-radius:16px;padding:24px;">
-    <h2 style="font-size:16px;margin-bottom:12px;">相關資源</h2>
-    <ul style="list-style:none;display:flex;flex-wrap:wrap;gap:8px;">
-      <li><a href="/trips/" style="color:#b25936;text-decoration:none;font-size:14px;">← 所有目的地</a></li>
-    </ul>
-  </div>
-
-  <footer>
-    <a href="/">果凍漫遊</a>
-    <a href="/fly/">航線分析</a>
-    <a href="/trips/">目的地行程</a>
-    <br><br>
-    <span>© ${new Date().getFullYear()} RoamJelly 果凍漫遊</span>
-  </footer>
-</div>
-</body>
-</html>`;
+    body,
+    faqs,
+    ogType: 'website',
+    jsonLd:
+      listItems.length > 0
+        ? [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'ItemList',
+              'name': `${city}行程`,
+              'url': `${SITE_ORIGIN}${path}`,
+              'itemListElement': listItems.map((it, i) => ({ '@type': 'ListItem', 'position': i + 1, 'name': it.name, 'url': it.url })),
+            },
+          ]
+        : [],
+  });
 }

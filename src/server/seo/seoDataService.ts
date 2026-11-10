@@ -1,7 +1,44 @@
 // src/server/seo/seoDataService.ts
 import { AppRepository } from '../repositories/appRepository.js';
 import type { RouteData, DestinationData, MonthlyDemand, PublicTrip } from './types.js';
-import { getRouteBySlug, getDestinationBySlug } from './cities.js';
+import { getRouteBySlug, getDestinationBySlug, KNOWN_ROUTES } from './cities.js';
+import { formatDurationZh, summarizeRouteFlights, timeDifferenceFromTaiwanZh } from './routeFlightFacts.js';
+import { ROUTE_FLIGHT_SNAPSHOTS } from '../../data/routeFlightFacts.js';
+import { TW_OFFICE_CALENDARS } from '../../data/taiwanOfficeCalendar.js';
+import { buildHolidayYearFacts } from './longWeekends.js';
+export { HOLIDAY_YEARS } from './longWeekends.js';
+import type { HolidayPageData, HolidayTripIdea } from './templates/holidayPage.js';
+
+/** Flights up to this long suit a 3–4 day break. */
+const SHORT_TRIP_MAX_MIN = 210;
+
+export function buildHolidayPageData(year: number): HolidayPageData | null {
+  const cal = TW_OFFICE_CALENDARS[year];
+  if (!cal) return null;
+
+  const ideas: Array<HolidayTripIdea & { minDurationMin: number }> = [];
+  for (const route of KNOWN_ROUTES) {
+    const summary = summarizeRouteFlights(ROUTE_FLIGHT_SNAPSHOTS[route.slug]);
+    if (!summary) continue;
+    ideas.push({
+      slug: route.slug,
+      label: `${route.fromDisplay} → ${route.toDisplay}`,
+      durationText: `${formatDurationZh(summary.minDurationMin)}起`,
+      minPrice: summary.minPrice,
+      minDurationMin: summary.minDurationMin,
+    });
+  }
+  ideas.sort((a, b) => a.minDurationMin - b.minDurationMin);
+  const strip = ({ minDurationMin: _m, ...idea }: (typeof ideas)[number]): HolidayTripIdea => idea;
+
+  return {
+    facts: buildHolidayYearFacts(cal),
+    sourcePage: cal.sourcePage,
+    sourceUrl: cal.sourceUrl,
+    shortTrips: ideas.filter((i) => i.minDurationMin <= SHORT_TRIP_MAX_MIN).map(strip),
+    longTrips: ideas.filter((i) => i.minDurationMin > SHORT_TRIP_MAX_MIN).map(strip),
+  };
+}
 
 export async function buildRouteData(slug: string, repo: AppRepository): Promise<RouteData | null> {
   const route = getRouteBySlug(slug);
@@ -41,6 +78,8 @@ export async function buildRouteData(slug: string, repo: AppRepository): Promise
     peakMonth,
     lowMonth,
     destinationSlug: route.destinationSlug,
+    flightSummary: summarizeRouteFlights(ROUTE_FLIGHT_SNAPSHOTS[slug]),
+    timeDifference: timeDifferenceFromTaiwanZh(route.toCode),
   };
 }
 
