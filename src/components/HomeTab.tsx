@@ -1393,7 +1393,7 @@ export default function HomeTab({
       initial={prefersReducedMotion ? undefined : { y: 12, scale: 0.985 }}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-tab-safe md:pb-14"
+      className="relative flex flex-col flex-1 w-full min-h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-tab-safe"
     >
       {/* === HERO SECTION with gradient background === */}
       <div
@@ -3362,7 +3362,7 @@ export default function HomeTab({
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Globe className="text-emerald-500" size={24} />
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                <h2 id="home-featured-guides" className="scroll-mt-4 text-2xl font-black text-slate-800 tracking-tight">
                   {t('str_11552810')}</h2>
               </div>
               <span className="text-[11px] font-black tracking-[0.15em] uppercase text-slate-500 hidden sm:block">
@@ -3484,7 +3484,7 @@ export default function HomeTab({
           <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2">
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="text-fuchsia-500" size={24} />
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+              <h2 id="home-expert-itineraries" className="scroll-mt-4 text-2xl font-black text-slate-800 tracking-tight">
                 {t('str_7f35ed14')}</h2>
             </div>
 

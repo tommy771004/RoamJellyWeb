@@ -39,7 +39,7 @@ export default function DynamicItineraryView({
 
   return (
     <main className="h-full w-full overflow-y-auto bg-[#eef2ed] text-[#26342d] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      <div className="mx-auto w-full max-w-5xl px-4 pb-32 pt-6 sm:px-8 sm:pb-20 sm:pt-12">
+      <div className="mx-auto w-full max-w-5xl px-4 pb-32 pt-6 sm:px-8 sm:pt-12">
         <button
           type="button"
           onClick={onBack}

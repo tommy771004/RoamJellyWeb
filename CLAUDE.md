@@ -37,7 +37,8 @@ CI ([.github/workflows/roamjelly-ci.yml](.github/workflows/roamjelly-ci.yml)) ru
 [server.ts](server.ts) (~3600 lines) is the whole backend in one file: Express REST routes, Socket.io event handlers, JWT auth middleware, Redis caching with in-memory fallback, the SEO SSR router (`app.use(createSeoRouter(repo))`), Vite middleware in dev, and static-file hosting in prod. There is no per-route file structure — search within `server.ts` by route path or socket event name.
 
 ### Frontend (React 19 + Vite + Zustand)
-- Entry: [src/main.tsx](src/main.tsx) → [src/App.tsx](src/App.tsx). App is a 3-tab shell (home / itinerary / tools).
+- Entry: [src/main.tsx](src/main.tsx) → [src/App.tsx](src/App.tsx). App is a 4-tab shell (home / ai_form / itinerary / tools; `ai_result` belongs to the AI tab).
+- App shell: [TopAppBar](src/components/layout/TopAppBar.tsx) (menu button + current tab name, notifications, account), [AppDrawer](src/components/layout/AppDrawer.tsx) (side menu: language, theme, AI preferences, other sites) and [BottomTabs](src/components/BottomTabs.tsx) (floating tab capsule at every width). Tabs, icons and labels are defined once in [layout/navigation.ts](src/components/layout/navigation.ts). Header height is the `--header-h` token in `index.css` (`pt-header` / `top-header` utilities).
 - **All HTTP goes through [src/lib/workflowApi.ts](src/lib/workflowApi.ts)** — the single chokepoint that does token bootstrap, injects the `Authorization` header, and handles timeout/status/parse errors. Do **not** add raw `fetch` calls to `/api/*` in components.
 - Shared request/response shapes live in [src/types/workflow.ts](src/types/workflow.ts).
 - State is split across Zustand stores in [src/store/](src/store/) (`useAppStore`, `useSearchStore`, `useItineraryStore`, `useToolsStore`, `useTripFactsStore`).

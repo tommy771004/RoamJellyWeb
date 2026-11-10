@@ -1,5 +1,5 @@
 import { SPRING_SNAPPY, SPRING_MODAL, IOS_EASE } from './lib/motionTokens';
-import { useState, useEffect, useRef, lazy, Suspense, type ComponentType } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 const HomeTab = lazy(() => import('./components/HomeTab'));
 import RedirectModal from './components/RedirectModal';
@@ -13,30 +13,10 @@ const UserProfileModal = lazy(() => import('./components/UserProfileModal'));
 const JellyAssistant = lazy(() => import('./components/JellyAssistant'));
 const AiForm = lazy(() => import('./components/AiForm'));
 const DynamicItineraryView = lazy(() => import('./components/DynamicItineraryView'));
-import { 
-  Bell, 
-  Sun, 
-  Moon, 
-  LogOut, 
-  Settings,
-  Settings2,
-  Menu,
-  ChevronDown,
-  Home as HomeIcon,
-  Sparkles as SparklesIcon,
-  CalendarDays as CalendarDaysIcon,
-  Luggage as LuggageIcon,
-  PlaneTakeoff,
-  UserRound,
-} from 'lucide-react';
-import BottomTabs, { TABS } from './components/BottomTabs';
-
-const TAB_ICON_MAP: Record<string, ComponentType<{ size?: number; strokeWidth?: number; className?: string }>> = {
-  home: HomeIcon,
-  ai_form: SparklesIcon,
-  itinerary: CalendarDaysIcon,
-  tools: LuggageIcon,
-};
+import { PlaneTakeoff } from 'lucide-react';
+import BottomTabs from './components/BottomTabs';
+import TopAppBar from './components/layout/TopAppBar';
+import AppDrawer from './components/layout/AppDrawer';
 import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
@@ -118,10 +98,10 @@ export default function App() {
   );
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [newAiJobState, setNewAiJobState] = useState<AiJobState | 'preparing' | 'sync-fallback' | null>(null);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [loginPromptMode, setLoginPromptMode] = useState<LoginPromptMode>('default');
   const [guestBootstrapState, setGuestBootstrapState] = useState<'idle' | 'loading' | 'error'>('idle');
 
@@ -276,6 +256,17 @@ export default function App() {
     setLoginPromptMode('default');
     setShowLogin(false);
   };
+
+  const openLogin = () => {
+    setLoginPromptMode('default');
+    setShowLogin(true);
+  };
+
+  // Closing the side menu hands focus back to the header button that opened it.
+  const closeMenu = useCallback(() => {
+    setIsMenuOpen(false);
+    requestAnimationFrame(() => menuButtonRef.current?.focus());
+  }, []);
 
   const handleLogout = () => {
     void logoutAppSession();
@@ -470,6 +461,7 @@ export default function App() {
           setActiveTab('home');
         }}
         guestFirst
+        reserveTabBarSpace
         {...getGuestLoginCopy(activeTab)}
       />;
     }
@@ -820,9 +812,9 @@ export default function App() {
     <div className="dark-transition flex-1 jelly-bg w-full h-full flex flex-col relative overflow-hidden font-body-md text-slate-800 dark:text-slate-100">
       <div className={`absolute inset-0 z-0 pointer-events-none transition-opacity duration-500 bg-gradient-to-br from-[#030712] via-[#090b18] to-[#0f172a] ${isDarkMode ? 'opacity-[0.93]' : 'opacity-0'}`} />
       <div className="noise-overlay absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20 transition-opacity duration-500" />
-      {/* Dev Mode Switches (Top Left outside Header, absolute for dev) */}
+      {/* Dev Mode Switches (bottom left, clear of the header menu button and the tab capsule) */}
       {(import.meta as any).env.MODE !== 'production' && (
-        <div className="fixed top-2 left-2 z-floating flex items-center gap-2 scale-75 origin-top-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
+        <div className="fixed bottom-24 left-2 z-floating flex items-center gap-2 scale-75 origin-bottom-left opacity-30 hover:opacity-100 transition-opacity bg-white/50 p-2 rounded-xl backdrop-blur-md">
           <label className="flex items-center gap-2 cursor-pointer text-xs font-bold">
             <input type="checkbox" checked={isOffline} onChange={e => setOffline(e.target.checked)} className="accent-red-500" />
             {t('offline')}
@@ -830,189 +822,25 @@ export default function App() {
         </div>
       )}
 
-      {/* TopAppBar */}
-      <header className={`fixed top-0 w-full z-50 px-3 sm:px-6 pt-[calc(0.5rem+env(safe-area-inset-top,0px))] sm:pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-2 sm:pb-4 flex justify-between items-center jelly-surface !rounded-none !border-x-0 !border-t-0 !shadow-sm transition-transform duration-500 transform-gpu ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-        {/* Left: Logo */}
-        <div className="flex items-center gap-2 z-20 hover:animate-none">
-          <img src="/icon-app.svg" alt="" className="h-10 w-10 rounded-[11px] sm:h-11 sm:w-11" />
-          <h1 className="text-primary dark:text-accent text-[22px] sm:text-3xl font-black italic tracking-tighter font-heading pr-2">RoamJelly</h1>
-        </div>
-        
-        {/* Desktop Navigation (Center, hidden on mobile) */}
-        <nav className="hidden md:flex flex-row items-center justify-center gap-2 absolute left-1/2 -translate-x-1/2">
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            const Icon = TAB_ICON_MAP[tab.id];
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex min-h-11 flex-row items-center gap-2 px-4 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 ${
-                  isActive 
-                    ? 'font-black text-[#9a452e] dark:text-[#d59a85]' 
-                    : 'text-slate-500 dark:text-slate-400 hover:text-[#26342d] dark:hover:text-white'
-                }`}
-              >
-                {Icon && <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'opacity-100' : 'opacity-60'} />}
-                <span className="font-bold text-sm tracking-wide">{t(`tab_${tab.id}`)}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Right: User Avatar & Greetings */}
-        <div className="flex items-center gap-2 sm:gap-3 z-20">
-          {isLoggedIn && (
-            <button
-              onClick={() => setShowUserProfile(true)}
-              className="hidden h-11 w-11 items-center justify-center text-[#8a4935] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#d59a85] sm:flex"
-              aria-label={t('preferences')}
-            >
-              <Settings2 size={20} />
-            </button>
-          )}
-          <button
-            onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'zh' : 'en')}
-            className="flex h-11 w-11 items-center justify-center text-sm font-bold text-[#6b756e] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#c8d2cb] dark:hover:text-white"
-            aria-label={t('language_toggle_label')}
-          >
-            {t('language_toggle')}
-          </button>
-          <button
-            onClick={() => setDarkMode(!isDarkMode)}
-            className="flex h-11 w-11 items-center justify-center text-[#8a4935] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#d59a85] dark:hover:text-white"
-            aria-label={isDarkMode ? t('switch_light_mode') : t('switch_dark_mode')}
-          >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-          <div className="relative hidden sm:block">
-            <button
-              onClick={() => setShowNotifications(v => !v)}
-              className="relative flex h-11 w-11 items-center justify-center text-[#8a4935] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#d59a85] dark:hover:text-white"
-              aria-label={t('notifications')}
-              aria-expanded={showNotifications}
-            >
-              <Bell size={20} />
-              {notifications.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white shadow-sm" />
-              )}
-            </button>
-            {showNotifications && (
-              <div
-                className="absolute right-0 top-12 w-72 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/60 z-50 overflow-hidden"
-                role="dialog"
-                aria-label={t('notifications_panel')}
-              >
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                  <span className="font-bold text-[14px] text-slate-700">{t('notifications')}</span>
-                  <div className="flex items-center gap-2">
-                    {notifications.length > 0 && (
-                      <button
-                        onClick={clearNotifications}
-                        className="text-[11px] text-slate-400 hover:text-slate-600"
-                      >{t('clear_all')}</button>
-                    )}
-                    <button
-                      onClick={() => setShowNotifications(false)}
-                      className="text-slate-400 hover:text-slate-600 text-[18px] leading-none"
-                      aria-label="{t('close')}"
-                    >×</button>
-                  </div>
-                </div>
-                {notifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 px-4 gap-2">
-                    <span className="text-3xl">🔔</span>
-                    <p className="text-[13px] text-slate-400 text-center font-medium">{t('no_new_notifications')}</p>
-                    <p className="text-[11px] text-slate-300 text-center">{t('notifications_desc')}</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col max-h-72 overflow-y-auto">
-                    {notifications.map(n => (
-                      <div key={n.id} className="px-4 py-3 border-b border-slate-50 last:border-0">
-                        <p className="text-[13px] text-slate-700">{n.text}</p>
-                        <p className="text-[11px] text-slate-300 mt-0.5">
-                          {new Date(n.at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {showNotifications && (
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowNotifications(false)}
-                aria-hidden="true"
-              />
-            )}
-          </div>
-          
-          <div className="relative z-30">
-            <button
-              type="button"
-              aria-label={t('account_menu')}
-              onClick={() => setShowUserMenu(v => !v)}
-              className="group flex min-h-11 items-center gap-2 px-2 text-[#59665e] transition-colors hover:text-[#26342d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#a3472b]/20 dark:text-[#c8d2cb] dark:hover:text-white"
-            >
-              <span className="hidden whitespace-nowrap pl-1 text-[13px] font-black tracking-wide sm:block">
-                {isLoggedIn ? t('hello_user', { userId }) : t('not_logged_in')}
-              </span>
-              <div className="relative flex h-11 w-11 items-center justify-center text-[#8a4935] dark:text-[#d59a85]">
-                {isLoggedIn ? <UserRound size={17} strokeWidth={2.4} /> : <SparklesIcon size={16} strokeWidth={2.4} />}
-              </div>
-            </button>
-            {showUserMenu && (
-              <div className="absolute right-0 top-[calc(100%+8px)] w-40 bg-white/95 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-100 z-50 overflow-hidden flex flex-col py-1">
-                {!isLoggedIn ? (
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      setLoginPromptMode('default');
-                      setShowLogin(true);
-                    }}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left w-full"
-                  >
-                    <UserRound size={16} className="text-slate-400" />
-                    <span className="text-[14px] font-bold text-slate-700">{t('login_account')}</span>
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        setShowUserProfile(true);
-                      }}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left w-full"
-                    >
-                      <SparklesIcon size={16} className="text-orange-400" />
-                      <span className="text-[14px] font-bold text-slate-700">{t('ai_preferences')}</span>
-                    </button>
-                    <div className="mx-3 h-px bg-slate-100" />
-                    <button
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        setShowLogoutModal(true);
-                      }}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition-colors text-left w-full group"
-                    >
-                      <LogOut size={16} className="text-rose-400 group-hover:text-rose-500 transition-colors" />
-                      <span className="text-[13px] font-bold text-rose-600 group-hover:text-rose-700 transition-colors">{t('logout_account')}</span>
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-            {showUserMenu && (
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowUserMenu(false)}
-                aria-hidden="true"
-              />
-            )}
-          </div>
-        </div>
-      </header>
+      <TopAppBar
+        isLoggedIn={isLoggedIn}
+        userId={userId}
+        isMenuOpen={isMenuOpen}
+        menuButtonRef={menuButtonRef}
+        onOpenMenu={() => setIsMenuOpen(true)}
+        onLogin={openLogin}
+        onOpenProfile={() => setShowUserProfile(true)}
+        onRequestLogout={() => setShowLogoutModal(true)}
+      />
+      <AppDrawer
+        open={isMenuOpen}
+        onClose={closeMenu}
+        isLoggedIn={isLoggedIn}
+        userId={userId}
+        onLogin={openLogin}
+        onOpenProfile={() => setShowUserProfile(true)}
+        onRequestLogout={() => setShowLogoutModal(true)}
+      />
 
       {/* Offline Banner */}
       <AnimatePresence>
@@ -1021,7 +849,7 @@ export default function App() {
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
-            className="fixed top-[72px] left-0 right-0 w-full z-40 px-4 pt-2 pb-1 pointer-events-none"
+            className="fixed top-header left-0 right-0 w-full z-40 px-4 pt-2 pb-1 pointer-events-none"
           >
             <div className="max-w-2xl mx-auto bg-red-500/80 dark:bg-red-900/80 backdrop-blur-md rounded-3xl p-2.5 shadow-lg border border-red-400/50 dark:border-red-500/30 flex items-center justify-center gap-2 pointer-events-auto">
               <span className="text-white text-[13px] font-bold tracking-wide">{t("offline_mode_msg")}</span>
@@ -1062,7 +890,7 @@ export default function App() {
             exit="exit"
             transition={prefersReducedMotion ? { duration: 0.16 } : SPRING_SNAPPY}
             style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
-            className="w-full pt-[calc(56px+env(safe-area-inset-top,0px))] sm:pt-[calc(80px+env(safe-area-inset-top,0px))] pb-0"
+            className="w-full pt-header pb-0"
           >
             <Suspense fallback={<div className="flex-1 flex items-center justify-center"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg shadow-pink-100/80"><PlaneTakeoff size={22} className="text-pink-500 animate-spin" strokeWidth={2.5} /></div></div>}>
               {renderContent()}
@@ -1071,7 +899,7 @@ export default function App() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom Fixed Navigation (Mobile Only) */}
+      {/* Floating tab capsule (all widths) */}
       <BottomTabs />
       <PwaInstallPrompt />
       {shouldShowAssistant ? <JellyAssistant /> : null}

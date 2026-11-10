@@ -388,12 +388,9 @@
   --text-label-caps--letter-spacing: 0.05em;
   --text-label-caps--font-weight: 700;
 
-  /* Spacing Variables */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
+  /* No named --spacing-xs…xl here on purpose: in Tailwind v4 they shadow the
+   * --container-* scale, which turned `max-w-md` into 16px. Use the numeric
+   * spacing scale (p-4, gap-6 …) instead. */
 
   /* Shadow Depths — tinted to the warm ink, tight and cast from a single
    * direction. Deliberately NOT a soft black bloom radiating on all sides. */
@@ -715,6 +712,32 @@
 
 @utility pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* App-shell header height (excluding the safe-area inset). TopAppBar, the
+   offline banner and the tab content offset all read this one value. */
+:root {
+  --header-h: 52px;
+}
+@media (min-width: 768px) {
+  :root {
+    --header-h: 60px;
+  }
+}
+
+/* Height of the fixed header including the notch inset. */
+@utility h-header {
+  height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+}
+
+/* Pushes content below the fixed header. */
+@utility pt-header {
+  padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+}
+
+/* Places an overlay directly under the fixed header. */
+@utility top-header {
+  top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
 }
 
 @utility mb-safe {

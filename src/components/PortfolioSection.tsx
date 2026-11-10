@@ -1,31 +1,10 @@
 import { Sparkles, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { PORTFOLIO_PROJECTS } from "./layout/navigation";
 
 export default function PortfolioSection() {
     const { t } = useTranslation();
-  const portfolios = [
-    {
-      title: "蔬果價格查詢",
-      url: "https://tw-veggieprice.vercel.app/",
-      desc1: "即時掌握農產品交易行情。",
-      desc2: "圖表化報價助您聰明採買。",
-      icon: "🥬",
-    },
-    {
-      title: "AI股票分析",
-      url: "https://stock-analyze-ai-connect.vercel.app/",
-      desc1: "AI 深度分析即時股市財報。",
-      desc2: "洞察市場提供客觀投資參考。",
-      icon: "📉",
-    },
-    {
-      title: "台鐵/高鐵時刻",
-      url: "https://taiwanrail.vercel.app/",
-      desc1: "快速查詢雙鐵班次與誤點。",
-      desc2: "介面支援通勤規劃。",
-      icon: "🚄",
-    },
-  ];
+  const portfolios = PORTFOLIO_PROJECTS;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 pt-12 pb-8 flex flex-col items-center">
