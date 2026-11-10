@@ -3,6 +3,7 @@ import { Heart, PlaneTakeoff } from "lucide-react";
 import type { SearchItem } from "../types/workflow";
 import AirlineLogo from "./AirlineLogo";
 import { useTranslation } from "react-i18next";
+import ArrivalDayOffset from "./ArrivalDayOffset";
 
 // Destination metadata lookup by IATA code
 const DEST_META: Record<
@@ -341,6 +342,7 @@ export default function DestinationCard({
             <div className="text-right">
               <span className="text-[11px] font-black text-slate-800 dark:text-white font-mono leading-none">
                 {flight.details?.arrival || "12:15"}
+                <ArrivalDayOffset offset={flight.details?.arrivalDayOffset} />
               </span>
               <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mt-0.5 leading-none font-mono">
                 {rawArr}

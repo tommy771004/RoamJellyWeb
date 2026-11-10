@@ -50,7 +50,7 @@ import { registerScrapingRoutes } from './src/server/routes/scrapingRoutes';
 import { registerSocketHandlers } from './src/server/realtime/socketHandlers';
 import * as schema from './src/server/db/schema';
 
-import { scrapeTripFlights } from './src/server/services/tripParser';
+import { resolveIataCode, scrapeTripFlights } from './src/server/services/tripParser';
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
 import { fetchOpenRouterWithFallback } from './src/server/services/openrouterHelper';
 import { createSeoRouter } from './src/server/seo/router';
@@ -97,6 +97,7 @@ type SearchItem = {
     depCode?: string;
     arrCode?: string;
     flightNumber?: string;
+    arrivalDayOffset?: number;
   };
 };
 
@@ -623,20 +624,26 @@ const REAL_FLIGHT_STANDARDS: Record<string, StandardFlight[]> = {
   ],
 };
 
-function getRealFlightStandards(from: string, to: string): SearchItem[] {
+/** Trip.com one-way search for a route and date — the same page the scraper reads. */
+function buildTripSearchUrl(from: string, to: string, date: string): string {
+  const f = encodeURIComponent(from.toLowerCase());
+  const t = encodeURIComponent(to.toLowerCase());
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(date) ? `&ddate=${date}` : '';
+  return `https://tw.trip.com/flights/${f}-to-${t}/tickets-${f}-${t}/?flighttype=ow&dcity=${f}&acity=${t}${d}`;
+}
+
+function getRealFlightStandards(from: string, to: string, date: string): SearchItem[] {
   const fCode = from.toUpperCase();
   const tCode = to.toUpperCase();
   const key = `${fCode}-${tCode}`;
   const reverseKey = `${tCode}-${fCode}`;
 
   let standards: StandardFlight[] = [];
-  let isReversed = false;
 
   if (REAL_FLIGHT_STANDARDS[key]) {
     standards = REAL_FLIGHT_STANDARDS[key];
   } else if (REAL_FLIGHT_STANDARDS[reverseKey]) {
     standards = REAL_FLIGHT_STANDARDS[reverseKey];
-    isReversed = true;
   } else {
     const isLong = ['JFK', 'LAX', 'SFO', 'CDG', 'LHR', 'FRA', 'AMS'].includes(tCode) || ['JFK', 'LAX', 'SFO', 'CDG', 'LHR', 'FRA', 'AMS'].includes(fCode);
     standards = [
@@ -653,18 +660,53 @@ function getRealFlightStandards(from: string, to: string): SearchItem[] {
     price: std.price,
     currency: 'TWD',
     emoji: '✈️',
-    affiliate_url: `https://www.trip.com/flights/${fCode.toLowerCase()}-to-${tCode.toLowerCase()}/tickets-${fCode.toLowerCase()}-${tCode.toLowerCase()}/?flighttype=ow&dcity=${fCode.toLowerCase()}&acity=${tCode.toLowerCase()}`,
+    affiliate_url: buildTripSearchUrl(fCode, tCode, date),
     details: {
       stops: std.stops,
       airline: std.airline,
-      departure: isReversed ? std.arrival : std.departure,
-      arrival: isReversed ? std.departure : std.arrival,
+      // A reversed route reuses the other direction's schedule. Swapping its
+      // times gave arrival-before-departure rows (e.g. 12:15 → 08:00), so the
+      // times stay as recorded and only the route codes are reversed.
+      departure: std.departure,
+      arrival: std.arrival,
       duration: std.duration,
     }
   }));
 }
 
+/**
+ * Flight offers for one direction. Both legs of a round trip come through
+ * here with the same logic; only the origin/destination/date differ.
+ *
+ * The UI sends place names (e.g. 台北 / 東京), so the route is resolved to
+ * airport codes once, up front: the scraper, every fallback and the result
+ * rows all use the same codes. Each row carries `depCode`/`arrCode` so the
+ * client never has to guess the direction (it used to fall back to TPE → TYO,
+ * which made return-leg rows look like the outbound leg).
+ */
 async function fetchFromOtaProvider(from: string, to: string, date: string): Promise<SearchItem[] | null> {
+  const depCode = toAirportCode(from);
+  const arrCode = toAirportCode(to);
+  const items = await fetchFlightOffers(depCode ?? from, arrCode ?? to, date);
+  if (!items) return items;
+  return items.map((item) => ({
+    ...item,
+    details: {
+      ...(item.details ?? {}),
+      // Keep a source's own airport (e.g. NRT); fill in the city code (TYO) otherwise.
+      depCode: item.details?.depCode || depCode || undefined,
+      arrCode: item.details?.arrCode || arrCode || undefined,
+    },
+  }));
+}
+
+/** Upper-case IATA code for a place name or code, or null when unknown. */
+function toAirportCode(place: string): string | null {
+  const code = resolveIataCode(place).toUpperCase();
+  return /^[A-Z]{3}$/.test(code) ? code : null;
+}
+
+async function fetchFlightOffers(from: string, to: string, date: string): Promise<SearchItem[] | null> {
   // Use Trip.com Scraper as primary flight provider
   try {
     console.log(`Fetching flights from Trip.com scraper for ${from} -> ${to} on ${date}`);
@@ -692,7 +734,7 @@ async function fetchFromOtaProvider(from: string, to: string, date: string): Pro
             price: Number(item.price ?? 0),
             currency: String(item.currency ?? 'TWD'),
             emoji: '✈️',
-            affiliate_url: String(item.affiliate_url ?? ''),
+            affiliate_url: String(item.affiliate_url || buildTripSearchUrl(from, to, date)),
             ...(item.details ? { details: item.details } : {})
           }));
         }
@@ -716,7 +758,6 @@ Return ONLY a valid JSON array of objects, with NO markdown code wrappers or for
 - price: typical economy ticket price in TWD (New Taiwan Dollar) as an integer (e.g. 11500)
 - currency: "TWD"
 - emoji: "✈️"
-- affiliate_url: "https://www.trip.com/flights/${from.toLowerCase()}-to-${to.toLowerCase()}/tickets-${from.toLowerCase()}-${to.toLowerCase()}/?flighttype=ow&dcity=${from.toLowerCase()}&acity=${to.toLowerCase()}"
 - details: an object containing:
   - stops: integer (e.g. 0, 1)
   - airline: string (e.g. "STARLUX Airlines")
@@ -740,7 +781,8 @@ Return ONLY the raw JSON string starting with [ and ending with ].`;
               price: Number(p.price || 8000),
               currency: 'TWD',
               emoji: '✈️',
-              affiliate_url: p.affiliate_url || `https://www.trip.com/flights/${from.toLowerCase()}-to-${to.toLowerCase()}/tickets-${from.toLowerCase()}-${to.toLowerCase()}/?flighttype=ow&dcity=${from.toLowerCase()}&acity=${to.toLowerCase()}`,
+              // Always our own link (with the date); the model's URL is not trusted.
+              affiliate_url: buildTripSearchUrl(from, to, date),
               details: {
                 stops: Number(p.details?.stops ?? 0),
                 airline: p.details?.airline || p.provider,
@@ -759,7 +801,7 @@ Return ONLY the raw JSON string starting with [ and ending with ].`;
 
   // High-fidelity standard static real flight option records
   console.log(`[fetchFromOtaProvider] Serving high-fidelity static standard real flights for ${from} -> ${to}`);
-  return getRealFlightStandards(from, to);
+  return getRealFlightStandards(from, to, date);
 }
 
 function annotateRoundTripLeg(items: SearchItem[] | null, legType: 'outbound' | 'return'): SearchItem[] {

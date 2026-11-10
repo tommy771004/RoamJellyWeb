@@ -10,6 +10,7 @@ export interface RedirectModalState {
   airline?: string;
   departure?: string;
   arrival?: string;
+  arrivalDayOffset?: number;
   duration?: string;
   stops?: number;
   price?: number;

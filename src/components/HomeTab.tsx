@@ -44,11 +44,13 @@ import {
   getDealsFeed,
   getDestinationAlerts,
   createTripFact,
+  fetchTripInfo,
   syncItinerary,
   fetchUserSubscriptions,
   toggleUserSubscription,
   trackClickOut,
 } from "../lib/workflowApi";
+import { getDateForDay, getDayForDate } from "../lib/itineraryUtils";
 import {
   buildTripComFlightUrl,
   buildTripComHotelUrl,
@@ -1283,12 +1285,20 @@ export default function HomeTab({
         (isReturnLeg ? searchForm.returnDate?.trim() : searchForm.date?.trim()) ||
         searchForm.date?.trim() ||
         new Date().toISOString().slice(0, 10);
+      // Put each flight on the trip day that matches its date. The return leg
+      // used to land on day 2 whatever the return date was.
+      const tripStartDate: string | null = await fetchTripInfo(tripId)
+        .then((trip) => trip?.startDate ?? null)
+        .catch(() => null);
+      const dayForDate = (date: string, fallbackDay: number) =>
+        getDayForDate(date, tripStartDate, fallbackDay);
       const newFact = await createTripFact(tripId, {
         factType: isReturnLeg ? "flight_inbound" : "flight_outbound",
         source: "imported_search",
         title: `${flight.details?.airline || flight.provider} ${depCode} → ${arrCode}`,
         startAt: `${factDate}T${toHHMM(flight.details?.departure)}:00.000Z`,
-        endAt: `${factDate}T${toHHMM(flight.details?.arrival) || "13:00"}:00.000Z`,
+        // Overnight flights land the next day (arrivalDayOffset = 1).
+        endAt: `${getDateForDay(1 + (flight.details?.arrivalDayOffset ?? 0), factDate) ?? factDate}T${toHHMM(flight.details?.arrival) || "13:00"}:00.000Z`,
         locationName: arrCode,
         referenceCode: flight.details?.flightNumber || null,
         metadata: {
@@ -1310,7 +1320,7 @@ export default function HomeTab({
           node_id: isReturnLeg
             ? `node_flight_return_${Date.now()}`
             : `node_flight_${Date.now()}`,
-          day: isReturnLeg ? 2 : 1,
+          day: dayForDate(factDate, isReturnLeg ? 2 : 1),
           date: factDate,
           time: toHHMM(flight.details?.departure),
           title: `${flight.details?.airline || flight.provider} 航班`,
@@ -1358,7 +1368,7 @@ export default function HomeTab({
           action: "add_node",
           payload: {
             node_id: `node_flight_return_${Date.now()}`,
-            day: 2,
+            day: dayForDate(retDate, 2),
             date: retDate,
             time: toHHMM(flight.returnLeg.departure),
             title: `${flight.returnLeg.airline || flight.provider} 回程航班`,
@@ -2601,6 +2611,7 @@ export default function HomeTab({
                                   airline: flight.details?.airline,
                                   departure: flight.details?.departure,
                                   arrival: flight.details?.arrival,
+                                  arrivalDayOffset: flight.details?.arrivalDayOffset,
                                   duration: flight.details?.duration,
                                   stops: flight.details?.stops,
                                   price: flight.price,
@@ -2660,6 +2671,7 @@ export default function HomeTab({
                               airline: flight.details?.airline,
                               departure: flight.details?.departure,
                               arrival: flight.details?.arrival,
+                              arrivalDayOffset: flight.details?.arrivalDayOffset,
                               duration: flight.details?.duration,
                               stops: flight.details?.stops,
                               price: flight.price,

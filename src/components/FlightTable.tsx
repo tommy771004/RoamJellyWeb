@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import type { SearchItem } from "../types/workflow";
 import AirlineLogo from "./AirlineLogo";
 import { useTranslation } from "react-i18next";
+import ArrivalDayOffset from "./ArrivalDayOffset";
 
 export default function FlightTable({
   results,
@@ -98,9 +99,10 @@ export default function FlightTable({
                     </div>
 
                     {/* Arr */}
-                    <div className="flex flex-col items-end w-[60px]">
-                      <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                    <div className="flex flex-col items-end min-w-[60px]">
+                      <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none whitespace-nowrap">
                         {flight.details?.arrival || "00:00"}
+                        <ArrivalDayOffset offset={flight.details?.arrivalDayOffset} />
                       </span>
                       <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">
                         {(flight.details?.arrCode || "TYO").toUpperCase()}
