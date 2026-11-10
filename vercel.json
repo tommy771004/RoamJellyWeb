@@ -75,7 +75,8 @@
     { "src": "/llms.txt", "dest": "/llms.txt" },
     { "src": "/sitemap.xsl", "dest": "/sitemap.xsl" },
     { "src": "/(.*\\.(js|css|png|svg|ico|webp|woff2?|webmanifest|txt|md|xsl|json|map))", "dest": "/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    { "src": "/(?:index\\.html|trip/[^/]+|trips/trip_[^/]+|auth/callback|forgot-password|reset-password|pricing)?/?", "dest": "/index.html" },
+    { "src": "/(.*)", "status": 404, "dest": "/index.html" }
   ]
 
 }

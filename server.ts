@@ -56,6 +56,7 @@ import { generateItinerary, regenerateSpot } from './src/server/services/aiItine
 import { fetchOpenRouterWithFallback } from './src/server/services/openrouterHelper';
 import { createSeoRouter } from './src/server/seo/router';
 import { injectSpaPageMeta } from './src/server/seo/spaMeta';
+import { isSpaRoute } from './src/server/seo/spaRoutes';
 import { SITE_ORIGIN } from './src/server/seo/utils';
 import { buildAllowedCorsOrigins, isCorsOriginAllowed } from './src/server/security/cors';
 
@@ -1602,7 +1603,10 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (_req, res) => {
+    app.get('*', (req, res) => {
+      // Unknown paths still get the app shell (users land somewhere useful),
+      // but with 404 so search engines don't index them as homepage copies.
+      if (!isSpaRoute(req.path)) res.status(404);
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

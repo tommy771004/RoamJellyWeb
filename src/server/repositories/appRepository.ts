@@ -1207,6 +1207,41 @@ export class AppRepository {
     return (rows.rows as { month: number; count: number }[]);
   }
 
+  /** Newest search per (from, to) pair within the 12-month window the /fly pages report on. */
+  async getRouteSearchLastSeen(fromVariants: string[], toVariants: string[]): Promise<{ from: string; to: string; lastSeen: Date | string | null }[]> {
+    if (!this.db || fromVariants.length === 0 || toVariants.length === 0) return [];
+    const rows = await this.db.execute(sql`
+      SELECT query_from AS "from", query_to AS "to",
+             to_char(MAX("timestamp"), 'YYYY-MM-DD') AS "lastSeen"
+      FROM search_history
+      WHERE query_from = ANY(${sql.param(fromVariants)}::text[])
+        AND query_to = ANY(${sql.param(toVariants)}::text[])
+        AND "timestamp" > NOW() - INTERVAL '12 months'
+      GROUP BY query_from, query_to
+    `);
+    return rows.rows as { from: string; to: string; lastSeen: Date | string | null }[];
+  }
+
+  /**
+   * Public trips with their last content change. Neither trips nor itinerary_nodes
+   * track edits (no updated_at), so this is the newest of trip creation and node
+   * creation — it moves when spots are added, not when existing ones are edited.
+   */
+  async getPublicTripsLastModified(limit: number): Promise<{ id: string; destination: string | null; lastModified: Date | string | null }[]> {
+    if (!this.db) return [];
+    const rows = await this.db.execute(sql`
+      SELECT t.id, t.destination,
+             to_char(GREATEST(t.created_at, COALESCE(MAX(n.created_at), t.created_at)), 'YYYY-MM-DD') AS "lastModified"
+      FROM trips t
+      LEFT JOIN itinerary_nodes n ON n.trip_id = t.id
+      WHERE t.is_public = true
+      GROUP BY t.id
+      ORDER BY "lastModified" DESC
+      LIMIT ${limit}
+    `);
+    return rows.rows as { id: string; destination: string | null; lastModified: Date | string | null }[];
+  }
+
   async getPublicTripsByDestination(dbVariants: string[]): Promise<{
     id: string;
     name: string;

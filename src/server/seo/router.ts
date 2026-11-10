@@ -5,7 +5,8 @@ import { buildRouteData, buildDestinationData } from './seoDataService.js';
 import { buildRoutePage } from './templates/routePage.js';
 import { buildDestinationPage } from './templates/destinationPage.js';
 import { buildRouteHubPage, buildDestinationHubPage } from './templates/hubPage.js';
-import { buildSitemapXml } from './templates/sitemap.js';
+import { buildSitemapXml, buildSitemapEntries, renderSitemapXml } from './templates/sitemap.js';
+import { SITE_ORIGIN } from './utils.js';
 import { KNOWN_ROUTES, KNOWN_DESTINATIONS } from './cities.js';
 
 export function createSeoRouter(repo: AppRepository): Router {
@@ -34,31 +35,14 @@ export function createSeoRouter(repo: AppRepository): Router {
     } catch (err) {
       console.error('[seo] /sitemap.xml error, falling back to static XML:', (err as Error)?.message, err);
       try {
-        const today = new Date().toISOString().split('T')[0];
-        const base = 'https://roam-jelly-web.vercel.app';
-        const staticUrls = [
-          `${base}/`,
-          `${base}/pricing`,
-          `${base}/guide/`,
-          `${base}/guide/collaborative-itinerary-planner`,
-          `${base}/guide/taiwan-travel-planner`,
-          `${base}/guide/group-travel-expense-splitting`,
-          `${base}/fly/`,
-          `${base}/trips/`,
-        ];
-        const routeUrls = KNOWN_ROUTES.map((r) => `${base}/fly/${r.slug}/`);
-        const destUrls = KNOWN_DESTINATIONS.map((d) => `${base}/trips/${d.slug}/`);
-        const allUrls = [...staticUrls, ...routeUrls, ...destUrls];
-        const entries = allUrls
-          .map((url) => `  <url>\n    <loc>${url}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n  </url>`)
-          .join('\n');
-        const fallbackXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>`;
+        // Static entries only (no DB); data-driven pages simply carry no lastmod.
+        const fallbackXml = renderSitemapXml(buildSitemapEntries({ routeSearches: [], publicTrips: [] }));
         res.setHeader('Content-Type', 'application/xml; charset=utf-8');
         res.setHeader('Cache-Control', 'public, max-age=3600');
         res.status(200).send(fallbackXml);
       } catch (fallbackErr) {
         console.error('[seo] /sitemap.xml hard-fallback failed:', (fallbackErr as Error)?.message, fallbackErr);
-        const ultraMinimalXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://roam-jelly-web.vercel.app/</loc>\n  </url>\n</urlset>`;
+        const ultraMinimalXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>${SITE_ORIGIN}/</loc>\n  </url>\n</urlset>`;
         res.setHeader('Content-Type', 'application/xml; charset=utf-8');
         res.status(200).send(ultraMinimalXml);
       }
