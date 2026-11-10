@@ -39,6 +39,7 @@ import {
   searchOffers,
   SearchServiceUnavailableError,
   SearchTimeoutError,
+  SearchCancelledError,
   fetchHandbooks,
   fetchUserTrips,
   getDealsFeed,
@@ -92,6 +93,7 @@ import DestinationCard from "./DestinationCard";
 import PortfolioSection from "./PortfolioSection";
 import FaqSection from "./FaqSection";
 import {
+  IOS_EASE,
   layoutIndicatorTransition,
   pressableSurfaceClass,
   raisedHoverClass,
@@ -466,7 +468,10 @@ export default function HomeTab({
     });
   }, [myTrips, tripSearchQuery]);
   const [searchProgress, setSearchProgress] = useState(0);
-  const [progressMsgIdx, setProgressMsgIdx] = useState(0);
+  const [searchElapsed, setSearchElapsed] = useState(0);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  // Leaving the page cancels a search still in flight.
+  useEffect(() => () => searchAbortRef.current?.abort(), []);
   const prefersReducedMotion = useReducedMotion() ?? false;
   const { onScroll } = useHideNavOnScroll();
 
@@ -803,12 +808,21 @@ export default function HomeTab({
     }
   };
 
-  const SEARCH_LOADING_MESSAGES = [
-    "搜尋航班中...",
-    "比較多家票價...",
-    "篩選最優惠...",
-    "整理結果中...",
-  ];
+  /**
+   * Search wait feedback, driven by real elapsed time. A search takes ~6–15s
+   * and can run to ~50s when fallbacks kick in, so the bar follows an
+   * easing-out curve that keeps moving instead of parking at a fixed
+   * percentage, and the message says what is actually happening at that
+   * point rather than cycling through the same four lines.
+   */
+  const searchStageMessage = (seconds: number) => {
+    if (seconds < 3) return "連線航空公司報價…";
+    if (seconds < 8)
+      return searchForm.tripType === "roundtrip" ? "同時查詢去程與回程…" : "查詢航班與票價…";
+    if (seconds < 15) return "比較各家票價…";
+    if (seconds < 30) return "這條航線資料較多，再稍等一下…";
+    return "快好了，正在整理可用的結果…";
+  };
 
   useEffect(() => {
     if (!loading) {
@@ -819,23 +833,16 @@ export default function HomeTab({
       }
       return;
     }
+    const startedAt = Date.now();
     setSearchProgress(0);
-    setProgressMsgIdx(0);
-    const progressInterval = setInterval(() => {
-      setSearchProgress((prev) => {
-        if (prev < 30) return prev + 4;
-        if (prev < 60) return prev + 1.8;
-        if (prev < 82) return prev + 0.6;
-        return Math.min(prev + 0.08, 92);
-      });
-    }, 120);
-    const msgInterval = setInterval(() => {
-      setProgressMsgIdx((prev) => (prev + 1) % SEARCH_LOADING_MESSAGES.length);
-    }, 2000);
-    return () => {
-      clearInterval(progressInterval);
-      clearInterval(msgInterval);
-    };
+    setSearchElapsed(0);
+    const tick = setInterval(() => {
+      const seconds = (Date.now() - startedAt) / 1000;
+      // ~46% at 6s, ~64% at 10s, ~77% at 15s, ~91% at 30s; never reaches 100 on its own.
+      setSearchProgress(95 * (1 - Math.exp(-seconds / 9)));
+      setSearchElapsed(Math.floor(seconds));
+    }, 200);
+    return () => clearInterval(tick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
@@ -1236,13 +1243,31 @@ export default function HomeTab({
       return;
     }
     setDateError(null);
+    // A new search replaces any search still running.
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+    const hadSearched = hasSearched;
+
     setHasSearched(true);
     setLoading(true);
     setSearchError(null);
     try {
-      const result = await searchOffers(searchForm);
+      const result = await searchOffers(searchForm, { signal: controller.signal });
       setResults(result);
+      // A light tap when results land: the wait is long enough that people
+      // look away, and the tap says "it's here" before they look back.
+      if (result.length > 0) impactHaptic();
     } catch (error) {
+      if (error instanceof SearchCancelledError) {
+        // Cancelled by the user (or replaced by a newer search): keep what was
+        // on screen before and show no error.
+        if (searchAbortRef.current === controller) {
+          setHasSearched(hadSearched);
+          showToast("已取消查詢", "info");
+        }
+        return;
+      }
       if (error instanceof SearchTimeoutError) {
         setSearchError("timeout");
       } else if (error instanceof SearchServiceUnavailableError) {
@@ -1252,8 +1277,17 @@ export default function HomeTab({
       }
       setResults([]);
     } finally {
-      setLoading(false);
+      // Only the latest search may end the loading state.
+      if (searchAbortRef.current === controller) {
+        searchAbortRef.current = null;
+        setLoading(false);
+      }
     }
+  };
+
+  const cancelSearch = () => {
+    selectionHaptic();
+    searchAbortRef.current?.abort();
   };
 
   const toHHMM = (s: string | undefined) =>
@@ -1700,8 +1734,11 @@ export default function HomeTab({
                     onClick={() => void handleSearch()}
                     disabled={isSearchDisabled || loading || isOffline}
                     title={isOffline ? "請連線網路以進行機票比價" : ""}
+                    aria-busy={loading}
                     className={`group relative flex w-full overflow-hidden items-center justify-center gap-2.5 rounded-[28px] sm:rounded-[32px] py-4 sm:py-5 mt-1 text-[17px] sm:text-[19px] font-black tracking-wide shadow-sm transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] transform-gpu ${
-                      isSearchDisabled || loading || isOffline
+                      loading
+                        ? "bg-slate-800 border border-slate-700 text-white/90 cursor-progress"
+                        : isSearchDisabled || isOffline
                         ? "bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
                         : "bg-slate-900 border border-slate-800 text-white shadow-[0_8px_20px_-6px_rgba(15,23,42,0.4)] hover:bg-slate-800 hover:shadow-[0_12px_24px_-6px_rgba(15,23,42,0.5)] ios-press active:translate-y-[1px]"
                     }`}
@@ -1710,7 +1747,10 @@ export default function HomeTab({
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-150%] skew-x-[-25deg] group-hover:transition-all group-hover:duration-700 group-hover:ease-in-out group-hover:translate-x-[150%]" />
                     )}
                     {loading ? (
-                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      <>
+                        <span className="w-5 h-5 border-2 border-white/25 border-t-white rounded-full animate-spin" aria-hidden="true" />
+                        <span>查詢中…</span>
+                      </>
                     ) : (
                       <>
                         <SearchIcon size={18} strokeWidth={3} className="drop-shadow-sm group-hover:animate-cute-bounce opacity-90" /> 
@@ -2509,12 +2549,27 @@ export default function HomeTab({
 
                     {/* Progress bar */}
                     <div className="w-full flex flex-col gap-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest leading-none whitespace-nowrap">
-                          {SEARCH_LOADING_MESSAGES[progressMsgIdx]}
-                        </span>
-                        <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 tabular-nums">
-                          {Math.round(searchProgress)}%
+                      <div className="flex justify-between items-center gap-3">
+                        {/* Keyed on the text so each new stage cross-fades in. */}
+                        <AnimatePresence mode="wait" initial={false}>
+                          <motion.span
+                            key={searchStageMessage(searchElapsed)}
+                            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+                            transition={{ duration: 0.2, ease: IOS_EASE }}
+                            className="min-w-0 truncate text-[12px] font-black text-slate-700 dark:text-slate-200 leading-none"
+                            role="status"
+                            aria-live="polite"
+                          >
+                            {searchStageMessage(searchElapsed)}
+                          </motion.span>
+                        </AnimatePresence>
+                        <span
+                          className="flex-none text-[11px] font-black text-slate-500 dark:text-slate-400 tabular-nums"
+                          aria-label={`已等待 ${searchElapsed} 秒`}
+                        >
+                          {searchElapsed} 秒
                         </span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -2526,8 +2581,16 @@ export default function HomeTab({
                       </div>
                     </div>
 
-                    <p className="text-slate-500 dark:text-slate-400 font-medium text-[11px] tracking-wide text-center whitespace-nowrap">
+                    <p className="text-slate-500 dark:text-slate-400 font-medium text-[11px] tracking-wide text-center">
                       {t('str_40f98d9')}</p>
+
+                    <button
+                      type="button"
+                      onClick={cancelSearch}
+                      className="ios-press -mb-2 flex min-h-11 items-center justify-center rounded-full px-5 text-[13px] font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300/50 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
+                    >
+                      取消查詢
+                    </button>
                   </div>
                 </motion.div>
               )}
