@@ -5,6 +5,7 @@ import './index.css';
 import './i18n';
 import { registerSW } from 'virtual:pwa-register';
 import { installAuthRefresh } from './lib/installAuthRefresh';
+import { bootHeroShown } from './lib/bootHero';
 
 // Refresh expired 15-minute access tokens transparently (before any request runs).
 installAuthRefresh();
@@ -76,8 +77,40 @@ if ('serviceWorker' in navigator) {
 // never blocks scrolling.
 document.addEventListener('touchstart', () => {}, { passive: true });
 
-createRoot(document.getElementById('root')!).render(
+const mount = () => createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
+
+// index.html's static hero is the LCP element only if it is actually presented
+// on screen before React replaces it. On a fast connection the bundle is ready
+// before the first frame is shown (a rAF is not enough: Chrome presented the
+// first frame ~50ms after it), so React swapped it out unseen and LCP waited
+// for the bundle again. Mount once the browser reports the hero's LCP entry;
+// `buffered` delivers it at once if it already painted (the usual case on a
+// slow network). Browsers without LCP (Safari) don't measure it, so mount at
+// once there. The timer covers tabs that never paint (background, prerender).
+const lcpSupported =
+  typeof PerformanceObserver !== 'undefined' &&
+  (PerformanceObserver.supportedEntryTypes ?? []).includes('largest-contentful-paint');
+
+if (bootHeroShown && lcpSupported) {
+  let mounted = false;
+  const observer = new PerformanceObserver((list) => {
+    if (list.getEntries().some((entry) => (entry as PerformanceEntry & { element?: Element | null }).element?.closest('#boot-hero'))) {
+      mountOnce();
+    }
+  });
+  const timer = window.setTimeout(() => mountOnce(), 300);
+  function mountOnce() {
+    if (mounted) return;
+    mounted = true;
+    observer.disconnect();
+    window.clearTimeout(timer);
+    mount();
+  }
+  observer.observe({ type: 'largest-contentful-paint', buffered: true });
+} else {
+  mount();
+}
