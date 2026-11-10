@@ -1996,12 +1996,12 @@ export default function ItineraryTab() {
       return (
         <div
           onScroll={onScroll}
-          className="flex-1 flex flex-col pt-4 sm:pt-10 bg-transparent min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth"
+          className="flex-1 flex flex-col pt-page bg-transparent min-h-screen-dvh max-h-screen-dvh overflow-y-auto scroll-smooth"
         >
           <div className="max-w-4xl mx-auto w-full px-4 h-full flex flex-col">
             <button
               onClick={() => setIsPlanningNew(false)}
-              className="mb-4 sm:mb-8 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-600 font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:border-sky-200 hover:text-sky-700 w-max ios-press transition-colors"
+              className="mb-4 px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-600 font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:border-sky-200 hover:text-sky-700 w-max ios-press transition-colors"
             >
               <ArrowLeft size={14} />
               {t('str_66f9470e')}</button>
@@ -2024,7 +2024,7 @@ export default function ItineraryTab() {
         onScroll={onScroll}
         className="flex-1 w-full overflow-y-auto scroll-smooth bg-transparent selection:bg-sky-100"
       >
-        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-4 md:mt-10 font-sans pb-tab-safe animate-in fade-in duration-700">
+        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 pt-page font-sans pb-tab-safe animate-in fade-in duration-700">
           <EditorialSectionIntro
             eyebrow="Trip Notebook"
             title={t('str_d467c8f')}
@@ -2033,13 +2033,13 @@ export default function ItineraryTab() {
               { label: "AI 起草", value: "先有第一版" },
               { label: "旅伴共編", value: "後續一起補完" },
             ]}
-            className="mb-6 md:mb-10"
+            className="mb-section"
             titleClassName="text-2xl md:text-5xl tracking-tight"
             descriptionClassName="max-w-3xl text-sm font-bold leading-6 sm:text-base sm:leading-7"
           />
 
           {/* AI Planning Entry Hero */}
-          <div className="mb-8 md:mb-16">
+          <div className="mb-section">
             <motion.div
               className={`editorial-card relative overflow-hidden rounded-[32px] sm:rounded-[36px] p-4 sm:p-7 backdrop-blur-xl transition-all duration-300`}
             >
@@ -2241,9 +2241,9 @@ export default function ItineraryTab() {
         onScroll={onScroll}
         className={`flex-1 w-full overflow-y-auto animate-in fade-in duration-500 bg-gradient-to-br ${activeGradient}`}
       >
-        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 mt-6 pb-tab-safe">
+        <div className="max-w-[1440px] mx-auto w-full px-4 md:px-8 pt-page pb-tab-safe">
           {/* Header skeleton */}
-          <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="mb-section flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div className="flex flex-col gap-3">
               <div className="h-3.5 w-20 bg-slate-100 rounded-full animate-pulse" />
               <div className="h-11 w-64 bg-slate-200/80 rounded-3xl animate-pulse" />
@@ -2381,7 +2381,7 @@ export default function ItineraryTab() {
         )}
 
         {/* Cover Image Banner */}
-        <div className="relative w-full h-[20vh] sm:h-[30vh] md:h-64 overflow-hidden md:rounded-[40px] mb-4 md:mb-8 print:hidden -mt-4 md:mt-0 shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-10 sm:max-w-[calc(100%-2rem)] sm:mx-auto">
+        <div className="relative w-full h-[20vh] sm:h-[30vh] md:h-64 overflow-hidden md:rounded-[40px] mb-section print:hidden -mt-4 md:mt-0 shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-10 sm:max-w-[calc(100%-2rem)] sm:mx-auto">
           {tripInfo?.coverImage ? (
             <img
               src={tripInfo.coverImage}
@@ -2478,7 +2478,7 @@ export default function ItineraryTab() {
               </button>
             </div>
 
-            <div className="hidden lg:block mt-8">
+            <div className="hidden lg:block mt-section">
               <h1 className="text-5xl lg:text-6xl font-black text-slate-800 mb-4 flex items-center gap-3 font-serif tracking-tight leading-tight">
                 <div className="flex items-center gap-2 group/title">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600">
@@ -2536,7 +2536,7 @@ export default function ItineraryTab() {
             </div>
           </div>
 
-          <div className="flex flex-row items-center justify-start gap-3 sm:gap-4 flex-nowrap sticky top-2 md:top-4 z-[45] md:relative md:top-0 md:mt-8 px-4 md:px-8 w-full">
+          <div className="flex flex-row items-center justify-start gap-3 sm:gap-4 flex-nowrap sticky top-2 md:top-4 z-[45] md:relative md:top-0 md:mt-section px-4 md:px-8 w-full">
             <div className="shrink-0 flex items-center">
               <button
                 onClick={handleBackToTrips}

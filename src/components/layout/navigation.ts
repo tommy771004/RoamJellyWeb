@@ -37,7 +37,7 @@ export function getTabLabelKey(tab: AppTab): MainNavItem['labelKey'] {
   return `tab_${toMainTab(tab)}`;
 }
 
-/** Other sites by the same author, listed in the drawer and on the home page. */
+/** Other sites by the same author, listed in the side menu (AppDrawer). */
 export interface PortfolioProject {
   title: string;
   url: string;

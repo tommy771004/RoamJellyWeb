@@ -895,7 +895,7 @@ function ToolsTabContent() {
       onScroll={onScroll}
       className="flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth bg-transparent text-slate-900 transition-colors"
     >
-      <div className="pt-4 sm:pt-8 pb-tab-safe px-3.5 sm:px-6 md:px-8 mx-auto flex flex-col w-full max-w-[1120px] gap-y-6 sm:gap-y-10">
+      <div className="pt-page pb-tab-safe px-3.5 sm:px-6 md:px-8 mx-auto flex flex-col w-full max-w-[1120px] gap-y-section">
         <TripSelectorBar />
 
         {loading ? (
@@ -914,7 +914,7 @@ function ToolsTabContent() {
              <p className="text-sm font-bold text-rose-500/90">{tip}</p>
           </div>
         ) : (
-        <div className="flex flex-col gap-y-6 sm:gap-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="flex flex-col gap-y-section animate-in fade-in slide-in-from-bottom-4 duration-500">
         <motion.section
           initial={prefersReducedMotion ? undefined : { y: 16, scale: 0.985 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}

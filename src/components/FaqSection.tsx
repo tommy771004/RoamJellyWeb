@@ -80,7 +80,7 @@ export default function FaqSection() {
   return (
     <section
       id="faq"
-      className="relative my-12 w-full max-w-4xl mx-auto px-4 sm:px-6"
+      className="relative mb-section w-full max-w-4xl mx-auto px-4 sm:px-6"
       aria-label="常見問題"
     >
       {/* Schema.org FAQPage JSON-LD script for Search Engine Optimization */}
@@ -93,7 +93,7 @@ export default function FaqSection() {
       <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-72 h-72 bg-sky-200/30 dark:bg-sky-900/20 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header */}
-      <div className="text-center mb-8 relative z-10 space-y-2">
+      <div className="text-center mb-4 md:mb-5 relative z-10 space-y-2">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-100/80 dark:bg-sky-950/80 border border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300 text-xs font-black uppercase tracking-wider">
           <Sparkles size={12} className="text-sky-500" />
           <span>常見問題 Q&A</span>

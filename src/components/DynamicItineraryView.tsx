@@ -39,7 +39,7 @@ export default function DynamicItineraryView({
 
   return (
     <main className="h-full w-full overflow-y-auto bg-[#eef2ed] text-[#26342d] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      <div className="mx-auto w-full max-w-5xl px-4 pb-32 pt-6 sm:px-8 sm:pt-12">
+      <div className="mx-auto w-full max-w-5xl px-4 pb-32 pt-page sm:px-8">
         <button
           type="button"
           onClick={onBack}
@@ -49,7 +49,7 @@ export default function DynamicItineraryView({
           <ArrowLeft size={23} />
         </button>
 
-        <header className="mb-8 grid gap-5 sm:mb-10 lg:grid-cols-[1fr_18rem] lg:items-end">
+        <header className="mb-section grid gap-5 lg:grid-cols-[1fr_18rem] lg:items-end">
           <div>
             <p className="mb-2 text-sm font-bold text-[#8a4935]">
               {t('ai_result.draft_label', 'AI 行程草稿')}
@@ -162,7 +162,7 @@ export default function DynamicItineraryView({
         </div>
 
         {onSave && (
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-section flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="w-full text-sm font-medium leading-6 text-[#5b675f] sm:max-w-[36rem]">
               {t('ai_result.save_hint', '先保存這份草稿，再到行程頁逐站改時間、交通與備註。')}
             </p>

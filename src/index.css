@@ -740,6 +740,43 @@
   top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
 }
 
+/* Page rhythm shared by every tab. Each tab used its own spacing (home page
+   sections sat 80–128px apart, the itinerary up to 64px, tools 24–40px), so
+   the same app felt loose on one tab and tight on the next.
+   --page-top:    space between the header and a tab's first block.
+   --section-gap: space between top-level blocks (sections or cards) of a tab. */
+:root {
+  --page-top: 16px;
+  --section-gap: 24px;
+}
+@media (min-width: 768px) {
+  :root {
+    --page-top: 24px;
+    --section-gap: 32px;
+  }
+}
+
+@utility pt-page {
+  padding-top: var(--page-top);
+}
+@utility mt-section {
+  margin-top: var(--section-gap);
+}
+@utility mb-section {
+  margin-bottom: var(--section-gap);
+}
+@utility pb-section {
+  padding-bottom: var(--section-gap);
+}
+@utility gap-y-section {
+  row-gap: var(--section-gap);
+}
+@utility space-y-section {
+  & > :not(:last-child) {
+    margin-bottom: var(--section-gap);
+  }
+}
+
 @utility mb-safe {
   margin-bottom: env(safe-area-inset-bottom, 0px);
 }
