@@ -52,7 +52,7 @@ import { registerSocketHandlers } from './src/server/realtime/socketHandlers';
 import * as schema from './src/server/db/schema';
 
 import { resolveIataCode, scrapeTripFlights } from './src/server/services/tripParser';
-import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
+import { generateItinerary, regenerateSpot, FALLBACK_ITINERARY_TITLE } from './src/server/services/aiItineraryService';
 import { fetchOpenRouterWithFallback } from './src/server/services/openrouterHelper';
 import { createSeoRouter } from './src/server/seo/router';
 import { injectSpaPageMeta } from './src/server/seo/spaMeta';
@@ -959,6 +959,8 @@ const cityCoordsCache = new Map<string, { lat: number; lng: number }>();
 async function geocodeSpot(title: string, city = ''): Promise<{ lat: number; lng: number } | null> {
   const cleanTitle = title.trim();
   const cleanCity = city.trim();
+  // The placeholder item from a failed AI generation is not a place.
+  if (cleanTitle === FALLBACK_ITINERARY_TITLE) return null;
 
   let biasCoords: { lat: number; lng: number } | null = null;
 

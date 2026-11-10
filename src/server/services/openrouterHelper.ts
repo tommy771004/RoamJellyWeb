@@ -11,6 +11,8 @@
 // - 'cohere/north-mini-code:free': Coding-specialised.
 // - 'parallel/decisions-fast:free', 'heygen/heygen-voice-1-turbo:free': Not in the
 //   OpenRouter catalog as of 2026-11-10 (heygen is a voice model anyway).
+// - 'thinkingmachines/inkling-2-small:free': 403 "only available on agentic
+//   harnesses" — never answers a plain API call.
 // - Removed 2026-11-10 because OpenRouter no longer lists them (every call was a 404):
 //   qwen3-coder, deepseek-v4-flash, qwen3-next-80b, llama-3.3-70b, llama-3.2-3b,
 //   hermes-3-405b, minimax-m2.5, gpt-oss-120b/20b, glm-4.5-air, lfm-2.5-1.2b ×2,
@@ -18,7 +20,6 @@
 export const FREE_MODELS = [
   'google/gemma-4-26b-a4b-it:free',      // MoE, 4B active — fast, proven in production
   'xingchen-agi/xing4.0-29b-a4b:free',   // MoE, 4B active
-  'thinkingmachines/inkling-2-small:free',
   'google/gemma-4-31b-it:free',
   'recursive/flint-v1.0:free',
   'liquid/lfm-3-1.7b:free',              // smallest; last resort for long JSON
@@ -55,7 +56,8 @@ const COOLDOWN_MS = {
   notFound: 6 * 60 * 60_000, // model removed or renamed
   rateLimited: 60_000,
   forbidden: 10 * 60_000, // moderation / account or region block / key limit
-  failed: 2 * 60_000, // error, timeout or empty answer
+  empty: 2 * 60_000, // answered with no content
+  failed: 2 * 60_000, // error or timeout
 } as const;
 
 type FailureKind = keyof typeof COOLDOWN_MS;
@@ -138,9 +140,19 @@ async function callModel(model: string, apiKey: string, prompt: string, signal: 
   }
 
   const data = await response.json().catch(() => null);
-  const text = data?.choices?.[0]?.message?.content;
+  const choice = data?.choices?.[0];
+  const text = choice?.message?.content;
   if (typeof text === 'string' && text.trim()) return text;
-  throw new ModelAttemptError('failed', `Model ${model} returned empty content`);
+  // finish_reason 'length' with no content usually means hidden reasoning used
+  // up max_tokens; the usage numbers show how the tokens were spent.
+  const usage = data?.usage;
+  const detail = [
+    `finish_reason=${choice?.finish_reason ?? choice?.native_finish_reason ?? 'unknown'}`,
+    usage ? `completion_tokens=${usage.completion_tokens ?? '?'}` : '',
+    usage?.completion_tokens_details?.reasoning_tokens != null ? `reasoning_tokens=${usage.completion_tokens_details.reasoning_tokens}` : '',
+    data?.error ? `error=${JSON.stringify(data.error).slice(0, 200)}` : '',
+  ].filter(Boolean).join(', ');
+  throw new ModelAttemptError('empty', `Model ${model} returned empty content (${detail})`);
 }
 
 /**
@@ -171,6 +183,7 @@ export async function fetchOpenRouterWithFallback(
   let rateLimitedCount = 0;
   let notFoundCount = 0;
   let forbiddenCount = 0;
+  const failuresByKind: Partial<Record<FailureKind, number>> = {};
   let lastError: Error | null = null;
 
   return new Promise<string>((resolve, reject) => {
@@ -184,6 +197,8 @@ export async function fetchOpenRouterWithFallback(
     };
 
     const finalError = () => {
+      const summary = Object.entries(failuresByKind).map(([kind, n]) => `${n} ${kind}`).join(', ');
+      console.warn(`[openrouter] All ${models.length} models failed: ${summary}`);
       const unavailable = rateLimitedCount + notFoundCount;
       if (forbiddenCount === models.length) {
         return new Error(`OpenRouter returned 403 for every model — check the API key's status and credit limit. Last: ${lastError?.message ?? ''}`);
@@ -227,6 +242,7 @@ export async function fetchOpenRouterWithFallback(
           if (error.kind === 'rateLimited') rateLimitedCount++;
           if (error.kind === 'notFound') notFoundCount++;
           if (error.kind === 'forbidden') forbiddenCount++;
+          failuresByKind[error.kind] = (failuresByKind[error.kind] ?? 0) + 1;
           modelHealth.set(model, { until: Date.now() + COOLDOWN_MS[error.kind], kind: error.kind });
           if (preferredModel === model) preferredModel = null;
           lastError = error;

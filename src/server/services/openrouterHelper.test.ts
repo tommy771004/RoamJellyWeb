@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 test('the model list holds the requested free models and the backups', () => {
-  assert.ok(FREE_MODELS.includes('thinkingmachines/inkling-2-small:free'));
+  assert.ok(!FREE_MODELS.includes('thinkingmachines/inkling-2-small:free'), 'API calls get 403 "agentic harnesses only"');
   assert.ok(FREE_MODELS.includes('liquid/lfm-3-1.7b:free'));
   assert.ok(FREE_MODELS.includes('recursive/flint-v1.0:free'));
   assert.ok(FREE_MODELS.includes('xingchen-agi/xing4.0-29b-a4b:free'));
