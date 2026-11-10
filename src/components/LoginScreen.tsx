@@ -34,6 +34,12 @@ interface Props {
   guestCtaLabel?: string;
   /** Rendered as a full tab (not inside a modal): leave room for the floating tab bar. */
   reserveTabBarSpace?: boolean;
+  /**
+   * `page` (default): full-screen layout — tinted backdrop with a clipped card on top.
+   * `dialog`: the host already draws the card (modal), so render flat inside it
+   * instead of stacking a second backdrop and card.
+   */
+  presentation?: 'page' | 'dialog';
 }
 
 type Mode = 'login' | 'register' | 'forgot-password' | 'reset-password';
@@ -58,7 +64,9 @@ export default function LoginScreen({
   description,
   guestCtaLabel,
   reserveTabBarSpace = false,
+  presentation = 'page',
 }: Props) {
+  const isDialog = presentation === 'dialog';
   const emailId = useId();
   const passwordId = useId();
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -300,7 +308,9 @@ export default function LoginScreen({
   }
 
   return (
-    <main className={`relative min-h-full w-full flex-1 overflow-y-auto overflow-x-hidden bg-[#eef2ed] px-4 pt-8 text-[#26342d] dark:bg-[#17221c] dark:text-white sm:px-6 sm:pt-12 ${reserveTabBarSpace ? "pb-tab-safe" : "pb-8 sm:pb-12"}`}>
+    <main className={isDialog
+      ? 'relative w-full overflow-x-hidden bg-white px-6 pb-8 pt-10 text-[#26342d] dark:bg-[#243229] dark:text-white sm:px-8'
+      : `relative min-h-full w-full flex-1 overflow-y-auto overflow-x-hidden bg-[#eef2ed] px-4 pt-8 text-[#26342d] dark:bg-[#17221c] dark:text-white sm:px-6 sm:pt-12 ${reserveTabBarSpace ? "pb-tab-safe" : "pb-8 sm:pb-12"}`}>
 
       {onCancel && (
         <button
@@ -313,8 +323,8 @@ export default function LoginScreen({
         </button>
       )}
 
-      <div className="relative z-10 mx-auto flex min-h-full w-full max-w-3xl items-center justify-center">
-        <section className="w-full bg-white/85 p-6 [clip-path:polygon(18px_0,100%_0,100%_calc(100%_-_18px),calc(100%_-_18px)_100%,0_100%,0_18px)] dark:bg-[#243229] sm:p-10">
+      <div className={isDialog ? 'relative z-10 w-full' : 'relative z-10 mx-auto flex min-h-full w-full max-w-3xl items-center justify-center'}>
+        <section className={isDialog ? 'w-full' : 'w-full bg-white/85 p-6 [clip-path:polygon(18px_0,100%_0,100%_calc(100%_-_18px),calc(100%_-_18px)_100%,0_100%,0_18px)] dark:bg-[#243229] sm:p-10'}>
           <header className="text-left">
             <div className="flex items-center gap-2 text-sm font-bold text-[#8a4935] dark:text-[#d59a85]">
               <PlaneTakeoff aria-hidden="true" size={19} strokeWidth={2.2} />
@@ -442,7 +452,8 @@ export default function LoginScreen({
                 </>
               )}
 
-              <form onSubmit={handleSubmit} noValidate>
+              {/* Social buttons supply the gap above the form; without them, add it here. */}
+              <form onSubmit={handleSubmit} noValidate className={SOCIAL_PROVIDERS.some((provider) => providerEnabled[provider]) ? undefined : 'mt-6'}>
                 {mode === 'register' && (
                   <div className="mb-4">
                     <label htmlFor="display-name" className="mb-2 block text-[12px] font-extrabold text-slate-700 dark:text-slate-200">顯示名稱</label>

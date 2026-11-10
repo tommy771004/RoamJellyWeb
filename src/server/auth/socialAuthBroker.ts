@@ -53,9 +53,28 @@ function providerLabel(provider: AuthProvider) {
   return provider === 'apple' ? 'Apple' : provider === 'google' ? 'Google' : 'LINE';
 }
 
+/**
+ * Log-safe error summary. Drizzle's "Failed query" message appends the bound
+ * params (user ids, token hashes), so drop everything from "params:" on, and
+ * surface the underlying Postgres error (code + message) that actually says
+ * what went wrong — e.g. 42P01 relation does not exist, 42703 column missing,
+ * 23503 foreign key violation. Postgres `detail` is skipped: it can echo values.
+ */
+export function describeAuthError(error: unknown): string {
+  if (!(error instanceof Error)) return 'unknown error';
+  const message = error.message.split(/\s*params:/)[0].trim();
+  const cause = (error as { cause?: unknown }).cause;
+  if (cause && typeof cause === 'object') {
+    const { code, message: causeMessage } = cause as { code?: unknown; message?: unknown };
+    const parts = [typeof code === 'string' ? code : '', typeof causeMessage === 'string' ? causeMessage : ''].filter(Boolean);
+    if (parts.length > 0) return `${message} | cause: ${parts.join(' ')}`;
+  }
+  return message;
+}
+
 function asyncRoute(handler: (req: Request, res: Response) => Promise<void>) {
   return (req: Request, res: Response) => { void handler(req, res).catch((error) => {
-    console.error('social auth request failed', error instanceof Error ? error.message : 'unknown error');
+    console.error('social auth request failed', describeAuthError(error));
     if (!res.headersSent) res.status(500).json({ error: 'AUTH_PROVIDER_ERROR', message: '登入服務暫時無法使用。' });
   }); };
 }

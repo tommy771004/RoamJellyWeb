@@ -50,3 +50,14 @@ test('LINE authorization URL includes PKCE without provider secrets', () => {
   assert.equal(url.searchParams.get('code_challenge_method'), 'S256');
   assert.equal(url.toString().includes('secret'), false);
 });
+
+test('describeAuthError surfaces the Postgres cause and never the bound params', async () => {
+  const { describeAuthError } = await import('../socialAuthBroker');
+  const pgError = Object.assign(new Error('column "remember_me" of relation "auth_sessions" does not exist'), { code: '42703', detail: 'Key (token_hash)=(secret-hash)' });
+  const drizzleError = new Error('Failed query: insert into "auth_sessions" ("id", "token_hash") values ($1, $2)\nparams: 9d34ca07,secret-hash-value', { cause: pgError });
+  const out = describeAuthError(drizzleError);
+  assert.match(out, /42703 column "remember_me" of relation "auth_sessions" does not exist/);
+  assert.match(out, /^Failed query: insert into "auth_sessions"/);
+  assert.ok(!out.includes('secret-hash'), 'params and detail must not be logged');
+  assert.equal(describeAuthError('nope'), 'unknown error');
+});

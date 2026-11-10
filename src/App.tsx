@@ -913,8 +913,9 @@ export default function App() {
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-2 sm:p-4 backdrop-blur-sm shadow-2xl"
           >
-            <div className="w-full max-w-[420px] max-h-full overflow-y-auto rounded-[32px] bg-white shadow-xl no-scrollbar overflow-hidden relative">
+            <div className="relative w-full max-w-[420px] max-h-full overflow-y-auto rounded-[28px] bg-white shadow-xl no-scrollbar dark:bg-[#243229]">
               <LoginScreen
+                presentation="dialog"
                 onLogin={(id) => {
                   handleLogin(id);
                   setShowLogin(false);
