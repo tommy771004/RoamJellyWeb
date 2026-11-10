@@ -19,6 +19,8 @@ export interface SearchItem {
     depCode?: string;
     arrCode?: string;
     flightNumber?: string;
+    /** Days after departure the flight lands (1 for an overnight arrival). */
+    arrivalDayOffset?: number;
   };
   /** Populated only when tripType === 'roundtrip' */
   returnLeg?: {

@@ -706,7 +706,10 @@ export async function trackClickOut(body: TrackClickOutBody): Promise<void> {
   }
 }
 
-export async function searchOffers(form: any): Promise<SearchItem[]> {
+/** Thrown when the caller cancels a search through `options.signal`. */
+export class SearchCancelledError extends Error {}
+
+export async function searchOffers(form: any, options: { signal?: AbortSignal } = {}): Promise<SearchItem[]> {
   const params = new URLSearchParams();
   if (form.from) params.append('from', String(form.from).trim());
   if (form.to) params.append('to', String(form.to).trim());
@@ -720,7 +723,7 @@ export async function searchOffers(form: any): Promise<SearchItem[]> {
   const url = queryString ? `/api/search?${queryString}` : '/api/search';
 
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: options.signal });
     if (!res.ok) {
       if (res.status === 504) throw new SearchTimeoutError('Search timed out');
       throw new SearchServiceUnavailableError(`Search service returned ${res.status}`);
@@ -736,6 +739,9 @@ export async function searchOffers(form: any): Promise<SearchItem[]> {
           : '',
     }));
   } catch (error: any) {
+    if (options.signal?.aborted) {
+      throw new SearchCancelledError('Search cancelled');
+    }
     if (error instanceof SearchTimeoutError || error instanceof SearchServiceUnavailableError) {
       throw error;
     }

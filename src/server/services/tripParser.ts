@@ -21,6 +21,11 @@ export interface FlightData {
     arrival: string;
     stops: number;
     duration: string;
+    flightNumber?: string;
+    depCode?: string;
+    arrCode?: string;
+    /** Days after departure the flight lands (1 for an overnight arrival). */
+    arrivalDayOffset?: number;
   };
   /** Populated only when tripType === 'roundtrip' */
   returnLeg?: {
@@ -888,6 +893,14 @@ const IATA_LOOKUP: Record<string, string> = Object.fromEntries(
   Object.entries(IATA_MAP).map(([key, value]) => [key.trim().toLowerCase(), value.trim().toLowerCase()]),
 );
 
+/**
+ * Lower-case IATA code for a place name (zh/en) or code. Unknown places come
+ * back unchanged (lower-cased), so callers should check for a 3-letter code.
+ */
+export function resolveIataCode(city: string): string {
+  return getIata(city);
+}
+
 function getIata(city: string): string {
   const normalizedCity = city.trim().toLowerCase();
   if (!normalizedCity) return 'tpe';
@@ -1059,6 +1072,273 @@ function parseApiResponses(
   return results.slice(0, 10);
 }
 
+/** Most flights a search returns; also the point where the scraper stops scrolling. */
+const MAX_FLIGHTS = 10;
+
+/** One flight read from either Trip.com response shape, before it becomes a row. */
+interface TripComFlight {
+  flightNos: string[];
+  airline: string;
+  departure: string;
+  arrival: string;
+  minutes: number;
+  depCode: string;
+  arrCode: string;
+  arrivalDayOffset: number;
+  price: number;
+  currency: string;
+}
+
+/** Whole days between the date parts of two "YYYY-MM-DD HH:MM:SS" stamps. */
+function dayOffset(depart: unknown, arrive: unknown): number {
+  const d1 = String(depart ?? '').match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  const d2 = String(arrive ?? '').match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  if (!d1 || !d2) return 0;
+  const days = Math.round((Date.parse(`${d2}T00:00:00Z`) - Date.parse(`${d1}T00:00:00Z`)) / 86_400_000);
+  return Number.isFinite(days) && days > 0 ? days : 0;
+}
+
+const hhmm = (value: unknown) => String(value ?? '').match(/\d{2}:\d{2}/)?.[0] ?? '';
+
+/** Per-adult price of a fare (falls back to the fare's total). */
+function farePrice(policy: any): number {
+  const n = Number(policy?.price?.adult?.totalPrice ?? policy?.price?.totalPrice ?? policy?.price?.averagePrice ?? 0);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
+ * `FlightListSearchSSE` (seen 2026-11): one server-sent event carrying the
+ * whole result list as `itineraryList`, in Trip.com's own ranking. It arrives
+ * a few seconds after the page opens.
+ */
+function flightsFromItineraryList(data: any): TripComFlight[] {
+  const itineraries: any[] = Array.isArray(data?.itineraryList) ? data.itineraryList : [];
+  const currency = String(data?.basicInfo?.currency || 'TWD');
+  const airlineNames = new Map<string, string>(
+    (Array.isArray(data?.airlineList) ? data.airlineList : []).map((a: any) => [String(a?.code), String(a?.name ?? '')]),
+  );
+  const flights: TripComFlight[] = [];
+
+  for (const itinerary of itineraries) {
+    const journey = itinerary?.journeyList?.[0];
+    const segments: any[] = Array.isArray(journey?.transSectionList) ? journey.transSectionList : [];
+    const flightNos = segments.map((s) => String(s?.flightInfo?.flightNo ?? '')).filter(Boolean);
+    const prices = (Array.isArray(itinerary?.policies) ? itinerary.policies : []).map(farePrice).filter(Boolean);
+    if (flightNos.length === 0 || prices.length === 0) continue;
+
+    const first = segments[0];
+    const last = segments[segments.length - 1];
+    const airlineCode = String(first?.flightInfo?.airlineCode ?? '');
+    flights.push({
+      flightNos,
+      airline: airlineNames.get(airlineCode) || airlineCode,
+      departure: hhmm(first?.departDateTime),
+      arrival: hhmm(last?.arriveDateTime),
+      minutes: Number(journey?.duration ?? 0),
+      depCode: String(first?.departPoint?.airportCode ?? ''),
+      arrCode: String(last?.arrivePoint?.airportCode ?? ''),
+      arrivalDayOffset: dayOffset(first?.departDateTime, last?.arriveDateTime),
+      price: Math.min(...prices),
+      currency,
+    });
+  }
+  return flights;
+}
+
+/**
+ * `FlightMiddleSearch` (seen 2026-11): one JSON response per flight —
+ * `journeyList` holds the flight, `policyList` its fares. Only a handful are
+ * sent, so this is the fallback when the SSE list is missing.
+ */
+function flightsFromJourneyResponse(data: any): TripComFlight[] {
+  const journeys: any[] = Array.isArray(data?.journeyList) ? data.journeyList : [];
+  const policies: any[] = Array.isArray(data?.policyList) ? data.policyList : [];
+  const currency = String(data?.basicInfo?.currency || 'TWD');
+  const flights: TripComFlight[] = [];
+
+  for (const journey of journeys) {
+    const segments: any[] = Array.isArray(journey?.transportList) ? journey.transportList : [];
+    const flightNos = segments.map((s) => String(s?.flight?.flightNo ?? '')).filter(Boolean);
+    if (flightNos.length === 0) continue;
+
+    // Fares name the flight they belong to; with a single journey in the
+    // response every fare is that journey's.
+    const ownFares = policies.filter((p) =>
+      (p?.gradeInfoList ?? []).some((g: any) => g?.flightNo === flightNos[0]),
+    );
+    const fares = ownFares.length > 0 ? ownFares : journeys.length === 1 ? policies : [];
+    const prices = fares.map(farePrice).filter(Boolean);
+    if (prices.length === 0) continue;
+
+    const first = segments[0];
+    const last = segments[segments.length - 1];
+    flights.push({
+      flightNos,
+      airline: String(first?.flight?.airlineInfo?.name ?? ''),
+      departure: hhmm(first?.dateInfo?.departDate),
+      arrival: hhmm(last?.dateInfo?.arriveDate),
+      minutes: Number(journey?.duration ?? 0),
+      depCode: String(first?.departPoint?.airPort?.airportCode ?? ''),
+      arrCode: String(last?.arrivePoint?.airPort?.airportCode ?? ''),
+      arrivalDayOffset: dayOffset(first?.dateInfo?.departDate, last?.dateInfo?.arriveDate),
+      price: Math.min(...prices),
+      currency,
+    });
+  }
+  return flights;
+}
+
+/**
+ * Turns captured Trip.com search responses into result rows: one per flight
+ * at its cheapest fare. Prefers the complete SSE list (kept in Trip.com's
+ * ranking); otherwise uses the per-flight responses, cheapest first.
+ */
+export function parseJourneyResponses(
+  captured: Array<{ url: string; data: any }>,
+  affiliateUrl: string,
+  origin: string,
+  destination: string,
+  date: string,
+): FlightData[] {
+  const fromList = captured.flatMap(({ data }) => flightsFromItineraryList(data));
+  const flights = fromList.length > 0
+    ? fromList
+    : captured.flatMap(({ data }) => flightsFromJourneyResponse(data)).sort((a, b) => a.price - b.price);
+
+  const byFlight = new Map<string, FlightData>();
+  for (const f of flights) {
+    if (!f.departure || !f.arrival) continue;
+    const key = f.flightNos.join('+');
+    const existing = byFlight.get(key);
+    if (existing && existing.price <= f.price) continue;
+
+    const stops = Math.max(0, f.flightNos.length - 1);
+    const depCode = f.depCode.toUpperCase();
+    const arrCode = f.arrCode.toUpperCase();
+    byFlight.set(key, {
+      // Stable per date + flight, so saved/tracked items survive a re-search.
+      id: `tripcom_${date}_${key}`,
+      type: 'flight',
+      provider: 'Trip.com',
+      title: `${origin} → ${destination} · ${stops === 0 ? '直飛' : `${stops} 轉`}`,
+      price: f.price,
+      currency: f.currency,
+      emoji: '✈️',
+      affiliate_url: affiliateUrl,
+      details: {
+        airline: f.airline || 'Unknown',
+        departure: f.departure,
+        arrival: f.arrival,
+        stops,
+        duration: f.minutes > 0 ? `${Math.floor(f.minutes / 60)}h ${f.minutes % 60}m` : '--',
+        flightNumber: f.flightNos.join(' / '),
+        ...(depCode ? { depCode } : {}),
+        ...(arrCode ? { arrCode } : {}),
+        ...(f.arrivalDayOffset > 0 ? { arrivalDayOffset: f.arrivalDayOffset } : {}),
+      },
+    });
+  }
+
+  return [...byFlight.values()].slice(0, MAX_FLIGHTS);
+}
+
+// ---------------------------------------------------------------------------
+// Shared browser
+// ---------------------------------------------------------------------------
+// A round-trip search scrapes both legs at once. Each scrape used to launch
+// its own Chromium; two at a time is heavy on a small instance and a crash
+// there silently turned one leg into fallback data. Concurrent scrapes now
+// share one browser (one context each) and it closes when the last finishes.
+
+let sharedBrowser: Promise<playwrightCore.Browser> | null = null;
+let sharedBrowserUsers = 0;
+
+function launchBrowser(): Promise<playwrightCore.Browser> {
+  const isVercel = !!process.env.VERCEL;
+  return (async () => {
+    const executablePath = isVercel
+      ? await (chromiumSparticuz as any).executablePath()
+      : undefined;
+    return playwrightCore.chromium.launch({
+      headless: true,
+      executablePath: executablePath || undefined,
+      args: [
+        ...((isVercel && (chromiumSparticuz as any).args) ? (chromiumSparticuz as any).args : []),
+        ...BROWSER_ARGS,
+      ],
+    });
+  })();
+}
+
+async function acquireBrowser(): Promise<playwrightCore.Browser> {
+  sharedBrowserUsers += 1;
+  if (!sharedBrowser) {
+    sharedBrowser = launchBrowser();
+    sharedBrowser.catch(() => {
+      sharedBrowser = null;
+    });
+  }
+  try {
+    const browser = await sharedBrowser;
+    if (browser.isConnected()) return browser;
+    // Crashed while shared: start a fresh one for this and later callers.
+    sharedBrowser = launchBrowser();
+    return await sharedBrowser;
+  } catch (error) {
+    sharedBrowserUsers -= 1;
+    throw error;
+  }
+}
+
+async function releaseBrowser(): Promise<void> {
+  sharedBrowserUsers = Math.max(0, sharedBrowserUsers - 1);
+  if (sharedBrowserUsers > 0 || !sharedBrowser) return;
+  const pending = sharedBrowser;
+  sharedBrowser = null;
+  try {
+    await (await pending).close();
+  } catch {
+    /* already gone */
+  }
+}
+
+const BROWSER_ARGS = [
+  '--disable-blink-features=AutomationControlled',
+  '--disable-features=IsolateOrigins,site-per-process',
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-accelerated-2d-canvas',
+  '--no-first-run',
+  '--no-zygote',
+  '--window-size=1440,900',
+  '--lang=zh-TW',
+  '--disable-infobars',
+  '--ignore-certificate-errors',
+  '--allow-running-insecure-content',
+  '--disable-web-security',
+  '--hide-scrollbars',
+  '--mute-audio',
+  '--force-device-scale-factor=1',
+  '--disable-background-networking',
+  '--disable-default-apps',
+  '--disable-sync',
+  '--disable-translate',
+  '--metrics-recording-only',
+  '--safebrowsing-disable-auto-update',
+  '--password-store=basic',
+];
+
+/** Polls `condition` until it is true or `timeoutMs` passes; returns whether it became true. */
+async function waitUntil(condition: () => boolean, timeoutMs: number, pollMs = 200): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (condition()) return true;
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
+  }
+  return condition();
+}
+
 // ---------------------------------------------------------------------------
 // DOM parser — executed inside page.evaluate(), must be self-contained JS.
 // Trip.com renders each flight field on its own line inside .m-flight-list.
@@ -1115,6 +1395,10 @@ function buildDomParserScript(_originIATA: string, _destIATA: string): string {
         var durM = text.match(/(\\d+)\\s*小時\\s*(\\d+)\\s*分/);
         duration = durM ? (durM[1] + 'h ' + durM[2] + 'm') : '';
       }
+      // The duration element reads "4 小時 20 分"; the client sorts on "4h 20m".
+      var durH = duration.match(/(\\d+)\\s*小時/);
+      var durMin = duration.match(/(\\d+)\\s*分/);
+      if (durH || durMin) duration = (durH ? durH[1] : '0') + 'h ' + (durMin ? durMin[1] : '0') + 'm';
       var stops = text.includes('直飛') ? 0 : (text.match(/(\\d+)\\s*[轉停]/) ? parseInt(text.match(/(\\d+)\\s*[轉停]/)[1]) : 1);
       if (!dep || !arr || price < 1000) return null;
       return { index: index, airline: airline, departure: dep, arrival: arr, price: price, duration: duration, stops: stops };
@@ -1203,11 +1487,15 @@ function buildDomParserScript(_originIATA: string, _destIATA: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Scrape Trip.com flight search results using Playwright with:
- *  1. Network response interception (parse internal API JSON — most reliable)
- *  2. DOM extraction with multi-strategy fallback
- *  3. Human-behaviour simulation (random mouse path, gradual scrolling)
- *  4. Comprehensive anti-detection init script
+ * Scrape Trip.com one-way flight results with Playwright.
+ *
+ *  1. Network interception: Trip.com streams one FlightMiddleSearch response
+ *     per flight. The scraper waits for the first, scrolls (like a reader) to
+ *     pull more in, and stops once MAX_FLIGHTS arrive or the stream goes quiet.
+ *     No waiting for the page to render: that took ~27s per leg; this ~12–15s.
+ *  2. DOM extraction, only when no usable API data arrived.
+ *
+ * Concurrent calls (both legs of a round trip) share one browser.
  */
 export async function scrapeTripFlights(
   origin: string,
@@ -1218,53 +1506,23 @@ export async function scrapeTripFlights(
   const destIATA = getIata(destination);
   const url = `https://tw.trip.com/flights/${originIATA}-to-${destIATA}/tickets-${originIATA}-${destIATA}/?flighttype=ow&dcity=${originIATA}&acity=${destIATA}&ddate=${date}`;
   const isVercel = !!process.env.VERCEL;
+  const startedAt = Date.now();
+  const elapsed = () => `${((Date.now() - startedAt) / 1000).toFixed(1)}s`;
 
   console.log(`[tripParser] Starting → ${url}`);
 
   const capturedApiData: Array<{ url: string; data: any }> = [];
+  let lastCaptureAt = 0;
   let browser: playwrightCore.Browser | undefined;
+  let context: playwrightCore.BrowserContext | undefined;
+
+  const parsedFromApi = () => parseJourneyResponses(capturedApiData, url, origin, destination, date);
 
   try {
-    // ── Browser launch ────────────────────────────────────────────────────
-    const executablePath = isVercel
-      ? await (chromiumSparticuz as any).executablePath()
-      : undefined;
-
-    browser = await playwrightCore.chromium.launch({
-      headless: true,
-      executablePath: executablePath || undefined,
-      args: [
-        ...((isVercel && (chromiumSparticuz as any).args) ? (chromiumSparticuz as any).args : []),
-        '--disable-blink-features=AutomationControlled',
-        '--disable-features=IsolateOrigins,site-per-process',
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--window-size=1440,900',
-        '--lang=zh-TW',
-        // Additional stealth: suppress headless indicators
-        '--disable-infobars',
-        '--ignore-certificate-errors',
-        '--allow-running-insecure-content',
-        '--disable-web-security',
-        '--hide-scrollbars',
-        '--mute-audio',
-        '--force-device-scale-factor=1',
-        '--disable-background-networking',
-        '--disable-default-apps',
-        '--disable-sync',
-        '--disable-translate',
-        '--metrics-recording-only',
-        '--safebrowsing-disable-auto-update',
-        '--password-store=basic',
-      ],
-    });
+    browser = await acquireBrowser();
 
     // ── Context setup ─────────────────────────────────────────────────────
-    const context = await browser.newContext({
+    context = await browser.newContext({
       userAgent:
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       viewport: { width: 1440, height: 900 },
@@ -1301,19 +1559,38 @@ export async function scrapeTripFlights(
         resUrl.includes('soa2/24049') ||
         resUrl.includes('intl/flight');
 
+      // The full result list arrives as a server-sent event stream.
+      if (resUrl.includes('FlightListSearchSSE')) {
+        try {
+          const body = await response.text();
+          for (const line of body.split(/\r?\n/)) {
+            if (!line.startsWith('data:')) continue;
+            const json = JSON.parse(line.slice(5));
+            if (json?.itineraryList?.length) {
+              capturedApiData.push({ url: resUrl, data: json });
+              lastCaptureAt = Date.now();
+            }
+          }
+        } catch {
+          // Stream cut short or not JSON — the per-flight responses still count
+        }
+        return;
+      }
+
       if (isJson && looksLikeFlight) {
         try {
           const json = await response.json();
           // Only keep if it looks like it has flight data
           const hasData =
+            json?.journeyList?.length ||             // FlightMiddleSearch (current)
             json?.Response?.FlightRouteItems?.length ||
             json?.data?.flightList?.length ||
             json?.flightList?.length ||
             json?.result?.length ||
-            json?.head?.retCode === 'SUCCESS';  // FlightMiddleSearch success indicator
+            json?.head?.retCode === 'SUCCESS';
           if (hasData) {
-            console.log(`[tripParser] Captured API response: ${resUrl}`);
             capturedApiData.push({ url: resUrl, data: json });
+            lastCaptureAt = Date.now();
           }
         } catch {
           // Non-JSON or parse error — skip silently
@@ -1322,59 +1599,58 @@ export async function scrapeTripFlights(
     });
 
     // ── Navigation ────────────────────────────────────────────────────────
-    // Start mouse at a plausible initial position
     await page.mouse.move(400 + Math.random() * 300, 100 + Math.random() * 100);
-
-    console.log('[tripParser] Navigating...');
     await page.goto(url, {
       waitUntil: 'domcontentloaded',
       timeout: isVercel ? 20000 : 60000,
     });
 
-    // Wait for initial JS hydration — networkidle gives the SPA time to bootstrap
-    try {
-      await page.waitForLoadState('networkidle', { timeout: isVercel ? 8000 : 15000 });
-    } catch {
-      // networkidle may not reach if long-polling keeps firing; proceed anyway
+    // ── Wait for the first flight response ────────────────────────────────
+    const gotFirst = await waitUntil(
+      () => parsedFromApi().length > 0,
+      isVercel ? 20000 : 30000,
+    );
+    console.log(`[tripParser] First flight data ${gotFirst ? 'arrived' : 'did not arrive'} after ${elapsed()}.`);
+
+    if (gotFirst) {
+      // ── Pull in more results ──────────────────────────────────────────
+      // Scroll in short, uneven steps; each new response resets the quiet
+      // timer. Stop at MAX_FLIGHTS, when nothing new arrives for a while, or
+      // at the overall cap.
+      const QUIET_MS = 2500;
+      const CAP_MS = isVercel ? 8000 : 12000;
+      const scrollStart = Date.now();
+      await humanMouseMove(page, 350, 400, 900, 500);
+      while (
+        parsedFromApi().length < MAX_FLIGHTS &&
+        Date.now() - lastCaptureAt < QUIET_MS &&
+        Date.now() - scrollStart < CAP_MS
+      ) {
+        await page.mouse.wheel(0, 300 + Math.floor(Math.random() * 300));
+        await sleep(350, 700);
+      }
+
+      const apiFlights = parsedFromApi();
+      if (apiFlights.length > 0) {
+        console.log(`[tripParser] ✓ ${apiFlights.length} flights from API interception (${elapsed()}).`);
+        return apiFlights;
+      }
     }
 
-    // ── Human-behaviour simulation ────────────────────────────────────────
-    console.log('[tripParser] Simulating human behaviour...');
-
-    // Brief pause after page load (as if reading the hero/banner)
-    await sleep(1200, 2500);
-
-    // Slow scroll to reveal flight list content
-    let scrolled = 0;
-    while (scrolled < 500) {
-      const delta = 40 + Math.floor(Math.random() * 50);
-      await page.mouse.wheel(0, delta);
-      scrolled += delta;
-      await sleep(60, 150);
+    // Older response shapes, if Trip.com ever serves them again.
+    if (capturedApiData.length > 0) {
+      const legacyFlights = parseApiResponses(capturedApiData, url, origin, destination, date);
+      if (legacyFlights.length > 0) {
+        console.log(`[tripParser] ✓ ${legacyFlights.length} flights from legacy API format (${elapsed()}).`);
+        return legacyFlights;
+      }
     }
 
-    await sleep(600, 1200);
-
-    // Realistic mouse drift across the page (simulating reading)
-    await humanMouseMove(page, 350, 400, 900, 500);
-    await sleep(200, 500);
-    await humanMouseMove(page, 900, 500, 600, 650);
-    await sleep(300, 700);
-
-    // Continue scrolling down (flight cards are below the fold)
-    while (scrolled < 1200) {
-      const delta = 50 + Math.floor(Math.random() * 60);
-      await page.mouse.wheel(0, delta);
-      scrolled += delta;
-      await sleep(80, 180);
-    }
-
-    await sleep(800, 1500);
-
-    // ── Wait for actual flight data (not just container) ─────────────────
-    // Poll body.innerText until a recognisable flight-card sentinel appears.
-    // Trip.com uses "選取" (Select) or "查看詳情" (View Details) per card.
-    console.log('[tripParser] Waiting for flight data to render...');
+    // ── Strategy 2: DOM extraction ────────────────────────────────────────
+    // Only reached when no usable API data arrived; give the page a chance to
+    // render its cards, then read them.
+    console.log('[tripParser] No usable API data; falling back to DOM extraction...');
+    await page.mouse.wheel(0, 800);
     try {
       await page.waitForFunction(
         () => {
@@ -1386,45 +1662,20 @@ export async function scrapeTripFlights(
             t.includes('0 個航班')
           );
         },
-        { timeout: isVercel ? 25000 : 45000, polling: 1000 },
+        { timeout: isVercel ? 8000 : 15000, polling: 1000 },
       );
-      console.log('[tripParser] Flight data detected in page.');
     } catch {
-      console.warn('[tripParser] Timed out waiting for flight data; proceeding with available content.');
+      console.warn('[tripParser] Timed out waiting for flight cards; reading what is there.');
     }
 
-    // Brief extra settle time
-    await sleep(800, 1500);
-
-    // Slight scroll back up (natural reading behaviour)
-    await page.mouse.wheel(0, -(100 + Math.floor(Math.random() * 100)));
-    await sleep(300, 600);
-
-    // ── Strategy 1: use intercepted API data ──────────────────────────────
-    if (capturedApiData.length > 0) {
-      console.log(`[tripParser] Parsing ${capturedApiData.length} captured API responses...`);
-      const apiFlights = parseApiResponses(capturedApiData, url, origin, destination, date);
-      if (apiFlights.length > 0) {
-        console.log(`[tripParser] ✓ ${apiFlights.length} flights from API interception.`);
-        await browser.close();
-        return apiFlights;
-      }
-    }
-
-    // ── Strategy 2: DOM extraction ────────────────────────────────────────
-    console.log('[tripParser] Falling back to DOM extraction...');
     const domScript = buildDomParserScript(originIATA, destIATA);
     const rawFlights: Array<{
       index: number; airline: string; departure: string;
       arrival: string; price: number; duration: string; stops: number;
     }> = await page.evaluate(domScript) as any;
 
-    await browser.close();
-
-    const valid = (rawFlights ?? []).filter(f => f?.price > 0).slice(0, 10);
-    console.log(`[tripParser] DOM extraction found ${valid.length} flights.`);
-
-    if (valid.length === 0) return [];
+    const valid = (rawFlights ?? []).filter(f => f?.price > 0).slice(0, MAX_FLIGHTS);
+    console.log(`[tripParser] DOM extraction found ${valid.length} flights (${elapsed()}).`);
 
     return valid.map(f => ({
       id: `tripcom_${date}_${f.index}_${Date.now()}`,
@@ -1443,11 +1694,12 @@ export async function scrapeTripFlights(
         duration: f.duration || '--',
       },
     }));
-
   } catch (error: any) {
-    if (browser) await browser.close();
     console.warn('[tripParser] Scraper failed:', error?.message ?? error);
     return [];
+  } finally {
+    if (context) await context.close().catch(() => {});
+    if (browser) await releaseBrowser();
   }
 }
 

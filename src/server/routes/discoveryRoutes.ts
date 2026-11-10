@@ -55,7 +55,8 @@ export function registerDiscoveryRoutes(app: Express, deps: DiscoveryRoutesDeps)
       return;
     }
 
-    const cacheVersion = tripType === 'roundtrip' ? 'rt-legs-v1' : 'default-v1';
+    // v2: rows now carry depCode/arrCode; older cached rows lack them.
+    const cacheVersion = tripType === 'roundtrip' ? 'rt-legs-v2' : 'default-v2';
     const cacheKey = `${from.toUpperCase()}_${to.toUpperCase()}_${date}_${tripType}_${returnDate}_${cacheVersion}`;
     const cached = await getSearchCacheData(cacheKey);
     if (cached) {

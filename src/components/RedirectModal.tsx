@@ -5,12 +5,14 @@ import GlassCard from './GlassCard';
 import { getModalMotion, getOverlayTransition, subtlePressableClass } from '../lib/motionTokens';
 import { useTranslation } from "react-i18next";
 import { useModalAccessibility } from '../lib/useModalAccessibility';
+import ArrivalDayOffset from './ArrivalDayOffset';
 
 interface RedirectModalProps {
   provider: string;
   airline?: string;
   departure?: string;
   arrival?: string;
+  arrivalDayOffset?: number;
   duration?: string;
   stops?: number;
   price?: number;
@@ -26,6 +28,7 @@ export default function RedirectModal({
   airline, 
   departure, 
   arrival, 
+  arrivalDayOffset,
   duration,
   stops,
   price, 
@@ -117,7 +120,7 @@ export default function RedirectModal({
                   <div className="mb-2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border-2 border-slate-100 bg-white shadow-sm">
                     <MapPin size={17} className="text-fuchsia-400" />
                   </div>
-                  <span className="text-[24px] sm:text-[26px] font-black tracking-[-0.04em] text-slate-800">{arrival}</span>
+                  <span className="text-[24px] sm:text-[26px] font-black tracking-[-0.04em] text-slate-800">{arrival}<ArrivalDayOffset offset={arrivalDayOffset} /></span>
                   <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{t('str_2f077073')}</span>
                 </div>
               </div>

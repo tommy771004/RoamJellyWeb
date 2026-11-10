@@ -939,6 +939,7 @@ export default function App() {
             airline={redirectModal.airline}
             departure={redirectModal.departure}
             arrival={redirectModal.arrival}
+            arrivalDayOffset={redirectModal.arrivalDayOffset}
             duration={redirectModal.duration}
             stops={redirectModal.stops}
             price={redirectModal.price}

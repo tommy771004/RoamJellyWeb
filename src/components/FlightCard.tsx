@@ -5,6 +5,7 @@ import { pressableSurfaceClass, raisedHoverClass, subtlePressableClass } from ".
 import GlassCard from "./GlassCard";
 import AirlineLogo from "./AirlineLogo";
 import { useTranslation } from "react-i18next";
+import ArrivalDayOffset from "./ArrivalDayOffset";
 
 export interface FlightCardProps {
   flight: SearchItem;
@@ -121,6 +122,7 @@ export default function FlightCard({
             <div className="flex flex-col items-end z-10 bg-white/40 dark:bg-transparent backdrop-blur-sm pl-1">
               <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
                 {flight.details?.arrival}
+                <ArrivalDayOffset offset={flight.details?.arrivalDayOffset} />
               </span>
               <span className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] leading-none">
                 Arrive
