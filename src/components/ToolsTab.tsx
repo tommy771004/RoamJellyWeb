@@ -680,7 +680,7 @@ function ToolsTabContent() {
 
   if (!activeTripId) {
     return (
-      <div className="flex-1 overflow-y-auto bg-transparent px-3 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] scroll-smooth sm:px-6 sm:py-6">
+      <div className="flex-1 overflow-y-auto bg-transparent px-3 pt-5 pb-tab-safe scroll-smooth sm:px-6 sm:pt-6">
         <motion.div
           initial={prefersReducedMotion ? undefined : { y: 12 }}
           animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}

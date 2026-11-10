@@ -27,13 +27,6 @@ export default {
         display: ["Sentient", "Noto Serif TC", "Georgia", "serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
       },
-      spacing: {
-        xs: "0.25rem",
-        sm: "0.5rem",
-        md: "1rem",
-        lg: "1.5rem",
-        xl: "2rem",
-      },
       boxShadow: {
         soft: "0 1px 2px rgba(49, 38, 32, 0.05)",
         card: "0 2px 6px -1px rgba(49, 38, 32, 0.07), 0 1px 2px rgba(49, 38, 32, 0.04)",

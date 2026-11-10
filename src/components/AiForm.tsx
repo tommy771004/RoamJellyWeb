@@ -252,7 +252,7 @@ export default function AiForm({
 
   return (
     <div className="relative h-full w-full overflow-y-auto overflow-x-hidden bg-[#eef2ed] text-[#26342d] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-28 pt-5 sm:px-8 sm:pb-20 sm:pt-10">
+      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-28 pt-5 sm:px-8 sm:pt-10">
         <header className="mb-6 flex items-start justify-between gap-5 sm:mb-9">
           <div className="max-w-2xl">
             <p className="mb-2 text-sm font-semibold text-[#7d4b3b]">

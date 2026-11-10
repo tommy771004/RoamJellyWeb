@@ -32,6 +32,8 @@ interface Props {
   title?: string;
   description?: string;
   guestCtaLabel?: string;
+  /** Rendered as a full tab (not inside a modal): leave room for the floating tab bar. */
+  reserveTabBarSpace?: boolean;
 }
 
 type Mode = 'login' | 'register' | 'forgot-password' | 'reset-password';
@@ -55,6 +57,7 @@ export default function LoginScreen({
   title,
   description,
   guestCtaLabel,
+  reserveTabBarSpace = false,
 }: Props) {
   const emailId = useId();
   const passwordId = useId();
@@ -297,7 +300,7 @@ export default function LoginScreen({
   }
 
   return (
-    <main className="relative min-h-full w-full flex-1 overflow-y-auto overflow-x-hidden bg-[#eef2ed] px-4 py-8 text-[#26342d] dark:bg-[#17221c] dark:text-white sm:px-6 sm:py-12">
+    <main className={`relative min-h-full w-full flex-1 overflow-y-auto overflow-x-hidden bg-[#eef2ed] px-4 pt-8 text-[#26342d] dark:bg-[#17221c] dark:text-white sm:px-6 sm:pt-12 ${reserveTabBarSpace ? "pb-tab-safe" : "pb-8 sm:pb-12"}`}>
 
       {onCancel && (
         <button
