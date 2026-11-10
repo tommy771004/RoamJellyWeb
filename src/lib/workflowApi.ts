@@ -11,6 +11,7 @@ export class SearchServiceUnavailableError extends Error {}
 
 const ACCESS_TOKEN_KEY = 'access_token';
 const USER_ID_KEY = 'user_id';
+const USER_DISPLAY_NAME_KEY = 'user_display_name';
 const LAST_ACTIVITY_KEY = 'last_activity';
 
 function getSessionStorage(): Storage | null {
@@ -173,7 +174,7 @@ export function getStoredToken(): string | null {
   return null;
 }
 
-export async function createGuestSession(displayName?: string): Promise<{ token: string; user_id: string }> {
+export async function createGuestSession(displayName?: string): Promise<{ token: string; user_id: string; display_name?: string }> {
   const res = await fetch('/api/auth/guest', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -195,7 +196,7 @@ export async function createGuestSession(displayName?: string): Promise<{ token:
   setClientAccessToken(token);
   getLocalStorage()?.setItem(USER_ID_KEY, userId);
   getLocalStorage()?.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-  return { token, user_id: userId };
+  return { token, user_id: userId, display_name: displayNameFromAuthResponse(data) };
 }
 
 function shouldAttemptDevTokenBootstrap(): boolean {
@@ -247,7 +248,46 @@ export function clearClientSession() {
   sessionStorage?.removeItem(ACCESS_TOKEN_KEY);
   localStorage?.removeItem(ACCESS_TOKEN_KEY);
   localStorage?.removeItem(USER_ID_KEY);
+  localStorage?.removeItem(USER_DISPLAY_NAME_KEY);
   localStorage?.removeItem(LAST_ACTIVITY_KEY);
+}
+
+/** Picks the display name out of any auth response shape (camelCase or snake_case). */
+export function displayNameFromAuthResponse(data: any): string | undefined {
+  const name = data?.user?.displayName ?? data?.user?.display_name ?? data?.display_name;
+  return typeof name === 'string' && name.trim() ? name.trim() : undefined;
+}
+
+export function getStoredDisplayName(): string | null {
+  try {
+    return getLocalStorage()?.getItem(USER_DISPLAY_NAME_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredDisplayName(name: string | null | undefined) {
+  try {
+    const storage = getLocalStorage();
+    if (!storage) return;
+    if (name && name.trim()) storage.setItem(USER_DISPLAY_NAME_KEY, name.trim());
+    else storage.removeItem(USER_DISPLAY_NAME_KEY);
+  } catch {
+    // Storage unavailable (private mode): the name just won't survive a reload.
+  }
+}
+
+/** Current user's display name from the server, or null if unavailable. */
+export async function fetchCurrentUserDisplayName(): Promise<string | null> {
+  const token = getStoredToken();
+  if (!token) return null;
+  try {
+    const res = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!res.ok) return null;
+    return displayNameFromAuthResponse(await res.json()) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function loginUser(

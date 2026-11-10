@@ -21,7 +21,7 @@ import AiLoadingState from './components/AiLoadingState';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import { useAppStore } from './store/useAppStore';
 import { useSearchStore } from './store/useSearchStore';
-import { trackClickOut, getStoredToken, setClientAccessToken, ensureClientAccessToken, geocodeSpot, geocodeSpotWithAI, getNativeMapUrl, createGuestSession, clearClientSession, fetchDirections, createTrip, fetchItinerary } from './lib/workflowApi';
+import { trackClickOut, getStoredToken, setClientAccessToken, ensureClientAccessToken, geocodeSpot, geocodeSpotWithAI, getNativeMapUrl, createGuestSession, clearClientSession, fetchDirections, createTrip, fetchItinerary, getStoredDisplayName, setStoredDisplayName, fetchCurrentUserDisplayName, displayNameFromAuthResponse } from './lib/workflowApi';
 import { suggestItineraryWithForm } from './lib/openrouterApi';
 import { startItineraryAiJob, waitForAiJob, type AiJobState } from './lib/aiJobApi';
 import { haversineKm, estimateTransport, formatMinutes } from './lib/geoUtils';
@@ -106,6 +106,23 @@ export default function App() {
   const [guestBootstrapState, setGuestBootstrapState] = useState<'idle' | 'loading' | 'error'>('idle');
 
   const isLoggedIn = !!userId;
+  // Human-readable account name (Google/LINE profile name, registration name,
+  // or guest name). Never fall back to showing the raw user id.
+  const [displayName, setDisplayName] = useState<string | null>(() => getStoredDisplayName());
+  const rememberDisplayName = useCallback((name: string | null | undefined) => {
+    const clean = name && name.trim() ? name.trim() : null;
+    setStoredDisplayName(clean);
+    setDisplayName(clean);
+  }, []);
+  // Sessions created before names were cached (or restored without one) ask once.
+  useEffect(() => {
+    if (!userId || displayName) return;
+    let cancelled = false;
+    void fetchCurrentUserDisplayName().then((name) => {
+      if (!cancelled && name) rememberDisplayName(name);
+    });
+    return () => { cancelled = true; };
+  }, [userId, displayName, rememberDisplayName]);
   const shouldAutoGuestBootstrap = false;
     // !isLoggedIn &&
     // !showLogin &&
@@ -193,7 +210,12 @@ export default function App() {
           setClientAccessToken(token);
           localStorage.setItem('user_id', session.user.id);
           localStorage.setItem('last_activity', now.toString());
-          if (!cancelled) setAuthenticated(session.user.id);
+          const restoredName = displayNameFromAuthResponse(session);
+          if (restoredName) setStoredDisplayName(restoredName);
+          if (!cancelled) {
+            if (restoredName) setDisplayName(restoredName);
+            setAuthenticated(session.user.id);
+          }
         } else {
           clearClientSession();
         }
@@ -246,8 +268,9 @@ export default function App() {
     }
   }, [activeTab]);
 
-  const handleLogin = (loggedInUserId: string) => {
+  const handleLogin = (loggedInUserId: string, loggedInDisplayName?: string) => {
     const now = Date.now();
+    rememberDisplayName(loggedInDisplayName);
     localStorage.setItem('user_id', loggedInUserId);
     localStorage.setItem('last_activity', now.toString());
     lastActivityRef.current = now;
@@ -271,6 +294,7 @@ export default function App() {
   const handleLogout = () => {
     void logoutAppSession();
     clearClientSession();
+    setDisplayName(null);
     setAuthenticated(null);
     setShowLogoutModal(false);
     if (activeTab !== 'home') {
@@ -290,7 +314,7 @@ export default function App() {
     void createGuestSession()
       .then((guest) => {
         if (cancelled) return;
-        handleLogin(guest.user_id);
+        handleLogin(guest.user_id, guest.display_name);
         setGuestBootstrapState('idle');
       })
       .catch(() => {
@@ -824,7 +848,7 @@ export default function App() {
 
       <TopAppBar
         isLoggedIn={isLoggedIn}
-        userId={userId}
+        displayName={displayName}
         isMenuOpen={isMenuOpen}
         menuButtonRef={menuButtonRef}
         onOpenMenu={() => setIsMenuOpen(true)}
@@ -836,7 +860,7 @@ export default function App() {
         open={isMenuOpen}
         onClose={closeMenu}
         isLoggedIn={isLoggedIn}
-        userId={userId}
+        displayName={displayName}
         onLogin={openLogin}
         onOpenProfile={() => setShowUserProfile(true)}
         onRequestLogout={() => setShowLogoutModal(true)}

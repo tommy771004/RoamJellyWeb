@@ -228,6 +228,16 @@ export function registerSocialAuthBrokerRoutes(
     res.json({ status: 'success', identities: await authRepo.listIdentities(userId) });
   }));
 
+  // Current user's public profile, for clients that hold a valid access token
+  // but no cached display name (e.g. sessions created before names were stored).
+  app.get('/api/auth/me', asyncRoute(async (req, res) => {
+    const userId = getRequestUserId(req);
+    if (!userId) { res.status(401).json({ error: 'UNAUTHORIZED' }); return; }
+    const user = await repo.getUserById(userId);
+    if (!user) { res.status(404).json({ error: 'USER_NOT_FOUND' }); return; }
+    res.json({ user: { id: user.userId, displayName: user.displayName, display_name: user.displayName } });
+  }));
+
   app.get('/api/auth/social/identities', asyncRoute(async (req, res) => {
     const userId = getRequestUserId(req);
     if (!userId) { res.status(401).json({ error: 'UNAUTHORIZED' }); return; }
@@ -247,7 +257,7 @@ export function registerSocialAuthBrokerRoutes(
   }));
 
   app.post('/api/auth/session/refresh', limiter, asyncRoute(async (req, res) => {
-    const session = await rotateRefreshSession(authRepo, req, res);
+    const session = await rotateRefreshSession(authRepo, req, res, (id) => repo.getUserById(id));
     if (!session) { res.status(401).json({ error: 'AUTH_SESSION_EXCHANGE_FAILED', message: '工作階段已失效。' }); return; }
     res.json(session);
   }));

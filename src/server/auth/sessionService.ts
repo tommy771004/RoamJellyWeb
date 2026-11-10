@@ -39,7 +39,11 @@ export async function issueAppSession(
   };
 }
 
-export async function rotateRefreshSession(authRepo: AuthRepository, req: Request, res: Response) {
+type SessionUserLookup = (userId: string) => Promise<{ displayName?: string | null; primaryEmail?: string | null } | null>;
+
+export async function rotateRefreshSession(
+  authRepo: AuthRepository, req: Request, res: Response, lookupUser?: SessionUserLookup,
+) {
   const raw = cookieValue(req);
   if (!raw) return null;
   const session = await authRepo.findSession(sha256(raw));
@@ -49,7 +53,14 @@ export async function rotateRefreshSession(authRepo: AuthRepository, req: Reques
     return null;
   }
   if (!(await authRepo.consumeSession(session.id))) return null;
-  return issueAppSession(authRepo, req, res, { userId: session.userId }, session.rememberMe, session.familyId);
+  // Include the profile so a client restoring from the refresh cookie gets the
+  // display name back, not just the id.
+  const user = lookupUser ? await lookupUser(session.userId).catch(() => null) : null;
+  return issueAppSession(authRepo, req, res, {
+    userId: session.userId,
+    displayName: user?.displayName ?? undefined,
+    email: user?.primaryEmail ?? null,
+  }, session.rememberMe, session.familyId);
 }
 
 export async function revokeRefreshSession(authRepo: AuthRepository, req: Request, res: Response) {

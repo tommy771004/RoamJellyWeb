@@ -9,7 +9,8 @@ const ICON_BUTTON =
 
 interface TopAppBarProps {
   isLoggedIn: boolean;
-  userId: string | null;
+  /** Account display name; null until known. Never pass the raw user id. */
+  displayName: string | null;
   isMenuOpen: boolean;
   menuButtonRef: RefObject<HTMLButtonElement | null>;
   onOpenMenu: () => void;
@@ -25,7 +26,7 @@ interface TopAppBarProps {
  */
 export default function TopAppBar({
   isLoggedIn,
-  userId,
+  displayName,
   isMenuOpen,
   menuButtonRef,
   onOpenMenu,
@@ -172,7 +173,7 @@ export default function TopAppBar({
               <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} aria-hidden="true" />
               <div className="absolute right-0 top-[calc(100%+8px)] z-50 flex w-48 flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white/95 py-1 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-[#1d2620]/95">
                 <p className="truncate px-4 pb-1 pt-2 text-[12px] font-black text-slate-500 dark:text-slate-400">
-                  {t('hello_user', { userId })}
+                  {t('hello_user', { name: displayName || t('account_default_name') })}
                 </p>
                 <button
                   type="button"

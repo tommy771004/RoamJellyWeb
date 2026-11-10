@@ -17,6 +17,7 @@ import SocialLoginButton from '../features/auth/components/SocialLoginButton';
 import type { AuthProvider, LoginStatus, PendingAuthTransaction } from '../features/auth/types';
 import {
   createGuestSession,
+  displayNameFromAuthResponse,
   loginUser,
   requestPasswordReset,
   resetPassword,
@@ -25,7 +26,7 @@ import {
 } from '../lib/workflowApi';
 
 interface Props {
-  onLogin: (userId: string) => void;
+  onLogin: (userId: string, displayName?: string) => void;
   onCancel?: () => void;
   guestFirst?: boolean;
   contextLabel?: string;
@@ -148,7 +149,7 @@ export default function LoginScreen({
         setClientAccessToken(token);
         window.history.replaceState({}, '', '/');
         setStatus('success');
-        onLogin(session.user.id);
+        onLogin(session.user.id, displayNameFromAuthResponse(session));
       })
       .catch((error) => {
         window.history.replaceState({}, '', '/');
@@ -216,7 +217,8 @@ export default function LoginScreen({
         setLinkTicket(null);
       }
       setStatus('success');
-      onLogin(result?.user?.id || result?.user_id || normalizedEmail);
+      const submittedName = mode === 'register' ? (displayName.trim() || normalizedEmail.split('@')[0]) : undefined;
+      onLogin(result?.user?.id || result?.user_id || normalizedEmail, displayNameFromAuthResponse(result) ?? submittedName);
     } catch (error) {
       setStatus('error');
       setFormError(
@@ -261,7 +263,7 @@ export default function LoginScreen({
     try {
       const guest = await createGuestSession(displayName.trim() || undefined);
       setStatus('success');
-      onLogin(guest.user_id);
+      onLogin(guest.user_id, guest.display_name);
     } catch (error) {
       setStatus('error');
       setFormError(userFacingError(error, '訪客登入失敗，請再試一次。'));

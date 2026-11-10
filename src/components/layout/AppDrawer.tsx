@@ -22,7 +22,8 @@ interface AppDrawerProps {
   open: boolean;
   onClose: () => void;
   isLoggedIn: boolean;
-  userId: string | null;
+  /** Account display name; null until known. Never pass the raw user id. */
+  displayName: string | null;
   onLogin: () => void;
   onOpenProfile: () => void;
   onRequestLogout: () => void;
@@ -61,7 +62,7 @@ export default function AppDrawer({
   open,
   onClose,
   isLoggedIn,
-  userId,
+  displayName,
   onLogin,
   onOpenProfile,
   onRequestLogout,
@@ -164,7 +165,7 @@ export default function AppDrawer({
                     <UserRound size={18} strokeWidth={2.4} />
                   </AccountAvatar>
                   <div className="flex min-w-0 flex-1 flex-col">
-                    <strong className="truncate text-[15px] text-slate-800 dark:text-slate-100">{t('hello_user', { userId })}</strong>
+                    <strong className="truncate text-[15px] text-slate-800 dark:text-slate-100">{t('hello_user', { name: displayName || t('account_default_name') })}</strong>
                     <span className="text-[12px] text-slate-500 dark:text-slate-400">{t('drawer_signed_in')}</span>
                   </div>
                 </div>
