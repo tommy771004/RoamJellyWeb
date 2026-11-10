@@ -1,7 +1,7 @@
 import type { Express, RequestHandler } from 'express';
 import type { AppRepository } from '../repositories/appRepository';
 import { getRequestUserId, type EnsureTripRole } from '../auth/requestAuth';
-import { generateItinerary, regenerateSpot } from '../services/aiItineraryService';
+import { generateItinerary, regenerateSpot, FALLBACK_ITINERARY_TITLE } from '../services/aiItineraryService';
 import { fetchOpenRouterWithFallback } from '../services/openrouterHelper';
 
 type GeocodeSpot = (title: string, city?: string) => Promise<{ lat: number; lng: number } | null>;
@@ -59,6 +59,12 @@ export function registerAiRoutes(app: Express, deps: AiRoutesDeps): void {
       res.status(400).json({ status: 'error', message: 'title is required' });
       return;
     }
+    // The placeholder item from a failed generation is not a place; asking AI
+    // to geocode it only spends another AI call.
+    if (String(title).trim() === FALLBACK_ITINERARY_TITLE) {
+      res.status(404).json({ status: 'error', message: 'Could not resolve valid coordinates close to the destination from AI' });
+      return;
+    }
 
     const openrouterApiKey = process.env.OPENROUTER_API_KEY;
     if (!openrouterApiKey) {
@@ -92,7 +98,7 @@ Do NOT include any extra text, markdown formatting, explanations, or labels. Onl
       res.status(404).json({ status: 'error', message: 'Could not resolve valid coordinates close to the destination from AI' });
     } catch (err: any) {
       console.error(`[AI Geocode API Route] failed for ${title}:`, err);
-      res.status(500).json({ status: 'error', message: err.message || 'AI Geocoding failed' });
+      res.status(500).json({ status: 'error', message: 'AI Geocoding failed' });
     }
   });
 

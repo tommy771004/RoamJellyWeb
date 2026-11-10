@@ -90,6 +90,17 @@ test('stops at once on a bad API key', async () => {
   assert.equal(calls.length, 1);
 });
 
+test('a 403 on one model falls through to the next model', async () => {
+  stubOpenRouter({ [M1]: { status: 403 }, [M2]: { text: 'second' } });
+  assert.equal(await fetchOpenRouterWithFallback('k', 'hi', FAST), 'second');
+});
+
+test('a 403 on every model rejects with a key-status hint', async () => {
+  stubOpenRouter(Object.fromEntries(FREE_MODELS.map((m) => [m, { status: 403 }])));
+  await assert.rejects(fetchOpenRouterWithFallback('k', 'hi', FAST), /403 for every model/);
+  assert.equal(calls.length, FREE_MODELS.length);
+});
+
 test('reports ALL_MODELS_RATE_LIMITED when every model is limited or missing', async () => {
   stubOpenRouter(Object.fromEntries(FREE_MODELS.map((m) => [m, { status: 429 }])));
   await assert.rejects(fetchOpenRouterWithFallback('k', 'hi', FAST), /ALL_MODELS_RATE_LIMITED/);

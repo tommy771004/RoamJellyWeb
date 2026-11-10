@@ -933,6 +933,9 @@ function parseChunkText(text: string, isFirst: boolean): any {
 
 export type ItineraryTextGenerator = (prompt: string) => Promise<string>;
 
+/** Title of the placeholder item returned when AI generation fails; it is not a real place. */
+export const FALLBACK_ITINERARY_TITLE = "系統繁忙: 這是一筆備用資料";
+
 export type GenerateItineraryOptions = {
   strictFailure?: boolean;
 };
@@ -956,7 +959,7 @@ export async function generateItineraryWithTextGenerator(
     }
   }
 
-  const fallback = [{ day: 1, time: "10:00", title: "系統繁忙: 這是一筆備用資料", category: "other", emoji: "📍" }];
+  const fallback = [{ day: 1, time: "10:00", title: FALLBACK_ITINERARY_TITLE, category: "other", emoji: "📍" }];
 
   // ── Pre-fetch destination context (weather + holidays + country + rates) ───
   const destinationContext = await fetchAllDestinationContext(

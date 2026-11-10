@@ -54,6 +54,7 @@ const MAX_PARALLEL = 2;
 const COOLDOWN_MS = {
   notFound: 6 * 60 * 60_000, // model removed or renamed
   rateLimited: 60_000,
+  forbidden: 10 * 60_000, // moderation / account or region block / key limit
   failed: 2 * 60_000, // error, timeout or empty answer
 } as const;
 
@@ -116,9 +117,18 @@ async function callModel(model: string, apiKey: string, prompt: string, signal: 
     throw new ModelAttemptError('failed', `${model} network error: ${err?.message ?? err}`);
   }
 
-  // Auth failure — no point retrying any model.
-  if (response.status === 401 || response.status === 403) {
-    throw new ModelAttemptError('auth', `API key invalid or forbidden (${response.status}). Stopping retries.`);
+  // 401 = the key itself is invalid or disabled — no point retrying any model.
+  if (response.status === 401) {
+    const errText = await response.text().catch(() => '');
+    throw new ModelAttemptError('auth', `API key invalid (401): ${errText.slice(0, 300)}. Stopping retries.`);
+  }
+  // 403 can be model-specific (input flagged by a model's moderation, model
+  // blocked for this account/region) or key-wide (key credit limit reached).
+  // Log OpenRouter's reason and move on; if the key is the problem every model
+  // returns 403 quickly and the run still ends in an error.
+  if (response.status === 403) {
+    const errText = await response.text().catch(() => '');
+    throw new ModelAttemptError('forbidden', `403 forbidden on ${model}: ${errText.slice(0, 300)}`);
   }
   if (response.status === 429) throw new ModelAttemptError('rateLimited', `429 rate limited on ${model}`);
   if (response.status === 404) throw new ModelAttemptError('notFound', `Model ${model} not found (404)`);
@@ -160,6 +170,7 @@ export async function fetchOpenRouterWithFallback(
   let settled = false;
   let rateLimitedCount = 0;
   let notFoundCount = 0;
+  let forbiddenCount = 0;
   let lastError: Error | null = null;
 
   return new Promise<string>((resolve, reject) => {
@@ -174,6 +185,9 @@ export async function fetchOpenRouterWithFallback(
 
     const finalError = () => {
       const unavailable = rateLimitedCount + notFoundCount;
+      if (forbiddenCount === models.length) {
+        return new Error(`OpenRouter returned 403 for every model — check the API key's status and credit limit. Last: ${lastError?.message ?? ''}`);
+      }
       if (unavailable === models.length || rateLimitedCount > 0) return new Error('ALL_MODELS_RATE_LIMITED');
       return lastError || new Error('All fallback models failed.');
     };
@@ -212,6 +226,7 @@ export async function fetchOpenRouterWithFallback(
           }
           if (error.kind === 'rateLimited') rateLimitedCount++;
           if (error.kind === 'notFound') notFoundCount++;
+          if (error.kind === 'forbidden') forbiddenCount++;
           modelHealth.set(model, { until: Date.now() + COOLDOWN_MS[error.kind], kind: error.kind });
           if (preferredModel === model) preferredModel = null;
           lastError = error;
