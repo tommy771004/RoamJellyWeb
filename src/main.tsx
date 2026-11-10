@@ -8,8 +8,28 @@ import { registerSW } from 'virtual:pwa-register';
 // Register the PWA service worker in prompt mode so an update never reloads the
 // page while a user is filling a form. App.tsx surfaces the update action.
 if ('serviceWorker' in navigator) {
+  // An update found right after launch — before the user has typed or tapped
+  // anything — is applied immediately: nothing can be lost yet, and otherwise
+  // the waiting worker only activates once every tab is closed, which on iOS
+  // can take days. After the first interaction we fall back to the prompt.
+  const bootedAt = Date.now();
+  let userHasInteracted = false;
+  const markInteracted = () => { userHasInteracted = true; };
+  window.addEventListener('pointerdown', markInteracted, { once: true, capture: true });
+  window.addEventListener('keydown', markInteracted, { once: true, capture: true });
+  // Never reload mid-flow: the OAuth callback consumes a one-time ticket and the
+  // password pages carry one-time tokens in the URL.
+  const isOneTimeFlowPage = /^\/(auth\/callback|forgot-password|reset-password)\/?$/.test(window.location.pathname);
+  const isSafeToAutoApply = () => !isOneTimeFlowPage && !userHasInteracted && Date.now() - bootedAt < 15_000;
+
   const updateSW = registerSW({
     onNeedRefresh() {
+      if (isSafeToAutoApply()) {
+        void updateSW(true).catch(() => {
+          window.dispatchEvent(new CustomEvent('pwa-update-available'));
+        });
+        return;
+      }
       window.dispatchEvent(new CustomEvent('pwa-update-available'));
     },
     onOfflineReady() {
