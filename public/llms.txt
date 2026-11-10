@@ -10,7 +10,7 @@ RoamJelly is a real-time collaborative travel planning app for groups, with a fo
 - **Group expense splitting** — Multi-currency expense tracking with automatic net-settlement calculation (e.g., "Alice owes Bob USD 42").
 - **Shared packing checklists** — Per-trip checklists accessible to all collaborators.
 - **Spot geocoding and maps** — GPS-precise locations for every itinerary item, with navigation launch support.
-- **Deep-link trip sharing** — Share a `/trip/:id` URL; collaborators land directly in the right trip.
+- **Deep-link trip sharing** — Share a `/trips/:id` URL; collaborators land directly in the right trip.
 
 ## Who Uses RoamJelly
 
@@ -24,6 +24,7 @@ Groups of 2–10 travelers planning trips across Taiwan and Asia-Pacific. Common
 - `/` — Main travel planning app (flight search, itinerary, tools)
 - `/trips/:id` — Shared public trip page (collaborators join via invite link; `id` is prefixed `trip_`)
 - `/pricing` — Plan details and pricing
+- `/pricing.md` — Machine-readable pricing (Markdown)
 - `/fly/` — Flight-route search-demand analysis hub (Taiwan departures)
 - `/fly/{route}/` — Per-route monthly search-demand (e.g. `/fly/tpe-nrt/` = Taipei→Tokyo)
 - `/trips/` — Destination itinerary recommendation hub
@@ -31,7 +32,7 @@ Groups of 2–10 travelers planning trips across Taiwan and Asia-Pacific. Common
 - `/guide/` — Travel-planning guide hub (index of all guides)
 - `/guide/collaborative-itinerary-planner` — Complete guide to collaborative group trip planning (EN)
 - `/guide/taiwan-travel-planner` — Taiwan travel planning guide (zh-TW)
-- `/guide/group-travel-expense-splitting` — Group travel expense-splitting guide (EN)
+- `/guide/group-travel-expense-splitting` — Group travel expense-splitting guide (zh-TW)
 - `/sitemap.xml` — Full list of indexable URLs
 
 ## Pricing Summary

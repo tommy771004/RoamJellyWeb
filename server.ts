@@ -11,6 +11,7 @@ import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import Parser from 'rss-parser';
 import { createClient, type RedisClientType } from 'redis';
 import { AppRepository } from './src/server/repositories/appRepository';
@@ -54,6 +55,8 @@ import { resolveIataCode, scrapeTripFlights } from './src/server/services/tripPa
 import { generateItinerary, regenerateSpot } from './src/server/services/aiItineraryService';
 import { fetchOpenRouterWithFallback } from './src/server/services/openrouterHelper';
 import { createSeoRouter } from './src/server/seo/router';
+import { injectSpaPageMeta } from './src/server/seo/spaMeta';
+import { SITE_ORIGIN } from './src/server/seo/utils';
 import { buildAllowedCorsOrigins, isCorsOriginAllowed } from './src/server/security/cors';
 
 // Vercel serverless: resolve/reject the app promise once startServer() finishes setup
@@ -1502,6 +1505,22 @@ async function startServer() {
     });
   }
 
+  // The built SPA shell. On Vercel the function's cwd is the bundle root and
+  // dist/index.html ships via vercel.json `includeFiles`; locally it sits in dist/.
+  const spaShellCandidates = [path.join(process.cwd(), 'dist', 'index.html')];
+  const resolveSpaShellPath = (): string => {
+    const found = spaShellCandidates.find((p) => fs.existsSync(p));
+    if (!found) throw new Error(`SPA shell not found (tried ${spaShellCandidates.join(', ')})`);
+    return found;
+  };
+  const readSpaShell = async (url: string): Promise<string> => {
+    if (vite) {
+      const raw = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
+      return vite.transformIndexHtml(url, raw);
+    }
+    return fs.readFileSync(resolveSpaShellPath(), 'utf-8');
+  };
+
   // UGC trips SEO metadata injection
   app.get('/trips/:trip_id', async (req, res, next) => {
     const tripId = req.params.trip_id;
@@ -1515,17 +1534,7 @@ async function startServer() {
         return next();
       }
 
-      const fs = await import('fs');
-      let html = '';
-
-      if (vite) {
-        html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
-        html = await vite.transformIndexHtml(req.url, html);
-      } else {
-        const distPath = path.join(process.cwd(), 'dist');
-        const fs = await import('fs');
-        html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
-      }
+      const html = await readSpaShell(req.url);
 
       const destName = tripInfo.destination || '熱門目的地';
       const spotsCount = tripInfo.totalSpots || 0;
@@ -1535,22 +1544,10 @@ async function startServer() {
 
       const title = `${tripInfo.name} — ${destName} ${tripInfo.days} 天自由行行程指南｜RoamJelly`;
       const description = `【RoamJelly 公開旅遊行程】${tripInfo.name}：包含 ${destName} ${tripInfo.days} 天自由行完整規劃與離線地圖${spotHighlights}。共 ${spotsCount} 個精選景點美食，提供實時交通與行程複製共編。`;
-      const coverImage = tripInfo.coverImage;
-      const canonicalUrl = `https://roam-jelly-web.vercel.app/trips/${tripId}`;
+      const coverImage = tripInfo.coverImage || undefined;
+      const canonicalUrl = `${SITE_ORIGIN}/trips/${encodeURIComponent(tripId)}`;
 
-      html = html.replace(/<title>.*?<\/title>/is, `<title>${title}</title>`);
-      html = html.replace(/<meta property="og:title" content=".*?"\s*\/>/is, `<meta property="og:title" content="${title}" />`);
-      html = html.replace(/<meta property="og:description" content=".*?"\s*\/>/is, `<meta property="og:description" content="${description}" />`);
-      html = html.replace(/<meta name="description" content=".*?"\s*\/>/is, `<meta name="description" content="${description}" />`);
-      if (coverImage) {
-        html = html.replace(/<meta property="og:image" content=".*?"\s*\/>/is, `<meta property="og:image" content="${coverImage}" />`);
-        html = html.replace(/<meta name="twitter:image" content=".*?"\s*\/>/is, `<meta name="twitter:image" content="${coverImage}" />`);
-      }
-
-      const canonicalTag = `\n    <link rel="canonical" href="${canonicalUrl}" />`;
-      html = html.replace('</head>', `${canonicalTag}\n  </head>`);
-
-      // 4. 結構化資料 (Schema Markup) 導入
+      // 結構化資料 (Schema Markup)
       const schemaMarkup = {
         "@context": "https://schema.org",
         "@type": "Trip",
@@ -1568,12 +1565,15 @@ async function startServer() {
           })),
         },
       };
-      
-      const schemaScript = `\n    <script type="application/ld+json">\n    ${JSON.stringify(schemaMarkup, null, 2)}\n    </script>`;
-      html = html.replace('</head>', `${schemaScript}\n  </head>`);
 
-      res.setHeader('Content-Type', 'text/html');
-      res.send(html);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(injectSpaPageMeta(html, {
+        title,
+        description,
+        canonical: canonicalUrl,
+        image: coverImage,
+        jsonLd: [schemaMarkup],
+      }));
     } catch (err) {
       console.error('[UGC SEO] Failed to render trip page:', err);
       next();
@@ -1584,30 +1584,13 @@ async function startServer() {
   // self-canonicalize to the homepage and gets an accurate title/description in SERPs.
   app.get('/pricing', async (req, res, next) => {
     try {
-      const fs = await import('fs');
-      let html = '';
-      if (vite) {
-        html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
-        html = await vite.transformIndexHtml(req.url, html);
-      } else {
-        html = fs.readFileSync(path.join(process.cwd(), 'dist', 'index.html'), 'utf-8');
-      }
-
-      const canonical = 'https://roam-jelly-web.vercel.app/pricing';
-      const title = 'RoamJelly 果凍漫遊 — 方案與價格｜早鳥免費';
-      const description = '果凍漫遊定價：早鳥階段免費，無需信用卡。每個行程最多 10 位旅伴，含 AI 行程生成、機票比價與多幣別分帳。未來 Pro / Team 方案規劃中。';
-
-      html = html.replace(/<title>.*?<\/title>/is, `<title>${title}</title>`);
-      html = html.replace(/<meta name="description" content=".*?"\s*\/>/is, `<meta name="description" content="${description}" />`);
-      html = html.replace(/<link rel="canonical" href=".*?"\s*\/>/is, `<link rel="canonical" href="${canonical}" />`);
-      html = html.replace(/<meta property="og:url" content=".*?"\s*\/>/is, `<meta property="og:url" content="${canonical}" />`);
-      html = html.replace(/<meta property="og:title" content=".*?"\s*\/>/is, `<meta property="og:title" content="${title}" />`);
-      html = html.replace(/<meta property="og:description" content=".*?"\s*\/>/is, `<meta property="og:description" content="${description}" />`);
-      html = html.replace(/<meta name="twitter:title" content=".*?"\s*\/>/is, `<meta name="twitter:title" content="${title}" />`);
-      html = html.replace(/<meta name="twitter:description" content=".*?"\s*\/>/is, `<meta name="twitter:description" content="${description}" />`);
-
-      res.setHeader('Content-Type', 'text/html');
-      res.send(html);
+      const html = await readSpaShell(req.url);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(injectSpaPageMeta(html, {
+        title: 'RoamJelly 果凍漫遊 — 方案與價格｜早鳥免費',
+        description: '果凍漫遊定價：早鳥階段免費，無需信用卡。每個行程最多 10 位旅伴，含 AI 行程生成、機票比價與多幣別分帳。未來 Pro / Team 方案規劃中。',
+        canonical: `${SITE_ORIGIN}/pricing`,
+      }));
     } catch (err) {
       console.error('[pricing SEO] Failed to render pricing page:', err);
       next();
