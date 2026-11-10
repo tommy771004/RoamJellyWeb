@@ -252,8 +252,8 @@ export default function AiForm({
 
   return (
     <div className="relative h-full w-full overflow-y-auto overflow-x-hidden bg-[#eef2ed] text-[#26342d] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-28 pt-5 sm:px-8 sm:pt-10">
-        <header className="mb-6 flex items-start justify-between gap-5 sm:mb-9">
+      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-4 pb-28 pt-page sm:px-8">
+        <header className="mb-section flex items-start justify-between gap-5">
           <div className="max-w-2xl">
             <p className="mb-2 text-sm font-semibold text-[#7d4b3b]">
               {t("ai_form.step_progress", "第 {{step}} 步，共 2 步", { step })}
@@ -291,7 +291,7 @@ export default function AiForm({
         </header>
 
         {step === 1 && (
-          <div className="space-y-5">
+          <div className="space-y-section">
             <section className="grid gap-8 bg-white/80 p-6 [clip-path:polygon(18px_0,100%_0,100%_calc(100%_-_18px),calc(100%_-_18px)_100%,0_100%,0_18px)] sm:p-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
               <div>
                 <div className="mb-5 flex items-center gap-2 text-sm font-bold text-[#4d5b52]">
@@ -422,7 +422,7 @@ export default function AiForm({
         )}
 
         {step === 2 && (
-          <div className="space-y-5">
+          <div className="space-y-section">
             <section className="bg-white/80 p-6 [clip-path:polygon(18px_0,100%_0,100%_calc(100%_-_18px),calc(100%_-_18px)_100%,0_100%,0_18px)] sm:p-8">
               <div className="grid gap-x-10 gap-y-7 lg:grid-cols-2">
                 {[

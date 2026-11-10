@@ -90,7 +90,6 @@ import AirlineLogo from "./AirlineLogo";
 import FlightCard from "./FlightCard";
 import FlightTable from "./FlightTable";
 import DestinationCard from "./DestinationCard";
-import PortfolioSection from "./PortfolioSection";
 import FaqSection from "./FaqSection";
 import {
   IOS_EASE,
@@ -2355,7 +2354,7 @@ export default function HomeTab({
           </AnimatePresence>
         </div>
 
-        <div className="pt-5 sm:pt-7 pb-16 md:pb-32 flex flex-col flex-1 min-w-0">
+        <div className="pt-page pb-section flex flex-col flex-1 min-w-0">
           <HomeTabContentFocusBlock containerRef={scrollRef} className="flex flex-col gap-3 mb-5 sm:mb-6 md:mb-7">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <EditorialSectionIntro
@@ -3047,7 +3046,7 @@ export default function HomeTab({
           </div>
 
           {/* 搜尋現有行程 (Search Existing Trips) Section */}
-          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-8 md:mt-12 px-2">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-section px-2">
             <div className="p-6 md:p-8 rounded-[36px] bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-indigo-950/90 text-white shadow-2xl backdrop-blur-xl border border-white/10 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -3171,8 +3170,8 @@ export default function HomeTab({
           </HomeTabContentFocusBlock>
 
           {communityTrips.length > 0 && (
-            <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2">
-              <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+            <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-section px-2">
+              <div className="flex items-center justify-between mb-4 md:mb-5 gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Globe className="text-sky-500" size={24} />
                   <h2 className="text-2xl font-black text-slate-800 tracking-tight">
@@ -3290,7 +3289,7 @@ export default function HomeTab({
           )}
 
           {/* Subscription Section */}
-          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2 pt-10 border-t border-slate-200/50 dark:border-white/10 text-left">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-section px-2 text-left">
             <div className="flex items-center gap-2 mb-2">
               <BellRing size={20} className="text-pink-500 animate-pulse" />
               <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
@@ -3433,8 +3432,8 @@ export default function HomeTab({
 
 
           {/* Featured Destinations Section */}
-          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2">
-            <div className="flex items-center justify-between mb-6">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-section px-2">
+            <div className="flex items-center justify-between mb-4 md:mb-5">
               <div className="flex items-center gap-2">
                 <Globe className="text-emerald-500" size={24} />
                 <h2 id="home-featured-guides" className="scroll-mt-4 text-2xl font-black text-slate-800 tracking-tight">
@@ -3556,8 +3555,8 @@ export default function HomeTab({
           </HomeTabContentFocusBlock>
 
           {/* Expert Handbooks Section */}
-          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-12 md:mt-20 mb-8 md:mb-12 px-2">
-            <div className="flex items-center gap-2 mb-6">
+          <HomeTabContentFocusBlock containerRef={scrollRef} className="mt-section px-2">
+            <div className="flex items-center gap-2 mb-4 md:mb-5">
               <Sparkles className="text-fuchsia-500" size={24} />
               <h2 id="home-expert-itineraries" className="scroll-mt-4 text-2xl font-black text-slate-800 tracking-tight">
                 {t('str_7f35ed14')}</h2>
@@ -3737,9 +3736,6 @@ export default function HomeTab({
           minDate={searchForm.date || undefined}
         />
       )}
-
-      {/* Portfolio Section */}
-      <PortfolioSection />
 
       {/* FAQ Q&A Section */}
       <FaqSection />
