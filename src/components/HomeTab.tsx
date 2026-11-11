@@ -3837,21 +3837,6 @@ export default function HomeTab({
         )}
       </AnimatePresence>
 
-      {/* SEO internal links */}
-      <div style={{ paddingTop: 24, paddingBottom: 24, alignItems: 'center' }} className="flex flex-col items-center gap-1">
-        <div className="flex flex-row gap-4">
-          <a
-            href="/fly/"
-            style={{ color: '#94a3b8', fontSize: 11 }}
-          >
-            {t('str_ab8ff02')}</a>
-          <a
-            href="/trips/"
-            style={{ color: '#94a3b8', fontSize: 11 }}
-          >
-            {t('str_78790f42')}</a>
-        </div>
-      </div>
     </motion.div>
   );
 }

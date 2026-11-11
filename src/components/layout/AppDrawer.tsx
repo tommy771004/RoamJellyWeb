@@ -8,10 +8,12 @@ import {
   Globe,
   Languages,
   LogOut,
+  Map as MapIcon,
   Moon,
   Sparkles,
   Sun,
   SunMoon,
+  TrendingUp,
   UserRound,
   X,
 } from 'lucide-react';
@@ -200,6 +202,17 @@ export default function AppDrawer({
                 <span className={ROW_LABEL}>{t('str_7f35ed14')}</span>
                 <ChevronRight size={18} className={ROW_ICON} />
               </button>
+              {/* Server-rendered SEO hubs: plain links, full page load. */}
+              <a href="/fly/" className={ROW}>
+                <TrendingUp size={20} className={ROW_ICON} />
+                <span className={ROW_LABEL}>{t('flight_search_trends')}</span>
+                <ChevronRight size={18} className={ROW_ICON} />
+              </a>
+              <a href="/trips/" className={ROW}>
+                <MapIcon size={20} className={ROW_ICON} />
+                <span className={ROW_LABEL}>{t('destination_trips')}</span>
+                <ChevronRight size={18} className={ROW_ICON} />
+              </a>
             </section>
 
             {/* Settings */}
