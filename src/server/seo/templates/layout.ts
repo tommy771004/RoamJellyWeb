@@ -2,7 +2,7 @@
 // Shared shell for the server-rendered SEO pages added in phase 2
 // (airport transfers, sample itineraries). Older templates keep their own.
 import { escHtml, safeJsonLd, SITE_ORIGIN } from '../utils.js';
-import { holidayFooterLink } from '../longWeekends.js';
+import { siteFooterLinks } from '../longWeekends.js';
 
 export type Faq = { q: string; a: string };
 
@@ -107,11 +107,7 @@ ${jsonLd.map((obj) => `  <script type="application/ld+json">${safeJsonLd(obj)}</
   <nav class="crumbs">${crumbHtml}</nav>
 ${page.body}
   <footer>
-    <a href="/">果凍漫遊</a>
-    <a href="/fly/">航線資訊</a>
-    <a href="/trips/">目的地行程</a>
-    <a href="/airport/">機場交通</a>
-    ${holidayFooterLink()}
+    ${siteFooterLinks()}
     <br><br>
     <span>© ${new Date().getFullYear()} RoamJelly 果凍漫遊</span>
   </footer>

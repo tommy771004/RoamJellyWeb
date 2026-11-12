@@ -97,3 +97,46 @@ test('every airport transfer option cites a source and a check date', () => {
     }
   }
 });
+
+test('slashless detail URLs redirect to the canonical slashed URL, and pages are CDN-cacheable', async () => {
+  const app = express();
+  app.use(createSeoRouter(fakeRepo));
+  const server = app.listen(0);
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    for (const [from, to] of [
+      [`/fly/${KNOWN_ROUTES[0].slug}`, `/fly/${KNOWN_ROUTES[0].slug}/`],
+      [`/trips/${KNOWN_DESTINATIONS[0].slug}`, `/trips/${KNOWN_DESTINATIONS[0].slug}/`],
+    ]) {
+      const res = await fetch(base + from, { redirect: 'manual' });
+      assert.equal(res.status, 308, `${from} should redirect`);
+      assert.equal(res.headers.get('location'), to);
+      const page = await fetch(base + to);
+      assert.equal(page.status, 200);
+      assert.match(page.headers.get('cache-control') ?? '', /s-maxage=\d+/, `${to} needs s-maxage for the CDN`);
+    }
+  } finally {
+    server.close();
+  }
+});
+
+test('route pages link to sibling routes and the arrival airport transfer pages', async () => {
+  const app = express();
+  app.use(createSeoRouter(fakeRepo));
+  const server = app.listen(0);
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    for (const r of KNOWN_ROUTES) {
+      const html = await (await fetch(`${base}/fly/${r.slug}/`)).text();
+      for (const sibling of KNOWN_ROUTES.filter((o) => o.destinationSlug === r.destinationSlug && o.slug !== r.slug)) {
+        assert.ok(html.includes(`href="/fly/${sibling.slug}/"`), `/fly/${r.slug}/ should link to /fly/${sibling.slug}/`);
+      }
+      for (const t of AIRPORT_TRANSFERS.filter((x) => x.destinationSlug === r.destinationSlug)) {
+        assert.equal(html.includes(`href="${transferPath(t)}"`), t.airportCode === r.toCode, `/fly/${r.slug}/ links ${transferPath(t)} only when it lands at ${t.airportCode}`);
+      }
+      assert.ok(html.includes('href="/guide/"') && html.includes('href="/airport/"'), `/fly/${r.slug}/ footer should link to every section`);
+    }
+  } finally {
+    server.close();
+  }
+});

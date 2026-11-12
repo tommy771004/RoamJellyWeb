@@ -1,7 +1,9 @@
 // src/server/seo/templates/routePage.ts
 import type { RouteData } from '../types.js';
 import { escHtml, safeJsonLd, SITE_ORIGIN } from '../utils.js';
-import { holidayFooterLink } from '../longWeekends.js';
+import { siteFooterLinks } from '../longWeekends.js';
+import { KNOWN_ROUTES } from '../cities.js';
+import { getDestinationContent, transferPath } from '../destinationContent.js';
 import { formatDurationRangeZh, formatDurationZh, type RouteFlightSummary } from '../routeFlightFacts.js';
 
 const MONTH_NAMES_ZH = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
@@ -10,6 +12,23 @@ const MONTH_NAMES_ZH = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', 
 const MIN_SEARCHES_FOR_DEMAND = 30;
 
 type Faq = { q: string; a: string };
+
+/**
+ * Other routes into the same destination (e.g. 成田 ↔ 羽田, 關西 ↔ 伊丹) and
+ * the airport-to-city pages for where this flight lands.
+ */
+function relatedLinks(data: RouteData): { href: string; text: string }[] {
+  if (!data.destinationSlug) return [];
+  const siblings = KNOWN_ROUTES
+    .filter((r) => r.destinationSlug === data.destinationSlug && r.slug !== data.slug)
+    .map((r) => ({ href: `/fly/${r.slug}/`, text: `${r.fromDisplay}飛${r.toDisplay}（${r.toCode}）` }));
+  // Only the airport this flight lands at: 伊丹 must not point at 關西機場 transfers.
+  const landingHere = getDestinationContent(data.destinationSlug).transfers.filter((t) => t.airportCode === data.toCode);
+  return [
+    ...siblings,
+    ...landingHere.map((t) => ({ href: transferPath(t), text: `${t.airportName}到${t.areaName}交通` })),
+  ];
+}
 
 /**
  * Destinations also flown from 台北松山 (TSA). The scrape only covers 桃園
@@ -321,18 +340,16 @@ ${body}
   </div>
 
   <div class="card">
-    <h2 style="font-size:16px;font-weight:700;margin-bottom:12px;">相關航線</h2>
-    <ul style="list-style:none;display:flex;flex-wrap:wrap;gap:8px;">
+    <h2 style="font-size:16px;font-weight:700;margin-bottom:12px;">相關航線與交通</h2>
+    <ul style="list-style:none;display:flex;flex-wrap:wrap;gap:8px 16px;">
       <li><a href="/fly/" style="color:#b25936;text-decoration:none;font-size:14px;">← 所有航線分析</a></li>
       ${data.destinationSlug ? `<li><a href="/trips/${data.destinationSlug}/" style="color:#b25936;text-decoration:none;font-size:14px;">${escHtml(data.toDisplay)} 旅遊行程 →</a></li>` : ''}
+      ${relatedLinks(data).map((l) => `<li><a href="${l.href}" style="color:#b25936;text-decoration:none;font-size:14px;">${escHtml(l.text)}</a></li>`).join('\n      ')}
     </ul>
   </div>
 
   <footer>
-    <a href="/">果凍漫遊</a>
-    <a href="/fly/">航線分析</a>
-    <a href="/trips/">目的地行程</a>
-    ${holidayFooterLink()}
+    ${siteFooterLinks()}
     <br><br>
     <span>© ${new Date().getFullYear()} RoamJelly 果凍漫遊</span>
   </footer>

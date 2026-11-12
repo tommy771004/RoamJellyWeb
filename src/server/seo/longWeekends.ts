@@ -10,6 +10,22 @@ import { TW_OFFICE_CALENDARS, type OfficeCalendarYear } from '../../data/taiwanO
 export const HOLIDAY_YEARS: number[] = Object.keys(TW_OFFICE_CALENDARS).map(Number).sort((a, b) => a - b);
 
 /** Footer link to the newest 連假 page, or '' when there is none. */
+/**
+ * The footer links every server-rendered SEO page carries, so each section
+ * (routes, destinations, airport transfers, long weekends, guides) is one
+ * click from any page.
+ */
+export function siteFooterLinks(): string {
+  return [
+    '<a href="/">果凍漫遊</a>',
+    '<a href="/fly/">航線資訊</a>',
+    '<a href="/trips/">目的地行程</a>',
+    '<a href="/airport/">機場交通</a>',
+    holidayFooterLink(),
+    '<a href="/guide/">旅遊指南</a>',
+  ].filter(Boolean).join('\n    ');
+}
+
 export function holidayFooterLink(): string {
   const year = HOLIDAY_YEARS[HOLIDAY_YEARS.length - 1];
   return year ? `<a href="/holidays/${year}/">${year} 連假</a>` : '';

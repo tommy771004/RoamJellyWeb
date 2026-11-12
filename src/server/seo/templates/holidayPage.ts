@@ -2,7 +2,7 @@
 // /holidays/{year}/ — the year's 連假 and leave plans from the official
 // office calendar, with nearby flights as trip ideas.
 import { escHtml, safeJsonLd, SITE_ORIGIN } from '../utils.js';
-import { formatDateZh, formatRangeZh, type HolidayYearFacts, type LeavePlan, type OffRun } from '../longWeekends.js';
+import { formatDateZh, formatRangeZh, siteFooterLinks, type HolidayYearFacts, type LeavePlan, type OffRun } from '../longWeekends.js';
 
 export interface HolidayTripIdea {
   slug: string;
@@ -267,9 +267,7 @@ ${tripsCard}
   </section>
 
   <footer>
-    <a href="/">果凍漫遊</a>
-    <a href="/fly/">航線資訊</a>
-    <a href="/trips/">目的地行程</a>
+    ${siteFooterLinks()}
     <br><br>
     <span>© ${new Date().getFullYear()} RoamJelly 果凍漫遊</span>
   </footer>

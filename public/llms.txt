@@ -26,9 +26,12 @@ Groups of 2–10 travelers planning trips across Taiwan and Asia-Pacific. Common
 - `/pricing` — Plan details and pricing
 - `/pricing.md` — Machine-readable pricing (Markdown)
 - `/fly/` — Flight-route search-demand analysis hub (Taiwan departures)
-- `/fly/{route}/` — Per-route monthly search-demand (e.g. `/fly/tpe-nrt/` = Taipei→Tokyo)
+- `/fly/{route}/` — Per-route flight time, nonstop airlines, recent lowest fare and monthly search demand (e.g. `/fly/tpe-nrt/` = Taipei→Tokyo)
 - `/trips/` — Destination itinerary recommendation hub
 - `/trips/{city}/` — Per-destination user-shared itineraries (e.g. `/trips/tokyo/`)
+- `/airport/` — Airport-to-city transfer hub (Japan, Korea, Hong Kong, Southeast Asia)
+- `/airport/{airport}-to-{area}/` — Transfer options with ride time and fare from operator sites (e.g. `/airport/narita-airport-to-ueno/`)
+- `/holidays/{year}/` — Taiwan long weekends and leave plans from the official government office calendar (e.g. `/holidays/2027/`)
 - `/guide/` — Travel-planning guide hub (index of all guides)
 - `/guide/collaborative-itinerary-planner` — Complete guide to collaborative group trip planning (EN)
 - `/guide/taiwan-travel-planner` — Taiwan travel planning guide (zh-TW)

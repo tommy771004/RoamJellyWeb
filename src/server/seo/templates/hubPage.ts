@@ -1,7 +1,7 @@
 // src/server/seo/templates/hubPage.ts
 import { KNOWN_ROUTES, KNOWN_DESTINATIONS } from '../cities.js';
 import { escHtml, safeJsonLd, SITE_ORIGIN } from '../utils.js';
-import { holidayFooterLink } from '../longWeekends.js';
+import { siteFooterLinks } from '../longWeekends.js';
 
 function hubHead(opts: {
   title: string;
@@ -97,9 +97,7 @@ ${hubHead({
   <p class="subtitle">根據果凍漫遊用戶搜尋資料，找出各航線的旺淡季</p>
   <div class="grid">${cards}</div>
   <footer>
-    <a href="/">果凍漫遊</a>
-    <a href="/trips/">目的地行程</a>
-    ${holidayFooterLink()}
+    ${siteFooterLinks()}
     <br><br>
     <span>© ${new Date().getFullYear()} RoamJelly 果凍漫遊</span>
   </footer>
@@ -136,9 +134,7 @@ ${hubHead({
   <p class="subtitle">果凍漫遊旅人分享的真實行程規劃</p>
   <div class="grid">${cards}</div>
   <footer>
-    <a href="/">果凍漫遊</a>
-    <a href="/fly/">航線分析</a>
-    ${holidayFooterLink()}
+    ${siteFooterLinks()}
     <br><br>
     <span>© ${new Date().getFullYear()} RoamJelly 果凍漫遊</span>
   </footer>

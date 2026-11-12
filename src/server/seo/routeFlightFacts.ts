@@ -77,7 +77,7 @@ export function formatDurationZh(min: number): string {
 
 /** Inclusive range in Chinese, collapsing equal ends: "2 小時 10 分至 2 小時 30 分". */
 export function formatDurationRangeZh(minMin: number, maxMin: number): string {
-  return minMin === maxMin ? formatDurationZh(minMin) : `${formatDurationZh(minMin)}至${formatDurationZh(maxMin)}`;
+  return minMin === maxMin ? formatDurationZh(minMin) : `${formatDurationZh(minMin)}至 ${formatDurationZh(maxMin)}`;
 }
 
 /**

@@ -48,7 +48,7 @@ test('parseDurationMin reads the scraper format', () => {
 test('durations print in Chinese and collapse equal ranges', () => {
   assert.equal(formatDurationZh(135), '2 小時 15 分');
   assert.equal(formatDurationZh(120), '2 小時');
-  assert.equal(formatDurationRangeZh(130, 150), '2 小時 10 分至2 小時 30 分');
+  assert.equal(formatDurationRangeZh(130, 150), '2 小時 10 分至 2 小時 30 分');
   assert.equal(formatDurationRangeZh(130, 130), '2 小時 10 分');
 });
 
@@ -124,7 +124,7 @@ test('with flight facts the route page answers "飛多久" and lists the airline
     timeDifference: '比台灣快 1 小時',
   });
   assert.match(html, /<title>台北飛福岡多久？直飛航空公司、廉航與機票價格/);
-  assert.ok(html.includes('2 小時 10 分至2 小時 30 分'));
+  assert.ok(html.includes('2 小時 10 分至 2 小時 30 分'));
   assert.ok(html.includes('臺灣虎航'));
   assert.ok(html.includes('福岡比台灣快 1 小時'));
   assert.ok(html.includes('NT$5,593'));
